@@ -6,6 +6,8 @@ from oblique import (
     plane_from_angles,
     oblique_plane,
     oblique_slab,
+    simulate_oblique,
+    simulate_oblique_slab,
     scout_lines,
     three_scouts,
 )
@@ -327,6 +329,184 @@ class TestScoutLines:
         for val in lines.values():
             if val is not None:
                 assert len(val) == 4
+
+
+# ---------------------------------------------------------------------------
+# simulate_oblique
+# ---------------------------------------------------------------------------
+class TestSimulateOblique:
+    def test_output_dtype_float(self, small_vol):
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15, shape=(20, 20))
+        assert np.issubdtype(img.dtype, np.floating)
+
+    def test_output_shape(self, small_vol):
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15, shape=(24, 30))
+        assert img.shape == (24, 30)
+
+    def test_output_2d(self, small_vol):
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15)
+        assert img.ndim == 2
+
+    def test_nonnegative(self, small_vol):
+        _, r, c = plane_from_angles("axial", tilt_deg=20, rot_deg=10)
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15, shape=(ny, nx))
+        assert np.all(img >= 0)
+
+    def test_background_label_is_zero_signal(self, small_vol):
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        ctr = (nz//2, ny//2, nx//2)
+        label_map = oblique_plane(small_vol, r, c, ctr, shape=(ny, nx))
+        img = simulate_oblique(small_vol, r, c, ctr, TR=500, TE=15, shape=(ny, nx))
+        assert np.all(img[label_map == 0] == 0.0)
+
+    def test_brain_tissue_has_nonzero_signal(self, small_vol):
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15, shape=(ny, nx))
+        assert img.max() > 0
+
+    def test_axial_matches_simulate_slice(self, small_vol):
+        from phantom3d import simulate_slice
+        nz, ny, nx = small_vol.shape
+        _, r, c = plane_from_angles("axial")
+        cz = nz // 2
+        img = simulate_oblique(small_vol, r, c, (cz, ny//2, nx//2),
+                               TR=800, TE=20, sequence="SE", shape=(ny, nx))
+        expected = simulate_slice(small_vol[cz, :, :], TR=800, TE=20, sequence="SE")
+        np.testing.assert_allclose(img, expected, rtol=1e-10)
+
+    def test_se_sequence(self, small_vol):
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15, sequence="SE", shape=(20, 20))
+        assert img.max() > 0
+
+    def test_gre_sequence(self, small_vol):
+        _, r, c = plane_from_angles("axial", tilt_deg=15)
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=250, TE=5, sequence="GRE", flip_angle=70,
+                               shape=(20, 20))
+        assert img.ndim == 2
+        assert img.max() > 0
+
+    def test_ir_sequence(self, small_vol):
+        _, r, c = plane_from_angles("coronal")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=9000, TE=90, sequence="IR", TI=2500,
+                               shape=(20, 20))
+        assert img.ndim == 2
+
+    def test_custom_tissue_props(self, small_vol):
+        custom = {
+            0: {"T1": 1,    "T2": 1,    "PD": 0.0, "T2star": 1,  "name": "BG"},
+            1: {"T1": 4500, "T2": 2200, "PD": 1.0, "T2star": 1500, "name": "CSF"},
+            2: {"T1": 1330, "T2": 100,  "PD": 0.8, "T2star": 60, "name": "GM"},
+            3: {"T1": 830,  "T2": 80,   "PD": 0.65,"T2star": 48, "name": "WM"},
+            4: {"T1": 370,  "T2": 60,   "PD": 0.95,"T2star": 40, "name": "Fat"},
+            5: {"T1": 200,  "T2": 5,    "PD": 0.1, "T2star": 3,  "name": "Bone"},
+        }
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        img = simulate_oblique(small_vol, r, c, (nz//2, ny//2, nx//2),
+                               TR=500, TE=15, tissue_props=custom, shape=(20, 20))
+        assert img.ndim == 2
+        assert img.max() > 0
+
+    def test_t1_contrast_direction(self, small_vol):
+        # Short TR → T1-weighted: WM (T1=830) brighter than CSF (T1=4500)
+        _, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        ctr = (nz//2, ny//2, nx//2)
+        label_map = oblique_plane(small_vol, r, c, ctr, shape=(ny, nx))
+        img = simulate_oblique(small_vol, r, c, ctr,
+                               TR=500, TE=15, sequence="SE", shape=(ny, nx))
+        if np.any(label_map == 3) and np.any(label_map == 1):
+            assert img[label_map == 3].mean() > img[label_map == 1].mean()
+
+
+# ---------------------------------------------------------------------------
+# simulate_oblique_slab
+# ---------------------------------------------------------------------------
+class TestSimulateObliqueSlab:
+    def test_output_shape(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        out = simulate_oblique_slab(small_vol, n, r, c, (nz//2, ny//2, nx//2),
+                                    n_slices=4, thickness_mm=2.0,
+                                    TR=500, TE=15, shape=(20, 24))
+        assert out.shape == (4, 20, 24)
+
+    def test_output_dtype_float(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        out = simulate_oblique_slab(small_vol, n, r, c, (nz//2, ny//2, nx//2),
+                                    n_slices=2, thickness_mm=2.0, TR=500, TE=15)
+        assert np.issubdtype(out.dtype, np.floating)
+
+    def test_all_nonnegative(self, small_vol):
+        n, r, c = plane_from_angles("axial", tilt_deg=20)
+        nz, ny, nx = small_vol.shape
+        out = simulate_oblique_slab(small_vol, n, r, c, (nz//2, ny//2, nx//2),
+                                    n_slices=3, thickness_mm=2.0,
+                                    TR=500, TE=15, shape=(ny, nx))
+        assert np.all(out >= 0)
+
+    def test_single_slice_matches_simulate_oblique(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial", tilt_deg=20)
+        ctr = (nz//2, ny//2, nx//2)
+        shape = (20, 20)
+        slab = simulate_oblique_slab(small_vol, n, r, c, ctr,
+                                     n_slices=1, thickness_mm=1.0,
+                                     TR=500, TE=15, shape=shape)
+        single = simulate_oblique(small_vol, r, c, ctr, TR=500, TE=15, shape=shape)
+        np.testing.assert_array_equal(slab[0], single)
+
+    def test_center_slice_matches_simulate_oblique(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial")
+        ctr = (nz//2, ny//2, nx//2)
+        shape = (ny, nx)
+        slab = simulate_oblique_slab(small_vol, n, r, c, ctr,
+                                     n_slices=5, thickness_mm=2.0,
+                                     TR=500, TE=15, shape=shape)
+        ref = simulate_oblique(small_vol, r, c, ctr, TR=500, TE=15, shape=shape)
+        np.testing.assert_array_equal(slab[2], ref)
+
+    def test_gre_sequence(self, small_vol):
+        n, r, c = plane_from_angles("coronal", tilt_deg=10)
+        nz, ny, nx = small_vol.shape
+        out = simulate_oblique_slab(small_vol, n, r, c, (nz//2, ny//2, nx//2),
+                                    n_slices=2, thickness_mm=2.0,
+                                    TR=250, TE=5, sequence="GRE", flip_angle=70,
+                                    shape=(20, 20))
+        assert out.shape[0] == 2
+        assert out.max() > 0
+
+    def test_ir_sequence(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        nz, ny, nx = small_vol.shape
+        out = simulate_oblique_slab(small_vol, n, r, c, (nz//2, ny//2, nx//2),
+                                    n_slices=2, thickness_mm=2.0,
+                                    TR=9000, TE=90, sequence="IR", TI=2500,
+                                    shape=(20, 20))
+        assert out.ndim == 3
 
 
 # ---------------------------------------------------------------------------

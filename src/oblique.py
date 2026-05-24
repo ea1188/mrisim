@@ -204,6 +204,103 @@ def oblique_slab(vol, normal, row_vec, col_vec, center,
 
 
 # ---------------------------------------------------------------------------
+# MRI signal rendering
+# ---------------------------------------------------------------------------
+
+def _render_label_map(label_map, TR, TE, sequence, TI, flip_angle, tissue_props):
+    """Apply MRI signal equations to a 2D integer label map.
+
+    Returns a 2D float64 image.  Labels absent from tissue_props are left at 0.
+    """
+    from signal_engine import (spin_echo_signal, gradient_echo_signal,
+                                inversion_recovery_signal)
+    image = np.zeros(label_map.shape, dtype=float)
+    ti = TI if TI is not None else 150.0
+    for label, props in tissue_props.items():
+        mask = label_map == label
+        if not np.any(mask):
+            continue
+        if sequence == "GRE":
+            sig = gradient_echo_signal(
+                props["T1"], props["T2star"], props["PD"], TR, TE, flip_angle)
+        elif sequence == "IR":
+            sig = inversion_recovery_signal(
+                props["T1"], props["T2"], props["PD"], TR, TE, ti)
+        else:  # SE and fallback
+            sig = spin_echo_signal(props["T1"], props["T2"], props["PD"], TR, TE)
+        image[mask] = sig
+    return image
+
+
+def simulate_oblique(vol, row_vec, col_vec, center,
+                     TR=500.0, TE=15.0, sequence="SE",
+                     TI=None, flip_angle=90.0,
+                     shape=None, voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None,
+                     tissue_props=None):
+    """
+    Sample one oblique plane from vol and render MRI signal.
+
+    vol          : 3-D integer label array (Z, Y, X)
+    row_vec      : unit vector along display rows, physical (Z, Y, X) space
+    col_vec      : unit vector along display cols, physical (Z, Y, X) space
+    center       : (Z, Y, X) voxel-index coordinate
+    TR / TE      : repetition / echo time in ms
+    sequence     : 'SE' (default), 'GRE', or 'IR'
+    TI           : inversion time in ms (IR only; default 150)
+    flip_angle   : flip angle in degrees (GRE only; default 90)
+    shape        : (rows, cols) output size; defaults to (max_dim, max_dim)
+    voxel_size   : (sz, sy, sx) mm per voxel for anisotropy correction
+    pixel_size_mm: output pixel size in mm; defaults to min(voxel_size)
+    tissue_props : dict {label: {T1, T2, T2star, PD, ...}}.
+                   Defaults to phantom3d.TISSUE_PROPERTIES_3D.
+
+    Returns 2-D float64 image.
+    """
+    if tissue_props is None:
+        from phantom3d import TISSUE_PROPERTIES_3D
+        tissue_props = TISSUE_PROPERTIES_3D
+
+    label_map = oblique_plane(vol, row_vec, col_vec, center,
+                              shape=shape, order=0,
+                              voxel_size=voxel_size, pixel_size_mm=pixel_size_mm)
+    return _render_label_map(label_map, TR, TE, sequence, TI, flip_angle,
+                             tissue_props)
+
+
+def simulate_oblique_slab(vol, normal, row_vec, col_vec, center,
+                          n_slices=1, thickness_mm=5.0, gap_mm=0.0,
+                          TR=500.0, TE=15.0, sequence="SE",
+                          TI=None, flip_angle=90.0,
+                          shape=None, voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None,
+                          tissue_props=None):
+    """
+    Sample a slab of parallel oblique slices and render MRI signal for each.
+
+    Geometry parameters (normal, row_vec, col_vec, center, n_slices,
+    thickness_mm, gap_mm, shape, voxel_size, pixel_size_mm) are identical to
+    oblique_slab.  MRI sequence parameters (TR, TE, sequence, TI, flip_angle,
+    tissue_props) are passed through to simulate_oblique for every slice.
+
+    Returns (n_slices, rows, cols) float64 array.
+    """
+    if tissue_props is None:
+        from phantom3d import TISSUE_PROPERTIES_3D
+        tissue_props = TISSUE_PROPERTIES_3D
+
+    label_stack = oblique_slab(vol, normal, row_vec, col_vec, center,
+                               n_slices=n_slices, thickness_mm=thickness_mm,
+                               gap_mm=gap_mm, shape=shape, order=0,
+                               voxel_size=voxel_size, pixel_size_mm=pixel_size_mm)
+
+    return np.stack(
+        [_render_label_map(label_stack[i], TR, TE, sequence, TI, flip_angle,
+                           tissue_props)
+         for i in range(int(n_slices))],
+        axis=0,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Three-scout intersection lines
 # ---------------------------------------------------------------------------
 
