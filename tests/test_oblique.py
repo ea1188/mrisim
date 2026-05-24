@@ -266,6 +266,102 @@ class TestScoutLines:
 
 
 # ---------------------------------------------------------------------------
+# Anisotropic voxel spacing
+# ---------------------------------------------------------------------------
+class TestAnisotropicVoxelSpacing:
+    # --- oblique_plane ---
+
+    def test_isotropic_axial_still_matches_get_slice(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        _, r, c = plane_from_angles("axial")
+        ctr = (nz // 2, ny // 2, nx // 2)
+        out = oblique_plane(small_vol, r, c, ctr, shape=(ny, nx),
+                            voxel_size=(1, 1, 1), pixel_size_mm=1.0)
+        np.testing.assert_array_equal(out, get_slice(small_vol, "axial", nz // 2))
+
+    def test_anisotropic_z_axial_base_still_matches_get_slice(self, small_vol):
+        # Z voxels being larger doesn't affect an axis-aligned axial slice
+        # because row_vec and col_vec have zero Z component.
+        nz, ny, nx = small_vol.shape
+        _, r, c = plane_from_angles("axial")
+        ctr = (nz // 2, ny // 2, nx // 2)
+        out = oblique_plane(small_vol, r, c, ctr, shape=(ny, nx),
+                            voxel_size=(5, 1, 1), pixel_size_mm=1.0)
+        np.testing.assert_array_equal(out, get_slice(small_vol, "axial", nz // 2))
+
+    def test_tilted_plane_differs_with_anisotropic_z(self, small_vol):
+        # A 45° tilt samples different Z voxels when Z voxels are 4 mm vs 1 mm.
+        nz, ny, nx = small_vol.shape
+        _, r, c = plane_from_angles("axial", tilt_deg=45)
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (20, 20)
+        out_iso = oblique_plane(small_vol, r, c, ctr, shape=shape,
+                                voxel_size=(1, 1, 1), pixel_size_mm=1.0)
+        out_aniso = oblique_plane(small_vol, r, c, ctr, shape=shape,
+                                  voxel_size=(4, 1, 1), pixel_size_mm=1.0)
+        assert not np.array_equal(out_iso, out_aniso)
+
+    def test_pixel_size_scales_fov(self, small_vol):
+        # A larger pixel_size_mm covers more physical space → samples a wider
+        # range of voxels → result changes relative to the default.
+        nz, ny, nx = small_vol.shape
+        _, r, c = plane_from_angles("axial", tilt_deg=30)
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (20, 20)
+        out_small = oblique_plane(small_vol, r, c, ctr, shape=shape,
+                                  voxel_size=(1, 1, 1), pixel_size_mm=1.0)
+        out_large = oblique_plane(small_vol, r, c, ctr, shape=shape,
+                                  voxel_size=(1, 1, 1), pixel_size_mm=3.0)
+        assert not np.array_equal(out_small, out_large)
+
+    def test_default_pixel_size_is_min_voxel_size(self, small_vol):
+        # pixel_size_mm=None should default to min(voxel_size).
+        nz, ny, nx = small_vol.shape
+        _, r, c = plane_from_angles("axial", tilt_deg=30)
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (20, 20)
+        vox = (2.0, 0.5, 0.5)
+        out_default = oblique_plane(small_vol, r, c, ctr, shape=shape,
+                                    voxel_size=vox)
+        out_explicit = oblique_plane(small_vol, r, c, ctr, shape=shape,
+                                     voxel_size=vox, pixel_size_mm=0.5)
+        np.testing.assert_array_equal(out_default, out_explicit)
+
+    # --- scout_lines ---
+
+    def test_isotropic_scout_lines_unchanged(self, small_vol):
+        n, _, _ = plane_from_angles("axial", 30, 20)
+        ctr = (15, 18, 15)
+        lines_default = scout_lines(small_vol.shape, n, ctr)
+        lines_iso = scout_lines(small_vol.shape, n, ctr, voxel_size=(1, 1, 1))
+        for key in lines_default:
+            if lines_default[key] is None:
+                assert lines_iso[key] is None
+            else:
+                np.testing.assert_allclose(lines_default[key], lines_iso[key])
+
+    def test_anisotropic_z_changes_sagittal_line_slope(self, small_vol):
+        # A double-oblique with tilt+rot has non-zero Z and Y components in its
+        # normal.  Scaling Z by 4× changes n_idx[0] → different sagittal slope.
+        n, _, _ = plane_from_angles("axial", tilt_deg=30, rot_deg=45)
+        ctr = (15, 18, 15)
+        lines_iso = scout_lines(small_vol.shape, n, ctr, voxel_size=(1, 1, 1))
+        lines_aniso = scout_lines(small_vol.shape, n, ctr, voxel_size=(4, 1, 1))
+        assert lines_iso["sagittal"] is not None
+        assert lines_aniso["sagittal"] is not None
+        # Both lines pass through center, but their slopes differ → different endpoints
+        assert not np.allclose(lines_iso["sagittal"], lines_aniso["sagittal"])
+
+    def test_coronal_plane_axial_line_unaffected_by_z_scaling(self, small_vol):
+        # Coronal normal [0,1,0] has zero Z component → n_idx is unchanged by vox_z.
+        n, _, _ = plane_from_angles("coronal")
+        ctr = (15, 18, 15)
+        lines_1 = scout_lines(small_vol.shape, n, ctr, voxel_size=(1, 1, 1))
+        lines_4 = scout_lines(small_vol.shape, n, ctr, voxel_size=(4, 1, 1))
+        np.testing.assert_allclose(lines_1["axial"], lines_4["axial"])
+
+
+# ---------------------------------------------------------------------------
 # three_scouts
 # ---------------------------------------------------------------------------
 class TestThreeScouts:

@@ -84,17 +84,23 @@ def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0):
 # Direct plane sampler
 # ---------------------------------------------------------------------------
 
-def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0):
+def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0,
+                  voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None):
     """
     Sample an oblique 2D plane from vol by direct interpolation.
 
-    vol      : 3-D ndarray (Z, Y, X)
-    row_vec  : unit vector along display rows, in (Z, Y, X) space
-    col_vec  : unit vector along display cols, in (Z, Y, X) space
-    center   : (Z, Y, X) voxel coordinate of the plane centre
-    shape    : (rows, cols) output size; defaults to (max_dim, max_dim)
-    order    : 0 = nearest-neighbour (preserves integer labels)
-               1 = trilinear (for floating-point signal images)
+    vol           : 3-D ndarray (Z, Y, X)
+    row_vec       : unit vector along display rows, in physical (Z, Y, X) space
+    col_vec       : unit vector along display cols, in physical (Z, Y, X) space
+    center        : (Z, Y, X) voxel-index coordinate of the plane centre
+    shape         : (rows, cols) output size; defaults to (max_dim, max_dim)
+    order         : 0 = nearest-neighbour (preserves integer labels)
+                    1 = trilinear (for floating-point signal images)
+    voxel_size    : (sz, sy, sx) physical size of one voxel in mm along each axis.
+                    Corrects for anisotropy so that tilt angles are physically accurate.
+    pixel_size_mm : physical size of one output pixel in mm.
+                    Defaults to min(voxel_size) so the finest voxel dimension sets
+                    the output resolution.
 
     Returns 2-D array with the same dtype as vol.
     Voxels that map outside the volume boundaries are filled with 0.
@@ -104,6 +110,10 @@ def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0):
         shape = (d, d)
     rows, cols = int(shape[0]), int(shape[1])
 
+    vox = np.asarray(voxel_size, dtype=float)
+    if pixel_size_mm is None:
+        pixel_size_mm = float(np.min(vox))
+
     ri = np.arange(rows, dtype=float) - rows / 2.0
     ci = np.arange(cols, dtype=float) - cols / 2.0
     rr, cc = np.meshgrid(ri, ci, indexing='ij')  # (rows, cols)
@@ -112,9 +122,11 @@ def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0):
     cv = np.asarray(col_vec, dtype=float)
     ctr = np.asarray(center, dtype=float)
 
+    # Each output pixel represents pixel_size_mm of physical displacement.
+    # Converting mm → voxel indices requires dividing by voxel_size per axis.
     coords = np.empty((3, rows, cols), dtype=float)
     for ax in range(3):
-        coords[ax] = ctr[ax] + rr * rv[ax] + cc * cv[ax]
+        coords[ax] = ctr[ax] + (rr * rv[ax] + cc * cv[ax]) * pixel_size_mm / vox[ax]
 
     return map_coordinates(
         vol.astype(float), coords, order=order, mode='constant', cval=0.0
@@ -171,23 +183,31 @@ def _intersect_line(n, center, fixed_axis, fixed_val,
     return (c0, r0, c1, r1)  # (x0, y0, x1, y1) in display / matplotlib coords
 
 
-def scout_lines(vol_shape, normal, center):
+def scout_lines(vol_shape, normal, center, voxel_size=(1.0, 1.0, 1.0)):
     """
     Intersect the oblique plane with the three axis-aligned scout planes.
 
     All three scouts pass through `center`, one per principal axis.
 
-    vol_shape : (nz, ny, nx)
-    normal    : unit normal vector in (Z, Y, X) space
-    center    : (Z, Y, X) voxel coordinate
+    vol_shape  : (nz, ny, nx)
+    normal     : unit normal vector in physical (Z, Y, X) space
+    center     : (Z, Y, X) voxel-index coordinate
+    voxel_size : (sz, sy, sx) mm per voxel — scales the physical normal into
+                 index space so that intersection lines reflect true physical geometry.
 
     Returns dict with keys 'axial', 'coronal', 'sagittal', each mapped to a
     (c0, r0, c1, r1) line-endpoint tuple in display coordinates, or None when
     the oblique plane is parallel to (or coincident with) that scout.
     """
     nz, ny, nx = vol_shape
-    n = np.asarray(normal, dtype=float)
+    n_phys = np.asarray(normal, dtype=float)
+    vox = np.asarray(voxel_size, dtype=float)
     ctr = np.asarray(center, dtype=float)
+
+    # Convert physical-space normal to index-space: n_idx[ax] = n_phys[ax] * vox[ax].
+    # The plane equation n·(p-center)=0 in physical space becomes
+    # n_idx·(p_idx-center_idx)=0 in index space after this substitution.
+    n = n_phys * vox
 
     return {
         # axial scout:    z fixed,  display rows = Y (axis 1), cols = X (axis 2)
