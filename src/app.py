@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import os
 from psd import draw_psd
@@ -26,7 +27,7 @@ from fse import simulate_fse_image, fse_scan_time, compute_fse_echo_train
 from acceleration import apply_parallel_imaging, compute_acceleration_metrics, apply_compressed_sensing
 
 class MRISimulator:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root = tk.Tk()
         self.root.title("MRI Simulation Platform")
         self.root.geometry("1400x850")
@@ -95,13 +96,13 @@ class MRISimulator:
         
         # Comparison
         self.compare_mode = tk.BooleanVar(value=False)
-        self.compare_params = None
-        self._recalc_job = None
+        self.compare_params: dict | None = None
+        self._recalc_job: str | None = None
         
         # Window/level
         self.window_width = 1.0
         self.window_level = 0.5
-        self.current_image = None
+        self.current_image: np.ndarray | None = None
         self.current_title = ""
         self.wl_dragging = False
         self.wl_start_x = 0
@@ -109,7 +110,7 @@ class MRISimulator:
         
         self.build_ui()
     
-    def build_ui(self):
+    def build_ui(self) -> None:
         self.left_panel = tk.Frame(self.root, bg='#2d2d2d', width=280)
         self.left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=2, pady=2)
         self.left_panel.pack_propagate(False)
@@ -123,7 +124,7 @@ class MRISimulator:
         self.build_controls()
         self.recalculate()
     
-    def build_image_display(self):
+    def build_image_display(self) -> None:
     # Main image figure (left side of center)
         self.img_frame = tk.Frame(self.center_panel, bg='#1e1e1e')
         self.img_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -153,7 +154,7 @@ class MRISimulator:
         img_widget.bind("<Control-ButtonRelease-1>", self.wl_mouse_up)
         img_widget.bind("<Double-Button-1>", self.wl_reset)
     
-    def _ensure_1x2_layout(self):
+    def _ensure_1x2_layout(self) -> None:
         """Restore the normal 1x2 subplot layout if the figure has a different configuration."""
         if len(self.fig.axes) != 2:
             self.fig.clear()
@@ -162,21 +163,21 @@ class MRISimulator:
             for ax in self.axes:
                 ax.set_facecolor('#1e1e1e')
     
-    def wl_mouse_down(self, event):
-        self.wl_dragging = True; self.wl_start_x = event.x; self.wl_start_y = event.y
-    def wl_mouse_drag(self, event):
+    def wl_mouse_down(self, event: object) -> None:
+        self.wl_dragging = True; self.wl_start_x = event.x; self.wl_start_y = event.y  # type: ignore[attr-defined]
+    def wl_mouse_drag(self, event: object) -> None:
         if not self.wl_dragging or self.current_image is None: return
-        self.window_width += (event.x - self.wl_start_x) * 0.005
-        self.window_level -= (event.y - self.wl_start_y) * 0.003
+        self.window_width += (event.x - self.wl_start_x) * 0.005  # type: ignore[attr-defined]
+        self.window_level -= (event.y - self.wl_start_y) * 0.003  # type: ignore[attr-defined]
         self.window_width = np.clip(self.window_width, 0.05, 3.0)
         self.window_level = np.clip(self.window_level, 0.0, 1.0)
-        self.wl_start_x = event.x; self.wl_start_y = event.y
+        self.wl_start_x = event.x; self.wl_start_y = event.y  # type: ignore[attr-defined]
         self.apply_window_level()
-    def wl_mouse_up(self, event): self.wl_dragging = False
-    def wl_reset(self, event):
+    def wl_mouse_up(self, event: object) -> None: self.wl_dragging = False
+    def wl_reset(self, event: object) -> None:
         self.window_width = 1.0; self.window_level = 0.5
         if self.current_image is not None: self.apply_window_level()
-    def apply_window_level(self):
+    def apply_window_level(self) -> None:
         if self.current_image is None: return
         img = self.current_image
         max_val = np.max(img) if np.max(img) > 0 else 1
@@ -187,7 +188,7 @@ class MRISimulator:
         self.axes[0].text(0.02, 0.02, f"W:{width:.3f} L:{center:.3f}", transform=self.axes[0].transAxes, color='yellow', fontsize=8, va='bottom')
         self.canvas.draw()
     
-    def build_controls(self):
+    def build_controls(self) -> None:
         ctrl_canvas = tk.Canvas(self.left_panel, bg='#2d2d2d', highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.left_panel, orient="vertical", command=ctrl_canvas.yview)
         self.scroll_frame = tk.Frame(ctrl_canvas, bg='#2d2d2d')
@@ -292,7 +293,7 @@ class MRISimulator:
         
         self.on_sequence_change()
     
-    def build_metrics_panel(self):
+    def build_metrics_panel(self) -> None:
         tk.Label(self.right_panel, text="Metrics", font=('Helvetica', 14, 'bold'), bg='#2d2d2d', fg='white').pack(pady=(10,5))
         self.metrics_labels = {}
         for dn, key in [("Scan Time","scan_time"),("Resolution","resolution"),("Voxel Size","voxel_size"),
@@ -308,7 +309,7 @@ class MRISimulator:
         self.compare_metrics_label.pack(fill=tk.X, padx=10, pady=2)
     
     # --- Core ---
-    def get_current_params(self):
+    def get_current_params(self) -> dict:
         return {"sequence":self.sequence_type.get(),"TR":self.TR.get(),"TE":self.TE.get(),"TI":self.TI.get(),
                 "flip_angle":self.flip_angle.get(),"matrix_size":self.matrix_size.get(),"FOV":self.FOV.get(),
                 "fov_fraction":self.fov_fraction.get(),"bandwidth":self.bandwidth.get(),"NEX":self.NEX.get(),
@@ -319,19 +320,19 @@ class MRISimulator:
                 "fmri_display":self.fmri_display.get(),"fmri_volumes":self.fmri_volumes.get(),
                 "fmri_threshold":self.fmri_threshold.get()}
     
-    def set_protocol_a(self):
+    def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()
         self.compare_status.config(text=f"A: {self.compare_params['sequence']} TR={self.compare_params['TR']:.0f}", fg='#4a9eff')
         self.compare_mode.set(True); self.recalculate()
-    def toggle_compare(self):
+    def toggle_compare(self) -> None:
         if not self.compare_params: self.compare_status.config(text="Set A first!", fg='#ff6b6b'); return
         self.compare_mode.set(not self.compare_mode.get()); self.recalculate()
-    def clear_compare(self):
+    def clear_compare(self) -> None:
         self.compare_params = None; self.compare_mode.set(False)
         self.compare_status.config(text="No comparison set", fg='#666666')
         self.compare_metrics_label.config(text=""); self.recalculate()
     
-    def _simulate_single_slice(self, params, orient, sl_idx):
+    def _simulate_single_slice(self, params: dict, orient: str, sl_idx: int) -> np.ndarray:
         seq = params["sequence"]; TR=params["TR"]; TE=params["TE"]; TI=params["TI"]; FA=params["flip_angle"]
         if TE >= TR: TE = TR - 5
         phantom_slice = get_slice(self.phantom_3d, orient, sl_idx)
@@ -342,7 +343,7 @@ class MRISimulator:
         elif seq == "Gradient Echo": return simulate_slice(phantom_slice, TR, TE, 'GRE', flip_angle=FA)
         elif seq == "Inversion Recovery": return simulate_slice(phantom_slice, TR, TE, 'IR', TI=TI)
         elif seq == "Diffusion (DWI)":
-            direction = {"Left-Right":[1,0],"Up-Down":[0,1],"Diagonal":[0.707,0.707]}[params["diff_direction"]]
+            direction: list[float] = {"Left-Right":[1.0,0.0],"Up-Down":[0.0,1.0],"Diagonal":[0.707,0.707]}[params["diff_direction"]]
             if params["diff_display"] == "DWI": return simulate_diffusion_3d_slice(phantom_slice, params["b_value"], direction, TR, TE)
             elif params["diff_display"] == "ADC Map": return simulate_adc_map_3d(phantom_slice)
             elif params["diff_display"] == "FA Map": return simulate_fa_map_3d(phantom_slice)
@@ -359,7 +360,7 @@ class MRISimulator:
                 return np.where(img > params["fmri_threshold"], img, 0)
         return np.zeros((181,181), dtype=float)
     
-    def simulate_with_params(self, params):
+    def simulate_with_params(self, params: dict) -> tuple[np.ndarray, dict]:
         orient = self.orientation.get(); sl_idx = self.slice_idx.get()
         matrix = params["matrix_size"]; fov_frac = params["fov_fraction"]/100.0
         thickness = int(self.slice_thickness.get()); R = params["accel_factor"]
@@ -425,7 +426,7 @@ class MRISimulator:
         return reconstructed, metrics
     
     # --- Display ---
-    def recalculate(self, *args):
+    def recalculate(self, *args: object) -> None:
         current_params = self.get_current_params()
         
         if self.multi_slice.get() and not self.compare_mode.get():
@@ -479,7 +480,7 @@ class MRISimulator:
         self.canvas.draw()
         self.update_metrics(current_params, metrics_b)
     
-    def _display_multi_slice(self, params):
+    def _display_multi_slice(self, params: dict) -> None:
         """Display 3x3 grid of adjacent slices."""
         self.fig.clear()
         axes = self.fig.subplots(3, 3)
@@ -506,7 +507,7 @@ class MRISimulator:
         self.update_metrics(params, metrics)
         self.current_image = None
     
-    def _plot_curves(self, params):
+    def _plot_curves(self, params: dict) -> None:
         seq, TR, TE, TI, FA = params["sequence"], params["TR"], params["TE"], params["TI"], params["flip_angle"]
         from signal_engine import TISSUES
         if seq == "FSE / TSE":
@@ -528,11 +529,11 @@ class MRISimulator:
             fa_range = np.arange(1,91,1)
             for name,color,T1,PD in [("Brain",'#69db7c',1330,0.8),("Blood",'#ff6b6b',1930,0.9)]:
                 if "Blood" in name: self.axes[1].plot(fa_range, PD*np.sin(np.radians(fa_range))*np.exp(-TE/50), color=color, linewidth=2, label=name)
-                else: self.axes[1].plot(fa_range, [gradient_echo_signal(T1,50,PD,TR,TE,fa) for fa in fa_range], color=color, linewidth=2, label=name)
+                else: self.axes[1].plot(fa_range, [gradient_echo_signal(T1,50,PD,TR,TE,float(fa)) for fa in fa_range], color=color, linewidth=2, label=name)
             self.axes[1].axvline(x=FA, color='yellow', linestyle='--', alpha=0.7)
             self.axes[1].set_xlabel('FA', color='white'); self.axes[1].set_title('TOF Signal', color='white', fontsize=11)
         elif seq == "fMRI (BOLD)":
-            te_range = np.arange(5,100,1); bs = te_range*np.exp(-te_range/60); bs /= bs.max()
+            te_range = np.arange(5, 100, 1, dtype=float); bs = te_range*np.exp(-te_range/60); bs /= bs.max()
             self.axes[1].plot(te_range, bs, color='#ff6b6b', linewidth=2, label='BOLD')
             self.axes[1].plot(te_range, np.exp(-te_range/60), color='#69db7c', linewidth=2, label='Signal')
             self.axes[1].axvline(x=TE, color='yellow', linestyle='--', alpha=0.7)
@@ -553,15 +554,15 @@ class MRISimulator:
         self.axes[1].legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
         self.axes[1].tick_params(colors='white'); self.axes[1].set_facecolor('#1e1e1e')
     
-    def update_compare_metrics(self, ma, mb):
-        def d(a,b,u="",f=".1f"):
+    def update_compare_metrics(self, ma: dict, mb: dict) -> None:
+        def d(a: float, b: float, u: str = "", f: str = ".1f") -> str:
             diff=b-a; pct=(diff/a*100) if a!=0 else 0
             return f"{'↑' if diff>0 else '↓' if diff<0 else '='} {abs(diff):{f}}{u} ({abs(pct):.0f}%)"
         text = f"── A vs B ──\nTime: {d(ma['scan_time'],mb['scan_time'],'s')}\nSNR: {d(ma['snr_wm'],mb['snr_wm'])}\n"
         text += f"Res: {d(ma['resolution'],mb['resolution'],'mm','.2f')}\nSAR: A={ma['sar_head']:.1f} B={mb['sar_head']:.1f}"
         self.compare_metrics_label.config(text=text, fg='#ffcc00')
     
-    def update_metrics(self, params, metrics):
+    def update_metrics(self, params: dict, metrics: dict) -> None:
         orient=self.orientation.get(); sl_idx=self.slice_idx.get()
         matrix=params["matrix_size"]; thickness=int(self.slice_thickness.get())
         R=params["accel_factor"]; ETL=params["etl"] if params["sequence"]=="FSE / TSE" else 1
@@ -590,7 +591,7 @@ class MRISimulator:
         if metrics['sar_exceeds']: active.append("SAR!")
         self.metrics_labels["artifacts"].config(text=", ".join(active) if active else "None", fg='#ff6b6b' if active else '#4a9eff')
     
-    def determine_weighting(self, TR, TE, seq):
+    def determine_weighting(self, TR: float, TE: float, seq: str) -> str:
         if seq=="Diffusion (DWI)": return "Diffusion"
         if seq=="MR Angiography": return "Flow"
         if seq=="fMRI (BOLD)": return "T2* (BOLD)"
@@ -600,7 +601,7 @@ class MRISimulator:
         return "Mixed"
     
     # --- UI Helpers ---
-    def on_preset_change(self):
+    def on_preset_change(self) -> None:
         name=self.preset_name.get()
         if name in ["(Custom)",""]: self.desc_label.config(text=""); return
         p=get_preset(name)
@@ -615,43 +616,43 @@ class MRISimulator:
             if k in p: v.set(p[k])
         self.desc_label.config(text=p.get("description","")); self.on_sequence_change()
     
-    def schedule_recalculate(self, *args):
+    def schedule_recalculate(self, *args: object) -> None:
         if self._recalc_job: self.root.after_cancel(self._recalc_job)
         self._recalc_job = self.root.after(150, self.recalculate)
     
-    def add_slider(self, label, variable, mn, mx):
+    def add_slider(self, label: str, variable: Any, mn: float, mx: float) -> Any:
         f=tk.Frame(self.scroll_frame, bg='#2d2d2d'); f.pack(fill=tk.X, padx=10, pady=2)
         self._bsc(f, label, variable, mn, mx); return f
-    def add_slider_to_frame(self, parent, label, variable, mn, mx):
+    def add_slider_to_frame(self, parent: Any, label: str, variable: Any, mn: float, mx: float) -> Any:
         f=tk.Frame(parent, bg='#2d2d2d'); f.pack(fill=tk.X, padx=0, pady=2)
         self._bsc(f, label, variable, mn, mx); return f
-    def _bsc(self, frame, label, variable, mn, mx):
+    def _bsc(self, frame: Any, label: str, variable: Any, mn: float, mx: float) -> None:
         h=tk.Frame(frame, bg='#2d2d2d'); h.pack(fill=tk.X)
         tk.Label(h, text=label, font=('Helvetica',9), bg='#2d2d2d', fg='#cccccc').pack(side=tk.LEFT)
         vl=tk.Label(h, text=str(variable.get()), font=('Helvetica',9,'bold'), bg='#2d2d2d', fg='white'); vl.pack(side=tk.RIGHT)
         tk.Scale(frame, from_=mn, to=mx, orient=tk.HORIZONTAL, variable=variable, showvalue=False, bg='#2d2d2d', fg='white', highlightthickness=0, troughcolor='#555555', length=200, command=lambda v: self.schedule_recalculate()).pack(fill=tk.X)
-        def ul(*a): vl.config(text=f"{variable.get():.0f}" if isinstance(variable.get(),float) else str(variable.get()))
+        def ul(*a: object) -> None: vl.config(text=f"{variable.get():.0f}" if isinstance(variable.get(),float) else str(variable.get()))
         variable.trace_add('write', ul)
-    def add_dropdown(self, label, variable, options, command):
+    def add_dropdown(self, label: str, variable: Any, options: list, command: Any) -> None:
         f=tk.Frame(self.scroll_frame, bg='#2d2d2d'); f.pack(fill=tk.X, padx=10, pady=5)
         tk.Label(f, text=label, font=('Helvetica',9), bg='#2d2d2d', fg='#cccccc').pack(anchor='w')
         d=ttk.Combobox(f, textvariable=variable, values=options, state='readonly'); d.pack(fill=tk.X)
         d.bind('<<ComboboxSelected>>', lambda e: command())
-    def add_dropdown_to_frame(self, parent, label, variable, options):
+    def add_dropdown_to_frame(self, parent: Any, label: str, variable: Any, options: list) -> None:
         f=tk.Frame(parent, bg='#2d2d2d'); f.pack(fill=tk.X, padx=0, pady=2)
         tk.Label(f, text=label, font=('Helvetica',9), bg='#2d2d2d', fg='#cccccc').pack(anchor='w')
         d=ttk.Combobox(f, textvariable=variable, values=options, state='readonly'); d.pack(fill=tk.X)
         d.bind('<<ComboboxSelected>>', lambda e: self.schedule_recalculate())
-    def add_dropdown_inline(self, label, variable, options):
+    def add_dropdown_inline(self, label: str, variable: Any, options: list) -> None:
         f=tk.Frame(self.scroll_frame, bg='#2d2d2d'); f.pack(fill=tk.X, padx=10, pady=2)
         tk.Label(f, text=label, font=('Helvetica',9), bg='#2d2d2d', fg='#cccccc').pack(side=tk.LEFT)
         d=ttk.Combobox(f, textvariable=variable, values=options, state='readonly', width=10); d.pack(side=tk.RIGHT)
         d.bind('<<ComboboxSelected>>', lambda e: self.schedule_recalculate())
     
-    def on_orientation_change(self):
+    def on_orientation_change(self) -> None:
         dims={"axial":self.phantom_3d.shape[0],"sagittal":self.phantom_3d.shape[2],"coronal":self.phantom_3d.shape[1]}
         self.slice_idx.set(dims[self.orientation.get()]//2); self.recalculate()
-    def on_sequence_change(self):
+    def on_sequence_change(self) -> None:
         seq=self.sequence_type.get()
         self.ti_frame.pack_forget(); self.fa_frame.pack_forget(); self.fse_frame.pack_forget()
         self.diff_frame.pack_forget(); self.angio_frame.pack_forget(); self.fmri_frame.pack_forget()
@@ -662,23 +663,23 @@ class MRISimulator:
         elif seq=="MR Angiography": self.angio_frame.pack(fill=tk.X, padx=10, pady=2); self.fa_frame.pack(fill=tk.X, padx=10, pady=2)
         elif seq=="fMRI (BOLD)": self.fmri_frame.pack(fill=tk.X, padx=10, pady=2)
         self.recalculate()
-    def get_max_slice_idx(self):
+    def get_max_slice_idx(self) -> int:
         dims={"axial":self.phantom_3d.shape[0],"sagittal":self.phantom_3d.shape[2],"coronal":self.phantom_3d.shape[1]}
         return dims[self.orientation.get()]-1
     
     # --- Export/Import ---
-    def export_current_image(self):
+    def export_current_image(self) -> None:
         from export import export_image
         img,_=self.simulate_with_params(self.get_current_params())
         self.compare_status.config(text=f"Saved: {os.path.basename(export_image(img, params=self.get_current_params()))}", fg='#69db7c')
-    def export_current_protocol(self):
+    def export_current_protocol(self) -> None:
         from export import export_protocol
         self.compare_status.config(text=f"Saved: {os.path.basename(export_protocol(self.get_current_params()))}", fg='#69db7c')
-    def export_current_report(self):
+    def export_current_report(self) -> None:
         from export import export_report
         p=self.get_current_params(); img,m=self.simulate_with_params(p)
         self.compare_status.config(text=f"Saved: {os.path.basename(export_report(img,p,m))}", fg='#69db7c')
-    def load_protocol_file(self):
+    def load_protocol_file(self) -> None:
         from tkinter import filedialog; from export import load_protocol
         fp=filedialog.askopenfilename(initialdir=os.path.expanduser('~/mrisim/exports'), filetypes=[("JSON","*.json"),("All","*.*")])
         if not fp: return
@@ -694,7 +695,7 @@ class MRISimulator:
             self.compare_status.config(text=f"Loaded: {os.path.basename(fp)}", fg='#69db7c'); self.on_sequence_change()
         except Exception as e: self.compare_status.config(text=f"Error: {str(e)[:30]}", fg='#ff6b6b')
     
-    def run(self): self.root.mainloop()
+    def run(self) -> None: self.root.mainloop()
 
 if __name__ == "__main__":
     app = MRISimulator()
