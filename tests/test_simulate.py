@@ -90,3 +90,52 @@ class TestAddNoise:
         noisy_low = add_noise(img, snr_level=5)
         # STD of residual should be larger with low SNR
         assert np.std(noisy_low - img) > np.std(noisy_high - img)
+
+    def test_noise_changes_image(self, phantom64):
+        img = simulate_spin_echo(phantom64, TR=500, TE=15)
+        noisy = add_noise(img, snr_level=10)
+        assert not np.allclose(noisy, img)
+
+    def test_dtype_float64(self, phantom64):
+        img = simulate_spin_echo(phantom64, TR=500, TE=15)
+        noisy = add_noise(img, snr_level=30)
+        assert noisy.dtype == np.float64
+
+
+class TestSimulatePhysics:
+    """Cross-function contrast checks."""
+
+    def test_longer_te_lower_se_signal(self, phantom64):
+        """Longer TE always reduces SE signal (T2 decay)."""
+        img_short = simulate_spin_echo(phantom64, TR=4000, TE=20)
+        img_long  = simulate_spin_echo(phantom64, TR=4000, TE=120)
+        brain = phantom64 > 0
+        assert img_short[brain].mean() > img_long[brain].mean()
+
+    def test_gre_dtype_float64(self, phantom64):
+        img = simulate_gradient_echo(phantom64, TR=50, TE=5, flip_angle=15)
+        assert img.dtype == np.float64
+
+    def test_se_dtype_float64(self, phantom64):
+        img = simulate_spin_echo(phantom64, TR=500, TE=15)
+        assert img.dtype == np.float64
+
+    def test_gre_short_tr_suppresses_long_t1(self, phantom64):
+        """Short TR saturates long-T1 tissue (CSF) more than short-T1 tissue."""
+        img = simulate_gradient_echo(phantom64, TR=50, TE=5, flip_angle=70)
+        if np.any(phantom64 == 1) and np.any(phantom64 == 3):
+            # WM (T1~830ms) less saturated than CSF (T1~4500ms)
+            assert img[phantom64 == 3].mean() > img[phantom64 == 1].mean()
+
+    def test_gre_long_tr_approaches_se(self, phantom64):
+        """For very long TR, GRE signal pattern approaches SE ordering."""
+        img_gre = simulate_gradient_echo(phantom64, TR=10000, TE=10, flip_angle=90)
+        img_se  = simulate_spin_echo(phantom64, TR=10000, TE=10)
+        brain = phantom64 > 0
+        # Both should be mostly PD-weighted — same tissue ordering
+        if np.any(phantom64 == 1) and np.any(phantom64 == 3):
+            gre_csf_wm = img_gre[phantom64 == 1].mean() / (img_gre[phantom64 == 3].mean() + 1e-9)
+            se_csf_wm  = img_se[phantom64 == 1].mean()  / (img_se[phantom64 == 3].mean()  + 1e-9)
+            # Both ratios should be > 1 (CSF brighter in PD-weighted)
+            assert gre_csf_wm > 1.0
+            assert se_csf_wm  > 1.0

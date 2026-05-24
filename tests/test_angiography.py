@@ -117,3 +117,53 @@ class TestComputeMip:
         ])
         mip = compute_mip(imgs)
         assert mip.shape == vascular_phantom.shape
+
+    def test_mip_gte_each_slice(self):
+        """MIP value must be ≥ each input slice at every pixel."""
+        slices = np.random.default_rng(0).random((5, 8, 8))
+        mip = compute_mip(slices)
+        for i in range(5):
+            assert np.all(mip >= slices[i] - 1e-12)
+
+    def test_mip_dtype_preserved(self):
+        slices = np.ones((3, 4, 4), dtype=np.float64)
+        mip = compute_mip(slices)
+        assert mip.dtype == np.float64
+
+
+class TestTofAdditional:
+    def test_zero_flip_angle_gives_zero(self, vascular_phantom):
+        img = simulate_tof_mra(vascular_phantom, TR=25, TE=4, flip_angle=0)
+        assert np.allclose(img, 0.0)
+
+    def test_dtype_float64(self, vascular_phantom):
+        img = simulate_tof_mra(vascular_phantom, TR=25, TE=4, flip_angle=60)
+        assert img.dtype == np.float64
+
+    def test_higher_flip_brighter_blood(self, vascular_phantom):
+        """Inflow signal = PD·sin(α)·exp(−TE/T2*) → peaks at 90°."""
+        img_30  = simulate_tof_mra(vascular_phantom, TR=25, TE=4, flip_angle=30)
+        img_90  = simulate_tof_mra(vascular_phantom, TR=25, TE=4, flip_angle=90)
+        if np.any(vascular_phantom == 5):
+            assert img_90[vascular_phantom == 5].mean() > img_30[vascular_phantom == 5].mean()
+
+
+class TestPhaseContrastAdditional:
+    def test_dtypes_float64(self, vascular_phantom):
+        mag, phase, speed = simulate_phase_contrast(vascular_phantom, venc=80, flow_velocity=60)
+        assert mag.dtype == np.float64
+        assert phase.dtype == np.float64
+        assert speed.dtype == np.float64
+
+    def test_background_zero_mag(self, vascular_phantom):
+        mag, _, _ = simulate_phase_contrast(vascular_phantom, venc=80, flow_velocity=60)
+        assert np.all(mag[vascular_phantom == 0] == 0)
+
+    def test_full_speed_at_venc(self, vascular_phantom):
+        """When v = venc, phase = π and speed = venc."""
+        _, phase, speed = simulate_phase_contrast(
+            vascular_phantom, venc=80, flow_velocity=80
+        )
+        if np.any(vascular_phantom == 5):
+            vessel_phase = phase[vascular_phantom == 5]
+            assert np.all(np.abs(np.abs(vessel_phase) - np.pi) < 1e-9)

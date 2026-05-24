@@ -109,16 +109,68 @@ class TestChemicalShiftCalculation:
         assert shift > 0
 
     def test_lower_bandwidth_larger_shift(self):
-        shift_low = calculate_chemical_shift_pixels(50, field_strength=3.0)
+        shift_low  = calculate_chemical_shift_pixels(50,  field_strength=3.0)
         shift_high = calculate_chemical_shift_pixels(250, field_strength=3.0)
         assert shift_low > shift_high
 
     def test_higher_field_larger_shift(self):
         shift_15 = calculate_chemical_shift_pixels(125, field_strength=1.5)
-        shift_3 = calculate_chemical_shift_pixels(125, field_strength=3.0)
+        shift_3  = calculate_chemical_shift_pixels(125, field_strength=3.0)
         assert shift_3 > shift_15
 
     def test_known_approximate_value(self):
         # At 3T (128 MHz), fat-water shift ~448 Hz; at 125 Hz/px => ~3.6 px
         shift = calculate_chemical_shift_pixels(125, field_strength=3.0)
         assert 3.0 < shift < 5.0
+
+    def test_returns_float(self):
+        shift = calculate_chemical_shift_pixels(125)
+        assert isinstance(shift, float)
+
+
+class TestArtifactDtypes:
+    """dtype and shape consistency checks across all artifact functions."""
+
+    def test_motion_dtype(self, brain_image):
+        out = add_motion_artifact(brain_image, "periodic", amplitude=3)
+        assert out.dtype == np.float64
+
+    def test_zipper_dtype(self, brain_image):
+        out = add_zipper_artifact(brain_image)
+        assert out.dtype == np.float64
+
+    def test_chemical_shift_dtype(self, brain_image, brain_phantom_64):
+        out = add_chemical_shift_artifact(brain_image, brain_phantom_64, shift_pixels=3)
+        assert out.dtype == np.float64
+
+    def test_susceptibility_dtype(self, brain_image, brain_phantom_64):
+        out = add_susceptibility_artifact(brain_image, brain_phantom_64)
+        assert out.dtype == np.float64
+
+
+class TestMotionArtifactPhysics:
+    def test_periodic_motion_modifies_image(self, brain_image):
+        out = add_motion_artifact(brain_image, "periodic", amplitude=5, frequency=4)
+        assert not np.allclose(out, brain_image)
+
+    def test_random_motion_modifies_image(self, brain_image):
+        out = add_motion_artifact(brain_image, "random", amplitude=5, frequency=3)
+        assert not np.allclose(out, brain_image)
+
+    def test_signal_conserved_approx(self, brain_image):
+        """Total image energy should be approximately conserved by motion."""
+        out = add_motion_artifact(brain_image, "linear", amplitude=2)
+        # Allow 20% change — motion redistributes signal, doesn't add/remove much
+        ratio = out.sum() / (brain_image.sum() + 1e-12)
+        assert 0.8 < ratio < 1.2
+
+
+class TestSusceptibilityPhysics:
+    def test_zero_strength_no_change(self, brain_image, brain_phantom_64):
+        out = add_susceptibility_artifact(brain_image, brain_phantom_64, strength=0.0)
+        np.testing.assert_allclose(out, brain_image, atol=1e-12)
+
+    def test_default_air_labels(self, brain_image, brain_phantom_64):
+        """Calling with default air_labels=None should not raise."""
+        out = add_susceptibility_artifact(brain_image, brain_phantom_64)
+        assert out.shape == brain_image.shape
