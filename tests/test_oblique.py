@@ -5,6 +5,7 @@ from oblique import (
     _intersect_line,
     plane_from_angles,
     oblique_plane,
+    oblique_slab,
     scout_lines,
     three_scouts,
 )
@@ -326,6 +327,98 @@ class TestScoutLines:
         for val in lines.values():
             if val is not None:
                 assert len(val) == 4
+
+
+# ---------------------------------------------------------------------------
+# oblique_slab
+# ---------------------------------------------------------------------------
+class TestObliqueSlab:
+    def test_output_ndim(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        out = oblique_slab(small_vol, n, r, c, (15, 18, 15), n_slices=3,
+                           thickness_mm=2.0)
+        assert out.ndim == 3
+
+    def test_output_shape_n_slices(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        out = oblique_slab(small_vol, n, r, c, (15, 18, 15), n_slices=7,
+                           thickness_mm=2.0)
+        assert out.shape[0] == 7
+
+    def test_inplane_shape_propagated(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        out = oblique_slab(small_vol, n, r, c, (15, 18, 15), n_slices=4,
+                           thickness_mm=2.0, shape=(20, 24))
+        assert out.shape == (4, 20, 24)
+
+    def test_dtype_preserved(self, small_vol):
+        n, r, c = plane_from_angles("axial")
+        out = oblique_slab(small_vol, n, r, c, (15, 18, 15), n_slices=3,
+                           thickness_mm=2.0)
+        assert out.dtype == small_vol.dtype
+
+    def test_single_slice_matches_oblique_plane(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial", tilt_deg=20)
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (20, 20)
+        slab = oblique_slab(small_vol, n, r, c, ctr,
+                            n_slices=1, thickness_mm=1.0, shape=shape)
+        single = oblique_plane(small_vol, r, c, ctr, shape=shape)
+        np.testing.assert_array_equal(slab[0], single)
+
+    def test_center_slice_of_odd_slab_matches_plane_at_center(self, small_vol):
+        # For odd n_slices the middle slice has zero offset → same as oblique_plane
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial")
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (ny, nx)
+        slab = oblique_slab(small_vol, n, r, c, ctr,
+                            n_slices=5, thickness_mm=2.0, shape=shape)
+        ref = oblique_plane(small_vol, r, c, ctr, shape=shape)
+        np.testing.assert_array_equal(slab[2], ref)
+
+    def test_outer_slices_differ_from_each_other(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial")
+        ctr = (nz // 2, ny // 2, nx // 2)
+        out = oblique_slab(small_vol, n, r, c, ctr,
+                           n_slices=5, thickness_mm=2.0, shape=(ny, nx))
+        assert not np.array_equal(out[0], out[-1])
+
+    def test_gap_separates_outer_slices_further(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial")
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (ny, nx)
+        no_gap = oblique_slab(small_vol, n, r, c, ctr,
+                              n_slices=3, thickness_mm=2.0, gap_mm=0.0, shape=shape)
+        with_gap = oblique_slab(small_vol, n, r, c, ctr,
+                                n_slices=3, thickness_mm=2.0, gap_mm=4.0, shape=shape)
+        # Outer slices are farther apart with gap → different voxels sampled
+        assert not np.array_equal(no_gap[0], with_gap[0])
+
+    def test_anisotropic_voxels_change_inter_slice_spacing(self, small_vol):
+        # 3 mm thickness with 3 mm Z voxels = 1 voxel step; with 1 mm Z = 3 voxels
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial")
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (ny, nx)
+        iso = oblique_slab(small_vol, n, r, c, ctr,
+                           n_slices=3, thickness_mm=3.0,
+                           voxel_size=(1, 1, 1), shape=shape)
+        aniso = oblique_slab(small_vol, n, r, c, ctr,
+                             n_slices=3, thickness_mm=3.0,
+                             voxel_size=(3, 1, 1), shape=shape)
+        assert not np.array_equal(iso[0], aniso[0])
+
+    def test_oblique_slab_has_nonzero_content(self, small_vol):
+        nz, ny, nx = small_vol.shape
+        n, r, c = plane_from_angles("axial", tilt_deg=30, rot_deg=15)
+        ctr = (nz // 2, ny // 2, nx // 2)
+        out = oblique_slab(small_vol, n, r, c, ctr,
+                           n_slices=4, thickness_mm=2.0)
+        assert out.max() > 0
 
 
 # ---------------------------------------------------------------------------

@@ -146,6 +146,64 @@ def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0,
 
 
 # ---------------------------------------------------------------------------
+# Multi-slice slab
+# ---------------------------------------------------------------------------
+
+def oblique_slab(vol, normal, row_vec, col_vec, center,
+                 n_slices=1, thickness_mm=5.0, gap_mm=0.0,
+                 shape=None, order=0,
+                 voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None):
+    """
+    Sample a stack of N parallel oblique slices (a prescribed slab).
+
+    Slices are evenly distributed about `center` along the normal direction,
+    separated by (thickness_mm + gap_mm) in physical space.  The centre of
+    slice i (0-indexed) is displaced from `center` by:
+
+        offset_mm = (i − (n_slices−1)/2) × (thickness_mm + gap_mm)
+
+    converted to voxel-index space per axis via voxel_size.
+
+    Parameters
+    ----------
+    vol           : 3-D ndarray (Z, Y, X)
+    normal        : unit normal of the plane family, physical (Z, Y, X) space
+    row_vec       : unit vector along display rows, physical (Z, Y, X) space
+    col_vec       : unit vector along display cols, physical (Z, Y, X) space
+    center        : (Z, Y, X) voxel-index coordinate of the slab centre
+    n_slices      : number of parallel slices
+    thickness_mm  : physical slice thickness in mm
+    gap_mm        : physical gap between adjacent slices in mm
+    shape         : (rows, cols) in-plane output size per slice
+    order         : 0 = nearest-neighbour, 1 = trilinear
+    voxel_size    : (sz, sy, sx) mm per voxel
+    pixel_size_mm : output pixel size in mm; defaults to min(voxel_size)
+
+    Returns
+    -------
+    ndarray of shape (n_slices, rows, cols) with the same dtype as vol.
+    """
+    n = np.asarray(normal, dtype=float)
+    n = n / np.linalg.norm(n)
+    vox = np.asarray(voxel_size, dtype=float)
+    ctr = np.asarray(center, dtype=float)
+    step_mm = thickness_mm + gap_mm
+
+    slices = []
+    for i in range(int(n_slices)):
+        offset_mm = (i - (n_slices - 1) / 2.0) * step_mm
+        # Physical offset along normal → voxel-index displacement
+        center_i = ctr + offset_mm * n / vox
+        slices.append(
+            oblique_plane(vol, row_vec, col_vec, center_i,
+                          shape=shape, order=order,
+                          voxel_size=voxel_size, pixel_size_mm=pixel_size_mm)
+        )
+
+    return np.stack(slices, axis=0)
+
+
+# ---------------------------------------------------------------------------
 # Three-scout intersection lines
 # ---------------------------------------------------------------------------
 
