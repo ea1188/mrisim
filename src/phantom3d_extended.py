@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-def add_vessels_3d(phantom):
+def add_vessels_3d(phantom: np.ndarray) -> np.ndarray:
     """Add a dense vascular network to the 3D phantom. Label 6 = vessels."""
     nx, ny, nz = phantom.shape
     cx, cy, cz = nx // 2, ny // 2, nz // 2
@@ -10,7 +10,7 @@ def add_vessels_3d(phantom):
     vessels = np.zeros_like(phantom, dtype=bool)
     
     # Helper to add a vessel segment between two 3D points
-    def add_vessel_segment(p1, p2, radius, taper=0):
+    def add_vessel_segment(p1: tuple, p2: tuple, radius: float, taper: float = 0) -> None:
         """Draw a vessel between two points with given radius."""
         num_steps = int(np.linalg.norm(np.array(p2) - np.array(p1)) * 2) + 5
         for i in range(num_steps):
@@ -24,7 +24,7 @@ def add_vessels_3d(phantom):
             vessels.__ior__(vessels_local)
     
     # Helper for curved vessel
-    def add_curved_vessel(points, radius, taper=0):
+    def add_curved_vessel(points: list, radius: float, taper: float = 0) -> None:
         """Draw vessel through list of control points."""
         for i in range(len(points) - 1):
             r = radius * (1 - taper * i / len(points))
@@ -126,7 +126,7 @@ def add_vessels_3d(phantom):
     
     return phantom_with_vessels
 
-def add_activation_3d(phantom):
+def add_activation_3d(phantom: np.ndarray) -> np.ndarray:
     """Create 3D activation map for fMRI simulation."""
     nx, ny, nz = phantom.shape
     cx, cy, cz = nx // 2, ny // 2, nz // 2
@@ -162,7 +162,7 @@ def add_activation_3d(phantom):
     
     return activation
 
-def add_tissue_texture(phantom, sigma_coarse=10, sigma_fine=3):
+def add_tissue_texture(phantom: np.ndarray, sigma_coarse: float = 10, sigma_fine: float = 3) -> np.ndarray:
     """Create tissue inhomogeneity texture for more realistic images.
     Returns a multiplicative texture map (values around 1.0)."""
     nx, ny, nz = phantom.shape
@@ -187,7 +187,7 @@ def add_tissue_texture(phantom, sigma_coarse=10, sigma_fine=3):
     
     return texture
 
-def get_diffusion_properties_3d(phantom):
+def get_diffusion_properties_3d(phantom: np.ndarray | None) -> dict[int, dict[str, float]]:
     """Return per-label diffusion properties."""
     return {
         0: {"ADC": 0.0, "FA": 0.0},
@@ -199,7 +199,13 @@ def get_diffusion_properties_3d(phantom):
         6: {"ADC": 1.0, "FA": 0.0},
     }
 
-def simulate_diffusion_3d_slice(phantom_slice, b_value, direction, TR=8000, TE=80):
+def simulate_diffusion_3d_slice(
+    phantom_slice: np.ndarray,
+    b_value: float,
+    direction: list[float] | np.ndarray,
+    TR: float = 8000,
+    TE: float = 80,
+) -> np.ndarray:
     """Simulate diffusion-weighted image with anisotropy effects."""
     from signal_engine import spin_echo_signal
     from phantom3d import TISSUE_PROPERTIES_3D
@@ -258,7 +264,7 @@ def simulate_diffusion_3d_slice(phantom_slice, b_value, direction, TR=8000, TE=8
     
     return image
 
-def simulate_adc_map_3d(phantom_slice):
+def simulate_adc_map_3d(phantom_slice: np.ndarray) -> np.ndarray:
     """Generate ADC map with spatial variation."""
     diff_props = get_diffusion_properties_3d(None)
     adc_map = np.zeros_like(phantom_slice, dtype=float)
@@ -278,7 +284,7 @@ def simulate_adc_map_3d(phantom_slice):
     
     return adc_map
 
-def simulate_fa_map_3d(phantom_slice):
+def simulate_fa_map_3d(phantom_slice: np.ndarray) -> np.ndarray:
     """Generate FA map with fiber structure variation."""
     diff_props = get_diffusion_properties_3d(None)
     fa_map = np.zeros_like(phantom_slice, dtype=float)
@@ -306,7 +312,12 @@ def simulate_fa_map_3d(phantom_slice):
     
     return fa_map
 
-def simulate_tof_3d_slice(phantom_slice, TR=25, TE=4, flip_angle=60):
+def simulate_tof_3d_slice(
+    phantom_slice: np.ndarray,
+    TR: float = 25,
+    TE: float = 4,
+    flip_angle: float = 60,
+) -> np.ndarray:
     """Simulate TOF MRA with better vessel-to-background contrast."""
     from signal_engine import gradient_echo_signal
     from phantom3d import TISSUE_PROPERTIES_3D
@@ -344,7 +355,14 @@ def simulate_tof_3d_slice(phantom_slice, TR=25, TE=4, flip_angle=60):
     
     return image
 
-def simulate_fmri_3d_slice(phantom_slice, activation_slice, TR=2000, TE=30, flip_angle=90, is_active=True):
+def simulate_fmri_3d_slice(
+    phantom_slice: np.ndarray,
+    activation_slice: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+    is_active: bool = True,
+) -> np.ndarray:
     """Simulate fMRI with tissue texture."""
     from signal_engine import gradient_echo_signal
     from phantom3d import TISSUE_PROPERTIES_3D
@@ -379,7 +397,13 @@ def simulate_fmri_3d_slice(phantom_slice, activation_slice, TR=2000, TE=30, flip
     
     return image
 
-def compute_activation_map_3d(phantom_slice, activation_slice, TR=2000, TE=30, flip_angle=90):
+def compute_activation_map_3d(
+    phantom_slice: np.ndarray,
+    activation_slice: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+) -> np.ndarray:
     """Compute BOLD percent signal change map."""
     rest = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=False)
     active = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=True)
@@ -389,7 +413,14 @@ def compute_activation_map_3d(phantom_slice, activation_slice, TR=2000, TE=30, f
     
     return pct_change
 
-def compute_tstat_map_3d(phantom_slice, activation_slice, TR=2000, TE=30, flip_angle=90, num_volumes=100):
+def compute_tstat_map_3d(
+    phantom_slice: np.ndarray,
+    activation_slice: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+    num_volumes: int = 100,
+) -> np.ndarray:
     """Compute t-statistic map."""
     rest = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=False)
     active = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=True)
@@ -406,7 +437,7 @@ def compute_tstat_map_3d(phantom_slice, activation_slice, TR=2000, TE=30, flip_a
     
     return t_map
 
-def load_real_tof_mra():
+def load_real_tof_mra() -> np.ndarray | None:
     """Load the real TOF MRA dataset."""
     import os
     path = os.path.expanduser('~/mrisim/data/tof_mra_real.npy')
@@ -414,7 +445,15 @@ def load_real_tof_mra():
         return np.load(path)
     return None
 
-def simulate_tof_with_real_data(real_mra, orientation, slice_idx, TR=25, TE=4, flip_angle=60, mip_slab=20):
+def simulate_tof_with_real_data(
+    real_mra: np.ndarray,
+    orientation: str,
+    slice_idx: int,
+    TR: float = 25,
+    TE: float = 4,
+    flip_angle: float = 60,
+    mip_slab: int = 20,
+) -> np.ndarray:
     """Use real MRA data with parameter-dependent contrast modulation.
     
     The real data provides anatomy; parameters modulate contrast.
@@ -430,19 +469,22 @@ def simulate_tof_with_real_data(real_mra, orientation, slice_idx, TR=25, TE=4, f
     start_sl = max(0, slice_idx - mip_slab // 2)
     end_sl = min(max_sl, slice_idx + mip_slab // 2)
     
-    mip_image = None
+    mip_image: np.ndarray | None = None
     for s in range(start_sl, end_sl + 1):
         if orientation == 'axial':
             sl = np.rot90(real_mra[:, :, s], k=3)
         elif orientation == 'sagittal':
             sl = np.rot90(real_mra[s, :, :], k=3)
-        elif orientation == 'coronal':
+        else:  # coronal
             sl = np.rot90(real_mra[:, s, :], k=-1)
-        
+
         if mip_image is None:
             mip_image = sl.copy()
         else:
             mip_image = np.maximum(mip_image, sl)
+
+    if mip_image is None:
+        return np.zeros_like(real_mra[:, :, 0])
     
     # Parameter-dependent contrast modulation
     # Optimal TOF: short TR (20-30ms), high FA (60-70°), short TE (3-5ms)

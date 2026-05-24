@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 from scipy.ndimage import gaussian_filter, binary_dilation, binary_erosion
 
@@ -273,7 +275,7 @@ def simulate_slice(phantom_slice, TR, TE, sequence='SE', TI=None, flip_angle=90)
     
     return image
 
-TISSUE_PROPERTIES_3D = {
+TISSUE_PROPERTIES_3D: dict[int, dict[str, Any]] = {
     0: {"T1": 1, "T2": 1, "PD": 0.0, "T2star": 1, "name": "Background"},
     1: {"T1": 4500, "T2": 2200, "PD": 1.0, "T2star": 1500, "name": "CSF"},
     2: {"T1": 1330, "T2": 100, "PD": 0.8, "T2star": 60, "name": "Gray Matter"},

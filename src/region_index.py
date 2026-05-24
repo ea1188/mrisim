@@ -8,6 +8,9 @@ dataobj + a coarse subsample), classifies into a coarse region, and writes a
 JSON cache so the (slow) scan happens once. Built against the CT-Lite 117-class
 scheme; the MR scheme can be added later via TS_MR_NAMES.
 """
+from __future__ import annotations
+
+from collections.abc import Callable
 import json
 import os
 
@@ -58,7 +61,7 @@ TS_MR_NAMES = {
 }
 
 
-def detect_scheme(label_set):
+def detect_scheme(label_set: set[int]) -> str:
     """'mr' if max label <= 50 else 'ct' (mirrors nifti_region.detect_scheme)."""
     s = set(int(x) for x in label_set if x > 0)
     if not s:
@@ -75,18 +78,18 @@ _HEAD = {90, 91}                                   # brain/skull
 _CERV = set(range(44, 51))                         # cervical vertebrae
 
 
-def _names_for(label_set, scheme):
+def _names_for(label_set: set[int], scheme: str) -> set[str]:
     table = TS_MR_NAMES if scheme == "mr" else TS_CT_NAMES
     return set(table.get(int(x), "") for x in label_set) - {""}
 
 
-def classify_region(label_set, scheme=None):
+def classify_region(label_set: set[int], scheme: str | None = None) -> str:
     """Map present labels to a coarse body-region string (scheme-aware)."""
     if scheme is None:
         scheme = detect_scheme(label_set)
     names = _names_for(label_set, scheme)
 
-    def any_name(*subs):
+    def any_name(*subs: str) -> bool:
         return any(any(sub in nm for sub in subs) for nm in names)
 
     lungs = any_name("lung")
@@ -117,7 +120,7 @@ def classify_region(label_set, scheme=None):
     return "Other"
 
 
-def summarise_anatomy(label_set, max_items=10, scheme=None):
+def summarise_anatomy(label_set: set[int], max_items: int = 10, scheme: str | None = None) -> str:
     """Human-readable list of distinct structures present (deduped group names)."""
     if scheme is None:
         scheme = detect_scheme(label_set)
@@ -134,19 +137,19 @@ def summarise_anatomy(label_set, max_items=10, scheme=None):
     return ", ".join(names) if names else "(no recognised structures)"
 
 
-def labels_in_mask(path, subsample=4):
+def labels_in_mask(path: str, subsample: int = 4) -> set[int]:
     """Return the set of integer labels present in a mask, reading lazily and
     coarsely subsampling for speed (a present structure spans many voxels, so a
     1-in-4 stride per axis still catches everything but tiny specks)."""
     import nibabel as nib
     import numpy as np
     img = nib.load(str(path))
-    arr = np.asarray(img.dataobj[::subsample, ::subsample, ::subsample])
+    arr = np.asarray(img.dataobj[::subsample, ::subsample, ::subsample])  # type: ignore[attr-defined]
     vals = np.unique(arr)
     return set(int(v) for v in vals if v > 0)
 
 
-def _mask_files(folder):
+def _mask_files(folder: str) -> list[str]:
     out = []
     for fn in sorted(os.listdir(folder)):
         if fn.endswith(".nii") or fn.endswith(".nii.gz"):
@@ -154,7 +157,12 @@ def _mask_files(folder):
     return out
 
 
-def build_index(folder, cache_path=None, progress=None, subsample=4):
+def build_index(
+    folder: str,
+    cache_path: str | None = None,
+    progress: Callable[[int, int, str], None] | None = None,
+    subsample: int = 4,
+) -> list[dict]:
     """
     Scan every mask in `folder`, classify + summarise each, and return a list of
     dict entries. Writes/reads a JSON cache keyed by filename+mtime+size so the
@@ -203,7 +211,7 @@ def build_index(folder, cache_path=None, progress=None, subsample=4):
     return entries
 
 
-def regions_summary(entries):
+def regions_summary(entries: list[dict]) -> dict[str, int]:
     """Count of masks per region, for building filter buttons."""
     from collections import Counter
     c = Counter(e["region"] for e in entries)

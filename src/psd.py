@@ -3,10 +3,20 @@ Pulse Sequence Diagram (PSD) renderer.
 Draws RF, Gx (readout/frequency), Gy (phase encode), Gz (slice select),
 and Signal/Echo timing for standard MRI sequences.
 """
+from typing import Any
+
 import numpy as np
 
 
-def _draw_rf_pulse(ax, t_start, duration, amplitude=1.0, label="90°", color='#ff6b6b', style='sinc'):
+def _draw_rf_pulse(
+    ax: Any,
+    t_start: float,
+    duration: float,
+    amplitude: float = 1.0,
+    label: str = "90°",
+    color: str = '#ff6b6b',
+    style: str = 'sinc',
+) -> None:
     """Draw an RF pulse (sinc envelope or block)."""
     t = np.linspace(t_start, t_start + duration, 100)
     if style == 'sinc':
@@ -20,7 +30,7 @@ def _draw_rf_pulse(ax, t_start, duration, amplitude=1.0, label="90°", color='#f
             color=color, fontsize=7, fontweight='bold')
 
 
-def _draw_gradient(ax, t_start, duration, amplitude=1.0, ramp=0.05):
+def _draw_gradient(ax: Any, t_start: float, duration: float, amplitude: float = 1.0, ramp: float = 0.05) -> None:
     """Draw a trapezoidal gradient lobe."""
     ramp_time = duration * ramp
     t = [t_start, t_start + ramp_time, t_start + duration - ramp_time, t_start + duration]
@@ -29,7 +39,15 @@ def _draw_gradient(ax, t_start, duration, amplitude=1.0, ramp=0.05):
     ax.plot(t, g, linewidth=1.5, color=ax.lines[-1].get_color() if len(ax.lines) > 1 else '#69db7c')
 
 
-def _draw_trapezoid(ax, t_start, duration, amplitude, color, ramp_frac=0.1, fill=True):
+def _draw_trapezoid(
+    ax: Any,
+    t_start: float,
+    duration: float,
+    amplitude: float,
+    color: str,
+    ramp_frac: float = 0.1,
+    fill: bool = True,
+) -> None:
     """Generic trapezoidal waveform."""
     ramp = duration * ramp_frac
     t = [t_start, t_start + ramp, t_start + duration - ramp, t_start + duration]
@@ -39,7 +57,7 @@ def _draw_trapezoid(ax, t_start, duration, amplitude, color, ramp_frac=0.1, fill
     ax.plot(t, g, linewidth=1.5, color=color)
 
 
-def _draw_echo(ax, t_center, width, amplitude=0.8, color='#ffd43b'):
+def _draw_echo(ax: Any, t_center: float, width: float, amplitude: float = 0.8, color: str = '#ffd43b') -> None:
     """Draw signal echo (gaussian-ish)."""
     t = np.linspace(t_center - width / 2, t_center + width / 2, 80)
     sig = amplitude * np.exp(-0.5 * ((t - t_center) / (width / 6)) ** 2)
@@ -47,7 +65,7 @@ def _draw_echo(ax, t_center, width, amplitude=0.8, color='#ffd43b'):
     ax.fill_between(t, 0, sig, alpha=0.2, color=color)
 
 
-def _draw_adc(ax, t_start, duration, color='#ffd43b'):
+def _draw_adc(ax: Any, t_start: float, duration: float, color: str = '#ffd43b') -> None:
     """Draw ADC (data acquisition) window."""
     ax.plot([t_start, t_start, t_start + duration, t_start + duration],
             [0, 0.3, 0.3, 0], color=color, linewidth=1.5, linestyle='-')
@@ -55,7 +73,7 @@ def _draw_adc(ax, t_start, duration, color='#ffd43b'):
             color=color, fontsize=6)
 
 
-def _setup_axis(ax, label, ylim=(-1.3, 1.5)):
+def _setup_axis(ax: Any, label: str, ylim: tuple[float, float] = (-1.3, 1.5)) -> None:
     """Configure a single PSD channel axis."""
     ax.set_ylim(ylim)
     ax.set_ylabel(label, color='white', fontsize=8, rotation=0, labelpad=25, va='center')
@@ -68,7 +86,7 @@ def _setup_axis(ax, label, ylim=(-1.3, 1.5)):
         spine.set_visible(False)
 
 
-def draw_spin_echo_psd(fig, TR, TE):
+def draw_spin_echo_psd(fig: Any, TR: float, TE: float) -> None:
     """Draw Spin Echo pulse sequence diagram."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -120,7 +138,7 @@ def draw_spin_echo_psd(fig, TR, TE):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_gradient_echo_psd(fig, TR, TE, flip_angle):
+def draw_gradient_echo_psd(fig: Any, TR: float, TE: float, flip_angle: float) -> None:
     """Draw Gradient Echo pulse sequence diagram."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -169,7 +187,7 @@ def draw_gradient_echo_psd(fig, TR, TE, flip_angle):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_inversion_recovery_psd(fig, TR, TE, TI):
+def draw_inversion_recovery_psd(fig: Any, TR: float, TE: float, TI: float) -> None:
     """Draw Inversion Recovery pulse sequence diagram."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -220,7 +238,7 @@ def draw_inversion_recovery_psd(fig, TR, TE, TI):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_fse_psd(fig, TR, TE, etl, echo_spacing):
+def draw_fse_psd(fig: Any, TR: float, TE: float, etl: int, echo_spacing: float) -> None:
     """Draw FSE/TSE pulse sequence diagram with echo train."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -282,7 +300,7 @@ def draw_fse_psd(fig, TR, TE, etl, echo_spacing):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_diffusion_psd(fig, TR, TE, b_value):
+def draw_diffusion_psd(fig: Any, TR: float, TE: float, b_value: float) -> None:
     """Draw Diffusion-Weighted SE with Stejskal-Tanner gradients."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -332,7 +350,7 @@ def draw_diffusion_psd(fig, TR, TE, b_value):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_epi_psd(fig, TR, TE):
+def draw_epi_psd(fig: Any, TR: float, TE: float) -> None:
     """Draw single-shot EPI pulse sequence diagram (fMRI)."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -387,7 +405,7 @@ def draw_epi_psd(fig, TR, TE):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_tof_psd(fig, TR, TE, flip_angle):
+def draw_tof_psd(fig: Any, TR: float, TE: float, flip_angle: float) -> None:
     """Draw TOF MRA (short TR GRE with flow compensation)."""
     fig.clear()
     axes = fig.subplots(5, 1, sharex=True, gridspec_kw={'hspace': 0.05, 'height_ratios': [1.2, 1, 1, 1, 1]})
@@ -435,7 +453,17 @@ def draw_tof_psd(fig, TR, TE, flip_angle):
     fig.patch.set_facecolor('#1e1e1e')
 
 
-def draw_psd(fig, sequence, TR, TE, TI=150, flip_angle=90, etl=1, echo_spacing=10, b_value=1000):
+def draw_psd(
+    fig: Any,
+    sequence: str,
+    TR: float,
+    TE: float,
+    TI: float = 150,
+    flip_angle: float = 90,
+    etl: int = 1,
+    echo_spacing: float = 10,
+    b_value: float = 1000,
+) -> None:
     """
     Main dispatcher — draws the appropriate PSD for the given sequence.
     
