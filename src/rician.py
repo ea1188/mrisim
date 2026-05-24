@@ -12,7 +12,7 @@ from scipy.special import i0e   # scaled modified Bessel function of order 0
 # Core distribution
 # ---------------------------------------------------------------------------
 
-def rician_pdf(x, nu, sigma):
+def rician_pdf(x: np.ndarray, nu: float, sigma: float) -> np.ndarray:
     """Rician probability density function.
 
     p(x; ν, σ) = (x/σ²) · exp(−(x²+ν²)/(2σ²)) · I₀(xν/σ²)
@@ -42,7 +42,7 @@ def rician_pdf(x, nu, sigma):
     return np.where(x >= 0, pdf, 0.0)
 
 
-def rician_mean(nu, sigma):
+def rician_mean(nu: float | np.ndarray, sigma: float | np.ndarray) -> np.ndarray:
     """Expected value of a Rician-distributed magnitude.
 
     E[M] = σ · sqrt(π/2) · L_{1/2}(−ν²/(2σ²))
@@ -66,14 +66,16 @@ def rician_mean(nu, sigma):
     return np.sqrt(nu**2 + sigma**2)
 
 
-def rician_variance(nu, sigma):
+def rician_variance(nu: float | np.ndarray,
+                    sigma: float | np.ndarray) -> np.ndarray:
     """Variance of a Rician distribution: Var = 2σ² + ν² − E[M]²."""
     nu    = np.asarray(nu, dtype=float)
     sigma = np.asarray(sigma, dtype=float)
     return 2.0 * sigma**2 + nu**2 - rician_mean(nu, sigma)**2
 
 
-def rician_snr_bias(nu, sigma):
+def rician_snr_bias(nu: float | np.ndarray,
+                    sigma: float | np.ndarray) -> np.ndarray:
     """Signal-to-noise ratio bias in Rician magnitude images.
 
     Returns the fractional noise floor: (E[M] − ν) / ν.
@@ -101,7 +103,8 @@ def rician_snr_bias(nu, sigma):
 # Noise addition
 # ---------------------------------------------------------------------------
 
-def add_rician_noise(signal_image, sigma):
+def add_rician_noise(signal_image: np.ndarray,
+                     sigma: float | np.ndarray) -> np.ndarray:
     """Add Rician noise to a real-valued MR signal image.
 
     Procedure: add independent Gaussian noise to real and imaginary channels,
@@ -123,7 +126,8 @@ def add_rician_noise(signal_image, sigma):
     return np.sqrt(real_part**2 + imag_part**2)
 
 
-def add_rician_noise_seeded(signal_image, sigma, seed=None):
+def add_rician_noise_seeded(signal_image: np.ndarray, sigma: float,
+                             seed: int | None = None) -> np.ndarray:
     """Reproducible version of add_rician_noise using a provided seed."""
     rng = np.random.default_rng(seed)
     signal_image = np.asarray(signal_image, dtype=float)
@@ -136,7 +140,8 @@ def add_rician_noise_seeded(signal_image, sigma, seed=None):
 # SNR estimation
 # ---------------------------------------------------------------------------
 
-def estimate_snr_background(image, signal_mask, background_mask=None):
+def estimate_snr_background(image: np.ndarray, signal_mask: np.ndarray,
+                             background_mask: np.ndarray | None = None) -> float:
     """Estimate SNR from signal and background regions.
 
     SNR = mean(signal_region) / std(background_region)
@@ -166,7 +171,7 @@ def estimate_snr_background(image, signal_mask, background_mask=None):
     return float(sig / noise_std)
 
 
-def noise_sigma_from_snr(signal_level, target_snr):
+def noise_sigma_from_snr(signal_level: float, target_snr: float) -> float:
     """Return the per-channel noise sigma that achieves a target SNR.
 
     Accounts for the Rician noise floor using rician_mean.
@@ -187,7 +192,7 @@ def noise_sigma_from_snr(signal_level, target_snr):
 # Correction
 # ---------------------------------------------------------------------------
 
-def rician_bias_correction(image, sigma):
+def rician_bias_correction(image: np.ndarray, sigma: float) -> np.ndarray:
     """Remove the Rician noise floor bias from a magnitude image.
 
     Applies: corrected = sqrt(max(image² − σ², 0))

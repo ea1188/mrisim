@@ -27,15 +27,16 @@ except ImportError:
     _DEFAULT_TISSUE = {}
 
 
-def _get_tissue(tissue_props):
+def _get_tissue(tissue_props: dict | None) -> dict:
     return tissue_props if tissue_props is not None else _DEFAULT_TISSUE
 
 
-def _signal_per_label(tissue_props, TR_ms, TE_ms, sequence,
-                       TI_ms, flip_angle_deg):
+def _signal_per_label(tissue_props: dict, TR_ms: float, TE_ms: float,
+                       sequence: str, TI_ms: float | None,
+                       flip_angle_deg: float) -> dict[int, float]:
     """Return {label: pure-tissue signal} for the given scan parameters."""
     seq = sequence.upper()
-    result = {}
+    result: dict[int, float] = {}
     for lab, p in tissue_props.items():
         if seq == "SE":
             result[lab] = spin_echo_signal(
@@ -57,7 +58,8 @@ def _signal_per_label(tissue_props, TR_ms, TE_ms, sequence,
 # Tissue fraction maps
 # ---------------------------------------------------------------------------
 
-def tissue_fraction_maps(label_map, smooth_sigma_vox=1.0):
+def tissue_fraction_maps(label_map: np.ndarray,
+                          smooth_sigma_vox: float = 1.0) -> dict[int, np.ndarray]:
     """Gaussian-PSF tissue fraction maps from a hard-label map.
 
     Each binary tissue mask is convolved with a Gaussian of width
@@ -90,7 +92,8 @@ def tissue_fraction_maps(label_map, smooth_sigma_vox=1.0):
 # Linear signal mixing
 # ---------------------------------------------------------------------------
 
-def pv_signal_linear(fractions, signal_per_label):
+def pv_signal_linear(fractions: dict[int, np.ndarray],
+                     signal_per_label: dict[int, float]) -> np.ndarray:
     """Linear partial-volume signal:  S_pv = Σ_i  f_i · S_i.
 
     Parameters
@@ -113,9 +116,11 @@ def pv_signal_linear(fractions, signal_per_label):
 # In-plane PVE simulation
 # ---------------------------------------------------------------------------
 
-def simulate_pv_slice(label_map, TR_ms=500., TE_ms=15., sequence="SE",
-                       smooth_sigma_vox=1.0, TI_ms=None, flip_angle_deg=90.,
-                       tissue_props=None):
+def simulate_pv_slice(label_map: np.ndarray, TR_ms: float = 500.,
+                       TE_ms: float = 15., sequence: str = "SE",
+                       smooth_sigma_vox: float = 1.0,
+                       TI_ms: float | None = None, flip_angle_deg: float = 90.,
+                       tissue_props: dict | None = None) -> np.ndarray:
     """Simulate a 2-D slice with in-plane Gaussian PSF partial-volume effects.
 
     Parameters
@@ -142,10 +147,12 @@ def simulate_pv_slice(label_map, TR_ms=500., TE_ms=15., sequence="SE",
 # Through-plane PVE simulation
 # ---------------------------------------------------------------------------
 
-def simulate_thick_slice(vol_3d, center_z, slice_thickness_vox=5,
-                          TR_ms=500., TE_ms=15., sequence="SE",
-                          TI_ms=None, flip_angle_deg=90.,
-                          slice_profile="rect", tissue_props=None):
+def simulate_thick_slice(vol_3d: np.ndarray, center_z: int,
+                          slice_thickness_vox: int = 5,
+                          TR_ms: float = 500., TE_ms: float = 15.,
+                          sequence: str = "SE", TI_ms: float | None = None,
+                          flip_angle_deg: float = 90., slice_profile: str = "rect",
+                          tissue_props: dict | None = None) -> np.ndarray:
     """2-D image with through-plane PVE from slab averaging.
 
     Averages the signal from ``slice_thickness_vox`` consecutive planes
@@ -194,7 +201,8 @@ def simulate_thick_slice(vol_3d, center_z, slice_thickness_vox=5,
 # Boundary analysis
 # ---------------------------------------------------------------------------
 
-def boundary_mask(label_map, label_a, label_b, dilation_vox=1):
+def boundary_mask(label_map: np.ndarray, label_a: int, label_b: int,
+                  dilation_vox: int = 1) -> np.ndarray:
     """Voxels at the interface between two tissue labels.
 
     Returns a boolean mask of voxels that are within ``dilation_vox``
@@ -219,8 +227,9 @@ def boundary_mask(label_map, label_a, label_b, dilation_vox=1):
     return near_a & near_b & ~pure_a & ~pure_b
 
 
-def fraction_at_boundary(label_map, label_a, label_b,
-                           smooth_sigma_vox=1.0, dilation_vox=1):
+def fraction_at_boundary(label_map: np.ndarray, label_a: int, label_b: int,
+                           smooth_sigma_vox: float = 1.0,
+                           dilation_vox: int = 1) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Tissue fractions of label_a and label_b at their shared boundary.
 
     Parameters
@@ -246,8 +255,10 @@ def fraction_at_boundary(label_map, label_a, label_b,
 # PVE correction
 # ---------------------------------------------------------------------------
 
-def pv_correction(measured_signal, tissue_fractions, signal_per_label,
-                   target_label):
+def pv_correction(measured_signal: np.ndarray,
+                   tissue_fractions: dict[int, np.ndarray],
+                   signal_per_label: dict[int, float],
+                   target_label: int) -> np.ndarray:
     """Remove partial-volume contamination from a measured signal.
 
     Solves:  S_target = (S_measured − Σ_{j≠target} f_j · S_j) / f_target
@@ -285,8 +296,9 @@ def pv_correction(measured_signal, tissue_fractions, signal_per_label,
 # ROI statistics
 # ---------------------------------------------------------------------------
 
-def mean_signal_in_roi(signal_map, label_map, label,
-                        fractions=None, min_fraction=0.9):
+def mean_signal_in_roi(signal_map: np.ndarray, label_map: np.ndarray,
+                        label: int, fractions: dict | None = None,
+                        min_fraction: float = 0.9) -> float:
     """Mean signal within a tissue ROI, with optional PV-weighting.
 
     Parameters

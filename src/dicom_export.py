@@ -19,6 +19,7 @@ import pydicom
 from pydicom.dataset import Dataset, FileMetaDataset
 from pydicom.uid import (
     ExplicitVRLittleEndian,
+    UID,
     generate_uid,
     MRImageStorage,
 )
@@ -40,7 +41,8 @@ _BITS_STORED    = 16
 _HIGH_BIT       = 15
 
 
-def _scale_to_uint16(image: np.ndarray, vmax: float | None = None):
+def _scale_to_uint16(image: np.ndarray,
+                     vmax: float | None = None) -> tuple[np.ndarray, float, float]:
     """Linearly scale a float array to uint16 in [0, _MAX_STORED].
 
     Returns
@@ -61,10 +63,11 @@ def _scale_to_uint16(image: np.ndarray, vmax: float | None = None):
     return pixels, scale, img_min
 
 
-def _make_file_meta(sop_class_uid=None, sop_instance_uid=None):
+def _make_file_meta(sop_class_uid: str | None = None,
+                    sop_instance_uid: str | None = None) -> FileMetaDataset:
     meta = FileMetaDataset()
-    meta.MediaStorageSOPClassUID    = sop_class_uid or MRImageStorage
-    meta.MediaStorageSOPInstanceUID = sop_instance_uid or generate_uid()
+    meta.MediaStorageSOPClassUID    = UID(sop_class_uid or MRImageStorage)
+    meta.MediaStorageSOPInstanceUID = UID(sop_instance_uid or generate_uid())
     meta.TransferSyntaxUID          = ExplicitVRLittleEndian
     return meta
 
@@ -209,7 +212,7 @@ def make_dataset(
 def image_to_dicom(
     image: np.ndarray,
     filepath: str,
-    **kwargs,
+    **kwargs: float | str | int | None,
 ) -> str:
     """Write a 2-D simulated MR image to a DICOM file.
 
@@ -228,7 +231,7 @@ def image_to_dicom(
     filepath : str  absolute path of the written file
     """
     os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
-    ds = make_dataset(image, **kwargs)
+    ds = make_dataset(image, **kwargs)  # type: ignore[arg-type]
     pydicom.dcmwrite(filepath, ds)
     return os.path.abspath(filepath)
 
@@ -246,7 +249,7 @@ def volume_to_dicom_series(
     filename_prefix: str = "slice",
     study_uid: str | None = None,
     series_uid: str | None = None,
-    **kwargs,
+    **kwargs: float | str | int | None,
 ) -> list[str]:
     """Write a 3-D volume as a numbered DICOM series.
 
@@ -290,7 +293,7 @@ def volume_to_dicom_series(
             fname,
             slice_location_mm=loc,
             slice_thickness_mm=slice_thickness_mm,
-            pixel_spacing_mm=pixel_spacing_mm,
+            pixel_spacing_mm=pixel_spacing_mm,  # type: ignore[arg-type]
             instance_number=i + 1,
             study_uid=shared_study,
             series_uid=shared_series,
@@ -344,7 +347,7 @@ def load_dicom_series(directory: str) -> np.ndarray:
     if not dcm_files:
         raise FileNotFoundError(f"No .dcm files found in {directory!r}")
 
-    def _sort_key(path):
+    def _sort_key(path: str) -> int | str:
         try:
             return int(pydicom.dcmread(path, stop_before_pixels=True).InstanceNumber)
         except Exception:

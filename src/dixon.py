@@ -27,12 +27,12 @@ FAT_LABELS  = frozenset({4, 19})   # labels treated as fat in the MR signal mode
 # Chemical shift frequency
 # ---------------------------------------------------------------------------
 
-def fat_water_shift_hz(field_strength_T):
+def fat_water_shift_hz(field_strength_T: float) -> float:
     """Fat–water frequency offset Δf = 3.5 ppm × γ × B0  (Hz)."""
     return FAT_CS_PPM * 1e-6 * GAMMA_HZ_T * float(field_strength_T)
 
 
-def inphase_te_ms(field_strength_T, n=1):
+def inphase_te_ms(field_strength_T: float, n: int = 1) -> float:
     """n-th in-phase echo time in ms  (fat and water phases coincide).
 
     TE_ip = n / Δf  (n = 1, 2, 3, …)
@@ -40,7 +40,7 @@ def inphase_te_ms(field_strength_T, n=1):
     return float(n) * 1000.0 / fat_water_shift_hz(field_strength_T)
 
 
-def opposed_phase_te_ms(field_strength_T, n=1):
+def opposed_phase_te_ms(field_strength_T: float, n: int = 1) -> float:
     """n-th opposed-phase echo time in ms  (fat and water 180° apart).
 
     TE_op = (2n−1) / (2·Δf)  (n = 1, 2, 3, …)
@@ -52,7 +52,8 @@ def opposed_phase_te_ms(field_strength_T, n=1):
 # Complex signal model
 # ---------------------------------------------------------------------------
 
-def combined_gre_signal(water_image, fat_image, field_strength_T, TE_ms):
+def combined_gre_signal(water_image: np.ndarray, fat_image: np.ndarray,
+                         field_strength_T: float, TE_ms: float) -> np.ndarray:
     """Complex GRE voxel signal combining water and fat with CS phase.
 
     S(TE) = S_water + S_fat · exp(i · 2π · Δf · TE)
@@ -77,11 +78,13 @@ def combined_gre_signal(water_image, fat_image, field_strength_T, TE_ms):
 # Simulation helpers
 # ---------------------------------------------------------------------------
 
-def _get_props(tissue_props):
+def _get_props(tissue_props: dict | None) -> dict:
     return tissue_props if tissue_props is not None else _DEFAULT_PROPS
 
 
-def _water_gre(label_map, TR_ms, TE_ms, flip_angle_deg, tissue_props, fat_labels):
+def _water_gre(label_map: np.ndarray, TR_ms: float, TE_ms: float,
+               flip_angle_deg: float, tissue_props: dict | None,
+               fat_labels: frozenset[int]) -> np.ndarray:
     """GRE signal from water-only labels (fat labels excluded)."""
     out = np.zeros(label_map.shape, dtype=np.float64)
     for lab, p in _get_props(tissue_props).items():
@@ -95,7 +98,9 @@ def _water_gre(label_map, TR_ms, TE_ms, flip_angle_deg, tissue_props, fat_labels
     return out
 
 
-def _fat_gre(label_map, TR_ms, TE_ms, flip_angle_deg, tissue_props, fat_labels):
+def _fat_gre(label_map: np.ndarray, TR_ms: float, TE_ms: float,
+             flip_angle_deg: float, tissue_props: dict | None,
+             fat_labels: frozenset[int]) -> np.ndarray:
     """GRE signal from fat-only labels."""
     out = np.zeros(label_map.shape, dtype=np.float64)
     for lab, p in _get_props(tissue_props).items():
@@ -109,9 +114,10 @@ def _fat_gre(label_map, TR_ms, TE_ms, flip_angle_deg, tissue_props, fat_labels):
     return out
 
 
-def simulate_inphase(label_map, field_strength_T=1.5, TR_ms=200.,
-                      flip_angle_deg=70., echo_n=1,
-                      tissue_props=None, fat_labels=None):
+def simulate_inphase(label_map: np.ndarray, field_strength_T: float = 1.5,
+                      TR_ms: float = 200., flip_angle_deg: float = 70.,
+                      echo_n: int = 1, tissue_props: dict | None = None,
+                      fat_labels: frozenset[int] | None = None) -> np.ndarray:
     """GRE magnitude image at an in-phase echo time.
 
     Fat and water signals add constructively: |S_water + S_fat|.
@@ -135,9 +141,10 @@ def simulate_inphase(label_map, field_strength_T=1.5, TR_ms=200.,
     return np.abs(combined_gre_signal(sw, sf, field_strength_T, te))
 
 
-def simulate_opposed(label_map, field_strength_T=1.5, TR_ms=200.,
-                      flip_angle_deg=70., echo_n=1,
-                      tissue_props=None, fat_labels=None):
+def simulate_opposed(label_map: np.ndarray, field_strength_T: float = 1.5,
+                      TR_ms: float = 200., flip_angle_deg: float = 70.,
+                      echo_n: int = 1, tissue_props: dict | None = None,
+                      fat_labels: frozenset[int] | None = None) -> np.ndarray:
     """GRE magnitude image at an opposed-phase echo time.
 
     Fat and water signals cancel: |S_water − S_fat|.
@@ -157,7 +164,8 @@ def simulate_opposed(label_map, field_strength_T=1.5, TR_ms=200.,
 # Dixon separation
 # ---------------------------------------------------------------------------
 
-def two_point_dixon(inphase, opposed):
+def two_point_dixon(inphase: np.ndarray,
+                    opposed: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Fat–water separation from in-phase and opposed-phase magnitude images.
 
     Assumes S_ip = W + F and S_op = |W − F|.
@@ -182,7 +190,8 @@ def two_point_dixon(inphase, opposed):
     return water, fat
 
 
-def three_point_dixon(s_ip1, s_op, s_ip2):
+def three_point_dixon(s_ip1: np.ndarray, s_op: np.ndarray,
+                      s_ip2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Fat–water separation from three complex GRE echoes with B0 correction.
 
     Echoes acquired at TE1 (in-phase), TE2 (opposed), TE3 (in-phase) so that
@@ -224,7 +233,7 @@ def three_point_dixon(s_ip1, s_op, s_ip2):
     return water, fat
 
 
-def fat_fraction(fat_image, water_image):
+def fat_fraction(fat_image: np.ndarray, water_image: np.ndarray) -> np.ndarray:
     """Fat fraction map: |F| / (|F| + |W|), clipped to [0, 1].
 
     Parameters
@@ -247,13 +256,14 @@ def fat_fraction(fat_image, water_image):
 # STIR fat suppression
 # ---------------------------------------------------------------------------
 
-def stir_ti_optimal(T1_fat_ms):
+def stir_ti_optimal(T1_fat_ms: float) -> float:
     """Inversion time that nulls fat signal: TI = T1_fat · ln 2."""
     return float(T1_fat_ms) * np.log(2.0)
 
 
-def simulate_stir(label_map, TR_ms=4000., TE_ms=30., TI_ms=None,
-                  tissue_props=None):
+def simulate_stir(label_map: np.ndarray, TR_ms: float = 4000.,
+                  TE_ms: float = 30., TI_ms: float | None = None,
+                  tissue_props: dict | None = None) -> np.ndarray:
     """STIR image: IR acquisition with TI chosen to null fat.
 
     If TI_ms is None, uses stir_ti_optimal for the T1 of label 4 (fat).
@@ -281,7 +291,7 @@ def simulate_stir(label_map, TR_ms=4000., TE_ms=30., TI_ms=None,
 # Chemical shift displacement
 # ---------------------------------------------------------------------------
 
-def chemical_shift_pixels(field_strength_T, bw_hz_per_pixel):
+def chemical_shift_pixels(field_strength_T: float, bw_hz_per_pixel: float) -> float:
     """Fat pixel displacement in the frequency-encode direction.
 
     shift = Δf / BW_per_pixel  (pixels)

@@ -1,5 +1,7 @@
 """Quantitative MRI: parameter mapping and synthetic contrast generation."""
 
+from collections.abc import Callable, Sequence
+
 import numpy as np
 from scipy.optimize import curve_fit
 from signal_engine import (
@@ -18,11 +20,13 @@ _T1_MAX_MS = 10000.0
 _T2_MAX_MS = 5000.0
 
 
-def _get_props(tissue_props):
+def _get_props(tissue_props: dict | None) -> dict:
     return tissue_props if tissue_props is not None else _DEFAULT_PROPS
 
 
-def _render_label_map(label_map, signal_fn, tissue_props):
+def _render_label_map(label_map: np.ndarray,
+                      signal_fn: Callable[[dict], float],
+                      tissue_props: dict | None) -> np.ndarray:
     """Apply signal_fn(props_dict) per label, return float image."""
     out = np.zeros(label_map.shape, dtype=np.float64)
     for lab, p in _get_props(tissue_props).items():
@@ -36,8 +40,10 @@ def _render_label_map(label_map, signal_fn, tissue_props):
 # Simulation helpers  (label map → signal series)
 # ---------------------------------------------------------------------------
 
-def simulate_vfa_series(label_map, flip_angles_deg, TR_ms, TE_ms=5.0,
-                        tissue_props=None):
+def simulate_vfa_series(label_map: np.ndarray,
+                        flip_angles_deg: Sequence[float],
+                        TR_ms: float, TE_ms: float = 5.0,
+                        tissue_props: dict | None = None) -> np.ndarray:
     """GRE images at multiple flip angles for VFA T1 mapping.
 
     Parameters
@@ -53,7 +59,7 @@ def simulate_vfa_series(label_map, flip_angles_deg, TR_ms, TE_ms=5.0,
     return np.stack(
         [_render_label_map(
             label_map,
-            lambda p, a=a: gradient_echo_signal(
+            lambda p, a=a: gradient_echo_signal(  # type: ignore[misc]
                 p["T1"], p.get("T2star", p["T2"]), p["PD"], TR_ms, TE_ms, a),
             tissue_props,
         ) for a in flip_angles_deg],
@@ -61,8 +67,10 @@ def simulate_vfa_series(label_map, flip_angles_deg, TR_ms, TE_ms=5.0,
     )
 
 
-def simulate_ir_series(label_map, TI_ms_list, TR_ms=3000., TE_ms=10.,
-                       tissue_props=None):
+def simulate_ir_series(label_map: np.ndarray,
+                       TI_ms_list: Sequence[float],
+                       TR_ms: float = 3000., TE_ms: float = 10.,
+                       tissue_props: dict | None = None) -> np.ndarray:
     """IR magnitude images at multiple inversion times.
 
     Returns
@@ -72,7 +80,7 @@ def simulate_ir_series(label_map, TI_ms_list, TR_ms=3000., TE_ms=10.,
     return np.stack(
         [_render_label_map(
             label_map,
-            lambda p, ti=ti: inversion_recovery_signal(
+            lambda p, ti=ti: inversion_recovery_signal(  # type: ignore[misc]
                 p["T1"], p["T2"], p["PD"], TR_ms, TE_ms, ti),
             tissue_props,
         ) for ti in TI_ms_list],
@@ -80,9 +88,11 @@ def simulate_ir_series(label_map, TI_ms_list, TR_ms=3000., TE_ms=10.,
     )
 
 
-def simulate_multi_echo_series(label_map, TE_ms_list, TR_ms=2000.,
-                               flip_angle_deg=90., sequence="SE",
-                               tissue_props=None):
+def simulate_multi_echo_series(label_map: np.ndarray,
+                               TE_ms_list: Sequence[float],
+                               TR_ms: float = 2000., flip_angle_deg: float = 90.,
+                               sequence: str = "SE",
+                               tissue_props: dict | None = None) -> np.ndarray:
     """Multi-echo images for T2 (SE) or T2* (GRE) mapping.
 
     Returns
@@ -93,10 +103,10 @@ def simulate_multi_echo_series(label_map, TE_ms_list, TR_ms=2000.,
     frames = []
     for te in TE_ms_list:
         if seq == "SE":
-            fn = lambda p, te=te: spin_echo_signal(
+            fn: Callable[[dict], float] = lambda p, te=te: spin_echo_signal(  # type: ignore[misc]
                 p["T1"], p["T2"], p["PD"], TR_ms, te)
         else:
-            fn = lambda p, te=te: gradient_echo_signal(
+            fn = lambda p, te=te: gradient_echo_signal(  # type: ignore[misc]
                 p["T1"], p.get("T2star", p["T2"]), p["PD"],
                 TR_ms, te, flip_angle_deg)
         frames.append(_render_label_map(label_map, fn, tissue_props))
@@ -107,7 +117,8 @@ def simulate_multi_echo_series(label_map, TE_ms_list, TR_ms=2000.,
 # Quantitative maps  (signal series → parameter maps)
 # ---------------------------------------------------------------------------
 
-def vfa_t1_map(signal_series, flip_angles_deg, TR_ms):
+def vfa_t1_map(signal_series: np.ndarray, flip_angles_deg: Sequence[float],
+               TR_ms: float) -> np.ndarray:
     """T1 map from a VFA GRE series via the Fram linearisation.
 
     Uses S/sin(α) = E1 · S/tan(α) + S0·(1−E1) — fully vectorised
@@ -146,7 +157,8 @@ def vfa_t1_map(signal_series, flip_angles_deg, TR_ms):
     return np.clip(T1, _T1_MIN_MS, _T1_MAX_MS)
 
 
-def multi_echo_t2_map(signal_series, TE_ms_list):
+def multi_echo_t2_map(signal_series: np.ndarray,
+                      TE_ms_list: Sequence[float]) -> np.ndarray:
     """T2 map from a multi-echo SE series via log-linear regression.
 
     ln S(TE) = ln S0 − TE / T2
@@ -176,7 +188,8 @@ def multi_echo_t2_map(signal_series, TE_ms_list):
     return np.clip(T2, 0., _T2_MAX_MS)
 
 
-def t2star_map(signal_series, TE_ms_list):
+def t2star_map(signal_series: np.ndarray,
+               TE_ms_list: Sequence[float]) -> np.ndarray:
     """T2* map from a multi-echo GRE series.
 
     Identical fitting algorithm to multi_echo_t2_map; named separately
@@ -185,7 +198,8 @@ def t2star_map(signal_series, TE_ms_list):
     return multi_echo_t2_map(signal_series, TE_ms_list)
 
 
-def ir_t1_map(signal_series, TI_ms_list, TR_ms=3000.):
+def ir_t1_map(signal_series: np.ndarray, TI_ms_list: Sequence[float],
+              TR_ms: float = 3000.) -> np.ndarray:
     """T1 map from an inversion recovery magnitude series.
 
     Fits S(TI) = S0 · |1 − 2·exp(−TI/T1) + exp(−TR/T1)| pixelwise via
@@ -206,7 +220,7 @@ def ir_t1_map(signal_series, TI_ms_list, TR_ms=3000.):
     H, W = signal_series.shape[1:]
     T1_map = np.zeros((H, W), dtype=np.float64)
 
-    def _model(ti, T1, S0):
+    def _model(ti: np.ndarray, T1: float, S0: float) -> np.ndarray:
         return S0 * np.abs(1.0 - 2.0 * np.exp(-ti / T1)
                            + np.exp(-TR_ms / T1))
 
@@ -233,8 +247,10 @@ def ir_t1_map(signal_series, TI_ms_list, TR_ms=3000.):
 # Synthetic MRI
 # ---------------------------------------------------------------------------
 
-def synthetic_contrast(t1_map, t2_map, pd_map, TR_ms, TE_ms,
-                       sequence="SE", TI_ms=None, flip_angle_deg=90.):
+def synthetic_contrast(t1_map: np.ndarray, t2_map: np.ndarray,
+                       pd_map: np.ndarray, TR_ms: float, TE_ms: float,
+                       sequence: str = "SE", TI_ms: float | None = None,
+                       flip_angle_deg: float = 90.) -> np.ndarray:
     """Synthesise any MR contrast from quantitative parameter maps.
 
     Parameters

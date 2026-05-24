@@ -11,6 +11,8 @@ Key references:
   Sled & Pike (2001) MRM 46:923-931
 """
 
+from collections.abc import Callable
+
 import numpy as np
 from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
 
@@ -28,7 +30,7 @@ GAMMA_RAD_T = 2.0 * np.pi * 42.577e6   # rad s⁻¹ T⁻¹
 # T2b_us : bound pool T2  (μs) — determines lineshape width
 # T1b_ms : bound pool T1  (ms) — typically long; often fixed at 1 s
 # ---------------------------------------------------------------------------
-MT_PARAMS = {
+MT_PARAMS: dict[int, dict[str, float | str]] = {
     0:  {"f": 0.000, "k_ab":  0.,  "T2b_us": 10., "T1b_ms": 1000., "name": "background"},
     1:  {"f": 0.005, "k_ab":  5.,  "T2b_us": 10., "T1b_ms": 1000., "name": "CSF"},
     2:  {"f": 0.100, "k_ab": 25.,  "T2b_us": 12., "T1b_ms": 1000., "name": "gray matter"},
@@ -54,11 +56,11 @@ MT_PARAMS = {
 }
 
 
-def _get_mt(mt_params):
+def _get_mt(mt_params: dict | None) -> dict:
     return mt_params if mt_params is not None else MT_PARAMS
 
 
-def _get_tissue(tissue_props):
+def _get_tissue(tissue_props: dict | None) -> dict:
     return tissue_props if tissue_props is not None else _DEFAULT_TISSUE
 
 
@@ -66,7 +68,7 @@ def _get_tissue(tissue_props):
 # Lineshape functions
 # ---------------------------------------------------------------------------
 
-def gaussian_lineshape(offset_hz, T2b_us):
+def gaussian_lineshape(offset_hz: float | np.ndarray, T2b_us: float) -> np.ndarray:
     """Gaussian spectral lineshape of the immobile (bound) pool.
 
     g(Δf) = T2b / √(2π) · exp(−2π²·Δf²·T2b²)   [s]
@@ -85,7 +87,7 @@ def gaussian_lineshape(offset_hz, T2b_us):
             * np.exp(-2.0 * np.pi**2 * np.asarray(offset_hz, float)**2 * T2b_s**2))
 
 
-def lorentzian_lineshape(offset_hz, T2a_ms):
+def lorentzian_lineshape(offset_hz: float | np.ndarray, T2a_ms: float) -> np.ndarray:
     """Lorentzian spectral lineshape of the free water pool.
 
     g(Δf) = T2a / π · 1 / (1 + (2π·Δf·T2a)²)   [s]
@@ -106,7 +108,8 @@ def lorentzian_lineshape(offset_hz, T2a_ms):
 # RF saturation rates
 # ---------------------------------------------------------------------------
 
-def saturation_rate_bound(B1_sat_uT, offset_hz, T2b_us):
+def saturation_rate_bound(B1_sat_uT: float, offset_hz: float | np.ndarray,
+                           T2b_us: float) -> np.ndarray:
     """CW RF saturation rate of the bound pool  W_b = π·ω₁²·g(Δf)  [s⁻¹].
 
     Parameters
@@ -119,7 +122,8 @@ def saturation_rate_bound(B1_sat_uT, offset_hz, T2b_us):
     return np.pi * omega1**2 * gaussian_lineshape(offset_hz, T2b_us)
 
 
-def saturation_rate_free(B1_sat_uT, offset_hz, T2a_ms):
+def saturation_rate_free(B1_sat_uT: float, offset_hz: float | np.ndarray,
+                          T2a_ms: float) -> np.ndarray:
     """CW RF saturation rate of the free pool  W_a = π·ω₁²·g_L(Δf)  [s⁻¹].
 
     Significant only near 0 Hz offset (direct water saturation).
@@ -132,7 +136,8 @@ def saturation_rate_free(B1_sat_uT, offset_hz, T2a_ms):
 # Core steady-state two-pool model
 # ---------------------------------------------------------------------------
 
-def mt_steady_state(f, k_ab, T1a_ms, T1b_ms, W_b, W_a=0.0):
+def mt_steady_state(f: float, k_ab: float, T1a_ms: float, T1b_ms: float,
+                    W_b: float | np.ndarray, W_a: float | np.ndarray = 0.0) -> np.ndarray:
     """Normalised free-pool steady-state magnetisation under CW MT saturation.
 
     Solves the binary spin-bath equations at steady state
@@ -181,7 +186,7 @@ def mt_steady_state(f, k_ab, T1a_ms, T1b_ms, W_b, W_a=0.0):
 # MTR and weighted images
 # ---------------------------------------------------------------------------
 
-def mt_ratio(signal_sat, signal_unsat):
+def mt_ratio(signal_sat: np.ndarray, signal_unsat: np.ndarray) -> np.ndarray:
     """Magnetisation Transfer Ratio: MTR = (M0 − Msat) / M0.
 
     Commonly expressed as a percentage (× 100).
@@ -202,7 +207,9 @@ def mt_ratio(signal_sat, signal_unsat):
     return np.clip(mtr * 100.0, 0.0, 100.0)
 
 
-def _render_signal(label_map, signal_fn, tissue_props):
+def _render_signal(label_map: np.ndarray,
+                   signal_fn: Callable[[dict], float],
+                   tissue_props: dict | None) -> np.ndarray:
     """Apply signal_fn(props) per label to produce a float image."""
     out = np.zeros(label_map.shape, dtype=np.float64)
     for lab, p in _get_tissue(tissue_props).items():
@@ -212,9 +219,11 @@ def _render_signal(label_map, signal_fn, tissue_props):
     return out
 
 
-def simulate_mt_weighted(label_map, B1_sat_uT=3.0, offset_hz=2000.,
-                          TR_ms=500., TE_ms=10., flip_angle_deg=30.,
-                          sequence="GRE", tissue_props=None, mt_params=None):
+def simulate_mt_weighted(label_map: np.ndarray, B1_sat_uT: float = 3.0,
+                          offset_hz: float = 2000., TR_ms: float = 500.,
+                          TE_ms: float = 10., flip_angle_deg: float = 30.,
+                          sequence: str = "GRE", tissue_props: dict | None = None,
+                          mt_params: dict | None = None) -> np.ndarray:
     """Simulate an MT-weighted image.
 
     For each voxel, computes the free-pool steady-state fraction under CW
@@ -236,7 +245,7 @@ def simulate_mt_weighted(label_map, B1_sat_uT=3.0, offset_hz=2000.,
     mtp = _get_mt(mt_params)
     seq = sequence.upper()
 
-    def _sig(p, lab):
+    def _sig(p: dict, lab: int = 0) -> float:
         if seq == "SE":
             s0 = spin_echo_signal(p["T1"], p["T2"], p["PD"], TR_ms, TE_ms)
         else:
@@ -257,12 +266,13 @@ def simulate_mt_weighted(label_map, B1_sat_uT=3.0, offset_hz=2000.,
     return out
 
 
-def simulate_no_mt(label_map, TR_ms=500., TE_ms=10., flip_angle_deg=30.,
-                   sequence="GRE", tissue_props=None):
+def simulate_no_mt(label_map: np.ndarray, TR_ms: float = 500., TE_ms: float = 10.,
+                   flip_angle_deg: float = 30., sequence: str = "GRE",
+                   tissue_props: dict | None = None) -> np.ndarray:
     """Simulate the reference (no MT saturation) image."""
     seq = sequence.upper()
 
-    def _sig(p):
+    def _sig(p: dict) -> float:
         if seq == "SE":
             return spin_echo_signal(p["T1"], p["T2"], p["PD"], TR_ms, TE_ms)
         return gradient_echo_signal(
@@ -272,9 +282,11 @@ def simulate_no_mt(label_map, TR_ms=500., TE_ms=10., flip_angle_deg=30.,
     return _render_signal(label_map, _sig, tissue_props)
 
 
-def simulate_mtr_map(label_map, B1_sat_uT=3.0, offset_hz=2000.,
-                      TR_ms=500., TE_ms=10., flip_angle_deg=30.,
-                      sequence="GRE", tissue_props=None, mt_params=None):
+def simulate_mtr_map(label_map: np.ndarray, B1_sat_uT: float = 3.0,
+                      offset_hz: float = 2000., TR_ms: float = 500.,
+                      TE_ms: float = 10., flip_angle_deg: float = 30.,
+                      sequence: str = "GRE", tissue_props: dict | None = None,
+                      mt_params: dict | None = None) -> np.ndarray:
     """MTR map from a label volume.
 
     Returns
@@ -293,8 +305,10 @@ def simulate_mtr_map(label_map, B1_sat_uT=3.0, offset_hz=2000.,
 # Z-spectrum
 # ---------------------------------------------------------------------------
 
-def z_spectrum(f, k_ab, T1a_ms, T1b_ms, T2b_us, T2a_ms,
-               offset_hz_list, B1_sat_uT=1.0):
+def z_spectrum(f: float, k_ab: float, T1a_ms: float, T1b_ms: float,
+               T2b_us: float, T2a_ms: float,
+               offset_hz_list: list[float] | np.ndarray,
+               B1_sat_uT: float = 1.0) -> np.ndarray:
     """Z-spectrum (magnetisation vs frequency offset) for a single tissue.
 
     Includes both MT from bound pool and direct saturation of free water.
@@ -318,8 +332,11 @@ def z_spectrum(f, k_ab, T1a_ms, T1b_ms, T2b_us, T2a_ms,
     return mt_steady_state(f, k_ab, T1a_ms, T1b_ms, Wb, W_a=Wa)
 
 
-def simulate_z_spectrum_map(label_map, offset_hz_list, B1_sat_uT=1.0,
-                              tissue_props=None, mt_params=None):
+def simulate_z_spectrum_map(label_map: np.ndarray,
+                              offset_hz_list: list[float] | np.ndarray,
+                              B1_sat_uT: float = 1.0,
+                              tissue_props: dict | None = None,
+                              mt_params: dict | None = None) -> np.ndarray:
     """Z-spectrum per pixel: full (n_offsets, H, W) stack.
 
     Parameters

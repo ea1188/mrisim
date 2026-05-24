@@ -7,7 +7,8 @@ from scipy.ndimage import map_coordinates
 # k-space trajectory
 # ---------------------------------------------------------------------------
 
-def epi_trajectory(n_freq, n_phase, esp_ms=0.5):
+def epi_trajectory(n_freq: int, n_phase: int,
+                   esp_ms: float = 0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate a Cartesian EPI k-space trajectory.
 
     Odd phase-encode lines are acquired right-to-left (reversed readout),
@@ -41,7 +42,7 @@ def epi_trajectory(n_freq, n_phase, esp_ms=0.5):
     return kx, ky, t
 
 
-def epi_phase_correction(kspace, n_ref_lines=3):
+def epi_phase_correction(kspace: np.ndarray, n_ref_lines: int = 3) -> np.ndarray:
     """Estimate and remove linear phase error between even and odd EPI lines.
 
     Uses reference lines (acquired without phase encoding) to estimate
@@ -83,7 +84,8 @@ def epi_phase_correction(kspace, n_ref_lines=3):
 # Nyquist (N/2) ghost
 # ---------------------------------------------------------------------------
 
-def add_nyquist_ghost(kspace, phase_offset_rad=0.1, linear_phase_rad_per_sample=0.0):
+def add_nyquist_ghost(kspace: np.ndarray, phase_offset_rad: float = 0.1,
+                      linear_phase_rad_per_sample: float = 0.0) -> np.ndarray:
     """Introduce a constant and/or linear phase error on odd EPI lines.
 
     This creates the N/2 (Nyquist) ghost: a shifted copy of the object
@@ -108,7 +110,7 @@ def add_nyquist_ghost(kspace, phase_offset_rad=0.1, linear_phase_rad_per_sample=
     return ghosted
 
 
-def ghost_ratio(image):
+def ghost_ratio(image: np.ndarray) -> float:
     """Ghost-to-signal ratio: mean ghost intensity / mean object intensity.
 
     Assumes the ghost occupies the opposite half of the image in the
@@ -138,7 +140,7 @@ def ghost_ratio(image):
 # B0-driven phase-encode distortion
 # ---------------------------------------------------------------------------
 
-def epi_b0_phase_error(b0_slice_hz, t_pe_ms):
+def epi_b0_phase_error(b0_slice_hz: np.ndarray, t_pe_ms: float) -> np.ndarray:
     """Phase accrual map due to B0 at a given time along the EPI train.
 
     Each phase-encode line is acquired at a different time and thus
@@ -156,7 +158,8 @@ def epi_b0_phase_error(b0_slice_hz, t_pe_ms):
     return 2.0 * np.pi * b0_slice_hz * t_pe_ms * 1e-3
 
 
-def epi_distortion_map(b0_slice_hz, esp_ms, n_phase, bw_hz_per_pixel=None):
+def epi_distortion_map(b0_slice_hz: np.ndarray, esp_ms: float, n_phase: int,
+                        bw_hz_per_pixel: float | None = None) -> np.ndarray:
     """Pixel-shift map in the phase-encode direction due to B0 off-resonance.
 
     In EPI the effective bandwidth per pixel in phase is very small:
@@ -180,8 +183,10 @@ def epi_distortion_map(b0_slice_hz, esp_ms, n_phase, bw_hz_per_pixel=None):
     return b0_slice_hz / bw_hz_per_pixel
 
 
-def apply_epi_distortion(image, b0_slice_hz, esp_ms, n_phase,
-                          bw_hz_per_pixel=None, phase_encode_axis=0):
+def apply_epi_distortion(image: np.ndarray, b0_slice_hz: np.ndarray,
+                          esp_ms: float, n_phase: int,
+                          bw_hz_per_pixel: float | None = None,
+                          phase_encode_axis: int = 0) -> np.ndarray:
     """Geometrically distort an image by the EPI B0 pixel-shift map.
 
     Parameters
@@ -213,9 +218,10 @@ def apply_epi_distortion(image, b0_slice_hz, esp_ms, n_phase,
 # Simulate full EPI acquisition
 # ---------------------------------------------------------------------------
 
-def simulate_epi(signal_image, b0_slice_hz=None, esp_ms=0.5,
-                 phase_offset_rad=0.0, linear_phase_rad_per_sample=0.0,
-                 correct_ghost=False):
+def simulate_epi(signal_image: np.ndarray, b0_slice_hz: np.ndarray | None = None,
+                 esp_ms: float = 0.5, phase_offset_rad: float = 0.0,
+                 linear_phase_rad_per_sample: float = 0.0,
+                 correct_ghost: bool = False) -> tuple[np.ndarray, np.ndarray]:
     """Simulate an EPI acquisition with optional B0 distortion and ghosting.
 
     Procedure:
@@ -288,7 +294,8 @@ def simulate_epi(signal_image, b0_slice_hz=None, esp_ms=0.5,
 # T2* signal decay along echo train
 # ---------------------------------------------------------------------------
 
-def epi_t2star_decay(signal_image, T2star_map_ms, esp_ms, n_phase):
+def epi_t2star_decay(signal_image: np.ndarray, T2star_map_ms: np.ndarray,
+                     esp_ms: float, n_phase: int) -> np.ndarray:
     """Apply T2* blurring along the phase-encode direction of EPI.
 
     Each phase-encode line is acquired at a different effective TE

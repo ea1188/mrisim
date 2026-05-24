@@ -13,8 +13,11 @@ from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_reco
 # B1+ map generators
 # ---------------------------------------------------------------------------
 
-def gaussian_b1_map(shape, voxel_size=(1., 1.), center=None,
-                    nominal=1.0, variation=0.3, fwhm_mm=150.):
+def gaussian_b1_map(shape: tuple[int, int],
+                    voxel_size: tuple[float, float] = (1., 1.),
+                    center: tuple[float, float] | None = None,
+                    nominal: float = 1.0, variation: float = 0.3,
+                    fwhm_mm: float = 150.) -> np.ndarray:
     """Smooth Gaussian B1+ map modelling centre-brightening at 3T.
 
     The transmit field is brighter at the isocentre and falls off toward
@@ -52,8 +55,10 @@ def gaussian_b1_map(shape, voxel_size=(1., 1.), center=None,
     return b1.astype(np.float64)
 
 
-def sinusoidal_b1_map(shape, voxel_size=(1., 1.), period_mm=200., axis=1,
-                       nominal=1.0, amplitude=0.2):
+def sinusoidal_b1_map(shape: tuple[int, int],
+                       voxel_size: tuple[float, float] = (1., 1.),
+                       period_mm: float = 200., axis: int = 1,
+                       nominal: float = 1.0, amplitude: float = 0.2) -> np.ndarray:
     """Sinusoidal standing-wave B1+ pattern.
 
     Models the constructive/destructive interference pattern seen in large
@@ -87,7 +92,7 @@ def sinusoidal_b1_map(shape, voxel_size=(1., 1.), period_mm=200., axis=1,
     return np.broadcast_to(b1, shape).astype(np.float64).copy()
 
 
-def uniform_b1_map(shape, value=1.0):
+def uniform_b1_map(shape: tuple[int, int], value: float = 1.0) -> np.ndarray:
     """Uniform B1+ map — baseline / ideal transmitter."""
     return np.full(shape, float(value), dtype=np.float64)
 
@@ -96,7 +101,7 @@ def uniform_b1_map(shape, value=1.0):
 # Effective flip angle
 # ---------------------------------------------------------------------------
 
-def effective_flip_angle(nominal_deg, b1_map):
+def effective_flip_angle(nominal_deg: float, b1_map: np.ndarray) -> np.ndarray:
     """Pointwise effective flip angle after B1+ scaling.
 
     Parameters
@@ -115,8 +120,9 @@ def effective_flip_angle(nominal_deg, b1_map):
 # Signal modulation
 # ---------------------------------------------------------------------------
 
-def apply_b1_to_gre(signal_image, b1_map, nominal_deg, T1_map, T2star_map,
-                    PD_map, TR_ms, TE_ms):
+def apply_b1_to_gre(signal_image: np.ndarray, b1_map: np.ndarray,
+                    nominal_deg: float, T1_map: np.ndarray, T2star_map: np.ndarray,
+                    PD_map: np.ndarray, TR_ms: float, TE_ms: float) -> np.ndarray:
     """Re-compute GRE signal using effective (B1-corrected) flip angles.
 
     Parameters
@@ -149,7 +155,8 @@ def apply_b1_to_gre(signal_image, b1_map, nominal_deg, T1_map, T2star_map,
     return np.where(T1 > 0, img, 0.).astype(np.float64)
 
 
-def apply_b1_to_se(signal_image, b1_map, nominal_deg):
+def apply_b1_to_se(signal_image: np.ndarray, b1_map: np.ndarray,
+                   nominal_deg: float) -> np.ndarray:
     """Scale SE signal by sin(α_eff) / sin(α_nominal) approximation.
 
     For a perfectly-slice-selective 180° refocusing pulse the SE signal
@@ -181,7 +188,8 @@ def apply_b1_to_se(signal_image, b1_map, nominal_deg):
 # B1 mapping sequences
 # ---------------------------------------------------------------------------
 
-def double_angle_b1_map(signal_alpha, signal_2alpha):
+def double_angle_b1_map(signal_alpha: np.ndarray,
+                         signal_2alpha: np.ndarray) -> np.ndarray:
     """Estimate relative B1+ from the double-angle method (Insko 1993).
 
     B1_rel = arccos(S(2α) / (2 · S(α))) / α_nominal
@@ -205,7 +213,8 @@ def double_angle_b1_map(signal_alpha, signal_2alpha):
     return np.arccos(ratio) / (np.pi / 3.)   # α_nominal = 60° → π/3
 
 
-def actual_flip_angle_b1_map(signal_tr1, signal_tr2, TR1_ms, TR2_ms):
+def actual_flip_angle_b1_map(signal_tr1: np.ndarray, signal_tr2: np.ndarray,
+                              TR1_ms: float, TR2_ms: float) -> np.ndarray:
     """Estimate B1+ via the AFI (Actual Flip Angle Imaging) method.
 
     Uses two interleaved acquisitions at the same flip angle but two TRs.
@@ -238,7 +247,8 @@ def actual_flip_angle_b1_map(signal_tr1, signal_tr2, TR1_ms, TR2_ms):
 # Statistics
 # ---------------------------------------------------------------------------
 
-def b1_uniformity(b1_map, mask=None):
+def b1_uniformity(b1_map: np.ndarray,
+                  mask: np.ndarray | None = None) -> float:
     """Transmit field uniformity metric: std / mean over the masked region.
 
     Lower is better; 0 = perfectly uniform.
