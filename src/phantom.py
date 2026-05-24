@@ -1,6 +1,7 @@
 import numpy as np
 
-def create_brain_phantom(size=256):
+
+def create_brain_phantom(size: int = 256) -> np.ndarray:
     """Create a 2D brain phantom with labeled tissue regions."""
     phantom = np.zeros((size, size), dtype=int)
     center = size // 2

@@ -190,15 +190,17 @@ PRESETS = {
     },
 }
 
-def get_preset_names():
+def get_preset_names() -> list[str]:
     """Return list of preset names grouped by category."""
     return list(PRESETS.keys())
 
-def get_preset(name):
+
+def get_preset(name: str) -> dict | None:
     """Return preset parameters dictionary."""
     return PRESETS.get(name, None)
 
-def estimate_sar(flip_angle, TR, num_slices=20, sequence="SE"):
+
+def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20, sequence: str = "SE") -> dict[str, float | bool]:
     """Estimate SAR (Specific Absorption Rate) in W/kg.
     
     SAR is proportional to:

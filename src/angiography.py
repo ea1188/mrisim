@@ -1,6 +1,6 @@
 import numpy as np
 
-def create_vascular_phantom(size=256):
+def create_vascular_phantom(size: int = 256) -> np.ndarray:
     """Create a brain phantom with blood vessels."""
     from phantom import create_brain_phantom
     
@@ -60,7 +60,13 @@ ANGIO_TISSUE_PROPERTIES = {
     5: {"T1": 1930, "T2": 275, "PD": 0.9},     # Arterial blood at 3T
 }
 
-def simulate_tof_mra(phantom, TR=25, TE=4, flip_angle=60, slice_thickness=1.5):
+def simulate_tof_mra(
+    phantom: np.ndarray,
+    TR: float = 25,
+    TE: float = 4,
+    flip_angle: float = 60,
+    slice_thickness: float = 1.5,
+) -> np.ndarray:
     """Simulate Time-of-Flight MR Angiography.
     
     TOF exploits inflow enhancement: fresh blood entering the slice
@@ -93,7 +99,12 @@ def simulate_tof_mra(phantom, TR=25, TE=4, flip_angle=60, slice_thickness=1.5):
     
     return image
 
-def simulate_phase_contrast(phantom, venc=80, flow_velocity=60, flow_direction="up"):
+def simulate_phase_contrast(
+    phantom: np.ndarray,
+    venc: float = 80,
+    flow_velocity: float = 60,
+    flow_direction: str = "up",
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Simulate Phase Contrast MR Angiography.
     
     PC-MRA encodes velocity as phase shift.
@@ -131,7 +142,7 @@ def simulate_phase_contrast(phantom, venc=80, flow_velocity=60, flow_direction="
     
     return magnitude, phase, speed
 
-def compute_mip(volume_slices):
+def compute_mip(volume_slices: np.ndarray) -> np.ndarray:
     """Maximum Intensity Projection across slices."""
     return np.max(volume_slices, axis=0)
 

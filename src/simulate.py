@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
 from phantom import create_brain_phantom, TISSUE_PROPERTIES
 
-def simulate_spin_echo(phantom, TR, TE):
+
+def simulate_spin_echo(phantom: np.ndarray, TR: float, TE: float) -> np.ndarray:
     """Generate a simulated spin echo image from phantom."""
     image = np.zeros_like(phantom, dtype=float)
     for label, props in TISSUE_PROPERTIES.items():
@@ -12,7 +13,7 @@ def simulate_spin_echo(phantom, TR, TE):
         image[mask] = signal
     return image
 
-def simulate_gradient_echo(phantom, TR, TE, flip_angle):
+def simulate_gradient_echo(phantom: np.ndarray, TR: float, TE: float, flip_angle: float) -> np.ndarray:
     """Generate a simulated gradient echo image from phantom."""
     # Use T2* approximation: T2* ~ T2 * 0.6 for brain at 3T
     image = np.zeros_like(phantom, dtype=float)
@@ -23,7 +24,7 @@ def simulate_gradient_echo(phantom, TR, TE, flip_angle):
         image[mask] = signal
     return image
 
-def add_noise(image, snr_level=30):
+def add_noise(image: np.ndarray, snr_level: float = 30) -> np.ndarray:
     """Add Rician noise to simulate realistic MRI noise."""
     sigma = np.max(image) / snr_level
     noise_real = np.random.normal(0, sigma, image.shape)
@@ -31,7 +32,7 @@ def add_noise(image, snr_level=30):
     noisy = np.sqrt((image + noise_real)**2 + noise_imag**2)
     return noisy
 
-def display_image(image, title="Simulated MRI", save_path=None):
+def display_image(image: np.ndarray, title: str = "Simulated MRI", save_path: str | None = None) -> None:
     """Display the simulated image."""
     plt.figure(figsize=(8, 8))
     plt.imshow(image, cmap='gray', origin='upper')

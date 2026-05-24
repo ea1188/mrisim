@@ -269,7 +269,7 @@ def simulate_fse_image(
     TE_eff: float,
     ETL: int,
     echo_spacing: float,
-    tissue_properties: dict,  # type: ignore[type-arg]
+    tissue_properties: dict,
     refocus_angle_deg: float = 180.0,
 ) -> np.ndarray:
     """Simulate an FSE image with T2 blurring in the phase-encode direction.

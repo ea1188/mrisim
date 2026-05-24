@@ -1,7 +1,13 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-def add_motion_artifact(image, motion_type="periodic", amplitude=5, frequency=3, phase_direction="vertical"):
+def add_motion_artifact(
+    image: np.ndarray,
+    motion_type: str = "periodic",
+    amplitude: float = 5,
+    frequency: float = 3,
+    phase_direction: str = "vertical",
+) -> np.ndarray:
     """Simulate motion artifact (ghosting) in the phase encode direction.
     
     In real MRI, motion during acquisition causes phase errors in k-space,
@@ -68,7 +74,12 @@ def add_motion_artifact(image, motion_type="periodic", amplitude=5, frequency=3,
     
     return result
 
-def add_chemical_shift_artifact(image, phantom_slice, shift_pixels=3, fat_label=4):
+def add_chemical_shift_artifact(
+    image: np.ndarray,
+    phantom_slice: np.ndarray,
+    shift_pixels: float = 3,
+    fat_label: int = 4,
+) -> np.ndarray:
     """Simulate chemical shift artifact.
     
     Fat resonates at a different frequency than water (~3.5 ppm).
@@ -111,18 +122,25 @@ def add_chemical_shift_artifact(image, phantom_slice, shift_pixels=3, fat_label=
     
     return result
 
-def add_susceptibility_artifact(image, phantom_slice, strength=0.3, air_labels=[0]):
+def add_susceptibility_artifact(
+    image: np.ndarray,
+    phantom_slice: np.ndarray,
+    strength: float = 0.3,
+    air_labels: list[int] | None = None,
+) -> np.ndarray:
     """Simulate susceptibility artifact (signal dropout and distortion).
     
     Occurs at air-tissue interfaces (sinuses, ear canals).
     Causes local field inhomogeneity -> signal dephasing -> signal loss.
     """
+    if air_labels is None:
+        air_labels = [0]
     rows, cols = image.shape
-    
+
     # Create susceptibility field map
     # Signal dropout near air-tissue boundaries
     boundary_map = np.zeros_like(image, dtype=float)
-    
+
     for air_label in air_labels:
         air_mask = phantom_slice == air_label
         if not np.any(air_mask):
@@ -153,7 +171,11 @@ def add_susceptibility_artifact(image, phantom_slice, strength=0.3, air_labels=[
     
     return result
 
-def add_zipper_artifact(image, frequency_offset=0.3, amplitude=0.1):
+def add_zipper_artifact(
+    image: np.ndarray,
+    frequency_offset: float = 0.3,
+    amplitude: float = 0.1,
+) -> np.ndarray:
     """Simulate zipper artifact (RF interference line).
     
     Caused by RF leakage or equipment interference.
@@ -179,7 +201,7 @@ def add_zipper_artifact(image, frequency_offset=0.3, amplitude=0.1):
     
     return result
 
-def calculate_chemical_shift_pixels(bandwidth_per_pixel, field_strength=3.0):
+def calculate_chemical_shift_pixels(bandwidth_per_pixel: float, field_strength: float = 3.0) -> float:
     """Calculate chemical shift displacement in pixels.
     
     Chemical shift of fat: 3.5 ppm

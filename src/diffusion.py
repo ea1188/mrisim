@@ -130,7 +130,7 @@ def create_diffusion_tensor(
 
 def simulate_diffusion_image(
     phantom: np.ndarray,
-    tissue_properties: dict,  # type: ignore[type-arg]
+    tissue_properties: dict,
     b_value: float,
     gradient_direction: np.ndarray | list[float] | None = None,
     TR: float = 8000,
