@@ -53,7 +53,7 @@ _RAW = {
 FIELD_STRENGTHS = ["1.5T", "3T"]
 
 
-def properties(field="3T"):
+def properties(field: str = "3T") -> dict[int, dict]:
     """Return {label: {T1,T2,PD,T2star,name}} for the requested field strength."""
     use3t = (field == "3T")
     out = {}
@@ -69,7 +69,7 @@ def properties(field="3T"):
     return out
 
 
-def apply_to_engine(field="3T"):
+def apply_to_engine(field: str = "3T") -> dict[int, dict]:
     """Overwrite phantom3d.TISSUE_PROPERTIES_3D with the chosen field's values.
 
     Replaces (not just fills) brain labels 0-5 and adds body labels 6-21, so the

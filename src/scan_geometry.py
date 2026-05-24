@@ -21,33 +21,51 @@ through-slice axis edge-on, so the prescribed slices appear as a band:
 None of these scouts is get_slice's 'sagittal' view (the only one that flips an
 axis), so display<->index mapping is a direct identity in every case below.
 """
+from typing import TypedDict
+
 import numpy as np
 from phantom3d import get_slice
 
-SCOUT = {
+
+class _ScoutCfg(TypedDict):
+    scout: str
+    through: str
+    through_axis: int
+    inplane_axis: int
+    depth_axis: int
+
+
+SCOUT: dict[str, _ScoutCfg] = {
     "axial":    dict(scout="coronal", through="v", through_axis=0, inplane_axis=2, depth_axis=1),
     "coronal":  dict(scout="axial",   through="v", through_axis=1, inplane_axis=2, depth_axis=0),
     "sagittal": dict(scout="coronal", through="h", through_axis=2, inplane_axis=0, depth_axis=1),
 }
 
 
-def cfg_for(acq):
+def cfg_for(acq: str) -> _ScoutCfg:
     return SCOUT[acq]
 
 
-def depth_index(acq, vol_shape):
+def depth_index(acq: str, vol_shape: tuple[int, ...]) -> int:
     """Index of the scout plane along the depth axis (centre of the volume)."""
     return vol_shape[SCOUT[acq]["depth_axis"]] // 2
 
 
-def scout_slice(vol, acq):
+def scout_slice(vol: np.ndarray, acq: str) -> tuple[np.ndarray, _ScoutCfg, int]:
     """Return (scout_label_slice, cfg, depth_idx) for the given acquisition plane."""
     cfg = SCOUT[acq]
     d = depth_index(acq, vol.shape)
     return get_slice(vol, cfg["scout"], d), cfg, d
 
 
-def prescribed_indices(acq, vol_shape, slice_idx, n_slices, thickness, gap=0.0):
+def prescribed_indices(
+    acq: str,
+    vol_shape: tuple[int, ...],
+    slice_idx: float,
+    n_slices: int,
+    thickness: float,
+    gap: float = 0.0,
+) -> list[int]:
     """
     List of integer through-axis indices for the prescribed slice group,
     centred on slice_idx, clamped to the volume. thickness/gap are in voxels.
@@ -62,8 +80,16 @@ def prescribed_indices(acq, vol_shape, slice_idx, n_slices, thickness, gap=0.0):
     return out
 
 
-def box_rect(acq, vol_shape, slice_idx, n_slices, thickness, gap,
-             inplane_fov_frac, inplane_off):
+def box_rect(
+    acq: str,
+    vol_shape: tuple[int, ...],
+    slice_idx: float,
+    n_slices: int,
+    thickness: float,
+    gap: float,
+    inplane_fov_frac: float,
+    inplane_off: float,
+) -> dict:
     """
     Compute the FOV box in scout DISPLAY coordinates.
 
@@ -103,9 +129,19 @@ def box_rect(acq, vol_shape, slice_idx, n_slices, thickness, gap,
     return info
 
 
-def update_from_drag(acq, vol_shape, mode, dx_through, d_inplane,
-                     slice_idx, n_slices, thickness, gap,
-                     inplane_fov_frac, inplane_off):
+def update_from_drag(
+    acq: str,
+    vol_shape: tuple[int, ...],
+    mode: str,
+    dx_through: float,
+    d_inplane: float,
+    slice_idx: float,
+    n_slices: int,
+    thickness: float,
+    gap: float,
+    inplane_fov_frac: float,
+    inplane_off: float,
+) -> tuple[float, float, float, int]:
     """
     Apply a drag to the geometry and return updated
     (slice_idx, inplane_off, inplane_fov_frac, n_slices).
@@ -141,7 +177,7 @@ def update_from_drag(acq, vol_shape, mode, dx_through, d_inplane,
 # ---- In-plane FOV crop of an acquired 2D slice ------------------------------
 # Maps the two in-plane axes onto the get_slice(acq, idx) output array, so we can
 # crop the acquired image to the prescribed FOV (square zoom + in-plane shift).
-def _arr_axis(acq, vol_axis):
+def _arr_axis(acq: str, vol_axis: int) -> tuple[int, bool]:
     """Which output-array axis (0=row,1=col) a given volume axis maps to,
     plus whether that array axis is flipped relative to the index."""
     if acq == "axial":     # vol[idx,:,:] -> rows=Y(1), cols=X(2)
@@ -153,7 +189,12 @@ def _arr_axis(acq, vol_axis):
     return m[vol_axis]
 
 
-def fov_crop(acq, slice2d, inplane_fov_frac, inplane_off):
+def fov_crop(
+    acq: str,
+    slice2d: np.ndarray,
+    inplane_fov_frac: float,
+    inplane_off: float,
+) -> np.ndarray:
     """
     Crop a 2D acquired slice to the prescribed FOV: a centred square window of
     side inplane_fov_frac * dimension, shifted by inplane_off along the shown
@@ -167,7 +208,7 @@ def fov_crop(acq, slice2d, inplane_fov_frac, inplane_off):
 
     dims = {0: H, 1: W}
 
-    def window(axis_len, frac, off):
+    def window(axis_len: int, frac: float, off: float) -> tuple[int, int]:
         half = max(2, int(round(frac * axis_len / 2.0)))
         c = axis_len / 2.0 + off
         lo = int(round(c - half)); hi = int(round(c + half))

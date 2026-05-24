@@ -19,7 +19,7 @@ from scipy.ndimage import map_coordinates
 # Rotation helpers
 # ---------------------------------------------------------------------------
 
-def _rot_matrix(axis, angle_rad):
+def _rot_matrix(axis: np.ndarray | list[float], angle_rad: float) -> np.ndarray:
     """3×3 Rodrigues rotation matrix: rotate by angle_rad around axis."""
     k = np.asarray(axis, dtype=float)
     k = k / np.linalg.norm(k)
@@ -51,7 +51,12 @@ _BASE_FRAMES = {
 # Plane orientation
 # ---------------------------------------------------------------------------
 
-def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0, rot_inplane_deg=0.0):
+def plane_from_angles(
+    base: str = "axial",
+    tilt_deg: float = 0.0,
+    rot_deg: float = 0.0,
+    rot_inplane_deg: float = 0.0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compose three rotation angles on top of a base orientation.
 
@@ -96,8 +101,16 @@ def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0, rot_inplane_deg=0
 # Direct plane sampler
 # ---------------------------------------------------------------------------
 
-def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0,
-                  voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None):
+def oblique_plane(
+    vol: np.ndarray,
+    row_vec: np.ndarray,
+    col_vec: np.ndarray,
+    center: np.ndarray | tuple[float, float, float],
+    shape: tuple[int, int] | None = None,
+    order: int = 0,
+    voxel_size: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    pixel_size_mm: float | None = None,
+) -> np.ndarray:
     """
     Sample an oblique 2D plane from vol by direct interpolation.
 
@@ -149,10 +162,20 @@ def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0,
 # Multi-slice slab
 # ---------------------------------------------------------------------------
 
-def oblique_slab(vol, normal, row_vec, col_vec, center,
-                 n_slices=1, thickness_mm=5.0, gap_mm=0.0,
-                 shape=None, order=0,
-                 voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None):
+def oblique_slab(
+    vol: np.ndarray,
+    normal: np.ndarray,
+    row_vec: np.ndarray,
+    col_vec: np.ndarray,
+    center: np.ndarray | tuple[float, float, float],
+    n_slices: int = 1,
+    thickness_mm: float = 5.0,
+    gap_mm: float = 0.0,
+    shape: tuple[int, int] | None = None,
+    order: int = 0,
+    voxel_size: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    pixel_size_mm: float | None = None,
+) -> np.ndarray:
     """
     Sample a stack of N parallel oblique slices (a prescribed slab).
 
@@ -207,7 +230,15 @@ def oblique_slab(vol, normal, row_vec, col_vec, center,
 # MRI signal rendering
 # ---------------------------------------------------------------------------
 
-def _render_label_map(label_map, TR, TE, sequence, TI, flip_angle, tissue_props):
+def _render_label_map(
+    label_map: np.ndarray,
+    TR: float,
+    TE: float,
+    sequence: str,
+    TI: float | None,
+    flip_angle: float,
+    tissue_props: dict,
+) -> np.ndarray:
     """Apply MRI signal equations to a 2D integer label map.
 
     Returns a 2D float64 image.  Labels absent from tissue_props are left at 0.
@@ -232,11 +263,21 @@ def _render_label_map(label_map, TR, TE, sequence, TI, flip_angle, tissue_props)
     return image
 
 
-def simulate_oblique(vol, row_vec, col_vec, center,
-                     TR=500.0, TE=15.0, sequence="SE",
-                     TI=None, flip_angle=90.0,
-                     shape=None, voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None,
-                     tissue_props=None):
+def simulate_oblique(
+    vol: np.ndarray,
+    row_vec: np.ndarray,
+    col_vec: np.ndarray,
+    center: np.ndarray | tuple[float, float, float],
+    TR: float = 500.0,
+    TE: float = 15.0,
+    sequence: str = "SE",
+    TI: float | None = None,
+    flip_angle: float = 90.0,
+    shape: tuple[int, int] | None = None,
+    voxel_size: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    pixel_size_mm: float | None = None,
+    tissue_props: dict | None = None,
+) -> np.ndarray:
     """
     Sample one oblique plane from vol and render MRI signal.
 
@@ -267,12 +308,25 @@ def simulate_oblique(vol, row_vec, col_vec, center,
                              tissue_props)
 
 
-def simulate_oblique_slab(vol, normal, row_vec, col_vec, center,
-                          n_slices=1, thickness_mm=5.0, gap_mm=0.0,
-                          TR=500.0, TE=15.0, sequence="SE",
-                          TI=None, flip_angle=90.0,
-                          shape=None, voxel_size=(1.0, 1.0, 1.0), pixel_size_mm=None,
-                          tissue_props=None):
+def simulate_oblique_slab(
+    vol: np.ndarray,
+    normal: np.ndarray,
+    row_vec: np.ndarray,
+    col_vec: np.ndarray,
+    center: np.ndarray | tuple[float, float, float],
+    n_slices: int = 1,
+    thickness_mm: float = 5.0,
+    gap_mm: float = 0.0,
+    TR: float = 500.0,
+    TE: float = 15.0,
+    sequence: str = "SE",
+    TI: float | None = None,
+    flip_angle: float = 90.0,
+    shape: tuple[int, int] | None = None,
+    voxel_size: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    pixel_size_mm: float | None = None,
+    tissue_props: dict | None = None,
+) -> np.ndarray:
     """
     Sample a slab of parallel oblique slices and render MRI signal for each.
 
@@ -304,8 +358,16 @@ def simulate_oblique_slab(vol, normal, row_vec, col_vec, center,
 # Three-scout intersection lines
 # ---------------------------------------------------------------------------
 
-def _intersect_line(n, center, fixed_axis, fixed_val,
-                    row_axis, col_axis, row_len, col_len):
+def _intersect_line(
+    n: np.ndarray,
+    center: np.ndarray,
+    fixed_axis: int,
+    fixed_val: float,
+    row_axis: int,
+    col_axis: int,
+    row_len: int,
+    col_len: int,
+) -> tuple[float, float, float, float] | None:
     """
     Clip the intersection of the oblique plane with an axis-aligned scout plane.
 
@@ -338,7 +400,7 @@ def _intersect_line(n, center, fixed_axis, fixed_val,
                 pts.append((float(np.clip(r_val, 0, row_len - 1)), c_val))
 
     # Deduplicate within half a pixel
-    unique = []
+    unique: list[tuple[float, float]] = []
     for p in pts:
         if not any(abs(p[0] - q[0]) < 0.5 and abs(p[1] - q[1]) < 0.5
                    for q in unique):
@@ -350,7 +412,12 @@ def _intersect_line(n, center, fixed_axis, fixed_val,
     return (c0, r0, c1, r1)  # (x0, y0, x1, y1) in display / matplotlib coords
 
 
-def scout_lines(vol_shape, normal, center, voxel_size=(1.0, 1.0, 1.0)):
+def scout_lines(
+    vol_shape: tuple[int, int, int],
+    normal: np.ndarray,
+    center: np.ndarray | tuple[float, float, float],
+    voxel_size: tuple[float, float, float] = (1.0, 1.0, 1.0),
+) -> dict[str, tuple[float, float, float, float] | None]:
     """
     Intersect the oblique plane with the three axis-aligned scout planes.
 
@@ -390,9 +457,16 @@ def scout_lines(vol_shape, normal, center, voxel_size=(1.0, 1.0, 1.0)):
 # Slab band overlay
 # ---------------------------------------------------------------------------
 
-def scout_band(vol_shape, normal, center,
-               n_slices=1, thickness_mm=5.0, gap_mm=0.0,
-               voxel_size=(1.0, 1.0, 1.0), scout_positions=None):
+def scout_band(
+    vol_shape: tuple[int, int, int],
+    normal: np.ndarray,
+    center: np.ndarray | tuple[float, float, float],
+    n_slices: int = 1,
+    thickness_mm: float = 5.0,
+    gap_mm: float = 0.0,
+    voxel_size: tuple[float, float, float] = (1.0, 1.0, 1.0),
+    scout_positions: np.ndarray | tuple[float, float, float] | None = None,
+) -> dict[str, dict]:
     """
     Compute slab-band overlay lines for a three-scout localizer display.
 
@@ -452,7 +526,14 @@ def scout_band(vol_shape, normal, center,
         "sagittal": (2, 0, 1, nz, ny),
     }
 
-    def _line(plane_ctr, fa, ra, ca, rl, cl):
+    def _line(
+        plane_ctr: np.ndarray,
+        fa: int,
+        ra: int,
+        ca: int,
+        rl: int,
+        cl: int,
+    ) -> tuple[float, float, float, float] | None:
         return _intersect_line(n_idx, np.asarray(plane_ctr, dtype=float),
                                fa, sp[fa], ra, ca, rl, cl)
 
@@ -470,7 +551,10 @@ def scout_band(vol_shape, normal, center,
 # Convenience: extract three axis-aligned scouts through a centre point
 # ---------------------------------------------------------------------------
 
-def three_scouts(vol, center=None):
+def three_scouts(
+    vol: np.ndarray,
+    center: tuple[int, int, int] | None = None,
+) -> dict[str, np.ndarray]:
     """
     Extract the three orthogonal scout slices that all pass through center.
 

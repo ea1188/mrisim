@@ -29,14 +29,23 @@ BODY_TISSUES = _tdb.properties("3T")
 _BODY_ONLY = (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
 
 
-def merge_into_engine():
+def merge_into_engine() -> None:
     """Add body tissue properties to phantom3d.TISSUE_PROPERTIES_3D in place."""
     import phantom3d
     for lab in _BODY_ONLY:
         phantom3d.TISSUE_PROPERTIES_3D.setdefault(lab, BODY_TISSUES[lab])
 
 
-def _ellipse(gy, gx, cy, cx, ry, rx, angle=0.0, pert=None):
+def _ellipse(
+    gy: np.ndarray,
+    gx: np.ndarray,
+    cy: float,
+    cx: float,
+    ry: float,
+    rx: float,
+    angle: float = 0.0,
+    pert: np.ndarray | None = None,
+) -> np.ndarray:
     t = np.deg2rad(angle)
     yy = gy - cy; xx = gx - cx
     xr = xx * np.cos(t) + yy * np.sin(t)
@@ -45,7 +54,7 @@ def _ellipse(gy, gx, cy, cx, ry, rx, angle=0.0, pert=None):
     return (xr / rx) ** 2 + (yr / ry) ** 2 <= rhs
 
 
-def _win(f, lo, hi, edge=0.10):
+def _win(f: float, lo: float, hi: float, edge: float = 0.10) -> float:
     """Smooth 0..1 raised-cosine window over [lo,hi] with soft edges of width `edge`."""
     if f <= lo or f >= hi:
         return 0.0
@@ -55,7 +64,15 @@ def _win(f, lo, hi, edge=0.10):
     return 0.5 - 0.5 * np.cos(np.pi * d / edge)
 
 
-def _abdomen_slice(f, H, W, gy, gx, pert, disc=False):
+def _abdomen_slice(
+    f: float,
+    H: int,
+    W: int,
+    gy: np.ndarray,
+    gx: np.ndarray,
+    pert: np.ndarray | None,
+    disc: bool = False,
+) -> np.ndarray:
     """One axial abdomen label slice at superior->inferior fraction f in [0,1]."""
     cy, cx = H * 0.5, W * 0.5
     ph = np.zeros((H, W), dtype=np.uint8)
@@ -135,7 +152,7 @@ def _abdomen_slice(f, H, W, gy, gx, pert, disc=False):
     return ph
 
 
-def generate_abdomen_3d(Z=160, H=200, W=256, seed=7):
+def generate_abdomen_3d(Z: int = 160, H: int = 200, W: int = 256, seed: int = 7) -> np.ndarray:
     """Z-varying axial abdomen volume, shape (Z, H, W)."""
     rng = np.random.default_rng(seed)
     gy, gx = np.ogrid[:H, :W]
@@ -161,7 +178,7 @@ REGION_SEQUENCES = {
 _BUILDERS = {"Abdomen": generate_abdomen_3d}
 
 
-def build_region(name):
+def build_region(name: str) -> np.ndarray:
     """Return a labeled 3D volume for a non-brain region (Brain is supplied by app)."""
     if name in _BUILDERS:
         return _BUILDERS[name]()
@@ -169,13 +186,22 @@ def build_region(name):
 
 
 # back-compat helper used by the earlier demo
-def generate_abdomen_axial(H=260, W=320, seed=7):
+def generate_abdomen_axial(H: int = 260, W: int = 320, seed: int = 7) -> np.ndarray:
     gy, gx = np.ogrid[:H, :W]
     return _abdomen_slice(0.34, H, W, gy, gx, pert=None, disc=False)
 
 
-def render_slice(label_map, TR, TE, sequence="SE", TI=150, flip_angle=90,
-                 texture=0.07, blur=0.6, seed=0):
+def render_slice(
+    label_map: np.ndarray,
+    TR: float,
+    TE: float,
+    sequence: str = "SE",
+    TI: float = 150,
+    flip_angle: float = 90,
+    texture: float = 0.07,
+    blur: float = 0.6,
+    seed: int = 0,
+) -> np.ndarray:
     from signal_engine import (spin_echo_signal, gradient_echo_signal,
                                inversion_recovery_signal)
     img = np.zeros(label_map.shape, dtype=float)

@@ -1,7 +1,7 @@
 import numpy as np
 
 # Brain activation regions (simplified)
-def create_fmri_phantom(size=256):
+def create_fmri_phantom(size: int = 256) -> tuple[np.ndarray, np.ndarray]:
     """Create phantom with activation regions for fMRI simulation."""
     from phantom import create_brain_phantom
     
@@ -34,7 +34,10 @@ def create_fmri_phantom(size=256):
     
     return phantom, activation
 
-def simulate_bold_signal(T2star_rest, bold_change_percent):
+def simulate_bold_signal(
+    T2star_rest: float | np.ndarray,
+    bold_change_percent: float | np.ndarray,
+) -> float | np.ndarray:
     """Calculate T2* change due to BOLD effect.
     
     BOLD effect: neural activation → increased blood flow → 
@@ -46,48 +49,65 @@ def simulate_bold_signal(T2star_rest, bold_change_percent):
     T2star_active = 1.0 / (1.0/T2star_rest + delta_R2star)
     return T2star_active
 
-def simulate_fmri_image(phantom, activation, TR=2000, TE=30, flip_angle=90, is_active=True):
+def simulate_fmri_image(
+    phantom: np.ndarray,
+    activation: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+    is_active: bool = True,
+) -> np.ndarray:
     """Simulate an fMRI EPI image.
-    
+
     Parameters:
     - is_active: if True, show activated state; if False, show rest state
     """
     from signal_engine import gradient_echo_signal
     from phantom import TISSUE_PROPERTIES
-    
+
     image = np.zeros_like(phantom, dtype=float)
-    
+
     T2star_values = {
         0: 1,
-        1: 2000 * 0.6,   # CSF
-        2: 100 * 0.6,    # GM (60ms at 3T)
-        3: 80 * 0.6,     # WM (48ms at 3T)
-        4: 2000 * 0.6,   # CSF
+        1: 2000 * 0.6,
+        2: 100 * 0.6,
+        3: 80 * 0.6,
+        4: 2000 * 0.6,
     }
-    
+
     for label, props in TISSUE_PROPERTIES.items():
         mask = phantom == label
-        T2star = T2star_values.get(label, props["T2"] * 0.6)
-        
-        if is_active and label == 2:  # Gray matter with activation
-            # Per-voxel T2* modification based on activation level
-            for i in range(phantom.shape[0]):
-                for j in range(phantom.shape[1]):
-                    if phantom[i, j] == label:
-                        act = activation[i, j]
-                        if act > 0:
-                            T2star_local = simulate_bold_signal(T2star, act)
-                        else:
-                            T2star_local = T2star
-                        image[i, j] = gradient_echo_signal(
-                            props["T1"], T2star_local, props["PD"], TR, TE, flip_angle)
+        T2star = float(T2star_values.get(label, props["T2"] * 0.6))
+
+        if is_active and label == 2:
+            act_values = activation[mask]
+            T2star_local = np.where(
+                act_values > 0,
+                simulate_bold_signal(T2star, act_values),
+                T2star,
+            )
+            alpha = np.radians(flip_angle)
+            E1 = np.exp(-TR / props["T1"])
+            denom = 1.0 - np.cos(alpha) * E1
+            if abs(denom) < 1e-12:
+                image[mask] = 0.0
+            else:
+                image[mask] = (props["PD"] * np.sin(alpha) * (1.0 - E1) / denom
+                               * np.exp(-TE / T2star_local))
         else:
             sig = gradient_echo_signal(props["T1"], T2star, props["PD"], TR, TE, flip_angle)
             image[mask] = sig
-    
+
     return image
 
-def simulate_fmri_fast(phantom, activation, TR=2000, TE=30, flip_angle=90, is_active=True):
+def simulate_fmri_fast(
+    phantom: np.ndarray,
+    activation: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+    is_active: bool = True,
+) -> np.ndarray:
     """Fast vectorized fMRI simulation."""
     from signal_engine import gradient_echo_signal
     from phantom import TISSUE_PROPERTIES
@@ -124,7 +144,13 @@ def simulate_fmri_fast(phantom, activation, TR=2000, TE=30, flip_angle=90, is_ac
     
     return image
 
-def compute_activation_map(phantom, activation, TR=2000, TE=30, flip_angle=90):
+def compute_activation_map(
+    phantom: np.ndarray,
+    activation: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+) -> np.ndarray:
     """Compute the difference (activation) map between rest and active states."""
     rest = simulate_fmri_fast(phantom, activation, TR, TE, flip_angle, is_active=False)
     active = simulate_fmri_fast(phantom, activation, TR, TE, flip_angle, is_active=True)
@@ -135,7 +161,15 @@ def compute_activation_map(phantom, activation, TR=2000, TE=30, flip_angle=90):
     
     return pct_change
 
-def compute_t_statistic_map(phantom, activation, TR=2000, TE=30, flip_angle=90, num_volumes=100, noise_level=0.5):
+def compute_t_statistic_map(
+    phantom: np.ndarray,
+    activation: np.ndarray,
+    TR: float = 2000,
+    TE: float = 30,
+    flip_angle: float = 90,
+    num_volumes: int = 100,
+    noise_level: float = 0.5,
+) -> np.ndarray:
     """Simulate a t-statistic map from a block design fMRI experiment.
     
     Simulates alternating rest/active blocks and computes per-voxel t-test.
@@ -166,7 +200,7 @@ def compute_t_statistic_map(phantom, activation, TR=2000, TE=30, flip_angle=90, 
     
     return t_map
 
-def compute_temporal_snr(TR, TE, flip_angle, num_volumes):
+def compute_temporal_snr(TR: float, TE: float, flip_angle: float, num_volumes: int) -> float:
     """Estimate temporal SNR for fMRI experiment."""
     # tSNR decreases with fewer volumes, increases with longer experiments
     # Typical tSNR at 3T: 50-150 for GRE-EPI

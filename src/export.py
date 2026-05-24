@@ -5,11 +5,15 @@ from datetime import datetime
 
 EXPORT_DIR = os.path.expanduser('~/mrisim/exports')
 
-def ensure_export_dir():
+def ensure_export_dir() -> str:
     os.makedirs(EXPORT_DIR, exist_ok=True)
     return EXPORT_DIR
 
-def export_image(image, filename=None, params=None):
+def export_image(
+    image: np.ndarray,
+    filename: str | None = None,
+    params: dict | None = None,
+) -> str:
     """Save simulated image as PNG."""
     import matplotlib.pyplot as plt
     
@@ -37,7 +41,7 @@ def export_image(image, filename=None, params=None):
     
     return filepath
 
-def export_protocol(params, filename=None):
+def export_protocol(params: dict, filename: str | None = None) -> str:
     """Save protocol parameters as JSON."""
     export_dir = ensure_export_dir()
     if filename is None:
@@ -58,13 +62,18 @@ def export_protocol(params, filename=None):
     
     return filepath
 
-def load_protocol(filepath):
+def load_protocol(filepath: str) -> dict:
     """Load protocol parameters from JSON."""
     with open(filepath, 'r') as f:
         data = json.load(f)
     return data.get("parameters", data)
 
-def export_report(image, params, metrics, filename=None):
+def export_report(
+    image: np.ndarray,
+    params: dict,
+    metrics: dict,
+    filename: str | None = None,
+) -> str:
     """Save a PDF-like report with image, parameters, and metrics."""
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
@@ -87,7 +96,7 @@ def export_report(image, params, metrics, filename=None):
                 ha='center', fontsize=8, color='red', style='italic')
         
         # Image
-        ax_img = fig.add_axes([0.15, 0.45, 0.7, 0.4])
+        ax_img = fig.add_axes((0.15, 0.45, 0.7, 0.4))
         ax_img.imshow(image, cmap='gray', origin='lower')
         ax_img.set_axis_off()
         ax_img.set_title(f"{params.get('sequence', '')} | TR={params.get('TR', 0):.0f}ms TE={params.get('TE', 0):.0f}ms",

@@ -37,7 +37,7 @@ SUSCEPTIBILITY_PPM = {
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _chi_vol(label_vol):
+def _chi_vol(label_vol: np.ndarray) -> np.ndarray:
     """Convert integer label volume to susceptibility map (ppm)."""
     out = np.zeros(label_vol.shape, dtype=np.float64)
     for lab, chi in SUSCEPTIBILITY_PPM.items():
@@ -45,7 +45,10 @@ def _chi_vol(label_vol):
     return out
 
 
-def _dipole_kernel(shape, voxel_size=(1., 1., 1.)):
+def _dipole_kernel(
+    shape: tuple[int, ...],
+    voxel_size: tuple[float, ...] = (1., 1., 1.),
+) -> np.ndarray:
     """Dipole kernel K(k) = 1/3 - kz² / |k|² in k-space.
 
     DC component is set to 0 (mean susceptibility does not shift the
@@ -80,7 +83,11 @@ def _dipole_kernel(shape, voxel_size=(1., 1., 1.)):
 # Public: B0 map generators
 # ---------------------------------------------------------------------------
 
-def susceptibility_b0_map(label_vol, voxel_size=(1., 1., 1.), field_strength_T=1.5):
+def susceptibility_b0_map(
+    label_vol: np.ndarray,
+    voxel_size: tuple[float, ...] = (1., 1., 1.),
+    field_strength_T: float = 1.5,
+) -> np.ndarray:
     """Compute B0 field map from a label volume via dipole convolution.
 
     Uses the standard MRI susceptibility forward model:
@@ -104,7 +111,12 @@ def susceptibility_b0_map(label_vol, voxel_size=(1., 1., 1.), field_strength_T=1
     return db0_T * GAMMA_HZ_T
 
 
-def polynomial_b0_map(shape, voxel_size=(1., 1., 1.), linear=0., quadratic=0.):
+def polynomial_b0_map(
+    shape: tuple[int, ...],
+    voxel_size: tuple[float, ...] = (1., 1., 1.),
+    linear: float | np.ndarray = 0.,
+    quadratic: float | np.ndarray = 0.,
+) -> np.ndarray:
     """Smooth polynomial B0 variation (shimming residuals).
 
     Models a first + second-order shim residual:
@@ -137,8 +149,13 @@ def polynomial_b0_map(shape, voxel_size=(1., 1., 1.), linear=0., quadratic=0.):
     return b0
 
 
-def gaussian_b0_map(shape, voxel_size=(1., 1., 1.), center=None,
-                    amplitude_hz=100.0, fwhm_mm=30.0):
+def gaussian_b0_map(
+    shape: tuple[int, ...],
+    voxel_size: tuple[float, ...] = (1., 1., 1.),
+    center: list[float] | np.ndarray | None = None,
+    amplitude_hz: float = 100.0,
+    fwhm_mm: float = 30.0,
+) -> np.ndarray:
     """Localised Gaussian B0 distortion (e.g. metallic implant).
 
     Parameters
@@ -172,7 +189,11 @@ def gaussian_b0_map(shape, voxel_size=(1., 1., 1.), center=None,
 # Public: off-resonance effects on signal
 # ---------------------------------------------------------------------------
 
-def b0_lineshape_factor(b0_slice_hz, TE_ms, voxel_size_2d=(1., 1.)):
+def b0_lineshape_factor(
+    b0_slice_hz: np.ndarray,
+    TE_ms: float,
+    voxel_size_2d: tuple[float, float] = (1., 1.),
+) -> np.ndarray:
     """Intravoxel dephasing factor [0, 1] per pixel.
 
     Estimates the B0 gradient across each voxel using finite differences,
@@ -199,8 +220,13 @@ def b0_lineshape_factor(b0_slice_hz, TE_ms, voxel_size_2d=(1., 1.)):
     return np.abs(np.sinc(delta_f * TE_s))  # numpy sinc = sin(πx)/(πx)
 
 
-def apply_offresonance(signal_image, b0_slice_hz, TE_ms, sequence="GRE",
-                       voxel_size_2d=(1., 1.)):
+def apply_offresonance(
+    signal_image: np.ndarray,
+    b0_slice_hz: np.ndarray,
+    TE_ms: float,
+    sequence: str = "GRE",
+    voxel_size_2d: tuple[float, float] = (1., 1.),
+) -> np.ndarray:
     """Apply intravoxel dephasing to a 2-D MR signal image.
 
     Spin echo (SE, IR) refocuses static field inhomogeneity → image unchanged.
@@ -229,7 +255,7 @@ def apply_offresonance(signal_image, b0_slice_hz, TE_ms, sequence="GRE",
 # Public: readout geometric distortion
 # ---------------------------------------------------------------------------
 
-def readout_pixel_shift(b0_slice_hz, bandwidth_hz_per_pixel):
+def readout_pixel_shift(b0_slice_hz: np.ndarray, bandwidth_hz_per_pixel: float) -> np.ndarray:
     """Pixel shift map along the frequency-encode direction.
 
     Parameters
@@ -244,8 +270,12 @@ def readout_pixel_shift(b0_slice_hz, bandwidth_hz_per_pixel):
     return b0_slice_hz / bandwidth_hz_per_pixel
 
 
-def apply_readout_shift(image, b0_slice_hz, bandwidth_hz_per_pixel,
-                        freq_encode_axis=1):
+def apply_readout_shift(
+    image: np.ndarray,
+    b0_slice_hz: np.ndarray,
+    bandwidth_hz_per_pixel: float,
+    freq_encode_axis: int = 1,
+) -> np.ndarray:
     """Geometrically distort an image by the readout pixel shift.
 
     Uses nearest-neighbour interpolation (order=0) to preserve label

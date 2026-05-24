@@ -197,7 +197,7 @@ TS_MR_TO_MR = {
 }
 
 
-def register_properties(field=None):
+def register_properties(field: str | None = None) -> None:
     """Ensure body tissue properties exist in the engine table.
 
     Delegates to tissue_db (the single source of truth) when available so a
@@ -223,7 +223,7 @@ def register_properties(field=None):
         phantom3d.TISSUE_PROPERTIES_3D.setdefault(lab, props)
 
 
-def detect_scheme(label_set):
+def detect_scheme(label_set: np.ndarray) -> str:
     """
     Decide whether a mask uses the CT 'total' (117-class) or MR 'total_mr'
     (50-class) numbering, from the set of labels actually present.
@@ -245,7 +245,7 @@ def detect_scheme(label_set):
     return "mr"
 
 
-def _remap(ts_volume, scheme="ct"):
+def _remap(ts_volume: np.ndarray, scheme: str = "ct") -> np.ndarray:
     """Vectorised remap of TS class indices -> MR tissue labels (0 = air)."""
     table = TS_MR_TO_MR if scheme == "mr" else TS_TO_MR
     lut = np.zeros(int(ts_volume.max()) + 1, dtype=np.uint8)
@@ -255,7 +255,7 @@ def _remap(ts_volume, scheme="ct"):
     return lut[ts_volume]
 
 
-def load_segmented_nifti(path, target_max=256, scheme="auto"):
+def load_segmented_nifti(path: str, target_max: int = 256, scheme: str = "auto") -> np.ndarray:
     """
     Load a TotalSegmentator label NIfTI and return a uint8 labeled volume in the
     simulator's (Z, Y, X) convention, with body fat filled around the organs so
@@ -280,7 +280,7 @@ def load_segmented_nifti(path, target_max=256, scheme="auto"):
     return vol
 
 
-def _slice_silhouette(mask):
+def _slice_silhouette(mask: np.ndarray) -> np.ndarray:
     """Approximate the body silhouette of one axial slice as the region bounded
     by the outermost labeled voxels along each row AND each column. Robust on
     sparse structures and needs no SciPy/skimage; reconstructs a torso outline
@@ -299,7 +299,7 @@ def _slice_silhouette(mask):
     return rowfill & colfill
 
 
-def _erode(mask, iters=1):
+def _erode(mask: np.ndarray, iters: int = 1) -> np.ndarray:
     """Binary erosion via 4-neighbour min, dependency-free (no scipy needed)."""
     m = mask
     for _ in range(iters):
@@ -310,7 +310,13 @@ def _erode(mask, iters=1):
     return m
 
 
-def _fill_body_layers(vol, fat_label=4, muscle_label=6, skin_iters=2, wall_iters=5):
+def _fill_body_layers(
+    vol: np.ndarray,
+    fat_label: int = 4,
+    muscle_label: int = 6,
+    skin_iters: int = 2,
+    wall_iters: int = 5,
+) -> np.ndarray:
     """
     Fill the unlabeled body interior with a realistic envelope instead of solid
     fat: an outer subcutaneous-fat rim, then a muscle wall, then interior fat
@@ -339,11 +345,11 @@ def _fill_body_layers(vol, fat_label=4, muscle_label=6, skin_iters=2, wall_iters
 
 
 # Backwards-compatible alias used by the loader.
-def _fill_body_fat(vol):
+def _fill_body_fat(vol: np.ndarray) -> np.ndarray:
     return _fill_body_layers(vol)
 
 
-def _maybe_downsample(vol, target_max):
+def _maybe_downsample(vol: np.ndarray, target_max: int) -> np.ndarray:
     """Nearest-neighbour downsample so the largest axis <= target_max (keeps
     interactive speed; label maps must use NN to preserve class values)."""
     m = max(vol.shape)

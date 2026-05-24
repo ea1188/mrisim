@@ -3,7 +3,7 @@ import os
 
 PHANTOM_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 
-def load_brainweb_phantom(subject_num=4):
+def load_brainweb_phantom(subject_num: int = 4) -> np.ndarray:
     """Load BrainWeb phantom and remap to our tissue labels."""
     os.makedirs(PHANTOM_DIR, exist_ok=True)
     
@@ -55,7 +55,7 @@ def load_brainweb_phantom(subject_num=4):
     
     return phantom
 
-def get_brainweb_or_synthetic():
+def get_brainweb_or_synthetic() -> tuple[np.ndarray, str]:
     """Try BrainWeb, fall back to synthetic."""
     try:
         phantom = load_brainweb_phantom(subject_num=4)
