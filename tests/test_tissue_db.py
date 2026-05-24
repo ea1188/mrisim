@@ -67,3 +67,57 @@ class TestProperties:
         p_15 = properties("1.5T")
         for lab in _RAW:
             assert p_other[lab]["T1"] == p_15[lab]["T1"]
+
+    def test_t2star_le_t2_all_labels(self):
+        for field in ["1.5T", "3T"]:
+            for lab, p in properties(field).items():
+                assert p["T2star"] <= p["T2"], (
+                    f"Label {lab} at {field}: T2star={p['T2star']} > T2={p['T2']}"
+                )
+
+    def test_twenty_two_labels(self):
+        assert len(_RAW) == 22  # labels 0-21
+
+    def test_bone_short_t2(self):
+        p = properties("3T")[5]
+        assert p["T2"] < 10  # cortical bone / skull bone has very short T2
+
+    def test_3t_t1_differs_from_15t(self):
+        p15 = properties("1.5T")
+        p3  = properties("3T")
+        # At least most tissue labels should have different T1 values
+        diffs = sum(1 for lab in _RAW if p3[lab]["T1"] != p15[lab]["T1"])
+        assert diffs > 10
+
+
+class TestApplyToEngine:
+    def test_returns_dict(self):
+        result = apply_to_engine("3T")
+        assert isinstance(result, dict)
+
+    def test_modifies_phantom3d(self):
+        import phantom3d
+        apply_to_engine("3T")
+        # After applying, phantom3d should have at least the brain labels
+        for lab in range(6):
+            assert lab in phantom3d.TISSUE_PROPERTIES_3D
+
+    def test_apply_15t_sets_shorter_t1(self):
+        import phantom3d
+        apply_to_engine("3T")
+        t1_3t = phantom3d.TISSUE_PROPERTIES_3D[2]["T1"]
+        apply_to_engine("1.5T")
+        t1_15t = phantom3d.TISSUE_PROPERTIES_3D[2]["T1"]
+        assert t1_15t < t1_3t  # 1.5T T1 < 3T T1 for gray matter
+
+    def test_apply_includes_body_labels(self):
+        result = apply_to_engine("3T")
+        # All 22 labels (0-21) should be present
+        for lab in range(22):
+            assert lab in result
+
+    def test_apply_3t_restores_default(self):
+        import phantom3d
+        apply_to_engine("1.5T")
+        apply_to_engine("3T")
+        assert phantom3d.TISSUE_PROPERTIES_3D[2]["T1"] == properties("3T")[2]["T1"]

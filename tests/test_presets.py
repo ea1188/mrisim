@@ -36,6 +36,32 @@ class TestPresets:
         for name, p in PRESETS.items():
             assert p["matrix_size"] in common, f"{name}: unexpected matrix_size {p['matrix_size']}"
 
+    def test_fov_positive(self):
+        for name, p in PRESETS.items():
+            assert p["FOV"] > 0, f"{name}: FOV must be positive"
+
+    def test_bandwidth_positive(self):
+        for name, p in PRESETS.items():
+            assert p["bandwidth"] > 0, f"{name}: bandwidth must be positive"
+
+    def test_flair_has_long_ti(self):
+        p = PRESETS["Brain FLAIR"]
+        assert p["TI"] >= 2000  # long TI to null CSF
+
+    def test_stir_has_short_ti(self):
+        p = PRESETS["Brain STIR"]
+        assert p["TI"] < 300  # short TI to null fat
+
+    def test_dwi_presets_have_b_value(self):
+        for name, p in PRESETS.items():
+            if "DWI" in name:
+                assert "b_value" in p, f"{name} missing b_value"
+
+    def test_fmri_presets_have_volumes_key(self):
+        for name, p in PRESETS.items():
+            if "fMRI" in name:
+                assert "fmri_volumes" in p, f"{name} missing fmri_volumes"
+
 
 class TestGetPreset:
     def test_returns_dict_for_known_preset(self):
@@ -95,3 +121,36 @@ class TestEstimateSAR:
         sar_se = estimate_sar(90, 500, sequence="SE")
         sar_gre = estimate_sar(90, 500, sequence="GRE")
         assert sar_gre["whole_body"] < sar_se["whole_body"]
+
+    def test_ir_highest_sar(self):
+        sar_se = estimate_sar(90, 500, sequence="SE")
+        sar_ir = estimate_sar(90, 500, sequence="IR")
+        assert sar_ir["whole_body"] > sar_se["whole_body"]
+
+    def test_more_slices_higher_sar(self):
+        sar_5  = estimate_sar(90, 500, num_slices=5)
+        sar_20 = estimate_sar(90, 500, num_slices=20)
+        assert sar_20["whole_body"] > sar_5["whole_body"]
+
+    def test_head_is_approx_2point5x_whole_body(self):
+        # head = round(whole_body * 2.5, 2), so ratio is within rounding error
+        sar = estimate_sar(60, 1000, sequence="GRE", num_slices=20)
+        ratio = sar["head"] / sar["whole_body"]
+        assert 2.4 < ratio < 2.6
+
+    def test_zero_flip_angle_zero_sar(self):
+        sar = estimate_sar(0, 500, sequence="SE")
+        assert sar["whole_body"] == pytest.approx(0.0)
+        assert sar["head"] == pytest.approx(0.0)
+        assert not sar["exceeds_limit"]
+
+    def test_shorter_tr_higher_sar(self):
+        sar_slow = estimate_sar(90, 2000, sequence="SE")
+        sar_fast = estimate_sar(90, 100, sequence="SE")
+        assert sar_fast["whole_body"] > sar_slow["whole_body"]
+
+    def test_unknown_sequence_uses_default_factor(self):
+        sar_unknown = estimate_sar(90, 500, sequence="UNKNOWN")
+        # seq_factor defaults to 1.0; SE uses 1.5 so unknown should be less
+        sar_se = estimate_sar(90, 500, sequence="SE")
+        assert sar_unknown["whole_body"] < sar_se["whole_body"]

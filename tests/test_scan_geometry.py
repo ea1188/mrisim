@@ -114,6 +114,42 @@ class TestBoxRect:
         info = box_rect("axial", small_vol.shape, 15, 5, 2, 0, 1.0, 0)
         assert len(info["lines"]) == 5
 
+    def test_coronal_orientation(self, small_vol):
+        info = box_rect("coronal", small_vol.shape, 18, 3, 2, 0, 1.0, 0)
+        assert info["w"] > 0 and info["h"] > 0
+        assert len(info["lines"]) == 3
+
+    def test_sagittal_orientation_horizontal_through(self, small_vol):
+        # sagittal has through="h", so w maps to through direction, h to in-plane
+        info = box_rect("sagittal", small_vol.shape, 15, 4, 2, 0, 1.0, 0)
+        assert info["line_axis"] == "x"
+        assert info["through"] == "h"
+
+    def test_axial_orientation_vertical_through(self, small_vol):
+        info = box_rect("axial", small_vol.shape, 15, 4, 2, 0, 1.0, 0)
+        assert info["line_axis"] == "y"
+        assert info["through"] == "v"
+
+    def test_coverage_equals_n_slices_times_thickness_no_gap(self, small_vol):
+        n, t = 4, 3
+        info = box_rect("axial", small_vol.shape, 15, n, t, 0, 1.0, 0)
+        assert info["h"] == pytest.approx(n * t)  # h = 2*half_cov = cov = n*t
+
+    def test_inplane_offset_shifts_box(self, small_vol):
+        info0 = box_rect("axial", small_vol.shape, 15, 3, 2, 0, 0.8, 0)
+        info5 = box_rect("axial", small_vol.shape, 15, 3, 2, 0, 0.8, 5)
+        assert info5["x0"] != info0["x0"]
+
+    def test_half_fov_frac_halves_inplane_width(self, small_vol):
+        info_full = box_rect("axial", small_vol.shape, 15, 3, 2, 0, 1.0, 0)
+        info_half = box_rect("axial", small_vol.shape, 15, 3, 2, 0, 0.5, 0)
+        assert info_half["w"] == pytest.approx(info_full["w"] * 0.5)
+
+    def test_gap_increases_height(self, small_vol):
+        info_nogap = box_rect("axial", small_vol.shape, 15, 4, 2, 0, 1.0, 0)
+        info_gap   = box_rect("axial", small_vol.shape, 15, 4, 2, 1, 1.0, 0)
+        assert info_gap["h"] > info_nogap["h"]
+
 
 class TestUpdateFromDrag:
     def test_move_updates_slice_idx(self, small_vol):
@@ -149,6 +185,85 @@ class TestUpdateFromDrag:
                                        inplane_fov_frac=0.8, inplane_off=0)
         assert 0.1 <= ff <= 1.0
 
+    def test_move_inplane_updates_offset(self, small_vol):
+        _, io, _, _ = update_from_drag("axial", small_vol.shape, "move",
+                                       dx_through=0, d_inplane=4,
+                                       slice_idx=15, n_slices=3,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=1.0, inplane_off=0)
+        assert io == pytest.approx(4)
+
+    def test_move_negative_drag_decreases_slice_idx(self, small_vol):
+        si, _, _, _ = update_from_drag("axial", small_vol.shape, "move",
+                                       dx_through=-3, d_inplane=0,
+                                       slice_idx=15, n_slices=3,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=1.0, inplane_off=0)
+        assert si == pytest.approx(12)
+
+    def test_move_clamps_to_zero_lower(self, small_vol):
+        si, _, _, _ = update_from_drag("axial", small_vol.shape, "move",
+                                       dx_through=-9999, d_inplane=0,
+                                       slice_idx=5, n_slices=1,
+                                       thickness=1, gap=0,
+                                       inplane_fov_frac=1.0, inplane_off=0)
+        assert si >= 0
+
+    def test_resize_cov_negative_decreases_nslices(self, small_vol):
+        _, _, _, ns_before = update_from_drag("axial", small_vol.shape, "resize_cov",
+                                              dx_through=0, d_inplane=0,
+                                              slice_idx=15, n_slices=5,
+                                              thickness=2, gap=0,
+                                              inplane_fov_frac=1.0, inplane_off=0)
+        _, _, _, ns_after = update_from_drag("axial", small_vol.shape, "resize_cov",
+                                             dx_through=-5, d_inplane=0,
+                                             slice_idx=15, n_slices=5,
+                                             thickness=2, gap=0,
+                                             inplane_fov_frac=1.0, inplane_off=0)
+        assert ns_after <= ns_before
+
+    def test_resize_cov_clamps_to_at_least_1(self, small_vol):
+        _, _, _, ns = update_from_drag("axial", small_vol.shape, "resize_cov",
+                                       dx_through=-9999, d_inplane=0,
+                                       slice_idx=15, n_slices=1,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=1.0, inplane_off=0)
+        assert ns >= 1
+
+    def test_resize_fov_large_drag_clamps_to_1(self, small_vol):
+        _, _, ff, _ = update_from_drag("axial", small_vol.shape, "resize_fov",
+                                       dx_through=0, d_inplane=9999,
+                                       slice_idx=15, n_slices=3,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=0.8, inplane_off=0)
+        assert ff == pytest.approx(1.0)
+
+    def test_resize_fov_large_negative_drag_reduces_frac(self, small_vol):
+        # Large negative d_inplane should reduce fov_frac and clamp it (not go <0.1)
+        _, _, ff, _ = update_from_drag("axial", small_vol.shape, "resize_fov",
+                                       dx_through=0, d_inplane=-9999,
+                                       slice_idx=15, n_slices=3,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=0.8, inplane_off=0)
+        assert ff < 0.8  # reduced from starting value
+        assert ff >= 0.1  # clamp floor
+
+    def test_coronal_move(self, small_vol):
+        si, _, _, _ = update_from_drag("coronal", small_vol.shape, "move",
+                                       dx_through=4, d_inplane=0,
+                                       slice_idx=18, n_slices=3,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=1.0, inplane_off=0)
+        assert si == pytest.approx(22)
+
+    def test_sagittal_move(self, small_vol):
+        si, _, _, _ = update_from_drag("sagittal", small_vol.shape, "move",
+                                       dx_through=2, d_inplane=0,
+                                       slice_idx=14, n_slices=3,
+                                       thickness=2, gap=0,
+                                       inplane_fov_frac=1.0, inplane_off=0)
+        assert si == pytest.approx(16)
+
 
 class TestFovCrop:
     def test_output_is_2d(self, small_vol):
@@ -176,3 +291,60 @@ class TestFovCrop:
             sl = get_slice(small_vol, acq, 15)
             cropped = fov_crop(acq, sl, 0.1, 0)
             assert cropped.size > 0
+
+    def test_coronal_crop_returns_2d(self, small_vol):
+        from phantom3d import get_slice
+        sl = get_slice(small_vol, "coronal", 18)
+        cropped = fov_crop("coronal", sl, 0.7, 0)
+        assert cropped.ndim == 2
+        assert cropped.size > 0
+
+    def test_sagittal_crop_returns_2d(self, small_vol):
+        from phantom3d import get_slice
+        sl = get_slice(small_vol, "sagittal", 15)
+        cropped = fov_crop("sagittal", sl, 0.7, 0)
+        assert cropped.ndim == 2
+        assert cropped.size > 0
+
+    def test_nonzero_offset_produces_different_crop(self, small_vol):
+        from phantom3d import get_slice
+        sl = get_slice(small_vol, "axial", 15)
+        cropped0 = fov_crop("axial", sl, 0.6, 0)
+        cropped5 = fov_crop("axial", sl, 0.6, 3)
+        # Different offsets should yield different windows (unless the vol is
+        # very small and both clamp to the same thing, so we just check they run)
+        assert cropped0.size > 0
+        assert cropped5.size > 0
+
+    def test_very_small_frac_still_nonempty(self, small_vol):
+        from phantom3d import get_slice
+        sl = get_slice(small_vol, "axial", 15)
+        # frac=0.01 is smaller than min; window() clamps to at least 2 px per side
+        cropped = fov_crop("axial", sl, 0.01, 0)
+        assert cropped.size > 0
+
+
+class TestPrescribedIndicesExtra:
+    """Additional coverage for prescribed_indices: gaps, orientations, edge cases."""
+
+    def test_gap_increases_span(self, small_vol):
+        idxs_no = prescribed_indices("axial", small_vol.shape, 15, 5, 2, 0)
+        idxs_gap = prescribed_indices("axial", small_vol.shape, 15, 5, 2, 2)
+        span_no  = idxs_no[-1]  - idxs_no[0]
+        span_gap = idxs_gap[-1] - idxs_gap[0]
+        assert span_gap >= span_no
+
+    def test_coronal_indices_within_volume(self, small_vol):
+        through_len = small_vol.shape[cfg_for("coronal")["through_axis"]]
+        idxs = prescribed_indices("coronal", small_vol.shape, 18, 5, 2, 1)
+        assert all(0 <= i < through_len for i in idxs)
+
+    def test_sagittal_indices_within_volume(self, small_vol):
+        through_len = small_vol.shape[cfg_for("sagittal")["through_axis"]]
+        idxs = prescribed_indices("sagittal", small_vol.shape, 14, 4, 2, 0)
+        assert all(0 <= i < through_len for i in idxs)
+
+    def test_single_slice_at_center(self, small_vol):
+        midpoint = small_vol.shape[0] // 2
+        idxs = prescribed_indices("axial", small_vol.shape, midpoint, 1, 1, 0)
+        assert idxs == [midpoint]

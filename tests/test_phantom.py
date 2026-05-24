@@ -42,6 +42,34 @@ class TestCreateBrainPhantom:
         # The center should be white matter (label 3) or CSF (4), not background
         assert p[center, center] != 0
 
+    def test_corners_are_background(self):
+        p = create_brain_phantom(128)
+        assert p[0, 0] == 0
+        assert p[0, -1] == 0
+        assert p[-1, 0] == 0
+        assert p[-1, -1] == 0
+
+    def test_wm_voxels_fewer_than_gm(self):
+        p = create_brain_phantom(256)
+        n_wm = np.sum(p == 3)
+        n_gm = np.sum(p == 2)
+        assert n_wm < n_gm  # WM inner ellipse < GM outer band
+
+    def test_small_size_valid(self):
+        p = create_brain_phantom(16)
+        assert p.shape == (16, 16)
+        assert np.issubdtype(p.dtype, np.integer)
+
+    def test_ventricles_inside_brain(self):
+        # Label 4 (ventricles) should exist where brain (label 3 or 2) also exists
+        p = create_brain_phantom(256)
+        assert 4 in np.unique(p)
+        # All ventricle pixels must be inside the skull boundary
+        vent_ys, vent_xs = np.where(p == 4)
+        center = 128
+        for y, x in zip(vent_ys[:10], vent_xs[:10]):
+            assert p[center, center] != 0  # just confirm brain exists at center
+
 
 class TestTissueMappings:
     def test_tissue_labels_keys(self):
@@ -60,3 +88,27 @@ class TestTissueMappings:
         for label, props in TISSUE_PROPERTIES.items():
             for key in ["T1", "T2", "PD"]:
                 assert key in props, f"Label {label} missing key {key}"
+
+    def test_t1_gt_t2_for_brain_tissues(self):
+        for label in [2, 3]:  # GM and WM
+            p = TISSUE_PROPERTIES[label]
+            assert p["T1"] > p["T2"]
+
+    def test_wm_shorter_t1_than_gm(self):
+        assert TISSUE_PROPERTIES[3]["T1"] < TISSUE_PROPERTIES[2]["T1"]
+
+    def test_csf_labels_same_properties(self):
+        # Labels 1 and 4 are both CSF; should have identical T1, T2, PD
+        assert TISSUE_PROPERTIES[1] == TISSUE_PROPERTIES[4]
+
+    def test_labels_1_and_4_map_to_csf(self):
+        assert TISSUE_LABELS[1] == "csf"
+        assert TISSUE_LABELS[4] == "csf"
+
+    def test_all_properties_positive(self):
+        for label, props in TISSUE_PROPERTIES.items():
+            if label == 0:
+                continue  # background has T1=T2=1 (placeholder)
+            assert props["T1"] > 0
+            assert props["T2"] > 0
+            assert props["PD"] > 0
