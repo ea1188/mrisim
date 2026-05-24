@@ -9,6 +9,7 @@ from oblique import (
     simulate_oblique,
     simulate_oblique_slab,
     scout_lines,
+    scout_band,
     three_scouts,
 )
 from phantom3d import generate_synthetic_3d_brain, get_slice
@@ -599,6 +600,125 @@ class TestObliqueSlab:
         out = oblique_slab(small_vol, n, r, c, ctr,
                            n_slices=4, thickness_mm=2.0)
         assert out.max() > 0
+
+
+# ---------------------------------------------------------------------------
+# scout_band
+# ---------------------------------------------------------------------------
+class TestScoutBand:
+    def test_returns_three_scout_keys(self, small_vol):
+        n, _, _ = plane_from_angles("axial")
+        band = scout_band(small_vol.shape, n, (15, 18, 15), n_slices=3, thickness_mm=2)
+        assert set(band.keys()) == {"axial", "coronal", "sagittal"}
+
+    def test_each_scout_has_edges_and_slices_keys(self, small_vol):
+        n, _, _ = plane_from_angles("axial")
+        band = scout_band(small_vol.shape, n, (15, 18, 15), n_slices=3, thickness_mm=2)
+        for v in band.values():
+            assert "edges"  in v
+            assert "slices" in v
+
+    def test_edges_always_two_entries(self, small_vol):
+        n, _, _ = plane_from_angles("axial")
+        band = scout_band(small_vol.shape, n, (15, 18, 15), n_slices=3, thickness_mm=2)
+        for v in band.values():
+            assert len(v["edges"]) == 2
+
+    def test_slices_count_matches_n_slices(self, small_vol):
+        n, _, _ = plane_from_angles("axial")
+        for ns in (1, 3, 7):
+            band = scout_band(small_vol.shape, n, (15, 18, 15),
+                              n_slices=ns, thickness_mm=2)
+            for v in band.values():
+                assert len(v["slices"]) == ns
+
+    def test_axial_slab_no_axial_band(self, small_vol):
+        # Pure axial normal → parallel to axial scout → all axial lines are None
+        n, _, _ = plane_from_angles("axial")
+        band = scout_band(small_vol.shape, n, (15, 18, 15), n_slices=3, thickness_mm=2)
+        assert band["axial"]["edges"] == [None, None]
+        assert all(s is None for s in band["axial"]["slices"])
+
+    def test_axial_slab_coronal_edges_are_horizontal(self, small_vol):
+        # Axial plane intersects coronal scout as horizontal lines (r0 == r1)
+        n, _, _ = plane_from_angles("axial")
+        band = scout_band(small_vol.shape, n, (15, 18, 15),
+                          n_slices=1, thickness_mm=4.0, voxel_size=(1, 1, 1))
+        front, back = band["coronal"]["edges"]
+        assert front is not None and back is not None
+        assert abs(front[1] - front[3]) < 1e-9   # r0 == r1 → horizontal
+        assert abs(back[1]  - back[3])  < 1e-9
+
+    def test_axial_slab_edges_symmetric_about_center(self, small_vol):
+        # thickness=4, n_slices=1 → half_coverage=2 → edges at ctr[0]±2
+        n, _, _ = plane_from_angles("axial")
+        ctr = (15, 18, 15)
+        band = scout_band(small_vol.shape, n, ctr,
+                          n_slices=1, thickness_mm=4.0, voxel_size=(1, 1, 1))
+        front, back = band["coronal"]["edges"]
+        assert abs(front[1] - (ctr[0] - 2.0)) < 1e-9
+        assert abs(back[1]  - (ctr[0] + 2.0)) < 1e-9
+
+    def test_single_slice_centre_line_matches_scout_lines(self, small_vol):
+        # The n_slices=1 centre slice line must equal scout_lines at the same center
+        n, _, _ = plane_from_angles("axial", tilt_deg=30, rot_deg=20)
+        ctr = (15, 18, 15)
+        band = scout_band(small_vol.shape, n, ctr, n_slices=1, thickness_mm=2,
+                          voxel_size=(1, 1, 1))
+        ref  = scout_lines(small_vol.shape, n, ctr, voxel_size=(1, 1, 1))
+        for key in ("axial", "coronal", "sagittal"):
+            bline = band[key]["slices"][0]
+            rline = ref[key]
+            if bline is None:
+                assert rline is None
+            else:
+                np.testing.assert_allclose(bline, rline, atol=1e-9)
+
+    def test_oblique_band_has_lines_on_all_scouts(self, small_vol):
+        # A fully oblique normal (all axes non-zero) → intersects every scout
+        n, _, _ = plane_from_angles("axial", tilt_deg=45, rot_deg=30)
+        band = scout_band(small_vol.shape, n, (15, 18, 15), n_slices=3, thickness_mm=2)
+        for key in ("axial", "coronal", "sagittal"):
+            assert not all(e is None for e in band[key]["edges"])
+
+    def test_gap_moves_edges_further_apart(self, small_vol):
+        # Larger gap → larger half_coverage → front edge is further from centre
+        n, _, _ = plane_from_angles("axial")
+        ctr = (15, 18, 15)
+        b0 = scout_band(small_vol.shape, n, ctr, n_slices=3,
+                        thickness_mm=2.0, gap_mm=0.0, voxel_size=(1, 1, 1))
+        b2 = scout_band(small_vol.shape, n, ctr, n_slices=3,
+                        thickness_mm=2.0, gap_mm=2.0, voxel_size=(1, 1, 1))
+        # front edge row: ctr[0] - half_cov; with gap half_cov is larger → row smaller
+        assert b2["coronal"]["edges"][0][1] < b0["coronal"]["edges"][0][1]
+
+    def test_anisotropic_voxels_shift_edges(self, small_vol):
+        # 4.5mm half-coverage: 4.5 vox with 1mm voxels, 1.5 vox with 3mm voxels
+        n, _, _ = plane_from_angles("axial")
+        ctr = (15, 18, 15)
+        b_iso   = scout_band(small_vol.shape, n, ctr, n_slices=3,
+                             thickness_mm=3.0, voxel_size=(1, 1, 1))
+        b_aniso = scout_band(small_vol.shape, n, ctr, n_slices=3,
+                             thickness_mm=3.0, voxel_size=(3, 1, 1))
+        front_iso   = b_iso["coronal"]["edges"][0][1]
+        front_aniso = b_aniso["coronal"]["edges"][0][1]
+        assert not np.isclose(front_iso, front_aniso)
+
+    def test_custom_scout_positions(self, small_vol):
+        # Scout planes at an off-centre position shift where edge lines appear
+        n, _, _ = plane_from_angles("axial")
+        ctr = (15, 18, 15)
+        band_default = scout_band(small_vol.shape, n, ctr,
+                                  n_slices=1, thickness_mm=4.0, voxel_size=(1, 1, 1))
+        band_shifted = scout_band(small_vol.shape, n, ctr,
+                                  n_slices=1, thickness_mm=4.0, voxel_size=(1, 1, 1),
+                                  scout_positions=(15, 10, 15))
+        # The sagittal scout is now at x=15 (same) but coronal scout at y=10
+        # → coronal intersection stays the same (normal has no Y component)
+        np.testing.assert_allclose(
+            band_default["coronal"]["edges"][0],
+            band_shifted["coronal"]["edges"][0],
+        )
 
 
 # ---------------------------------------------------------------------------

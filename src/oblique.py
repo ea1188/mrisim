@@ -387,6 +387,86 @@ def scout_lines(vol_shape, normal, center, voxel_size=(1.0, 1.0, 1.0)):
 
 
 # ---------------------------------------------------------------------------
+# Slab band overlay
+# ---------------------------------------------------------------------------
+
+def scout_band(vol_shape, normal, center,
+               n_slices=1, thickness_mm=5.0, gap_mm=0.0,
+               voxel_size=(1.0, 1.0, 1.0), scout_positions=None):
+    """
+    Compute slab-band overlay lines for a three-scout localizer display.
+
+    For each of the three orthogonal scouts this returns:
+      - two edge lines: the front and back boundary planes of the slab
+      - one line per prescribed slice: the centre plane of each slice
+
+    All lines are intersected with fixed scout planes.  By default the scouts
+    all pass through `center`; pass `scout_positions=(z, y, x)` to override.
+
+    Parameters
+    ----------
+    vol_shape       : (nz, ny, nx)
+    normal          : unit normal in physical (Z, Y, X) space
+    center          : (Z, Y, X) voxel-index slab centre
+    n_slices        : number of parallel slices
+    thickness_mm    : physical slice thickness in mm
+    gap_mm          : physical gap between adjacent slices in mm
+    voxel_size      : (sz, sy, sx) mm per voxel
+    scout_positions : (z, y, x) voxel-index positions of the three fixed scouts;
+                      defaults to `center`
+
+    Returns
+    -------
+    dict with keys 'axial', 'coronal', 'sagittal'.  Each value is a dict::
+
+        {
+          "edges":  [front_line, back_line],     # (c0,r0,c1,r1) or None each
+          "slices": [slice_line_0, ...],          # one per slice
+        }
+    """
+    nz, ny, nx = vol_shape
+    n_unit = np.asarray(normal, dtype=float)
+    n_unit = n_unit / np.linalg.norm(n_unit)
+    vox = np.asarray(voxel_size, dtype=float)
+    ctr = np.asarray(center, dtype=float)
+    sp  = ctr if scout_positions is None else np.asarray(scout_positions, dtype=float)
+
+    # Physical-space normal → index-space normal for _intersect_line
+    n_idx = n_unit * vox
+
+    step_mm     = thickness_mm + gap_mm
+    half_cov_mm = (n_slices * thickness_mm + max(0, n_slices - 1) * gap_mm) / 2.0
+
+    # Front/back boundary plane centres in voxel-index space
+    front_ctr = ctr - half_cov_mm * n_unit / vox
+    back_ctr  = ctr + half_cov_mm * n_unit / vox
+
+    # Individual slice plane centres
+    slice_ctrs = [ctr + (i - (n_slices - 1) / 2.0) * step_mm * n_unit / vox
+                  for i in range(int(n_slices))]
+
+    # Scout geometry: (fixed_axis, row_axis, col_axis, row_len, col_len)
+    scouts = {
+        "axial":    (0, 1, 2, ny, nx),
+        "coronal":  (1, 0, 2, nz, nx),
+        "sagittal": (2, 0, 1, nz, ny),
+    }
+
+    def _line(plane_ctr, fa, ra, ca, rl, cl):
+        return _intersect_line(n_idx, np.asarray(plane_ctr, dtype=float),
+                               fa, sp[fa], ra, ca, rl, cl)
+
+    result = {}
+    for key, (fa, ra, ca, rl, cl) in scouts.items():
+        result[key] = {
+            "edges":  [_line(front_ctr, fa, ra, ca, rl, cl),
+                       _line(back_ctr,  fa, ra, ca, rl, cl)],
+            "slices": [_line(sc, fa, ra, ca, rl, cl) for sc in slice_ctrs],
+        }
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Convenience: extract three axis-aligned scouts through a centre point
 # ---------------------------------------------------------------------------
 
