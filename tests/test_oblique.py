@@ -102,6 +102,57 @@ class TestPlaneFromAngles:
         # Different tilt/rot angles should give different normals
         assert not np.allclose(n_tr, n_rt)
 
+    # --- in-plane rotation ---
+
+    def test_inplane_zero_unchanged(self):
+        n0, r0, c0 = plane_from_angles("axial", 30, 20, rot_inplane_deg=0)
+        n1, r1, c1 = plane_from_angles("axial", 30, 20)
+        np.testing.assert_allclose(n0, n1, atol=1e-12)
+        np.testing.assert_allclose(r0, r1, atol=1e-12)
+        np.testing.assert_allclose(c0, c1, atol=1e-12)
+
+    def test_inplane_preserves_normal(self):
+        for ang in (30, 45, 90, 135):
+            n_base, _, _ = plane_from_angles("axial", 30, 20)
+            n_rot, _, _ = plane_from_angles("axial", 30, 20, rot_inplane_deg=ang)
+            np.testing.assert_allclose(n_base, n_rot, atol=1e-12)
+
+    def test_inplane_preserves_orthogonality(self):
+        n, r, c = plane_from_angles("coronal", 20, 15, rot_inplane_deg=55)
+        assert abs(np.dot(n, r)) < 1e-12
+        assert abs(np.dot(n, c)) < 1e-12
+        assert abs(np.dot(r, c)) < 1e-12
+
+    def test_inplane_90_from_axial_rotates_row_to_col(self):
+        # Axial base: n=[1,0,0], r=[0,1,0], c=[0,0,1].
+        # 90° rotation around n=[1,0,0]: r→[0,0,1], c→[0,-1,0].
+        _, r, c = plane_from_angles("axial", rot_inplane_deg=90)
+        np.testing.assert_allclose(r, [0., 0., 1.], atol=1e-12)
+        np.testing.assert_allclose(c, [0., -1., 0.], atol=1e-12)
+
+    def test_inplane_360_is_identity(self):
+        n0, r0, c0 = plane_from_angles("axial", 30, 20, rot_inplane_deg=0)
+        n1, r1, c1 = plane_from_angles("axial", 30, 20, rot_inplane_deg=360)
+        np.testing.assert_allclose(n0, n1, atol=1e-12)
+        np.testing.assert_allclose(r0, r1, atol=1e-12)
+        np.testing.assert_allclose(c0, c1, atol=1e-12)
+
+    def test_inplane_180_inverts_row_and_col(self):
+        _, r0, c0 = plane_from_angles("coronal", 15, 10, rot_inplane_deg=0)
+        _, r1, c1 = plane_from_angles("coronal", 15, 10, rot_inplane_deg=180)
+        np.testing.assert_allclose(r1, -r0, atol=1e-12)
+        np.testing.assert_allclose(c1, -c0, atol=1e-12)
+
+    def test_inplane_combined_with_tilt_rot(self):
+        # Sanity: combining all three angles still yields a unit orthonormal frame.
+        n, r, c = plane_from_angles("sagittal", tilt_deg=25, rot_deg=15,
+                                    rot_inplane_deg=40)
+        assert abs(np.linalg.norm(n) - 1) < 1e-12
+        assert abs(np.linalg.norm(r) - 1) < 1e-12
+        assert abs(np.linalg.norm(c) - 1) < 1e-12
+        assert abs(np.dot(n, r)) < 1e-12
+        assert abs(np.dot(r, c)) < 1e-12
+
 
 # ---------------------------------------------------------------------------
 # oblique_plane
@@ -167,6 +218,18 @@ class TestObliquePlane:
         out = oblique_plane(small_vol.astype(float), r, c,
                             (nz // 2, ny // 2, nx // 2), shape=(10, 10), order=1)
         assert np.issubdtype(out.dtype, np.floating)
+
+    def test_inplane_rotation_changes_sampled_image(self, small_vol):
+        # In-plane rotation spins the FOV: row/col vectors change, so different
+        # voxels are sampled even though the plane cuts through the same anatomy.
+        nz, ny, nx = small_vol.shape
+        ctr = (nz // 2, ny // 2, nx // 2)
+        shape = (ny, nx)
+        _, r0, c0 = plane_from_angles("axial", rot_inplane_deg=0)
+        _, r1, c1 = plane_from_angles("axial", rot_inplane_deg=45)
+        out0 = oblique_plane(small_vol, r0, c0, ctr, shape=shape)
+        out1 = oblique_plane(small_vol, r1, c1, ctr, shape=shape)
+        assert not np.array_equal(out0, out1)
 
     def test_different_tilts_give_different_slices(self, small_vol):
         nz, ny, nx = small_vol.shape

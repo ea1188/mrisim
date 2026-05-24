@@ -51,15 +51,21 @@ _BASE_FRAMES = {
 # Plane orientation
 # ---------------------------------------------------------------------------
 
-def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0):
+def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0, rot_inplane_deg=0.0):
     """
-    Compose two tilt angles on top of a base orientation.
+    Compose three rotation angles on top of a base orientation.
 
-    tilt_deg : rotation around col_vec (tips the plane forward / back)
-    rot_deg  : rotation around row_vec (rotates the plane left / right)
+    tilt_deg       : rotation around col_vec  — tips the plane forward / back
+    rot_deg        : rotation around row_vec  — rotates the plane left / right
+    rot_inplane_deg: rotation around normal   — spins the FOV in-place without
+                     changing which anatomy the plane cuts through
+
+    Applied in the order tilt → rot → rot_inplane, so each angle is defined
+    relative to the result of the previous one.
 
     Returns (normal, row_vec, col_vec) as unit float64 arrays in (Z, Y, X) space.
-    The three vectors are mutually orthogonal; normal = row_vec × col_vec up to sign.
+    The three vectors are mutually orthogonal; the frame is right- or left-handed
+    depending on the base orientation convention.
     """
     if base not in _BASE_FRAMES:
         raise ValueError(f"base must be one of {list(_BASE_FRAMES)}; got {base!r}")
@@ -73,6 +79,12 @@ def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0):
     if rot_deg:
         R = _rot_matrix(r, np.radians(rot_deg))
         n = R @ n
+        c = R @ c
+
+    if rot_inplane_deg:
+        # Rotating around n leaves n fixed; only r and c spin.
+        R = _rot_matrix(n, np.radians(rot_inplane_deg))
+        r = R @ r
         c = R @ c
 
     return (n / np.linalg.norm(n),
