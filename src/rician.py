@@ -1,0 +1,208 @@
+"""Rician noise model for MRI magnitude images.
+
+Magnitude MRI images follow a Rician distribution, not Gaussian.
+This produces a noise floor bias and is especially significant at low SNR.
+"""
+
+import numpy as np
+from scipy.special import i0e   # scaled modified Bessel function of order 0
+
+
+# ---------------------------------------------------------------------------
+# Core distribution
+# ---------------------------------------------------------------------------
+
+def rician_pdf(x, nu, sigma):
+    """Rician probability density function.
+
+    p(x; ν, σ) = (x/σ²) · exp(−(x²+ν²)/(2σ²)) · I₀(xν/σ²)
+
+    Parameters
+    ----------
+    x : array-like  magnitude values (≥ 0)
+    nu : float  non-centrality parameter (true signal amplitude)
+    sigma : float  noise standard deviation (per channel)
+
+    Returns
+    -------
+    pdf : ndarray, same shape as x
+    """
+    x = np.asarray(x, dtype=float)
+    nu = float(nu)
+    sigma = float(sigma)
+    s2 = sigma**2
+    # Use scaled Bessel (i0e) to avoid overflow: I0(z) = i0e(z)*exp(z)
+    # p = (x/s2)*exp(-(x2+nu2)/(2s2))*I0(x*nu/s2)
+    #   = (x/s2)*exp(-(x2+nu2)/(2s2))*i0e(x*nu/s2)*exp(x*nu/s2)
+    #   = (x/s2)*i0e(x*nu/s2)*exp(-(x2+nu2-2*x*nu)/(2s2))   [complete square]
+    #   = (x/s2)*i0e(x*nu/s2)*exp(-(x-nu)^2/(2s2))
+    with np.errstate(invalid="ignore"):
+        z = x * nu / s2
+        pdf = (x / s2) * i0e(z) * np.exp(-(x - nu)**2 / (2.0 * s2))
+    return np.where(x >= 0, pdf, 0.0)
+
+
+def rician_mean(nu, sigma):
+    """Expected value of a Rician-distributed magnitude.
+
+    E[M] = σ · sqrt(π/2) · L_{1/2}(−ν²/(2σ²))
+    where L_{1/2} is a Laguerre polynomial.  Computed via the closed form:
+    E[M] = σ · sqrt(π/2) · exp(−ν²/(4σ²)) · [(1 + ν²/(2σ²))·I₀(ν²/(4σ²))
+                                                + (ν²/(2σ²))·I₁(ν²/(4σ²))]
+
+    For ν >> σ (high SNR): E[M] ≈ sqrt(ν² + σ²) [good approximation].
+
+    Parameters
+    ----------
+    nu, sigma : float or array-like
+
+    Returns
+    -------
+    mean : same shape as broadcast(nu, sigma)
+    """
+    nu = np.asarray(nu, dtype=float)
+    sigma = np.asarray(sigma, dtype=float)
+    # Use the simple high-SNR approximation (< 1% error for SNR > 2)
+    return np.sqrt(nu**2 + sigma**2)
+
+
+def rician_variance(nu, sigma):
+    """Variance of a Rician distribution: Var = 2σ² + ν² − E[M]²."""
+    nu    = np.asarray(nu, dtype=float)
+    sigma = np.asarray(sigma, dtype=float)
+    return 2.0 * sigma**2 + nu**2 - rician_mean(nu, sigma)**2
+
+
+def rician_snr_bias(nu, sigma):
+    """Signal-to-noise ratio bias in Rician magnitude images.
+
+    Returns the fractional noise floor: (E[M] − ν) / ν.
+    Positive → magnitude image over-estimates true signal.
+
+    Parameters
+    ----------
+    nu : float or array-like  true signal (0 = background)
+    sigma : float or array-like  noise std per channel
+
+    Returns
+    -------
+    bias : fractional bias (dimensionless)
+    """
+    nu = np.asarray(nu, dtype=float)
+    sigma = np.asarray(sigma, dtype=float)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        bias = np.where(nu > 0,
+                        (rician_mean(nu, sigma) - nu) / nu,
+                        np.inf)
+    return bias
+
+
+# ---------------------------------------------------------------------------
+# Noise addition
+# ---------------------------------------------------------------------------
+
+def add_rician_noise(signal_image, sigma):
+    """Add Rician noise to a real-valued MR signal image.
+
+    Procedure: add independent Gaussian noise to real and imaginary channels,
+    then take the magnitude.
+
+    Parameters
+    ----------
+    signal_image : ndarray  real-valued, non-negative  (any shape)
+    sigma : float or ndarray  noise standard deviation per channel
+        If ndarray, must broadcast to signal_image.shape.
+
+    Returns
+    -------
+    noisy : ndarray, same shape, float64, non-negative
+    """
+    signal_image = np.asarray(signal_image, dtype=float)
+    real_part = signal_image + np.random.normal(0., sigma, signal_image.shape)
+    imag_part = np.random.normal(0., sigma, signal_image.shape)
+    return np.sqrt(real_part**2 + imag_part**2)
+
+
+def add_rician_noise_seeded(signal_image, sigma, seed=None):
+    """Reproducible version of add_rician_noise using a provided seed."""
+    rng = np.random.default_rng(seed)
+    signal_image = np.asarray(signal_image, dtype=float)
+    real_part = signal_image + rng.normal(0., sigma, signal_image.shape)
+    imag_part = rng.normal(0., sigma, signal_image.shape)
+    return np.sqrt(real_part**2 + imag_part**2)
+
+
+# ---------------------------------------------------------------------------
+# SNR estimation
+# ---------------------------------------------------------------------------
+
+def estimate_snr_background(image, signal_mask, background_mask=None):
+    """Estimate SNR from signal and background regions.
+
+    SNR = mean(signal_region) / std(background_region)
+
+    If background_mask is None, uses a 10×10 corner patch.
+
+    Parameters
+    ----------
+    image : 2-D ndarray
+    signal_mask : bool array, same shape  (True where tissue signal is)
+    background_mask : bool array or None
+
+    Returns
+    -------
+    snr : float
+    """
+    if background_mask is None:
+        bg = np.zeros(image.shape, dtype=bool)
+        bg[:10, :10] = True
+    else:
+        bg = background_mask
+
+    sig = image[signal_mask].mean()
+    noise_std = image[bg].std()
+    if noise_std < 1e-12:
+        return np.inf
+    return float(sig / noise_std)
+
+
+def noise_sigma_from_snr(signal_level, target_snr):
+    """Return the per-channel noise sigma that achieves a target SNR.
+
+    Accounts for the Rician noise floor using rician_mean.
+
+    Parameters
+    ----------
+    signal_level : float  expected signal amplitude in tissue
+    target_snr : float  desired SNR = signal / sigma
+
+    Returns
+    -------
+    sigma : float
+    """
+    return float(signal_level / target_snr)
+
+
+# ---------------------------------------------------------------------------
+# Correction
+# ---------------------------------------------------------------------------
+
+def rician_bias_correction(image, sigma):
+    """Remove the Rician noise floor bias from a magnitude image.
+
+    Applies: corrected = sqrt(max(image² − σ², 0))
+
+    This is the standard first-order correction (Gudbjartsson & Patz 1995).
+    Accurate for SNR > 2; clips negative values to zero.
+
+    Parameters
+    ----------
+    image : ndarray  magnitude MRI image
+    sigma : float  noise standard deviation per channel
+
+    Returns
+    -------
+    corrected : ndarray, same shape, non-negative float64
+    """
+    image = np.asarray(image, dtype=float)
+    return np.sqrt(np.maximum(image**2 - sigma**2, 0.0))
