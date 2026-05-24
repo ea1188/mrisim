@@ -90,3 +90,33 @@ class TestExportReport:
                                            "report.pdf")
         assert os.path.exists(path)
         assert path.endswith(".pdf")
+
+    def test_auto_filename(self, export_module, sample_image, sample_params, sample_metrics):
+        path = export_module.export_report(sample_image, sample_params, sample_metrics)
+        assert os.path.exists(path)
+
+    def test_ir_sequence_params(self, export_module, sample_image, sample_metrics):
+        ir_params = {
+            "sequence": "Inversion Recovery",
+            "TR": 3000, "TE": 15, "TI": 150,
+            "flip_angle": 90, "matrix_size": 256,
+            "FOV": 240, "bandwidth": 125, "NEX": 1,
+        }
+        path = export_module.export_report(sample_image, ir_params, sample_metrics,
+                                           "ir_report.pdf")
+        assert os.path.exists(path)
+
+
+class TestLoadProtocolEdgeCases:
+    def test_load_bare_json(self, export_module, tmp_path):
+        """load_protocol falls back gracefully when 'parameters' key is absent."""
+        bare = {"TR": 500, "TE": 15, "sequence": "SE"}
+        p = str(tmp_path / "bare.json")
+        with open(p, "w") as f:
+            json.dump(bare, f)
+        loaded = export_module.load_protocol(p)
+        assert loaded["TR"] == 500
+
+    def test_ensure_export_dir_returns_string(self, export_module):
+        result = export_module.ensure_export_dir()
+        assert isinstance(result, str)
