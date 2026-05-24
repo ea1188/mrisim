@@ -1,139 +1,316 @@
+"""Fast Spin Echo (FSE/TSE) signal simulation with Extended Phase Graph (EPG).
+
+Functions
+---------
+epg_signal           — signal at effective TE using full EPG echo-train simulation
+compute_fse_echo_train — signal at every echo in the train (EPG-based)
+fse_scan_time        — scan-time formula for FSE
+fse_blurring_factor  — PSF FWHM broadening from T2 decay across the echo train
+simulate_fse_image   — per-tissue FSE image with Gaussian phase-blur approximation
+"""
+
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
-def epg_signal(T1, T2, PD, TR, TE_eff, ETL, echo_spacing):
-    """Simplified Extended Phase Graph signal for FSE/TSE.
-    
-    In FSE, multiple echoes are collected per TR using 180° refocusing pulses.
-    Each echo has different T2 weighting. The echo at TE_eff determines contrast.
-    
-    ETL: Echo Train Length (number of echoes per TR)
-    echo_spacing: time between echoes (ms)
-    TE_eff: effective TE (which echo fills center of k-space)
-    
-    The key tradeoff: longer ETL = faster scan but more T2 blurring.
+
+# ---------------------------------------------------------------------------
+# Internal EPG engine
+# ---------------------------------------------------------------------------
+
+def _epg_run(
+    T1: float,
+    T2: float,
+    PD: float,
+    TR: float,
+    ETL: int,
+    echo_spacing: float,
+    refocus_angle_deg: float = 180.0,
+) -> np.ndarray:
+    """EPG simulation of an FSE/CPMG echo train.
+
+    Uses a reduced-state representation (tracking only F⁺[k] and Z[k]) that
+    is valid for CPMG-style sequences where the refocusing pulses all share
+    the same phase axis.  The Hermitian conjugate F⁻[k] = (F⁺[k])* is
+    maintained automatically by the shift boundary condition.
+
+    Parameters
+    ----------
+    T1, T2      : float  tissue relaxation times (ms)
+    PD          : float  proton density (0–1)
+    TR          : float  repetition time (ms); sets initial longitudinal Mz
+    ETL         : int    echo train length
+    echo_spacing: float  time between consecutive echoes (ms)
+    refocus_angle_deg : float  refocusing flip angle in degrees (default 180)
+
+    Returns
+    -------
+    signals : (ETL,) float64  magnitude signal at each echo (TE_n = n × ESP)
     """
-    # Signal at effective TE
-    signal = PD * (1 - np.exp(-TR / T1)) * np.exp(-TE_eff / T2)
-    return signal
+    alpha_ref = np.deg2rad(refocus_angle_deg)
+    ca2 = float(np.cos(alpha_ref / 2) ** 2)
+    sa2 = float(np.sin(alpha_ref / 2) ** 2)
+    sa  = float(np.sin(alpha_ref))
+    ca  = float(np.cos(alpha_ref))
 
-def fse_scan_time(TR, matrix_size, NEX, ETL, acceleration=1):
-    """Calculate FSE scan time.
-    
-    FSE is faster than SE by factor of ETL:
-    Time = TR * (phase_encodes / ETL) * NEX / acceleration
+    tau = echo_spacing / 2.0            # half echo-spacing
+    T1  = max(float(T1), 1e-9)
+    T2  = max(float(T2), 1e-9)
+
+    N = ETL + 2                         # maximum EPG state order needed
+    Fp = np.zeros(N, dtype=complex)
+    Z  = np.zeros(N, dtype=float)
+
+    # Initial Mz after TR recovery (T1 weighting)
+    M0 = float(PD) * (1.0 - np.exp(-TR / T1))
+
+    # 90° excitation (phase Y = π/2): F⁺[0] = −M0, Z[0] = 0
+    Fp[0] = -M0
+    Z[0]  = 0.0
+
+    E1 = np.exp(-tau / T1)
+    E2 = np.exp(-tau / T2)
+    dZ = M0 * (1.0 - E1)               # T1 recovery increment per half-ESP
+
+    signals = np.zeros(ETL)
+
+    for _ in range(ETL):
+        # ---- Relax ESP/2 ------------------------------------------------
+        Fp *= E2
+        Z  *= E1
+        Z[0] += dZ
+
+        # ---- Gradient shift (+1 dephasing order) -------------------------
+        # Fp_new[k] = Fp_old[k−1] for k≥1; Fp_new[0] = conj(Fp_old[1])
+        fp1 = complex(Fp[1])
+        Fp[1:] = Fp[:-1].copy()
+        Fp[0]  = np.conj(fp1)
+
+        # ---- RF refocusing pulse -----------------------------------------
+        # General rotation (phi = 0, i.e., pulse along X):
+        #   F⁺_new = cos²(α/2)·F⁺ + sin²(α/2)·(F⁺)* − i·sin(α)·Z
+        #   Z_new  = sin(α)·Im(F⁺) + cos(α)·Z
+        Fp_new  = ca2 * Fp + sa2 * np.conj(Fp) - 1j * sa * Z
+        Z[:]    = sa * np.imag(Fp) + ca * Z
+        Fp[:]   = Fp_new
+
+        # ---- Gradient shift (+1 dephasing order) -------------------------
+        fp1    = complex(Fp[1])
+        Fp[1:] = Fp[:-1].copy()
+        Fp[0]  = np.conj(fp1)
+
+        # ---- Relax ESP/2 ------------------------------------------------
+        Fp *= E2
+        Z  *= E1
+        Z[0] += dZ
+
+        signals[_] = abs(Fp[0])
+
+    return signals
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def epg_signal(
+    T1: float,
+    T2: float,
+    PD: float,
+    TR: float,
+    TE_eff: float,
+    ETL: int,
+    echo_spacing: float,
+    refocus_angle_deg: float = 180.0,
+) -> float:
+    """FSE signal at the effective TE using EPG echo-train simulation.
+
+    Unlike the simple SE formula PD·(1−e^{−TR/T1})·e^{−TE/T2}, EPG correctly
+    accounts for stimulated-echo contributions when the refocusing flip angle
+    deviates from 180°, producing the characteristic echo-amplitude modulation
+    seen in clinical FSE sequences.
+
+    Parameters
+    ----------
+    T1, T2         : float  relaxation times (ms)
+    PD             : float  proton density (0–1)
+    TR             : float  repetition time (ms)
+    TE_eff         : float  effective TE (ms) — centre of k-space echo
+    ETL            : int    echo train length
+    echo_spacing   : float  inter-echo spacing (ms)
+    refocus_angle_deg : float  refocusing flip angle in degrees (default 180)
+
+    Returns
+    -------
+    signal : float  non-negative signal magnitude
+    """
+    if PD == 0.0:
+        return 0.0
+
+    signals = _epg_run(T1, T2, PD, TR, ETL, echo_spacing, refocus_angle_deg)
+
+    # Map TE_eff → echo index (1-based → 0-based array index)
+    echo_idx = max(0, min(ETL - 1, round(TE_eff / echo_spacing) - 1))
+    return float(signals[echo_idx])
+
+
+def compute_fse_echo_train(
+    T1: float,
+    T2: float,
+    PD: float,
+    TR: float,
+    ETL: int,
+    echo_spacing: float,
+    refocus_angle_deg: float = 180.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute FSE signal at every echo in the train using EPG.
+
+    Parameters
+    ----------
+    T1, T2         : float  relaxation times (ms)
+    PD             : float  proton density (0–1)
+    TR             : float  repetition time (ms)
+    ETL            : int    echo train length
+    echo_spacing   : float  inter-echo spacing (ms)
+    refocus_angle_deg : float  refocusing flip angle in degrees (default 180)
+
+    Returns
+    -------
+    TE_values : (ETL,) float64  TE at each echo (ms)
+    signals   : (ETL,) float64  magnitude signal at each echo
+    """
+    TE_values = np.arange(1, ETL + 1, dtype=float) * echo_spacing
+    signals   = _epg_run(T1, T2, PD, TR, ETL, echo_spacing, refocus_angle_deg)
+    return TE_values, signals
+
+
+def fse_scan_time(
+    TR: float,
+    matrix_size: int,
+    NEX: int,
+    ETL: int,
+    acceleration: int = 1,
+) -> float:
+    """FSE scan time (seconds).
+
+    FSE reduces phase-encode time by ETL relative to SE:
+    time = TR × (phase_encodes / ETL) × NEX / acceleration
+
+    Parameters
+    ----------
+    TR           : float  repetition time (ms)
+    matrix_size  : int    phase-encode matrix dimension
+    NEX          : int    number of signal averages
+    ETL          : int    echo train length
+    acceleration : int    parallel-imaging acceleration factor (default 1)
+
+    Returns
+    -------
+    time : float  scan time in seconds
     """
     phase_encodes = matrix_size
     time_ms = TR * (phase_encodes / ETL) * NEX / acceleration
-    return time_ms / 1000  # seconds
+    return time_ms / 1000.0
 
-def fse_blurring_factor(ETL, echo_spacing, T2):
-    """Estimate T2 blurring in FSE.
-    
-    Later echoes in the train have more T2 decay.
-    This causes blurring in the phase encode direction.
-    Worse with: long ETL, long echo spacing, short T2.
-    
-    Returns a blurring factor (1.0 = no blurring, higher = more blur)
-    """
-    # Total readout time for the echo train
-    train_duration = ETL * echo_spacing
-    
-    # Signal decay across the echo train
-    decay_ratio = np.exp(-train_duration / T2)
-    
-    # Blurring factor: ratio of signal at end vs start of train
-    # More decay = more blurring (PSF broadening)
-    blurring = 1.0 + (1.0 - decay_ratio) * 0.5
-    
-    return blurring
 
-def simulate_fse_image(phantom_slice, TR, TE_eff, ETL, echo_spacing, tissue_properties):
-    """Simulate FSE image with T2 blurring effect.
-    
-    Returns the simulated image with ETL-dependent blurring.
+def fse_blurring_factor(
+    ETL: int,
+    echo_spacing: float,
+    T2: float,
+    refocus_angle_deg: float = 180.0,
+) -> float:
+    """PSF FWHM broadening in the phase-encode direction due to T2 decay.
+
+    The echo-train amplitude modulation acts as a k-space apodisation window.
+    EPG echo amplitudes are used as the window, and the resulting PSF FWHM
+    is compared to the ideal (rect-window) FWHM to give a blurring factor.
+
+    Parameters
+    ----------
+    ETL           : int    echo train length
+    echo_spacing  : float  inter-echo spacing (ms)
+    T2            : float  tissue T2 (ms)
+    refocus_angle_deg : float  refocusing flip angle (default 180)
+
+    Returns
+    -------
+    factor : float  FWHM ratio (≥ 1.0; 1.0 = no blurring)
     """
-    from scipy.ndimage import gaussian_filter
-    
+    # Use infinite T1 / TR to isolate T2 modulation
+    _, amplitudes = compute_fse_echo_train(
+        T1=1e9, T2=T2, PD=1.0, TR=1e9,
+        ETL=ETL, echo_spacing=echo_spacing,
+        refocus_angle_deg=refocus_angle_deg,
+    )
+    if amplitudes.max() == 0.0:
+        return float(ETL)
+
+    window = amplitudes / amplitudes.max()
+
+    def _fwhm(w: np.ndarray) -> float:
+        psf = np.abs(np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(w))))
+        if psf.max() == 0.0:
+            return 1.0
+        psf /= psf.max()
+        above = psf >= 0.5
+        if not above.any():
+            return float(len(w))
+        first = int(np.argmax(above))
+        last  = int(len(above) - 1 - np.argmax(above[::-1]))
+        return float(last - first + 1)
+
+    actual_fwhm = _fwhm(window)
+    ideal_fwhm  = _fwhm(np.ones(ETL))
+    return max(1.0, actual_fwhm / max(ideal_fwhm, 1.0))
+
+
+def simulate_fse_image(
+    phantom_slice: np.ndarray,
+    TR: float,
+    TE_eff: float,
+    ETL: int,
+    echo_spacing: float,
+    tissue_properties: dict,  # type: ignore[type-arg]
+    refocus_angle_deg: float = 180.0,
+) -> np.ndarray:
+    """Simulate an FSE image with T2 blurring in the phase-encode direction.
+
+    Each tissue is assigned its EPG signal at TE_eff.  A Gaussian blur is
+    applied along the phase-encode (vertical) axis to approximate the PSF
+    broadening from T2 decay across the echo train.
+
+    Parameters
+    ----------
+    phantom_slice     : (rows, cols) integer label array
+    TR, TE_eff        : float  scan parameters (ms)
+    ETL, echo_spacing : int, float  echo-train parameters
+    tissue_properties : dict  {label: {"T1": …, "T2": …, "PD": …}}
+    refocus_angle_deg : float  refocusing flip angle (default 180)
+
+    Returns
+    -------
+    image : (rows, cols) float64  simulated FSE magnitude image
+    """
     image = np.zeros_like(phantom_slice, dtype=float)
-    max_blur = 0
-    
+    min_T2 = float("inf")
+
     for label, props in tissue_properties.items():
         mask = phantom_slice == label
         if not np.any(mask):
             continue
-        
-        T1, T2, PD = props["T1"], props["T2"], props["PD"]
-        
-        # Signal at effective TE
-        signal = epg_signal(T1, T2, PD, TR, TE_eff, ETL, echo_spacing)
+
+        T1, T2, PD = float(props["T1"]), float(props["T2"]), float(props["PD"])
+        signal = epg_signal(T1, T2, PD, TR, TE_eff, ETL, echo_spacing, refocus_angle_deg)
         image[mask] = signal
-        
-        # Track blurring for short-T2 tissues
-        blur = fse_blurring_factor(ETL, echo_spacing, T2)
-        if blur > max_blur:
-            max_blur = blur
-    
-    # Apply T2 blurring (affects phase encode direction = vertical)
-    # Blurring is proportional to ETL and echo spacing
-    train_duration = ETL * echo_spacing
-    blur_sigma = train_duration / 500.0  # empirical scaling
-    
-    if blur_sigma > 0.5:
-        # Apply directional blur (phase encode = vertical)
-        kernel_size = int(blur_sigma * 3)
-        if kernel_size > 0:
-            # Blur only in vertical direction (phase encode)
-            image = gaussian_filter(image, sigma=[blur_sigma, 0])
-    
+
+        if T2 < min_T2:
+            min_T2 = T2
+
+    # Apply Gaussian blur in the phase-encode (row) direction
+    if min_T2 < float("inf"):
+        factor = fse_blurring_factor(ETL, echo_spacing, min_T2, refocus_angle_deg)
+        fwhm   = factor - 1.0           # excess FWHM in voxels
+        sigma  = fwhm / 2.355           # FWHM → Gaussian σ
+        if sigma > 0.1:
+            image = gaussian_filter(image, sigma=[sigma, 0.0])
+
     return image
-
-def compute_fse_echo_train(T1, T2, PD, TR, ETL, echo_spacing):
-    """Compute signal at each echo in the train.
-    
-    Returns array of signal values for each echo.
-    """
-    echoes = np.arange(1, ETL + 1)
-    TE_values = echoes * echo_spacing
-    
-    # Signal at each echo
-    signals = PD * (1 - np.exp(-TR / T1)) * np.exp(-TE_values / T2)
-    
-    return TE_values, signals
-
-if __name__ == "__main__":
-    from phantom3d import TISSUE_PROPERTIES_3D
-    
-    # Test FSE signal
-    print("FSE Signal Test:")
-    print("-" * 50)
-    
-    TR, TE_eff, ETL, ESP = 4000, 80, 16, 10
-    print(f"Parameters: TR={TR}, TE_eff={TE_eff}, ETL={ETL}, ESP={ESP}ms")
-    print()
-    
-    for label, props in TISSUE_PROPERTIES_3D.items():
-        if props["PD"] == 0:
-            continue
-        sig = epg_signal(props["T1"], props["T2"], props["PD"], TR, TE_eff, ETL, ESP)
-        blur = fse_blurring_factor(ETL, ESP, props["T2"])
-        print(f"  {props['name']:15s}: signal={sig:.4f}, blur_factor={blur:.2f}")
-    
-    # Scan time comparison
-    print()
-    print("Scan Time Comparison (256 matrix, NEX=1):")
-    print("-" * 50)
-    se_time = TR * 256 / 1000
-    for etl in [1, 4, 8, 16, 32]:
-        fse_time = fse_scan_time(TR, 256, 1, etl)
-        speedup = se_time / fse_time
-        print(f"  ETL={etl:2d}: time={fse_time:.0f}s ({fse_time/60:.1f}min), speedup={speedup:.1f}x")
-    
-    # Echo train decay
-    print()
-    print("Echo Train Signal Decay (WM vs CSF):")
-    print("-" * 50)
-    for tissue, T1, T2, PD in [("WM", 830, 80, 0.65), ("CSF", 4500, 2200, 1.0)]:
-        te_vals, sigs = compute_fse_echo_train(T1, T2, PD, TR, 16, 10)
-        print(f"  {tissue}: echo1={sigs[0]:.4f}, echo8={sigs[7]:.4f}, echo16={sigs[15]:.4f}")
-    
-    print("\nFSE module working.")
