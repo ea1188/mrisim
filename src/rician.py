@@ -103,8 +103,11 @@ def rician_snr_bias(nu: float | np.ndarray,
 # Noise addition
 # ---------------------------------------------------------------------------
 
-def add_rician_noise(signal_image: np.ndarray,
-                     sigma: float | np.ndarray) -> np.ndarray:
+def add_rician_noise(
+    signal_image: np.ndarray,
+    sigma: float | np.ndarray,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray:
     """Add Rician noise to a real-valued MR signal image.
 
     Procedure: add independent Gaussian noise to real and imaginary channels,
@@ -115,25 +118,27 @@ def add_rician_noise(signal_image: np.ndarray,
     signal_image : ndarray  real-valued, non-negative  (any shape)
     sigma : float or ndarray  noise standard deviation per channel
         If ndarray, must broadcast to signal_image.shape.
+    rng : np.random.Generator or None  reproducible noise source
 
     Returns
     -------
     noisy : ndarray, same shape, float64, non-negative
     """
-    signal_image = np.asarray(signal_image, dtype=float)
-    real_part = signal_image + np.random.normal(0., sigma, signal_image.shape)
-    imag_part = np.random.normal(0., sigma, signal_image.shape)
-    return np.sqrt(real_part**2 + imag_part**2)
-
-
-def add_rician_noise_seeded(signal_image: np.ndarray, sigma: float,
-                             seed: int | None = None) -> np.ndarray:
-    """Reproducible version of add_rician_noise using a provided seed."""
-    rng = np.random.default_rng(seed)
+    if rng is None:
+        rng = np.random.default_rng()
     signal_image = np.asarray(signal_image, dtype=float)
     real_part = signal_image + rng.normal(0., sigma, signal_image.shape)
     imag_part = rng.normal(0., sigma, signal_image.shape)
     return np.sqrt(real_part**2 + imag_part**2)
+
+
+def add_rician_noise_seeded(
+    signal_image: np.ndarray,
+    sigma: float,
+    seed: int | None = None,
+) -> np.ndarray:
+    """Reproducible Rician noise using an integer seed (thin wrapper)."""
+    return add_rician_noise(signal_image, sigma, rng=np.random.default_rng(seed))
 
 
 # ---------------------------------------------------------------------------

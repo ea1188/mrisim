@@ -33,8 +33,8 @@ class TestMotionArtifact:
         assert out.shape == brain_image.shape
 
     def test_output_shape_random(self, brain_image):
-        np.random.seed(0)
-        out = add_motion_artifact(brain_image, "random", amplitude=3, frequency=3)
+        out = add_motion_artifact(brain_image, "random", amplitude=3, frequency=3,
+                                  rng=np.random.default_rng(0))
         assert out.shape == brain_image.shape
 
     def test_output_shape_linear(self, brain_image):

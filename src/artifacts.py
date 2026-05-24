@@ -7,6 +7,7 @@ def add_motion_artifact(
     amplitude: float = 5,
     frequency: float = 3,
     phase_direction: str = "vertical",
+    rng: np.random.Generator | None = None,
 ) -> np.ndarray:
     """Simulate motion artifact (ghosting) in the phase encode direction.
     
@@ -30,6 +31,9 @@ def add_motion_artifact(
     else:
         num_lines = cols
     
+    if rng is None:
+        rng = np.random.default_rng()
+
     # Generate motion trajectory (displacement per k-space line)
     if motion_type == "periodic":
         # Simulates breathing or pulsation
@@ -39,12 +43,12 @@ def add_motion_artifact(
         # Sudden jerky movements
         displacement = np.zeros(num_lines)
         num_events = max(1, int(frequency))
-        event_positions = np.random.randint(0, num_lines, num_events)
+        event_positions = rng.integers(0, num_lines, num_events)
         for pos in event_positions:
             # Each event causes a shift that persists briefly
             duration = num_lines // 10
-            end = min(pos + duration, num_lines)
-            displacement[pos:end] = amplitude * (np.random.rand() * 2 - 1)
+            end = min(int(pos) + duration, num_lines)
+            displacement[int(pos):end] = amplitude * (rng.random() * 2 - 1)
     elif motion_type == "linear":
         # Gradual drift during scan
         displacement = np.linspace(0, amplitude, num_lines)

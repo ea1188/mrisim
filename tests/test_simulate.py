@@ -70,30 +70,26 @@ class TestAddNoise:
 
     def test_nonnegative(self, phantom64):
         img = simulate_spin_echo(phantom64, TR=500, TE=15)
-        np.random.seed(42)
-        noisy = add_noise(img, snr_level=30)
+        noisy = add_noise(img, snr_level=30, rng=np.random.default_rng(42))
         assert np.all(noisy >= 0)
 
     def test_mean_close_to_original(self, phantom64):
         img = simulate_spin_echo(phantom64, TR=500, TE=15)
         brain = phantom64 > 0
-        np.random.seed(0)
-        noisy = add_noise(img, snr_level=100)  # high SNR
+        noisy = add_noise(img, snr_level=100, rng=np.random.default_rng(0))
         # Mean of noisy brain should be close to mean of original
         assert abs(noisy[brain].mean() - img[brain].mean()) < 0.05
 
     def test_lower_snr_more_noise(self, phantom64):
         img = simulate_spin_echo(phantom64, TR=500, TE=15)
-        np.random.seed(0)
-        noisy_high = add_noise(img, snr_level=100)
-        np.random.seed(0)
-        noisy_low = add_noise(img, snr_level=5)
+        noisy_high = add_noise(img, snr_level=100, rng=np.random.default_rng(0))
+        noisy_low  = add_noise(img, snr_level=5,   rng=np.random.default_rng(0))
         # STD of residual should be larger with low SNR
         assert np.std(noisy_low - img) > np.std(noisy_high - img)
 
     def test_noise_changes_image(self, phantom64):
         img = simulate_spin_echo(phantom64, TR=500, TE=15)
-        noisy = add_noise(img, snr_level=10)
+        noisy = add_noise(img, snr_level=10, rng=np.random.default_rng(1))
         assert not np.allclose(noisy, img)
 
     def test_dtype_float64(self, phantom64):

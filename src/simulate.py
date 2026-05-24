@@ -24,13 +24,18 @@ def simulate_gradient_echo(phantom: np.ndarray, TR: float, TE: float, flip_angle
         image[mask] = signal
     return image
 
-def add_noise(image: np.ndarray, snr_level: float = 30) -> np.ndarray:
+def add_noise(
+    image: np.ndarray,
+    snr_level: float = 30,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray:
     """Add Rician noise to simulate realistic MRI noise."""
+    if rng is None:
+        rng = np.random.default_rng()
     sigma = np.max(image) / snr_level
-    noise_real = np.random.normal(0, sigma, image.shape)
-    noise_imag = np.random.normal(0, sigma, image.shape)
-    noisy = np.sqrt((image + noise_real)**2 + noise_imag**2)
-    return noisy
+    noise_real = rng.normal(0, sigma, image.shape)
+    noise_imag = rng.normal(0, sigma, image.shape)
+    return np.sqrt((image + noise_real) ** 2 + noise_imag ** 2)
 
 def display_image(image: np.ndarray, title: str = "Simulated MRI", save_path: str | None = None) -> None:
     """Display the simulated image."""
