@@ -1,0 +1,223 @@
+"""
+oblique.py — True double-oblique slice prescription via direct plane sampling.
+
+Two tilt angles are composed into a single rotation matrix which defines the
+sampled plane's row and column unit vectors.  scipy.ndimage.map_coordinates
+then samples the volume at those coordinates in one pass — the volume is never
+rotated or resampled as a whole.
+
+Volume index convention (matches phantom3d / scan_geometry):
+    axis 0 = Z  (superior → inferior)
+    axis 1 = Y  (anterior → posterior)
+    axis 2 = X  (right → left)
+"""
+import numpy as np
+from scipy.ndimage import map_coordinates
+
+
+# ---------------------------------------------------------------------------
+# Rotation helpers
+# ---------------------------------------------------------------------------
+
+def _rot_matrix(axis, angle_rad):
+    """3×3 Rodrigues rotation matrix: rotate by angle_rad around axis."""
+    k = np.asarray(axis, dtype=float)
+    k = k / np.linalg.norm(k)
+    K = np.array([[ 0.0,  -k[2],  k[1]],
+                  [ k[2],  0.0,  -k[0]],
+                  [-k[1],  k[0],  0.0 ]])
+    return np.eye(3) + np.sin(angle_rad) * K + (1.0 - np.cos(angle_rad)) * (K @ K)
+
+
+# ---------------------------------------------------------------------------
+# Base orientation frames  (normal, row_vec, col_vec) in (Z, Y, X) space
+# ---------------------------------------------------------------------------
+
+_BASE_FRAMES = {
+    "axial":    (np.array([1., 0., 0.]),
+                 np.array([0., 1., 0.]),
+                 np.array([0., 0., 1.])),
+    "coronal":  (np.array([0., 1., 0.]),
+                 np.array([1., 0., 0.]),
+                 np.array([0., 0., 1.])),
+    # col_vec = +Y so coords increase naturally; GUI can flip display if desired
+    "sagittal": (np.array([0., 0., 1.]),
+                 np.array([1., 0., 0.]),
+                 np.array([0., 1., 0.])),
+}
+
+
+# ---------------------------------------------------------------------------
+# Plane orientation
+# ---------------------------------------------------------------------------
+
+def plane_from_angles(base="axial", tilt_deg=0.0, rot_deg=0.0):
+    """
+    Compose two tilt angles on top of a base orientation.
+
+    tilt_deg : rotation around col_vec (tips the plane forward / back)
+    rot_deg  : rotation around row_vec (rotates the plane left / right)
+
+    Returns (normal, row_vec, col_vec) as unit float64 arrays in (Z, Y, X) space.
+    The three vectors are mutually orthogonal; normal = row_vec × col_vec up to sign.
+    """
+    if base not in _BASE_FRAMES:
+        raise ValueError(f"base must be one of {list(_BASE_FRAMES)}; got {base!r}")
+    n, r, c = [v.copy() for v in _BASE_FRAMES[base]]
+
+    if tilt_deg:
+        R = _rot_matrix(c, np.radians(tilt_deg))
+        n = R @ n
+        r = R @ r
+
+    if rot_deg:
+        R = _rot_matrix(r, np.radians(rot_deg))
+        n = R @ n
+        c = R @ c
+
+    return (n / np.linalg.norm(n),
+            r / np.linalg.norm(r),
+            c / np.linalg.norm(c))
+
+
+# ---------------------------------------------------------------------------
+# Direct plane sampler
+# ---------------------------------------------------------------------------
+
+def oblique_plane(vol, row_vec, col_vec, center, shape=None, order=0):
+    """
+    Sample an oblique 2D plane from vol by direct interpolation.
+
+    vol      : 3-D ndarray (Z, Y, X)
+    row_vec  : unit vector along display rows, in (Z, Y, X) space
+    col_vec  : unit vector along display cols, in (Z, Y, X) space
+    center   : (Z, Y, X) voxel coordinate of the plane centre
+    shape    : (rows, cols) output size; defaults to (max_dim, max_dim)
+    order    : 0 = nearest-neighbour (preserves integer labels)
+               1 = trilinear (for floating-point signal images)
+
+    Returns 2-D array with the same dtype as vol.
+    Voxels that map outside the volume boundaries are filled with 0.
+    """
+    if shape is None:
+        d = max(vol.shape)
+        shape = (d, d)
+    rows, cols = int(shape[0]), int(shape[1])
+
+    ri = np.arange(rows, dtype=float) - rows / 2.0
+    ci = np.arange(cols, dtype=float) - cols / 2.0
+    rr, cc = np.meshgrid(ri, ci, indexing='ij')  # (rows, cols)
+
+    rv = np.asarray(row_vec, dtype=float)
+    cv = np.asarray(col_vec, dtype=float)
+    ctr = np.asarray(center, dtype=float)
+
+    coords = np.empty((3, rows, cols), dtype=float)
+    for ax in range(3):
+        coords[ax] = ctr[ax] + rr * rv[ax] + cc * cv[ax]
+
+    return map_coordinates(
+        vol.astype(float), coords, order=order, mode='constant', cval=0.0
+    ).astype(vol.dtype)
+
+
+# ---------------------------------------------------------------------------
+# Three-scout intersection lines
+# ---------------------------------------------------------------------------
+
+def _intersect_line(n, center, fixed_axis, fixed_val,
+                    row_axis, col_axis, row_len, col_len):
+    """
+    Clip the intersection of the oblique plane with an axis-aligned scout plane.
+
+    The oblique plane satisfies  n · (p − center) = 0.
+    The scout plane fixes one volume axis at fixed_val.
+
+    Returns (c0, r0, c1, r1) display-coordinate endpoints, or None if the
+    oblique plane is parallel to the scout (no transecting line).
+    """
+    nr = n[row_axis]
+    nc = n[col_axis]
+    if abs(nr) < 1e-9 and abs(nc) < 1e-9:
+        return None
+
+    # Intersection equation:  nr*r + nc*c = rhs
+    rhs = (nr * center[row_axis] + nc * center[col_axis]
+           - n[fixed_axis] * (fixed_val - center[fixed_axis]))
+
+    pts = []
+    tol = 0.5  # half-pixel tolerance at image edges
+    if abs(nc) > 1e-9:
+        for r_val in (0.0, float(row_len - 1)):
+            c_val = (rhs - nr * r_val) / nc
+            if -tol <= c_val <= col_len - 1 + tol:
+                pts.append((r_val, float(np.clip(c_val, 0, col_len - 1))))
+    if abs(nr) > 1e-9:
+        for c_val in (0.0, float(col_len - 1)):
+            r_val = (rhs - nc * c_val) / nr
+            if -tol <= r_val <= row_len - 1 + tol:
+                pts.append((float(np.clip(r_val, 0, row_len - 1)), c_val))
+
+    # Deduplicate within half a pixel
+    unique = []
+    for p in pts:
+        if not any(abs(p[0] - q[0]) < 0.5 and abs(p[1] - q[1]) < 0.5
+                   for q in unique):
+            unique.append(p)
+    if len(unique) < 2:
+        return None
+
+    (r0, c0), (r1, c1) = unique[0], unique[1]
+    return (c0, r0, c1, r1)  # (x0, y0, x1, y1) in display / matplotlib coords
+
+
+def scout_lines(vol_shape, normal, center):
+    """
+    Intersect the oblique plane with the three axis-aligned scout planes.
+
+    All three scouts pass through `center`, one per principal axis.
+
+    vol_shape : (nz, ny, nx)
+    normal    : unit normal vector in (Z, Y, X) space
+    center    : (Z, Y, X) voxel coordinate
+
+    Returns dict with keys 'axial', 'coronal', 'sagittal', each mapped to a
+    (c0, r0, c1, r1) line-endpoint tuple in display coordinates, or None when
+    the oblique plane is parallel to (or coincident with) that scout.
+    """
+    nz, ny, nx = vol_shape
+    n = np.asarray(normal, dtype=float)
+    ctr = np.asarray(center, dtype=float)
+
+    return {
+        # axial scout:    z fixed,  display rows = Y (axis 1), cols = X (axis 2)
+        "axial":    _intersect_line(n, ctr, 0, ctr[0], 1, 2, ny, nx),
+        # coronal scout:  y fixed,  display rows = Z (axis 0), cols = X (axis 2)
+        "coronal":  _intersect_line(n, ctr, 1, ctr[1], 0, 2, nz, nx),
+        # sagittal scout: x fixed,  display rows = Z (axis 0), cols = Y (axis 1)
+        "sagittal": _intersect_line(n, ctr, 2, ctr[2], 0, 1, nz, ny),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Convenience: extract three axis-aligned scouts through a centre point
+# ---------------------------------------------------------------------------
+
+def three_scouts(vol, center=None):
+    """
+    Extract the three orthogonal scout slices that all pass through center.
+
+    Returns dict with keys 'axial', 'coronal', 'sagittal' → 2-D arrays.
+    Shapes: axial (ny, nx), coronal (nz, nx), sagittal (nz, ny).
+    """
+    nz, ny, nx = vol.shape
+    if center is None:
+        center = (nz // 2, ny // 2, nx // 2)
+    cz = int(np.clip(round(center[0]), 0, nz - 1))
+    cy = int(np.clip(round(center[1]), 0, ny - 1))
+    cx = int(np.clip(round(center[2]), 0, nx - 1))
+    return {
+        "axial":    vol[cz, :, :],
+        "coronal":  vol[:, cy, :],
+        "sagittal": vol[:, :, cx],
+    }
