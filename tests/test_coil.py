@@ -498,3 +498,18 @@ class TestCoilUniformityZeroReturn:
         sm_zero = np.zeros((2, 8, 8))
         result = coil_uniformity(sm_zero)
         assert result == pytest.approx(0., abs=1e-12)
+
+
+class TestGFactorMapSingularCoils:
+    def test_singular_sensitivity_leaves_g_as_one(self):
+        """When S_block is rank-deficient (identical coil columns), linalg.inv
+        raises LinAlgError → the except branch (lines 431-433) leaves g=1."""
+        # 2 coils with identical sensitivity → S_block is rank 1, A = S†S is singular
+        # Use R=2 so we need 2 independent coils but only have rank 1
+        sm_singular = np.zeros((2, 8, 4), dtype=complex)
+        sm_singular[0] = 1.0  # coil 0: uniform
+        sm_singular[1] = 1.0  # coil 1: identical to coil 0 → rank-deficient
+        g = g_factor_map(sm_singular, acceleration=2)
+        # Singular blocks should leave g at 1.0 (default)
+        assert g.shape == (8, 4)
+        assert np.all(g >= 1.0)

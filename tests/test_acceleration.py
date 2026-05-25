@@ -403,3 +403,18 @@ class TestDefaultRngFallbacks:
         mask = vd_poisson_mask(32, 32, 4)
         assert mask.shape == (32, 32)
         assert mask.dtype == bool
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestSensePaddingNonDivisibleRows:
+    def test_sense_pads_non_divisible_rows(self, rng):
+        """Image with rows not divisible by R triggers SENSE padding (lines 192-193)
+        and the matching crop (lines 201-202) after reconstruction."""
+        # 33 rows, R=4 → 33 % 4 = 1 → pad = 3
+        img = np.ones((33, 32))
+        result, g = apply_parallel_imaging(img, acceleration_factor=4, method="SENSE",
+                                           rng=rng)
+        assert result.shape == (33, 32)
+        assert g.shape == (33, 32)

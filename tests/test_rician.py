@@ -272,3 +272,23 @@ class TestRicianBiasCorrection:
         img = np.full((100,), rician_mean(nu, sigma))
         corrected = rician_bias_correction(img, sigma)
         assert abs(corrected.mean() - nu) < abs(img.mean() - nu)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestEstimateSnrNonzeroNoise:
+    def test_finite_return_when_background_has_noise(self):
+        """When background std > 0, the `return float(sig/noise_std)` branch
+        (line 176) executes rather than the `return np.inf` guard."""
+        rng = np.random.default_rng(7)
+        img = np.zeros((30, 30))
+        img[15:, 15:] = 100.    # bright signal region
+        img[:10, :10] = rng.normal(0, 5., (10, 10))   # noisy background
+        signal_mask = np.zeros((30, 30), dtype=bool)
+        signal_mask[15:, 15:] = True
+        bg_mask = np.zeros((30, 30), dtype=bool)
+        bg_mask[:10, :10] = True
+        snr = estimate_snr_background(img, signal_mask, bg_mask)
+        assert np.isfinite(snr)
+        assert snr > 0.
