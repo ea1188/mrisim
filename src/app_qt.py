@@ -16,6 +16,7 @@ Run:  pip install PyQt6 matplotlib numpy   (plus your existing backend deps)
 
 import os
 import sys
+from typing import Any
 
 # Force matplotlib's Qt backend onto PyQt6 before it is imported.
 os.environ.setdefault("QT_API", "PyQt6")
@@ -62,39 +63,39 @@ class Var:
     """Drop-in replacement for tk.*Var. Holds a value and notifies callbacks."""
     __slots__ = ("_value", "_callbacks")
 
-    def __init__(self, value):
+    def __init__(self, value: object) -> None:
         self._value = value
-        self._callbacks = []
+        self._callbacks: list[Any] = []
 
-    def get(self):
+    def get(self) -> Any:
         return self._value
 
-    def set(self, value):
+    def set(self, value: object) -> None:
         self._value = value
         for cb in self._callbacks:
             cb()
 
-    def trace_add(self, _mode, callback):
+    def trace_add(self, _mode: str, callback: Any) -> None:
         # tk passes (name, index, mode) to the callback; we ignore them.
         self._callbacks.append(lambda: callback())
 
 
 class DLabel(QLabel):
     """QLabel with a tk-style .config(text=, fg=) method and a preserved base style."""
-    def __init__(self, text="", base_style="", parent=None):
+    def __init__(self, text: str = "", base_style: str = "", parent: Any = None) -> None:
         super().__init__(text, parent)
         self._base = base_style
         if base_style:
             self.setStyleSheet(base_style)
 
-    def config(self, text=None, fg=None):
+    def config(self, text: str | None = None, fg: str | None = None) -> None:
         if text is not None:
             self.setText(text)
         if fg is not None:
             self.setStyleSheet(self._base + f"color:{fg};")
 
 
-def _fmt(val):
+def _fmt(val: object) -> str:
     """Match the Tkinter slider label formatting."""
     if isinstance(val, float):
         return f"{val:.0f}"
@@ -127,7 +128,7 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 
 
 class MRISimulator(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("MRI Simulation Platform")
         self.resize(1400, 850)
@@ -146,7 +147,7 @@ class MRISimulator(QMainWindow):
         body_phantoms.merge_into_engine()
         self._brain_volume = self.phantom_3d
         self._region_cache = {"Brain": self.phantom_3d}
-        self._region_sequences = {}
+        self._region_sequences: dict[str, list[str]] = {}
 
         # --- State variables (Var shim instead of tk.*Var) ---
         self.region = Var("Brain")
@@ -213,7 +214,7 @@ class MRISimulator(QMainWindow):
 
         # Comparison
         self.compare_mode = Var(False)
-        self.compare_params = None
+        self.compare_params: dict | None = None
 
         # Debounced recalculate timer (replaces root.after)
         self._recalc_timer = QTimer(self)
@@ -223,7 +224,7 @@ class MRISimulator(QMainWindow):
         # Window/level
         self.window_width = 1.0
         self.window_level = 0.5
-        self.current_image = None
+        self.current_image: np.ndarray | None = None
         self.current_title = ""
         self.wl_dragging = False
         self.wl_start_x = 0
@@ -240,7 +241,7 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     #  Layout
     # ------------------------------------------------------------------ #
-    def build_ui(self):
+    def build_ui(self) -> None:
         central = QWidget()
         self.setCentralWidget(central)
         root_layout = QHBoxLayout(central)
@@ -283,7 +284,7 @@ class MRISimulator(QMainWindow):
         self.build_controls()
         self.recalculate()
 
-    def build_image_display(self):
+    def build_image_display(self) -> None:
         # Scout / FOV-planning figure (left of the main image, hidden by default)
         self.scout_fig = Figure(figsize=(3.5, 5), facecolor="#1e1e1e")
         self.scout_ax = self.scout_fig.add_subplot(111)
@@ -294,8 +295,8 @@ class MRISimulator(QMainWindow):
         self.scout_canvas.mpl_connect("button_press_event", self._scout_press)
         self.scout_canvas.mpl_connect("motion_notify_event", self._scout_motion)
         self.scout_canvas.mpl_connect("button_release_event", self._scout_release)
-        self._scout_drag = None      # active drag state dict
-        self._scout_box_info = None   # last drawn box geometry (for hit-testing)
+        self._scout_drag: dict | None = None      # active drag state dict
+        self._scout_box_info: dict | None = None   # last drawn box geometry (for hit-testing)
 
         # Main image figure
         self.fig = Figure(figsize=(10, 5), facecolor="#1e1e1e")
@@ -324,10 +325,10 @@ class MRISimulator(QMainWindow):
         self.canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Status bar for the live cursor readout
-        self.statusBar().setStyleSheet("color:#cccccc; background:#262626;")
+        self.statusBar().setStyleSheet("color:#cccccc; background:#262626;")  # type: ignore[union-attr]
         self._set_status_default()
 
-    def _ensure_1x2_layout(self):
+    def _ensure_1x2_layout(self) -> None:
         """Restore the normal 1x2 subplot layout if the figure has a different configuration."""
         if len(self.fig.axes) != 2:
             self.fig.clear()
@@ -337,9 +338,9 @@ class MRISimulator(QMainWindow):
                 ax.set_facecolor("#1e1e1e")
 
     # --- Window/level (matplotlib event handlers) ---
-    def _on_press(self, event):
+    def _on_press(self, event: object) -> None:
         # Double-click left = reset
-        if event.button == 1 and getattr(event, "dblclick", False):
+        if event.button == 1 and getattr(event, "dblclick", False):  # type: ignore[attr-defined]
             self.window_width = 1.0
             self.window_level = 0.5
             if self.current_image is not None:
@@ -347,39 +348,39 @@ class MRISimulator(QMainWindow):
             return
         ctrl = False
         try:
-            if event.guiEvent is not None:
-                ctrl = bool(event.guiEvent.modifiers() & Qt.KeyboardModifier.ControlModifier)
+            if event.guiEvent is not None:  # type: ignore[attr-defined]
+                ctrl = bool(event.guiEvent.modifiers() & Qt.KeyboardModifier.ControlModifier)  # type: ignore[attr-defined]
         except Exception:
             ctrl = False
         # Middle / right drag, or Ctrl+left drag, adjusts W/L
-        if event.button in (2, 3) or (event.button == 1 and ctrl):
+        if event.button in (2, 3) or (event.button == 1 and ctrl):  # type: ignore[attr-defined]
             self.wl_dragging = True
-            self.wl_start_x = event.x
-            self.wl_start_y = event.y
+            self.wl_start_x = event.x  # type: ignore[attr-defined]
+            self.wl_start_y = event.y  # type: ignore[attr-defined]
 
-    def _on_motion(self, event):
+    def _on_motion(self, event: object) -> None:
         # Live cursor readout (only over the main image axis) when not dragging
         if not self.wl_dragging:
             self._update_readout(event)
             return
         if self.current_image is None:
             return
-        if event.x is None or event.y is None:
+        if event.x is None or event.y is None:  # type: ignore[attr-defined]
             return
-        self.window_width += (event.x - self.wl_start_x) * 0.005
+        self.window_width += (event.x - self.wl_start_x) * 0.005  # type: ignore[attr-defined]
         # matplotlib's y grows upward (opposite of Tk), so '+=' preserves drag direction
-        self.window_level += (event.y - self.wl_start_y) * 0.003
+        self.window_level += (event.y - self.wl_start_y) * 0.003  # type: ignore[attr-defined]
         self.window_width = np.clip(self.window_width, 0.05, 3.0)
         self.window_level = np.clip(self.window_level, 0.0, 1.0)
-        self.wl_start_x = event.x
-        self.wl_start_y = event.y
+        self.wl_start_x = event.x  # type: ignore[attr-defined]
+        self.wl_start_y = event.y  # type: ignore[attr-defined]
         self.apply_window_level()
 
-    def _on_release(self, event):
+    def _on_release(self, event: object) -> None:
         self.wl_dragging = False
 
     # --- Workstation navigation -------------------------------------------- #
-    def _change_slice(self, delta):
+    def _change_slice(self, delta: int) -> None:
         """Step the current slice by +/- delta, clamped to the volume bounds."""
         max_sl = self.get_max_slice_idx()
         new_idx = int(np.clip(self.slice_idx.get() + delta, 0, max_sl))
@@ -387,16 +388,16 @@ class MRISimulator(QMainWindow):
             self.slice_idx.set(new_idx)   # updates the slider via its trace
             self.recalculate()             # immediate feedback while scrolling
 
-    def _on_scroll(self, event):
+    def _on_scroll(self, event: object) -> None:
         # Wheel up = next slice, wheel down = previous (radiology convention)
-        step = 1 if event.button == "up" else -1
+        step = 1 if event.button == "up" else -1  # type: ignore[attr-defined]
         # event.step carries magnitude on trackpads; use its sign if present
         if getattr(event, "step", 0):
-            step = 1 if event.step > 0 else -1
+            step = 1 if event.step > 0 else -1  # type: ignore[attr-defined]
         self._change_slice(step)
 
-    def _on_key(self, event):
-        k = (event.key or "").lower()
+    def _on_key(self, event: object) -> None:
+        k = (event.key or "").lower()  # type: ignore[attr-defined]
         if k in ("up", "right", "+", "="):
             self._change_slice(1)
         elif k in ("down", "left", "-"):
@@ -420,21 +421,21 @@ class MRISimulator(QMainWindow):
     TISSUE_LABELS = {0: "Background", 1: "CSF", 2: "Gray Matter", 3: "White Matter",
                      4: "Fat", 5: "Muscle/Skin", 6: "Skull", 7: "Vessel", 8: "Marrow"}
 
-    def _set_status_default(self):
-        self.statusBar().showMessage(
+    def _set_status_default(self) -> None:
+        self.statusBar().showMessage(  # type: ignore[union-attr]
             "Wheel / \u2191\u2193 : slice   \u2022   Ctrl+drag : window/level   \u2022   "
             "double-click : reset   \u2022   k / m / p : k-space / multi / PSD")
 
-    def _update_readout(self, event):
-        if self.current_image is None or event.inaxes is not self.axes[0]:
+    def _update_readout(self, event: object) -> None:
+        if self.current_image is None or event.inaxes is not self.axes[0]:  # type: ignore[attr-defined]
             self._set_status_default()
             return
-        if event.xdata is None or event.ydata is None:
+        if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return
         img = self.current_image
         H, W = img.shape[:2]
-        col = int(np.clip(round(event.xdata), 0, W - 1))
-        row = int(np.clip(round(event.ydata), 0, H - 1))
+        col = int(np.clip(round(event.xdata), 0, W - 1))  # type: ignore[attr-defined]
+        row = int(np.clip(round(event.ydata), 0, H - 1))  # type: ignore[attr-defined]
         signal = float(img[row, col])
 
         # Map the cursor's fractional position onto the phantom label volume,
@@ -442,8 +443,8 @@ class MRISimulator(QMainWindow):
         tissue = ""
         try:
             ph = get_slice(self.phantom_3d, self.orientation.get(), self.slice_idx.get())
-            py = int(np.clip(round(event.ydata / H * ph.shape[0]), 0, ph.shape[0] - 1))
-            px = int(np.clip(round(event.xdata / W * ph.shape[1]), 0, ph.shape[1] - 1))
+            py = int(np.clip(round(event.ydata / H * ph.shape[0]), 0, ph.shape[0] - 1))  # type: ignore[attr-defined]
+            px = int(np.clip(round(event.xdata / W * ph.shape[1]), 0, ph.shape[1] - 1))  # type: ignore[attr-defined]
             label = int(round(float(ph[py, px])))
             import phantom3d
             props = phantom3d.TISSUE_PROPERTIES_3D.get(label)
@@ -451,11 +452,11 @@ class MRISimulator(QMainWindow):
         except Exception:
             tissue = "n/a"
 
-        self.statusBar().showMessage(
+        self.statusBar().showMessage(  # type: ignore[union-attr]
             f"({col}, {row})   \u2022   {tissue}   \u2022   signal: {signal:.3f}   "
             f"\u2022   slice {self.slice_idx.get()}/{self.get_max_slice_idx()}")
 
-    def apply_window_level(self):
+    def apply_window_level(self) -> None:
         if self.current_image is None:
             return
         img = self.current_image
@@ -473,7 +474,7 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     #  Widget factory helpers
     # ------------------------------------------------------------------ #
-    def _section_label(self, parent_layout, text, big=False):
+    def _section_label(self, parent_layout: Any, text: str, big: bool = False) -> QLabel:
         if big:
             style = "font-size:15px; font-weight:bold; color:white;"
         else:
@@ -483,13 +484,13 @@ class MRISimulator(QMainWindow):
         parent_layout.addWidget(lbl)
         return lbl
 
-    def _separator(self, parent_layout):
+    def _separator(self, parent_layout: Any) -> None:
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setStyleSheet("background:#555; max-height:1px; border:none;")
         parent_layout.addWidget(line)
 
-    def _slider(self, parent_layout, label, var, mn, mx):
+    def _slider(self, parent_layout: Any, label: str, var: Var, mn: float, mx: float) -> Any:
         container = QWidget()
         v = QVBoxLayout(container)
         v.setContentsMargins(4, 1, 4, 1)
@@ -514,14 +515,14 @@ class MRISimulator(QMainWindow):
 
         is_float = isinstance(var.get(), float)
 
-        def on_change(value):
+        def on_change(value: int) -> None:
             var.set(float(value) if is_float else int(value))
             val_lbl.setText(_fmt(var.get()))
             self.schedule_recalculate()
 
         s.valueChanged.connect(on_change)
 
-        def sync():
+        def sync() -> None:
             iv = int(round(var.get()))
             if s.value() != iv:
                 s.blockSignals(True)
@@ -531,11 +532,12 @@ class MRISimulator(QMainWindow):
 
         var.trace_add("write", sync)
         parent_layout.addWidget(container)
-        container._qslider = s
+        container._qslider = s  # type: ignore[attr-defined]
         return container
 
-    def _dropdown(self, parent_layout, label, var, options, on_select, inline=False):
+    def _dropdown(self, parent_layout: Any, label: str, var: Var, options: Any, on_select: Any, inline: bool = False) -> Any:
         container = QWidget()
+        lay: Any
         if inline:
             lay = QHBoxLayout(container)
             lay.setContentsMargins(4, 1, 4, 1)
@@ -559,13 +561,13 @@ class MRISimulator(QMainWindow):
             combo.setMaximumWidth(120)
         lay.addWidget(combo)
 
-        def on_text(text):
+        def on_text(text: str) -> None:
             var.set(text)
             on_select()
 
         combo.currentTextChanged.connect(on_text)
 
-        def sync():
+        def sync() -> None:
             if combo.currentText() != var.get() and var.get() in options:
                 combo.blockSignals(True)
                 combo.setCurrentText(var.get())
@@ -573,20 +575,20 @@ class MRISimulator(QMainWindow):
 
         var.trace_add("write", sync)
         parent_layout.addWidget(container)
-        container._combo = combo
+        container._combo = combo  # type: ignore[attr-defined]
         return container
 
-    def _checkbox(self, parent_layout, text, var):
+    def _checkbox(self, parent_layout: Any, text: str, var: Var) -> QCheckBox:
         cb = QCheckBox(text)
         cb.setChecked(bool(var.get()))
 
-        def on_toggle(checked):
+        def on_toggle(checked: bool) -> None:
             var.set(bool(checked))
             self.schedule_recalculate()
 
         cb.toggled.connect(on_toggle)
 
-        def sync():
+        def sync() -> None:
             if cb.isChecked() != bool(var.get()):
                 cb.blockSignals(True)
                 cb.setChecked(bool(var.get()))
@@ -596,7 +598,7 @@ class MRISimulator(QMainWindow):
         parent_layout.addWidget(cb)
         return cb
 
-    def _button(self, parent_layout_or_row, text, command, color="#4a4a4a"):
+    def _button(self, parent_layout_or_row: Any, text: str, command: Any, color: str = "#4a4a4a") -> QPushButton:
         b = QPushButton(text)
         b.setStyleSheet(f"QPushButton {{ background:{color}; color:white; border:none; "
                         f"padding:5px 8px; border-radius:4px; font-weight:bold; }}"
@@ -608,7 +610,7 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     #  Controls
     # ------------------------------------------------------------------ #
-    def build_controls(self):
+    def build_controls(self) -> None:
         L = self.controls_layout
 
         self._section_label(L, "MRI Simulator", big=True)
@@ -748,7 +750,7 @@ class MRISimulator(QMainWindow):
         L.addStretch(1)
         self.on_sequence_change()
 
-    def build_metrics_panel(self):
+    def build_metrics_panel(self) -> None:
         title = QLabel("Metrics")
         title.setStyleSheet("font-size:15px; font-weight:bold; color:white;")
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -775,7 +777,7 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     #  Core (unchanged from Tkinter version)
     # ------------------------------------------------------------------ #
-    def get_current_params(self):
+    def get_current_params(self) -> dict:
         return {"sequence": self.sequence_type.get(), "TR": self.TR.get(), "TE": self.TE.get(), "TI": self.TI.get(),
                 "flip_angle": self.flip_angle.get(), "matrix_size": self.matrix_size.get(), "FOV": self.FOV.get(),
                 "fov_fraction": self.fov_fraction.get(), "bandwidth": self.bandwidth.get(), "NEX": self.NEX.get(),
@@ -786,22 +788,22 @@ class MRISimulator(QMainWindow):
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get()}
 
-    def set_protocol_a(self):
+    def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()
         self.compare_status.config(text=f"A: {self.compare_params['sequence']} TR={self.compare_params['TR']:.0f}", fg="#4a9eff")
         self.compare_mode.set(True); self.recalculate()
 
-    def toggle_compare(self):
+    def toggle_compare(self) -> None:
         if not self.compare_params:
             self.compare_status.config(text="Set A first!", fg="#ff6b6b"); return
         self.compare_mode.set(not self.compare_mode.get()); self.recalculate()
 
-    def clear_compare(self):
+    def clear_compare(self) -> None:
         self.compare_params = None; self.compare_mode.set(False)
         self.compare_status.config(text="No comparison set", fg="#666666")
         self.compare_metrics_label.config(text=""); self.recalculate()
 
-    def _simulate_single_slice(self, params, orient, sl_idx):
+    def _simulate_single_slice(self, params: dict, orient: str, sl_idx: int) -> np.ndarray:
         seq = params["sequence"]; TR = params["TR"]; TE = params["TE"]; TI = params["TI"]; FA = params["flip_angle"]
         if TE >= TR:
             TE = TR - 5
@@ -824,7 +826,7 @@ class MRISimulator(QMainWindow):
         elif seq == "Inversion Recovery":
             return simulate_slice(phantom_slice, TR, TE, 'IR', TI=TI)
         elif seq == "Diffusion (DWI)":
-            direction = {"Left-Right": [1, 0], "Up-Down": [0, 1], "Diagonal": [0.707, 0.707]}[params["diff_direction"]]
+            direction: list[float] = {"Left-Right": [1.0, 0.0], "Up-Down": [0.0, 1.0], "Diagonal": [0.707, 0.707]}[params["diff_direction"]]
             if params["diff_display"] == "DWI":
                 return simulate_diffusion_3d_slice(phantom_slice, params["b_value"], direction, TR, TE)
             elif params["diff_display"] == "ADC Map":
@@ -847,7 +849,7 @@ class MRISimulator(QMainWindow):
         return np.zeros((181, 181), dtype=float)
 
     @staticmethod
-    def _resize_nn(arr, shape):
+    def _resize_nn(arr: np.ndarray, shape: Any) -> np.ndarray:
         """Nearest-neighbor resize of a label map to `shape` (no scipy needed)."""
         if arr.shape == tuple(shape):
             return arr
@@ -855,13 +857,13 @@ class MRISimulator(QMainWindow):
         xs = np.clip(np.linspace(0, arr.shape[1] - 1, shape[1]).round().astype(int), 0, arr.shape[1] - 1)
         return arr[np.ix_(ys, xs)]
 
-    def _aligned_labels(self, recon, phantom_slice):
+    def _aligned_labels(self, recon: np.ndarray, phantom_slice: np.ndarray) -> np.ndarray:
         """Phantom label map resampled (nearest) to the reconstructed image grid."""
         if phantom_slice.shape == recon.shape:
             return phantom_slice
         return self._resize_nn(phantom_slice, recon.shape)
 
-    def _tissue_ref_signal(self, recon, phantom_slice):
+    def _tissue_ref_signal(self, recon: np.ndarray, phantom_slice: np.ndarray) -> float:
         """Mean signal over brain tissue (CSF/GM/WM) used as the SNR reference level."""
         labels = self._aligned_labels(recon, phantom_slice)
         mask = np.isin(labels, (1, 2, 3))
@@ -876,7 +878,7 @@ class MRISimulator(QMainWindow):
         mx = float(np.max(recon))
         return mx * 0.5 if mx > 0 else 0.0
 
-    def _measure_snr(self, recon, phantom_slice):
+    def _measure_snr(self, recon: np.ndarray, phantom_slice: np.ndarray) -> dict:
         """
         Measure SNR the console way: mean signal in a tissue ROI divided by the
         true noise sigma estimated from a signal-free (air) region.
@@ -906,7 +908,7 @@ class MRISimulator(QMainWindow):
                 out[name] = float(roi.mean() / sigma)
         return out
 
-    def simulate_with_params(self, params):
+    def simulate_with_params(self, params: dict) -> tuple[np.ndarray, dict]:
         orient = self.orientation.get(); sl_idx = self.slice_idx.get()
         matrix = params["matrix_size"]; fov_frac = params["fov_fraction"] / 100.0
         thickness = int(self.slice_thickness.get()); R = params["accel_factor"]
@@ -986,7 +988,7 @@ class MRISimulator(QMainWindow):
         return reconstructed, metrics
 
     # --- Display ---
-    def recalculate(self, *args):
+    def recalculate(self, *args: object) -> None:
         current_params = self.get_current_params()
 
         # FOV planning takes over the main view with the prescribed slice group
@@ -1050,7 +1052,7 @@ class MRISimulator(QMainWindow):
         self.canvas.draw()
         self.update_metrics(current_params, metrics_b)
 
-    def _display_multi_slice(self, params):
+    def _display_multi_slice(self, params: dict) -> None:
         """Display 3x3 grid of adjacent slices."""
         self.fig.clear()
         axes = self.fig.subplots(3, 3)
@@ -1078,7 +1080,7 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     #  FOV planning: prescribed-group display + interactive scout
     # ------------------------------------------------------------------ #
-    def _display_prescription(self, params):
+    def _display_prescription(self, params: dict) -> None:
         """Show the prescribed slice group (montage) acquired with the boxed FOV."""
         import scan_geometry as sg
         self.fig.clear()
@@ -1103,7 +1105,7 @@ class MRISimulator(QMainWindow):
         self.canvas.draw()
         self.current_image = self._simulate_single_slice(params, orient, self.slice_idx.get()) if n == 1 else None
 
-    def _draw_scout(self, params):
+    def _draw_scout(self, params: dict) -> None:
         """Render the localizer in an orthogonal plane with the FOV box overlaid."""
         import scan_geometry as sg
         from matplotlib.patches import Rectangle
@@ -1142,11 +1144,11 @@ class MRISimulator(QMainWindow):
         self.scout_canvas.draw()
 
     @staticmethod
-    def _scout_handle_points(info):
+    def _scout_handle_points(info: dict) -> list:
         x0, y0, w, h = info["x0"], info["y0"], info["w"], info["h"]
         return [(x0, y0), (x0 + w, y0), (x0, y0 + h), (x0 + w, y0 + h)]
 
-    def on_fov_planning_toggle(self):
+    def on_fov_planning_toggle(self) -> None:
         on = self.fov_planning.get()
         self.plan_frame.setVisible(on)
         if not on:
@@ -1155,12 +1157,12 @@ class MRISimulator(QMainWindow):
         self.recalculate()
 
     # --- scout mouse interaction ---
-    def _scout_hit_test(self, event):
+    def _scout_hit_test(self, event: object) -> str | None:
         """Return 'move'|'resize_cov'|'resize_fov' for a press location, or None."""
         info = self._scout_box_info
-        if info is None or event.xdata is None or event.ydata is None:
+        if info is None or event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return None
-        x, y = event.xdata, event.ydata
+        x, y = event.xdata, event.ydata  # type: ignore[attr-defined]
         x0, y0, w, h = info["x0"], info["y0"], info["w"], info["h"]
         tol = max(4.0, 0.03 * max(info["through_len"], info["inplane_len"]))
         inside = (x0 - tol <= x <= x0 + w + tol) and (y0 - tol <= y <= y0 + h + tol)
@@ -1175,7 +1177,7 @@ class MRISimulator(QMainWindow):
         cov_dim = h if through_v else w          # through extent on screen
         fov_dim = w if through_v else h          # in-plane extent on screen
 
-        def near_edge(coord, lo, length):
+        def near_edge(coord: float, lo: float, length: float) -> bool:
             return abs(coord - lo) < tol or abs(coord - (lo + length)) < tol
 
         if through_v:
@@ -1194,23 +1196,25 @@ class MRISimulator(QMainWindow):
             return "resize_fov"
         return "move"
 
-    def _scout_press(self, event):
-        if not self.fov_planning.get() or event.inaxes is not self.scout_ax:
+    def _scout_press(self, event: object) -> None:
+        if not self.fov_planning.get() or event.inaxes is not self.scout_ax:  # type: ignore[attr-defined]
             return
         mode = self._scout_hit_test(event)
         if mode is None:
             return
-        self._scout_drag = dict(mode=mode, x=event.xdata, y=event.ydata)
+        self._scout_drag = dict(mode=mode, x=event.xdata, y=event.ydata)  # type: ignore[attr-defined]
 
-    def _scout_motion(self, event):
-        if self._scout_drag is None or event.xdata is None or event.ydata is None:
+    def _scout_motion(self, event: object) -> None:
+        if self._scout_drag is None or event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return
         import scan_geometry as sg
         d = self._scout_drag
-        dx = event.xdata - d["x"]; dy = event.ydata - d["y"]
-        d["x"], d["y"] = event.xdata, event.ydata
+        dx = event.xdata - d["x"]; dy = event.ydata - d["y"]  # type: ignore[attr-defined]
+        d["x"], d["y"] = event.xdata, event.ydata  # type: ignore[attr-defined]
         orient = self.orientation.get()
         info = self._scout_box_info
+        if info is None:
+            return
         # Map screen dx/dy onto through vs in-plane drag depending on orientation
         if info["through"] == "v":
             dx_through, d_inplane = dy, dx
@@ -1228,12 +1232,12 @@ class MRISimulator(QMainWindow):
         self._draw_scout(self.get_current_params())
         self.schedule_recalculate()
 
-    def _scout_release(self, event):
+    def _scout_release(self, event: object) -> None:
         if self._scout_drag is not None:
             self._scout_drag = None
             self.recalculate()
 
-    def _plot_curves(self, params):
+    def _plot_curves(self, params: dict) -> None:
         seq, TR, TE, TI, FA = params["sequence"], params["TR"], params["TE"], params["TI"], params["flip_angle"]
         from signal_engine import TISSUES
         if seq == "FSE / TSE":
@@ -1256,11 +1260,11 @@ class MRISimulator(QMainWindow):
                 if "Blood" in name:
                     self.axes[1].plot(fa_range, PD * np.sin(np.radians(fa_range)) * np.exp(-TE / 50), color=color, linewidth=2, label=name)
                 else:
-                    self.axes[1].plot(fa_range, [gradient_echo_signal(T1, 50, PD, TR, TE, fa) for fa in fa_range], color=color, linewidth=2, label=name)
+                    self.axes[1].plot(fa_range, [gradient_echo_signal(T1, 50, PD, TR, TE, float(fa)) for fa in fa_range], color=color, linewidth=2, label=name)
             self.axes[1].axvline(x=FA, color='yellow', linestyle='--', alpha=0.7)
             self.axes[1].set_xlabel('FA', color='white'); self.axes[1].set_title('TOF Signal', color='white', fontsize=11)
         elif seq == "fMRI (BOLD)":
-            te_range = np.arange(5, 100, 1); bs = te_range * np.exp(-te_range / 60); bs /= bs.max()
+            te_range = np.arange(5, 100, 1, dtype=float); bs = te_range * np.exp(-te_range / 60); bs /= bs.max()
             self.axes[1].plot(te_range, bs, color='#ff6b6b', linewidth=2, label='BOLD')
             self.axes[1].plot(te_range, np.exp(-te_range / 60), color='#69db7c', linewidth=2, label='Signal')
             self.axes[1].axvline(x=TE, color='yellow', linestyle='--', alpha=0.7)
@@ -1283,10 +1287,10 @@ class MRISimulator(QMainWindow):
         self.axes[1].legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
         self.axes[1].tick_params(colors='white'); self.axes[1].set_facecolor('#1e1e1e')
 
-    def update_compare_metrics(self, ma, mb):
+    def update_compare_metrics(self, ma: dict, mb: dict) -> None:
         up, down = "\u2191", "\u2193"
 
-        def d(a, b, u="", f=".1f"):
+        def d(a: float, b: float, u: str = "", f: str = ".1f") -> str:
             diff = b - a; pct = (diff / a * 100) if a != 0 else 0
             arrow = up if diff > 0 else down if diff < 0 else "="
             return f"{arrow} {abs(diff):{f}}{u} ({abs(pct):.0f}%)"
@@ -1295,7 +1299,7 @@ class MRISimulator(QMainWindow):
         text += f"Res: {d(ma['resolution'], mb['resolution'], 'mm', '.2f')}\nSAR: A={ma['sar_head']:.1f} B={mb['sar_head']:.1f}"
         self.compare_metrics_label.config(text=text, fg="#ffcc00")
 
-    def update_metrics(self, params, metrics):
+    def update_metrics(self, params: dict, metrics: dict) -> None:
         orient = self.orientation.get(); sl_idx = self.slice_idx.get()
         matrix = params["matrix_size"]; thickness = int(self.slice_thickness.get())
         R = params["accel_factor"]; ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
@@ -1324,7 +1328,7 @@ class MRISimulator(QMainWindow):
         if metrics['sar_exceeds']: active.append("SAR!")
         self.metrics_labels["artifacts"].config(text=", ".join(active) if active else "None", fg='#ff6b6b' if active else '#4a9eff')
 
-    def determine_weighting(self, TR, TE, seq):
+    def determine_weighting(self, TR: float, TE: float, seq: str) -> str:
         if seq == "Diffusion (DWI)": return "Diffusion"
         if seq == "MR Angiography": return "Flow"
         if seq == "fMRI (BOLD)": return "T2* (BOLD)"
@@ -1336,7 +1340,7 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     #  UI event helpers
     # ------------------------------------------------------------------ #
-    def _refresh_slice_range(self):
+    def _refresh_slice_range(self) -> None:
         """Match the Slice slider's range to the current volume/orientation."""
         mx = self.get_max_slice_idx()
         s = self._slice_slider
@@ -1347,10 +1351,10 @@ class MRISimulator(QMainWindow):
         s.setValue(int(self.slice_idx.get()))
         s.blockSignals(False)
 
-    def on_region_change(self):
+    def on_region_change(self) -> None:
         name = self.region.get()
         if name not in self._region_cache:
-            self.statusBar().showMessage(f"Building {name} phantom\u2026")
+            self.statusBar().showMessage(f"Building {name} phantom\u2026")  # type: ignore[union-attr]
             QApplication.processEvents()
             self._region_cache[name] = self._body_phantoms.build_region(name)
         self.phantom_3d = self._region_cache[name]
@@ -1379,7 +1383,7 @@ class MRISimulator(QMainWindow):
         self._set_status_default()
         self.on_sequence_change()
 
-    def load_nifti_region(self):
+    def load_nifti_region(self) -> None:
         """Load a single segmented NIfTI label mask via a file dialog."""
         fp, _ = QFileDialog.getOpenFileName(
             self, "Load segmented NIfTI mask", os.path.expanduser("~"),
@@ -1387,11 +1391,11 @@ class MRISimulator(QMainWindow):
         if fp:
             self._load_mask_path(fp)
 
-    def _load_mask_path(self, fp, label=None, scheme="auto"):
+    def _load_mask_path(self, fp: str, label: str | None = None, scheme: str = "auto") -> None:
         """Shared loader: remap a mask file into a region and make it active."""
         try:
             import nifti_region as nrg
-            self.statusBar().showMessage("Loading segmentation\u2026"); QApplication.processEvents()
+            self.statusBar().showMessage("Loading segmentation\u2026"); QApplication.processEvents()  # type: ignore[union-attr]
             nrg.register_properties()
             vol = nrg.load_segmented_nifti(fp, scheme=scheme)
             base = os.path.basename(fp).split(".")[0]
@@ -1405,13 +1409,13 @@ class MRISimulator(QMainWindow):
             combo.setCurrentText(name)
             self.region.set(name)
             self.on_region_change()
-            self.statusBar().showMessage(f"Loaded {name}  {vol.shape}")
+            self.statusBar().showMessage(f"Loaded {name}  {vol.shape}")  # type: ignore[union-attr]
         except ImportError:
-            self.statusBar().showMessage("Install nibabel:  pip3 install --user nibabel")
+            self.statusBar().showMessage("Install nibabel:  pip3 install --user nibabel")  # type: ignore[union-attr]
         except Exception as e:
-            self.statusBar().showMessage(f"Load failed: {str(e)[:60]}")
+            self.statusBar().showMessage(f"Load failed: {str(e)[:60]}")  # type: ignore[union-attr]
 
-    def browse_masks(self):
+    def browse_masks(self) -> None:
         """Pick a mask folder, index it by body region, and choose from a list."""
         folder = QFileDialog.getExistingDirectory(
             self, "Select folder of NIfTI masks", os.path.expanduser("~"))
@@ -1420,17 +1424,17 @@ class MRISimulator(QMainWindow):
         try:
             import region_index as rix
         except ImportError:
-            self.statusBar().showMessage("region_index.py missing"); return
+            self.statusBar().showMessage("region_index.py missing"); return  # type: ignore[union-attr]
 
         # Scan with a cancelable progress dialog (cache makes re-scans instant)
         files = rix._mask_files(folder)
         if not files:
-            self.statusBar().showMessage("No .nii/.nii.gz files in that folder"); return
+            self.statusBar().showMessage("No .nii/.nii.gz files in that folder"); return  # type: ignore[union-attr]
         prog = QProgressDialog("Indexing masks by body region\u2026", "Cancel", 0, len(files), self)
         prog.setWindowTitle("Scanning"); prog.setMinimumDuration(0)
         cancelled = {"v": False}
 
-        def cb(i, total, fn):
+        def cb(i: int, total: int, fn: str) -> None:
             prog.setValue(i); prog.setLabelText(f"Scanning {fn}  ({i}/{total})")
             QApplication.processEvents()
             if prog.wasCanceled():
@@ -1439,14 +1443,14 @@ class MRISimulator(QMainWindow):
         try:
             entries = rix.build_index(folder, progress=cb)
         except KeyboardInterrupt:
-            self.statusBar().showMessage("Indexing cancelled"); return
+            self.statusBar().showMessage("Indexing cancelled"); return  # type: ignore[union-attr]
         finally:
             prog.setValue(len(files))
         if cancelled["v"]:
             return
         self._show_mask_picker(entries)
 
-    def _show_mask_picker(self, entries):
+    def _show_mask_picker(self, entries: list) -> None:
         """Modal dialog: filter masks by region and load the chosen one."""
         import region_index as rix
         dlg = QDialog(self)
@@ -1466,7 +1470,7 @@ class MRISimulator(QMainWindow):
                             "QListWidget::item:selected{background:#4a9eff;}")
         v.addWidget(listw, stretch=1)
 
-        def populate():
+        def populate() -> None:
             listw.clear()
             sel = regions[filt.currentIndex()]
             for e in entries:
@@ -1490,7 +1494,7 @@ class MRISimulator(QMainWindow):
 
         chosen = {"path": None, "region": None, "scheme": "auto"}
 
-        def do_load():
+        def do_load() -> None:
             it = listw.currentItem()
             if it is None:
                 return
@@ -1508,14 +1512,14 @@ class MRISimulator(QMainWindow):
         populate()
         if dlg.exec() and chosen["path"]:
             self._load_mask_path(chosen["path"], label=chosen["region"],
-                                 scheme=chosen["scheme"])
+                                 scheme=str(chosen["scheme"]))
 
-    def _on_orient_radio(self, checked, orient):
+    def _on_orient_radio(self, checked: bool, orient: str) -> None:
         if checked:
             self.orientation.set(orient)
             self.on_orientation_change()
 
-    def on_preset_change(self):
+    def on_preset_change(self) -> None:
         name = self.preset_name.get()
         if name in ["(Custom)", ""]:
             self.desc_label.config(text=""); return
@@ -1531,16 +1535,16 @@ class MRISimulator(QMainWindow):
             if k in p: v.set(p[k])
         self.desc_label.config(text=p.get("description", "")); self.on_sequence_change()
 
-    def schedule_recalculate(self, *args):
+    def schedule_recalculate(self, *args: object) -> None:
         self._recalc_timer.start(150)
 
-    def on_orientation_change(self):
+    def on_orientation_change(self) -> None:
         dims = {"axial": self.phantom_3d.shape[0], "sagittal": self.phantom_3d.shape[2], "coronal": self.phantom_3d.shape[1]}
         self.slice_idx.set(dims[self.orientation.get()] // 2)
         self._refresh_slice_range()
         self.recalculate()
 
-    def on_sequence_change(self):
+    def on_sequence_change(self) -> None:
         seq = self.sequence_type.get()
         for frame in (self.ti_frame, self.fa_frame, self.fse_frame,
                       self.diff_frame, self.angio_frame, self.fmri_frame):
@@ -1559,28 +1563,28 @@ class MRISimulator(QMainWindow):
             self.fmri_frame.setVisible(True)
         self.recalculate()
 
-    def get_max_slice_idx(self):
+    def get_max_slice_idx(self) -> int:
         dims = {"axial": self.phantom_3d.shape[0], "sagittal": self.phantom_3d.shape[2], "coronal": self.phantom_3d.shape[1]}
         return dims[self.orientation.get()] - 1
 
     # ------------------------------------------------------------------ #
     #  Export / Import
     # ------------------------------------------------------------------ #
-    def export_current_image(self):
+    def export_current_image(self) -> None:
         from export import export_image
         img, _ = self.simulate_with_params(self.get_current_params())
         self.compare_status.config(text=f"Saved: {os.path.basename(export_image(img, params=self.get_current_params()))}", fg='#69db7c')
 
-    def export_current_protocol(self):
+    def export_current_protocol(self) -> None:
         from export import export_protocol
         self.compare_status.config(text=f"Saved: {os.path.basename(export_protocol(self.get_current_params()))}", fg='#69db7c')
 
-    def export_current_report(self):
+    def export_current_report(self) -> None:
         from export import export_report
         p = self.get_current_params(); img, m = self.simulate_with_params(p)
         self.compare_status.config(text=f"Saved: {os.path.basename(export_report(img, p, m))}", fg='#69db7c')
 
-    def load_protocol_file(self):
+    def load_protocol_file(self) -> None:
         from export import load_protocol
         fp, _ = QFileDialog.getOpenFileName(self, "Load Protocol",
                                             os.path.expanduser('~/mrisim/exports'),
@@ -1601,7 +1605,7 @@ class MRISimulator(QMainWindow):
         except Exception as e:
             self.compare_status.config(text=f"Error: {str(e)[:30]}", fg='#ff6b6b')
 
-    def run(self):
+    def run(self) -> None:
         self.show()
 
 
