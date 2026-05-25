@@ -258,9 +258,6 @@ def simulate_epi(signal_image: np.ndarray, b0_slice_hz: np.ndarray | None = None
 
     # B0 phase: each line acquired at time i * esp_ms
     if b0_slice_hz is not None:
-        b0_kspace = np.fft.fftshift(np.fft.fft2(
-            np.fft.ifftshift(signal_image * np.exp(
-                2j * np.pi * b0_slice_hz * 0.0))))  # placeholder
         for i in range(rows):
             t_ms = i * esp_ms
             phase_map = epi_b0_phase_error(b0_slice_hz, t_ms)
