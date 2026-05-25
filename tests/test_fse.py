@@ -242,6 +242,13 @@ class TestFseBlurringFactor:
         bf_120 = fse_blurring_factor(ETL=16, echo_spacing=10, T2=80, refocus_angle_deg=120)
         assert abs(bf_180 - bf_120) < 0.1
 
+    def test_near_zero_t2_returns_etl(self):
+        """When T2≈0, all EPG echoes are zero; the guard `return float(ETL)` fires
+        (line 245), meaning blurring is at its worst (factor = ETL)."""
+        etl = 6
+        bf = fse_blurring_factor(ETL=etl, echo_spacing=1.0, T2=0.0)
+        assert bf == pytest.approx(float(etl))
+
 
 # ---------------------------------------------------------------------------
 # simulate_fse_image

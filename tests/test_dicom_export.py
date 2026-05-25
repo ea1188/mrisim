@@ -388,3 +388,25 @@ class TestReadScanParams:
         for key in ("TR_ms", "TE_ms", "TI_ms", "flip_angle_deg",
                     "sequence", "field_strength_T"):
             assert key in params
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestLoadDicomSeriesMissingInstanceNumber:
+    def test_no_instance_number_falls_back_to_path(self, tmp_path, small_volume):
+        """DICOM files without InstanceNumber trigger the except branch (lines 353-354)
+        in _sort_key — the sort falls back to using the file path string."""
+        import pydicom
+        out = str(tmp_path / "series_no_inst")
+        volume_to_dicom_series(small_volume, out)
+        # Remove InstanceNumber from all DICOM files
+        for fn in os.listdir(out):
+            if fn.endswith(".dcm"):
+                fp = os.path.join(out, fn)
+                ds = pydicom.dcmread(fp)
+                if hasattr(ds, "InstanceNumber"):
+                    del ds.InstanceNumber
+                ds.save_as(fp)
+        back = load_dicom_series(out)
+        assert back.shape == small_volume.shape

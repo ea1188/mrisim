@@ -852,3 +852,19 @@ class TestThreeScouts:
         nz, ny, nx = small_vol.shape
         scouts = three_scouts(small_vol, center=(9999, 9999, 9999))
         np.testing.assert_array_equal(scouts["axial"], small_vol[nz - 1, :, :])
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestIntersectLineSinglePoint:
+    def test_returns_none_when_line_clips_single_corner(self):
+        """When the intersection line passes through exactly one image corner,
+        deduplication leaves len(unique)==1 → `return None` (line 409)."""
+        # n = [1,1,1]/√3, center at origin, image 10×10.
+        # Line equation: nr*r + nc*c = 0 → only point (0,0) is in-bounds.
+        n = np.array([1., 1., 1.]) / np.sqrt(3.)
+        ctr = np.array([0., 0., 0.])
+        # fixed_axis=0 at 0; row_axis=1, col_axis=2; row_len=col_len=10
+        result = _intersect_line(n, ctr, 0, 0.0, 1, 2, 10, 10)
+        assert result is None
