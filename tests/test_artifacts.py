@@ -174,3 +174,33 @@ class TestSusceptibilityPhysics:
         """Calling with default air_labels=None should not raise."""
         out = add_susceptibility_artifact(brain_image, brain_phantom_64)
         assert out.shape == brain_image.shape
+
+    def test_no_matching_air_label_returns_unchanged(self, brain_image, brain_phantom_64):
+        """When the air_label is absent from the slice, susceptibility is a no-op."""
+        out = add_susceptibility_artifact(brain_image, brain_phantom_64,
+                                          strength=0.5, air_labels=[99])
+        np.testing.assert_array_equal(out, brain_image)
+
+
+class TestMotionArtifactUnknownType:
+    def test_unknown_motion_type_returns_same_shape(self, brain_image):
+        out = add_motion_artifact(brain_image, "unknown_type", amplitude=3)
+        assert out.shape == brain_image.shape
+
+    def test_unknown_motion_type_no_phase_change(self, brain_image):
+        # Unknown type falls back to zero displacement → FFT round-trip only.
+        out = add_motion_artifact(brain_image, "unknown_type", amplitude=3)
+        np.testing.assert_allclose(out, brain_image, atol=1e-10)
+
+
+class TestChemicalShiftNegative:
+    def test_negative_shift_output_shape(self, brain_image, brain_phantom_64):
+        """Negative shift (fat shifted in the opposite direction) still returns correct shape."""
+        out = add_chemical_shift_artifact(brain_image, brain_phantom_64,
+                                          shift_pixels=-3)
+        assert out.shape == brain_image.shape
+
+    def test_negative_shift_nonnegative(self, brain_image, brain_phantom_64):
+        out = add_chemical_shift_artifact(brain_image, brain_phantom_64,
+                                          shift_pixels=-3)
+        assert np.all(out >= 0)

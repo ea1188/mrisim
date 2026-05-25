@@ -96,6 +96,17 @@ class TestSimulatePhaseContrast:
         _, _, speed = simulate_phase_contrast(vascular_phantom, venc=80, flow_velocity=60)
         assert np.all(speed >= 0)
 
+    def test_velocity_aliasing_wraps_phase(self, vascular_phantom):
+        """When flow_velocity > venc the phase aliases and is still in [-pi, pi]."""
+        _, phase, _ = simulate_phase_contrast(vascular_phantom, venc=40,
+                                              flow_velocity=100)
+        assert np.all(np.abs(phase) <= np.pi + 1e-9)
+
+    def test_aliased_speed_still_nonnegative(self, vascular_phantom):
+        _, _, speed = simulate_phase_contrast(vascular_phantom, venc=40,
+                                              flow_velocity=100)
+        assert np.all(speed >= 0)
+
 
 class TestComputeMip:
     def test_basic_mip(self):

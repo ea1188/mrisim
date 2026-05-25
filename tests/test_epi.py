@@ -308,3 +308,27 @@ class TestEpiT2starDecay:
         out_long  = epi_t2star_decay(img, T2s_long,  esp_ms=0.5, n_phase=32)
         out_short = epi_t2star_decay(img, T2s_short, esp_ms=0.5, n_phase=32)
         assert out_short.max() < out_long.max()
+
+
+class TestSimulateEpiWithB0:
+    """Tests for the b0_slice_hz branch in simulate_epi (previously uncovered)."""
+
+    def test_b0_map_returns_correct_shape(self):
+        img = np.ones((32, 32)) * 0.5
+        b0 = np.full((32, 32), 50.0)  # 50 Hz uniform B0
+        recon, ks = simulate_epi(img, b0_slice_hz=b0)
+        assert recon.shape == (32, 32)
+        assert ks.shape == (32, 32)
+
+    def test_b0_map_finite_output(self):
+        img = np.ones((32, 32)) * 0.5
+        b0 = np.random.default_rng(0).uniform(-100, 100, (32, 32))
+        recon, _ = simulate_epi(img, b0_slice_hz=b0)
+        assert np.all(np.isfinite(recon))
+
+    def test_b0_map_changes_kspace_vs_no_b0(self):
+        img = np.ones((32, 32)) * 0.5
+        b0 = np.full((32, 32), 100.0)
+        _, ks_b0  = simulate_epi(img, b0_slice_hz=b0)
+        _, ks_no  = simulate_epi(img)
+        assert not np.allclose(ks_b0, ks_no)

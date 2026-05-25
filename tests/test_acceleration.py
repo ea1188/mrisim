@@ -383,3 +383,23 @@ class TestApplyCompressedSensing:
         r_large = apply_compressed_sensing(brain_image, 4, center_fraction=0.20, rng=rng)
         assert r_small.shape == brain_image.shape
         assert r_large.shape == brain_image.shape
+
+    def test_no_rng_arg_runs(self, brain_image):
+        """Omitting rng triggers the default_rng() fallback inside the function."""
+        result = apply_compressed_sensing(brain_image, acceleration_factor=2)
+        assert result.shape == brain_image.shape
+        assert np.all(result >= 0.0)
+
+
+class TestDefaultRngFallbacks:
+    """Verify that functions with optional rng kwargs work when rng is omitted."""
+
+    def test_parallel_imaging_no_rng(self, brain_image):
+        result, g = apply_parallel_imaging(brain_image, acceleration_factor=2)
+        assert result.shape == brain_image.shape
+        assert np.all(g >= 1.0)
+
+    def test_vd_poisson_mask_no_rng(self):
+        mask = vd_poisson_mask(32, 32, 4)
+        assert mask.shape == (32, 32)
+        assert mask.dtype == bool

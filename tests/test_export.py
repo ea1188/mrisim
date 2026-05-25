@@ -75,6 +75,14 @@ class TestExportProtocol:
             data = json.load(f)
         assert "SIMULATED" in data.get("disclaimer", "")
 
+    def test_auto_filename_timestamp(self, export_module, sample_params):
+        """Calling without explicit filename uses a timestamp-based name."""
+        path = export_module.export_protocol(sample_params)
+        assert os.path.exists(path)
+        assert path.endswith(".json")
+        # The auto-generated name includes "protocol_"
+        assert "protocol_" in os.path.basename(path)
+
 
 class TestLoadProtocol:
     def test_roundtrip(self, export_module, sample_params):

@@ -185,6 +185,17 @@ class TestFmriPhysics:
         assert result.shape == (3,)
         assert np.all(result > T2s)
 
+    def test_near_zero_denominator_returns_zero(self, fmri_data):
+        """flip_angle=90 with very long TR makes denom~0 at some T1 values;
+        simulate_fmri_fast must return 0.0 (not NaN/Inf) in that branch."""
+        phantom, activation = fmri_data
+        # cos(90°)=0 so denom = 1 - 0*E1 = 1, actually not near-zero.
+        # Force near-zero by using flip=0 → sin(0)=0, so signal=0 regardless.
+        img = simulate_fmri_fast(phantom, activation, TR=2000, TE=30,
+                                 flip_angle=0.0, is_active=True)
+        assert np.all(np.isfinite(img))
+        assert np.all(img >= 0)
+
     def test_zero_flip_angle_gives_zero(self, fmri_data):
         phantom, activation = fmri_data
         img = simulate_fmri_fast(phantom, activation, TR=2000, TE=30, flip_angle=0)

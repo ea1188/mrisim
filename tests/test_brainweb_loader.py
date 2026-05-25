@@ -57,3 +57,26 @@ class TestLoadBrainwebPhantom:
         unique = set(int(x) for x in np.unique(phantom))
         assert 2 in unique  # gray matter
         assert 3 in unique  # white matter
+
+
+class TestGetBrainwebOrSyntheticFallback:
+    def test_falls_back_to_synthetic_on_exception(self, monkeypatch):
+        """If load_brainweb_phantom raises, get_brainweb_or_synthetic returns Synthetic."""
+        import brainweb_loader as bwl
+
+        def _raise(*a, **kw):
+            raise RuntimeError("simulated download failure")
+
+        monkeypatch.setattr(bwl, "load_brainweb_phantom", _raise)
+        phantom, source = bwl.get_brainweb_or_synthetic()
+        assert source == "Synthetic"
+        assert isinstance(phantom, np.ndarray)
+        assert phantom.ndim == 3
+
+    def test_fallback_phantom_has_brain_voxels(self, monkeypatch):
+        import brainweb_loader as bwl
+
+        monkeypatch.setattr(bwl, "load_brainweb_phantom",
+                            lambda *a, **kw: (_ for _ in ()).throw(RuntimeError()))
+        phantom, source = bwl.get_brainweb_or_synthetic()
+        assert np.sum(phantom > 0) > 10000
