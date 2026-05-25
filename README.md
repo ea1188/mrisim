@@ -1,4 +1,4 @@
-# mrisim
+# MRI Simulator
 
 An MRI physics simulation platform written in Python. Models the signal chain from tissue properties and pulse sequence parameters through k-space acquisition to reconstructed image, covering the major contrast mechanisms and artifacts seen in clinical MRI.
 
