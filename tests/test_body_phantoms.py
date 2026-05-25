@@ -7,6 +7,9 @@ from body_phantoms import (
     _win,
     _abdomen_slice,
     generate_abdomen_3d,
+    generate_knee_3d,
+    generate_spine_3d,
+    generate_pelvis_3d,
     generate_abdomen_axial,
     REGION_NAMES,
     REGION_SEQUENCES,
@@ -220,22 +223,126 @@ class TestGenerateAbdomenAxial:
 
 
 # ---------------------------------------------------------------------------
+# generate_knee_3d
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="module")
+def small_knee_3d():
+    return generate_knee_3d(Z=6, H=40, W=40, seed=42)
+
+
+class TestGenerateKnee3d:
+    def test_shape(self, small_knee_3d):
+        assert small_knee_3d.shape == (6, 40, 40)
+
+    def test_dtype_uint8(self, small_knee_3d):
+        assert small_knee_3d.dtype == np.uint8
+
+    def test_labels_within_known_range(self, small_knee_3d):
+        unique = set(np.unique(small_knee_3d).tolist())
+        assert unique.issubset(set(BODY_TISSUES.keys()))
+
+    def test_multiple_tissues_present(self, small_knee_3d):
+        assert len(np.unique(small_knee_3d)) >= 3
+
+    def test_has_background(self, small_knee_3d):
+        assert 0 in np.unique(small_knee_3d)
+
+    def test_seed_reproducible(self):
+        a = generate_knee_3d(Z=4, H=30, W=30, seed=5)
+        b = generate_knee_3d(Z=4, H=30, W=30, seed=5)
+        np.testing.assert_array_equal(a, b)
+
+    def test_z_variation(self, small_knee_3d):
+        assert not np.array_equal(small_knee_3d[0], small_knee_3d[-1])
+
+
+# ---------------------------------------------------------------------------
+# generate_spine_3d
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="module")
+def small_spine_3d():
+    return generate_spine_3d(Z=8, H=40, W=40, seed=42)
+
+
+class TestGenerateSpine3d:
+    def test_shape(self, small_spine_3d):
+        assert small_spine_3d.shape == (8, 40, 40)
+
+    def test_dtype_uint8(self, small_spine_3d):
+        assert small_spine_3d.dtype == np.uint8
+
+    def test_labels_within_known_range(self, small_spine_3d):
+        unique = set(np.unique(small_spine_3d).tolist())
+        assert unique.issubset(set(BODY_TISSUES.keys()))
+
+    def test_multiple_tissues_present(self, small_spine_3d):
+        assert len(np.unique(small_spine_3d)) >= 3
+
+    def test_has_background(self, small_spine_3d):
+        assert 0 in np.unique(small_spine_3d)
+
+    def test_seed_reproducible(self):
+        a = generate_spine_3d(Z=4, H=30, W=30, seed=7)
+        b = generate_spine_3d(Z=4, H=30, W=30, seed=7)
+        np.testing.assert_array_equal(a, b)
+
+    def test_z_variation(self, small_spine_3d):
+        assert not np.array_equal(small_spine_3d[0], small_spine_3d[-1])
+
+
+# ---------------------------------------------------------------------------
+# generate_pelvis_3d
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="module")
+def small_pelvis_3d():
+    return generate_pelvis_3d(Z=6, H=40, W=50, seed=42)
+
+
+class TestGeneratePelvis3d:
+    def test_shape(self, small_pelvis_3d):
+        assert small_pelvis_3d.shape == (6, 40, 50)
+
+    def test_dtype_uint8(self, small_pelvis_3d):
+        assert small_pelvis_3d.dtype == np.uint8
+
+    def test_labels_within_known_range(self, small_pelvis_3d):
+        unique = set(np.unique(small_pelvis_3d).tolist())
+        assert unique.issubset(set(BODY_TISSUES.keys()))
+
+    def test_multiple_tissues_present(self, small_pelvis_3d):
+        assert len(np.unique(small_pelvis_3d)) >= 3
+
+    def test_has_background(self, small_pelvis_3d):
+        assert 0 in np.unique(small_pelvis_3d)
+
+    def test_seed_reproducible(self):
+        a = generate_pelvis_3d(Z=4, H=30, W=40, seed=11)
+        b = generate_pelvis_3d(Z=4, H=30, W=40, seed=11)
+        np.testing.assert_array_equal(a, b)
+
+    def test_z_variation(self, small_pelvis_3d):
+        assert not np.array_equal(small_pelvis_3d[0], small_pelvis_3d[-1])
+
+
+# ---------------------------------------------------------------------------
 # Region registry
 # ---------------------------------------------------------------------------
 class TestRegionRegistry:
-    def test_region_names_has_brain_and_abdomen(self):
-        assert "Brain" in REGION_NAMES
-        assert "Abdomen" in REGION_NAMES
+    def test_region_names_has_all_five(self):
+        for name in ("Brain", "Abdomen", "Knee", "Spine", "Pelvis"):
+            assert name in REGION_NAMES
 
-    def test_region_sequences_has_both_regions(self):
-        assert "Brain" in REGION_SEQUENCES
-        assert "Abdomen" in REGION_SEQUENCES
+    def test_region_sequences_has_all_five(self):
+        for name in ("Brain", "Abdomen", "Knee", "Spine", "Pelvis"):
+            assert name in REGION_SEQUENCES
 
-    def test_brain_has_more_sequences_than_abdomen(self):
-        assert len(REGION_SEQUENCES["Brain"]) > len(REGION_SEQUENCES["Abdomen"])
+    def test_brain_has_more_sequences_than_body(self):
+        for name in ("Abdomen", "Knee", "Spine", "Pelvis"):
+            assert len(REGION_SEQUENCES["Brain"]) > len(REGION_SEQUENCES[name])
 
-    def test_abdomen_has_spin_echo(self):
-        assert "Spin Echo" in REGION_SEQUENCES["Abdomen"]
+    def test_all_body_regions_have_spin_echo(self):
+        for name in ("Abdomen", "Knee", "Spine", "Pelvis"):
+            assert "Spin Echo" in REGION_SEQUENCES[name]
 
 
 # ---------------------------------------------------------------------------
@@ -249,6 +356,18 @@ class TestBuildRegion:
     def test_abdomen_3d(self):
         vol = build_region("Abdomen")
         assert vol.ndim == 3
+
+    def test_knee_returns_ndarray(self):
+        vol = build_region("Knee")
+        assert isinstance(vol, np.ndarray) and vol.ndim == 3
+
+    def test_spine_returns_ndarray(self):
+        vol = build_region("Spine")
+        assert isinstance(vol, np.ndarray) and vol.ndim == 3
+
+    def test_pelvis_returns_ndarray(self):
+        vol = build_region("Pelvis")
+        assert isinstance(vol, np.ndarray) and vol.ndim == 3
 
     def test_unknown_region_raises(self):
         with pytest.raises(KeyError):

@@ -26,7 +26,7 @@ BODY_TISSUES = _tdb.properties("3T")
 
 # Labels that belong to body anatomy (not in the brain table) — these get added
 # to the engine's property dict; brain labels 0-5 are left untouched.
-_BODY_ONLY = (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+_BODY_ONLY = (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21)
 
 
 def merge_into_engine() -> None:
@@ -71,7 +71,7 @@ def _abdomen_slice(
     gy: np.ndarray,
     gx: np.ndarray,
     pert: np.ndarray | None,
-    disc: bool = False,
+    disc: bool = False,  # kept for back-compat (generate_abdomen_axial)
 ) -> np.ndarray:
     """One axial abdomen label slice at superior->inferior fraction f in [0,1]."""
     cy, cx = H * 0.5, W * 0.5
@@ -153,33 +153,423 @@ def _abdomen_slice(
 
 
 def generate_abdomen_3d(Z: int = 160, H: int = 200, W: int = 256, seed: int = 7) -> np.ndarray:
-    """Z-varying axial abdomen volume, shape (Z, H, W)."""
+    """Abdomen phantom: diaphragm (superior) to iliac crest (inferior).
+    Axis0=S→I, Axis1=A→P, Axis2=R→L.  Full 3D volumetric generation.
+    """
     rng = np.random.default_rng(seed)
-    gy, gx = np.ogrid[:H, :W]
-    # Coherent boundary-irregularity field (small, smooth, correlated in z)
-    noise = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=(2.0, 3.0, 3.0))
-    noise *= 0.06 / (np.abs(noise).max() + 1e-9)
-    vol = np.zeros((Z, H, W), dtype=np.uint8)
-    for z in range(Z):
-        f = z / (Z - 1)
-        disc = (z % 13) in (0, 1)        # intervertebral discs at intervals
-        vol[z] = _abdomen_slice(f, H, W, gy, gx, noise[z], disc=disc)
-    return vol
+    phantom = np.zeros((Z, H, W), dtype=np.uint8)
+    gz, gy, gx = np.ogrid[:Z, :H, :W]
+    cz, cy, cx = Z // 2, H // 2, W // 2
+
+    n1 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[3, 4, 4])
+    n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.5, 2, 2])
+    pert = n1 * 0.050 + n2 * 0.025
+
+    def E(z0: float, y0: float, x0: float,
+          sz: float, sy: float, sx: float, ps: float = 1.0) -> np.ndarray:
+        dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
+        return dist <= 1.0 + pert * ps
+
+    # Body outline
+    body = E(cz, cy, cx, Z * 0.52, H * 0.44, W * 0.47)
+    phantom[body] = 4                                           # subcutaneous fat
+    wall = E(cz, cy, cx, Z * 0.52, H * 0.395, W * 0.425, 0.6)
+    phantom[wall] = 6                                           # body-wall muscle
+    cavity = E(cz, cy, cx, Z * 0.52, H * 0.33, W * 0.36, 0.5)
+    phantom[cavity] = 4                                         # visceral fat baseline
+
+    # Liver — right lobe (D-shape) + left lobe wedge
+    lz_r = Z * 0.28; ly_r = cy - H * 0.11; lx_r = cx - W * 0.16
+    liver_r = E(lz_r, ly_r, lx_r, Z * 0.28, H * 0.19, W * 0.22, 0.6) & cavity
+    liver_l = E(Z * 0.33, cy - H * 0.14, cx + W * 0.03, Z * 0.22, H * 0.15, W * 0.11, 0.5) & cavity
+    liver = liver_r | liver_l
+    phantom[liver] = 7
+    # Hepatic veins (3 trunks toward IVC)
+    for dx in (-W * 0.10, 0.0, W * 0.10):
+        phantom[E(lz_r - Z * 0.05, ly_r, lx_r + dx, Z * 0.18, H * 0.022, W * 0.016, 0) & liver] = 11
+    # Portal vein
+    phantom[E(lz_r + Z * 0.08, ly_r + H * 0.08, lx_r, Z * 0.06, H * 0.026, W * 0.028, 0) & liver] = 11
+    # Gallbladder (pear-shaped, inferior liver fossa)
+    phantom[E(lz_r + Z * 0.12, ly_r - H * 0.10, lx_r + W * 0.09, Z * 0.08, H * 0.060, W * 0.040, 0.3) & cavity] = 1
+
+    # Spleen — left upper posterior
+    phantom[E(Z * 0.30, cy - H * 0.05, cx + W * 0.29, Z * 0.16, H * 0.13, W * 0.09, 0.55) & cavity] = 8
+
+    # Adrenal glands (small, above kidneys)
+    for sign in (-1, 1):
+        phantom[E(Z * 0.38, cy + H * 0.05, cx + sign * W * 0.24, Z * 0.04, H * 0.035, W * 0.025, 0) & cavity] = 21
+
+    # Kidneys — bean-shaped with medial hilum notch
+    for sign in (-1, 1):
+        kz = Z * (0.50 + 0.04 * (1 if sign > 0 else 0))
+        ky = cy + H * 0.11; kx = cx + sign * W * 0.27
+        cortex = E(kz, ky, kx, Z * 0.16, H * 0.145, W * 0.082, 0.55) & cavity
+        medulla = E(kz, ky, kx, Z * 0.11, H * 0.100, W * 0.055, 0)
+        hilum = E(kz, ky, kx - sign * W * 0.055, Z * 0.09, H * 0.07, W * 0.040, 0)
+        phantom[cortex & ~hilum] = 9
+        phantom[medulla & cortex & ~hilum] = 10
+        phantom[hilum & cortex] = 4                             # renal sinus fat
+
+    # Pancreas — head (right) + body/tail (horizontal to left)
+    phantom[E(Z * 0.50, cy + H * 0.03, cx - W * 0.10, Z * 0.09, H * 0.07, W * 0.07, 0.5) & cavity] = 19
+    phantom[E(Z * 0.47, cy - H * 0.04, cx + W * 0.05, Z * 0.08, H * 0.05, W * 0.18, 0.4) & cavity] = 19
+
+    # Aorta + IVC (posterior, run full length)
+    phantom[E(cz, cy + H * 0.19, cx - W * 0.040, Z * 0.52, H * 0.040, W * 0.032, 0) & cavity] = 11
+    phantom[E(cz, cy + H * 0.21, cx + W * 0.055, Z * 0.52, H * 0.050, W * 0.040, 0) & cavity] = 11
+
+    # Bowel — noise-based distribution in inferior cavity
+    bn = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[3, 3.5, 3.5])
+    inf_cavity = cavity & (gz > int(cz * 0.80)) & (phantom == 4)
+    phantom[(bn > 0.70) & inf_cavity] = 17                     # bowel wall
+    phantom[(bn > 1.20) & (phantom == 17)] = 1                 # luminal fluid
+    # Ascending + descending colon (lateral, full height)
+    for sign in (-1, 1):
+        col = E(cz, cy + H * 0.10, cx + sign * W * 0.31, Z * 0.44, H * 0.060, W * 0.055, 0.5) & cavity
+        phantom[col] = 17
+        phantom[E(cz, cy + H * 0.10, cx + sign * W * 0.31, Z * 0.44, H * 0.028, W * 0.025, 0) & col] = 12  # gas
+
+    # Lumbar spine (posterior) — vertebral chain + canal
+    for i in range(12):
+        zi = int(Z * (0.04 + 0.86 * i / 12))
+        vy = cy + H * 0.30
+        vbz = Z * 0.034
+        if (i % 3) == 2:                                        # disc
+            phantom[E(zi, vy, cx, vbz, H * 0.090, W * 0.085, 0.3)] = 15
+        else:
+            phantom[E(zi, vy, cx, vbz, H * 0.090, W * 0.090, 0.3)] = 13
+            phantom[E(zi, vy, cx, vbz * 0.7, H * 0.062, W * 0.062, 0)] = 14
+        cay = vy + H * 0.110
+        phantom[E(zi, cay, cx, vbz * 1.1, H * 0.048, W * 0.044, 0)] = 1   # CSF
+        phantom[E(zi, cay, cx, vbz * 1.1, H * 0.028, W * 0.025, 0)] = 16  # cord
+        for sign in (-1, 1):                                    # pedicles
+            phantom[E(zi, cay, cx + sign * W * 0.055, vbz * 0.9, H * 0.040, W * 0.028, 0)] = 13
+        phantom[E(zi, cay + H * 0.16, cx, vbz * 0.7, H * 0.038, W * 0.015, 0)] = 13  # spinous
+
+    phantom[~body] = 0
+    return phantom
+
+
+# ---- Knee ------------------------------------------------------------------- #
+def generate_knee_3d(Z: int = 120, H: int = 160, W: int = 150, seed: int = 17) -> np.ndarray:
+    """Knee MRI phantom.  Axis0=S→I (femur→tibia), Axis1=A→P, Axis2=M→L.
+
+    Structures: distal femur (medial > lateral condyle), patella, femoral &
+    tibial articular cartilage, medial and lateral menisci, Hoffa\'s fat pad,
+    patellar tendon, cruciate ligaments, popliteal vessels, fibula, and the
+    surrounding muscle groups.
+    """
+    rng = np.random.default_rng(seed)
+    phantom = np.zeros((Z, H, W), dtype=np.uint8)
+    gz, gy, gx = np.ogrid[:Z, :H, :W]
+    cz, cy, cx = Z // 2, H // 2, W // 2
+
+    n1 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[2.5, 3.5, 3.5])
+    n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.2, 1.8, 1.8])
+    pert = n1 * 0.045 + n2 * 0.020
+
+    def E(z0, y0, x0, sz, sy, sx, ps=1.0):
+        dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
+        return dist <= 1.0 + pert * ps
+
+    # Outer soft-tissue envelope
+    body = E(cz, cy, cx, Z * 0.50, H * 0.47, W * 0.46)
+    phantom[body] = 4
+    muscle = E(cz, cy, cx, Z * 0.50, H * 0.43, W * 0.42, 0.6)
+    phantom[muscle] = 6
+
+    # ---- Femur (superior: z=0..Z*0.42) --- medial condyle slightly larger
+    for cx_c, rsz, rsy, rsx in [
+        (cx - W * 0.15, Z * 0.26, H * 0.23, W * 0.16),   # medial (larger)
+        (cx + W * 0.13, Z * 0.24, H * 0.21, W * 0.14),   # lateral (smaller)
+    ]:
+        phantom[E(Z * 0.20, cy, cx_c, rsz, rsy, rsx, 0.4)] = 13
+        phantom[E(Z * 0.20, cy, cx_c, rsz * 0.72, rsy * 0.68, rsx * 0.70, 0)] = 14
+
+    # Patella (anterior, superior)
+    phantom[E(Z * 0.12, cy - H * 0.29, cx, Z * 0.10, H * 0.12, W * 0.09, 0.2)] = 13
+    phantom[E(Z * 0.12, cy - H * 0.29, cx, Z * 0.07, H * 0.08, W * 0.06, 0)] = 14
+
+    # Quadriceps tendon (anterior, above patella)
+    phantom[E(Z * 0.04, cy - H * 0.31, cx, Z * 0.05, H * 0.07, W * 0.06, 0)] = 6
+
+    # ---- Joint space (z=Z*0.38..Z*0.62) ------------------------------------
+    # Femoral condyle articular cartilage
+    for cx_c in (cx - W * 0.15, cx + W * 0.13):
+        phantom[E(Z * 0.42, cy - H * 0.01, cx_c, Z * 0.055, H * 0.025, W * 0.115, 0)] = 15
+
+    # Medial meniscus: C-shaped (open posterolaterally) — two-arc approximation
+    med_m_z = Z * 0.50
+    phantom[E(med_m_z, cy, cx - W * 0.15, Z * 0.08, H * 0.055, W * 0.060)] = 15
+    phantom[E(med_m_z, cy + H * 0.08, cx - W * 0.18, Z * 0.06, H * 0.040, W * 0.045)] = 15
+    # Lateral meniscus: complete ring (smaller)
+    phantom[E(med_m_z, cy, cx + W * 0.13, Z * 0.08, H * 0.050, W * 0.052)] = 15
+    phantom[E(med_m_z, cy, cx + W * 0.13, Z * 0.09, H * 0.025, W * 0.026, 0) & (phantom == 15)] = 1
+
+    # Tibial plateau cartilage
+    for cx_c in (cx - W * 0.15, cx + W * 0.13):
+        phantom[E(Z * 0.58, cy + H * 0.04, cx_c, Z * 0.045, H * 0.020, W * 0.115, 0)] = 15
+
+    # Joint fluid (intercondylar space)
+    phantom[E(Z * 0.50, cy, cx, Z * 0.12, H * 0.070, W * 0.36) & (phantom == 6)] = 1
+
+    # Cruciate ligaments (fibrous cords in notch)
+    phantom[E(Z * 0.50, cy, cx, Z * 0.14, H * 0.060, W * 0.028, 0)] = 6
+
+    # Hoffa\'s fat pad (anterior, below patella)
+    phantom[E(Z * 0.55, cy - H * 0.20, cx, Z * 0.10, H * 0.09, W * 0.19, 0.5) & muscle] = 4
+
+    # ---- Tibia + fibula (z=Z*0.58..1.0) ------------------------------------
+    tib_z = E(cz * 1.4, cy, cx - W * 0.03, Z * 0.35, H * 0.24, W * 0.19, 0.3)
+    phantom[tib_z & (gz > int(Z * 0.55))] = 13
+    phantom[E(cz * 1.4, cy, cx - W * 0.03, Z * 0.35, H * 0.17, W * 0.13, 0) & (gz > int(Z * 0.55))] = 14
+
+    fib_cx = cx + W * 0.30
+    phantom[E(cz * 1.3, cy + H * 0.08, fib_cx, Z * 0.32, H * 0.065, W * 0.040, 0.3) & (gz > int(Z * 0.50))] = 13
+    phantom[E(cz * 1.3, cy + H * 0.08, fib_cx, Z * 0.32, H * 0.038, W * 0.022, 0) & (gz > int(Z * 0.50))] = 14
+
+    # Patellar tendon (anterior, below patella to tibial tuberosity)
+    phantom[E(Z * 0.44, cy - H * 0.28, cx, Z * 0.12, H * 0.08, W * 0.05, 0)] = 6
+
+    # Popliteal vessels (posterior)
+    for dx in (-W * 0.035, W * 0.035):
+        phantom[E(cz, cy + H * 0.36, cx + dx, Z * 0.40, H * 0.038, W * 0.030, 0) & body] = 11
+
+    phantom[~body] = 0
+    return phantom
+
+
+# ---- Spine ------------------------------------------------------------------ #
+def generate_spine_3d(Z: int = 160, H: int = 200, W: int = 180, seed: int = 23) -> np.ndarray:
+    """Spine phantom (C1-L5).  Axis0=S->I, Axis1=A->P, Axis2=L->R.
+
+    Each spinal level: vertebral body (cortical + marrow, posterior concavity);
+    complete posterior arch (pedicles + laminae + spinous + transverse processes);
+    facet joints; IVD (nucleus pulposus + annulus fibrosus); spinal canal
+    (CSF + cord); epidural fat; erector spinae (bilateral) + psoas (lumbar).
+    """
+    rng = np.random.default_rng(seed)
+    phantom = np.zeros((Z, H, W), dtype=np.uint8)
+    gz, gy, gx = np.ogrid[:Z, :H, :W]
+    cz, cy, cx = Z // 2, H // 2, W // 2
+
+    n1 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[3, 4, 4])
+    n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.5, 2, 2])
+    pert = n1 * 0.048 + n2 * 0.022
+
+    def E(z0, y0, x0, sz, sy, sx, ps=1.0):
+        dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
+        return dist <= 1.0 + pert * ps
+
+    # Graded body outline: narrows superiorly, widens in lumbar
+    tz = gz.astype(float) / Z
+    body_graded = ((gz - cz) ** 2 / (Z * 0.52) ** 2 +
+                   (gy - cy) ** 2 / ((H * (0.35 + 0.10 * tz)) ** 2) +
+                   (gx - cx) ** 2 / ((W * (0.41 + 0.06 * tz)) ** 2)) <= 1 + pert
+    phantom[body_graded] = 4
+
+    # Erector spinae (bilateral, posterior)
+    for sign in (-1, 1):
+        es = ((gz - cz) ** 2 / (Z * 0.52) ** 2 +
+              (gy - (cy + H * 0.11)) ** 2 / ((H * (0.17 + 0.05 * tz)) ** 2) +
+              (gx - (cx + sign * W * (0.16 + 0.07 * tz))) ** 2 / ((W * (0.16 + 0.06 * tz)) ** 2)) <= 1 + pert * 0.5
+        phantom[es & body_graded] = 6
+
+    # Psoas (anterior, lower half only)
+    for sign in (-1, 1):
+        ps_m = ((gz - cz * 1.3) ** 2 / (Z * 0.30) ** 2 +
+                (gy - (cy - H * 0.10)) ** 2 / ((H * (0.10 + 0.04 * tz)) ** 2) +
+                (gx - (cx + sign * W * 0.14)) ** 2 / (W * 0.09) ** 2) <= 1 + pert * 0.4
+        phantom[ps_m & body_graded & (gz > int(Z * 0.50))] = 6
+
+    # Vertebral chain (24 levels)
+    for i in range(24):
+        f = i / 24.0
+        zi = int(Z * (0.03 + 0.90 * f))
+        vbz = Z * 0.032
+        vy = cy + H * (0.09 + 0.05 * f)
+        vbw_y = H * (0.085 + 0.040 * f)
+        vbw_x = W * (0.130 + 0.055 * f)
+        is_disc = (i % 3) == 2
+
+        if is_disc:
+            phantom[E(zi, vy, cx, vbz, vbw_y, vbw_x, 0.3)] = 15          # annulus
+            phantom[E(zi, vy, cx, vbz * 0.70, vbw_y * 0.55, vbw_x * 0.55, 0)] = 1  # nucleus
+        else:
+            phantom[E(zi, vy, cx, vbz, vbw_y, vbw_x, 0.3)] = 13
+            phantom[E(zi, vy, cx, vbz * 0.75, vbw_y * 0.66, vbw_x * 0.66, 0)] = 14
+            # Posterior concavity (flattened back of vertebral body)
+            phantom[E(zi, vy + vbw_y * 0.90, cx, vbz * 0.6, vbw_y * 0.28, vbw_x * 0.50, 0) & (phantom == 14)] = 13
+
+        # Pedicles
+        ped_y = vy + vbw_y * 1.05
+        for sign in (-1, 1):
+            phantom[E(zi, ped_y, cx + sign * vbw_x * 0.85, vbz * 0.85, vbw_y * 0.42, vbw_x * 0.28, 0)] = 13
+
+        # Spinal canal: CSF + cord
+        cay = vy + vbw_y * 1.20
+        can_h = H * (0.055 - 0.012 * f); can_w = W * (0.060 - 0.010 * f)
+        phantom[E(zi, cay, cx, vbz * 1.05, can_h, can_w, 0)] = 1
+        phantom[E(zi, cay, cx, vbz * 1.05, can_h * 0.54, can_w * 0.54, 0)] = 16
+
+        # Epidural fat (dorsal)
+        phantom[E(zi, cay + can_h * 1.55, cx, vbz * 0.8, can_h * 0.40, can_w * 0.90, 0)] = 4
+
+        # Laminae (bilateral, posterior arch)
+        for sign in (-1, 1):
+            phantom[E(zi, cay + can_h * 1.10, cx + sign * can_w * 1.10, vbz * 0.75, can_h * 0.55, can_w * 0.38, 0)] = 13
+
+        # Spinous process
+        phantom[E(zi, cay + can_h * 2.05, cx, vbz * 0.65, H * 0.040, W * 0.015, 0)] = 13
+
+        # Facet joints
+        for sign in (-1, 1):
+            phantom[E(zi, ped_y, cx + sign * can_w * 1.65, vbz * 0.50, vbw_y * 0.30, vbw_x * 0.20, 0)] = 13
+            phantom[E(zi, ped_y, cx + sign * can_w * 1.65, vbz * 0.30, vbw_y * 0.14, vbw_x * 0.10, 0)] = 1
+
+        # Transverse processes (thoracic+lumbar only)
+        if f > 0.30:
+            for sign in (-1, 1):
+                phantom[E(zi, vy, cx + sign * W * (0.185 + 0.04 * f), vbz * 0.55, vbw_y * 0.22, vbw_x * 0.062, 0) & body_graded] = 13
+
+    phantom[~body_graded] = 0
+    return phantom
+
+
+# ---- Pelvis ----------------------------------------------------------------- #
+def generate_pelvis_3d(Z: int = 120, H: int = 220, W: int = 280, seed: int = 31) -> np.ndarray:
+    """Pelvis phantom.  Axis0=S->I (iliac crest->perineum), Axis1=A->P, Axis2=R->L.
+
+    Structures: iliac wings; sacrum; acetabulum + femoral head + labrum +
+    articular cartilage; obturator internus; levator ani; bladder; prostate/
+    uterus + adnexa; rectum; iliac vessels; pubic symphysis; femoral shafts.
+    """
+    rng = np.random.default_rng(seed)
+    phantom = np.zeros((Z, H, W), dtype=np.uint8)
+    gz, gy, gx = np.ogrid[:Z, :H, :W]
+    cz, cy, cx = Z // 2, H // 2, W // 2
+
+    n1 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[3, 4, 4])
+    n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.5, 2.2, 2.2])
+    pert = n1 * 0.050 + n2 * 0.022
+
+    def E(z0, y0, x0, sz, sy, sx, ps=1.0):
+        dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
+        return dist <= 1.0 + pert * ps
+
+    tz = gz.astype(float) / Z
+    body_mask = ((gz - cz) ** 2 / (Z * 0.52) ** 2 +
+                 (gy - cy) ** 2 / ((H * (0.43 + 0.04 * tz)) ** 2) +
+                 (gx - cx) ** 2 / ((W * (0.46 + 0.03 * tz)) ** 2)) <= 1 + pert
+    phantom[body_mask] = 4
+    muscle_mask = ((gz - cz) ** 2 / (Z * 0.52) ** 2 +
+                   (gy - cy) ** 2 / ((H * (0.38 + 0.04 * tz)) ** 2) +
+                   (gx - cx) ** 2 / ((W * (0.40 + 0.03 * tz)) ** 2)) <= 1 + pert * 0.5
+    phantom[muscle_mask] = 6
+
+    # Sacrum (posterior midline, tapers inferiorly)
+    phantom[E(Z * 0.35, cy + H * 0.28, cx, Z * 0.38, H * 0.13, W * 0.12, 0.4)] = 13
+    phantom[E(Z * 0.35, cy + H * 0.28, cx, Z * 0.30, H * 0.09, W * 0.085, 0)] = 14
+    phantom[E(Z * 0.35, cy + H * 0.20, cx, Z * 0.38, H * 0.05, W * 0.035, 0)] = 1   # sacral canal
+
+    # Iliac wings (bilateral, superior 40%)
+    for sign in (-1, 1):
+        il_x = cx + sign * W * 0.30
+        phantom[E(Z * 0.20, cy, il_x, Z * 0.22, H * 0.32, W * 0.12, 0.5)] = 13
+        phantom[E(Z * 0.20, cy, il_x, Z * 0.18, H * 0.26, W * 0.08, 0)] = 14
+        phantom[E(Z * 0.27, cy - H * 0.22, cx + sign * W * 0.30, Z * 0.06, H * 0.06, W * 0.06, 0.2)] = 13
+
+    # Acetabulum + femoral head (hip joint, mid-pelvis)
+    hip_z = Z * 0.52
+    for sign in (-1, 1):
+        ac_x = cx + sign * W * 0.31; ac_y = cy + H * 0.04
+        phantom[E(hip_z, ac_y, ac_x, Z * 0.15, H * 0.135, W * 0.13, 0.35)] = 13
+        phantom[E(hip_z, ac_y, ac_x, Z * 0.11, H * 0.095, W * 0.09, 0)] = 14
+        phantom[E(hip_z, ac_y - H * 0.10, ac_x, Z * 0.15, H * 0.030, W * 0.030, 0)] = 15  # labrum
+        fh_x = ac_x + sign * W * 0.04
+        phantom[E(hip_z, ac_y, fh_x, Z * 0.125, H * 0.105, W * 0.100, 0.25)] = 13
+        phantom[E(hip_z, ac_y, fh_x, Z * 0.090, H * 0.073, W * 0.070, 0)] = 14
+        phantom[E(hip_z, ac_y, fh_x - sign * W * 0.07, Z * 0.12, H * 0.025, W * 0.025, 0)] = 15
+        phantom[E(hip_z, ac_y, ac_x + sign * W * 0.02, Z * 0.12, H * 0.020, W * 0.020, 0)] = 1
+
+    # Femoral shafts (inferior third)
+    for sign in (-1, 1):
+        fs_x = cx + sign * W * 0.27
+        phantom[E(Z * 0.76, cy + H * 0.04, fs_x, Z * 0.28, H * 0.17, W * 0.15, 0.3) & (gz > int(Z * 0.60))] = 13
+        phantom[E(Z * 0.76, cy + H * 0.04, fs_x, Z * 0.28, H * 0.11, W * 0.09, 0) & (gz > int(Z * 0.60))] = 14
+
+    # Pubic symphysis + ischial rami
+    phantom[E(Z * 0.72, cy, cx, Z * 0.12, H * 0.060, W * 0.090, 0.2)] = 13
+    phantom[E(Z * 0.72, cy, cx, Z * 0.08, H * 0.030, W * 0.030, 0)] = 15
+    for sign in (-1, 1):
+        phantom[E(Z * 0.72, cy + H * 0.08, cx + sign * W * 0.14, Z * 0.10, H * 0.045, W * 0.090, 0.3)] = 13
+
+    # Obturator internus + levator ani
+    for sign in (-1, 1):
+        phantom[E(Z * 0.65, cy + H * 0.08, cx + sign * W * 0.22, Z * 0.22, H * 0.080, W * 0.060, 0.4) & muscle_mask] = 6
+    phantom[E(Z * 0.80, cy + H * 0.12, cx, Z * 0.12, H * 0.042, W * 0.28, 0.3) & body_mask] = 6
+
+    # Bladder (dome-shaped, fluid)
+    phantom[E(Z * 0.38, cy - H * 0.20, cx, Z * 0.18, H * 0.135, W * 0.130, 0.35)] = 1
+    phantom[E(Z * 0.38, cy - H * 0.20, cx, Z * 0.22, H * 0.158, W * 0.155, 0.3) & (phantom == 6)] = 21
+
+    # Prostate/uterus + adnexa
+    phantom[E(Z * 0.58, cy - H * 0.04, cx, Z * 0.16, H * 0.070, W * 0.085, 0.4)] = 21
+    for sign in (-1, 1):
+        phantom[E(Z * 0.50, cy + H * 0.02, cx + sign * W * 0.07, Z * 0.08, H * 0.045, W * 0.060, 0.3)] = 21
+
+    # Rectum (posterior)
+    phantom[E(Z * 0.50, cy + H * 0.22, cx, Z * 0.38, H * 0.080, W * 0.070, 0.5)] = 17
+    phantom[E(Z * 0.50, cy + H * 0.22, cx, Z * 0.38, H * 0.040, W * 0.040, 0)] = 1
+
+    # Iliac vessels
+    for sign in (-1, 1):
+        phantom[E(Z * 0.25, cy - H * 0.07, cx + sign * W * 0.085, Z * 0.18, H * 0.040, W * 0.032, 0) & body_mask] = 11
+        phantom[E(Z * 0.25, cy - H * 0.015, cx + sign * W * 0.085, Z * 0.18, H * 0.050, W * 0.042, 0) & body_mask] = 11
+
+    phantom[~body_mask] = 0
+    return phantom
+
+
 
 
 # ---- Region registry --------------------------------------------------------
-REGION_NAMES = ["Brain", "Abdomen"]
-# Sequences each region supports (brain has the specialised ones)
+REGION_NAMES = ["Brain", "Abdomen", "Knee", "Spine", "Pelvis"]
+_MSK_SEQS = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery"]
 REGION_SEQUENCES = {
     "Brain":   ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
                 "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)"],
-    "Abdomen": ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery"],
+    "Abdomen": _MSK_SEQS,
+    "Knee":    _MSK_SEQS,
+    "Spine":   _MSK_SEQS,
+    "Pelvis":  _MSK_SEQS,
 }
-_BUILDERS = {"Abdomen": generate_abdomen_3d}
+_BUILDERS = {
+    "Abdomen": generate_abdomen_3d,
+    "Knee":    generate_knee_3d,
+    "Spine":   generate_spine_3d,
+    "Pelvis":  generate_pelvis_3d,
+}
 
 
 def build_region(name: str) -> np.ndarray:
-    """Return a labeled 3D volume for a non-brain region (Brain is supplied by app)."""
+    """Return a labeled 3D volume for a non-brain region (Brain is supplied by app).
+
+    Tries to load a real TotalSegmentator segmentation from data/ first (the
+    body equivalent of BrainWeb).  Falls back to the synthetic generator if the
+    data file is absent or nibabel is unavailable.
+    """
+    # Real NIfTI path
+    try:
+        import os
+        from nifti_region import load_region_nifti
+        _data = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+        vol = load_region_nifti(name, _data)
+        if vol is not None:
+            return vol
+    except Exception:
+        pass
+    # Synthetic fallback
     if name in _BUILDERS:
         return _BUILDERS[name]()
     raise KeyError(f"No builder for region {name!r}")

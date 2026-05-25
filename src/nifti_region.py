@@ -13,6 +13,7 @@ Requires nibabel:  pip install nibabel
 Volume is reoriented to the simulator convention (axis0=Z axial, axis1=Y coronal,
 axis2=X sagittal) so phantom3d.get_slice and scan_geometry work unchanged.
 """
+import os
 import numpy as np
 
 # Tissue properties come from the authoritative tissue_db (1.5T/3T aware). This
@@ -357,3 +358,223 @@ def _maybe_downsample(vol: np.ndarray, target_max: int) -> np.ndarray:
         return vol
     step = int(np.ceil(m / target_max))
     return vol[::step, ::step, ::step].copy()
+
+
+# Mapping from TotalSegmentatorMRI per-organ binary mask filename stems to
+# simulator MR tissue labels.  Used by load_totalseg_mri_subject().
+_SEG_FILE_TO_MR: dict[str, int] = {
+    "adrenal_gland_left": 21, "adrenal_gland_right": 21,
+    "aorta": 11,
+    "autochthon_left": 6, "autochthon_right": 6,
+    "brain": 2,
+    "colon": 17, "duodenum": 17, "esophagus": 17,
+    "femur_left": 13, "femur_right": 13,
+    "fibula": 13,
+    "gallbladder": 1,
+    "gluteus_maximus_left": 6, "gluteus_maximus_right": 6,
+    "gluteus_medius_left": 6, "gluteus_medius_right": 6,
+    "gluteus_minimus_left": 6, "gluteus_minimus_right": 6,
+    "heart": 20,
+    "hip_left": 13, "hip_right": 13,
+    "humerus_left": 13, "humerus_right": 13,
+    "iliac_artery_left": 11, "iliac_artery_right": 11,
+    "iliac_vena_left": 11, "iliac_vena_right": 11,
+    "iliopsoas_left": 6, "iliopsoas_right": 6,
+    "inferior_vena_cava": 11,
+    "intervertebral_discs": 15,
+    "kidney_left": 9, "kidney_right": 9,
+    "liver": 7,
+    "lung_left": 18, "lung_right": 18,
+    "pancreas": 19,
+    "portal_vein_and_splenic_vein": 11,
+    "prostate": 21,
+    "quadriceps_femoris_left": 6, "quadriceps_femoris_right": 6,
+    "sacrum": 13,
+    "sartorius_left": 6, "sartorius_right": 6,
+    "small_bowel": 17,
+    "spinal_cord": 16,
+    "spleen": 8,
+    "stomach": 17,
+    "thigh_medial_compartment_left": 6, "thigh_medial_compartment_right": 6,
+    "thigh_posterior_compartment_left": 6, "thigh_posterior_compartment_right": 6,
+    "tibia": 13,
+    "urinary_bladder": 1,
+    "vertebrae": 13,
+}
+
+# Organ groups in ascending priority — later groups overwrite earlier ones when
+# masks overlap (e.g. a vessel running through the liver, cord inside vertebra).
+_SEG_PRIORITY_GROUPS: list[list[str]] = [
+    # background muscle (lowest — explicit organ labels take precedence)
+    ["autochthon_left", "autochthon_right",
+     "gluteus_maximus_left", "gluteus_maximus_right",
+     "gluteus_medius_left", "gluteus_medius_right",
+     "gluteus_minimus_left", "gluteus_minimus_right",
+     "quadriceps_femoris_left", "quadriceps_femoris_right",
+     "thigh_medial_compartment_left", "thigh_medial_compartment_right",
+     "thigh_posterior_compartment_left", "thigh_posterior_compartment_right",
+     "sartorius_left", "sartorius_right",
+     "iliopsoas_left", "iliopsoas_right"],
+    # hollow structures
+    ["lung_left", "lung_right",
+     "colon", "small_bowel", "duodenum", "esophagus", "stomach"],
+    # solid organs
+    ["liver", "spleen", "kidney_left", "kidney_right", "pancreas",
+     "adrenal_gland_left", "adrenal_gland_right", "gallbladder",
+     "urinary_bladder", "prostate", "heart", "brain"],
+    # vessels
+    ["aorta", "inferior_vena_cava", "portal_vein_and_splenic_vein",
+     "iliac_artery_left", "iliac_artery_right",
+     "iliac_vena_left", "iliac_vena_right"],
+    # bone
+    ["femur_left", "femur_right", "fibula", "tibia",
+     "sacrum", "vertebrae",
+     "hip_left", "hip_right",
+     "humerus_left", "humerus_right"],
+    # highest priority: soft-tissue structures within bone
+    ["intervertebral_discs", "spinal_cord"],
+]
+
+# Best representative TotalSegmentatorMRI subject for each body region.
+# s0001: chest+abdomen+upper pelvis at 1.5T GRE (liver, spleen, kidneys, spine)
+# s0008: dedicated pelvis FOV (sacrum, femurs, gluteal muscles, hips)
+_REGION_TOTALSEG: dict[str, str] = {
+    "Abdomen": "s0001",
+    "Spine":   "s0001",
+    "Pelvis":  "s0008",
+}
+
+# Fallback: flat combined NIfTI files (CT-scheme, less anatomically rich).
+_REGION_NIFTI = {
+    "Abdomen": "s0009.nii.gz",
+    "Spine":   "s0021.nii.gz",
+    "Pelvis":  "s0000.nii.gz",
+}
+
+
+def _classify_unlabeled_from_mri(
+    label_vol: np.ndarray,
+    mri_vol: np.ndarray,
+    fat_thresh: float = 380.0,
+    body_thresh: float = 60.0,
+) -> np.ndarray:
+    """Fill unlabeled interior voxels using real MRI intensity.
+
+    Uses the MRI image to define the body boundary (intensity > body_thresh),
+    then assigns fat (label 4) to bright unlabeled voxels and muscle (label 6)
+    to medium-intensity ones.  Existing segmented labels are never overwritten.
+    """
+    out = label_vol.copy()
+    nz = min(label_vol.shape[0], mri_vol.shape[0])
+    for z in range(nz):
+        sl = label_vol[z]
+        mri_sl = mri_vol[z].astype(float)
+        body = _slice_silhouette(mri_sl > body_thresh)
+        empty = body & (sl == 0)
+        if not empty.any():
+            continue
+        out[z][empty & (mri_sl >= fat_thresh)] = 4   # subcutaneous / mesenteric fat
+        out[z][empty & (mri_sl < fat_thresh)] = 6    # abdominal wall / unlabeled muscle
+    return out
+
+
+def load_totalseg_mri_subject(
+    subject_dir: str,
+    target_max: int = 256,
+    fat_threshold: float = 380.0,
+    body_threshold: float = 60.0,
+) -> np.ndarray:
+    """Build a rich multi-label atlas from a TotalSegmentatorMRI per-subject dir.
+
+    Combines up to 56 per-organ binary masks into a single uint8 label volume,
+    then uses the accompanying real MRI (mri.nii.gz) to fill the remaining body
+    voxels (subcutaneous fat, abdominal wall muscle, mesenteric fat) using
+    intensity thresholding.
+
+    Returns a uint8 volume in simulator (Z, Y, X) convention, downsampled so
+    the longest axis <= target_max voxels.
+    """
+    import nibabel as nib
+
+    mri_path = os.path.join(subject_dir, "mri.nii.gz")
+    seg_dir = os.path.join(subject_dir, "segmentations")
+    if not os.path.exists(mri_path) or not os.path.isdir(seg_dir):
+        raise FileNotFoundError(f"Missing mri.nii.gz or segmentations/ in {subject_dir}")
+
+    mri_img = nib.as_closest_canonical(nib.load(mri_path))
+    mri_xyz = np.asarray(mri_img.dataobj).astype(np.float32)  # (X, Y, Z) RAS+
+
+    label_xyz = np.zeros(mri_xyz.shape, dtype=np.uint8)
+
+    for group in _SEG_PRIORITY_GROUPS:
+        for seg_name in group:
+            mr_label = _SEG_FILE_TO_MR.get(seg_name)
+            if mr_label is None:
+                continue
+            seg_path = os.path.join(seg_dir, f"{seg_name}.nii.gz")
+            if not os.path.exists(seg_path):
+                continue
+            seg_img = nib.as_closest_canonical(nib.load(seg_path))
+            seg_mask = np.asarray(seg_img.dataobj) > 0
+            label_xyz[seg_mask] = mr_label
+
+    # Reorient both to simulator (Z, Y, X)
+    label_zyx = np.transpose(label_xyz, (2, 1, 0))
+    mri_zyx = np.transpose(mri_xyz, (2, 1, 0))
+
+    # Downsample with the same step so shapes stay aligned
+    m = max(label_zyx.shape)
+    step = max(1, int(np.ceil(m / target_max)))
+    label_zyx = label_zyx[::step, ::step, ::step].copy()
+    mri_zyx = mri_zyx[::step, ::step, ::step].copy()
+
+    label_zyx = _classify_unlabeled_from_mri(label_zyx, mri_zyx, fat_threshold, body_threshold)
+    return label_zyx
+
+
+def load_region_nifti(
+    region: str,
+    data_dir: str,
+    *,
+    target_max: int = 256,
+) -> "np.ndarray | None":
+    """Load a real TotalSegmentator segmentation for *region* and return a
+    remapped uint8 label volume in simulator (Z, Y, X) convention.
+
+    Tries the rich TotalSegmentatorMRI per-subject data first (real MRI-guided
+    fat/muscle fill), then falls back to the flat combined NIfTI files.
+    Caches results as .npy files for fast subsequent loads.
+    Returns ``None`` if no data source is found or nibabel is unavailable.
+    """
+    # --- primary: TotalSegmentatorMRI per-subject (best quality) ---
+    subj_name = _REGION_TOTALSEG.get(region)
+    if subj_name is not None:
+        ts_root = os.path.join(data_dir, "TotalsegmentatorMRI_dataset_v100", subj_name)
+        if os.path.isdir(ts_root):
+            cache = os.path.join(ts_root, f"atlas_{target_max}.npy")
+            if os.path.exists(cache):
+                return np.load(cache)
+            try:
+                vol = load_totalseg_mri_subject(ts_root, target_max=target_max)
+                np.save(cache, vol)
+                return vol
+            except Exception as exc:
+                print(f"nifti_region: TotalSegMRI load failed for {subj_name}: {exc}")
+
+    # --- fallback: flat combined NIfTI ---
+    filename = _REGION_NIFTI.get(region)
+    if filename is None:
+        return None
+    nii_path = os.path.join(data_dir, filename)
+    if not os.path.exists(nii_path):
+        return None
+    cache_path = nii_path.replace(".nii.gz", "_mr.npy")
+    if os.path.exists(cache_path):
+        return np.load(cache_path)
+    try:
+        vol = load_segmented_nifti(nii_path, target_max=target_max)
+        np.save(cache_path, vol)
+        return vol
+    except Exception as exc:
+        print(f"nifti_region: could not load {nii_path}: {exc}")
+        return None

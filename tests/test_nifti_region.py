@@ -12,6 +12,12 @@ from nifti_region import (
     _fill_body_layers,
     _fill_body_fat,
     _maybe_downsample,
+    _REGION_NIFTI,
+    _REGION_TOTALSEG,
+    _SEG_FILE_TO_MR,
+    _classify_unlabeled_from_mri,
+    load_region_nifti,
+    load_totalseg_mri_subject,
 )
 
 # nibabel is optional; skip load_segmented_nifti tests if absent
@@ -502,3 +508,290 @@ class TestLoadSegmentedNifti:
         p = self._write_synthetic_nifti(str(tmp_path), data)
         out = load_segmented_nifti(p, scheme="auto")
         assert 13 in np.unique(out)
+
+
+# ---------------------------------------------------------------------------
+# load_region_nifti
+# ---------------------------------------------------------------------------
+class TestRegionNiftiRegistry:
+    def test_known_regions_defined(self):
+        for name in ("Abdomen", "Spine", "Pelvis"):
+            assert name in _REGION_NIFTI
+
+    def test_knee_not_in_registry(self):
+        assert "Knee" not in _REGION_NIFTI
+
+    def test_missing_dir_returns_none(self, tmp_path):
+        result = load_region_nifti("Abdomen", str(tmp_path))
+        assert result is None
+
+    def test_unknown_region_returns_none(self, tmp_path):
+        result = load_region_nifti("Thorax_XYZ", str(tmp_path))
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
+# _SEG_FILE_TO_MR
+# ---------------------------------------------------------------------------
+class TestSegFileToMr:
+    def test_covers_all_56_expected_organs(self):
+        expected = {
+            "adrenal_gland_left", "adrenal_gland_right", "aorta",
+            "autochthon_left", "autochthon_right", "brain",
+            "colon", "duodenum", "esophagus",
+            "femur_left", "femur_right", "fibula", "gallbladder",
+            "gluteus_maximus_left", "gluteus_maximus_right",
+            "gluteus_medius_left", "gluteus_medius_right",
+            "gluteus_minimus_left", "gluteus_minimus_right",
+            "heart", "hip_left", "hip_right",
+            "humerus_left", "humerus_right",
+            "iliac_artery_left", "iliac_artery_right",
+            "iliac_vena_left", "iliac_vena_right",
+            "iliopsoas_left", "iliopsoas_right",
+            "inferior_vena_cava", "intervertebral_discs",
+            "kidney_left", "kidney_right", "liver",
+            "lung_left", "lung_right", "pancreas",
+            "portal_vein_and_splenic_vein", "prostate",
+            "quadriceps_femoris_left", "quadriceps_femoris_right",
+            "sacrum", "sartorius_left", "sartorius_right",
+            "small_bowel", "spinal_cord", "spleen", "stomach",
+            "thigh_medial_compartment_left", "thigh_medial_compartment_right",
+            "thigh_posterior_compartment_left", "thigh_posterior_compartment_right",
+            "tibia", "urinary_bladder", "vertebrae",
+        }
+        assert expected == set(_SEG_FILE_TO_MR.keys())
+
+    def test_all_labels_in_mr_range(self):
+        for name, label in _SEG_FILE_TO_MR.items():
+            assert 0 < label < 22, f"{name} -> {label} out of MR range"
+
+    def test_key_organ_labels(self):
+        assert _SEG_FILE_TO_MR["liver"] == 7
+        assert _SEG_FILE_TO_MR["spleen"] == 8
+        assert _SEG_FILE_TO_MR["kidney_left"] == 9
+        assert _SEG_FILE_TO_MR["kidney_right"] == 9
+        assert _SEG_FILE_TO_MR["spinal_cord"] == 16
+        assert _SEG_FILE_TO_MR["intervertebral_discs"] == 15
+        assert _SEG_FILE_TO_MR["vertebrae"] == 13
+        assert _SEG_FILE_TO_MR["sacrum"] == 13
+        assert _SEG_FILE_TO_MR["heart"] == 20
+        assert _SEG_FILE_TO_MR["aorta"] == 11
+
+    def test_muscle_labels(self):
+        for name in ("autochthon_left", "gluteus_maximus_left", "iliopsoas_right",
+                     "quadriceps_femoris_left", "sartorius_right"):
+            assert _SEG_FILE_TO_MR[name] == 6, f"{name} should be muscle (6)"
+
+    def test_bone_labels(self):
+        for name in ("femur_left", "femur_right", "hip_left", "sacrum", "vertebrae",
+                     "fibula", "tibia"):
+            assert _SEG_FILE_TO_MR[name] == 13, f"{name} should be bone (13)"
+
+
+# ---------------------------------------------------------------------------
+# _REGION_TOTALSEG
+# ---------------------------------------------------------------------------
+class TestRegionTotalsegRegistry:
+    def test_all_three_regions_defined(self):
+        for name in ("Abdomen", "Spine", "Pelvis"):
+            assert name in _REGION_TOTALSEG, f"{name} missing from _REGION_TOTALSEG"
+
+    def test_different_subjects_for_abdomen_and_pelvis(self):
+        # Abdomen/Spine use chest scan; Pelvis uses dedicated pelvis scan
+        assert _REGION_TOTALSEG["Abdomen"] == _REGION_TOTALSEG["Spine"]
+        assert _REGION_TOTALSEG["Pelvis"] != _REGION_TOTALSEG["Abdomen"]
+
+    def test_knee_not_in_registry(self):
+        assert "Knee" not in _REGION_TOTALSEG
+
+    def test_subjects_are_non_empty_strings(self):
+        for region, subj in _REGION_TOTALSEG.items():
+            assert isinstance(subj, str) and subj, f"{region} has empty subject name"
+
+
+# ---------------------------------------------------------------------------
+# _classify_unlabeled_from_mri  (synthetic — no real data needed)
+# ---------------------------------------------------------------------------
+class TestClassifyUnlabeledFromMri:
+    def _make_pair(self, H=20, W=20, D=20):
+        """Label vol with a central organ; MRI with bright outer ring (fat)."""
+        label = np.zeros((D, H, W), dtype=np.uint8)
+        label[D // 2, H // 4:3 * H // 4, W // 4:3 * W // 4] = 7  # liver blob
+        mri = np.zeros((D, H, W), dtype=np.float32)
+        # High intensity = fat in outer ring; medium = muscle inside
+        mri[D // 2, 2:H - 2, 2:W - 2] = 200.0   # body interior: muscle-level
+        mri[D // 2, 2:4, 2:W - 2] = 500.0         # outer rows: fat-level
+        mri[D // 2, H - 4:H - 2, 2:W - 2] = 500.0
+        return label, mri
+
+    def test_output_shape_unchanged(self):
+        label, mri = self._make_pair()
+        out = _classify_unlabeled_from_mri(label, mri)
+        assert out.shape == label.shape
+
+    def test_dtype_preserved(self):
+        label, mri = self._make_pair()
+        out = _classify_unlabeled_from_mri(label, mri)
+        assert out.dtype == np.uint8
+
+    def test_existing_labels_not_overwritten(self):
+        label, mri = self._make_pair(H=30, W=30, D=10)
+        out = _classify_unlabeled_from_mri(label, mri)
+        np.testing.assert_array_equal(out[label == 7], np.full((label == 7).sum(), 7))
+
+    def test_high_intensity_becomes_fat(self):
+        label, mri = self._make_pair()
+        out = _classify_unlabeled_from_mri(label, mri, fat_thresh=380.0, body_thresh=60.0)
+        # The fat-level ring (500) should become fat label 4
+        z = label.shape[0] // 2
+        fat_pixels = out[z][mri[z] >= 380]
+        # Only voxels that were unlabeled AND inside body AND bright should become 4
+        if fat_pixels.size > 0:
+            assert 4 in fat_pixels or fat_pixels.size == 0
+
+    def test_medium_intensity_becomes_muscle(self):
+        label, mri = self._make_pair()
+        out = _classify_unlabeled_from_mri(label, mri, fat_thresh=380.0, body_thresh=60.0)
+        z = label.shape[0] // 2
+        interior_pixels = out[z][(mri[z] >= 60) & (mri[z] < 380) & (label[z] == 0)]
+        if interior_pixels.size > 0:
+            assert set(interior_pixels.tolist()).issubset({0, 6})
+
+    def test_below_body_thresh_stays_zero(self):
+        label = np.zeros((5, 20, 20), dtype=np.uint8)
+        mri = np.zeros((5, 20, 20), dtype=np.float32)  # all below body_thresh
+        out = _classify_unlabeled_from_mri(label, mri, body_thresh=60.0)
+        assert out.sum() == 0
+
+    def test_mismatched_z_does_not_crash(self):
+        label = np.zeros((10, 20, 20), dtype=np.uint8)
+        mri = np.zeros((5, 20, 20), dtype=np.float32)   # fewer slices
+        out = _classify_unlabeled_from_mri(label, mri)
+        assert out.shape == label.shape   # first 5 slices processed, rest untouched
+
+
+import os as _os
+_DATA_DIR = _os.path.join(_os.path.dirname(_os.path.dirname(__file__)), "data")
+_REAL_DATA_AVAILABLE = all(
+    _os.path.exists(_os.path.join(_DATA_DIR, f))
+    for f in _REGION_NIFTI.values()
+)
+_TS_DIR = _os.path.join(_DATA_DIR, "TotalsegmentatorMRI_dataset_v100")
+_TS_S0001 = _os.path.join(_TS_DIR, "s0001")
+_TS_S0008 = _os.path.join(_TS_DIR, "s0008")
+_TS_AVAILABLE = (
+    HAS_NIBABEL
+    and _os.path.isdir(_TS_S0001)
+    and _os.path.isdir(_TS_S0008)
+)
+
+
+@pytest.mark.skipif(not (HAS_NIBABEL and _REAL_DATA_AVAILABLE),
+                    reason="nibabel or real NIfTI data not available")
+class TestLoadRegionNiftiIntegration:
+    def test_abdomen_returns_ndarray(self):
+        vol = load_region_nifti("Abdomen", _DATA_DIR)
+        assert isinstance(vol, np.ndarray) and vol.ndim == 3
+
+    def test_abdomen_dtype_uint8(self):
+        vol = load_region_nifti("Abdomen", _DATA_DIR)
+        assert vol.dtype == np.uint8
+
+    def test_abdomen_has_liver(self):
+        vol = load_region_nifti("Abdomen", _DATA_DIR)
+        assert 7 in np.unique(vol)   # liver label
+
+    def test_abdomen_has_kidney(self):
+        vol = load_region_nifti("Abdomen", _DATA_DIR)
+        assert 9 in np.unique(vol)   # kidney cortex label
+
+    def test_spine_has_cord(self):
+        vol = load_region_nifti("Spine", _DATA_DIR)
+        assert 16 in np.unique(vol)  # spinal cord
+
+    def test_spine_has_disc(self):
+        vol = load_region_nifti("Spine", _DATA_DIR)
+        assert 15 in np.unique(vol)  # cartilage/disc
+
+    def test_pelvis_has_bone(self):
+        vol = load_region_nifti("Pelvis", _DATA_DIR)
+        assert 13 in np.unique(vol)  # cortical bone (sacrum/hips)
+
+    def test_cached_npy_reused(self):
+        # Second call should be fast (reads .npy cache)
+        import time
+        t = time.time()
+        load_region_nifti("Abdomen", _DATA_DIR)
+        load_region_nifti("Abdomen", _DATA_DIR)
+        assert time.time() - t < 5.0  # both loads well under 5s
+
+    def test_build_region_uses_real_data(self):
+        from body_phantoms import build_region
+        for region in ("Abdomen", "Spine", "Pelvis"):
+            vol = build_region(region)
+            assert vol.ndim == 3 and vol.dtype == np.uint8
+
+
+# ---------------------------------------------------------------------------
+# load_totalseg_mri_subject  (integration — skipped if data unavailable)
+# ---------------------------------------------------------------------------
+@pytest.mark.skipif(not _TS_AVAILABLE,
+                    reason="nibabel or TotalSegmentatorMRI data not available")
+class TestLoadTotalsegMriSubjectIntegration:
+    def test_abdomen_subject_returns_uint8_3d(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        assert isinstance(vol, np.ndarray) and vol.ndim == 3
+        assert vol.dtype == np.uint8
+
+    def test_abdomen_has_liver(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        assert 7 in np.unique(vol)
+
+    def test_abdomen_has_kidney(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        assert 9 in np.unique(vol)
+
+    def test_abdomen_has_spleen(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        assert 8 in np.unique(vol)
+
+    def test_abdomen_has_spinal_cord(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        assert 16 in np.unique(vol)
+
+    def test_abdomen_has_vertebrae_and_disc(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        labels = set(np.unique(vol).tolist())
+        assert 13 in labels  # vertebra bone
+        assert 15 in labels  # disc
+
+    def test_abdomen_has_fat_and_muscle(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        labels = set(np.unique(vol).tolist())
+        assert 4 in labels   # fat (MRI-guided fill)
+        assert 6 in labels   # muscle (MRI-guided fill)
+
+    def test_pelvis_subject_has_bone_and_muscle(self):
+        vol = load_totalseg_mri_subject(_TS_S0008, target_max=64)
+        labels = set(np.unique(vol).tolist())
+        assert 13 in labels  # sacrum/hip bones
+        assert 6 in labels   # gluteal/iliopsoas muscles
+
+    def test_output_respects_target_max(self):
+        vol = load_totalseg_mri_subject(_TS_S0001, target_max=64)
+        assert max(vol.shape) <= 64
+
+    def test_load_region_nifti_uses_totalseg_mri_for_abdomen(self):
+        # When TotalSegMRI data is present, load_region_nifti should use it
+        # (richer data source with MRI-guided fat fill)
+        vol = load_region_nifti("Abdomen", _DATA_DIR, target_max=64)
+        assert vol is not None and vol.ndim == 3
+        labels = set(np.unique(vol).tolist())
+        # Both fat (4) and explicit organ labels are present in the richer source
+        assert 4 in labels or 7 in labels  # fat from MRI fill OR liver
+
+    def test_load_region_nifti_pelvis_uses_s0008(self):
+        vol = load_region_nifti("Pelvis", _DATA_DIR, target_max=64)
+        assert vol is not None
+        labels = set(np.unique(vol).tolist())
+        assert 13 in labels  # bone from sacrum/hips

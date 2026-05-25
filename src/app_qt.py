@@ -203,6 +203,10 @@ class MRISimulator(QMainWindow):
         self.fmri_volumes = Var(100)
         self.fmri_threshold = Var(3.0)
 
+        # Display options
+        self.display_cmap = Var("gray")
+        self.show_tissue_overlay = Var(False)
+
         # Artifacts
         self.motion_enabled = Var(False)
         self.motion_amplitude = Var(3.0)
@@ -215,6 +219,9 @@ class MRISimulator(QMainWindow):
         # Comparison
         self.compare_mode = Var(False)
         self.compare_params: dict | None = None
+
+        # FOV slider widget reference (set in build_controls; guarded until then)
+        self._fov_slider: Any = None
 
         # Debounced recalculate timer (replaces root.after)
         self._recalc_timer = QTimer(self)
@@ -442,7 +449,8 @@ class MRISimulator(QMainWindow):
         # which may differ in matrix size from the reconstructed image.
         tissue = ""
         try:
-            ph = get_slice(self.phantom_3d, self.orientation.get(), self.slice_idx.get())
+            ph = self._get_current_phantom_slice(
+                self.orientation.get(), self.slice_idx.get(), self.get_current_params())
             py = int(np.clip(round(event.ydata / H * ph.shape[0]), 0, ph.shape[0] - 1))  # type: ignore[attr-defined]
             px = int(np.clip(round(event.xdata / W * ph.shape[1]), 0, ph.shape[1] - 1))  # type: ignore[attr-defined]
             label = int(round(float(ph[py, px])))
@@ -456,6 +464,47 @@ class MRISimulator(QMainWindow):
             f"({col}, {row})   \u2022   {tissue}   \u2022   signal: {signal:.3f}   "
             f"\u2022   slice {self.slice_idx.get()}/{self.get_max_slice_idx()}")
 
+    # RGBA colours for each tissue label (R, G, B, A) — used by the overlay.
+    _TISSUE_COLORS: dict[int, tuple[int, int, int, int]] = {
+        0:  (0,   0,   0,   0),    # background: transparent
+        1:  (0,   200, 255, 110),  # CSF/fluid: cyan
+        2:  (255, 140, 0,   90),   # gray matter: orange
+        3:  (255, 220, 50,  90),   # white matter: yellow
+        4:  (255, 255, 80,  80),   # fat: bright yellow
+        5:  (190, 190, 190, 100),  # skull/bone: gray
+        6:  (220, 60,  60,  90),   # muscle: red
+        7:  (180, 100, 30,  90),   # liver: brown
+        8:  (160, 80,  200, 90),   # spleen: purple
+        9:  (255, 145, 110, 90),   # kidney cortex: salmon
+        10: (210, 100, 80,  90),   # kidney medulla: dark salmon
+        11: (255, 30,  30,  110),  # blood: bright red
+        12: (20,  20,  20,  120),  # gas: near-black
+        13: (200, 200, 200, 100),  # cortical bone: light gray
+        14: (255, 185, 185, 90),   # marrow: pale pink
+        15: (100, 200, 255, 90),   # cartilage/disc: light blue
+        16: (50,  230, 100, 90),   # spinal cord: green
+        17: (200, 165, 100, 90),   # bowel: tan
+        18: (150, 200, 150, 80),   # lung: pale green
+        19: (255, 200, 100, 90),   # pancreas: amber
+        20: (255, 100, 150, 90),   # heart: pink
+        21: (200, 150, 210, 90),   # soft tissue/gland: lavender
+    }
+
+    def _make_tissue_overlay(self, label_map: np.ndarray,
+                              target_shape: tuple[int, int]) -> np.ndarray:
+        """Return an RGBA image mapping each label to a translucent colour."""
+        if label_map.shape != target_shape:
+            from scipy.ndimage import zoom
+            scale = (target_shape[0] / label_map.shape[0],
+                     target_shape[1] / label_map.shape[1])
+            label_map = zoom(label_map, scale, order=0)
+        rgba = np.zeros((*target_shape, 4), dtype=np.uint8)
+        for lab, color in self._TISSUE_COLORS.items():
+            mask = label_map == lab
+            if mask.any():
+                rgba[mask] = color
+        return rgba
+
     def apply_window_level(self) -> None:
         if self.current_image is None:
             return
@@ -463,11 +512,21 @@ class MRISimulator(QMainWindow):
         max_val = np.max(img) if np.max(img) > 0 else 1
         center = self.window_level * max_val
         width = self.window_width * max_val
+        cmap = self.display_cmap.get()
+        _asp = self._get_voxel_aspect(self.orientation.get())
         self.axes[0].clear()
-        self.axes[0].imshow(img, cmap="gray", origin="lower", vmin=center - width / 2, vmax=center + width / 2)
+        self.axes[0].imshow(img, cmap=cmap, origin="lower",
+                            vmin=center - width / 2, vmax=center + width / 2,
+                            aspect=_asp)
+        if self.show_tissue_overlay.get():
+            orient = self.orientation.get(); sl_idx = self.slice_idx.get()
+            ph_slice = self._get_current_phantom_slice(orient, sl_idx, self.get_current_params())
+            self.axes[0].imshow(self._make_tissue_overlay(ph_slice, img.shape),
+                                origin="lower", aspect="auto")
         self.axes[0].set_title(self.current_title, color="white", fontsize=10)
         self.axes[0].set_axis_off()
-        self.axes[0].text(0.02, 0.02, f"W:{width:.3f} L:{center:.3f}", transform=self.axes[0].transAxes,
+        self.axes[0].text(0.02, 0.02, f"W:{width:.3f} L:{center:.3f}",
+                          transform=self.axes[0].transAxes,
                           color="yellow", fontsize=8, va="bottom")
         self.canvas.draw()
 
@@ -712,7 +771,7 @@ class MRISimulator(QMainWindow):
         self._section_label(L, "Spatial / Acquisition")
         self._slider(L, "Matrix Size", self.matrix_size, 32, 256)
         self._slider(L, "FOV Coverage (%)", self.fov_fraction, 50, 100)
-        self._slider(L, "FOV (mm)", self.FOV, 100, 500)
+        self._fov_slider = self._slider(L, "FOV (mm)", self.FOV, 100, 500)._qslider
         self._slider(L, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
         self._slider(L, "Bandwidth (kHz)", self.bandwidth, 10, 500)
         self._slider(L, "NEX", self.NEX, 1, 8)
@@ -732,6 +791,10 @@ class MRISimulator(QMainWindow):
         self._separator(L)
         self._section_label(L, "Display")
         self._slider(L, "Noise Level (SNR)", self.snr_level, 5, 100)
+        self._dropdown(L, "Colormap", self.display_cmap,
+                       ["gray", "bone", "hot", "plasma", "viridis", "magma"],
+                       self.schedule_recalculate, inline=True)
+        self._checkbox(L, "Tissue label overlay", self.show_tissue_overlay)
         self._checkbox(L, "Show k-space", self.show_kspace)
         hint = QLabel("Wheel/\u2191\u2193: slice | Ctrl+drag: W/L | dbl-click/R: reset")
         hint.setStyleSheet("color:#666666; font-size:9px;")
@@ -807,15 +870,7 @@ class MRISimulator(QMainWindow):
         seq = params["sequence"]; TR = params["TR"]; TE = params["TE"]; TI = params["TI"]; FA = params["flip_angle"]
         if TE >= TR:
             TE = TR - 5
-        phantom_slice = get_slice(self.phantom_3d, orient, sl_idx)
-
-        # Graphic FOV prescription: crop the source slice to the boxed field
-        # of view so every sequence below inherits the zoom/position.
-        if self.fov_planning.get() and self.inplane_fov_frac.get() < 0.999:
-            import scan_geometry as sg
-            phantom_slice = sg.fov_crop(orient, phantom_slice,
-                                        self.inplane_fov_frac.get(),
-                                        self.inplane_off.get())
+        phantom_slice = self._get_current_phantom_slice(orient, sl_idx, params)
 
         if seq == "Spin Echo":
             return simulate_slice(phantom_slice, TR, TE, 'SE')
@@ -920,9 +975,26 @@ class MRISimulator(QMainWindow):
         else:
             image = self._simulate_single_slice(params, orient, sl_idx)
 
-        phantom_slice = get_slice(self.phantom_3d, orient, sl_idx)
+        phantom_slice = self._get_current_phantom_slice(orient, sl_idx, params)
         is_map = params["sequence"] == "Diffusion (DWI)" and params["diff_display"] in ["ADC Map", "FA Map"]
         is_map = is_map or (params["sequence"] == "fMRI (BOLD)" and params["fmri_display"] in ["Activation Map", "T-statistic Map"])
+
+        # MR tissue texture: spatially-correlated multiplicative noise within each
+        # tissue region + partial-volume boundary blur.  Makes the flat per-label
+        # signal look like a real acquisition rather than a coloured segmentation.
+        # Deterministic per (orient, sl_idx) so parameter knobs don't flicker.
+        if not is_map and phantom_slice.shape == image.shape:
+            from scipy.ndimage import gaussian_filter as _gf
+            _rng = np.random.default_rng(
+                sl_idx * 7919 + {'axial': 0, 'coronal': 1, 'sagittal': 2}.get(orient, 0))
+            _n = _gf(_rng.standard_normal(image.shape).astype(float), sigma=2.5)
+            _n /= max(float(np.abs(_n).max()), 1e-9)
+            _tm = phantom_slice > 0
+            image = image.astype(float, copy=True)
+            image[_tm] = np.maximum(0.0, image[_tm] * (1.0 + 0.08 * _n[_tm]))
+            # Soft boundary blur — simulates finite PSF / partial volume
+            image = _gf(image, sigma=0.7)
+            image[~_tm] = 0.0  # keep background clean after blurring
 
         if not is_map:
             if self.motion_enabled.get():
@@ -1009,11 +1081,13 @@ class MRISimulator(QMainWindow):
         image_b, metrics_b = self.simulate_with_params(current_params)
         self.axes[0].clear(); self.axes[1].clear()
 
+        cmap = self.display_cmap.get()
+        _asp = self._get_voxel_aspect(self.orientation.get())
         if self.compare_mode.get() and self.compare_params:
             image_a, metrics_a = self.simulate_with_params(self.compare_params)
-            self.axes[0].imshow(image_a, cmap="gray", origin="lower")
+            self.axes[0].imshow(image_a, cmap=cmap, origin="lower", aspect=_asp)
             self.axes[0].set_title(f"A: {self.compare_params['sequence']} TR={self.compare_params['TR']:.0f}", color="white", fontsize=10); self.axes[0].set_axis_off()
-            self.axes[1].imshow(image_b, cmap="gray", origin="lower")
+            self.axes[1].imshow(image_b, cmap=cmap, origin="lower", aspect=_asp)
             self.axes[1].set_title(f"B: {current_params['sequence']} TR={current_params['TR']:.0f}", color="white", fontsize=10); self.axes[1].set_axis_off()
             self.update_compare_metrics(metrics_a, metrics_b)
             self.current_image = None
@@ -1023,7 +1097,14 @@ class MRISimulator(QMainWindow):
             self.current_title = f"{current_params['sequence']} | TR={current_params['TR']:.0f} TE={current_params['TE']:.0f} | {orient.capitalize()} #{sl_idx}"
             max_val = np.max(image_b) if np.max(image_b) > 0 else 1
             center = self.window_level * max_val; width = self.window_width * max_val
-            self.axes[0].imshow(image_b, cmap="gray", origin="lower", vmin=center - width / 2, vmax=center + width / 2)
+            self.axes[0].imshow(image_b, cmap=cmap, origin="lower",
+                                vmin=center - width / 2, vmax=center + width / 2,
+                                aspect=_asp)
+            if self.show_tissue_overlay.get():
+                ph_slice = self._get_current_phantom_slice(orient, sl_idx, current_params)
+                self.axes[0].imshow(
+                    self._make_tissue_overlay(ph_slice, image_b.shape),
+                    origin="lower", aspect="auto")
             self.axes[0].set_title(self.current_title, color="white", fontsize=10); self.axes[0].set_axis_off()
             if self.show_kspace.get():
                 from kspace import image_to_kspace
@@ -1063,12 +1144,14 @@ class MRISimulator(QMainWindow):
         max_sl = self.get_max_slice_idx()
         spacing = max(1, int(self.slice_thickness.get()))
 
+        cmap = self.display_cmap.get()
+        _asp = self._get_voxel_aspect(orient)
         for idx, ax in enumerate(axes.flat):
             ax.set_facecolor("#1e1e1e")
             sl = center_sl + (idx - 4) * spacing
             if 0 <= sl <= max_sl:
                 image = self._simulate_single_slice(params, orient, sl)
-                ax.imshow(image, cmap="gray", origin="lower")
+                ax.imshow(image, cmap=cmap, origin="lower", aspect=_asp)
                 ax.set_title(f"#{sl}", color="white", fontsize=8)
             ax.set_axis_off()
 
@@ -1093,11 +1176,12 @@ class MRISimulator(QMainWindow):
         rows = int(np.ceil(n / cols))
         axes = self.fig.subplots(rows, cols, squeeze=False)
         self.fig.subplots_adjust(wspace=0.05, hspace=0.18)
+        _asp = self._get_voxel_aspect(orient)
         for k, ax in enumerate(axes.flat):
             ax.set_facecolor("#1e1e1e"); ax.set_axis_off()
             if k < n:
                 img = self._simulate_single_slice(params, orient, idxs[k])
-                ax.imshow(img, cmap="gray", origin="lower")
+                ax.imshow(img, cmap=self.display_cmap.get(), origin="lower", aspect=_asp)
                 ax.set_title(f"#{idxs[k]}", color="white", fontsize=8)
         self.fig.suptitle(f"{params['sequence']}  |  {n} slice{'s' if n != 1 else ''}  "
                           f"|  FOV {int(self.inplane_fov_frac.get() * 100)}%",
@@ -1380,6 +1464,18 @@ class MRISimulator(QMainWindow):
                     b.blockSignals(True); b.setChecked(True); b.blockSignals(False)
         self.slice_idx.set(self.get_max_slice_idx() // 2)
         self._refresh_slice_range()
+
+        # Sync FOV slider range and default to the native physical extent of the new region
+        if self._fov_slider is not None:
+            native = self._get_native_fov()
+            lo = max(50, int(native * 0.2))
+            hi = max(500, int(native * 1.5))
+            self._fov_slider.blockSignals(True)
+            self._fov_slider.setMinimum(lo)
+            self._fov_slider.setMaximum(hi)
+            self._fov_slider.blockSignals(False)
+            self.FOV.set(float(native))
+
         self._set_status_default()
         self.on_sequence_change()
 
@@ -1562,6 +1658,52 @@ class MRISimulator(QMainWindow):
         elif seq == "fMRI (BOLD)":
             self.fmri_frame.setVisible(True)
         self.recalculate()
+
+    def _get_native_fov(self) -> float:
+        """Physical FOV (mm) represented by the current phantom's in-plane extent."""
+        _map = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 380.0, "Pelvis": 380.0, "Knee": 150.0}
+        name = self.region.get()
+        for key, fov in _map.items():
+            if key in name:
+                return fov
+        # Loaded NIfTI: estimate from voxel count at ~1.5 mm/voxel
+        return float(max(self.phantom_3d.shape[1], self.phantom_3d.shape[2]) * 1.5)
+
+    def _get_voxel_aspect(self, orient: str) -> float:
+        """imshow `aspect` (row_mm / col_mm) so non-axial body slices render to true scale.
+
+        Body atlases are anisotropic: 8.8 mm through-plane vs 1.484 mm in-plane after
+        x2 downsampling.  Coronal/sagittal rows map to the Z axis, so each row pixel
+        must be 8.8/1.484 ~5.9x taller than a column pixel.
+        Brain and knee phantoms are isotropic (1 mm), so aspect stays 1.
+        """
+        if orient == "axial":
+            return 1.0
+        _vox: dict[str, tuple[float, float]] = {
+            "Brain":   (1.0,  1.0),
+            "Abdomen": (8.8,  1.484),
+            "Spine":   (8.8,  1.484),
+            "Pelvis":  (8.8,  1.484),
+            "Knee":    (1.0,  1.0),
+        }
+        name = self.region.get()
+        for key, (z_mm, ip_mm) in _vox.items():
+            if key in name:
+                return z_mm / ip_mm
+        return 1.0
+
+    def _get_current_phantom_slice(self, orient: str, sl_idx: int, params: dict) -> np.ndarray:
+        """Phantom label slice with FOV crop applied (slider zoom + planning box)."""
+        import scan_geometry as sg
+        ph = get_slice(self.phantom_3d, orient, sl_idx)
+        # Physical FOV zoom: smaller FOV → crop to central fraction
+        fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self._get_native_fov())
+        if fov_frac < 0.99:
+            ph = sg.fov_crop(orient, ph, fov_frac, 0.0)
+        # FOV planning box prescription crop
+        if self.fov_planning.get() and self.inplane_fov_frac.get() < 0.999:
+            ph = sg.fov_crop(orient, ph, self.inplane_fov_frac.get(), self.inplane_off.get())
+        return ph
 
     def get_max_slice_idx(self) -> int:
         dims = {"axial": self.phantom_3d.shape[0], "sagittal": self.phantom_3d.shape[2], "coronal": self.phantom_3d.shape[1]}
