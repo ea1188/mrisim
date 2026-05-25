@@ -433,3 +433,25 @@ class TestSyntheticContrast:
         synth = synthetic_contrast(T1_gt, T2_gt, PD_gt, TR, TE, sequence="SE")
 
         np.testing.assert_allclose(synth, direct, rtol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestIrT1MapCurveFitFailure:
+    def test_degenerate_signal_leaves_zero(self):
+        """All-zero IR signal makes curve_fit fail → except branch (lines 240-241).
+        The map should return 0. for that voxel, not raise."""
+        # A 2-TI series with all-zero signal
+        TIs = [100., 1000.]
+        zeros = np.zeros((len(TIs), 4, 4))
+        T1 = ir_t1_map(zeros, TIs, TR_ms=5000.)
+        assert T1.shape == (4, 4)
+        assert np.all(T1 == 0.)
+
+    def test_nan_signal_leaves_zero(self):
+        """NaN values cause curve_fit to raise → same except branch."""
+        TIs = [100., 500., 1500.]
+        nans = np.full((len(TIs), 3, 3), np.nan)
+        T1 = ir_t1_map(nans, TIs, TR_ms=5000.)
+        assert np.all(T1 == 0.)

@@ -461,3 +461,40 @@ class TestEstimateSensitivity:
         ci  = apply_coil_sensitivities(uniform_image, four_coil_maps)
         est = estimate_sensitivity(ci, smooth_sigma=0.0)
         assert est.shape == (4, *SHAPE)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestCoilSnrWeightsWithNoiseCov:
+    def test_noise_cov_argument_accepted(self):
+        """Providing noise_cov triggers the linalg.inv branch (line 334)."""
+        from coil import coil_snr_weights, gaussian_sensitivity
+        sm = np.stack([gaussian_sensitivity((16, 16), (8., 8.), sigma_mm=6.)
+                       for _ in range(3)])  # (3, 16, 16)
+        n_coils = sm.shape[0]
+        psi = np.eye(n_coils, dtype=complex) * 0.5
+        w = coil_snr_weights(sm, noise_cov=psi)
+        assert w.shape == sm.shape
+
+    def test_noise_cov_weights_differ_from_default(self):
+        from coil import coil_snr_weights, gaussian_sensitivity
+        # Two coils at opposite sides — different sensitivity maps
+        sm = np.stack([
+            gaussian_sensitivity((12, 12), (2., 6.), sigma_mm=3.),
+            gaussian_sensitivity((12, 12), (10., 6.), sigma_mm=3.),
+        ])
+        w_default = coil_snr_weights(sm)
+        # Strong cross-correlation in noise cov changes the optimal combination
+        psi = np.array([[1., 0.9], [0.9, 1.]], dtype=complex)
+        w_corr = coil_snr_weights(sm, noise_cov=psi)
+        assert not np.allclose(w_default, w_corr)
+
+
+class TestCoilUniformityZeroReturn:
+    def test_zero_sensitivity_returns_zero(self):
+        """All-zero sensitivity maps → mean=0 → return 0.0 guard (line 464)."""
+        from coil import coil_uniformity
+        sm_zero = np.zeros((2, 8, 8))
+        result = coil_uniformity(sm_zero)
+        assert result == pytest.approx(0., abs=1e-12)

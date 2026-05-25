@@ -501,3 +501,66 @@ class TestLabelsInMask:
     def test_import_succeeds(self):
         from region_index import labels_in_mask
         assert callable(labels_in_mask)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestLabelsInMaskReal:
+    @pytest.mark.skipif(not HAS_NIBABEL, reason="nibabel not installed")
+    def test_returns_set_of_labels(self, tmp_path):
+        """Call labels_in_mask on a real NIfTI; covers lines 144-149."""
+        import numpy as np
+        import nibabel as nib
+        from region_index import labels_in_mask
+        data = np.zeros((20, 20, 20), dtype=np.int32)
+        data[5:10, 5:10, 5:10] = 5    # liver
+        data[12:16, 5:10, 5:10] = 90  # brain
+        img = nib.Nifti1Image(data, np.eye(4))
+        p = str(tmp_path / "test.nii.gz")
+        nib.save(img, p)
+        labs = labels_in_mask(p, subsample=1)
+        assert isinstance(labs, set)
+        assert 5 in labs
+        assert 90 in labs
+        assert 0 not in labs
+
+    @pytest.mark.skipif(not HAS_NIBABEL, reason="nibabel not installed")
+    def test_all_zeros_returns_empty_set(self, tmp_path):
+        import numpy as np
+        import nibabel as nib
+        from region_index import labels_in_mask
+        data = np.zeros((10, 10, 10), dtype=np.int32)
+        img = nib.Nifti1Image(data, np.eye(4))
+        p = str(tmp_path / "zero.nii.gz")
+        nib.save(img, p)
+        assert labels_in_mask(p) == set()
+
+
+class TestBuildIndexJsonWriteFailure:
+    def test_json_write_failure_silently_ignored(self, tmp_path, monkeypatch):
+        """JSON cache write exception is swallowed (lines 209-210)."""
+        import region_index
+
+        nii_file = tmp_path / "organ.nii.gz"
+        nii_file.write_bytes(b"\x00" * 16)
+        cache_path = tmp_path / "idx.json"
+
+        original_labels = region_index.labels_in_mask
+        region_index.labels_in_mask = lambda path, subsample=4: {5}
+
+        def _raise_dump(*a, **kw):
+            raise OSError("disk full")
+
+        # Patch json.dump as seen by region_index (not the local import)
+        monkeypatch.setattr(region_index.json, "dump", _raise_dump)
+        try:
+            # Should not raise — the OSError is silently caught (lines 209-210)
+            result = build_index(str(tmp_path), cache_path=str(cache_path))
+            assert len(result) == 1  # scan ran normally despite write failure
+            # File may exist (opened before dump raised) but has no valid JSON
+            if cache_path.exists():
+                assert cache_path.stat().st_size == 0 or \
+                    not cache_path.read_text().strip().startswith("[")
+        finally:
+            region_index.labels_in_mask = original_labels

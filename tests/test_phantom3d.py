@@ -90,6 +90,16 @@ class TestGetSlice:
         raw = small_brain[:, :, idx]
         np.testing.assert_array_equal(sl, np.fliplr(raw))
 
+    def test_sagittal_default_index_is_middle(self, small_brain):
+        sl_default = get_slice(small_brain, "sagittal")
+        sl_mid = get_slice(small_brain, "sagittal", small_brain.shape[2] // 2)
+        np.testing.assert_array_equal(sl_default, sl_mid)
+
+    def test_coronal_default_index_is_middle(self, small_brain):
+        sl_default = get_slice(small_brain, "coronal")
+        sl_mid = get_slice(small_brain, "coronal", small_brain.shape[1] // 2)
+        np.testing.assert_array_equal(sl_default, sl_mid)
+
 
 class TestSimulateSlice:
     def test_se_output_shape(self, small_brain):

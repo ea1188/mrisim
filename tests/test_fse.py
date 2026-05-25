@@ -281,3 +281,23 @@ class TestSimulateFseImage:
                                  refocus_angle_deg=150.0)
         assert img.shape == phantom64.shape
         assert np.all(img >= 0)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestSimulateFseImageSparsePhantom:
+    def test_continue_for_absent_label(self):
+        """Phantom with only label 2 (GM) forces the `continue` branch (line 299)
+        for labels 1, 3, 4, etc. that are absent. Only labels 2 and 0 are present,
+        so all other label loops hit the `continue`."""
+        # Use tissue_properties that only covers label 2 to guarantee the branch
+        sparse_props = {2: TISSUE_PROPERTIES[2], 1: TISSUE_PROPERTIES[1], 3: TISSUE_PROPERTIES[3]}
+        ph = np.zeros((16, 16), dtype=int)
+        ph[4:12, 4:12] = 2  # only gray matter
+        img = simulate_fse_image(ph, TR=4000, TE_eff=80, ETL=16,
+                                 echo_spacing=10, tissue_properties=sparse_props)
+        assert img.shape == (16, 16)
+        assert img[ph == 2].mean() > 0
+        # No signal outside brain (label 0 is not in sparse_props)
+        assert np.all(img[ph == 0] == 0)

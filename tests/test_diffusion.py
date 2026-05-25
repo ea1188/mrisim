@@ -299,3 +299,37 @@ class TestComputeDirectionMap:
     def test_dtype_float64(self, phantom64):
         dm = compute_direction_map(phantom64)
         assert dm.dtype == np.float64
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestCreateDiffusionTensorExtremeFa:
+    def test_fa_above_sqrt2_denom_guard(self):
+        """FA > √2 makes denom ≤ 0, triggering the denom=1e-9 guard (line 111).
+        The result must still be a valid 2×2 positive-semidefinite matrix."""
+        tensor = create_diffusion_tensor(ADC=0.7, FA=1.5, orientation=[1., 0.])
+        assert tensor.shape == (2, 2)
+        eigenvalues = np.linalg.eigvalsh(tensor)
+        assert np.all(eigenvalues >= -1e-10)  # PSD up to floating-point noise
+
+    def test_fa_above_one_lambda2_guard(self):
+        """FA slightly > 1 (unphysical but defensively handled) produces lambda2 < 0,
+        triggering the lambda2 = 0.01e-3 clamp (lines 117-118)."""
+        tensor = create_diffusion_tensor(ADC=0.7, FA=1.1, orientation=[1., 0.])
+        assert tensor.shape == (2, 2)
+        # trace should be positive
+        assert np.trace(tensor) > 0
+
+
+class TestSimulateDiffusionImageSparsePhantom:
+    def test_continue_for_absent_label(self):
+        """Phantom with a gap in labels forces the `continue` branch (line 168)."""
+        # Labels 0,2,3 are present; label 1 is missing → the label-1 loop iteration
+        # hits `not np.any(mask)` → continue
+        ph = np.zeros((10, 10), dtype=int)
+        ph[3:7, 3:7] = 2  # gray matter only
+        ph[0, 0] = 3      # white matter corner
+        img = simulate_diffusion_image(ph, TISSUE_PROPERTIES, b_value=1000, TR=8000, TE=80)
+        assert img.shape == (10, 10)
+        assert np.all(img >= 0)

@@ -385,3 +385,37 @@ class TestSimulateZSpectrumMap:
         z_wm  = stack[0, :, 10:].mean()
         z_csf = stack[0, :, :5].mean()
         assert z_wm < z_csf
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestSimulateMtWeightedSESequence:
+    def test_se_sequence_runs(self):
+        """sequence='SE' hits the spin_echo_signal branch (line 250)."""
+        lm = _brain_map()
+        out = simulate_mt_weighted(lm, B1_sat_uT=3., TR_ms=500., TE_ms=15.,
+                                   sequence="SE")
+        assert out.shape == lm.shape
+        assert np.all(np.isfinite(out))
+
+    def test_se_output_positive(self):
+        lm = _brain_map()
+        out = simulate_mt_weighted(lm, B1_sat_uT=3., sequence="SE")
+        assert out[lm > 0].min() > 0.
+
+
+class TestSimulateNoMtSESequence:
+    def test_se_sequence_runs(self):
+        """sequence='SE' in simulate_no_mt hits line 277."""
+        lm = _brain_map()
+        out = simulate_no_mt(lm, TR_ms=500., TE_ms=15., sequence="SE")
+        assert out.shape == lm.shape
+        assert np.all(np.isfinite(out))
+
+    def test_se_gre_differ(self):
+        lm = _brain_map()
+        se  = simulate_no_mt(lm, TR_ms=500., TE_ms=15., sequence="SE")
+        gre = simulate_no_mt(lm, TR_ms=500., TE_ms=15., sequence="GRE")
+        # SE and GRE produce different contrast
+        assert not np.allclose(se, gre)

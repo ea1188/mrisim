@@ -302,3 +302,30 @@ class TestSimulateTofWithRealData:
         img_lo = simulate_tof_with_real_data(real_mra, "axial", mid, flip_angle=20)
         img_hi = simulate_tof_with_real_data(real_mra, "axial", mid, flip_angle=70)
         assert img_hi.mean() != img_lo.mean()
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestLoadRealTofMraNone:
+    def test_returns_none_when_file_absent(self, monkeypatch):
+        """When the data file doesn't exist, load_real_tof_mra returns None (line 446)."""
+        import os
+        import phantom3d_extended as p3e
+        monkeypatch.setattr(os.path, "exists", lambda p: False)
+        result = p3e.load_real_tof_mra()
+        assert result is None
+
+
+class TestSimulateTofWithRealDataEmptySlab:
+    def test_out_of_bounds_slice_returns_zeros(self):
+        """When slice_idx is far beyond the volume, the MIP slab is empty
+        and mip_image stays None → the zeros fallback (line 487) is returned."""
+        # Create a tiny synthetic 'real MRA' volume
+        rng = np.random.default_rng(42)
+        fake_mra = rng.uniform(0, 1, (20, 20, 20)).astype(np.float32)
+        # slice_idx >> volume depth so that start_sl > end_sl
+        out = simulate_tof_with_real_data(fake_mra, "axial", slice_idx=9999,
+                                          mip_slab=10)
+        assert out.shape == (fake_mra.shape[0], fake_mra.shape[1])
+        assert np.all(out == 0)

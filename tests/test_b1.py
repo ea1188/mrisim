@@ -264,3 +264,28 @@ class TestB1Uniformity:
     def test_returns_scalar(self):
         b1 = uniform_b1_map((5, 5))
         assert isinstance(b1_uniformity(b1), float)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestGaussianB1MapWithCenter:
+    def test_explicit_center_shifts_peak(self):
+        """Providing center=(cy, cx) hits the cy, cx = center branch (line 48)."""
+        b1_default = gaussian_b1_map((20, 20), variation=0.3)
+        b1_shifted = gaussian_b1_map((20, 20), variation=0.3, center=(5., 5.))
+        # Peak location should differ
+        assert np.unravel_index(b1_default.argmax(), b1_default.shape) != \
+               np.unravel_index(b1_shifted.argmax(), b1_shifted.shape)
+
+    def test_center_tuple_output_shape(self):
+        b1 = gaussian_b1_map((16, 16), center=(-3., 2.))
+        assert b1.shape == (16, 16)
+
+
+class TestB1UniformityNearZeroMean:
+    def test_near_zero_mean_returns_zero(self):
+        """A map with effectively zero mean hits the `return 0.` guard (line 269)."""
+        b1 = np.zeros((10, 10))
+        result = b1_uniformity(b1)
+        assert result == pytest.approx(0., abs=1e-12)

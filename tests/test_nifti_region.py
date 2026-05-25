@@ -198,6 +198,43 @@ class TestRegisterProperties:
             for k in ("T1", "T2", "PD"):
                 assert k in p
 
+    def test_with_explicit_field_applies_tissue_db(self):
+        """Passing field='3T' should call tissue_db.apply_to_engine (line 211)."""
+        import phantom3d
+        orig_props = {k: dict(v) for k, v in phantom3d.TISSUE_PROPERTIES_3D.items()}
+        try:
+            register_properties(field="3T")
+            for lab in range(1, 22):
+                assert lab in phantom3d.TISSUE_PROPERTIES_3D
+        finally:
+            phantom3d.TISSUE_PROPERTIES_3D.clear()
+            phantom3d.TISSUE_PROPERTIES_3D.update(orig_props)
+
+    def test_exception_fallback_uses_local_defaults(self, monkeypatch):
+        """If tissue_db raises, the except branch (lines 219-223) falls back to EXTRA_MR_PROPERTIES."""
+        import nifti_region as nr
+        import phantom3d
+        import sys
+        import types
+
+        def _raise(*a, **kw):
+            raise RuntimeError("simulated tissue_db failure")
+
+        fake_tdb = types.ModuleType("tissue_db")
+        fake_tdb.apply_to_engine = _raise  # type: ignore[attr-defined]
+        fake_tdb.properties = _raise  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, "tissue_db", fake_tdb)
+
+        orig_props = {k: dict(v) for k, v in phantom3d.TISSUE_PROPERTIES_3D.items()}
+        try:
+            phantom3d.TISSUE_PROPERTIES_3D.clear()
+            register_properties(field=None)
+            for lab in nr.EXTRA_MR_PROPERTIES:
+                assert lab in phantom3d.TISSUE_PROPERTIES_3D
+        finally:
+            phantom3d.TISSUE_PROPERTIES_3D.clear()
+            phantom3d.TISSUE_PROPERTIES_3D.update(orig_props)
+
 
 # ---------------------------------------------------------------------------
 # _slice_silhouette
@@ -343,6 +380,25 @@ class TestFillBodyLayers:
         assert out[0, 0, 0] == 0
         assert out[0, 0, -1] == 0
 
+    def test_empty_slice_skipped_unchanged(self):
+        """A fully-zero slice triggers the `not sl.any()` continue (line 331)."""
+        vol = np.zeros((3, 20, 20), dtype=np.uint8)
+        vol[1, 5:15, 5:15] = 7   # only middle slice has content
+        out = _fill_body_layers(vol)
+        # Empty slices must remain all zero
+        assert out[0].sum() == 0
+        assert out[2].sum() == 0
+
+    def test_fully_labeled_slice_skipped_unchanged(self):
+        """A slice where the silhouette has no unlabeled gaps triggers the
+        `not empty.any()` continue (line 335). A solid slab of organ label
+        leaves no interior zeros after silhouette computation."""
+        vol = np.zeros((2, 20, 20), dtype=np.uint8)
+        vol[0, 5:15, 5:15] = 7   # solid 10×10 block — interior fully labeled
+        out = _fill_body_layers(vol)
+        # The existing organ voxels must be untouched
+        assert (out[0, 5:15, 5:15] == 7).all()
+
 
 class TestFillBodyFat:
     def test_is_alias_for_fill_body_layers(self):
@@ -394,3 +450,55 @@ class TestLoadSegmentedNifti:
     def test_import_succeeds(self):
         from nifti_region import load_segmented_nifti
         assert callable(load_segmented_nifti)
+
+    def _write_synthetic_nifti(self, tmp_path: str, data: np.ndarray) -> str:
+        import nibabel as nib
+        import os
+        affine = np.eye(4)
+        img = nib.Nifti1Image(data.astype(np.int32), affine)
+        p = os.path.join(tmp_path, "test.nii.gz")
+        nib.save(img, p)
+        return p
+
+    def test_returns_uint8_ndarray(self, tmp_path):
+        from nifti_region import load_segmented_nifti
+        # CT-scheme volume: label 5=liver (->7), label 90=brain (->2)
+        data = np.zeros((30, 30, 30), dtype=np.int32)
+        data[10:20, 10:20, 10:20] = 5
+        p = self._write_synthetic_nifti(str(tmp_path), data)
+        out = load_segmented_nifti(p, target_max=256)
+        assert isinstance(out, np.ndarray)
+        assert out.dtype == np.uint8
+
+    def test_output_is_3d(self, tmp_path):
+        from nifti_region import load_segmented_nifti
+        data = np.zeros((20, 20, 20), dtype=np.int32)
+        data[5:15, 5:15, 5:15] = 5
+        p = self._write_synthetic_nifti(str(tmp_path), data)
+        out = load_segmented_nifti(p)
+        assert out.ndim == 3
+
+    def test_ct_scheme_maps_liver(self, tmp_path):
+        from nifti_region import load_segmented_nifti
+        data = np.zeros((20, 20, 20), dtype=np.int32)
+        data[5:15, 5:15, 5:15] = 5   # CT label 5 = liver -> MR label 7
+        p = self._write_synthetic_nifti(str(tmp_path), data)
+        out = load_segmented_nifti(p, scheme="ct")
+        assert 7 in np.unique(out)
+
+    def test_mr_scheme_maps_liver(self, tmp_path):
+        from nifti_region import load_segmented_nifti
+        data = np.zeros((20, 20, 20), dtype=np.int32)
+        data[5:15, 5:15, 5:15] = 5   # MR label 5 = liver -> MR label 7
+        p = self._write_synthetic_nifti(str(tmp_path), data)
+        out = load_segmented_nifti(p, scheme="mr")
+        assert 7 in np.unique(out)
+
+    def test_auto_scheme_detection(self, tmp_path):
+        from nifti_region import load_segmented_nifti
+        # Label 92 (>50) forces CT detection
+        data = np.zeros((20, 20, 20), dtype=np.int32)
+        data[5:15, 5:15, 5:15] = 92   # rib_left_1 -> bone (13)
+        p = self._write_synthetic_nifti(str(tmp_path), data)
+        out = load_segmented_nifti(p, scheme="auto")
+        assert 13 in np.unique(out)
