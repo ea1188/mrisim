@@ -19,8 +19,13 @@ def gradient_echo_signal(T1: float, T2star: float, PD: float, TR: float, TE: flo
     """Calculate spoiled gradient echo signal intensity."""
     alpha = np.radians(flip_angle_deg)
     E1 = np.exp(-TR / T1)
-    signal = PD * np.sin(alpha) * (1 - E1) / (1 - np.cos(alpha) * E1) * np.exp(-TE / T2star)
-    return signal
+    denom = 1.0 - np.cos(alpha) * E1
+    numer = PD * np.sin(alpha) * (1.0 - E1) * np.exp(-TE / T2star)
+    # Guard against 0/0 (flip_angle=0 and TR→0): replace near-zero denom with 1 so
+    # the division is safe, then force the result to 0 via np.where.
+    safe_denom = np.where(np.abs(denom) < 1e-12, 1.0, denom)
+    signal = np.where(np.abs(denom) < 1e-12, 0.0, numer / safe_denom)
+    return float(signal) if np.ndim(signal) == 0 else signal
 
 def inversion_recovery_signal(T1: float, T2: float, PD: float, TR: float, TE: float,
                                TI: float) -> float:

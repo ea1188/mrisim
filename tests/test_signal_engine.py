@@ -238,3 +238,20 @@ class TestCalculateScanTime:
         t_base  = calculate_scan_time(4000, 256, 1, ETL=1, acceleration=1)
         t_combo = calculate_scan_time(4000, 256, 1, ETL=4, acceleration=2)
         assert t_combo == pytest.approx(t_base / 8, rel=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestGradientEchoSignalDenomGuard:
+    def test_zero_flip_angle_at_tr_zero_returns_zero_not_nan(self):
+        """flip_angle=0 + TR=0 → denom→0 → guard returns 0 (not NaN) — lines 21-22."""
+        sig = gradient_echo_signal(T1=800, T2star=60, PD=1.0, TR=0.0, TE=5.0,
+                                   flip_angle_deg=0.0)
+        assert sig == 0.0
+        assert sig == sig  # not NaN
+
+    def test_normal_params_unaffected(self):
+        """Guard must not change output for normal (non-degenerate) parameters."""
+        sig = gradient_echo_signal(T1=800, T2star=60, PD=0.8, TR=500, TE=5, flip_angle_deg=30)
+        assert sig > 0
