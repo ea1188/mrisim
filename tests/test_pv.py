@@ -546,3 +546,21 @@ class TestMeanSignalInRoi:
         result = mean_signal_in_roi(img, m, label=2)
         expected = float(img[m == 2].mean())
         np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestPvImportErrorFallback:
+    def test_default_tissue_empty_when_phantom3d_missing(self, monkeypatch):
+        """When phantom3d is absent at import time, _DEFAULT_TISSUE falls back to {} (lines 26-27)."""
+        import importlib
+        import sys
+        import types
+
+        fake = types.ModuleType("phantom3d")
+        monkeypatch.setitem(sys.modules, "phantom3d", fake)
+        monkeypatch.delitem(sys.modules, "pv", raising=False)
+
+        fresh = importlib.import_module("pv")
+        assert fresh._DEFAULT_TISSUE == {}

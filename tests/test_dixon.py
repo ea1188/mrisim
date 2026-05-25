@@ -411,3 +411,22 @@ class TestChemicalShiftPixels:
         # BW=200 Hz/pixel at 1.5T → ~224/200 ≈ 1.1 pixels
         shift = chemical_shift_pixels(1.5, 200.)
         assert 0.8 < shift < 2.0
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestDixonImportErrorFallback:
+    def test_default_props_empty_when_phantom3d_missing(self, monkeypatch):
+        """When phantom3d is absent at import time, _DEFAULT_PROPS falls back to {} (lines 18-19)."""
+        import importlib
+        import sys
+        import types
+
+        fake = types.ModuleType("phantom3d")
+        # No TISSUE_PROPERTIES_3D attribute → 'from phantom3d import ...' raises ImportError
+        monkeypatch.setitem(sys.modules, "phantom3d", fake)
+        monkeypatch.delitem(sys.modules, "dixon", raising=False)
+
+        fresh = importlib.import_module("dixon")
+        assert fresh._DEFAULT_PROPS == {}

@@ -11,6 +11,8 @@ from psd import (
     draw_epi_psd,
     draw_tof_psd,
     draw_psd,
+    _draw_rf_pulse,
+    _draw_gradient,
 )
 
 
@@ -143,3 +145,28 @@ class TestDrawPsd:
     def test_unknown_sequence_does_not_raise(self, fig):
         draw_psd(fig, sequence="Unknown Sequence", TR=500, TE=20, TI=150,
                  flip_angle=90, etl=1, echo_spacing=10, b_value=0)
+
+    def test_fse_tse_exact_string_dispatch(self, fig):
+        """sequence="FSE / TSE" (with spaces) hits line 479 — draw_fse_psd branch."""
+        draw_psd(fig, sequence="FSE / TSE", TR=4000, TE=100, TI=150,
+                 flip_angle=90, etl=8, echo_spacing=12, b_value=0)
+        assert len(fig.axes) > 0
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions — private helpers
+# ---------------------------------------------------------------------------
+class TestDrawRfPulseBlockStyle:
+    def test_block_style_hits_else_branch(self, fig):
+        """_draw_rf_pulse with style!='sinc' executes the else branch (line 26)."""
+        ax = fig.add_subplot(1, 1, 1)
+        _draw_rf_pulse(ax, t_start=0.0, duration=0.1, amplitude=1.0,
+                       label="flip", color="#ff6b6b", style="block")
+        # No assertion needed beyond no exception; line 26 is now covered
+
+
+class TestDrawGradient:
+    def test_gradient_draws_without_error(self, fig):
+        """_draw_gradient body (lines 35-39) executes when called directly."""
+        ax = fig.add_subplot(1, 1, 1)
+        _draw_gradient(ax, t_start=0.0, duration=0.2, amplitude=0.8)

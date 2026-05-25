@@ -455,3 +455,18 @@ class TestIrT1MapCurveFitFailure:
         nans = np.full((len(TIs), 3, 3), np.nan)
         T1 = ir_t1_map(nans, TIs, TR_ms=5000.)
         assert np.all(T1 == 0.)
+
+
+class TestQmriImportErrorFallback:
+    def test_default_props_empty_when_phantom3d_missing(self, monkeypatch):
+        """When phantom3d is absent at import time, _DEFAULT_PROPS falls back to {} (lines 15-16)."""
+        import importlib
+        import sys
+        import types
+
+        fake = types.ModuleType("phantom3d")
+        monkeypatch.setitem(sys.modules, "phantom3d", fake)
+        monkeypatch.delitem(sys.modules, "qmri", raising=False)
+
+        fresh = importlib.import_module("qmri")
+        assert fresh._DEFAULT_PROPS == {}

@@ -419,3 +419,21 @@ class TestSimulateNoMtSESequence:
         gre = simulate_no_mt(lm, TR_ms=500., TE_ms=15., sequence="GRE")
         # SE and GRE produce different contrast
         assert not np.allclose(se, gre)
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestMtImportErrorFallback:
+    def test_default_tissue_empty_when_phantom3d_missing(self, monkeypatch):
+        """When phantom3d is absent at import time, _DEFAULT_TISSUE falls back to {} (lines 21-22)."""
+        import importlib
+        import sys
+        import types
+
+        fake = types.ModuleType("phantom3d")
+        monkeypatch.setitem(sys.modules, "phantom3d", fake)
+        monkeypatch.delitem(sys.modules, "mt", raising=False)
+
+        fresh = importlib.import_module("mt")
+        assert fresh._DEFAULT_TISSUE == {}

@@ -1,6 +1,8 @@
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import pytest
-from simulate import simulate_spin_echo, simulate_gradient_echo, add_noise
+from simulate import simulate_spin_echo, simulate_gradient_echo, add_noise, display_image
 from phantom import create_brain_phantom, TISSUE_PROPERTIES
 
 
@@ -135,3 +137,25 @@ class TestSimulatePhysics:
             # Both ratios should be > 1 (CSF brighter in PD-weighted)
             assert gre_csf_wm > 1.0
             assert se_csf_wm  > 1.0
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestDisplayImage:
+    def test_display_without_save_path(self, monkeypatch, tmp_path, phantom64):
+        """display_image with save_path=None covers lines 42-46, 50."""
+        import matplotlib.pyplot as plt
+        monkeypatch.setattr(plt, "show", lambda: None)
+        img = simulate_spin_echo(phantom64, TR=500, TE=15)
+        display_image(img, title="Test")  # no exception → lines 42-46, 50 covered
+
+    def test_display_with_save_path(self, monkeypatch, tmp_path, phantom64):
+        """display_image with a save_path covers the if-branch (lines 47-49)."""
+        import matplotlib.pyplot as plt
+        monkeypatch.setattr(plt, "show", lambda: None)
+        img = simulate_spin_echo(phantom64, TR=500, TE=15)
+        out = str(tmp_path / "mri_out.png")
+        display_image(img, title="Saved", save_path=out)
+        import os
+        assert os.path.exists(out)

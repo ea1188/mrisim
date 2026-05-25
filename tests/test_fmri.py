@@ -202,6 +202,20 @@ class TestFmriPhysics:
         assert np.allclose(img, 0.0)
 
 
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestSimulateFmriImageZeroFlipAngle:
+    def test_zero_flip_angle_hits_denom_guard(self):
+        """flip_angle=0, TR=0 → denom=0 → image[mask]=0 guard fires (line 93)."""
+        ph = np.array([[2, 2], [0, 0]], dtype=int)
+        act = np.zeros_like(ph, dtype=float)
+        act[0, 0] = 0.5  # some activation in label-2 pixel
+        img = simulate_fmri_image(ph, act, TR=0.0, TE=30.0, flip_angle=0.0, is_active=True)
+        # The denom guard zeroes out label-2 pixels
+        assert np.all(img[ph == 2] == 0.0)
+
+
 class TestComputeTemporalSNR:
     def test_positive(self):
         tsnr = compute_temporal_snr(TR=2000, TE=30, flip_angle=90, num_volumes=100)

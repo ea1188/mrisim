@@ -348,3 +348,14 @@ class TestPrescribedIndicesExtra:
         midpoint = small_vol.shape[0] // 2
         idxs = prescribed_indices("axial", small_vol.shape, midpoint, 1, 1, 0)
         assert idxs == [midpoint]
+
+
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestFovCropEmptyInput:
+    def test_empty_slice_returns_input_unchanged(self):
+        """fov_crop with a (0, 0) slice produces an empty crop → guard at line 229 fires."""
+        empty = np.zeros((0, 0), dtype=np.float64)
+        result = fov_crop("axial", empty, 0.8, 0.0)
+        assert result.shape == (0, 0)

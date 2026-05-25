@@ -59,6 +59,50 @@ class TestLoadBrainwebPhantom:
         assert 3 in unique  # white matter
 
 
+# ---------------------------------------------------------------------------
+# Branch coverage additions
+# ---------------------------------------------------------------------------
+class TestLoadBrainwebPhantomCacheMiss:
+    """Cover the brainweb download/processing path (lines 15-56) via mocks."""
+
+    def test_processing_path_when_cache_missing(self, monkeypatch):
+        """When the cached .npy doesn't exist, the brainweb library is called
+        and the full label-remap + save path executes (lines 15-56)."""
+        import sys
+        import types
+        import brainweb_loader as bwl
+
+        # Fake brainweb volume with several BrainWeb-encoded labels
+        fake_vol = np.zeros((10, 10, 10), dtype=np.uint8)
+        fake_vol[1, :, :] = 16   # CSF
+        fake_vol[2, :, :] = 32   # Gray Matter
+        fake_vol[3, :, :] = 48   # White Matter
+        fake_vol[4, :, :] = 64   # Fat
+        fake_vol[5, :, :] = 80   # Muscle
+        fake_vol[6, :, :] = 96   # Muscle/Skin
+        fake_vol[7, :, :] = 112  # Skull
+        fake_vol[8, :, :] = 128  # Vessels
+        fake_vol[9, :, :] = 145  # Around fat
+        fake_vol[0, :, :] = 177  # Bone marrow
+
+        fake_bw = types.ModuleType("brainweb")
+        fake_bw.get_files = lambda: None
+        fake_bw.load_file = lambda path: fake_vol
+        monkeypatch.setitem(sys.modules, "brainweb", fake_bw)
+
+        # Patch os.path.exists: cache miss, subject file also absent (covers download branch)
+        def _exists(path):
+            return False  # neither cache nor subject file present
+
+        monkeypatch.setattr(bwl.os.path, "exists", _exists)
+        monkeypatch.setattr(bwl.os, "makedirs", lambda *a, **kw: None)
+        monkeypatch.setattr(bwl.np, "save", lambda *a, **kw: None)
+
+        phantom = bwl.load_brainweb_phantom(subject_num=99)
+        assert phantom.ndim == 3
+        assert set(int(x) for x in np.unique(phantom)).issubset({0, 1, 2, 3, 4, 5})
+
+
 class TestGetBrainwebOrSyntheticFallback:
     def test_falls_back_to_synthetic_on_exception(self, monkeypatch):
         """If load_brainweb_phantom raises, get_brainweb_or_synthetic returns Synthetic."""
