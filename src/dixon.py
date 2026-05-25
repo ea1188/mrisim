@@ -219,14 +219,13 @@ def three_point_dixon(s_ip1: np.ndarray, s_op: np.ndarray,
     # B0 phase between the two in-phase echoes: e^(i·2φ) = s2 / s1
     with np.errstate(invalid="ignore", divide="ignore"):
         ratio = np.where(np.abs(s1) > 1e-12, s2 / s1, 1. + 0j)
-    phi = np.angle(ratio) / 2.0           # per-echo B0 phase increment
+    phi = np.angle(ratio) / 2.0   # B0 phase increment from TE1 to midpoint echo
 
-    # Phase-corrected in-phase and opposed signals
-    ip_corrected = np.real(s1 * np.exp(-1j * phi))          # W + F
-    op_corrected = np.real(sm * np.exp(-1j * phi * 0.0))    # W − F  (op at φ=0)
+    # B0 phase at TE1; midpoint (opposed) echo phase = phi_1 + phi
+    phi_1 = np.angle(s1)
 
-    WpF = ip_corrected
-    WmF = np.real(sm * np.exp(-1j * np.angle(s1)))
+    WpF = np.real(s1 * np.exp(-1j * phi_1))           # W + F
+    WmF = np.real(sm * np.exp(-1j * (phi_1 + phi)))   # W − F
 
     water = np.maximum((WpF + WmF) / 2.0, 0.0)
     fat   = np.maximum((WpF - WmF) / 2.0, 0.0)

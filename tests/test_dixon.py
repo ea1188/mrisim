@@ -297,6 +297,30 @@ class TestThreePointDixon:
         water, fat = three_point_dixon(s1, sm, s2)
         assert water.mean() > fat.mean()
 
+    def test_b0_correction_recovers_water_fat(self):
+        """B0 off-resonance on equally-spaced echoes is correctly removed."""
+        W, F = 0.7, 0.3
+        B0 = 1.5
+        B0_extra_hz = 50.0   # Hz additional B0 off-resonance
+        shape = (4, 4)
+
+        # Equally-spaced echoes: TE1=0 (ip), TE_op (op), TE2=2*TE_op (ip)
+        te_op_ms = opposed_phase_te_ms(B0, n=1)
+        te_ip_ms = 2.0 * te_op_ms   # = inphase_te_ms(B0, n=1)
+
+        def echo(te_ms, fat_wf_phase):
+            b0_phase = 2.0 * np.pi * B0_extra_hz * te_ms * 1e-3
+            fw = W + F * np.exp(1j * fat_wf_phase)
+            return fw * np.exp(1j * b0_phase) * np.ones(shape, dtype=complex)
+
+        s1 = echo(0.0,      0.0)    # TE=0: fat in-phase
+        sm = echo(te_op_ms, np.pi)  # TE=te_op: fat opposed
+        s2 = echo(te_ip_ms, 0.0)    # TE=te_ip: fat in-phase again
+
+        water, fat = three_point_dixon(s1, sm, s2)
+        np.testing.assert_allclose(water, W, atol=0.01)
+        np.testing.assert_allclose(fat,   F, atol=0.01)
+
 
 # ---------------------------------------------------------------------------
 # TestFatFraction
@@ -411,6 +435,54 @@ class TestChemicalShiftPixels:
         # BW=200 Hz/pixel at 1.5T → ~224/200 ≈ 1.1 pixels
         shift = chemical_shift_pixels(1.5, 200.)
         assert 0.8 < shift < 2.0
+
+
+# ---------------------------------------------------------------------------
+# End-to-end integration
+# ---------------------------------------------------------------------------
+class TestDixonEndToEnd:
+    """Full pipeline integration: simulation helpers → separation → fat fraction."""
+
+    def test_inphase_te_longer_than_opposed(self):
+        """In-phase TE > opposed-phase TE → pure-tissue signal decays more by TE.
+        The T2*-driven ratio matches the expected exponential for pure GM."""
+        from phantom3d import TISSUE_PROPERTIES_3D
+        B0 = 1.5
+        lm = np.full((4, 4), 2, dtype=np.uint8)   # pure gray matter
+        ip = simulate_inphase(lm, field_strength_T=B0)
+        op = simulate_opposed(lm, field_strength_T=B0)
+        T2s = TISSUE_PROPERTIES_3D[2]["T2star"]
+        te_ip = inphase_te_ms(B0, n=1)
+        te_op = opposed_phase_te_ms(B0, n=1)
+        expected_ratio = np.exp(-(te_ip - te_op) / T2s)
+        np.testing.assert_allclose(ip.mean() / op.mean(), expected_ratio, rtol=0.02)
+
+    def test_three_point_b0_correction_full_pipeline(self):
+        """combined_gre_signal → three_point_dixon with B0 → fat_fraction."""
+        W, F, shape = 0.6, 0.4, (8, 8)
+        B0 = 3.0
+        te_op = opposed_phase_te_ms(B0, n=1)
+        te_ip = 2.0 * te_op   # equally spaced
+
+        B0_extra_hz = 30.0
+        W_arr = np.full(shape, W)
+        F_arr = np.full(shape, F)
+
+        def _echo(te_ms, fw_phase):
+            fw  = W_arr + F_arr * np.exp(1j * fw_phase)
+            b0p = 2.0 * np.pi * B0_extra_hz * te_ms * 1e-3
+            return fw * np.exp(1j * b0p)
+
+        s1 = _echo(0.0,    0.0)    # TE=0: fat in-phase
+        sm = _echo(te_op,  np.pi)  # opposed echo
+        s2 = _echo(te_ip,  0.0)    # in-phase again
+
+        water, fat = three_point_dixon(s1, sm, s2)
+        np.testing.assert_allclose(water, W, atol=0.01)
+        np.testing.assert_allclose(fat,   F, atol=0.01)
+
+        ff = fat_fraction(fat, water)
+        np.testing.assert_allclose(ff, F / (W + F), atol=0.01)
 
 
 # ---------------------------------------------------------------------------
