@@ -93,21 +93,24 @@ def add_chemical_shift_artifact(
         At 125 Hz/pixel bandwidth: shift = 3.5ppm * 128MHz / 125Hz = ~3.6 pixels at 3T
     """
     result = image.copy()
-    
+
     # Find fat voxels
     fat_mask = phantom_slice == fat_label
     if not np.any(fat_mask):
         return result
-    
+
     # Get fat signal values
     fat_signal = np.zeros_like(image)
     fat_signal[fat_mask] = image[fat_mask]
-    
+
     # Remove fat from original position
     result[fat_mask] = 0
-    
+
     # Shift fat signal in readout direction (horizontal)
-    shift = int(shift_pixels)
+    shift = int(round(shift_pixels))
+    if shift == 0:
+        result[fat_mask] = image[fat_mask]
+        return result
     if shift > 0:
         shifted_fat = np.zeros_like(fat_signal)
         shifted_fat[:, shift:] = fat_signal[:, :-shift]

@@ -27,7 +27,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QSlider,
     QComboBox, QCheckBox, QRadioButton, QButtonGroup, QFrame, QScrollArea,
-    QVBoxLayout, QHBoxLayout, QFileDialog,
+    QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog,
     QDialog, QListWidget, QListWidgetItem, QProgressDialog,
 )
 
@@ -38,8 +38,11 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from psd import draw_psd
 
-from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
-from phantom3d import get_slice, simulate_slice, TISSUE_PROPERTIES_3D
+from signal_engine import spin_echo_signal, gradient_echo_signal
+from phantom3d import get_slice, simulate_slice
+import tissue_db
+import qmri
+import rendering
 from kspace import simulate_acquisition, get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic
 from phantom3d_extended import (add_vessels_3d, add_activation_3d,
@@ -48,12 +51,29 @@ from phantom3d_extended import (add_vessels_3d, add_activation_3d,
                                 compute_activation_map_3d, compute_tstat_map_3d,
                                 get_diffusion_properties_3d, load_real_tof_mra, simulate_tof_with_real_data)
 from fmri import compute_temporal_snr
-from presets import PRESETS, get_preset_names, get_preset, estimate_sar
+from presets import PRESETS, get_preset_names, get_preset, get_preset_region, estimate_sar
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        calculate_chemical_shift_pixels)
 from fse import simulate_fse_image, fse_scan_time, compute_fse_echo_train
 from acceleration import apply_parallel_imaging, compute_acceleration_metrics, apply_compressed_sensing
+
+# Partial-Fourier fractions (string label → actual fraction)
+_PF_MAP: dict[str, float] = {
+    "Full": 1.0, "7/8": 7.0 / 8.0, "6/8": 6.0 / 8.0, "5/8": 5.0 / 8.0,
+}
+
+# SAR scaling factor per sequence type (relative to SE reference)
+_SAR_SEQ_FACTORS: dict[str, float] = {
+    "Spin Echo": 1.5, "FSE / TSE": 1.5, "Gradient Echo": 0.5,
+    "Inversion Recovery": 2.0, "Diffusion (DWI)": 1.5,
+    "MR Angiography": 0.5, "fMRI (BOLD)": 0.5,
+}
+
+
+# Field-strength label → Tesla.  Labels match tissue_db.FIELD_STRENGTHS so the
+# measured 1.5T / 3T property tables are the single source of truth.
+_B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
 
 
 # --------------------------------------------------------------------------- #
@@ -106,32 +126,80 @@ def _fmt(val: object) -> str:
 #  Style
 # --------------------------------------------------------------------------- #
 GLOBAL_QSS = """
-QMainWindow { background-color: #1e1e1e; }
+QMainWindow { background-color: #1a1a2e; }
 QLabel { color: #e0e0e0; font-family: Helvetica, Arial, sans-serif; }
-QScrollArea { background-color: #2d2d2d; border: none; }
-QSlider::groove:horizontal { height: 4px; background: #555555; border-radius: 2px; }
-QSlider::sub-page:horizontal { background: #4a9eff; border-radius: 2px; }
-QSlider::handle:horizontal { background: #4a9eff; width: 14px; margin: -6px 0; border-radius: 7px; }
+QScrollArea { background-color: #252535; border: none; }
+QWidget#controls-host { background: #252535; }
+QSlider::groove:horizontal { height: 5px; background: #3a3a5a; border-radius: 3px; }
+QSlider::sub-page:horizontal { background: #4a9eff; border-radius: 3px; }
+QSlider::handle:horizontal { background: #4a9eff; width: 16px; margin: -6px 0; border-radius: 8px; border: 2px solid #1e1e38; }
 QSlider::handle:horizontal:hover { background: #6cb2ff; }
-QComboBox { background: #3a3a3a; border: 1px solid #555; padding: 3px 6px; border-radius: 3px; color: white; }
+QComboBox { background: #32324a; border: 1px solid #4a4a6a; padding: 3px 6px; border-radius: 4px; color: #e0e0e0; }
 QComboBox::drop-down { border: none; width: 18px; }
-QComboBox QAbstractItemView { background: #2d2d2d; color: white; selection-background-color: #4a9eff; }
-QCheckBox, QRadioButton { color: #e0e0e0; spacing: 5px; }
-QCheckBox::indicator, QRadioButton::indicator { width: 14px; height: 14px; }
-QPushButton { background: #4a4a4a; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-weight: bold; }
-QPushButton:hover { background: #5a5a5a; }
-QPushButton:pressed { background: #3a3a3a; }
-QScrollBar:vertical { background: #2d2d2d; width: 10px; margin: 0; }
-QScrollBar::handle:vertical { background: #555; border-radius: 5px; min-height: 20px; }
+QComboBox QAbstractItemView { background: #252535; color: #e0e0e0; selection-background-color: #4a9eff; }
+QCheckBox, QRadioButton { color: #c8c8e0; spacing: 6px; }
+QCheckBox::indicator, QRadioButton::indicator { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #555577; background: #32324a; }
+QCheckBox::indicator:checked, QRadioButton::indicator:checked { background: #4a9eff; border-color: #4a9eff; }
+QPushButton { background: #3a3a5a; color: #e0e0e0; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
+QPushButton:hover { background: #4a4a6a; }
+QPushButton:pressed { background: #2a2a4a; }
+QPushButton#section-toggle { background: #1e1e38; color: #8aabff; font-size: 11px; font-weight: bold;
+    text-align: left; border: none; border-left: 3px solid #4a9eff;
+    padding: 5px 10px; margin-top: 3px; border-radius: 0; }
+QPushButton#section-toggle:hover { background: #252545; color: #aac8ff; }
+QPushButton#section-toggle:checked { border-left-color: #6cb2ff; }
+QScrollBar:vertical { background: #1e1e38; width: 8px; margin: 0; }
+QScrollBar::handle:vertical { background: #4a4a6a; border-radius: 4px; min-height: 20px; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 """
+
+
+class CollapsibleSection(QWidget):
+    """Vertically collapsible panel with a clickable header toggle."""
+
+    def __init__(self, title: str, collapsed: bool = False, parent: Any = None) -> None:
+        super().__init__(parent)
+        self._title = title
+        self._collapsed = collapsed
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 2, 0, 0)
+        root.setSpacing(0)
+
+        self._btn = QPushButton()
+        self._btn.setObjectName("section-toggle")
+        self._btn.setCheckable(True)
+        self._btn.setChecked(not collapsed)
+        self._btn.clicked.connect(self._on_toggle)
+        self._refresh_label()
+        root.addWidget(self._btn)
+
+        self._body = QWidget()
+        self._body.setStyleSheet("background:#1e1e32; border-left:3px solid #2a2a4a; margin-left:0;")
+        self._inner = QVBoxLayout(self._body)
+        self._inner.setContentsMargins(6, 4, 6, 8)
+        self._inner.setSpacing(0)
+        self._body.setVisible(not collapsed)
+        root.addWidget(self._body)
+
+    def _refresh_label(self) -> None:
+        arrow = "▼" if not self._collapsed else "▶"
+        self._btn.setText(f"  {arrow}  {self._title}")
+
+    def _on_toggle(self, checked: bool) -> None:
+        self._collapsed = not checked
+        self._refresh_label()
+        self._body.setVisible(checked)
+
+    @property
+    def inner(self) -> QVBoxLayout:
+        return self._inner
 
 
 class MRISimulator(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("MRI Simulation Platform")
-        self.resize(1400, 850)
+        self.resize(1500, 900)
 
         print("Loading 3D phantom...")
         self.phantom_3d, self.phantom_source = get_brainweb_or_synthetic()
@@ -151,6 +219,7 @@ class MRISimulator(QMainWindow):
 
         # --- State variables (Var shim instead of tk.*Var) ---
         self.region = Var("Brain")
+        self.field_strength = Var("3T")
         self.sequence_type = Var("Spin Echo")
         self.preset_name = Var("")
         self.TR = Var(500.0)
@@ -172,8 +241,10 @@ class MRISimulator(QMainWindow):
         self.fov_planning = Var(False)
         self.n_slices = Var(1)
         self.slice_gap = Var(0.0)
-        self.inplane_fov_frac = Var(1.0)
+        self.inplane_fov_pct = Var(100)   # in-plane FOV as integer % (10–100)
         self.inplane_off = Var(0.0)
+        self.slice_tilt = Var(0.0)        # tilt angle in degrees (-45…+45)
+        self.slice_rot  = Var(0.0)        # rotation angle in degrees (-45…+45)
 
         self.orientation = Var("axial")
         self.slice_idx = Var(90)
@@ -185,6 +256,21 @@ class MRISimulator(QMainWindow):
         # Acceleration
         self.accel_factor = Var(1)
         self.accel_method = Var("SENSE")
+
+        # Partial Fourier
+        self.pf_enabled = Var(False)
+        self.pf_fraction = Var("Full")
+
+        # Gadolinium contrast agent
+        self.contrast_enabled = Var(False)
+        self.contrast_dose = Var(1)      # × 0.1 mmol/kg  (1 = 0.1, 5 = 0.5)
+
+        # k-Space filter (Gibbs ringing suppression)
+        self.kspace_filter_enabled = Var(False)
+        self.kspace_filter_window = Var("hamming")
+
+        # Signal curve plot mode
+        self.plot_curve_mode = Var("TE")   # "TE" | "TR"
 
         # Diffusion
         self.b_value = Var(1000.0)
@@ -203,6 +289,9 @@ class MRISimulator(QMainWindow):
         self.fmri_volumes = Var(100)
         self.fmri_threshold = Var(3.0)
 
+        # Quantitative MRI (parameter mapping / synthetic contrast)
+        self.qmri_display = Var("T1 Map (VFA)")
+
         # Display options
         self.display_cmap = Var("gray")
         self.show_tissue_overlay = Var(False)
@@ -215,6 +304,11 @@ class MRISimulator(QMainWindow):
         self.susceptibility_enabled = Var(False)
         self.susceptibility_strength = Var(3.0)
         self.zipper_enabled = Var(False)
+
+        # Physics effects
+        self.mt_enabled = Var(False)
+        self.mt_power = Var(50)      # integer 0–100 → 0.0–1.0
+        self.b1_inhom_enabled = Var(False)
 
         # Comparison
         self.compare_mode = Var(False)
@@ -232,6 +326,7 @@ class MRISimulator(QMainWindow):
         self.window_width = 1.0
         self.window_level = 0.5
         self.current_image: np.ndarray | None = None
+        self._last_kspace: np.ndarray | None = None
         self.current_title = ""
         self.wl_dragging = False
         self.wl_start_x = 0
@@ -258,26 +353,27 @@ class MRISimulator(QMainWindow):
         # Left panel — scrollable controls
         self.left_scroll = QScrollArea()
         self.left_scroll.setWidgetResizable(True)
-        self.left_scroll.setFixedWidth(290)
-        self.left_scroll.setStyleSheet("QScrollArea { background:#2d2d2d; border:none; }")
+        self.left_scroll.setFixedWidth(330)
+        self.left_scroll.setStyleSheet("QScrollArea { background:#252535; border:none; }")
         self.controls_host = QWidget()
-        self.controls_host.setStyleSheet("background:#2d2d2d;")
+        self.controls_host.setObjectName("controls-host")
+        self.controls_host.setStyleSheet("background:#252535;")
         self.controls_layout = QVBoxLayout(self.controls_host)
-        self.controls_layout.setContentsMargins(6, 6, 6, 6)
-        self.controls_layout.setSpacing(3)
+        self.controls_layout.setContentsMargins(6, 8, 6, 6)
+        self.controls_layout.setSpacing(0)
         self.left_scroll.setWidget(self.controls_host)
 
         # Center panel — image + PSD canvases
         self.center_panel = QWidget()
-        self.center_panel.setStyleSheet("background:#1e1e1e;")
+        self.center_panel.setStyleSheet("background:#12121e;")
         self.center_layout = QHBoxLayout(self.center_panel)
         self.center_layout.setContentsMargins(4, 4, 4, 4)
         self.center_layout.setSpacing(4)
 
         # Right panel — metrics
         self.right_panel = QWidget()
-        self.right_panel.setFixedWidth(260)
-        self.right_panel.setStyleSheet("background:#2d2d2d;")
+        self.right_panel.setFixedWidth(270)
+        self.right_panel.setStyleSheet("background:#1e1e32;")
         self.right_layout = QVBoxLayout(self.right_panel)
         self.right_layout.setContentsMargins(8, 8, 8, 8)
         self.right_layout.setSpacing(2)
@@ -292,30 +388,46 @@ class MRISimulator(QMainWindow):
         self.recalculate()
 
     def build_image_display(self) -> None:
-        # Scout / FOV-planning figure (left of the main image, hidden by default)
-        self.scout_fig = Figure(figsize=(3.5, 5), facecolor="#1e1e1e")
-        self.scout_ax = self.scout_fig.add_subplot(111)
-        self.scout_ax.set_facecolor("#1e1e1e")
+        # Scout / FOV-planning figure — 3-plane localizer (axial / coronal / sagittal)
+        self.scout_fig = Figure(figsize=(3.5, 10), facecolor="#12121e")
+        gs = self.scout_fig.add_gridspec(3, 1, hspace=0.06,
+                                          left=0.02, right=0.98,
+                                          top=0.98, bottom=0.02)
+        self._scout_plane_names = ["axial", "coronal", "sagittal"]
+        self.scout_axes: list[Any] = [
+            self.scout_fig.add_subplot(gs[0]),  # axial viewer
+            self.scout_fig.add_subplot(gs[1]),  # coronal viewer
+            self.scout_fig.add_subplot(gs[2]),  # sagittal viewer
+        ]
+        for ax in self.scout_axes:
+            ax.set_facecolor("#12121e")
+        # Backward-compat alias; set dynamically in _draw_scout to the primary panel
+        self.scout_ax: Any = self.scout_axes[1]
+        self._scout_primary_ax: Any = None
+        self._scout_overlays: dict = {}
+        # Angle-drag handles: list of (hx, hy, panel_name, angle_var, cx, cy)
+        self._scout_angle_handles: list = []
+
         self.scout_canvas = FigureCanvas(self.scout_fig)
         self.scout_canvas.setVisible(False)
         self.center_layout.addWidget(self.scout_canvas, stretch=2)
         self.scout_canvas.mpl_connect("button_press_event", self._scout_press)
         self.scout_canvas.mpl_connect("motion_notify_event", self._scout_motion)
         self.scout_canvas.mpl_connect("button_release_event", self._scout_release)
-        self._scout_drag: dict | None = None      # active drag state dict
-        self._scout_box_info: dict | None = None   # last drawn box geometry (for hit-testing)
+        self._scout_drag: dict | None = None
+        self._scout_box_info: dict | None = None
 
         # Main image figure
-        self.fig = Figure(figsize=(10, 5), facecolor="#1e1e1e")
+        self.fig = Figure(figsize=(10, 5), facecolor="#12121e")
         self.axes = self.fig.subplots(1, 2)
-        self.fig.subplots_adjust(wspace=0.3)
+        self.fig.subplots_adjust(wspace=0.25)
         for ax in self.axes:
-            ax.set_facecolor("#1e1e1e")
+            ax.set_facecolor("#12121e")
         self.canvas = FigureCanvas(self.fig)
         self.center_layout.addWidget(self.canvas, stretch=3)
 
         # PSD figure (conditionally shown)
-        self.psd_fig = Figure(figsize=(4, 5), facecolor="#1e1e1e")
+        self.psd_fig = Figure(figsize=(4, 5), facecolor="#12121e")
         self.psd_canvas = FigureCanvas(self.psd_fig)
         self.psd_canvas.setVisible(False)
         self.center_layout.addWidget(self.psd_canvas, stretch=2)
@@ -332,7 +444,7 @@ class MRISimulator(QMainWindow):
         self.canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Status bar for the live cursor readout
-        self.statusBar().setStyleSheet("color:#cccccc; background:#262626;")  # type: ignore[union-attr]
+        self.statusBar().setStyleSheet("color:#aaaacc; background:#12121e; border-top:1px solid #2a2a4a;")  # type: ignore[union-attr]
         self._set_status_default()
 
     def _ensure_1x2_layout(self) -> None:
@@ -340,9 +452,9 @@ class MRISimulator(QMainWindow):
         if len(self.fig.axes) != 2:
             self.fig.clear()
             self.axes = self.fig.subplots(1, 2)
-            self.fig.subplots_adjust(wspace=0.3)
+            self.fig.subplots_adjust(wspace=0.25)
             for ax in self.axes:
-                ax.set_facecolor("#1e1e1e")
+                ax.set_facecolor("#12121e")
 
     # --- Window/level (matplotlib event handlers) ---
     def _on_press(self, event: object) -> None:
@@ -552,15 +664,15 @@ class MRISimulator(QMainWindow):
     def _slider(self, parent_layout: Any, label: str, var: Var, mn: float, mx: float) -> Any:
         container = QWidget()
         v = QVBoxLayout(container)
-        v.setContentsMargins(4, 1, 4, 1)
-        v.setSpacing(1)
+        v.setContentsMargins(4, 5, 4, 3)
+        v.setSpacing(3)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         name_lbl = QLabel(label)
-        name_lbl.setStyleSheet("color:#cccccc; font-size:11px;")
+        name_lbl.setStyleSheet("color:#bbbbdd; font-size:11px;")
         val_lbl = QLabel(_fmt(var.get()))
-        val_lbl.setStyleSheet("color:white; font-size:11px; font-weight:bold;")
+        val_lbl.setStyleSheet("color:white; font-size:12px; font-weight:bold;")
         row.addWidget(name_lbl)
         row.addStretch(1)
         row.addWidget(val_lbl)
@@ -599,17 +711,17 @@ class MRISimulator(QMainWindow):
         lay: Any
         if inline:
             lay = QHBoxLayout(container)
-            lay.setContentsMargins(4, 1, 4, 1)
+            lay.setContentsMargins(4, 4, 4, 4)
             lbl = QLabel(label)
-            lbl.setStyleSheet("color:#cccccc; font-size:11px;")
+            lbl.setStyleSheet("color:#bbbbdd; font-size:11px;")
             lay.addWidget(lbl)
             lay.addStretch(1)
         else:
             lay = QVBoxLayout(container)
-            lay.setContentsMargins(4, 2, 4, 2)
-            lay.setSpacing(1)
+            lay.setContentsMargins(4, 5, 4, 4)
+            lay.setSpacing(3)
             lbl = QLabel(label)
-            lbl.setStyleSheet("color:#cccccc; font-size:11px;")
+            lbl.setStyleSheet("color:#bbbbdd; font-size:11px;")
             lay.addWidget(lbl)
 
         combo = QComboBox()
@@ -617,7 +729,7 @@ class MRISimulator(QMainWindow):
         if var.get() in options:
             combo.setCurrentText(var.get())
         if inline:
-            combo.setMaximumWidth(120)
+            combo.setMaximumWidth(140)
         lay.addWidget(combo)
 
         def on_text(text: str) -> None:
@@ -640,6 +752,7 @@ class MRISimulator(QMainWindow):
     def _checkbox(self, parent_layout: Any, text: str, var: Var) -> QCheckBox:
         cb = QCheckBox(text)
         cb.setChecked(bool(var.get()))
+        cb.setStyleSheet("QCheckBox { color:#c8c8e0; font-size:11px; padding:3px 4px; }")
 
         def on_toggle(checked: bool) -> None:
             var.set(bool(checked))
@@ -672,84 +785,48 @@ class MRISimulator(QMainWindow):
     def build_controls(self) -> None:
         L = self.controls_layout
 
-        self._section_label(L, "MRI Simulator", big=True)
-        self._dropdown(L, "Preset", self.preset_name, ["(Custom)"] + get_preset_names(), self.on_preset_change)
-        self._seq_dropdown = self._dropdown(L, "Sequence", self.sequence_type,
+        # \u2500\u2500 App header \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        hdr = QLabel("MRI Simulator")
+        hdr.setStyleSheet("font-size:17px; font-weight:bold; color:white; padding:6px 6px 2px 6px;")
+        L.addWidget(hdr)
+
+        # \u2500\u2500 Sequence & Protocol \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        seq_sec = CollapsibleSection("Sequence & Protocol")
+        L.addWidget(seq_sec)
+        SL = seq_sec.inner
+        self._dropdown(SL, "Preset", self.preset_name, ["(Custom)"] + get_preset_names(), self.on_preset_change)
+        self._dropdown(SL, "Field Strength", self.field_strength,
+                       list(_B0_MAP.keys()), self.schedule_recalculate, inline=True)
+        self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
                        ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-                        "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)"], self.on_sequence_change)
-        self.desc_label = DLabel("", base_style="color:#888888; font-size:9px;")
+                        "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
+                        "Quantitative (qMRI)"], self.on_sequence_change)
+        self.desc_label = DLabel("", base_style="color:#8888aa; font-size:9px; padding:2px 2px;")
         self.desc_label.setWordWrap(True)
-        L.addWidget(self.desc_label)
+        SL.addWidget(self.desc_label)
 
-        self._separator(L)
-        self._section_label(L, "Comparison")
-        crow = QHBoxLayout()
-        self._button(crow, "Set as A", self.set_protocol_a, color="#4a9eff")
-        self._button(crow, "Compare A\u2194B", self.toggle_compare)
-        self._button(crow, "Clear", self.clear_compare)
-        cwrap = QWidget(); cwrap.setLayout(crow); crow.setContentsMargins(4, 2, 4, 2)
-        L.addWidget(cwrap)
-        self.compare_status = DLabel("No comparison set", base_style="color:#666666; font-size:9px;")
-        L.addWidget(self.compare_status)
+        # \u2500\u2500 Timing \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        timing_sec = CollapsibleSection("Timing")
+        L.addWidget(timing_sec)
+        TL = timing_sec.inner
+        self.tr_slider = self._slider(TL, "TR (ms)", self.TR, 50, 10000)
+        self.te_slider = self._slider(TL, "TE (ms)", self.TE, 5, 300)
+        self.ti_frame = self._slider(TL, "TI (ms)", self.TI, 50, 4000)
+        self.fa_frame = self._slider(TL, "Flip Angle (\u00b0)", self.flip_angle, 1, 90)
 
-        self._separator(L)
-        self._section_label(L, "3D Navigation")
-        self._region_dd = self._dropdown(L, "Region", self.region, self._body_phantoms.REGION_NAMES,
-                       self.on_region_change, inline=True)
-        rl_row = QHBoxLayout(); rl_row.setContentsMargins(4, 0, 4, 2)
-        self._button(rl_row, "Browse Masks\u2026", self.browse_masks, color="#4a9eff")
-        self._button(rl_row, "Load File\u2026", self.load_nifti_region)
-        rlwrap = QWidget(); rlwrap.setLayout(rl_row); L.addWidget(rlwrap)
-        orow = QHBoxLayout()
-        orow.setContentsMargins(4, 2, 4, 2)
-        self._orient_group = QButtonGroup(self)
-        for orient, label in [("axial", "Ax"), ("sagittal", "Sag"), ("coronal", "Cor")]:
-            rb = QRadioButton(label)
-            rb.setChecked(self.orientation.get() == orient)
-            rb.toggled.connect(lambda checked, o=orient: self._on_orient_radio(checked, o))
-            self._orient_group.addButton(rb)
-            orow.addWidget(rb)
-        orow.addStretch(1)
-        owrap = QWidget(); owrap.setLayout(orow)
-        L.addWidget(owrap)
-        self._slice_slider = self._slider(L, "Slice", self.slice_idx, 0, 180)._qslider
-        self._checkbox(L, "Multi-slice (3x3 grid)", self.multi_slice)
-        self._checkbox(L, "FOV Planning (scout)", self.fov_planning)
-        self.fov_planning.trace_add("write", self.on_fov_planning_toggle)
-        self.plan_frame = QWidget()
-        plan_l = QVBoxLayout(self.plan_frame)
-        plan_l.setContentsMargins(0, 0, 0, 0); plan_l.setSpacing(1)
-        self._slider(plan_l, "# Slices", self.n_slices, 1, 32)
-        self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
-        hint2 = QLabel("Scout: drag box = move \u2022 edges = FOV / coverage")
-        hint2.setStyleSheet("color:#666666; font-size:9px;")
-        plan_l.addWidget(hint2)
-        L.addWidget(self.plan_frame)
-        self.plan_frame.setVisible(False)
-
-        self._separator(L)
-        self._section_label(L, "Timing")
-        self.tr_slider = self._slider(L, "TR (ms)", self.TR, 50, 10000)
-        self.te_slider = self._slider(L, "TE (ms)", self.TE, 5, 300)
-        self.ti_frame = self._slider(L, "TI (ms)", self.TI, 50, 4000)
-        self.fa_frame = self._slider(L, "Flip Angle", self.flip_angle, 1, 90)
-
-        # FSE controls
         self.fse_frame = QWidget()
         fse_l = QVBoxLayout(self.fse_frame); fse_l.setContentsMargins(0, 0, 0, 0); fse_l.setSpacing(1)
         self._slider(fse_l, "Echo Train Length", self.etl, 1, 32)
         self._slider(fse_l, "Echo Spacing (ms)", self.echo_spacing, 5, 20)
-        L.addWidget(self.fse_frame)
+        TL.addWidget(self.fse_frame)
 
-        # Diffusion controls
         self.diff_frame = QWidget()
         diff_l = QVBoxLayout(self.diff_frame); diff_l.setContentsMargins(0, 0, 0, 0); diff_l.setSpacing(1)
         self._slider(diff_l, "b-value (s/mm\u00b2)", self.b_value, 0, 3000)
         self._dropdown(diff_l, "Direction", self.diff_direction, ["Left-Right", "Up-Down", "Diagonal"], self.schedule_recalculate)
         self._dropdown(diff_l, "Display", self.diff_display, ["DWI", "ADC Map", "FA Map"], self.schedule_recalculate)
-        L.addWidget(self.diff_frame)
+        TL.addWidget(self.diff_frame)
 
-        # MRA controls
         self.angio_frame = QWidget()
         angio_l = QVBoxLayout(self.angio_frame); angio_l.setContentsMargins(0, 0, 0, 0); angio_l.setSpacing(1)
         self._dropdown(angio_l, "MRA Type", self.angio_type, ["TOF", "Phase Contrast"], self.schedule_recalculate)
@@ -757,54 +834,145 @@ class MRISimulator(QMainWindow):
         self._slider(angio_l, "VENC (cm/s)", self.venc, 10, 200)
         self._slider(angio_l, "Flow Velocity", self.flow_velocity, 10, 150)
         self._dropdown(angio_l, "Display", self.angio_display, ["Magnitude", "Phase", "Speed"], self.schedule_recalculate)
-        L.addWidget(self.angio_frame)
+        TL.addWidget(self.angio_frame)
 
-        # fMRI controls
         self.fmri_frame = QWidget()
         fmri_l = QVBoxLayout(self.fmri_frame); fmri_l.setContentsMargins(0, 0, 0, 0); fmri_l.setSpacing(1)
         self._dropdown(fmri_l, "Display", self.fmri_display, ["EPI Image", "Activation Map", "T-statistic Map"], self.schedule_recalculate)
         self._slider(fmri_l, "Num Volumes", self.fmri_volumes, 20, 500)
         self._slider(fmri_l, "T-threshold", self.fmri_threshold, 1, 8)
-        L.addWidget(self.fmri_frame)
+        TL.addWidget(self.fmri_frame)
 
-        self._separator(L)
-        self._section_label(L, "Spatial / Acquisition")
-        self._slider(L, "Matrix Size", self.matrix_size, 32, 256)
-        self._slider(L, "FOV Coverage (%)", self.fov_fraction, 50, 100)
-        self._fov_slider = self._slider(L, "FOV (mm)", self.FOV, 100, 500)._qslider
-        self._slider(L, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
-        self._slider(L, "Bandwidth (kHz)", self.bandwidth, 10, 500)
-        self._slider(L, "NEX", self.NEX, 1, 8)
-        self._slider(L, "Acceleration (R)", self.accel_factor, 1, 4)
-        self._dropdown(L, "Accel Method", self.accel_method, ["SENSE", "GRAPPA", "CS"], self.schedule_recalculate, inline=True)
+        self.qmri_frame = QWidget()
+        qmri_l = QVBoxLayout(self.qmri_frame); qmri_l.setContentsMargins(0, 0, 0, 0); qmri_l.setSpacing(1)
+        self._dropdown(qmri_l, "Map", self.qmri_display,
+                       ["T1 Map (VFA)", "T2 Map (multi-echo)", "T2* Map (multi-echo)",
+                        "Synthetic SE"], self.schedule_recalculate)
+        qmri_hint = QLabel("Maps are quantitative (ms). Synthetic SE uses TR/TE to render contrast from the maps.")
+        qmri_hint.setWordWrap(True); qmri_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
+        qmri_l.addWidget(qmri_hint)
+        TL.addWidget(self.qmri_frame)
 
-        self._separator(L)
-        self._section_label(L, "Artifacts")
-        self._checkbox(L, "Motion (ghosting)", self.motion_enabled)
-        self._slider(L, "Motion Amplitude", self.motion_amplitude, 1, 15)
-        self._dropdown(L, "Motion Type", self.motion_type, ["periodic", "random", "linear"], self.schedule_recalculate, inline=True)
-        self._checkbox(L, "Chemical Shift", self.chemical_shift_enabled)
-        self._checkbox(L, "Susceptibility", self.susceptibility_enabled)
-        self._slider(L, "Susceptibility Strength", self.susceptibility_strength, 1, 10)
-        self._checkbox(L, "Zipper (RF leak)", self.zipper_enabled)
+        # \u2500\u2500 3D Navigation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        nav_sec = CollapsibleSection("3D Navigation")
+        L.addWidget(nav_sec)
+        NL = nav_sec.inner
+        self._region_dd = self._dropdown(NL, "Region", self.region, self._body_phantoms.REGION_NAMES,
+                       self.on_region_change, inline=True)
+        rl_row = QHBoxLayout(); rl_row.setContentsMargins(0, 0, 0, 2)
+        self._button(rl_row, "Browse Masks\u2026", self.browse_masks, color="#2255aa")
+        self._button(rl_row, "Load File\u2026", self.load_nifti_region)
+        rlwrap = QWidget(); rlwrap.setLayout(rl_row); NL.addWidget(rlwrap)
+        orow = QHBoxLayout(); orow.setContentsMargins(0, 4, 0, 2)
+        self._orient_group = QButtonGroup(self)
+        for orient, label in [("axial", "Axial"), ("sagittal", "Sagittal"), ("coronal", "Coronal")]:
+            rb = QRadioButton(label)
+            rb.setChecked(self.orientation.get() == orient)
+            rb.toggled.connect(lambda checked, o=orient: self._on_orient_radio(checked, o))
+            self._orient_group.addButton(rb)
+            orow.addWidget(rb)
+        orow.addStretch(1)
+        owrap = QWidget(); owrap.setLayout(orow); NL.addWidget(owrap)
+        self._slice_slider = self._slider(NL, "Slice", self.slice_idx, 0, 180)._qslider
+        self._checkbox(NL, "Multi-slice (3\u00d73 grid)", self.multi_slice)
+        self._checkbox(NL, "FOV Planning (scout)", self.fov_planning)
+        self.fov_planning.trace_add("write", self.on_fov_planning_toggle)
+        self.plan_frame = QWidget()
+        plan_l = QVBoxLayout(self.plan_frame); plan_l.setContentsMargins(0, 0, 0, 0); plan_l.setSpacing(1)
+        self._slider(plan_l, "# Slices", self.n_slices, 1, 32)
+        self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
+        self._slider(plan_l, "In-plane FOV (%)", self.inplane_fov_pct, 10, 100)
+        self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
+        self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
+        _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
+        _reset_btn = QPushButton("Reset Angles & FOV")
+        _reset_btn.setStyleSheet("font-size:10px; padding:3px 6px; background:#2a2a4a; color:#cccccc; border:1px solid #444466;")
+        _reset_btn.clicked.connect(self._reset_oblique)
+        _reset_row.addWidget(_reset_btn)
+        _reset_wrap = QWidget(); _reset_wrap.setLayout(_reset_row); plan_l.addWidget(_reset_wrap)
+        hint2 = QLabel("Scout: drag box = move \u2022 edges = FOV / coverage \u2022 Tilt/Rot = oblique")
+        hint2.setStyleSheet("color:#666688; font-size:9px;")
+        plan_l.addWidget(hint2)
+        NL.addWidget(self.plan_frame)
+        self.plan_frame.setVisible(False)
 
-        self._separator(L)
-        self._section_label(L, "Display")
-        self._slider(L, "Noise Level (SNR)", self.snr_level, 5, 100)
-        self._dropdown(L, "Colormap", self.display_cmap,
+        # \u2500\u2500 Spatial / Acquisition \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        spatial_sec = CollapsibleSection("Spatial / Acquisition")
+        L.addWidget(spatial_sec)
+        SPL = spatial_sec.inner
+        self._slider(SPL, "Matrix Size", self.matrix_size, 32, 256)
+        self._slider(SPL, "FOV Coverage (%)", self.fov_fraction, 50, 100)
+        self._fov_slider = self._slider(SPL, "FOV (mm)", self.FOV, 100, 500)._qslider
+        self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
+        self._slider(SPL, "Bandwidth (kHz)", self.bandwidth, 10, 500)
+        self._slider(SPL, "NEX", self.NEX, 1, 8)
+        self._slider(SPL, "Acceleration (R)", self.accel_factor, 1, 4)
+        self._dropdown(SPL, "Accel Method", self.accel_method, ["SENSE", "GRAPPA", "CS"], self.schedule_recalculate, inline=True)
+        self._checkbox(SPL, "Partial Fourier", self.pf_enabled)
+        self._dropdown(SPL, "PF Fraction", self.pf_fraction, list(_PF_MAP.keys()), self.schedule_recalculate, inline=True)
+        self._checkbox(SPL, "k-Space Filter (anti-Gibbs)", self.kspace_filter_enabled)
+        self._dropdown(SPL, "Filter Window", self.kspace_filter_window,
+                       ["hamming", "hanning", "blackman"], self.schedule_recalculate, inline=True)
+
+        # \u2500\u2500 Artifacts (collapsed by default) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        art_sec = CollapsibleSection("Artifacts", collapsed=True)
+        L.addWidget(art_sec)
+        AL = art_sec.inner
+        self._checkbox(AL, "Motion (ghosting)", self.motion_enabled)
+        self._slider(AL, "Motion Amplitude", self.motion_amplitude, 1, 15)
+        self._dropdown(AL, "Motion Type", self.motion_type, ["periodic", "random", "linear"], self.schedule_recalculate, inline=True)
+        self._checkbox(AL, "Chemical Shift", self.chemical_shift_enabled)
+        self._checkbox(AL, "Susceptibility", self.susceptibility_enabled)
+        self._slider(AL, "Susceptibility Strength", self.susceptibility_strength, 1, 10)
+        self._checkbox(AL, "Zipper (RF leak)", self.zipper_enabled)
+        self._checkbox(AL, "Gadolinium Contrast", self.contrast_enabled)
+        self._slider(AL, "Gd Dose (mmol/kg × 10)", self.contrast_dose, 1, 5)
+
+        # ── Physics Effects (collapsed by default) ───────────────────────────────
+        phys_sec = CollapsibleSection("Physics Effects", collapsed=True)
+        L.addWidget(phys_sec)
+        PHL = phys_sec.inner
+        self._checkbox(PHL, "Magnetization Transfer (MT)", self.mt_enabled)
+        self._slider(PHL, "MT Saturation Power (%)", self.mt_power, 0, 100)
+        self._checkbox(PHL, "B1+ Field Inhomogeneity", self.b1_inhom_enabled)
+        b1_hint = QLabel("B1+: mild at 1.5T/3T · dramatic at 7T")
+        b1_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
+        PHL.addWidget(b1_hint)
+
+        # \u2500\u2500 Display (collapsed by default) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        disp_sec = CollapsibleSection("Display", collapsed=True)
+        L.addWidget(disp_sec)
+        DL = disp_sec.inner
+        self._slider(DL, "Noise Level (SNR)", self.snr_level, 5, 100)
+        self._dropdown(DL, "Colormap", self.display_cmap,
                        ["gray", "bone", "hot", "plasma", "viridis", "magma"],
                        self.schedule_recalculate, inline=True)
-        self._checkbox(L, "Tissue label overlay", self.show_tissue_overlay)
-        self._checkbox(L, "Show k-space", self.show_kspace)
-        hint = QLabel("Wheel/\u2191\u2193: slice | Ctrl+drag: W/L | dbl-click/R: reset")
-        hint.setStyleSheet("color:#666666; font-size:9px;")
-        L.addWidget(hint)
-        self._checkbox(L, "Show Pulse Sequence Diagram", self.show_psd)
+        self._checkbox(DL, "Tissue label overlay", self.show_tissue_overlay)
+        self._checkbox(DL, "Show k-space", self.show_kspace)
+        self._checkbox(DL, "Show Pulse Sequence Diagram", self.show_psd)
+        self._dropdown(DL, "Signal Curve", self.plot_curve_mode,
+                       ["TE decay", "TR recovery", "TI sweep", "Contrast Map", "Histogram"],
+                       self.schedule_recalculate, inline=True)
+        hint = QLabel("Wheel/\u2191\u2193: slice \u2022 Ctrl+drag: W/L \u2022 dbl-click/R: reset")
+        hint.setStyleSheet("color:#666688; font-size:9px;")
+        DL.addWidget(hint)
 
-        erow = QHBoxLayout()
-        erow.setContentsMargins(4, 4, 4, 4)
+        # \u2500\u2500 Comparison (collapsed by default) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        cmp_sec = CollapsibleSection("Comparison", collapsed=True)
+        L.addWidget(cmp_sec)
+        CL = cmp_sec.inner
+        crow = QHBoxLayout(); crow.setContentsMargins(0, 0, 0, 0)
+        self._button(crow, "Set as A", self.set_protocol_a, color="#2255aa")
+        self._button(crow, "Compare A\u2194B", self.toggle_compare)
+        self._button(crow, "Clear", self.clear_compare)
+        cwrap = QWidget(); cwrap.setLayout(crow); CL.addWidget(cwrap)
+        self.compare_status = DLabel("No comparison set", base_style="color:#666688; font-size:9px;")
+        CL.addWidget(self.compare_status)
+
+        # \u2500\u2500 Export \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        erow = QHBoxLayout(); erow.setContentsMargins(6, 6, 6, 4)
         self._button(erow, "Save Img", self.export_current_image)
-        self._button(erow, "Save Proto", self.export_current_protocol)
+        self._button(erow, "Protocol", self.export_current_protocol)
         self._button(erow, "PDF", self.export_current_report)
         self._button(erow, "Load", self.load_protocol_file)
         ewrap = QWidget(); ewrap.setLayout(erow)
@@ -815,24 +983,52 @@ class MRISimulator(QMainWindow):
 
     def build_metrics_panel(self) -> None:
         title = QLabel("Metrics")
-        title.setStyleSheet("font-size:15px; font-weight:bold; color:white;")
+        title.setStyleSheet("font-size:15px; font-weight:bold; color:white; padding:4px 0 2px 0;")
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.right_layout.addWidget(title)
+        self._separator(self.right_layout)
 
         self.metrics_labels = {}
-        for dn, key in [("Scan Time", "scan_time"), ("Resolution", "resolution"), ("Voxel Size", "voxel_size"),
-                        ("SNR (WM)", "snr_wm"), ("SNR (GM)", "snr_gm"), ("CNR", "cnr"), ("BW/pixel", "bw_pixel"),
-                        ("SAR (W/kg)", "sar"), ("Weighting", "weighting"), ("Matrix", "matrix_display"),
-                        ("Slice", "slice_info"), ("ETL / Accel", "etl_accel"), ("Artifacts", "artifacts")]:
-            name = QLabel(dn)
-            name.setStyleSheet("color:#aaaaaa; font-size:10px;")
-            self.right_layout.addWidget(name)
-            value = DLabel("--", base_style="font-size:14px; font-weight:bold; color:#4a9eff;")
-            self.right_layout.addWidget(value)
-            self.metrics_labels[key] = value
+
+        def _card(key: str, label: str, value_color: str = "#4a9eff") -> QWidget:
+            card = QWidget()
+            card.setStyleSheet("background:#252540; border-radius:5px;")
+            cl = QVBoxLayout(card)
+            cl.setContentsMargins(7, 4, 7, 5)
+            cl.setSpacing(1)
+            lbl = QLabel(label)
+            lbl.setStyleSheet("color:#8888bb; font-size:9px; font-weight:normal;")
+            val = DLabel("--", base_style=f"font-size:13px; font-weight:bold; color:{value_color};")
+            cl.addWidget(lbl); cl.addWidget(val)
+            self.metrics_labels[key] = val
+            return card
+
+        # 2-column grid: SNR / timing / spatial
+        grid_w = QWidget()
+        grid = QGridLayout(grid_w)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(5)
+        pairs = [
+            ("snr_wm", "SNR  WM"),  ("snr_gm", "SNR  GM"),
+            ("cnr", "CNR"),          ("snr_eff", "SNR Eff. (√min)"),
+            ("scan_time", "Scan Time"), ("resolution", "Resolution"),
+            ("voxel_size", "Voxel Size"), ("sar", "SAR (W/kg)"),
+            ("weighting", "Weighting"), ("matrix_display", "Matrix"),
+            ("bw_pixel", "BW / pixel"), ("etl_accel", "ETL / Accel"),
+            ("slice_info", "Slice"),  ("field_disp", "Field"),
+            ("fw_phase", "Fat-Water"),
+        ]
+        for i, (key, dn) in enumerate(pairs):
+            grid.addWidget(_card(key, dn), i // 2, i % 2)
+        self.right_layout.addWidget(grid_w)
+
+        # Artifacts: full width, amber accent
+        art_card = _card("artifacts", "Artifacts", value_color="#ffaa44")
+        art_card.setStyleSheet("background:#2a2015; border-radius:5px;")
+        self.right_layout.addWidget(art_card)
 
         self._separator(self.right_layout)
-        self.compare_metrics_label = DLabel("", base_style="color:#aaaaaa; font-size:10px;")
+        self.compare_metrics_label = DLabel("", base_style="color:#9999bb; font-size:10px;")
         self.compare_metrics_label.setWordWrap(True)
         self.right_layout.addWidget(self.compare_metrics_label)
         self.right_layout.addStretch(1)
@@ -841,7 +1037,8 @@ class MRISimulator(QMainWindow):
     #  Core (unchanged from Tkinter version)
     # ------------------------------------------------------------------ #
     def get_current_params(self) -> dict:
-        return {"sequence": self.sequence_type.get(), "TR": self.TR.get(), "TE": self.TE.get(), "TI": self.TI.get(),
+        return {"sequence": self.sequence_type.get(), "field_strength": self.field_strength.get(),
+                "TR": self.TR.get(), "TE": self.TE.get(), "TI": self.TI.get(),
                 "flip_angle": self.flip_angle.get(), "matrix_size": self.matrix_size.get(), "FOV": self.FOV.get(),
                 "fov_fraction": self.fov_fraction.get(), "bandwidth": self.bandwidth.get(), "NEX": self.NEX.get(),
                 "etl": self.etl.get(), "echo_spacing": self.echo_spacing.get(), "accel_factor": self.accel_factor.get(),
@@ -849,7 +1046,20 @@ class MRISimulator(QMainWindow):
                 "diff_direction": self.diff_direction.get(), "diff_display": self.diff_display.get(),
                 "angio_type": self.angio_type.get(), "angio_mip_slab": self.angio_mip_slab.get(),
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
-                "fmri_threshold": self.fmri_threshold.get()}
+                "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
+                "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
+                "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),
+                "motion_type": self.motion_type.get(), "chemical_shift_enabled": self.chemical_shift_enabled.get(),
+                "susceptibility_enabled": self.susceptibility_enabled.get(),
+                "susceptibility_strength": self.susceptibility_strength.get(),
+                "zipper_enabled": self.zipper_enabled.get(),
+                "pf_enabled": self.pf_enabled.get(), "pf_fraction": self.pf_fraction.get(),
+                "kspace_filter_enabled": self.kspace_filter_enabled.get(),
+                "kspace_filter_window": self.kspace_filter_window.get(),
+                "contrast_enabled": self.contrast_enabled.get(),
+                "contrast_dose": self.contrast_dose.get(),
+                "mt_enabled": self.mt_enabled.get(), "mt_power": self.mt_power.get(),
+                "b1_inhom_enabled": self.b1_inhom_enabled.get()}
 
     def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()
@@ -872,14 +1082,17 @@ class MRISimulator(QMainWindow):
             TE = TR - 5
         phantom_slice = self._get_current_phantom_slice(orient, sl_idx, params)
 
-        if seq == "Spin Echo":
-            return simulate_slice(phantom_slice, TR, TE, 'SE')
+        # Tissue property pipeline: measured field-strength table (tissue_db) → Gd
+        tprops = tissue_db.properties(params.get("field_strength", "3T"))
+        gd_active = params.get("contrast_enabled") and params.get("contrast_dose", 0) > 0
+        if gd_active:
+            tprops = rendering.apply_gd(tprops, params["contrast_dose"] * 0.1)
+
+        seq_map = {"Spin Echo": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR"}
+        if seq in seq_map:
+            return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
         elif seq == "FSE / TSE":
-            return simulate_fse_image(phantom_slice, TR, TE, params["etl"], params["echo_spacing"], TISSUE_PROPERTIES_3D)
-        elif seq == "Gradient Echo":
-            return simulate_slice(phantom_slice, TR, TE, 'GRE', flip_angle=FA)
-        elif seq == "Inversion Recovery":
-            return simulate_slice(phantom_slice, TR, TE, 'IR', TI=TI)
+            return simulate_fse_image(phantom_slice, TR, TE, params["etl"], params["echo_spacing"], tprops)
         elif seq == "Diffusion (DWI)":
             direction: list[float] = {"Left-Right": [1.0, 0.0], "Up-Down": [0.0, 1.0], "Diagonal": [0.707, 0.707]}[params["diff_direction"]]
             if params["diff_display"] == "DWI":
@@ -901,6 +1114,31 @@ class MRISimulator(QMainWindow):
             elif params["fmri_display"] == "T-statistic Map":
                 img = compute_tstat_map_3d(phantom_slice, act, TR, TE, FA, params["fmri_volumes"])
                 return np.where(img > params["fmri_threshold"], img, 0)
+        elif seq == "Quantitative (qMRI)":
+            disp = params["qmri_display"]
+            if disp == "T1 Map (VFA)":
+                # Variable-flip-angle GRE series → Fram-linearised T1 map (ms)
+                fas = [2.0, 5.0, 10.0, 15.0, 20.0]
+                series = qmri.simulate_vfa_series(phantom_slice, fas, TR_ms=15.0, TE_ms=3.0,
+                                                  tissue_props=tprops)
+                return qmri.vfa_t1_map(series, fas, 15.0)
+            elif disp == "T2 Map (multi-echo)":
+                # Multi-echo SE → log-linear T2 map (ms)
+                tes = [10.0, 30.0, 50.0, 70.0, 90.0, 110.0]
+                series = qmri.simulate_multi_echo_series(phantom_slice, tes, TR_ms=2000.0,
+                                                         sequence="SE", tissue_props=tprops)
+                return qmri.multi_echo_t2_map(series, tes)
+            elif disp == "T2* Map (multi-echo)":
+                # Multi-echo GRE → log-linear T2* map (ms)
+                tes = [5.0, 10.0, 20.0, 30.0, 40.0, 50.0]
+                series = qmri.simulate_multi_echo_series(phantom_slice, tes, TR_ms=500.0,
+                                                         flip_angle_deg=FA, sequence="GRE",
+                                                         tissue_props=tprops)
+                return qmri.t2star_map(series, tes)
+            elif disp == "Synthetic SE":
+                # Synthesise an SE contrast at the current TR/TE from quantitative maps
+                T1m, T2m, PDm = rendering.param_maps(phantom_slice, tprops, ("T1", "T2", "PD"))
+                return qmri.synthetic_contrast(T1m, T2m, PDm, TR, TE, sequence="SE")
         return np.zeros((181, 181), dtype=float)
 
     @staticmethod
@@ -966,7 +1204,7 @@ class MRISimulator(QMainWindow):
     def simulate_with_params(self, params: dict) -> tuple[np.ndarray, dict]:
         orient = self.orientation.get(); sl_idx = self.slice_idx.get()
         matrix = params["matrix_size"]; fov_frac = params["fov_fraction"] / 100.0
-        thickness = int(self.slice_thickness.get()); R = params["accel_factor"]
+        thickness = int(params.get("slice_thickness", self.slice_thickness.get())); R = params["accel_factor"]
         max_sl = self.get_max_slice_idx()
 
         if thickness > 1 and params["sequence"] not in ["MR Angiography"]:
@@ -978,6 +1216,7 @@ class MRISimulator(QMainWindow):
         phantom_slice = self._get_current_phantom_slice(orient, sl_idx, params)
         is_map = params["sequence"] == "Diffusion (DWI)" and params["diff_display"] in ["ADC Map", "FA Map"]
         is_map = is_map or (params["sequence"] == "fMRI (BOLD)" and params["fmri_display"] in ["Activation Map", "T-statistic Map"])
+        is_map = is_map or (params["sequence"] == "Quantitative (qMRI)")
 
         # MR tissue texture: spatially-correlated multiplicative noise within each
         # tissue region + partial-volume boundary blur.  Makes the flat per-label
@@ -997,14 +1236,39 @@ class MRISimulator(QMainWindow):
             image[~_tm] = 0.0  # keep background clean after blurring
 
         if not is_map:
-            if self.motion_enabled.get():
-                image = add_motion_artifact(image, self.motion_type.get(), self.motion_amplitude.get(), 3)
-            if self.chemical_shift_enabled.get() and phantom_slice.shape == image.shape:
-                image = add_chemical_shift_artifact(image, phantom_slice, calculate_chemical_shift_pixels(params["bandwidth"] * 1000 / matrix))
-            if self.susceptibility_enabled.get() and phantom_slice.shape == image.shape:
-                image = add_susceptibility_artifact(image, phantom_slice, self.susceptibility_strength.get() / 10.0)
+            if params.get("motion_enabled", self.motion_enabled.get()):
+                _mseed = (sl_idx * 7919 + {"axial": 0, "coronal": 17, "sagittal": 37}.get(orient, 0)) & 0xFFFFFFFF
+                image = add_motion_artifact(image, params.get("motion_type", self.motion_type.get()),
+                                            params.get("motion_amplitude", self.motion_amplitude.get()), 3,
+                                            rng=np.random.default_rng(_mseed))
+            if params.get("chemical_shift_enabled", self.chemical_shift_enabled.get()) and phantom_slice.shape == image.shape:
+                _b0_cs = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
+                image = add_chemical_shift_artifact(image, phantom_slice,
+                    calculate_chemical_shift_pixels(params["bandwidth"] * 1000 / matrix, field_strength=_b0_cs))
+            if params.get("susceptibility_enabled", self.susceptibility_enabled.get()) and phantom_slice.shape == image.shape:
+                image = add_susceptibility_artifact(image, phantom_slice,
+                                                    params.get("susceptibility_strength", self.susceptibility_strength.get()) / 10.0)
 
-            reconstructed, _ = simulate_acquisition(image, matrix, fov_frac)
+            # B1+ transmit inhomogeneity and MT are signal-formation effects, so
+            # they act on the signal image before k-space (via the b1 / mt modules).
+            _field = params.get("field_strength", "3T")
+            _B0_val = _B0_MAP.get(_field, 3.0)
+            _tprops = tissue_db.properties(_field)
+            if params.get("b1_inhom_enabled"):
+                image = rendering.apply_b1(image, phantom_slice, _tprops, params["sequence"],
+                                  params["flip_angle"], params["TR"], params["TE"], _B0_val)
+            if params.get("mt_enabled"):
+                image = rendering.apply_mt(image, phantom_slice, _tprops, params.get("mt_power", 0),
+                                  params["sequence"], params["TR"], params["TE"], params["flip_angle"])
+
+            # Fat-water phase cycling: automatic for GRE (SE refocuses this; GRE does not)
+            if params["sequence"] in ("Gradient Echo", "MR Angiography") and phantom_slice.shape == image.shape:
+                image = rendering.gre_fatwater_phase(image, phantom_slice, params["TE"], _B0_val)
+
+            _pf = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else None
+            _fw = params.get("kspace_filter_window", "hamming") if params.get("kspace_filter_enabled") else None
+            reconstructed, kspace_acquired = simulate_acquisition(image, matrix, fov_frac,
+                                                                   filter_window=_fw, pf_fraction=_pf)
 
             # Acceleration
             if R > 1:
@@ -1023,12 +1287,14 @@ class MRISimulator(QMainWindow):
             res_mm = params["FOV"] / matrix
             vox_vol = res_mm * res_mm * max(1, thickness)
             BW_hz = max(1.0, params["bandwidth"] * 1000.0)
+            B0_snr = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
             g_factor = 1.0 + 0.15 * (R - 1) if R > 1 else 1.0
-            eff_snr = (self.snr_level.get()
+            eff_snr = (params.get("snr_level", self.snr_level.get())
                        * (vox_vol / self._VOX_REF)            # SNR proportional to voxel volume
                        * np.sqrt(max(1, params["NEX"]))       # SNR proportional to sqrt(NEX)
                        * np.sqrt(self._BW_REF / BW_hz)         # SNR proportional to 1/sqrt(receiver BW)
-                       / (g_factor * np.sqrt(R)))             # parallel-imaging penalty (g * sqrt(R))
+                       / (g_factor * np.sqrt(R))              # parallel-imaging penalty (g * sqrt(R))
+                       * (B0_snr / 3.0))                      # field-strength SNR advantage
             eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
             tissue_ref = self._tissue_ref_signal(reconstructed, phantom_slice)
             if tissue_ref > 0:
@@ -1036,27 +1302,37 @@ class MRISimulator(QMainWindow):
                 reconstructed = np.sqrt(
                     (reconstructed + np.random.normal(0, sigma, reconstructed.shape)) ** 2
                     + np.random.normal(0, sigma, reconstructed.shape) ** 2)
-            if self.zipper_enabled.get():
+            if params.get("zipper_enabled", self.zipper_enabled.get()):
                 reconstructed = add_zipper_artifact(reconstructed, 0.3, 0.12)
         else:
+            kspace_acquired = None
             reconstructed = image
 
         # Metrics
         TR, TE, FA = params["TR"], params["TE"], params["flip_angle"]
         FOV, NEX, BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
         ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
+        pf_val = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else 1.0
         resolution = FOV / matrix; voxel_vol = resolution * resolution * thickness
-        scan_time = TR * matrix * NEX / (ETL * R) / 1000
+        scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000
         seq_map = {"Spin Echo": "SE", "FSE / TSE": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
                    "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI"}
+        B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
+        sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
-                   "sar_head": sar["head"], "sar_exceeds": sar["exceeds_limit"]}
+                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2}
         if not is_map:
             snr = self._measure_snr(reconstructed, phantom_slice)
             metrics["snr_wm"] = snr["wm"]
             metrics["snr_gm"] = snr["gm"]
             metrics["noise_sigma"] = snr["sigma"]
+            # SNR efficiency: SNR per √(scan-time in minutes)
+            t_min = max(scan_time / 60.0, 1e-6)
+            metrics["snr_eff"] = snr["wm"] / np.sqrt(t_min)
+        else:
+            metrics["snr_eff"] = 0.0
+        self._last_kspace = kspace_acquired  # stored for k-space display
         return reconstructed, metrics
 
     # --- Display ---
@@ -1094,7 +1370,12 @@ class MRISimulator(QMainWindow):
         else:
             self.current_image = image_b
             orient = self.orientation.get(); sl_idx = self.slice_idx.get()
-            self.current_title = f"{current_params['sequence']} | TR={current_params['TR']:.0f} TE={current_params['TE']:.0f} | {orient.capitalize()} #{sl_idx}"
+            if current_params["sequence"] == "Quantitative (qMRI)":
+                _qd = current_params["qmri_display"]
+                _unit = "" if _qd == "Synthetic SE" else "  [pixel value = ms]"
+                self.current_title = f"{_qd}{_unit} | {orient.capitalize()} #{sl_idx}"
+            else:
+                self.current_title = f"{current_params['sequence']} | TR={current_params['TR']:.0f} TE={current_params['TE']:.0f} | {orient.capitalize()} #{sl_idx}"
             max_val = np.max(image_b) if np.max(image_b) > 0 else 1
             center = self.window_level * max_val; width = self.window_width * max_val
             self.axes[0].imshow(image_b, cmap=cmap, origin="lower",
@@ -1107,9 +1388,12 @@ class MRISimulator(QMainWindow):
                     origin="lower", aspect="auto")
             self.axes[0].set_title(self.current_title, color="white", fontsize=10); self.axes[0].set_axis_off()
             if self.show_kspace.get():
-                from kspace import image_to_kspace
-                self.axes[1].imshow(get_kspace_display(image_to_kspace(image_b)), cmap="hot", origin="lower")
-                self.axes[1].set_title("k-Space", color="white", fontsize=11); self.axes[1].set_axis_off()
+                ks = self._last_kspace if self._last_kspace is not None else None
+                if ks is None:
+                    from kspace import image_to_kspace
+                    ks = image_to_kspace(image_b)
+                self.axes[1].imshow(get_kspace_display(ks), cmap="hot", origin="lower")
+                self.axes[1].set_title("k-Space (acquired)", color="white", fontsize=11); self.axes[1].set_axis_off()
             else:
                 self._plot_curves(current_params)
             self.compare_metrics_label.config(text="")
@@ -1184,48 +1468,251 @@ class MRISimulator(QMainWindow):
                 ax.imshow(img, cmap=self.display_cmap.get(), origin="lower", aspect=_asp)
                 ax.set_title(f"#{idxs[k]}", color="white", fontsize=8)
         self.fig.suptitle(f"{params['sequence']}  |  {n} slice{'s' if n != 1 else ''}  "
-                          f"|  FOV {int(self.inplane_fov_frac.get() * 100)}%",
+                          f"|  FOV {self.inplane_fov_pct.get()}%",
                           color="white", fontsize=10)
         self.canvas.draw()
         self.current_image = self._simulate_single_slice(params, orient, self.slice_idx.get()) if n == 1 else None
 
     def _draw_scout(self, params: dict) -> None:
-        """Render the localizer in an orthogonal plane with the FOV box overlaid."""
+        """Render 3-plane localizer with acquisition prescription overlaid on each panel."""
         import scan_geometry as sg
         from matplotlib.patches import Rectangle
+        from oblique import plane_from_angles, scout_band, three_scouts as _three_scouts
         self.scout_canvas.setVisible(True)
-        sslice, cfg, depth = sg.scout_slice(self.phantom_3d, self.orientation.get())
-        # anatomical-looking localizer: quick balanced SE render of the scout label slice
-        scout_img = simulate_slice(sslice, 600, 12, 'SE')
+        acq = self.orientation.get()
+        vol = self.phantom_3d
+        tilt = self.slice_tilt.get()
+        rot  = self.slice_rot.get()
+        fov_frac = self.inplane_fov_pct.get() / 100.0
 
-        ax = self.scout_ax
-        ax.clear(); ax.set_facecolor("#1e1e1e")
-        ax.imshow(scout_img, cmap="gray", origin="lower", aspect="auto")
-        ax.set_title(f"Scout ({cfg['scout']})  \u2014  drag to prescribe",
-                     color="white", fontsize=9)
-        ax.set_axis_off()
+        # Role assignment: which of the 3 panel indices is primary/secondary/acq-plane
+        _role_map = {
+            "axial":    {"primary": 1, "secondary": 2, "acqplane": 0},
+            "coronal":  {"primary": 0, "secondary": 2, "acqplane": 1},
+            "sagittal": {"primary": 1, "secondary": 0, "acqplane": 2},
+        }
+        roles = _role_map[acq]
 
-        info = sg.box_rect(self.orientation.get(), self.phantom_3d.shape,
-                           self.slice_idx.get(), self.n_slices.get(),
-                           self.slice_thickness.get(), self.slice_gap.get(),
-                           self.inplane_fov_frac.get(), self.inplane_off.get())
-        self._scout_box_info = info
+        # Slab centre in voxel-index space
+        center = self._compute_slab_center()
+        center_int = (int(round(center[0])), int(round(center[1])), int(round(center[2])))
 
-        # FOV box
-        ax.add_patch(Rectangle((info["x0"], info["y0"]), info["w"], info["h"],
-                               fill=False, edgecolor="#34d4ff", linewidth=1.8))
-        # Individual slice lines within the group
-        for L in info["lines"]:
-            if info["line_axis"] == "y":
-                ax.plot([info["x0"], info["x0"] + info["w"]], [L, L],
-                        color="#34d4ff", linewidth=0.5, alpha=0.55)
-            else:
-                ax.plot([L, L], [info["y0"], info["y0"] + info["h"]],
-                        color="#34d4ff", linewidth=0.5, alpha=0.55)
-        # corner handles
-        for hx, hy in self._scout_handle_points(info):
-            ax.plot(hx, hy, "s", color="#34d4ff", markersize=4)
+        # Background images: slices through the planned centre
+        scouts_bg = _three_scouts(vol, center_int)
+
+        # Acquisition-plane dashed FOV box (unchanged for both modes)
+        ip_box = sg.inplane_box(acq, vol.shape, fov_frac, self.inplane_off.get())
+
+        is_oblique = abs(tilt) > 0.5 or abs(rot) > 0.5
+
+        if is_oblique:
+            normal, row_vec, col_vec = plane_from_angles(acq, tilt_deg=tilt, rot_deg=rot)
+            band = scout_band(vol.shape, normal, center,
+                              n_slices=self.n_slices.get(),
+                              thickness_mm=self.slice_thickness.get(),
+                              gap_mm=self.slice_gap.get(),
+                              voxel_size=(1.0, 1.0, 1.0))
+            self._scout_box_info = None
+            self._scout_overlays = {}
+            for i, plane in enumerate(self._scout_plane_names):
+                if i == roles["primary"]:
+                    self._scout_overlays[plane] = {"role": "primary",   "info": band[plane]}
+                elif i == roles["secondary"]:
+                    self._scout_overlays[plane] = {"role": "secondary", "info": band[plane]}
+                else:
+                    self._scout_overlays[plane] = {"role": "acqplane",  "info": ip_box}
+        else:
+            info = sg.box_rect(acq, vol.shape,
+                               self.slice_idx.get(), self.n_slices.get(),
+                               self.slice_thickness.get(), self.slice_gap.get(),
+                               fov_frac, self.inplane_off.get())
+            self._scout_box_info = info
+            sec_plane = self._scout_plane_names[roles["secondary"]]
+            sec_ov = sg.secondary_overlay(sec_plane, acq, vol.shape,
+                                           self.slice_idx.get(), self.n_slices.get(),
+                                           self.slice_thickness.get(), self.slice_gap.get(),
+                                           fov_frac, self.inplane_off.get())
+            self._scout_overlays = {}
+            for i, plane in enumerate(self._scout_plane_names):
+                if i == roles["primary"]:
+                    self._scout_overlays[plane] = {"role": "primary",   "info": info}
+                elif i == roles["secondary"]:
+                    self._scout_overlays[plane] = {"role": "secondary", "info": sec_ov}
+                else:
+                    self._scout_overlays[plane] = {"role": "acqplane",  "info": ip_box}
+
+        self._scout_primary_ax = self.scout_axes[roles["primary"]]
+        self.scout_ax = self._scout_primary_ax
+
+        # ── Draw each panel ──────────────────────────────────────────────────
+        self._scout_angle_handles = []   # rebuilt every redraw
+        for i, plane in enumerate(self._scout_plane_names):
+            ax = self.scout_axes[i]
+            ax.clear()
+            ax.set_facecolor("#12121e")
+            ax.set_axis_off()
+
+            # Background: slice through planned centre (sagittal needs LR flip)
+            bg_raw = scouts_bg[plane]
+            if plane == "sagittal":
+                bg_raw = np.fliplr(bg_raw)
+            ax.imshow(simulate_slice(bg_raw, 600, 12, "SE"),
+                      cmap="gray", origin="lower", aspect="auto")
+
+            role = self._scout_overlays[plane]["role"]
+            ov_info = self._scout_overlays[plane]["info"]
+
+            if role == "primary":
+                color = "#ffdd44"
+                if is_oblique:
+                    cx, cy = self._display_center(plane, center)
+                    _angle_var = self._ANGLE_MAP[acq]["primary"]
+                    for seg in ov_info.get("edges", []):
+                        if seg is not None:
+                            ax.plot([seg[0], seg[2]], [seg[1], seg[3]],
+                                    color=color, linewidth=2.5)
+                            # Endpoint markers — grab anywhere on the line to rotate
+                            ax.plot([seg[0], seg[2]], [seg[1], seg[3]], "D",
+                                    color="#ff5533", markersize=6,
+                                    markeredgecolor="white", markeredgewidth=0.7)
+                            self._scout_angle_handles.append(
+                                (seg[0], seg[1], seg[2], seg[3], plane, _angle_var, cx, cy))
+                    slices_segs = ov_info.get("slices", [])
+                    mid_j = len(slices_segs) // 2
+                    for j, seg in enumerate(slices_segs):
+                        if seg is not None:
+                            lw = 1.4 if j == mid_j else 0.7
+                            alpha = 0.9 if j == mid_j else 0.55
+                            ax.plot([seg[0], seg[2]], [seg[1], seg[3]],
+                                    color=color, linewidth=lw, alpha=alpha)
+                    ax.set_title(f"{plane.capitalize()}  [oblique — drag edge to angle]",
+                                 color=color, fontsize=8, pad=2)
+                else:
+                    # Non-oblique: draw box + register through-edges as angle handles
+                    x0, y0, w, h = ov_info["x0"], ov_info["y0"], ov_info["w"], ov_info["h"]
+                    ax.add_patch(Rectangle((x0, y0), w, h,
+                                           fill=False, edgecolor=color, linewidth=1.8))
+                    for L in ov_info["lines"]:
+                        if ov_info["line_axis"] == "y":
+                            ax.plot([x0, x0 + w], [L, L], color=color, linewidth=0.6, alpha=0.6)
+                        else:
+                            ax.plot([L, L], [y0, y0 + h], color=color, linewidth=0.6, alpha=0.6)
+                    # Angle handles on the through-direction edges (top/bottom or left/right)
+                    cx_p, cy_p = self._display_center(plane, center)
+                    _av = self._ANGLE_MAP[acq]["primary"]
+                    if ov_info["through"] == "v":
+                        ang_edges = [(x0, y0, x0 + w, y0), (x0, y0 + h, x0 + w, y0 + h)]
+                    else:
+                        ang_edges = [(x0, y0, x0, y0 + h), (x0 + w, y0, x0 + w, y0 + h)]
+                    for seg in ang_edges:
+                        ax.plot([seg[0], seg[2]], [seg[1], seg[3]], "D",
+                                color="#ff5533", markersize=5,
+                                markeredgecolor="white", markeredgewidth=0.7)
+                        self._scout_angle_handles.append(
+                            (seg[0], seg[1], seg[2], seg[3], plane, _av, cx_p, cy_p))
+                    ax.set_title(f"{plane.capitalize()}  [drag edge to angle]",
+                                 color=color, fontsize=8, pad=2)
+
+            elif role == "secondary":
+                color = "#34d4ff"
+                if is_oblique:
+                    cx, cy = self._display_center(plane, center)
+                    _angle_var = self._ANGLE_MAP[acq]["secondary"]
+                    for seg in ov_info.get("edges", []):
+                        if seg is not None:
+                            ax.plot([seg[0], seg[2]], [seg[1], seg[3]],
+                                    color=color, linewidth=2.0, linestyle="--")
+                            ax.plot([seg[0], seg[2]], [seg[1], seg[3]], "D",
+                                    color="#33aaff", markersize=5,
+                                    markeredgecolor="white", markeredgewidth=0.7)
+                            self._scout_angle_handles.append(
+                                (seg[0], seg[1], seg[2], seg[3], plane, _angle_var, cx, cy))
+                    slices_segs = ov_info.get("slices", [])
+                    mid_j = len(slices_segs) // 2
+                    for j, seg in enumerate(slices_segs):
+                        if seg is not None:
+                            lw = 1.4 if j == mid_j else 0.7
+                            alpha = 0.9 if j == mid_j else 0.55
+                            ax.plot([seg[0], seg[2]], [seg[1], seg[3]],
+                                    color=color, linewidth=lw, alpha=alpha)
+                    ax.set_title(f"{plane.capitalize()}  [drag edge to angle]",
+                                 color=color, fontsize=8, pad=2)
+                elif ov_info:
+                    lo, hi = ov_info["span"]
+                    cx_s, cy_s = self._display_center(plane, center)
+                    _av_s = self._ANGLE_MAP[acq]["secondary"]
+                    mid_pos_idx = len(ov_info["positions"]) // 2
+                    for j, pos in enumerate(ov_info["positions"]):
+                        lw = 1.4 if j == mid_pos_idx else 0.7
+                        alpha = 0.9 if j == mid_pos_idx else 0.55
+                        if ov_info["orient"] == "h":
+                            ax.plot([lo, hi], [pos, pos], color=color, lw=lw, alpha=alpha)
+                            # Endpoint markers + register as angle handle
+                            ax.plot([lo, hi], [pos, pos], "D", color="#33aaff",
+                                    markersize=5, markeredgecolor="white", markeredgewidth=0.7)
+                            self._scout_angle_handles.append(
+                                (lo, pos, hi, pos, plane, _av_s, cx_s, cy_s))
+                        else:
+                            ax.plot([pos, pos], [lo, hi], color=color, lw=lw, alpha=alpha)
+                            ax.plot([pos, pos], [lo, hi], "D", color="#33aaff",
+                                    markersize=5, markeredgecolor="white", markeredgewidth=0.7)
+                            self._scout_angle_handles.append(
+                                (pos, lo, pos, hi, plane, _av_s, cx_s, cy_s))
+                    ax.set_title(f"{plane.capitalize()}  [drag edge to angle / move]",
+                                 color=color, fontsize=8, pad=2)
+
+            else:  # acqplane
+                color = "#ff8844"
+                ax.add_patch(Rectangle((ip_box["x0"], ip_box["y0"]),
+                                       ip_box["w"], ip_box["h"],
+                                       fill=False, edgecolor=color,
+                                       linewidth=1.4, linestyle="--"))
+                lbl = "oblique acq" if is_oblique else "acq plane"
+                ax.set_title(f"{plane.capitalize()}  [{lbl}]",
+                             color=color, fontsize=8, pad=2)
+
         self.scout_canvas.draw()
+
+    # Which angle variable is controlled by dragging each panel role in oblique mode.
+    # Derived from: rot_deg makes angled lines on primary panels; tilt_deg on secondary.
+    # Exception: sagittal acquisition has them swapped.
+    _ANGLE_MAP: dict[str, dict[str, str]] = {
+        "axial":    {"primary": "rot",  "secondary": "tilt"},
+        "coronal":  {"primary": "rot",  "secondary": "tilt"},
+        "sagittal": {"primary": "tilt", "secondary": "rot"},
+    }
+
+    def _display_center(self, panel: str, center: np.ndarray) -> tuple:
+        """Return (cx, cy) of the slab center in display coords for the given scout panel."""
+        nY = self.phantom_3d.shape[1]
+        cZ, cY, cX = float(center[0]), float(center[1]), float(center[2])
+        if panel == "axial":
+            return cX, cY
+        elif panel == "coronal":
+            return cX, cZ
+        else:  # sagittal — Y axis is flipped
+            return nY - 1.0 - cY, cZ
+
+    def _compute_slab_center(self) -> np.ndarray:
+        """(Z, Y, X) voxel-index centre of the currently prescribed slab."""
+        import scan_geometry as sg
+        vol = self.phantom_3d
+        nZ, nY, nX = vol.shape
+        acq = self.orientation.get()
+        cfg = sg.cfg_for(acq)
+        center = np.array([nZ / 2.0, nY / 2.0, nX / 2.0])
+        center[cfg["through_axis"]] = float(self.slice_idx.get())
+        center[cfg["inplane_axis"]] = vol.shape[cfg["inplane_axis"]] / 2.0 + self.inplane_off.get()
+        return center
+
+    def _reset_oblique(self) -> None:
+        self.slice_tilt.set(0.0)
+        self.slice_rot.set(0.0)
+        self.inplane_fov_pct.set(100)
+        self.inplane_off.set(0.0)
+        if self.fov_planning.get():
+            self._draw_scout(self.get_current_params())
+        self.schedule_recalculate()
 
     @staticmethod
     def _scout_handle_points(info: dict) -> list:
@@ -1280,39 +1767,152 @@ class MRISimulator(QMainWindow):
             return "resize_fov"
         return "move"
 
+    # through/through_sign for secondary panel drag — depends only on acquisition
+    _SEC_THROUGH: dict[str, tuple[str, int]] = {
+        "axial":    ("v", +1),
+        "coronal":  ("h", -1),
+        "sagittal": ("h", +1),
+    }
+
     def _scout_press(self, event: object) -> None:
-        if not self.fov_planning.get() or event.inaxes is not self.scout_ax:  # type: ignore[attr-defined]
+        if not self.fov_planning.get() or event.inaxes is None:  # type: ignore[attr-defined]
             return
-        mode = self._scout_hit_test(event)
-        if mode is None:
+        if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return
-        self._scout_drag = dict(mode=mode, x=event.xdata, y=event.ydata)  # type: ignore[attr-defined]
+        px, py = event.xdata, event.ydata  # type: ignore[attr-defined]
+
+        # ── Edge-line hit test ─────────────────────────────────────────────
+        # Outer 25% of each edge line  →  angle drag  (◆ endpoints)
+        # Middle 50%                   →  fall through to normal move routing
+        import math as _math
+        line_tol = 7.0
+        for (lx0, ly0, lx1, ly1, h_plane, angle_var, cx, cy) in self._scout_angle_handles:
+            panel_idx = self._scout_plane_names.index(h_plane)
+            if event.inaxes is not self.scout_axes[panel_idx]:  # type: ignore[attr-defined]
+                continue
+            ldx, ldy = lx1 - lx0, ly1 - ly0
+            seg_len_sq = ldx * ldx + ldy * ldy
+            if seg_len_sq < 1e-6:
+                t, dist = 0.5, _math.hypot(px - lx0, py - ly0)
+            else:
+                t = max(0.0, min(1.0, ((px - lx0) * ldx + (py - ly0) * ldy) / seg_len_sq))
+                dist = _math.hypot(px - (lx0 + t * ldx), py - (ly0 + t * ldy))
+            if dist >= line_tol:
+                continue
+            if t < 0.25 or t > 0.75:
+                # Near an endpoint → angle drag
+                self._scout_drag = dict(mode="angle", x=px, y=py,
+                                        angle_var=angle_var, cx=cx, cy=cy)
+                return
+            # Near the middle → stop checking handles, fall through to move routing
+            break
+
+        # ── Normal panel-role routing ──────────────────────────────────────
+        clicked_plane: str | None = None
+        for i, ax in enumerate(self.scout_axes):
+            if event.inaxes is ax:  # type: ignore[attr-defined]
+                clicked_plane = self._scout_plane_names[i]
+                break
+        if clicked_plane is None:
+            return
+        ov = self._scout_overlays.get(clicked_plane)
+        if ov is None:
+            return
+        role = ov["role"]
+        is_oblique = abs(self.slice_tilt.get()) > 0.5 or abs(self.slice_rot.get()) > 0.5
+        acq = self.orientation.get()
+        if role == "primary":
+            if is_oblique:
+                self._scout_drag = dict(mode="move", x=px, y=py,
+                                        secondary=False, oblique=True)
+            else:
+                mode = self._scout_hit_test(event)
+                if mode is None:
+                    return
+                self._scout_drag = dict(mode=mode, x=px, y=py,
+                                        secondary=False, oblique=False)
+        elif role == "secondary":
+            through, sign = self._SEC_THROUGH.get(acq, ("v", 1))
+            meta = {"through": through, "through_sign": sign}
+            self._scout_drag = dict(mode="move", x=px, y=py,  # type: ignore[attr-defined]
+                                    secondary=True, overlay=meta)
 
     def _scout_motion(self, event: object) -> None:
         if self._scout_drag is None or event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return
         import scan_geometry as sg
+        import math
         d = self._scout_drag
-        dx = event.xdata - d["x"]; dy = event.ydata - d["y"]  # type: ignore[attr-defined]
-        d["x"], d["y"] = event.xdata, event.ydata  # type: ignore[attr-defined]
+        ex, ey = event.xdata, event.ydata  # type: ignore[attr-defined]
+        dx = ex - d["x"]; dy = ey - d["y"]
+        d["x"], d["y"] = ex, ey
         orient = self.orientation.get()
-        info = self._scout_box_info
-        if info is None:
+
+        if d.get("mode") == "angle":
+            # Angle drag: compute angular change from handle movement around slab centre
+            cx, cy = d["cx"], d["cy"]
+            prev_x, prev_y = ex - dx, ey - dy  # position before this event
+            dist_prev = math.hypot(prev_x - cx, prev_y - cy)
+            if dist_prev < 2.0:
+                return  # too close to centre; skip to avoid large jumps
+            angle_prev = math.atan2(prev_y - cy, prev_x - cx)
+            angle_new  = math.atan2(ey - cy, ex - cx)
+            d_angle = math.degrees(angle_new - angle_prev)
+            # Clamp to avoid large jumps at wrap-around
+            if d_angle > 90:
+                d_angle -= 180
+            elif d_angle < -90:
+                d_angle += 180
+            if d["angle_var"] == "tilt":
+                new_val = float(np.clip(self.slice_tilt.get() + d_angle, -45, 45))
+                self.slice_tilt.set(new_val)
+            else:
+                new_val = float(np.clip(self.slice_rot.get() + d_angle, -45, 45))
+                self.slice_rot.set(new_val)
+            self._draw_scout(self.get_current_params())
+            self.schedule_recalculate()
             return
-        # Map screen dx/dy onto through vs in-plane drag depending on orientation
-        if info["through"] == "v":
-            dx_through, d_inplane = dy, dx
+
+        if d.get("secondary"):
+            # Secondary panel: only move through-axis position
+            sec_meta = d["overlay"]
+            if sec_meta:
+                through = sec_meta["through"]
+                sign = sec_meta["through_sign"]
+                raw = dy if through == "v" else dx
+                dx_through = raw * sign
+                si, _, _, _ = sg.update_from_drag(
+                    orient, self.phantom_3d.shape, "move", dx_through, 0.0,
+                    self.slice_idx.get(), self.n_slices.get(), self.slice_thickness.get(),
+                    self.slice_gap.get(), self.inplane_fov_pct.get() / 100.0, self.inplane_off.get())
+                self.slice_idx.set(int(round(si)))
+        elif d.get("oblique"):
+            # Oblique primary: translate slice centre using standard through-axis mapping
+            import scan_geometry as _sg
+            cfg = _sg.SCOUT[orient]
+            raw = dy if cfg["through"] == "v" else dx
+            si, _, _, _ = sg.update_from_drag(
+                orient, self.phantom_3d.shape, "move", raw, 0.0,
+                self.slice_idx.get(), self.n_slices.get(), self.slice_thickness.get(),
+                self.slice_gap.get(), self.inplane_fov_pct.get() / 100.0, self.inplane_off.get())
+            self.slice_idx.set(int(round(si)))
         else:
-            dx_through, d_inplane = dx, dy
-        si, off, fr, n = sg.update_from_drag(
-            orient, self.phantom_3d.shape, d["mode"], dx_through, d_inplane,
-            self.slice_idx.get(), self.n_slices.get(), self.slice_thickness.get(),
-            self.slice_gap.get(), self.inplane_fov_frac.get(), self.inplane_off.get())
-        self.slice_idx.set(int(round(si)))
-        self.inplane_off.set(off)
-        self.inplane_fov_frac.set(fr)
-        self.n_slices.set(n)
-        # redraw box immediately; debounce the heavier acquisition render
+            info = self._scout_box_info
+            if info is None:
+                return
+            if info["through"] == "v":
+                dx_through, d_inplane = dy, dx
+            else:
+                dx_through, d_inplane = dx, dy
+            si, off, fr, n = sg.update_from_drag(
+                orient, self.phantom_3d.shape, d["mode"], dx_through, d_inplane,
+                self.slice_idx.get(), self.n_slices.get(), self.slice_thickness.get(),
+                self.slice_gap.get(), self.inplane_fov_pct.get() / 100.0, self.inplane_off.get())
+            self.slice_idx.set(int(round(si)))
+            self.inplane_off.set(off)
+            self.inplane_fov_pct.set(int(round(fr * 100)))
+            self.n_slices.set(n)
+
         self._draw_scout(self.get_current_params())
         self.schedule_recalculate()
 
@@ -1323,52 +1923,217 @@ class MRISimulator(QMainWindow):
 
     def _plot_curves(self, params: dict) -> None:
         seq, TR, TE, TI, FA = params["sequence"], params["TR"], params["TE"], params["TI"], params["flip_angle"]
-        from signal_engine import TISSUES
+        ax = self.axes[1]
+        mode = self.plot_curve_mode.get()
+
+        # Tissue curves read from the measured field-strength table (tissue_db),
+        # keyed by the names this method uses.
+        _tdb = tissue_db.properties(params.get("field_strength", "3T"))
+        _NAME2LABEL = {"white_matter": 3, "gray_matter": 2, "csf": 1, "fat": 4, "muscle": 6}
+        TISSUES_B0 = {name: _tdb[lab] for name, lab in _NAME2LABEL.items()}
+
+        # --- Sequences with fixed curve type (ignore mode toggle) ----------
         if seq == "FSE / TSE":
-            for tn, color, T1, T2, PD in [("WM", '#ff6b6b', 830, 80, 0.65), ("GM", '#69db7c', 1330, 100, 0.8), ("CSF", '#74c0fc', 4500, 2200, 1.0)]:
+            for tn, color, T1, T2, PD in [("WM", '#ff6b6b', 830, 80, 0.65),
+                                           ("GM", '#69db7c', 1330, 100, 0.8),
+                                           ("CSF", '#74c0fc', 4500, 2200, 1.0)]:
                 te_vals, sigs = compute_fse_echo_train(T1, T2, PD, TR, params["etl"], params["echo_spacing"])
-                self.axes[1].plot(te_vals, sigs, color=color, linewidth=2, label=tn, marker='o', markersize=3)
-            self.axes[1].axvline(x=TE, color='yellow', linestyle='--', alpha=0.7, label=f'TE_eff={TE:.0f}')
-            self.axes[1].set_xlabel('Echo Time (ms)', color='white'); self.axes[1].set_title('Echo Train Decay', color='white', fontsize=11)
+                ax.plot(te_vals, sigs, color=color, linewidth=2, label=tn, marker='o', markersize=3)
+            ax.axvline(x=TE, color='yellow', linestyle='--', alpha=0.7, label=f'TE_eff={TE:.0f}')
+            ax.set_xlabel('Echo Time (ms)', color='white')
+            ax.set_title('FSE Echo Train Decay', color='white', fontsize=11)
+
         elif seq == "Diffusion (DWI)":
             b_range = np.arange(0, 3001, 50); dp = get_diffusion_properties_3d(None)
             for name, color, label in [("WM", '#ff6b6b', 3), ("GM", '#69db7c', 2), ("CSF", '#74c0fc', 1)]:
-                props = TISSUES[name.lower().replace("wm", "white_matter").replace("gm", "gray_matter")]
+                props = TISSUES_B0[name.lower().replace("wm", "white_matter").replace("gm", "gray_matter")]
                 S0 = spin_echo_signal(props["T1"], props["T2"], props["PD"], TR, TE)
-                self.axes[1].plot(b_range, S0 * np.exp(-b_range * dp[label]["ADC"] * 1e-3), color=color, linewidth=2, label=name)
-            self.axes[1].axvline(x=params["b_value"], color='yellow', linestyle='--', alpha=0.7)
-            self.axes[1].set_xlabel('b-value', color='white'); self.axes[1].set_title('Signal vs b-value', color='white', fontsize=11)
+                ax.plot(b_range, S0 * np.exp(-b_range * dp[label]["ADC"] * 1e-3), color=color, linewidth=2, label=name)
+            ax.axvline(x=params["b_value"], color='yellow', linestyle='--', alpha=0.7)
+            ax.set_xlabel('b-value (s/mm²)', color='white')
+            ax.set_title('Signal vs b-value', color='white', fontsize=11)
+
         elif seq == "MR Angiography":
             fa_range = np.arange(1, 91, 1)
             for name, color, T1, PD in [("Brain", '#69db7c', 1330, 0.8), ("Blood", '#ff6b6b', 1930, 0.9)]:
                 if "Blood" in name:
-                    self.axes[1].plot(fa_range, PD * np.sin(np.radians(fa_range)) * np.exp(-TE / 50), color=color, linewidth=2, label=name)
+                    ax.plot(fa_range, PD * np.sin(np.radians(fa_range)) * np.exp(-TE / 50),
+                            color=color, linewidth=2, label=name)
                 else:
-                    self.axes[1].plot(fa_range, [gradient_echo_signal(T1, 50, PD, TR, TE, float(fa)) for fa in fa_range], color=color, linewidth=2, label=name)
-            self.axes[1].axvline(x=FA, color='yellow', linestyle='--', alpha=0.7)
-            self.axes[1].set_xlabel('FA', color='white'); self.axes[1].set_title('TOF Signal', color='white', fontsize=11)
+                    ax.plot(fa_range, [gradient_echo_signal(T1, 50, PD, TR, TE, float(fa)) for fa in fa_range],
+                            color=color, linewidth=2, label=name)
+            ax.axvline(x=FA, color='yellow', linestyle='--', alpha=0.7, label=f'FA={FA:.0f}°')
+            # Ernst angle for brain tissue
+            ernst_brain = float(np.degrees(np.arccos(np.exp(-TR / 1330))))
+            ax.axvline(x=ernst_brain, color='#aaaaff', linestyle=':', alpha=0.6, label=f'Ernst={ernst_brain:.0f}°')
+            ax.set_xlabel('Flip Angle (°)', color='white')
+            ax.set_title('TOF Signal vs Flip Angle', color='white', fontsize=11)
+
         elif seq == "fMRI (BOLD)":
-            te_range = np.arange(5, 100, 1, dtype=float); bs = te_range * np.exp(-te_range / 60); bs /= bs.max()
-            self.axes[1].plot(te_range, bs, color='#ff6b6b', linewidth=2, label='BOLD')
-            self.axes[1].plot(te_range, np.exp(-te_range / 60), color='#69db7c', linewidth=2, label='Signal')
-            self.axes[1].axvline(x=TE, color='yellow', linestyle='--', alpha=0.7)
-            self.axes[1].set_xlabel('TE', color='white'); self.axes[1].set_title('BOLD Sensitivity', color='white', fontsize=11)
-        else:
+            te_range = np.arange(5, 100, 1, dtype=float)
+            bs = te_range * np.exp(-te_range / 60); bs /= bs.max()
+            ax.plot(te_range, bs, color='#ff6b6b', linewidth=2, label='BOLD sensitivity')
+            ax.plot(te_range, np.exp(-te_range / 60), color='#69db7c', linewidth=2, label='GRE signal')
+            ax.axvline(x=TE, color='yellow', linestyle='--', alpha=0.7, label=f'TE={TE:.0f}')
+            ax.set_xlabel('TE (ms)', color='white')
+            ax.set_title('BOLD Sensitivity vs TE', color='white', fontsize=11)
+
+        # --- SE / GRE / IR with mode toggle --------------------------------
+        elif mode == "TR recovery":
+            tr_range = np.arange(100, 8001, 50, dtype=float)
+            _tissue_rows = [("White Matter", '#ff6b6b', "white_matter"),
+                            ("Gray Matter",  '#69db7c', "gray_matter"),
+                            ("CSF",          '#74c0fc', "csf")]
+            for tlabel, color, key in _tissue_rows:
+                props = TISSUES_B0[key]
+                if seq == "Spin Echo":
+                    sig = props["PD"] * (1 - np.exp(-tr_range / props["T1"])) * np.exp(-TE / props["T2"])
+                elif seq == "Gradient Echo":
+                    a = np.radians(FA); E1v = np.exp(-tr_range / props["T1"])
+                    denom = np.where(np.abs(1 - np.cos(a) * E1v) < 1e-9, 1e-9, 1 - np.cos(a) * E1v)
+                    sig = props["PD"] * np.sin(a) * (1 - E1v) / denom * np.exp(-TE / (props["T2"] * 0.6))
+                else:  # IR
+                    sig = props["PD"] * np.abs(1 - 2 * np.exp(-TI / props["T1"]) + np.exp(-tr_range / props["T1"])) * np.exp(-TE / props["T2"])
+                ax.plot(tr_range, sig, color=color, linewidth=2, label=tlabel)
+            ax.axvline(x=TR, color='yellow', linestyle='--', alpha=0.7, label=f'TR={TR:.0f}')
+            ax.set_xlabel('TR (ms)', color='white')
+            ax.set_ylabel('Signal (a.u.)', color='white')
+            ax.set_title('T1 Recovery  (signal vs TR)', color='white', fontsize=11)
+            ax.legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
+
+        elif mode == "TI sweep":
+            # Signal vs TI — most useful for IR/STIR/FLAIR education
+            ti_max = min(max(TR * 0.99, 500), 5000)
+            ti_range = np.arange(50, ti_max, 10, dtype=float)
+            _ir_tissues = [("White Matter", '#ff6b6b', "white_matter"),
+                           ("Gray Matter",  '#69db7c', "gray_matter"),
+                           ("CSF",          '#74c0fc', "csf"),
+                           ("Fat",          '#ffd43b', "fat")]
+            for tlabel, color, key in _ir_tissues:
+                if key not in TISSUES_B0:
+                    continue
+                props = TISSUES_B0[key]
+                signed = props["PD"] * (1 - 2 * np.exp(-ti_range / props["T1"]) + np.exp(-TR / props["T1"])) * np.exp(-TE / props["T2"])
+                mag = np.abs(signed)
+                ax.plot(ti_range, signed, color=color, linewidth=1, linestyle='--', alpha=0.35)
+                ax.plot(ti_range, mag, color=color, linewidth=2, label=tlabel)
+                # Null point
+                denom_null = 1 + np.exp(-TR / props["T1"])
+                if denom_null > 1e-9:
+                    null_ti = props["T1"] * np.log(2.0 / denom_null)
+                    if 50 < null_ti < ti_max:
+                        ax.axvline(x=null_ti, color=color, linestyle=':', alpha=0.55, linewidth=1)
+                        ax.text(null_ti + ti_max * 0.01, ax.get_ylim()[1] * 0.02 if ax.get_ylim()[1] > 0 else 0.01,
+                                f"null\n{null_ti:.0f}ms", color=color, fontsize=7, va='bottom')
+            ax.axhline(y=0, color='#556677', linewidth=0.8, alpha=0.5)
+            ax.axvline(x=TI, color='yellow', linestyle='--', alpha=0.8, label=f'TI={TI:.0f}')
+            ax.set_xlabel('TI (ms)', color='white')
+            ax.set_ylabel('Signal (a.u.)', color='white')
+            ax.set_title('IR Signal vs TI  (— magnitude · - - signed)', color='white', fontsize=10)
+            ax.legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
+
+        elif mode == "Contrast Map":
+            # 2-D WM–GM CNR heat map vs TR and TE for the current sequence
+            tr_vals = np.logspace(np.log10(200), np.log10(6000), 80)
+            te_vals = np.linspace(5, 200, 60)
+            TR_g, TE_g = np.meshgrid(tr_vals, te_vals)
+            wm = TISSUES_B0["white_matter"]; gm = TISSUES_B0["gray_matter"]
+            csf = TISSUES_B0["csf"]
+            if seq == "Gradient Echo":
+                a = np.radians(FA)
+                def gre_sig(p: dict, TRg: np.ndarray, TEg: np.ndarray) -> np.ndarray:
+                    E1g = np.exp(-TRg / p["T1"])
+                    d = np.where(np.abs(1 - np.cos(a) * E1g) < 1e-9, 1e-9, 1 - np.cos(a) * E1g)
+                    return p["PD"] * np.sin(a) * (1 - E1g) / d * np.exp(-TEg / (p["T2"] * 0.6))
+                s_wm = gre_sig(wm, TR_g, TE_g); s_gm = gre_sig(gm, TR_g, TE_g)
+            elif seq == "Inversion Recovery":
+                s_wm = wm["PD"] * np.abs(1 - 2*np.exp(-TI/wm["T1"]) + np.exp(-TR_g/wm["T1"])) * np.exp(-TE_g/wm["T2"])
+                s_gm = gm["PD"] * np.abs(1 - 2*np.exp(-TI/gm["T1"]) + np.exp(-TR_g/gm["T1"])) * np.exp(-TE_g/gm["T2"])
+            else:  # SE / FSE
+                s_wm = wm["PD"] * (1 - np.exp(-TR_g / wm["T1"])) * np.exp(-TE_g / wm["T2"])
+                s_gm = gm["PD"] * (1 - np.exp(-TR_g / gm["T1"])) * np.exp(-TE_g / gm["T2"])
+            cnr_map = np.abs(s_wm - s_gm)
+            ax.imshow(cnr_map, origin='lower', aspect='auto', cmap='hot',
+                      extent=[np.log10(200), np.log10(6000), 5, 200], vmin=0)
+            ax.plot([np.log10(TR)], [TE], 'c+', markersize=12, markeredgewidth=2, label=f'TR={TR:.0f} TE={TE:.0f}')
+            tick_trs = [200, 500, 1000, 2000, 4000]
+            ax.set_xticks([np.log10(v) for v in tick_trs])
+            ax.set_xticklabels([str(v) for v in tick_trs])
+            ax.set_xlabel('TR (ms, log scale)', color='white')
+            ax.set_ylabel('TE (ms)', color='white')
+            ax.set_title('WM–GM CNR map  (brighter = better contrast)', color='white', fontsize=10)
+            ax.legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
+
+        elif mode == "Histogram":
+            img = self.current_image
+            if img is not None and img.size > 0:
+                img_pos = img.ravel()
+                img_pos = img_pos[img_pos > 0]
+                if img_pos.size > 0:
+                    ax.hist(img_pos, bins=80, color='#4a9eff', alpha=0.7, density=True)
+                    # Annotate tissue ROI means using TISSUES_B0
+                    _tissue_rows = [("WM", '#ff6b6b', "white_matter"),
+                                    ("GM", '#69db7c', "gray_matter"),
+                                    ("CSF", '#74c0fc', "csf")]
+                    y_top = ax.get_ylim()[1] if ax.get_ylim()[1] > 0 else 1.0
+                    for tlabel, color, key in _tissue_rows:
+                        props = TISSUES_B0[key]
+                        if seq == "Spin Echo":
+                            mean_sig = props["PD"] * (1 - np.exp(-TR / props["T1"])) * np.exp(-TE / props["T2"])
+                        elif seq == "Gradient Echo":
+                            a = np.radians(FA); E1 = np.exp(-TR / props["T1"])
+                            denom = 1 - np.cos(a) * E1
+                            mean_sig = (props["PD"] * np.sin(a) * (1 - E1) / max(abs(denom), 1e-9)
+                                        * np.exp(-TE / (props["T2"] * 0.6)))
+                        else:
+                            mean_sig = (props["PD"] * abs(1 - 2*np.exp(-TI/props["T1"]) + np.exp(-TR/props["T1"]))
+                                        * np.exp(-TE / props["T2"]))
+                        ax.axvline(x=mean_sig, color=color, linestyle='--', linewidth=1.5, alpha=0.85,
+                                   label=f'{tlabel}≈{mean_sig:.3f}')
+                    ax.set_xlabel('Pixel Value', color='white')
+                    ax.set_ylabel('Density', color='white')
+                    ax.set_title('Image Histogram  (dashed = tissue signal prediction)',
+                                 color='white', fontsize=10)
+                    ax.legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
+                else:
+                    ax.text(0.5, 0.5, 'No image data', ha='center', va='center',
+                            transform=ax.transAxes, color='white')
+            else:
+                ax.text(0.5, 0.5, 'Run simulation first', ha='center', va='center',
+                        transform=ax.transAxes, color='white')
+
+        else:  # TE decay (default)
             te_range = np.arange(5, min(300, TR), 2)
-            for tn, color in [("white_matter", '#ff6b6b'), ("gray_matter", '#69db7c'), ("csf", '#74c0fc')]:
-                props = TISSUES[tn]
+            _tissue_rows = [("White Matter", '#ff6b6b', "white_matter"),
+                            ("Gray Matter",  '#69db7c', "gray_matter"),
+                            ("CSF",          '#74c0fc', "csf")]
+            for tlabel, color, key in _tissue_rows:
+                props = TISSUES_B0[key]
                 if seq == "Spin Echo":
                     sig = props["PD"] * (1 - np.exp(-TR / props["T1"])) * np.exp(-te_range / props["T2"])
                 elif seq == "Gradient Echo":
                     a = np.radians(FA); E1 = np.exp(-TR / props["T1"])
-                    sig = props["PD"] * np.sin(a) * (1 - E1) / (1 - np.cos(a) * E1) * np.exp(-te_range / (props["T2"] * 0.6))
-                else:
-                    sig = props["PD"] * np.abs(1 - 2 * np.exp(-TI / props["T1"]) + np.exp(-TR / props["T1"])) * np.exp(-te_range / props["T2"])
-                self.axes[1].plot(te_range, sig, color=color, linewidth=2, label=tn.replace("_", " ").title())
-            self.axes[1].axvline(x=TE, color='yellow', linestyle='--', alpha=0.7)
-            self.axes[1].set_xlabel('TE (ms)', color='white'); self.axes[1].set_title('Signal vs TE', color='white', fontsize=11)
-        self.axes[1].set_ylabel('Signal', color='white')
-        self.axes[1].legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
+                    denom = 1 - np.cos(a) * E1
+                    sig = (props["PD"] * np.sin(a) * (1 - E1) / max(abs(denom), 1e-9)
+                           * np.exp(-te_range / (props["T2"] * 0.6)))
+                else:  # IR — show the magnitude decay at current TI
+                    sig = (props["PD"] * abs(1 - 2*np.exp(-TI/props["T1"]) + np.exp(-TR/props["T1"]))
+                           * np.exp(-te_range / props["T2"]))
+                ax.plot(te_range, sig, color=color, linewidth=2, label=tlabel)
+
+            ax.axvline(x=TE, color='yellow', linestyle='--', alpha=0.7, label=f'TE={TE:.0f}')
+            if seq == "Gradient Echo":
+                ernst_gm = float(np.degrees(np.arccos(np.clip(np.exp(-TR / 1330), -1.0, 1.0))))
+                ax.set_title(f'GRE T2* Decay  (Ernst≈{ernst_gm:.0f}° for GM at this TR)',
+                             color='white', fontsize=10)
+            elif seq == "Inversion Recovery":
+                ax.set_title(f'IR T2 Decay at TI={TI:.0f}ms  (use TI sweep for null points)',
+                             color='white', fontsize=10)
+            else:
+                ax.set_title('T2 Decay  (signal vs TE)', color='white', fontsize=11)
+            ax.set_xlabel('TE (ms)', color='white')
+            ax.set_ylabel('Signal (a.u.)', color='white')
+            ax.legend(fontsize=8, facecolor='#2d2d2d', labelcolor='white')
         self.axes[1].tick_params(colors='white'); self.axes[1].set_facecolor('#1e1e1e')
 
     def update_compare_metrics(self, ma: dict, mb: dict) -> None:
@@ -1379,43 +2144,95 @@ class MRISimulator(QMainWindow):
             arrow = up if diff > 0 else down if diff < 0 else "="
             return f"{arrow} {abs(diff):{f}}{u} ({abs(pct):.0f}%)"
         rule = "\u2500\u2500"
-        text = f"{rule} A vs B {rule}\nTime: {d(ma['scan_time'], mb['scan_time'], 's')}\nSNR: {d(ma['snr_wm'], mb['snr_wm'])}\n"
-        text += f"Res: {d(ma['resolution'], mb['resolution'], 'mm', '.2f')}\nSAR: A={ma['sar_head']:.1f} B={mb['sar_head']:.1f}"
+        cnr_a = abs(ma["snr_wm"] - ma["snr_gm"]); cnr_b = abs(mb["snr_wm"] - mb["snr_gm"])
+        text = f"{rule} A vs B {rule}\nTime: {d(ma['scan_time'], mb['scan_time'], 's')}\n"
+        text += f"SNR WM: {d(ma['snr_wm'], mb['snr_wm'])}\nCNR: {d(cnr_a, cnr_b)}\n"
+        text += f"Res: {d(ma['resolution'], mb['resolution'], 'mm', '.2f')}\nSAR: A={ma['sar_head']:.1f} B={mb['sar_head']:.1f} W/kg"
         self.compare_metrics_label.config(text=text, fg="#ffcc00")
 
     def update_metrics(self, params: dict, metrics: dict) -> None:
         orient = self.orientation.get(); sl_idx = self.slice_idx.get()
-        matrix = params["matrix_size"]; thickness = int(self.slice_thickness.get())
+        matrix = params["matrix_size"]
+        thickness = int(params.get("slice_thickness", self.slice_thickness.get()))
         R = params["accel_factor"]; ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
+        pf_on = params.get("pf_enabled", False)
+        pf_label = params.get("pf_fraction", "Full") if pf_on else ""
         resolution = metrics["resolution"]
+
         self.metrics_labels["resolution"].config(text=f"{resolution:.2f} mm")
         self.metrics_labels["voxel_size"].config(text=f"{resolution:.2f}x{resolution:.2f}x{thickness}mm")
         self.metrics_labels["matrix_display"].config(text=f"{matrix}x{matrix}")
         self.metrics_labels["slice_info"].config(text=f"{orient.capitalize()} #{sl_idx}")
-        st = metrics["scan_time"]; self.metrics_labels["scan_time"].config(text=f"{int(st // 60)}:{int(st % 60):02d}")
+
+        # Scan time with per-factor breakdown
+        st = metrics["scan_time"]
+        parts = [p for p in [
+            f"\u00f7ETL{ETL}" if ETL > 1 else "",
+            f"\u00f7R{R}" if R > 1 else "",
+            f"\u00d7PF{pf_label}" if pf_on and pf_label != "Full" else "",
+        ] if p]
+        st_text = f"{int(st // 60)}:{int(st % 60):02d}"
+        if parts:
+            st_text += "  [" + " ".join(parts) + "]"
+        self.metrics_labels["scan_time"].config(text=st_text)
+
         self.metrics_labels["bw_pixel"].config(text=f"{params['bandwidth'] * 1000 / matrix:.1f}")
         self.metrics_labels["snr_wm"].config(text=f"{metrics['snr_wm']:.1f}")
         self.metrics_labels["snr_gm"].config(text=f"{metrics['snr_gm']:.1f}")
         self.metrics_labels["cnr"].config(text=f"{abs(metrics['snr_wm'] - metrics['snr_gm']):.1f}")
-        self.metrics_labels["sar"].config(text=f"{metrics['sar_head']:.1f}" + (" \u26a0\ufe0f" if metrics['sar_exceeds'] else ""),
-                                          fg='#ff6b6b' if metrics['sar_exceeds'] else '#4a9eff')
-        self.metrics_labels["weighting"].config(text=self.determine_weighting(params["TR"], params["TE"], params["sequence"]))
-        etl_text = f"ETL={ETL}" if ETL > 1 else ""; accel_text = f"R={R}" if R > 1 else ""
-        self.metrics_labels["etl_accel"].config(text=f"{etl_text} {accel_text}".strip() or "None")
+        self.metrics_labels["snr_eff"].config(text=f"{metrics.get('snr_eff', 0):.1f}")
+
+        # SAR: show max safe FA when limit exceeded
+        if metrics["sar_exceeds"]:
+            sf = _SAR_SEQ_FACTORS.get(params["sequence"], 1.0)
+            fa_max = int(np.clip(90 * np.sqrt(3.2 * max(params["TR"], 10) / (2500.0 * sf)), 1, 90))
+            sar_text = f"{metrics['sar_head']:.1f} W/kg  \u26a0\ufe0f (safe \u2264{fa_max}\u00b0)"
+        else:
+            sar_text = f"{metrics['sar_head']:.1f} W/kg"
+        self.metrics_labels["sar"].config(text=sar_text, fg="#ff6b6b" if metrics["sar_exceeds"] else "#4a9eff")
+
+        self.metrics_labels["weighting"].config(
+            text=self.determine_weighting(params["TR"], params["TE"], params["sequence"]))
+        self.metrics_labels["field_disp"].config(text=params.get("field_strength", "3T"))
+
+        # Fat-water phase (GRE only; SE refocuses chemical-shift phase)
+        _B0_fw = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
+        if params["sequence"] in ("Gradient Echo", "MR Angiography"):
+            fw_lbl = rendering.gre_fw_phase_label(params["TE"], _B0_fw)
+            fw_col = "#69db7c" if fw_lbl == "In-phase" else ("#ff6b6b" if fw_lbl == "Opposed" else "#ffcc00")
+            self.metrics_labels["fw_phase"].config(text=fw_lbl, fg=fw_col)
+        else:
+            self.metrics_labels["fw_phase"].config(text="N/A (SE)", fg="#666688")
+
+        # ETL / Accel / PF summary line
+        tokens = [t for t in [
+            f"ETL={ETL}" if ETL > 1 else "",
+            f"R={R}" if R > 1 else "",
+            f"PF={pf_label}" if pf_on else "",
+        ] if t]
+        self.metrics_labels["etl_accel"].config(text=" ".join(tokens) or "None")
+
+        # Active effects list
         active = []
-        if self.motion_enabled.get(): active.append("Motion")
-        if self.chemical_shift_enabled.get(): active.append("ChemShift")
-        if self.susceptibility_enabled.get(): active.append("Suscept.")
-        if self.zipper_enabled.get(): active.append("Zipper")
+        if params.get("motion_enabled", self.motion_enabled.get()): active.append("Motion")
+        if params.get("chemical_shift_enabled", self.chemical_shift_enabled.get()): active.append("ChemShift")
+        if params.get("susceptibility_enabled", self.susceptibility_enabled.get()): active.append("Suscept.")
+        if params.get("zipper_enabled", self.zipper_enabled.get()): active.append("Zipper")
+        if params.get("contrast_enabled"): active.append(f"Gd×{params.get('contrast_dose',1)*0.1:.1f}mmol/kg")
         if params["fov_fraction"] < 100: active.append("Aliasing")
+        if pf_on: active.append(f"PF({pf_label})")
+        if params.get("kspace_filter_enabled"): active.append(f"Filter({params.get('kspace_filter_window','')})")
         if matrix < 128: active.append("Blur")
-        if metrics['sar_exceeds']: active.append("SAR!")
-        self.metrics_labels["artifacts"].config(text=", ".join(active) if active else "None", fg='#ff6b6b' if active else '#4a9eff')
+        if metrics["sar_exceeds"]: active.append("SAR!")
+        self.metrics_labels["artifacts"].config(
+            text=", ".join(active) if active else "None",
+            fg="#ff6b6b" if active else "#4a9eff")
 
     def determine_weighting(self, TR: float, TE: float, seq: str) -> str:
         if seq == "Diffusion (DWI)": return "Diffusion"
         if seq == "MR Angiography": return "Flow"
         if seq == "fMRI (BOLD)": return "T2* (BOLD)"
+        if seq == "Quantitative (qMRI)": return "Quantitative"
         if TR < 800 and TE < 30: return "T1-weighted"
         elif TR > 2000 and TE > 60: return "T2-weighted"
         elif TR > 2000 and TE < 30: return "PD-weighted"
@@ -1621,6 +2438,9 @@ class MRISimulator(QMainWindow):
             self.desc_label.config(text=""); return
         p = get_preset(name)
         if not p: return
+        region = get_preset_region(name)
+        if region and region != self.region.get():
+            self.region.set(region); self.on_region_change()
         self.sequence_type.set(p["sequence"]); self.TR.set(float(p["TR"])); self.TE.set(float(p["TE"]))
         self.TI.set(float(p.get("TI", 150))); self.flip_angle.set(float(p.get("flip_angle", 90)))
         self.matrix_size.set(int(p.get("matrix_size", 256))); self.FOV.set(float(p.get("FOV", 240)))
@@ -1629,7 +2449,13 @@ class MRISimulator(QMainWindow):
                      ("angio_type", self.angio_type), ("angio_mip_slab", self.angio_mip_slab),
                      ("fmri_display", self.fmri_display), ("fmri_volumes", self.fmri_volumes), ("fmri_threshold", self.fmri_threshold)]:
             if k in p: v.set(p[k])
-        self.desc_label.config(text=p.get("description", "")); self.on_sequence_change()
+        self.desc_label.config(text=p.get("description", ""))
+        self.on_sequence_change()
+        # on_sequence_change resets TR/TE/etl for FSE; re-apply preset values
+        self.TR.set(float(p["TR"])); self.TE.set(float(p["TE"]))
+        if "etl" in p: self.etl.set(int(p["etl"]))
+        if "echo_spacing" in p: self.echo_spacing.set(float(p["echo_spacing"]))
+        self.recalculate()
 
     def schedule_recalculate(self, *args: object) -> None:
         self._recalc_timer.start(150)
@@ -1643,7 +2469,8 @@ class MRISimulator(QMainWindow):
     def on_sequence_change(self) -> None:
         seq = self.sequence_type.get()
         for frame in (self.ti_frame, self.fa_frame, self.fse_frame,
-                      self.diff_frame, self.angio_frame, self.fmri_frame):
+                      self.diff_frame, self.angio_frame, self.fmri_frame,
+                      self.qmri_frame):
             frame.setVisible(False)
         if seq == "Inversion Recovery":
             self.ti_frame.setVisible(True)
@@ -1657,6 +2484,8 @@ class MRISimulator(QMainWindow):
             self.angio_frame.setVisible(True); self.fa_frame.setVisible(True)
         elif seq == "fMRI (BOLD)":
             self.fmri_frame.setVisible(True)
+        elif seq == "Quantitative (qMRI)":
+            self.qmri_frame.setVisible(True)
         self.recalculate()
 
     def _get_native_fov(self) -> float:
@@ -1693,16 +2522,31 @@ class MRISimulator(QMainWindow):
         return 1.0
 
     def _get_current_phantom_slice(self, orient: str, sl_idx: int, params: dict) -> np.ndarray:
-        """Phantom label slice with FOV crop applied (slider zoom + planning box)."""
+        """Phantom label slice with FOV crop / oblique sampling applied."""
         import scan_geometry as sg
+        tilt = self.slice_tilt.get()
+        rot  = self.slice_rot.get()
+
+        if self.fov_planning.get() and (abs(tilt) > 0.5 or abs(rot) > 0.5):
+            from oblique import plane_from_angles, oblique_plane
+            _, row_vec, col_vec = plane_from_angles(orient, tilt_deg=tilt, rot_deg=rot)
+            vol = self.phantom_3d
+            cfg = sg.cfg_for(orient)
+            center = self._compute_slab_center()
+            center[cfg["through_axis"]] = float(sl_idx)
+            max_dim = max(vol.shape)
+            return oblique_plane(vol, row_vec, col_vec, center,
+                                 shape=(max_dim, max_dim), order=0)
+
         ph = get_slice(self.phantom_3d, orient, sl_idx)
         # Physical FOV zoom: smaller FOV → crop to central fraction
         fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self._get_native_fov())
         if fov_frac < 0.99:
             ph = sg.fov_crop(orient, ph, fov_frac, 0.0)
         # FOV planning box prescription crop
-        if self.fov_planning.get() and self.inplane_fov_frac.get() < 0.999:
-            ph = sg.fov_crop(orient, ph, self.inplane_fov_frac.get(), self.inplane_off.get())
+        if self.fov_planning.get() and self.inplane_fov_pct.get() < 100:
+            ph = sg.fov_crop(orient, ph, self.inplane_fov_pct.get() / 100.0,
+                             self.inplane_off.get())
         return ph
 
     def get_max_slice_idx(self) -> int:

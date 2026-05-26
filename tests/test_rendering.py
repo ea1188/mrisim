@@ -1,0 +1,217 @@
+"""Tests for rendering.py — the Qt-free signal-rendering helpers."""
+
+import numpy as np
+import pytest
+
+import rendering
+import tissue_db
+from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
+
+
+# --------------------------------------------------------------------------- #
+# Fixtures
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def props():
+    return tissue_db.properties("3T")
+
+
+@pytest.fixture
+def brain_slice():
+    """Small label slice: CSF(1) outer, GM(2), WM(3) core, fat(4) rim."""
+    ph = np.zeros((40, 40), dtype=int)
+    ph[2:38, 2:38] = 4     # fat rim
+    ph[6:34, 6:34] = 1     # CSF
+    ph[12:28, 12:28] = 2   # GM
+    ph[17:23, 17:23] = 3   # WM
+    return ph
+
+
+def _median(img, ph, label):
+    return float(np.median(img[ph == label]))
+
+
+# --------------------------------------------------------------------------- #
+# apply_gd
+# --------------------------------------------------------------------------- #
+def test_apply_gd_shortens_enhancing_t1(props):
+    out = rendering.apply_gd(props, dose=0.2)
+    # Fat/scalp (label 4) has the largest BBB fraction → most T1 shortening
+    assert out[4]["T1"] < props[4]["T1"]
+    assert out[1]["T1"] < props[1]["T1"]   # CSF enhances modestly
+
+
+def test_apply_gd_zero_dose_is_identity(props):
+    out = rendering.apply_gd(props, dose=0.0)
+    for lab in props:
+        assert out[lab]["T1"] == pytest.approx(props[lab]["T1"])
+
+
+def test_apply_gd_higher_dose_shortens_more(props):
+    lo = rendering.apply_gd(props, dose=0.1)
+    hi = rendering.apply_gd(props, dose=0.5)
+    assert hi[4]["T1"] < lo[4]["T1"]
+
+
+def test_apply_gd_does_not_mutate_input(props):
+    before = props[4]["T1"]
+    rendering.apply_gd(props, dose=0.3)
+    assert props[4]["T1"] == before
+
+
+def test_apply_gd_leaves_non_enhancing_labels(props):
+    out = rendering.apply_gd(props, dose=0.3)
+    # Label 6 (muscle) is not in GD_TISSUE_FRACTION → unchanged
+    assert 6 not in rendering.GD_TISSUE_FRACTION
+    assert out[6]["T1"] == pytest.approx(props[6]["T1"])
+
+
+# --------------------------------------------------------------------------- #
+# param_maps
+# --------------------------------------------------------------------------- #
+def test_param_maps_fills_per_label(brain_slice, props):
+    (t1,) = rendering.param_maps(brain_slice, props, ("T1",))
+    assert t1[brain_slice == 3].std() == 0          # uniform within a label
+    assert _median(t1, brain_slice, 3) == pytest.approx(props[3]["T1"])
+    assert _median(t1, brain_slice, 1) == pytest.approx(props[1]["T1"])
+
+
+def test_param_maps_multiple_keys(brain_slice, props):
+    t1, t2, pd = rendering.param_maps(brain_slice, props, ("T1", "T2", "PD"))
+    assert _median(t2, brain_slice, 2) == pytest.approx(props[2]["T2"])
+    assert _median(pd, brain_slice, 2) == pytest.approx(props[2]["PD"])
+
+
+def test_param_maps_missing_key_falls_back_to_t2(brain_slice, props):
+    # No tissue defines "bogus"; helper falls back to that label's T2.
+    (m,) = rendering.param_maps(brain_slice, props, ("bogus",))
+    assert _median(m, brain_slice, 3) == pytest.approx(props[3]["T2"])
+
+
+def test_param_maps_background_is_zero(brain_slice, props):
+    # Label 0 has PD 0 but its T1 is still filled; background stays 0 only where
+    # no label matches. Here every pixel is labelled, so verify shape instead.
+    (t1,) = rendering.param_maps(brain_slice, props, ("T1",))
+    assert t1.shape == brain_slice.shape
+
+
+# --------------------------------------------------------------------------- #
+# simulate_slice_props
+# --------------------------------------------------------------------------- #
+def test_simulate_slice_props_se_matches_signal_engine(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 600, 15, "SE", 0, 90, props)
+    expect = spin_echo_signal(props[3]["T1"], props[3]["T2"], props[3]["PD"], 600, 15)
+    assert _median(img, brain_slice, 3) == pytest.approx(expect)
+
+
+def test_simulate_slice_props_gre_uses_t2star(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 200, 5, "GRE", 0, 30, props)
+    expect = gradient_echo_signal(props[2]["T1"], props[2]["T2star"], props[2]["PD"],
+                                  200, 5, 30)
+    assert _median(img, brain_slice, 2) == pytest.approx(expect)
+
+
+def test_simulate_slice_props_ir_uses_ti(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 9000, 90, "IR", 2548, 90, props)
+    expect = inversion_recovery_signal(props[1]["T1"], props[1]["T2"], props[1]["PD"],
+                                       9000, 90, 2548)
+    assert _median(img, brain_slice, 1) == pytest.approx(expect)
+
+
+def test_simulate_slice_props_t1_weighting_ordering(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 500, 15, "SE", 0, 90, props)
+    wm = _median(img, brain_slice, 3)
+    gm = _median(img, brain_slice, 2)
+    csf = _median(img, brain_slice, 1)
+    assert wm > gm > csf      # T1-weighted contrast
+
+
+# --------------------------------------------------------------------------- #
+# apply_mt
+# --------------------------------------------------------------------------- #
+def test_apply_mt_zero_power_is_identity(brain_slice, props):
+    img = np.ones_like(brain_slice, dtype=float)
+    out = rendering.apply_mt(img, brain_slice, props, 0, "Spin Echo", 600, 12, 90)
+    assert np.array_equal(out, img)
+
+
+def test_apply_mt_suppresses_white_matter_most(brain_slice, props):
+    img = np.ones_like(brain_slice, dtype=float)
+    out = rendering.apply_mt(img, brain_slice, props, 100, "Spin Echo", 600, 12, 90)
+    supp_wm = 1 - _median(out, brain_slice, 3)
+    supp_csf = 1 - _median(out, brain_slice, 1)
+    assert supp_wm > supp_csf        # WM has higher bound-pool fraction
+    assert 0.3 < supp_wm < 0.6       # clinically realistic WM MTR at full power
+
+
+def test_apply_mt_shape_mismatch_is_identity(props):
+    img = np.ones((10, 10))
+    ph = np.ones((8, 8), dtype=int)
+    assert np.array_equal(rendering.apply_mt(img, ph, props, 100, "Spin Echo", 600, 12, 90), img)
+
+
+# --------------------------------------------------------------------------- #
+# apply_b1
+# --------------------------------------------------------------------------- #
+def test_apply_b1_shape_mismatch_is_identity(props):
+    img = np.ones((10, 10))
+    ph = np.ones((8, 8), dtype=int)
+    assert np.array_equal(rendering.apply_b1(img, ph, props, "Gradient Echo", 20, 200, 5, 3.0), img)
+
+
+def test_apply_b1_gre_finite_and_modulates(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 200, 5, "GRE", 0, 20, props)
+    out = rendering.apply_b1(img, brain_slice, props, "Gradient Echo", 20, 200, 5, 3.0)
+    assert np.isfinite(out).all()
+    assert out.shape == img.shape
+    # Centre-bright B1 map → centre and edge differ for a low-flip GRE
+    assert not np.allclose(out, img)
+
+
+def test_apply_b1_se_center_near_nominal(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 600, 15, "SE", 0, 90, props)
+    out = rendering.apply_b1(img, brain_slice, props, "Spin Echo", 90, 600, 15, 3.0)
+    # At map centre B1≈nominal, so signal is essentially unchanged there.
+    c = img.shape[0] // 2
+    assert out[c, c] == pytest.approx(img[c, c], rel=0.05)
+
+
+def test_apply_b1_field_strength_changes_magnitude(brain_slice, props):
+    img = rendering.simulate_slice_props(brain_slice, 600, 15, "SE", 0, 90, props)
+    o15 = rendering.apply_b1(img, brain_slice, props, "Spin Echo", 90, 600, 15, 1.5)
+    o30 = rendering.apply_b1(img, brain_slice, props, "Spin Echo", 90, 600, 15, 3.0)
+    # 3T uses larger B1 variation than 1.5T → larger edge deviation
+    assert not np.allclose(o15, o30)
+
+
+# --------------------------------------------------------------------------- #
+# gre_fatwater_phase
+# --------------------------------------------------------------------------- #
+def test_gre_fatwater_no_fat_is_identity(props):
+    ph = np.full((20, 20), 2, dtype=int)   # all GM, no fat
+    img = np.ones_like(ph, dtype=float)
+    assert np.array_equal(rendering.gre_fatwater_phase(img, ph, 5.0, 3.0), img)
+
+
+def test_gre_fatwater_opposed_darker_than_inphase():
+    import dixon
+    ph = np.zeros((40, 40), dtype=int)
+    ph[:, :20] = 4     # fat
+    ph[:, 20:] = 2     # water (GM)
+    img = np.where(ph == 4, 0.6, 0.3).astype(float)
+    op = rendering.gre_fatwater_phase(img, ph, dixon.opposed_phase_te_ms(3.0), 3.0)
+    ip = rendering.gre_fatwater_phase(img, ph, dixon.inphase_te_ms(3.0), 3.0)
+    col = 19  # fat side of the fat-water boundary
+    assert op[:, col].mean() < ip[:, col].mean()   # India-ink at opposed phase
+
+
+# --------------------------------------------------------------------------- #
+# gre_fw_phase_label
+# --------------------------------------------------------------------------- #
+def test_gre_fw_phase_label_classification():
+    import dixon
+    assert rendering.gre_fw_phase_label(dixon.inphase_te_ms(3.0), 3.0) == "In-phase"
+    assert rendering.gre_fw_phase_label(dixon.opposed_phase_te_ms(3.0), 3.0) == "Opposed"
+    # A quarter-cycle TE is neither in- nor opposed-phase
+    quarter = dixon.opposed_phase_te_ms(3.0) / 2.0
+    assert rendering.gre_fw_phase_label(quarter, 3.0).startswith("Partial")
