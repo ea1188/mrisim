@@ -1288,7 +1288,7 @@ class MRISimulator(QMainWindow):
             vox_vol = res_mm * res_mm * max(1, thickness)
             BW_hz = max(1.0, params["bandwidth"] * 1000.0)
             B0_snr = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-            g_factor = 1.0 + 0.15 * (R - 1) if R > 1 else 1.0
+            g_factor = rendering.g_factor(R)   # real SENSE g-factor (coil.g_factor_map)
             eff_snr = (params.get("snr_level", self.snr_level.get())
                        * (vox_vol / self._VOX_REF)            # SNR proportional to voxel volume
                        * np.sqrt(max(1, params["NEX"]))       # SNR proportional to sqrt(NEX)
@@ -1321,7 +1321,8 @@ class MRISimulator(QMainWindow):
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
-                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2}
+                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
+                   "g_factor": rendering.g_factor(R)}
         if not is_map:
             snr = self._measure_snr(reconstructed, phantom_slice)
             metrics["snr_wm"] = snr["wm"]
@@ -2204,10 +2205,10 @@ class MRISimulator(QMainWindow):
         else:
             self.metrics_labels["fw_phase"].config(text="N/A (SE)", fg="#666688")
 
-        # ETL / Accel / PF summary line
+        # ETL / Accel / PF summary line (R shown with its real SENSE g-factor)
         tokens = [t for t in [
             f"ETL={ETL}" if ETL > 1 else "",
-            f"R={R}" if R > 1 else "",
+            f"R={R} (g={metrics.get('g_factor', 1.0):.2f})" if R > 1 else "",
             f"PF={pf_label}" if pf_on else "",
         ] if t]
         self.metrics_labels["etl_accel"].config(text=" ".join(tokens) or "None")

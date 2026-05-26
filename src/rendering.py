@@ -20,6 +20,7 @@ from signal_engine import (
 import dixon
 import mt
 import b1
+import coil
 
 
 # Gadolinium relaxivity constants (3T, Gd-DTPA)
@@ -150,6 +151,34 @@ def gre_fatwater_phase(image: np.ndarray, phantom_slice: np.ndarray,
     result              = image.copy()
     result[tissue_mask] = combined[tissue_mask]
     return result
+
+
+_GFACTOR_CACHE: dict[tuple, float] = {}
+
+
+def g_factor(acceleration: int, n_coils: int = 8) -> float:
+    """Representative SENSE g-factor for an R-fold accelerated acquisition.
+
+    Builds a head-coil sensitivity array and evaluates the Pruessmann
+    voxel-wise g-factor map (coil.g_factor_map), then returns the **median**
+    over the FOV. The median is used instead of the mean because near-singular
+    peripheral voxels send the mean (and max) to extreme values that don't
+    reflect the typical noise amplification over the anatomy.
+
+    The g-factor depends on coil geometry and R, not image resolution, so it is
+    evaluated on a fixed 96×96 grid (divisible by R∈{2,3,4}) and cached.
+    Returns 1.0 for R ≤ 1 (no acceleration penalty).
+    """
+    R = int(acceleration)
+    if R <= 1:
+        return 1.0
+    key = (R, int(n_coils))
+    if key not in _GFACTOR_CACHE:
+        n = (96 // R) * R                      # square grid divisible by R
+        sens = coil.head_coil_array((n, n), n_coils=n_coils)
+        g = coil.g_factor_map(sens, R)
+        _GFACTOR_CACHE[key] = float(np.median(g))
+    return _GFACTOR_CACHE[key]
 
 
 def gre_fw_phase_label(TE_ms: float, B0: float) -> str:

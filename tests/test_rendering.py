@@ -215,3 +215,30 @@ def test_gre_fw_phase_label_classification():
     # A quarter-cycle TE is neither in- nor opposed-phase
     quarter = dixon.opposed_phase_te_ms(3.0) / 2.0
     assert rendering.gre_fw_phase_label(quarter, 3.0).startswith("Partial")
+
+
+# --------------------------------------------------------------------------- #
+# g_factor
+# --------------------------------------------------------------------------- #
+def test_g_factor_no_acceleration_is_one():
+    assert rendering.g_factor(1) == 1.0
+    assert rendering.g_factor(0) == 1.0
+
+
+def test_g_factor_increases_with_acceleration():
+    g2 = rendering.g_factor(2)
+    g3 = rendering.g_factor(3)
+    g4 = rendering.g_factor(4)
+    assert 1.0 < g2 < g3 < g4          # superlinear SENSE penalty
+    assert g2 < 1.3                    # R=2 on an 8ch head coil is mild
+
+
+def test_g_factor_matches_coil_median():
+    import coil
+    sens = coil.head_coil_array((96, 96), n_coils=8)
+    expect = float(np.median(coil.g_factor_map(sens, 2)))
+    assert rendering.g_factor(2) == pytest.approx(expect)
+
+
+def test_g_factor_is_cached_deterministic():
+    assert rendering.g_factor(3) == rendering.g_factor(3)
