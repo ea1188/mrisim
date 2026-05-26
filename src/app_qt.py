@@ -43,6 +43,7 @@ from phantom3d import get_slice, simulate_slice
 import tissue_db
 import qmri
 import rendering
+import rician
 from kspace import simulate_acquisition, get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic
 from phantom3d_extended import (add_vessels_3d, add_activation_3d,
@@ -1298,10 +1299,8 @@ class MRISimulator(QMainWindow):
             eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
             tissue_ref = self._tissue_ref_signal(reconstructed, phantom_slice)
             if tissue_ref > 0:
-                sigma = tissue_ref / eff_snr
-                reconstructed = np.sqrt(
-                    (reconstructed + np.random.normal(0, sigma, reconstructed.shape)) ** 2
-                    + np.random.normal(0, sigma, reconstructed.shape) ** 2)
+                sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
+                reconstructed = rician.add_rician_noise(reconstructed, sigma)
             if params.get("zipper_enabled", self.zipper_enabled.get()):
                 reconstructed = add_zipper_artifact(reconstructed, 0.3, 0.12)
         else:
