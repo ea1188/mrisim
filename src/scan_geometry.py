@@ -174,6 +174,94 @@ def update_from_drag(
     return slice_idx, inplane_off, inplane_fov_frac, n_slices
 
 
+# ---- 3-plane localizer overlays ---------------------------------------------
+
+def secondary_overlay(
+    viewer: str,
+    acq: str,
+    vol_shape: tuple[int, ...],
+    slice_idx: float,
+    n_slices: int,
+    thickness: float,
+    gap: float,
+    inplane_fov_frac: float,
+    inplane_off: float,
+) -> dict:
+    """
+    Overlay geometry for the *secondary* panel of a 3-plane scout.
+
+    Returns:
+      orient        'h'|'v'  — horizontal or vertical lines
+      positions     list[int]— display-axis coords of each slice line
+      span          (lo, hi) — perpendicular extent of each line
+      through       'v'|'h'  — which display axis the user must drag to move lines
+      through_sign  +1|-1    — sign relating drag delta to slice_idx delta
+    """
+    nZ, nY, nX = vol_shape[0], vol_shape[1], vol_shape[2]
+    slices = prescribed_indices(acq, vol_shape, slice_idx, n_slices, thickness, gap)
+
+    if acq == "axial" and viewer == "sagittal":
+        # Sagittal: rows=Z, cols=Y(flipped). Axial slices → h-lines at y=Z
+        return dict(orient="h", positions=list(slices), span=(0, nY),
+                    through="v", through_sign=+1)
+
+    if acq == "coronal" and viewer == "sagittal":
+        # Sagittal: rows=Z, cols=Y(flipped). Coronal slices at Y=y_i → v-lines at x=nY-1-y
+        return dict(orient="v", positions=[nY - 1 - y for y in slices], span=(0, nZ),
+                    through="h", through_sign=-1)
+
+    if acq == "sagittal" and viewer == "axial":
+        # Axial: rows=Y, cols=X. Sagittal slices → v-lines at x=X
+        return dict(orient="v", positions=list(slices), span=(0, nY),
+                    through="h", through_sign=+1)
+
+    return {}
+
+
+def inplane_box(
+    acq: str,
+    vol_shape: tuple[int, ...],
+    inplane_fov_frac: float,
+    inplane_off: float,
+) -> dict:
+    """
+    Dashed FOV crop rectangle for the acquisition-plane panel in the 3-plane scout.
+    Returns {x0, y0, w, h} in display coords of the acquired slice image.
+
+    Viewer conventions (same as get_slice):
+      axial   : rows=Y(nY), cols=X(nX)  — inplane along cols(X), depth along rows(Y)
+      coronal : rows=Z(nZ), cols=X(nX)  — inplane along cols(X), depth along rows(Z)
+      sagittal: rows=Z(nZ), cols=Y(nY)  — inplane along rows(Z), depth along cols(Y)
+
+    The crop window is a square fraction of each dimension (mirrors fov_crop logic).
+    """
+    nZ, nY, nX = vol_shape[0], vol_shape[1], vol_shape[2]
+
+    if acq == "axial":
+        inplane_len, depth_len = nX, nY
+        half_ip = max(2.0, inplane_fov_frac * inplane_len / 2.0)
+        half_dp = max(2.0, inplane_fov_frac * depth_len / 2.0)
+        ip_c = inplane_len / 2.0 + inplane_off   # cols = X (not flipped)
+        dp_c = depth_len / 2.0
+        return dict(x0=ip_c - half_ip, y0=dp_c - half_dp, w=2 * half_ip, h=2 * half_dp)
+
+    if acq == "coronal":
+        inplane_len, depth_len = nX, nZ
+        half_ip = max(2.0, inplane_fov_frac * inplane_len / 2.0)
+        half_dp = max(2.0, inplane_fov_frac * depth_len / 2.0)
+        ip_c = inplane_len / 2.0 + inplane_off
+        dp_c = depth_len / 2.0
+        return dict(x0=ip_c - half_ip, y0=dp_c - half_dp, w=2 * half_ip, h=2 * half_dp)
+
+    # sagittal: inplane=Z(rows), depth=Y(cols, symmetric)
+    inplane_len, depth_len = nZ, nY
+    half_ip = max(2.0, inplane_fov_frac * inplane_len / 2.0)
+    half_dp = max(2.0, inplane_fov_frac * depth_len / 2.0)
+    ip_c = inplane_len / 2.0 + inplane_off   # rows=Z (not flipped in acquired array)
+    dp_c = depth_len / 2.0
+    return dict(x0=dp_c - half_dp, y0=ip_c - half_ip, w=2 * half_dp, h=2 * half_ip)
+
+
 # ---- In-plane FOV crop of an acquired 2D slice ------------------------------
 # Maps the two in-plane axes onto the get_slice(acq, idx) output array, so we can
 # crop the acquired image to the prescribed FOV (square zoom + in-plane shift).

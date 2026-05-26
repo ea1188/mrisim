@@ -11,6 +11,7 @@ Volume index convention (matches phantom3d / scan_geometry):
     axis 1 = Y  (anterior → posterior)
     axis 2 = X  (right → left)
 """
+from __future__ import annotations
 import numpy as np
 from scipy.ndimage import map_coordinates
 

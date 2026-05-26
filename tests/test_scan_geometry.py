@@ -8,6 +8,8 @@ from scan_geometry import (
     box_rect,
     update_from_drag,
     fov_crop,
+    secondary_overlay,
+    inplane_box,
     SCOUT,
 )
 from phantom3d import generate_synthetic_3d_brain
@@ -359,3 +361,110 @@ class TestFovCropEmptyInput:
         empty = np.zeros((0, 0), dtype=np.float64)
         result = fov_crop("axial", empty, 0.8, 0.0)
         assert result.shape == (0, 0)
+
+
+# ---------------------------------------------------------------------------
+# secondary_overlay
+# ---------------------------------------------------------------------------
+SHAPE = (40, 50, 60)   # (nZ=40, nY=50, nX=60)
+
+
+class TestSecondaryOverlay:
+    def test_axial_sagittal_orient(self):
+        ov = secondary_overlay("sagittal", "axial", SHAPE, 20, 3, 2, 0, 1.0, 0.0)
+        assert ov["orient"] == "h"
+        assert ov["through"] == "v"
+        assert ov["through_sign"] == +1
+
+    def test_axial_sagittal_positions_are_z_indices(self):
+        ov = secondary_overlay("sagittal", "axial", SHAPE, 20, 3, 2, 0, 1.0, 0.0)
+        expected = prescribed_indices("axial", SHAPE, 20, 3, 2, 0)
+        assert ov["positions"] == expected
+
+    def test_axial_sagittal_span_full_y(self):
+        ov = secondary_overlay("sagittal", "axial", SHAPE, 20, 1, 2, 0, 1.0, 0.0)
+        assert ov["span"] == (0, SHAPE[1])   # nY
+
+    def test_coronal_sagittal_orient(self):
+        ov = secondary_overlay("sagittal", "coronal", SHAPE, 25, 3, 2, 0, 1.0, 0.0)
+        assert ov["orient"] == "v"
+        assert ov["through"] == "h"
+        assert ov["through_sign"] == -1
+
+    def test_coronal_sagittal_positions_flipped(self):
+        ov = secondary_overlay("sagittal", "coronal", SHAPE, 25, 3, 2, 0, 1.0, 0.0)
+        raw = prescribed_indices("coronal", SHAPE, 25, 3, 2, 0)
+        expected = [SHAPE[1] - 1 - y for y in raw]
+        assert ov["positions"] == expected
+
+    def test_coronal_sagittal_span_full_z(self):
+        ov = secondary_overlay("sagittal", "coronal", SHAPE, 25, 1, 2, 0, 1.0, 0.0)
+        assert ov["span"] == (0, SHAPE[0])   # nZ
+
+    def test_sagittal_axial_orient(self):
+        ov = secondary_overlay("axial", "sagittal", SHAPE, 30, 3, 2, 0, 1.0, 0.0)
+        assert ov["orient"] == "v"
+        assert ov["through"] == "h"
+        assert ov["through_sign"] == +1
+
+    def test_sagittal_axial_positions_are_x_indices(self):
+        ov = secondary_overlay("axial", "sagittal", SHAPE, 30, 3, 2, 0, 1.0, 0.0)
+        expected = prescribed_indices("sagittal", SHAPE, 30, 3, 2, 0)
+        assert ov["positions"] == expected
+
+    def test_sagittal_axial_span_full_y(self):
+        ov = secondary_overlay("axial", "sagittal", SHAPE, 30, 1, 2, 0, 1.0, 0.0)
+        assert ov["span"] == (0, SHAPE[1])   # nY
+
+    def test_positions_length_matches_n_slices(self):
+        for acq, viewer in [("axial", "sagittal"), ("coronal", "sagittal"), ("sagittal", "axial")]:
+            for n in [1, 3, 5]:
+                ov = secondary_overlay(viewer, acq, SHAPE, 20, n, 2, 0, 1.0, 0.0)
+                assert len(ov["positions"]) == n, f"{acq}/{viewer} n={n}"
+
+
+# ---------------------------------------------------------------------------
+# inplane_box
+# ---------------------------------------------------------------------------
+class TestInplaneBox:
+    def test_axial_full_fov(self):
+        b = inplane_box("axial", SHAPE, 1.0, 0.0)
+        nZ, nY, nX = SHAPE
+        assert abs(b["w"] - nX) < 1.0
+        assert abs(b["h"] - nY) < 1.0
+
+    def test_axial_half_fov(self):
+        b = inplane_box("axial", SHAPE, 0.5, 0.0)
+        nZ, nY, nX = SHAPE
+        assert abs(b["w"] - 0.5 * nX) < 1.0
+        assert abs(b["h"] - 0.5 * nY) < 1.0
+
+    def test_coronal_full_fov(self):
+        b = inplane_box("coronal", SHAPE, 1.0, 0.0)
+        nZ, nY, nX = SHAPE
+        assert abs(b["w"] - nX) < 1.0
+        assert abs(b["h"] - nZ) < 1.0
+
+    def test_sagittal_full_fov(self):
+        b = inplane_box("sagittal", SHAPE, 1.0, 0.0)
+        nZ, nY, nX = SHAPE
+        assert abs(b["h"] - nZ) < 1.0   # inplane = rows = Z
+        assert abs(b["w"] - nY) < 1.0   # depth = cols = Y
+
+    def test_centred_no_offset(self):
+        for acq in ("axial", "coronal", "sagittal"):
+            b = inplane_box(acq, SHAPE, 0.8, 0.0)
+            # box should be roughly centred in each dimension
+            cx = b["x0"] + b["w"] / 2
+            cy = b["y0"] + b["h"] / 2
+            dims = {"axial": (SHAPE[2]/2, SHAPE[1]/2),
+                    "coronal": (SHAPE[2]/2, SHAPE[0]/2),
+                    "sagittal": (SHAPE[1]/2, SHAPE[0]/2)}
+            ex, ey = dims[acq]
+            assert abs(cx - ex) < 2.0, f"{acq} cx={cx} expected {ex}"
+            assert abs(cy - ey) < 2.0, f"{acq} cy={cy} expected {ey}"
+
+    def test_offset_shifts_box(self):
+        b0 = inplane_box("axial", SHAPE, 0.8, 0.0)
+        b1 = inplane_box("axial", SHAPE, 0.8, 5.0)
+        assert abs((b1["x0"] + b1["w"]/2) - (b0["x0"] + b0["w"]/2) - 5.0) < 1.0
