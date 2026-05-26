@@ -296,6 +296,7 @@ class MRISimulator(QMainWindow):
         # Display options
         self.display_cmap = Var("gray")
         self.show_tissue_overlay = Var(False)
+        self.rician_bias_correct = Var(False)
 
         # Artifacts
         self.motion_enabled = Var(False)
@@ -945,6 +946,7 @@ class MRISimulator(QMainWindow):
         L.addWidget(disp_sec)
         DL = disp_sec.inner
         self._slider(DL, "Noise Level (SNR)", self.snr_level, 5, 100)
+        self._checkbox(DL, "Rician bias correction", self.rician_bias_correct)
         self._dropdown(DL, "Colormap", self.display_cmap,
                        ["gray", "bone", "hot", "plasma", "viridis", "magma"],
                        self.schedule_recalculate, inline=True)
@@ -1049,6 +1051,7 @@ class MRISimulator(QMainWindow):
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
+                "rician_bias_correction": self.rician_bias_correct.get(),
                 "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),
                 "motion_type": self.motion_type.get(), "chemical_shift_enabled": self.chemical_shift_enabled.get(),
                 "susceptibility_enabled": self.susceptibility_enabled.get(),
@@ -1301,6 +1304,8 @@ class MRISimulator(QMainWindow):
             if tissue_ref > 0:
                 sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
                 reconstructed = rician.add_rician_noise(reconstructed, sigma)
+                if params.get("rician_bias_correction"):
+                    reconstructed = rician.rician_bias_correction(reconstructed, sigma)
             if params.get("zipper_enabled", self.zipper_enabled.get()):
                 reconstructed = add_zipper_artifact(reconstructed, 0.3, 0.12)
         else:
