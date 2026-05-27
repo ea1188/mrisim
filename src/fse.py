@@ -274,9 +274,12 @@ def simulate_fse_image(
 ) -> np.ndarray:
     """Simulate an FSE image with T2 blurring in the phase-encode direction.
 
-    Each tissue is assigned its EPG signal at TE_eff.  A Gaussian blur is
-    applied along the phase-encode (vertical) axis to approximate the PSF
-    broadening from T2 decay across the echo train.
+    Each tissue is assigned its EPG signal at TE_eff, then blurred along the
+    phase-encode (row) axis by its **own** T2-dependent PSF broadening. This is
+    per-tissue on purpose: a single global blur keyed to the shortest T2 in the
+    slice (e.g. cortical bone, ~3 ms) would smear the entire image, even though
+    that tissue has essentially no FSE signal. Long-T2 tissue (brain, CSF) stays
+    sharp; only short-T2 (thin, near-signal-less) tissue blurs.
 
     Parameters
     ----------
@@ -291,7 +294,6 @@ def simulate_fse_image(
     image : (rows, cols) float64  simulated FSE magnitude image
     """
     image = np.zeros_like(phantom_slice, dtype=float)
-    min_T2 = float("inf")
 
     for label, props in tissue_properties.items():
         mask = phantom_slice == label
@@ -300,17 +302,12 @@ def simulate_fse_image(
 
         T1, T2, PD = float(props["T1"]), float(props["T2"]), float(props["PD"])
         signal = epg_signal(T1, T2, PD, TR, TE_eff, ETL, echo_spacing, refocus_angle_deg)
-        image[mask] = signal
 
-        if T2 < min_T2:
-            min_T2 = T2
-
-    # Apply Gaussian blur in the phase-encode (row) direction
-    if min_T2 < float("inf"):
-        factor = fse_blurring_factor(ETL, echo_spacing, min_T2, refocus_angle_deg)
-        fwhm   = factor - 1.0           # excess FWHM in voxels
-        sigma  = fwhm / 2.355           # FWHM → Gaussian σ
+        tissue_img = np.where(mask, signal, 0.0)
+        factor = fse_blurring_factor(ETL, echo_spacing, T2, refocus_angle_deg)
+        sigma = (factor - 1.0) / 2.355      # excess FWHM (voxels) → Gaussian σ
         if sigma > 0.1:
-            image = gaussian_filter(image, sigma=[sigma, 0.0])
+            tissue_img = gaussian_filter(tissue_img, sigma=[sigma, 0.0])
+        image += tissue_img
 
     return image
