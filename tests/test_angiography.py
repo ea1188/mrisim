@@ -218,3 +218,13 @@ class TestRotatingMIP:
         tof = tof_intensity_volume(self._vessel_vol())
         mip = rotating_mip(tof, 0, 0)            # projects along axis 1
         assert np.all(mip >= tof.max(axis=1) - 1e-9)
+
+    def test_prep_realtof_suppresses_background(self):
+        from angiography import prep_realtof_volume
+        v = np.zeros((8, 8, 8))
+        v[4, 4, 4] = 1.0      # bright vessel
+        v[0, 0, 0] = 0.3      # dim tissue (below threshold)
+        out = prep_realtof_volume(v, threshold=0.5, gamma=2.0)
+        assert 0.0 <= out.min() and out.max() <= 1.0
+        assert out[4, 4, 4] > 0      # vessel kept
+        assert out[0, 0, 0] == 0     # background suppressed

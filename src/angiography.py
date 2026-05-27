@@ -178,6 +178,20 @@ def tof_intensity_volume(vessel_vol: np.ndarray, TR: float = 25.0, TE: float = 4
     return out
 
 
+def prep_realtof_volume(volume: np.ndarray, threshold: float = 0.5,
+                        gamma: float = 2.0) -> np.ndarray:
+    """Background-suppress a real TOF MRA volume so a MIP shows the vessels.
+
+    Real (non-fat-suppressed) TOF data has bright fat/tissue as well as vessels,
+    so a raw MIP is washed out. Normalise to [0,1], clip away everything below
+    ``threshold``, and apply ``gamma`` to emphasise the brightest (vessel)
+    voxels — leaving an organic vessel tree to project.
+    """
+    v = np.asarray(volume, dtype=float)
+    v = v / max(float(v.max()), 1e-9)
+    return np.clip((v - threshold) / (1.0 - threshold), 0.0, 1.0) ** gamma
+
+
 def rotating_mip(tof_volume: np.ndarray, azimuth_deg: float = 0.0,
                  elevation_deg: float = 0.0) -> np.ndarray:
     """Maximum-intensity projection of a TOF volume from a viewing angle.
