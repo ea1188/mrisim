@@ -178,3 +178,43 @@ class TestPhaseContrastAdditional:
         if np.any(vascular_phantom == 5):
             vessel_phase = phase[vascular_phantom == 5]
             assert np.all(np.abs(np.abs(vessel_phase) - np.pi) < 1e-9)
+
+
+# --------------------------------------------------------------------------- #
+# Rotating-MIP TOF angiogram
+# --------------------------------------------------------------------------- #
+class TestRotatingMIP:
+    def _vessel_vol(self):
+        # small labelled volume: tissue block (GM=2) with a blood column (11)
+        v = np.zeros((24, 30, 30), dtype=int)
+        v[:, 8:22, 8:22] = 2
+        v[:, 12:18, 14] = 11          # a vertical "vessel"
+        return v
+
+    def test_tof_volume_blood_brighter_than_tissue(self):
+        from angiography import tof_intensity_volume
+        v = self._vessel_vol()
+        tof = tof_intensity_volume(v)
+        assert tof.shape == v.shape
+        assert tof[v == 11].mean() > 5 * tof[v == 2].mean()   # strong vessel-tissue contrast
+        assert np.all(tof[v == 0] == 0)
+
+    def test_rotating_mip_is_2d_projection(self):
+        from angiography import tof_intensity_volume, rotating_mip
+        tof = tof_intensity_volume(self._vessel_vol())
+        mip = rotating_mip(tof, 0, 0)
+        assert mip.ndim == 2
+        assert mip.max() > 0
+
+    def test_rotation_changes_projection(self):
+        from angiography import tof_intensity_volume, rotating_mip
+        tof = tof_intensity_volume(self._vessel_vol())
+        front = rotating_mip(tof, 0, 0)
+        turned = rotating_mip(tof, 90, 0)
+        assert not np.allclose(front, turned)   # azimuth genuinely re-views the volume
+
+    def test_mip_geq_any_constituent_slice(self):
+        from angiography import tof_intensity_volume, rotating_mip
+        tof = tof_intensity_volume(self._vessel_vol())
+        mip = rotating_mip(tof, 0, 0)            # projects along axis 1
+        assert np.all(mip >= tof.max(axis=1) - 1e-9)

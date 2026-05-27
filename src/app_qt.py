@@ -276,6 +276,8 @@ class MRISimulator(QMainWindow):
         # MRA
         self.angio_type = Var("TOF")
         self.angio_mip_slab = Var(20)
+        self.angio_azimuth = Var(0)      # rotating-MIP view angle (deg)
+        self.angio_elevation = Var(0)
         self.venc = Var(80.0)
         self.flow_velocity = Var(60.0)
         self.angio_display = Var("Magnitude")
@@ -826,11 +828,11 @@ class MRISimulator(QMainWindow):
 
         self.angio_frame = QWidget()
         angio_l = QVBoxLayout(self.angio_frame); angio_l.setContentsMargins(0, 0, 0, 0); angio_l.setSpacing(1)
-        self._dropdown(angio_l, "MRA Type", self.angio_type, ["TOF", "Phase Contrast"], self.schedule_recalculate)
-        self._slider(angio_l, "MIP Slab", self.angio_mip_slab, 1, 50)
-        self._slider(angio_l, "VENC (cm/s)", self.venc, 10, 200)
-        self._slider(angio_l, "Flow Velocity", self.flow_velocity, 10, 150)
-        self._dropdown(angio_l, "Display", self.angio_display, ["Magnitude", "Phase", "Speed"], self.schedule_recalculate)
+        self._slider(angio_l, "MIP Azimuth (°)", self.angio_azimuth, 0, 360)
+        self._slider(angio_l, "MIP Elevation (°)", self.angio_elevation, -60, 60)
+        angio_hint = QLabel("Rotating Time-of-Flight MIP — drag Azimuth/Elevation to maneuver the vessel angiogram in 3D.")
+        angio_hint.setWordWrap(True); angio_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
+        angio_l.addWidget(angio_hint)
         TL.addWidget(self.angio_frame)
 
         self.fmri_frame = QWidget()
@@ -1058,6 +1060,7 @@ class MRISimulator(QMainWindow):
                 "accel_method": self.accel_method.get(), "b_value": self.b_value.get(),
                 "diff_direction": self.diff_direction.get(), "diff_display": self.diff_display.get(),
                 "angio_type": self.angio_type.get(), "angio_mip_slab": self.angio_mip_slab.get(),
+                "angio_azimuth": self.angio_azimuth.get(), "angio_elevation": self.angio_elevation.get(),
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
                 "epi_esp": self.epi_esp.get(), "epi_b0_hz": self.epi_b0_hz.get(),

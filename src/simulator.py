@@ -33,6 +33,7 @@ import qmri
 import rendering
 import rician
 import b0
+import angiography
 import scan_geometry as sg
 
 
@@ -60,7 +61,7 @@ def default_params(**overrides) -> dict:
         slice_thickness=1, accel_factor=1, accel_method="SENSE",
         etl=16, echo_spacing=10.0,
         b_value=1000.0, diff_direction="Left-Right", diff_display="DWI",
-        angio_type="TOF", angio_mip_slab=20,
+        angio_type="TOF", angio_mip_slab=20, angio_azimuth=0, angio_elevation=0,
         fmri_display="EPI Image", fmri_volumes=100, fmri_threshold=3.0,
         qmri_display="T1 Map (VFA)",
         field_strength="3T", contrast_enabled=False, contrast_dose=1,
@@ -103,7 +104,16 @@ class Simulator:
 
         # Caches / outputs
         self._b0_cache: tuple | None = None
+        self._tof_cache: tuple | None = None
         self.last_kspace: np.ndarray | None = None
+
+    def _tof_volume(self, TR: float, TE: float, FA: float) -> np.ndarray:
+        """3D TOF intensity volume for the current vessels, cached (for rotating MIP)."""
+        vol = self.vessels
+        key = (vol.shape, int(vol.sum()), round(TR, 1), round(TE, 1), round(FA, 1))
+        if self._tof_cache is None or self._tof_cache[0] != key:
+            self._tof_cache = (key, angiography.tof_intensity_volume(vol, TR, TE, FA))
+        return self._tof_cache[1]
 
     # --- geometry -----------------------------------------------------------
     def get_max_slice_idx(self) -> int:
@@ -248,14 +258,11 @@ class Simulator:
             elif params["diff_display"] == "FA Map":
                 return simulate_fa_map_3d(phantom_slice)
         elif seq == "MR Angiography":
-            # Maximum-intensity projection of the TOF signal over a slab, so the
-            # vessel tree projects into an angiogram (vs a single sparse slice).
-            half = max(1, int(params["angio_mip_slab"]) // 2)
-            max_sl = self.get_max_slice_idx()
-            lo, hi = max(0, sl_idx - half), min(max_sl, sl_idx + half)
-            frames = [simulate_tof_3d_slice(get_slice(self.vessels, orient, s), TR, TE, FA)
-                      for s in range(lo, hi + 1)]
-            return np.maximum.reduce(frames)
+            # Maneuverable rotating MIP of the 3D TOF volume (azimuth/elevation),
+            # the way an angiogram is reviewed — not a fixed slice.
+            return angiography.rotating_mip(self._tof_volume(TR, TE, FA),
+                                            params.get("angio_azimuth", 0),
+                                            params.get("angio_elevation", 0))
         elif seq == "fMRI (BOLD)":
             act = get_slice(self.activation, orient, sl_idx)
             if params["fmri_display"] == "EPI Image":
@@ -301,6 +308,9 @@ class Simulator:
         is_map = params["sequence"] == "Diffusion (DWI)" and params["diff_display"] in ["ADC Map", "FA Map"]
         is_map = is_map or (params["sequence"] == "fMRI (BOLD)" and params["fmri_display"] in ["Activation Map", "T-statistic Map"])
         is_map = is_map or (params["sequence"] == "Quantitative (qMRI)")
+        # MRA renders a 3D-projection MIP, not a slice acquisition — bypass the
+        # texture/k-space/noise pipeline and display the projection directly.
+        is_map = is_map or (params["sequence"] == "MR Angiography")
 
         # MR tissue texture: spatially-correlated multiplicative noise + PV blur.
         # Deterministic per (orient, sl_idx) so parameter knobs don't flicker.

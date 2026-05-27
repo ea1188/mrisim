@@ -146,6 +146,58 @@ def compute_mip(volume_slices: np.ndarray) -> np.ndarray:
     """Maximum Intensity Projection across slices."""
     return np.max(volume_slices, axis=0)
 
+
+def tof_intensity_volume(vessel_vol: np.ndarray, TR: float = 25.0, TE: float = 4.0,
+                         flip_angle: float = 60.0,
+                         static_suppression: float = 0.10) -> np.ndarray:
+    """3D Time-of-Flight intensity volume from a labelled vessel phantom.
+
+    Fresh inflowing blood (label 11) is unsaturated → bright; stationary tissue
+    is saturated by the short TR + large flip angle and further attenuated by
+    ``static_suppression`` so a MIP is vessel-dominated rather than picking up
+    the brightest stationary voxel along each ray.
+
+    Returns a float volume the same shape as ``vessel_vol``.
+    """
+    from signal_engine import gradient_echo_signal
+    import tissue_db
+    tp = tissue_db.properties("3T")
+    a = np.radians(flip_angle)
+    out = np.zeros(vessel_vol.shape, dtype=float)
+    for lab, p in tp.items():
+        mask = vessel_vol == lab
+        if not mask.any():
+            continue
+        t2s = p.get("T2star", p["T2"] * 0.6)
+        if lab == 11:        # blood / vessels — bright inflow
+            out[mask] = p["PD"] * np.sin(a) * np.exp(-TE / t2s)
+        elif lab == 0:       # background air
+            out[mask] = 0.0
+        else:                # stationary tissue — saturated and suppressed
+            out[mask] = gradient_echo_signal(p["T1"], t2s, p["PD"], TR, TE, flip_angle) * static_suppression
+    return out
+
+
+def rotating_mip(tof_volume: np.ndarray, azimuth_deg: float = 0.0,
+                 elevation_deg: float = 0.0) -> np.ndarray:
+    """Maximum-intensity projection of a TOF volume from a viewing angle.
+
+    The volume axes are (Z=superior/inferior, Y=anterior/posterior, X=left/right).
+    ``azimuth`` rotates about the S/I axis (spin the angiogram), ``elevation``
+    tilts about the L/R axis; the projection is along the (rotated) A/P axis, so
+    azimuth=elevation=0 gives a coronal front view — the classic MRA MIP that a
+    radiologist rotates to inspect the vessel tree in 3D.
+
+    Returns a 2-D (Z, X) projection image.
+    """
+    from scipy.ndimage import rotate
+    v = tof_volume
+    if abs(azimuth_deg) > 0.01:
+        v = rotate(v, azimuth_deg, axes=(1, 2), reshape=False, order=1)
+    if abs(elevation_deg) > 0.01:
+        v = rotate(v, elevation_deg, axes=(0, 1), reshape=False, order=1)
+    return v.max(axis=1)
+
 if __name__ == "__main__":
     phantom = create_vascular_phantom(256)
     print(f"Vascular phantom: {np.unique(phantom)} labels")
