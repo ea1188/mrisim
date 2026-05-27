@@ -68,7 +68,7 @@ _PF_MAP: dict[str, float] = {
 _SAR_SEQ_FACTORS: dict[str, float] = {
     "Spin Echo": 1.5, "FSE / TSE": 1.5, "Gradient Echo": 0.5,
     "Inversion Recovery": 2.0, "Diffusion (DWI)": 1.5,
-    "MR Angiography": 0.5, "fMRI (BOLD)": 0.5,
+    "MR Angiography": 0.5, "fMRI (BOLD)": 0.5, "Echo Planar (EPI)": 0.5,
 }
 
 
@@ -292,6 +292,11 @@ class MRISimulator(QMainWindow):
 
         # Quantitative MRI (parameter mapping / synthetic contrast)
         self.qmri_display = Var("T1 Map (VFA)")
+
+        # Echo-planar imaging (integer Vars; interpreted as scaled units)
+        self.epi_esp = Var(5)            # echo spacing, ×0.1 ms  (5 = 0.5 ms)
+        self.epi_b0_hz = Var(60)         # peak B0 off-resonance, Hz
+        self.epi_ghost = Var(10)         # Nyquist ghost phase, ×0.01 rad
 
         # Display options
         self.display_cmap = Var("gray")
@@ -802,7 +807,7 @@ class MRISimulator(QMainWindow):
         self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
                        ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
                         "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
-                        "Quantitative (qMRI)"], self.on_sequence_change)
+                        "Quantitative (qMRI)", "Echo Planar (EPI)"], self.on_sequence_change)
         self.desc_label = DLabel("", base_style="color:#8888aa; font-size:9px; padding:2px 2px;")
         self.desc_label.setWordWrap(True)
         SL.addWidget(self.desc_label)
@@ -854,6 +859,16 @@ class MRISimulator(QMainWindow):
         qmri_hint.setWordWrap(True); qmri_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
         qmri_l.addWidget(qmri_hint)
         TL.addWidget(self.qmri_frame)
+
+        self.epi_frame = QWidget()
+        epi_l = QVBoxLayout(self.epi_frame); epi_l.setContentsMargins(0, 0, 0, 0); epi_l.setSpacing(1)
+        self._slider(epi_l, "Echo Spacing (×0.1 ms)", self.epi_esp, 3, 15)
+        self._slider(epi_l, "B0 off-resonance (Hz)", self.epi_b0_hz, 0, 300)
+        self._slider(epi_l, "Nyquist ghost (×0.01 rad)", self.epi_ghost, 0, 40)
+        epi_hint = QLabel("Single-shot GRE-EPI: B0 warps geometry in the phase-encode (vertical) axis; even/odd phase errors give the N/2 ghost.")
+        epi_hint.setWordWrap(True); epi_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
+        epi_l.addWidget(epi_hint)
+        TL.addWidget(self.epi_frame)
 
         # \u2500\u2500 3D Navigation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         nav_sec = CollapsibleSection("3D Navigation")
@@ -1050,6 +1065,8 @@ class MRISimulator(QMainWindow):
                 "angio_type": self.angio_type.get(), "angio_mip_slab": self.angio_mip_slab.get(),
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
+                "epi_esp": self.epi_esp.get(), "epi_b0_hz": self.epi_b0_hz.get(),
+                "epi_ghost": self.epi_ghost.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
                 "rician_bias_correction": self.rician_bias_correct.get(),
                 "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),
@@ -1092,7 +1109,10 @@ class MRISimulator(QMainWindow):
         if gd_active:
             tprops = rendering.apply_gd(tprops, params["contrast_dose"] * 0.1)
 
-        seq_map = {"Spin Echo": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR"}
+        # EPI shares the T2*-weighted GRE base; its readout artifacts are applied
+        # downstream in simulate_with_params.
+        seq_map = {"Spin Echo": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
+                   "Echo Planar (EPI)": "GRE"}
         if seq in seq_map:
             return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
         elif seq == "FSE / TSE":
@@ -1269,6 +1289,16 @@ class MRISimulator(QMainWindow):
             if params["sequence"] in ("Gradient Echo", "MR Angiography") and phantom_slice.shape == image.shape:
                 image = rendering.gre_fatwater_phase(image, phantom_slice, params["TE"], _B0_val)
 
+            # EPI readout artifacts: T2* blur, B0 geometric distortion, N/2 ghost
+            if params["sequence"] == "Echo Planar (EPI)" and phantom_slice.shape == image.shape:
+                _t2s = rendering.param_maps(phantom_slice, _tprops, ("T2star",))[0]
+                _b0 = rendering.epi_b0_field(image.shape, params.get("epi_b0_hz", 0))
+                image = rendering.simulate_epi_slice(
+                    image, _t2s, _b0,
+                    esp_ms=params.get("epi_esp", 5) / 10.0,
+                    ghost_phase=params.get("epi_ghost", 0) / 100.0,
+                    correct_ghost=False)
+
             _pf = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else None
             _fw = params.get("kspace_filter_window", "hamming") if params.get("kspace_filter_enabled") else None
             reconstructed, kspace_acquired = simulate_acquisition(image, matrix, fov_frac,
@@ -1320,7 +1350,8 @@ class MRISimulator(QMainWindow):
         resolution = FOV / matrix; voxel_vol = resolution * resolution * thickness
         scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000
         seq_map = {"Spin Echo": "SE", "FSE / TSE": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
-                   "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI"}
+                   "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI",
+                   "Echo Planar (EPI)": "EPI"}
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
@@ -2238,6 +2269,7 @@ class MRISimulator(QMainWindow):
         if seq == "MR Angiography": return "Flow"
         if seq == "fMRI (BOLD)": return "T2* (BOLD)"
         if seq == "Quantitative (qMRI)": return "Quantitative"
+        if seq == "Echo Planar (EPI)": return "T2* (EPI)"
         if TR < 800 and TE < 30: return "T1-weighted"
         elif TR > 2000 and TE > 60: return "T2-weighted"
         elif TR > 2000 and TE < 30: return "PD-weighted"
@@ -2475,7 +2507,7 @@ class MRISimulator(QMainWindow):
         seq = self.sequence_type.get()
         for frame in (self.ti_frame, self.fa_frame, self.fse_frame,
                       self.diff_frame, self.angio_frame, self.fmri_frame,
-                      self.qmri_frame):
+                      self.qmri_frame, self.epi_frame):
             frame.setVisible(False)
         if seq == "Inversion Recovery":
             self.ti_frame.setVisible(True)
@@ -2491,6 +2523,8 @@ class MRISimulator(QMainWindow):
             self.fmri_frame.setVisible(True)
         elif seq == "Quantitative (qMRI)":
             self.qmri_frame.setVisible(True)
+        elif seq == "Echo Planar (EPI)":
+            self.epi_frame.setVisible(True); self.fa_frame.setVisible(True)
         self.recalculate()
 
     def _get_native_fov(self) -> float:

@@ -21,6 +21,7 @@ import dixon
 import mt
 import b1
 import coil
+import epi
 
 
 # Gadolinium relaxivity constants (3T, Gd-DTPA)
@@ -190,3 +191,43 @@ def gre_fw_phase_label(TE_ms: float, B0: float) -> str:
     if cos_phi < -0.70:
         return "Opposed"
     return f"Partial ({np.degrees(phi) % 360:.0f}°)"
+
+
+def epi_b0_field(shape: tuple[int, int], strength_hz: float) -> np.ndarray:
+    """Synthetic off-resonance B0 map (Hz) for EPI distortion demos.
+
+    A localised frontal off-resonance region (sinus-like) plus a mild
+    through-FOV gradient, scaled so the peak magnitude ≈ strength_hz. A proper
+    dipole field from susceptibility labels (b0.py) is the natural replacement.
+    """
+    H, W = shape
+    y, x = np.ogrid[:H, :W]
+    cy, cx = H * 0.72, W * 0.5
+    r2 = ((y - cy) / (H * 0.22)) ** 2 + ((x - cx) / (W * 0.28)) ** 2
+    blob = np.exp(-r2)
+    grad = (y / max(H - 1, 1)) - 0.5
+    return (float(strength_hz) * (blob + 0.2 * grad)).astype(float)
+
+
+def simulate_epi_slice(image: np.ndarray, t2star_map: np.ndarray,
+                       b0_map: np.ndarray, esp_ms: float,
+                       ghost_phase: float, correct_ghost: bool) -> np.ndarray:
+    """Apply EPI readout artifacts to a rendered image (image-space in/out).
+
+    Two effects, both from the long single-shot echo train:
+      * T2* blur along the phase-encode direction (epi.epi_t2star_decay), and
+      * the EPI acquisition itself (epi.simulate_epi): B0-driven geometric
+        distortion in the phase-encode direction and a Nyquist (N/2) ghost from
+        even/odd line phase errors, with optional phase correction.
+
+    Returns the magnitude image. The phase-encode direction is the row axis.
+    """
+    n_phase = image.shape[0]
+    blurred = epi.epi_t2star_decay(image, t2star_map, esp_ms, n_phase)
+    # Pass None (not a zero array) when there is no off-resonance, so simulate_epi
+    # uses the exact reorder→recon path instead of its per-line B0 approximation.
+    b0_arg = b0_map if (b0_map is not None and np.any(np.abs(b0_map) > 1e-9)) else None
+    recon, _ = epi.simulate_epi(blurred, b0_slice_hz=b0_arg, esp_ms=esp_ms,
+                                phase_offset_rad=ghost_phase,
+                                correct_ghost=correct_ghost)
+    return np.abs(recon)

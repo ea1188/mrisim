@@ -242,3 +242,44 @@ def test_g_factor_matches_coil_median():
 
 def test_g_factor_is_cached_deterministic():
     assert rendering.g_factor(3) == rendering.g_factor(3)
+
+
+# --------------------------------------------------------------------------- #
+# EPI helpers
+# --------------------------------------------------------------------------- #
+def test_epi_b0_field_scales_and_shape():
+    f = rendering.epi_b0_field((64, 64), 100.0)
+    assert f.shape == (64, 64)
+    assert np.isfinite(f).all()
+    # peak magnitude tracks the requested strength (localised blob ~1.0)
+    assert 80 < np.abs(f).max() < 160
+    assert np.allclose(rendering.epi_b0_field((64, 64), 0.0), 0.0)
+
+
+def test_epi_slice_clean_is_faithful():
+    # object in the top half; with no B0 and no ghost the recon stays there
+    img = np.zeros((96, 96)); img[12:40, 30:66] = 1.0
+    t2s = np.full_like(img, 50.0)
+    out = rendering.simulate_epi_slice(img, t2s, np.zeros_like(img), 0.5, 0.0, False)
+    assert np.abs(out)[48:].mean() < 0.01      # bottom (ghost) half stays empty
+
+
+def test_epi_slice_nyquist_ghost_appears():
+    img = np.zeros((96, 96)); img[12:40, 30:66] = 1.0
+    t2s = np.full_like(img, 50.0); Z = np.zeros_like(img)
+    clean = rendering.simulate_epi_slice(img, t2s, Z, 0.5, 0.0, False)
+    ghost = rendering.simulate_epi_slice(img, t2s, Z, 0.5, 0.30, False)
+    assert ghost[48:].mean() > 5 * clean[48:].mean()   # N/2 ghost in bottom half
+
+
+def test_epi_slice_b0_distorts_geometry():
+    img = np.zeros((96, 96)); img[12:40, 30:66] = 1.0
+    t2s = np.full_like(img, 50.0)
+    b0 = rendering.epi_b0_field(img.shape, 150.0)
+    clean = rendering.simulate_epi_slice(img, t2s, np.zeros_like(img), 0.8, 0.0, False)
+    dist  = rendering.simulate_epi_slice(img, t2s, b0, 0.8, 0.0, False)
+
+    def row_centroid(a):
+        m = np.abs(a)
+        return (m.sum(1) * np.arange(m.shape[0])).sum() / m.sum()
+    assert abs(row_centroid(dist) - row_centroid(clean)) > 0.5
