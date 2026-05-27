@@ -55,13 +55,12 @@ class TestAddVessels3d:
         for lab in np.unique(small_brain):
             assert lab in np.unique(brain_with_vessels)
 
-    def test_vessels_only_in_brain(self, brain_with_vessels):
-        # Label 6 (vessels) must not appear in background regions
-        vessel_mask = brain_with_vessels == 6
-        # Where vessels exist, the original brain should have had tissue
-        # (we can't check original easily here, just verify label 6 exists or doesn't crash)
+    def test_vessels_labelled_blood(self, small_brain, brain_with_vessels):
+        # Vessels are stamped as label 11 (Blood) — not 6, which is now Muscle.
         assert brain_with_vessels.min() >= 0
-        assert brain_with_vessels.max() <= 6
+        assert 11 in np.unique(brain_with_vessels)
+        # Vessels only replace brain tissue, never background.
+        assert not np.any((brain_with_vessels == 11) & (small_brain == 0))
 
 
 class TestAddActivation3d:

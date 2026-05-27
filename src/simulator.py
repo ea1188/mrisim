@@ -248,9 +248,14 @@ class Simulator:
             elif params["diff_display"] == "FA Map":
                 return simulate_fa_map_3d(phantom_slice)
         elif seq == "MR Angiography":
-            if self.real_tof is not None and params["angio_type"] == "TOF":
-                return simulate_tof_with_real_data(self.real_tof, orient, sl_idx, TR, TE, FA, params["angio_mip_slab"])
-            return simulate_tof_3d_slice(get_slice(self.vessels, orient, sl_idx), TR, TE, FA)
+            # Maximum-intensity projection of the TOF signal over a slab, so the
+            # vessel tree projects into an angiogram (vs a single sparse slice).
+            half = max(1, int(params["angio_mip_slab"]) // 2)
+            max_sl = self.get_max_slice_idx()
+            lo, hi = max(0, sl_idx - half), min(max_sl, sl_idx + half)
+            frames = [simulate_tof_3d_slice(get_slice(self.vessels, orient, s), TR, TE, FA)
+                      for s in range(lo, hi + 1)]
+            return np.maximum.reduce(frames)
         elif seq == "fMRI (BOLD)":
             act = get_slice(self.activation, orient, sl_idx)
             if params["fmri_display"] == "EPI Image":

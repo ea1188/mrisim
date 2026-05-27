@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 def add_vessels_3d(phantom: np.ndarray) -> np.ndarray:
-    """Add a dense vascular network to the 3D phantom. Label 6 = vessels."""
+    """Add a dense vascular network to the 3D phantom. Label 11 = vessels (Blood)."""
     nx, ny, nz = phantom.shape
     cx, cy, cz = nx // 2, ny // 2, nz // 2
     x, y, z = np.mgrid[:nx, :ny, :nz]
@@ -122,7 +122,7 @@ def add_vessels_3d(phantom: np.ndarray) -> np.ndarray:
     vessels &= brain_mask
     
     phantom_with_vessels = phantom.copy()
-    phantom_with_vessels[vessels] = 6
+    phantom_with_vessels[vessels] = 11   # Blood (tissue_db); was 6, which is now Muscle
     
     return phantom_with_vessels
 
@@ -318,34 +318,34 @@ def simulate_tof_3d_slice(
     TE: float = 4,
     flip_angle: float = 60,
 ) -> np.ndarray:
-    """Simulate TOF MRA with better vessel-to-background contrast."""
+    """Simulate TOF MRA with better vessel-to-background contrast.
+
+    Blood (label 11) is fresh, unsaturated inflow → bright; all other tissue is
+    saturated by the short TR + large flip angle → dark. Take a MIP over a slab
+    of these slices for the angiogram.
+    """
     from signal_engine import gradient_echo_signal
-    from phantom3d import TISSUE_PROPERTIES_3D
-    
-    props_extended = dict(TISSUE_PROPERTIES_3D)
-    props_extended[6] = {"T1": 1930, "T2": 275, "PD": 0.9, "T2star": 50, "name": "Blood"}
-    
+    import tissue_db
+
+    props_extended = tissue_db.properties("3T")
     image = np.zeros_like(phantom_slice, dtype=float)
-    alpha = flip_angle
-    
+    alpha_rad = np.radians(flip_angle)
+
     for label, props in props_extended.items():
         mask = phantom_slice == label
         if not np.any(mask):
             continue
-        
+
         T2star = props.get("T2star", props["T2"] * 0.6)
-        
-        if label == 6:  # Vessels - full inflow enhancement
-            alpha_rad = np.radians(alpha)
+
+        if label == 11:  # Blood / vessels - full inflow enhancement
             # Fresh unsaturated blood signal (much brighter than static tissue)
-            inflow_signal = props["PD"] * np.sin(alpha_rad) * np.exp(-TE / T2star)
-            image[mask] = inflow_signal
+            image[mask] = props["PD"] * np.sin(alpha_rad) * np.exp(-TE / T2star)
         elif label == 0:
             image[mask] = 0
         else:
             # Static tissue - heavily saturated by short TR + large flip angle
-            sig = gradient_echo_signal(props["T1"], T2star, props["PD"], TR, TE, alpha)
-            image[mask] = sig
+            image[mask] = gradient_echo_signal(props["T1"], T2star, props["PD"], TR, TE, flip_angle)
     
     # Add subtle texture
     np.random.seed(46)
