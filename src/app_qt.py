@@ -563,8 +563,7 @@ class MRISimulator(QMainWindow):
             py = int(np.clip(round(event.ydata / H * ph.shape[0]), 0, ph.shape[0] - 1))  # type: ignore[attr-defined]
             px = int(np.clip(round(event.xdata / W * ph.shape[1]), 0, ph.shape[1] - 1))  # type: ignore[attr-defined]
             label = int(round(float(ph[py, px])))
-            import phantom3d
-            props = phantom3d.TISSUE_PROPERTIES_3D.get(label)
+            props = tissue_db.properties(self.field_strength.get()).get(label)
             tissue = props["name"] if props else f"Tissue {label}"
         except Exception:
             tissue = "n/a"

@@ -7,7 +7,9 @@ def load_brainweb_phantom(subject_num: int = 4) -> np.ndarray:
     """Load BrainWeb phantom and remap to our tissue labels."""
     os.makedirs(PHANTOM_DIR, exist_ok=True)
     
-    cached_file = os.path.join(PHANTOM_DIR, f'brainweb_sub{subject_num:02d}.npy')
+    # '_rich' tag: multi-class mapping (muscle/blood/marrow/etc. kept distinct).
+    # Bumping the tag invalidates older collapsed-label caches automatically.
+    cached_file = os.path.join(PHANTOM_DIR, f'brainweb_sub{subject_num:02d}_rich.npy')
     if os.path.exists(cached_file):
         print("Loading cached BrainWeb phantom...")
         return np.load(cached_file)
@@ -32,21 +34,22 @@ def load_brainweb_phantom(subject_num: int = 4) -> np.ndarray:
     vol = raw[::2, ::2, ::2]
     print(f"  Downsampled: {raw.shape} -> {vol.shape}")
     
-    # Remap to our convention:
-    # 0=Background, 1=CSF, 2=Gray Matter, 3=White Matter, 4=Fat/Scalp, 5=Bone
+    # Remap BrainWeb's 12 classes to the simulator's tissue_db labels, keeping
+    # muscle / vessels / connective / dura / marrow distinct (previously these
+    # were collapsed into fat/CSF/bone, discarding ~16% of the head as "fat").
     phantom = np.zeros_like(vol, dtype=np.uint8)
-    
-    phantom[vol == 16] = 1    # CSF
-    phantom[vol == 32] = 2    # Gray Matter
-    phantom[vol == 48] = 3    # White Matter
-    phantom[vol == 64] = 4    # Fat
-    phantom[vol == 80] = 4    # Muscle -> Fat/Scalp
-    phantom[vol == 96] = 4    # Muscle/Skin -> Fat/Scalp
-    phantom[vol == 112] = 5   # Skull -> Bone
-    phantom[vol == 128] = 1   # Vessels -> CSF (fluid-like)
-    phantom[vol == 145] = 4   # Around fat -> Fat/Scalp
-    phantom[vol == 161] = 1   # Dura -> CSF
-    phantom[vol == 177] = 5   # Bone marrow -> Bone
+
+    phantom[vol == 16]  = 1    # CSF              -> Fluid/CSF
+    phantom[vol == 32]  = 2    # Gray matter      -> Gray matter
+    phantom[vol == 48]  = 3    # White matter     -> White matter
+    phantom[vol == 64]  = 4    # Fat (subcut.)    -> Fat
+    phantom[vol == 80]  = 6    # Muscle           -> Muscle
+    phantom[vol == 96]  = 6    # Muscle / skin    -> Muscle (scalp soft tissue)
+    phantom[vol == 112] = 5    # Skull            -> Bone (skull)
+    phantom[vol == 128] = 11   # Vessels          -> Blood
+    phantom[vol == 145] = 4    # Connective (peri-fat) -> Fat
+    phantom[vol == 161] = 15   # Dura mater       -> Cartilage/Disc (fibrous, short T2)
+    phantom[vol == 177] = 14   # Bone marrow      -> Marrow
     
     # Cache
     np.save(cached_file, phantom)

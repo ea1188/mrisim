@@ -21,10 +21,14 @@ class TestGetBrainwebOrSynthetic:
         phantom, _ = get_brainweb_or_synthetic()
         assert phantom.ndim == 3
 
+    # Rich multi-class mapping: BrainWeb classes map to these tissue_db labels
+    # (CSF/GM/WM/fat/bone + muscle/blood/marrow/dura). Synthetic fallback ⊆ this.
+    VALID_LABELS = {0, 1, 2, 3, 4, 5, 6, 11, 14, 15}
+
     def test_labels_in_range(self):
         phantom, _ = get_brainweb_or_synthetic()
         assert phantom.min() >= 0
-        assert phantom.max() <= 5
+        assert set(int(x) for x in np.unique(phantom)).issubset(self.VALID_LABELS)
 
     def test_has_brain_voxels(self):
         phantom, _ = get_brainweb_or_synthetic()
@@ -46,7 +50,8 @@ class TestLoadBrainwebPhantom:
 
     def test_labels_in_range(self):
         phantom = load_brainweb_phantom(subject_num=4)
-        assert set(int(x) for x in np.unique(phantom)).issubset({0, 1, 2, 3, 4, 5})
+        assert set(int(x) for x in np.unique(phantom)).issubset(
+            {0, 1, 2, 3, 4, 5, 6, 11, 14, 15})
 
     def test_has_multiple_tissues(self):
         phantom = load_brainweb_phantom(subject_num=4)
@@ -100,7 +105,8 @@ class TestLoadBrainwebPhantomCacheMiss:
 
         phantom = bwl.load_brainweb_phantom(subject_num=99)
         assert phantom.ndim == 3
-        assert set(int(x) for x in np.unique(phantom)).issubset({0, 1, 2, 3, 4, 5})
+        assert set(int(x) for x in np.unique(phantom)).issubset(
+            {0, 1, 2, 3, 4, 5, 6, 11, 14, 15})
 
 
 class TestGetBrainwebOrSyntheticFallback:
