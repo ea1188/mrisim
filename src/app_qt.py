@@ -59,23 +59,15 @@ from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        calculate_chemical_shift_pixels)
 from fse import simulate_fse_image, fse_scan_time, compute_fse_echo_train
 from acceleration import apply_parallel_imaging, compute_acceleration_metrics, apply_compressed_sensing
+from simulator import Simulator, _B0_MAP, _PF_MAP
 
-# Partial-Fourier fractions (string label → actual fraction)
-_PF_MAP: dict[str, float] = {
-    "Full": 1.0, "7/8": 7.0 / 8.0, "6/8": 6.0 / 8.0, "5/8": 5.0 / 8.0,
-}
-
-# SAR scaling factor per sequence type (relative to SE reference)
+# SAR scaling factor per sequence type (relative to SE reference) — used by the
+# metrics display's max-safe-FA hint (the simulation SAR lives in simulator.py).
 _SAR_SEQ_FACTORS: dict[str, float] = {
     "Spin Echo": 1.5, "FSE / TSE": 1.5, "Gradient Echo": 0.5,
     "Inversion Recovery": 2.0, "Diffusion (DWI)": 1.5,
     "MR Angiography": 0.5, "fMRI (BOLD)": 0.5, "Echo Planar (EPI)": 0.5,
 }
-
-
-# Field-strength label → Tesla.  Labels match tissue_db.FIELD_STRENGTHS so the
-# measured 1.5T / 3T property tables are the single source of truth.
-_B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
 
 
 # --------------------------------------------------------------------------- #
@@ -208,6 +200,7 @@ class MRISimulator(QMainWindow):
         self.phantom_3d_vessels = add_vessels_3d(self.phantom_3d)
         self.activation_3d = add_activation_3d(self.phantom_3d)
         self.real_tof = load_real_tof_mra()
+        self.sim = Simulator()   # Qt-free acquisition controller (see simulator.py)
         print(f"Ready. ({self.phantom_source})")
 
         # Region registry: add body tissue properties to the engine, cache the
@@ -336,17 +329,10 @@ class MRISimulator(QMainWindow):
         self.window_level = 0.5
         self.current_image: np.ndarray | None = None
         self._last_kspace: np.ndarray | None = None
-        self._b0_cache: tuple | None = None   # (key, 3D susceptibility B0 field, Hz)
         self.current_title = ""
         self.wl_dragging = False
         self.wl_start_x = 0
         self.wl_start_y = 0
-
-        # Reference protocol for the physical SNR model: the "Noise Level"
-        # slider equals the tissue-average SNR at this protocol, and every
-        # other parameter scales SNR relative to it via real proportionalities.
-        self._VOX_REF = (240.0 / 256.0) ** 2 * 5.0   # ~4.39 mm^3 (240 FOV, 256 matrix, 5 mm)
-        self._BW_REF = 125000.0                       # 125 kHz receiver bandwidth (Hz)
 
         self.build_ui()
 
@@ -1101,291 +1087,31 @@ class MRISimulator(QMainWindow):
         self.compare_status.config(text="No comparison set", fg="#666666")
         self.compare_metrics_label.config(text=""); self.recalculate()
 
+    def _sync_sim(self) -> None:
+        """Copy the active volume + view/geometry state onto the controller."""
+        s = self.sim
+        s.volume = self.phantom_3d
+        s.vessels = self.phantom_3d_vessels
+        s.activation = self.activation_3d
+        s.real_tof = self.real_tof
+        s.native_fov = self._get_native_fov()
+        s.orientation = self.orientation.get()
+        s.slice_idx = self.slice_idx.get()
+        s.fov_planning = self.fov_planning.get()
+        s.tilt = self.slice_tilt.get()
+        s.rot = self.slice_rot.get()
+        s.inplane_fov_pct = self.inplane_fov_pct.get()
+        s.inplane_off = self.inplane_off.get()
+
     def _simulate_single_slice(self, params: dict, orient: str, sl_idx: int) -> np.ndarray:
-        seq = params["sequence"]; TR = params["TR"]; TE = params["TE"]; TI = params["TI"]; FA = params["flip_angle"]
-        if TE >= TR:
-            TE = TR - 5
-        phantom_slice = self._get_current_phantom_slice(orient, sl_idx, params)
-
-        # Tissue property pipeline: measured field-strength table (tissue_db) → Gd
-        tprops = tissue_db.properties(params.get("field_strength", "3T"))
-        gd_active = params.get("contrast_enabled") and params.get("contrast_dose", 0) > 0
-        if gd_active:
-            tprops = rendering.apply_gd(tprops, params["contrast_dose"] * 0.1)
-
-        # EPI shares the T2*-weighted GRE base; its readout artifacts are applied
-        # downstream in simulate_with_params.
-        seq_map = {"Spin Echo": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
-                   "Echo Planar (EPI)": "GRE"}
-        if seq in seq_map:
-            return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
-        elif seq == "FSE / TSE":
-            return simulate_fse_image(phantom_slice, TR, TE, params["etl"], params["echo_spacing"], tprops)
-        elif seq == "Diffusion (DWI)":
-            direction: list[float] = {"Left-Right": [1.0, 0.0], "Up-Down": [0.0, 1.0], "Diagonal": [0.707, 0.707]}[params["diff_direction"]]
-            if params["diff_display"] == "DWI":
-                return simulate_diffusion_3d_slice(phantom_slice, params["b_value"], direction, TR, TE)
-            elif params["diff_display"] == "ADC Map":
-                return simulate_adc_map_3d(phantom_slice)
-            elif params["diff_display"] == "FA Map":
-                return simulate_fa_map_3d(phantom_slice)
-        elif seq == "MR Angiography":
-            if self.real_tof is not None and params["angio_type"] == "TOF":
-                return simulate_tof_with_real_data(self.real_tof, orient, sl_idx, TR, TE, FA, params["angio_mip_slab"])
-            return simulate_tof_3d_slice(get_slice(self.phantom_3d_vessels, orient, sl_idx), TR, TE, FA)
-        elif seq == "fMRI (BOLD)":
-            act = get_slice(self.activation_3d, orient, sl_idx)
-            if params["fmri_display"] == "EPI Image":
-                return simulate_fmri_3d_slice(phantom_slice, act, TR, TE, FA, True)
-            elif params["fmri_display"] == "Activation Map":
-                return compute_activation_map_3d(phantom_slice, act, TR, TE, FA)
-            elif params["fmri_display"] == "T-statistic Map":
-                img = compute_tstat_map_3d(phantom_slice, act, TR, TE, FA, params["fmri_volumes"])
-                return np.where(img > params["fmri_threshold"], img, 0)
-        elif seq == "Quantitative (qMRI)":
-            disp = params["qmri_display"]
-            if disp == "T1 Map (VFA)":
-                # Variable-flip-angle GRE series → Fram-linearised T1 map (ms)
-                fas = [2.0, 5.0, 10.0, 15.0, 20.0]
-                series = qmri.simulate_vfa_series(phantom_slice, fas, TR_ms=15.0, TE_ms=3.0,
-                                                  tissue_props=tprops)
-                return qmri.vfa_t1_map(series, fas, 15.0)
-            elif disp == "T2 Map (multi-echo)":
-                # Multi-echo SE → log-linear T2 map (ms)
-                tes = [10.0, 30.0, 50.0, 70.0, 90.0, 110.0]
-                series = qmri.simulate_multi_echo_series(phantom_slice, tes, TR_ms=2000.0,
-                                                         sequence="SE", tissue_props=tprops)
-                return qmri.multi_echo_t2_map(series, tes)
-            elif disp == "T2* Map (multi-echo)":
-                # Multi-echo GRE → log-linear T2* map (ms)
-                tes = [5.0, 10.0, 20.0, 30.0, 40.0, 50.0]
-                series = qmri.simulate_multi_echo_series(phantom_slice, tes, TR_ms=500.0,
-                                                         flip_angle_deg=FA, sequence="GRE",
-                                                         tissue_props=tprops)
-                return qmri.t2star_map(series, tes)
-            elif disp == "Synthetic SE":
-                # Synthesise an SE contrast at the current TR/TE from quantitative maps
-                T1m, T2m, PDm = rendering.param_maps(phantom_slice, tprops, ("T1", "T2", "PD"))
-                return qmri.synthetic_contrast(T1m, T2m, PDm, TR, TE, sequence="SE")
-        return np.zeros((181, 181), dtype=float)
-
-    @staticmethod
-    def _resize_nn(arr: np.ndarray, shape: Any) -> np.ndarray:
-        """Nearest-neighbor resize of a label map to `shape` (no scipy needed)."""
-        if arr.shape == tuple(shape):
-            return arr
-        ys = np.clip(np.linspace(0, arr.shape[0] - 1, shape[0]).round().astype(int), 0, arr.shape[0] - 1)
-        xs = np.clip(np.linspace(0, arr.shape[1] - 1, shape[1]).round().astype(int), 0, arr.shape[1] - 1)
-        return arr[np.ix_(ys, xs)]
-
-    def _aligned_labels(self, recon: np.ndarray, phantom_slice: np.ndarray) -> np.ndarray:
-        """Phantom label map resampled (nearest) to the reconstructed image grid."""
-        if phantom_slice.shape == recon.shape:
-            return phantom_slice
-        return self._resize_nn(phantom_slice, recon.shape)
-
-    def _tissue_ref_signal(self, recon: np.ndarray, phantom_slice: np.ndarray) -> float:
-        """Mean signal over brain tissue (CSF/GM/WM) used as the SNR reference level."""
-        labels = self._aligned_labels(recon, phantom_slice)
-        mask = np.isin(labels, (1, 2, 3))
-        if np.any(mask):
-            val = float(recon[mask].mean())
-            if val > 0:
-                return val
-        # Fallbacks for non-brain data (e.g. real TOF) with no matching labels
-        bright = recon[recon > 0]
-        if bright.size:
-            return float(bright.mean())
-        mx = float(np.max(recon))
-        return mx * 0.5 if mx > 0 else 0.0
-
-    def _measure_snr(self, recon: np.ndarray, phantom_slice: np.ndarray) -> dict:
-        """
-        Measure SNR the console way: mean signal in a tissue ROI divided by the
-        true noise sigma estimated from a signal-free (air) region.
-
-        In a magnitude image, background noise is Rayleigh-distributed with
-        std = sigma * sqrt(2 - pi/2), so we divide by that factor to recover the
-        underlying Gaussian sigma. Robust to matrix downsampling (labels are
-        resampled to the reconstructed grid) and to data without a background.
-        """
-        RAYLEIGH = np.sqrt(2.0 - np.pi / 2.0)  # ~0.6551
-        labels = self._aligned_labels(recon, phantom_slice)
-
-        bg = recon[labels == 0]
-        sigma = None
-        if bg.size > 50 and bg.std() > 0:
-            sigma = bg.std() / RAYLEIGH
-        if sigma is None or sigma <= 0:
-            # No usable background: estimate from the dimmest pixels in the frame
-            flat = np.sort(recon.ravel())
-            low = flat[: max(50, flat.size // 20)]
-            sigma = (low.std() / RAYLEIGH) if low.std() > 0 else max(1e-6, float(np.max(recon)) * 1e-3)
-
-        out = {"sigma": float(sigma), "wm": 0.0, "gm": 0.0}
-        for name, lab in (("wm", 3), ("gm", 2)):
-            roi = recon[labels == lab]
-            if roi.size and sigma > 0:
-                out[name] = float(roi.mean() / sigma)
-        return out
+        self._sync_sim()
+        return self.sim._simulate_single_slice(params, orient, sl_idx)
 
     def simulate_with_params(self, params: dict) -> tuple[np.ndarray, dict]:
-        orient = self.orientation.get(); sl_idx = self.slice_idx.get()
-        matrix = params["matrix_size"]; fov_frac = params["fov_fraction"] / 100.0
-        thickness = int(params.get("slice_thickness", self.slice_thickness.get())); R = params["accel_factor"]
-        max_sl = self.get_max_slice_idx()
-
-        if thickness > 1 and params["sequence"] not in ["MR Angiography"]:
-            start = max(0, sl_idx - thickness // 2); end = min(max_sl, sl_idx + thickness // 2)
-            image = np.mean([self._simulate_single_slice(params, orient, s) for s in range(start, end + 1)], axis=0)
-        else:
-            image = self._simulate_single_slice(params, orient, sl_idx)
-
-        phantom_slice = self._get_current_phantom_slice(orient, sl_idx, params)
-        is_map = params["sequence"] == "Diffusion (DWI)" and params["diff_display"] in ["ADC Map", "FA Map"]
-        is_map = is_map or (params["sequence"] == "fMRI (BOLD)" and params["fmri_display"] in ["Activation Map", "T-statistic Map"])
-        is_map = is_map or (params["sequence"] == "Quantitative (qMRI)")
-
-        # MR tissue texture: spatially-correlated multiplicative noise within each
-        # tissue region + partial-volume boundary blur.  Makes the flat per-label
-        # signal look like a real acquisition rather than a coloured segmentation.
-        # Deterministic per (orient, sl_idx) so parameter knobs don't flicker.
-        if not is_map and phantom_slice.shape == image.shape:
-            from scipy.ndimage import gaussian_filter as _gf
-            _rng = np.random.default_rng(
-                sl_idx * 7919 + {'axial': 0, 'coronal': 1, 'sagittal': 2}.get(orient, 0))
-            _n = _gf(_rng.standard_normal(image.shape).astype(float), sigma=2.5)
-            _n /= max(float(np.abs(_n).max()), 1e-9)
-            _tm = phantom_slice > 0
-            image = image.astype(float, copy=True)
-            image[_tm] = np.maximum(0.0, image[_tm] * (1.0 + 0.08 * _n[_tm]))
-            # Soft boundary blur — simulates finite PSF / partial volume
-            image = _gf(image, sigma=0.7)
-            image[~_tm] = 0.0  # keep background clean after blurring
-
-        if not is_map:
-            if params.get("motion_enabled", self.motion_enabled.get()):
-                _mseed = (sl_idx * 7919 + {"axial": 0, "coronal": 17, "sagittal": 37}.get(orient, 0)) & 0xFFFFFFFF
-                image = add_motion_artifact(image, params.get("motion_type", self.motion_type.get()),
-                                            params.get("motion_amplitude", self.motion_amplitude.get()), 3,
-                                            rng=np.random.default_rng(_mseed))
-            if params.get("chemical_shift_enabled", self.chemical_shift_enabled.get()) and phantom_slice.shape == image.shape:
-                _b0_cs = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-                image = add_chemical_shift_artifact(image, phantom_slice,
-                    calculate_chemical_shift_pixels(params["bandwidth"] * 1000 / matrix, field_strength=_b0_cs))
-            if params.get("susceptibility_enabled", self.susceptibility_enabled.get()) and phantom_slice.shape == image.shape:
-                image = add_susceptibility_artifact(image, phantom_slice,
-                                                    params.get("susceptibility_strength", self.susceptibility_strength.get()) / 10.0)
-
-            # B1+ transmit inhomogeneity and MT are signal-formation effects, so
-            # they act on the signal image before k-space (via the b1 / mt modules).
-            _field = params.get("field_strength", "3T")
-            _B0_val = _B0_MAP.get(_field, 3.0)
-            _tprops = tissue_db.properties(_field)
-            if params.get("b1_inhom_enabled"):
-                image = rendering.apply_b1(image, phantom_slice, _tprops, params["sequence"],
-                                  params["flip_angle"], params["TR"], params["TE"], _B0_val)
-            if params.get("mt_enabled"):
-                image = rendering.apply_mt(image, phantom_slice, _tprops, params.get("mt_power", 0),
-                                  params["sequence"], params["TR"], params["TE"], params["flip_angle"])
-
-            # Fat-water phase cycling: automatic for GRE (SE refocuses this; GRE does not)
-            if params["sequence"] in ("Gradient Echo", "MR Angiography") and phantom_slice.shape == image.shape:
-                image = rendering.gre_fatwater_phase(image, phantom_slice, params["TE"], _B0_val)
-
-            # EPI readout artifacts: T2* blur, B0 geometric distortion, N/2 ghost
-            if params["sequence"] == "Echo Planar (EPI)" and phantom_slice.shape == image.shape:
-                _t2s = rendering.param_maps(phantom_slice, _tprops, ("T2star",))[0]
-                # Slider sets the peak off-resonance at 3T; scale ∝ B0 so 1.5T
-                # distorts half as much (off-resonance grows with field strength).
-                _peak = params.get("epi_b0_hz", 0) * (_B0_val / 3.0)
-                # Real dipole field from tissue susceptibility (b0), scaled to the
-                # requested peak; fall back to a synthetic field if the slice
-                # geometry doesn't line up (e.g. oblique prescription).
-                try:
-                    _b0field = self._b0_field_slice(orient, sl_idx, params, _B0_val)
-                    _b0 = (rendering.scale_to_peak(_b0field, _peak)
-                           if _b0field.shape == image.shape
-                           else rendering.epi_b0_field(image.shape, _peak))
-                except Exception:
-                    _b0 = rendering.epi_b0_field(image.shape, _peak)
-                image = rendering.simulate_epi_slice(
-                    image, _t2s, _b0,
-                    esp_ms=params.get("epi_esp", 5) / 10.0,
-                    ghost_phase=params.get("epi_ghost", 0) / 100.0,
-                    correct_ghost=params.get("epi_correct_ghost", False))
-
-            _pf = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else None
-            _fw = params.get("kspace_filter_window", "hamming") if params.get("kspace_filter_enabled") else None
-            reconstructed, kspace_acquired = simulate_acquisition(image, matrix, fov_frac,
-                                                                   filter_window=_fw, pf_fraction=_pf)
-
-            # Acceleration
-            if R > 1:
-                method = params["accel_method"]
-                if method == "CS":
-                    reconstructed = apply_compressed_sensing(reconstructed, R)
-                else:
-                    reconstructed, _ = apply_parallel_imaging(reconstructed, R, method)
-
-            # --- Physical noise model -------------------------------------
-            # Effective image SNR follows standard MRI proportionalities,
-            # scaled so the "Noise Level" slider equals the tissue-average SNR
-            # at the reference protocol. Then we set the Rician noise sigma so
-            # the reconstructed image actually carries that SNR, which lets us
-            # MEASURE it back out below the way a tech does on the console.
-            res_mm = params["FOV"] / matrix
-            vox_vol = res_mm * res_mm * max(1, thickness)
-            BW_hz = max(1.0, params["bandwidth"] * 1000.0)
-            B0_snr = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-            g_factor = rendering.g_factor(R)   # real SENSE g-factor (coil.g_factor_map)
-            eff_snr = (params.get("snr_level", self.snr_level.get())
-                       * (vox_vol / self._VOX_REF)            # SNR proportional to voxel volume
-                       * np.sqrt(max(1, params["NEX"]))       # SNR proportional to sqrt(NEX)
-                       * np.sqrt(self._BW_REF / BW_hz)         # SNR proportional to 1/sqrt(receiver BW)
-                       / (g_factor * np.sqrt(R))              # parallel-imaging penalty (g * sqrt(R))
-                       * (B0_snr / 3.0))                      # field-strength SNR advantage
-            eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
-            tissue_ref = self._tissue_ref_signal(reconstructed, phantom_slice)
-            if tissue_ref > 0:
-                sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
-                reconstructed = rician.add_rician_noise(reconstructed, sigma)
-                if params.get("rician_bias_correction"):
-                    reconstructed = rician.rician_bias_correction(reconstructed, sigma)
-            if params.get("zipper_enabled", self.zipper_enabled.get()):
-                reconstructed = add_zipper_artifact(reconstructed, 0.3, 0.12)
-        else:
-            kspace_acquired = None
-            reconstructed = image
-
-        # Metrics
-        TR, TE, FA = params["TR"], params["TE"], params["flip_angle"]
-        FOV, NEX, BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
-        ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
-        pf_val = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else 1.0
-        resolution = FOV / matrix; voxel_vol = resolution * resolution * thickness
-        scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000
-        seq_map = {"Spin Echo": "SE", "FSE / TSE": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
-                   "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI",
-                   "Echo Planar (EPI)": "EPI"}
-        B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-        sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
-        sar_head = sar["head"] * (B0_sar / 3.0) ** 2
-        metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
-                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
-                   "g_factor": rendering.g_factor(R)}
-        if not is_map:
-            snr = self._measure_snr(reconstructed, phantom_slice)
-            metrics["snr_wm"] = snr["wm"]
-            metrics["snr_gm"] = snr["gm"]
-            metrics["noise_sigma"] = snr["sigma"]
-            # SNR efficiency: SNR per √(scan-time in minutes)
-            t_min = max(scan_time / 60.0, 1e-6)
-            metrics["snr_eff"] = snr["wm"] / np.sqrt(t_min)
-        else:
-            metrics["snr_eff"] = 0.0
-        self._last_kspace = kspace_acquired  # stored for k-space display
-        return reconstructed, metrics
+        self._sync_sim()
+        image, metrics = self.sim.simulate(params)
+        self._last_kspace = self.sim.last_kspace
+        return image, metrics
 
     # --- Display ---
     def recalculate(self, *args: object) -> None:
@@ -1746,16 +1472,9 @@ class MRISimulator(QMainWindow):
             return nY - 1.0 - cY, cZ
 
     def _compute_slab_center(self) -> np.ndarray:
-        """(Z, Y, X) voxel-index centre of the currently prescribed slab."""
-        import scan_geometry as sg
-        vol = self.phantom_3d
-        nZ, nY, nX = vol.shape
-        acq = self.orientation.get()
-        cfg = sg.cfg_for(acq)
-        center = np.array([nZ / 2.0, nY / 2.0, nX / 2.0])
-        center[cfg["through_axis"]] = float(self.slice_idx.get())
-        center[cfg["inplane_axis"]] = vol.shape[cfg["inplane_axis"]] / 2.0 + self.inplane_off.get()
-        return center
+        """(Z, Y, X) voxel-index centre of the prescribed slab (via controller)."""
+        self._sync_sim()
+        return self.sim._compute_slab_center(self.orientation.get(), self.slice_idx.get())
 
     def _reset_oblique(self) -> None:
         self.slice_tilt.set(0.0)
@@ -2576,60 +2295,10 @@ class MRISimulator(QMainWindow):
                 return z_mm / ip_mm
         return 1.0
 
-    def _b0_volume(self, field_strength_T: float) -> np.ndarray:
-        """3D susceptibility B0 field (Hz) for the active volume, cached.
-
-        Computed once per (volume, field strength) via the dipole forward model
-        (b0.susceptibility_b0_map); reused across slices and parameter tweaks.
-        """
-        vol = self.phantom_3d
-        # Content-based key (shape + label sum) avoids stale hits from id() reuse.
-        key = (vol.shape, int(vol.sum()), round(float(field_strength_T), 3))
-        if self._b0_cache is None or self._b0_cache[0] != key:
-            field = b0.susceptibility_b0_map(vol, field_strength_T=field_strength_T)
-            self._b0_cache = (key, field)
-        return self._b0_cache[1]
-
-    def _b0_field_slice(self, orient: str, sl_idx: int, params: dict,
-                        field_strength_T: float) -> np.ndarray:
-        """2D B0 field slice (Hz) aligned to the (non-oblique) phantom slice."""
-        import scan_geometry as sg
-        sl = get_slice(self._b0_volume(field_strength_T), orient, sl_idx)
-        fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self._get_native_fov())
-        if fov_frac < 0.99:
-            sl = sg.fov_crop(orient, sl, fov_frac, 0.0)
-        if self.fov_planning.get() and self.inplane_fov_pct.get() < 100:
-            sl = sg.fov_crop(orient, sl, self.inplane_fov_pct.get() / 100.0,
-                             self.inplane_off.get())
-        return sl
-
     def _get_current_phantom_slice(self, orient: str, sl_idx: int, params: dict) -> np.ndarray:
-        """Phantom label slice with FOV crop / oblique sampling applied."""
-        import scan_geometry as sg
-        tilt = self.slice_tilt.get()
-        rot  = self.slice_rot.get()
-
-        if self.fov_planning.get() and (abs(tilt) > 0.5 or abs(rot) > 0.5):
-            from oblique import plane_from_angles, oblique_plane
-            _, row_vec, col_vec = plane_from_angles(orient, tilt_deg=tilt, rot_deg=rot)
-            vol = self.phantom_3d
-            cfg = sg.cfg_for(orient)
-            center = self._compute_slab_center()
-            center[cfg["through_axis"]] = float(sl_idx)
-            max_dim = max(vol.shape)
-            return oblique_plane(vol, row_vec, col_vec, center,
-                                 shape=(max_dim, max_dim), order=0)
-
-        ph = get_slice(self.phantom_3d, orient, sl_idx)
-        # Physical FOV zoom: smaller FOV → crop to central fraction
-        fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self._get_native_fov())
-        if fov_frac < 0.99:
-            ph = sg.fov_crop(orient, ph, fov_frac, 0.0)
-        # FOV planning box prescription crop
-        if self.fov_planning.get() and self.inplane_fov_pct.get() < 100:
-            ph = sg.fov_crop(orient, ph, self.inplane_fov_pct.get() / 100.0,
-                             self.inplane_off.get())
-        return ph
+        """Phantom label slice with FOV crop / oblique sampling (via controller)."""
+        self._sync_sim()
+        return self.sim._get_phantom_slice(orient, sl_idx, params)
 
     def get_max_slice_idx(self) -> int:
         dims = {"axial": self.phantom_3d.shape[0], "sagittal": self.phantom_3d.shape[2], "coronal": self.phantom_3d.shape[1]}
