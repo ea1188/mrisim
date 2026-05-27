@@ -44,6 +44,7 @@ import tissue_db
 import qmri
 import rendering
 import rician
+import b0
 from kspace import simulate_acquisition, get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic
 from phantom3d_extended import (add_vessels_3d, add_activation_3d,
@@ -335,6 +336,7 @@ class MRISimulator(QMainWindow):
         self.window_level = 0.5
         self.current_image: np.ndarray | None = None
         self._last_kspace: np.ndarray | None = None
+        self._b0_cache: tuple | None = None   # (key, 3D susceptibility B0 field, Hz)
         self.current_title = ""
         self.wl_dragging = False
         self.wl_start_x = 0
@@ -867,7 +869,7 @@ class MRISimulator(QMainWindow):
         self._slider(epi_l, "B0 off-resonance (Hz)", self.epi_b0_hz, 0, 300)
         self._slider(epi_l, "Nyquist ghost (×0.01 rad)", self.epi_ghost, 0, 40)
         self._checkbox(epi_l, "Ghost correction (navigator)", self.epi_correct_ghost)
-        epi_hint = QLabel("Single-shot GRE-EPI: B0 warps geometry in the phase-encode (vertical) axis; even/odd phase errors give the N/2 ghost.")
+        epi_hint = QLabel("Single-shot GRE-EPI: the tissue susceptibility B0 field warps geometry in the phase-encode (vertical) axis; even/odd phase errors give the N/2 ghost.")
         epi_hint.setWordWrap(True); epi_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
         epi_l.addWidget(epi_hint)
         TL.addWidget(self.epi_frame)
@@ -1294,7 +1296,19 @@ class MRISimulator(QMainWindow):
             # EPI readout artifacts: T2* blur, B0 geometric distortion, N/2 ghost
             if params["sequence"] == "Echo Planar (EPI)" and phantom_slice.shape == image.shape:
                 _t2s = rendering.param_maps(phantom_slice, _tprops, ("T2star",))[0]
-                _b0 = rendering.epi_b0_field(image.shape, params.get("epi_b0_hz", 0))
+                # Slider sets the peak off-resonance at 3T; scale ∝ B0 so 1.5T
+                # distorts half as much (off-resonance grows with field strength).
+                _peak = params.get("epi_b0_hz", 0) * (_B0_val / 3.0)
+                # Real dipole field from tissue susceptibility (b0), scaled to the
+                # requested peak; fall back to a synthetic field if the slice
+                # geometry doesn't line up (e.g. oblique prescription).
+                try:
+                    _b0field = self._b0_field_slice(orient, sl_idx, params, _B0_val)
+                    _b0 = (rendering.scale_to_peak(_b0field, _peak)
+                           if _b0field.shape == image.shape
+                           else rendering.epi_b0_field(image.shape, _peak))
+                except Exception:
+                    _b0 = rendering.epi_b0_field(image.shape, _peak)
                 image = rendering.simulate_epi_slice(
                     image, _t2s, _b0,
                     esp_ms=params.get("epi_esp", 5) / 10.0,
@@ -2561,6 +2575,33 @@ class MRISimulator(QMainWindow):
             if key in name:
                 return z_mm / ip_mm
         return 1.0
+
+    def _b0_volume(self, field_strength_T: float) -> np.ndarray:
+        """3D susceptibility B0 field (Hz) for the active volume, cached.
+
+        Computed once per (volume, field strength) via the dipole forward model
+        (b0.susceptibility_b0_map); reused across slices and parameter tweaks.
+        """
+        vol = self.phantom_3d
+        # Content-based key (shape + label sum) avoids stale hits from id() reuse.
+        key = (vol.shape, int(vol.sum()), round(float(field_strength_T), 3))
+        if self._b0_cache is None or self._b0_cache[0] != key:
+            field = b0.susceptibility_b0_map(vol, field_strength_T=field_strength_T)
+            self._b0_cache = (key, field)
+        return self._b0_cache[1]
+
+    def _b0_field_slice(self, orient: str, sl_idx: int, params: dict,
+                        field_strength_T: float) -> np.ndarray:
+        """2D B0 field slice (Hz) aligned to the (non-oblique) phantom slice."""
+        import scan_geometry as sg
+        sl = get_slice(self._b0_volume(field_strength_T), orient, sl_idx)
+        fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self._get_native_fov())
+        if fov_frac < 0.99:
+            sl = sg.fov_crop(orient, sl, fov_frac, 0.0)
+        if self.fov_planning.get() and self.inplane_fov_pct.get() < 100:
+            sl = sg.fov_crop(orient, sl, self.inplane_fov_pct.get() / 100.0,
+                             self.inplane_off.get())
+        return sl
 
     def _get_current_phantom_slice(self, orient: str, sl_idx: int, params: dict) -> np.ndarray:
         """Phantom label slice with FOV crop / oblique sampling applied."""

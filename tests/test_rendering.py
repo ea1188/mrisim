@@ -247,6 +247,34 @@ def test_g_factor_is_cached_deterministic():
 # --------------------------------------------------------------------------- #
 # EPI helpers
 # --------------------------------------------------------------------------- #
+def test_scale_to_peak_sets_p95_magnitude():
+    f = np.linspace(-50, 200, 1000).reshape(20, 50)
+    out = rendering.scale_to_peak(f, 80.0)
+    assert np.percentile(np.abs(out), 95) == pytest.approx(80.0, rel=1e-6)
+    # spatial pattern preserved (uniform rescale)
+    nz = f != 0
+    assert np.allclose((out[nz] / f[nz]).std(), 0.0, atol=1e-9)
+
+
+def test_scale_to_peak_zero_and_flat():
+    f = np.random.default_rng(0).normal(size=(16, 16))
+    assert np.all(rendering.scale_to_peak(f, 0.0) == 0.0)        # peak 0 → no field
+    assert np.all(rendering.scale_to_peak(np.zeros((8, 8)), 50.0) == 0.0)  # flat → 0
+
+
+def test_scale_to_peak_drives_b0_distortion():
+    # a real dipole field, scaled, distorts an EPI image
+    import b0
+    vol = np.zeros((24, 32, 32), int); vol[:, 8:24, 8:24] = 3   # tissue block in air
+    field = b0.susceptibility_b0_map(vol, field_strength_T=3.0)
+    b0_slice = rendering.scale_to_peak(field[12], 150.0)
+    img = np.zeros((32, 32)); img[10:22, 10:22] = 1.0
+    t2s = np.full_like(img, 50.0)
+    clean = rendering.simulate_epi_slice(img, t2s, np.zeros_like(img), 0.8, 0.0, False)
+    dist  = rendering.simulate_epi_slice(img, t2s, b0_slice, 0.8, 0.0, False)
+    assert not np.allclose(dist, clean)        # the susceptibility field warps geometry
+
+
 def test_epi_b0_field_scales_and_shape():
     f = rendering.epi_b0_field((64, 64), 100.0)
     assert f.shape == (64, 64)

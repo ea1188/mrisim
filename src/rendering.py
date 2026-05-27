@@ -193,12 +193,29 @@ def gre_fw_phase_label(TE_ms: float, B0: float) -> str:
     return f"Partial ({np.degrees(phi) % 360:.0f}°)"
 
 
+def scale_to_peak(field: np.ndarray, peak_hz: float) -> np.ndarray:
+    """Rescale a B0 field (Hz) so its 95th-percentile magnitude equals peak_hz.
+
+    Preserves the spatial pattern (e.g. a dipole field from b0.susceptibility_b0_map)
+    while letting a single control set the off-resonance magnitude. Returns zeros
+    if peak_hz ≤ 0 or the field is essentially flat. The 95th percentile (rather
+    than the max) avoids a single hot voxel dominating the scale.
+    """
+    field = np.asarray(field, dtype=float)
+    if peak_hz <= 0:
+        return np.zeros_like(field)
+    ref = float(np.percentile(np.abs(field), 95))
+    if ref < 1e-9:
+        return np.zeros_like(field)
+    return field * (float(peak_hz) / ref)
+
+
 def epi_b0_field(shape: tuple[int, int], strength_hz: float) -> np.ndarray:
-    """Synthetic off-resonance B0 map (Hz) for EPI distortion demos.
+    """Synthetic off-resonance B0 map (Hz) — fallback when the real dipole-field
+    slice (b0.susceptibility_b0_map) is unavailable (e.g. oblique geometry).
 
     A localised frontal off-resonance region (sinus-like) plus a mild
-    through-FOV gradient, scaled so the peak magnitude ≈ strength_hz. A proper
-    dipole field from susceptibility labels (b0.py) is the natural replacement.
+    through-FOV gradient, scaled so the peak magnitude ≈ strength_hz.
     """
     H, W = shape
     y, x = np.ogrid[:H, :W]
