@@ -214,6 +214,7 @@ class MRISimulator(QMainWindow):
 
         # --- State variables (Var shim instead of tk.*Var) ---
         self.region = Var("Brain")
+        self.brain_subject = Var("04")   # BrainWeb subject id (Brain region only)
         self.field_strength = Var("3T")
         self.sequence_type = Var("Spin Echo")
         self.preset_name = Var("")
@@ -866,6 +867,9 @@ class MRISimulator(QMainWindow):
         NL = nav_sec.inner
         self._region_dd = self._dropdown(NL, "Region", self.region, self._body_phantoms.REGION_NAMES,
                        self.on_region_change, inline=True)
+        self._dropdown(NL, "Brain Subject", self.brain_subject,
+                       ["04", "05", "06", "18", "20", "38"],
+                       self.on_subject_change, inline=True)
         rl_row = QHBoxLayout(); rl_row.setContentsMargins(0, 0, 0, 2)
         self._button(rl_row, "Browse Masks\u2026", self.browse_masks, color="#2255aa")
         self._button(rl_row, "Load File\u2026", self.load_nifti_region)
@@ -2025,6 +2029,32 @@ class MRISimulator(QMainWindow):
             self.slice_idx.set(mx)
         s.setValue(int(self.slice_idx.get()))
         s.blockSignals(False)
+
+    def _load_brain(self, subject_num: int) -> np.ndarray:
+        """Load a BrainWeb subject's labelled volume, falling back to synthetic."""
+        try:
+            from brainweb_loader import load_brainweb_phantom
+            return load_brainweb_phantom(subject_num)
+        except Exception as exc:
+            print(f"subject {subject_num} load failed ({exc}); using synthetic brain")
+            from phantom3d import generate_synthetic_3d_brain
+            return generate_synthetic_3d_brain()
+
+    def on_subject_change(self) -> None:
+        """Switch the Brain phantom to a different BrainWeb subject."""
+        n = int(self.brain_subject.get())
+        self.statusBar().showMessage(f"Loading BrainWeb subject {n:02d}…")  # type: ignore[union-attr]
+        QApplication.processEvents()
+        vol = self._load_brain(n)
+        self._region_cache["Brain"] = vol
+        self._brain_volume = vol
+        # fMRI activation is placed in this brain's cortex (cheap to rebuild);
+        # the synthetic TOF vessel tree is reused (it is not subject-specific).
+        self.activation_3d = add_activation_3d(vol)
+        if self.region.get() != "Brain":
+            self.region.set("Brain")
+            self._region_dd._combo.setCurrentText("Brain")
+        self.on_region_change()   # picks up the updated Brain cache + refreshes
 
     def on_region_change(self) -> None:
         name = self.region.get()
