@@ -393,7 +393,19 @@ class Simulator:
                 reconstructed = add_zipper_artifact(reconstructed, 0.3, 0.12)
         else:
             kspace_acquired = None
-            reconstructed = image
+            # Parameter maps are otherwise hard-edged (no texture/noise step). Apply
+            # partial-volume boundary mixing so a boundary voxel reports a
+            # fraction-weighted blend of its tissues — the real PVE in quantitative
+            # maps, and it removes the blocky segmented look. (fMRI statistical maps
+            # are left crisp — blurring activation would misrepresent it.)
+            pv_map = (params["sequence"] == "Quantitative (qMRI)" or
+                      (params["sequence"] == "Diffusion (DWI)"
+                       and params["diff_display"] in ("ADC Map", "FA Map")))
+            if pv_map and phantom_slice.shape == image.shape:
+                reconstructed = rendering.partial_volume(
+                    image, phantom_slice, params.get("pv_sigma", 10) / 10.0)
+            else:
+                reconstructed = image
 
         # Metrics
         TR, TE, FA = params["TR"], params["TE"], params["flip_angle"]

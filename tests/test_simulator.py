@@ -86,9 +86,12 @@ def test_each_sequence_renders_sane(sim, seq):
 
 
 def test_qmri_t1_map_recovers_tissue_values(sim):
-    """Full controller path: VFA T1 map recovers the tissue_db 3T values."""
+    """Full controller path: VFA T1 map recovers the tissue_db 3T values.
+
+    pv_sigma=0 isolates fit accuracy from partial-volume boundary blending
+    (which is exercised separately in test_rendering)."""
     p = base_params(sequence="Quantitative (qMRI)", qmri_display="T1 Map (VFA)",
-                    field_strength="3T")
+                    field_strength="3T", pv_sigma=0)
     t1, _ = sim.simulate(p)
     labels = sim._get_phantom_slice("axial", sim.slice_idx, p)
     assert t1.shape == labels.shape
