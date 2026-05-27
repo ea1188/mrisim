@@ -64,6 +64,13 @@ SEQUENCES = [
 ]
 
 
+def test_default_params_is_a_valid_contract(sim):
+    """simulator.default_params() drives a render end-to-end (headless API)."""
+    img, m = sim.simulate(simulator.default_params(matrix_size=64))
+    assert img.ndim == 2 and np.all(np.isfinite(img))
+    assert "scan_time" in m and m["scan_time"] > 0
+
+
 @pytest.mark.parametrize("seq", SEQUENCES)
 def test_each_sequence_renders_sane(sim, seq):
     """Every sequence dispatches to a finite, non-negative 2-D image with metrics."""

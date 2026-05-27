@@ -45,6 +45,38 @@ _PF_MAP: dict[str, float] = {
 }
 
 
+def default_params(**overrides) -> dict:
+    """A complete params dict for Simulator.simulate(), with sensible defaults.
+
+    This is the input contract for headless/scripted use — override any subset:
+
+        sim.simulate(default_params(sequence="Gradient Echo", TE=30, flip_angle=20))
+
+    Mirrors the parameter set the GUI assembles from its controls.
+    """
+    p = dict(
+        sequence="Spin Echo", TR=500.0, TE=15.0, TI=2548.0, flip_angle=90.0,
+        matrix_size=256, FOV=240.0, fov_fraction=100, bandwidth=125.0, NEX=1,
+        slice_thickness=1, accel_factor=1, accel_method="SENSE",
+        etl=16, echo_spacing=10.0,
+        b_value=1000.0, diff_direction="Left-Right", diff_display="DWI",
+        angio_type="TOF", angio_mip_slab=20,
+        fmri_display="EPI Image", fmri_volumes=100, fmri_threshold=3.0,
+        qmri_display="T1 Map (VFA)",
+        field_strength="3T", contrast_enabled=False, contrast_dose=1,
+        motion_enabled=False, motion_type="periodic", motion_amplitude=3.0,
+        chemical_shift_enabled=False, susceptibility_enabled=False,
+        susceptibility_strength=3.0, zipper_enabled=False, snr_level=35.0,
+        pf_enabled=False, pf_fraction="Full",
+        kspace_filter_enabled=False, kspace_filter_window="hamming",
+        b1_inhom_enabled=False, mt_enabled=False, mt_power=50,
+        epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
+        rician_bias_correction=False, pv_sigma=10,
+    )
+    p.update(overrides)
+    return p
+
+
 class Simulator:
     """Pure simulation controller. Set the volume + view attributes, call simulate()."""
 
