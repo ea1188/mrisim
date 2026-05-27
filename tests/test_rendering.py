@@ -245,6 +245,44 @@ def test_g_factor_is_cached_deterministic():
 
 
 # --------------------------------------------------------------------------- #
+# partial_volume
+# --------------------------------------------------------------------------- #
+def _two_tissue():
+    ph = np.zeros((40, 40), dtype=int)
+    ph[:, :20] = 2   # GM (signal 0.5)
+    ph[:, 20:] = 3   # WM (signal 0.8)
+    img = np.where(ph == 2, 0.5, 0.8).astype(float)
+    return ph, img
+
+
+def test_partial_volume_zero_sigma_is_identity():
+    ph, img = _two_tissue()
+    assert np.array_equal(rendering.partial_volume(img, ph, 0.0), img)
+
+
+def test_partial_volume_preserves_interiors():
+    ph, img = _two_tissue()
+    out = rendering.partial_volume(img, ph, 1.5)
+    assert out[:, 5] == pytest.approx(0.5, abs=1e-3)    # deep GM unchanged
+    assert out[:, 35] == pytest.approx(0.8, abs=1e-3)   # deep WM unchanged
+
+
+def test_partial_volume_mixes_at_boundary():
+    ph, img = _two_tissue()
+    out = rendering.partial_volume(img, ph, 1.5)
+    # boundary column sits between GM (0.5) and WM (0.8) -> intermediate value
+    edge = out[20, 19]
+    assert 0.5 < edge < 0.8
+    assert not np.isclose(edge, img[20, 19])
+
+
+def test_partial_volume_shape_mismatch_is_identity():
+    img = np.ones((10, 10))
+    ph = np.ones((8, 8), dtype=int)
+    assert np.array_equal(rendering.partial_volume(img, ph, 1.5), img)
+
+
+# --------------------------------------------------------------------------- #
 # EPI helpers
 # --------------------------------------------------------------------------- #
 def test_scale_to_peak_sets_p95_magnitude():

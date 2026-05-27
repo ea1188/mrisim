@@ -35,7 +35,7 @@ def base_params(**over):
         kspace_filter_enabled=False, kspace_filter_window="hamming",
         b1_inhom_enabled=False, mt_enabled=False, mt_power=50,
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
-        rician_bias_correction=False,
+        rician_bias_correction=False, pv_sigma=10,
     )
     p.update(over)
     return p

@@ -275,7 +275,8 @@ class Simulator:
             _tm = phantom_slice > 0
             image = image.astype(float, copy=True)
             image[_tm] = np.maximum(0.0, image[_tm] * (1.0 + 0.08 * _n[_tm]))
-            image = gaussian_filter(image, sigma=0.7)
+            # Partial-volume boundary mixing (pv tissue-fraction model)
+            image = rendering.partial_volume(image, phantom_slice, params.get("pv_sigma", 10) / 10.0)
             image[~_tm] = 0.0
 
         if not is_map:

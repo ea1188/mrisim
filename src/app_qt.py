@@ -297,6 +297,7 @@ class MRISimulator(QMainWindow):
         self.display_cmap = Var("gray")
         self.show_tissue_overlay = Var(False)
         self.rician_bias_correct = Var(False)
+        self.pv_sigma = Var(10)          # partial-volume PSF width, ×0.1 vox
 
         # Artifacts
         self.motion_enabled = Var(False)
@@ -951,6 +952,7 @@ class MRISimulator(QMainWindow):
         L.addWidget(disp_sec)
         DL = disp_sec.inner
         self._slider(DL, "Noise Level (SNR)", self.snr_level, 5, 100)
+        self._slider(DL, "Partial Volume (×0.1 vox)", self.pv_sigma, 0, 30)
         self._checkbox(DL, "Rician bias correction", self.rician_bias_correct)
         self._dropdown(DL, "Colormap", self.display_cmap,
                        ["gray", "bone", "hot", "plasma", "viridis", "magma"],
@@ -1059,6 +1061,7 @@ class MRISimulator(QMainWindow):
                 "epi_ghost": self.epi_ghost.get(), "epi_correct_ghost": self.epi_correct_ghost.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
                 "rician_bias_correction": self.rician_bias_correct.get(),
+                "pv_sigma": self.pv_sigma.get(),
                 "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),
                 "motion_type": self.motion_type.get(), "chemical_shift_enabled": self.chemical_shift_enabled.get(),
                 "susceptibility_enabled": self.susceptibility_enabled.get(),

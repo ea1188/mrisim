@@ -22,6 +22,7 @@ import mt
 import b1
 import coil
 import epi
+import pv
 
 
 # Gadolinium relaxivity constants (3T, Gd-DTPA)
@@ -180,6 +181,28 @@ def g_factor(acceleration: int, n_coils: int = 8) -> float:
         g = coil.g_factor_map(sens, R)
         _GFACTOR_CACHE[key] = float(np.median(g))
     return _GFACTOR_CACHE[key]
+
+
+def partial_volume(image: np.ndarray, phantom_slice: np.ndarray,
+                   sigma_vox: float) -> np.ndarray:
+    """In-plane partial-volume mixing via pv tissue-fraction maps.
+
+    Boundary voxels become fraction-weighted blends of the adjacent tissues'
+    signals (pv.tissue_fraction_maps + pv.pv_signal_linear), modelling the finite
+    voxel PSF. Pure interiors keep their rendered texture: the fraction mix is
+    blended in by (1 − max tissue fraction), which is ~0 inside a tissue and
+    rises only at boundaries. sigma_vox ≤ 0 (or a shape mismatch) is a no-op.
+    """
+    if sigma_vox <= 0 or phantom_slice.shape != image.shape:
+        return image
+    fracs = pv.tissue_fraction_maps(phantom_slice, sigma_vox)
+    means = {lab: (float(image[phantom_slice == lab].mean())
+                   if np.any(phantom_slice == lab) else 0.0)
+             for lab in fracs}
+    mixed = pv.pv_signal_linear(fracs, means)
+    max_frac = np.maximum.reduce(list(fracs.values()))
+    w = np.clip(1.0 - max_frac, 0.0, 1.0)        # 0 in pure interiors, >0 at edges
+    return image * (1.0 - w) + mixed * w
 
 
 def gre_fw_phase_label(TE_ms: float, B0: float) -> str:
