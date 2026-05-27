@@ -110,15 +110,12 @@ class Simulator:
     def _tof_volume(self, TR: float, TE: float, FA: float) -> np.ndarray:
         """3D TOF intensity volume for the rotating MIP, cached.
 
-        Prefers the real TOF MRA dataset (real vessel anatomy) when present,
-        background-suppressed for projection; otherwise builds a synthetic TOF
-        volume from the current subject's vessel labels.
+        Built from the subject's synthetic vessel labels: blood is bright inflow
+        and stationary tissue is strongly suppressed, giving a clean
+        vessels-on-black angiogram. (The real TOF dataset was tried but its fat /
+        skull is as bright as the vessels and can't be isolated without
+        segmentation, so its MIP is hazy — the synthetic tree projects cleaner.)
         """
-        if self.real_tof is not None:
-            key = ("real", self.real_tof.shape)
-            if self._tof_cache is None or self._tof_cache[0] != key:
-                self._tof_cache = (key, angiography.prep_realtof_volume(self.real_tof))
-            return self._tof_cache[1]
         vol = self.vessels
         key = (vol.shape, int(vol.sum()), round(TR, 1), round(TE, 1), round(FA, 1))
         if self._tof_cache is None or self._tof_cache[0] != key:

@@ -8,20 +8,27 @@ def add_vessels_3d(phantom: np.ndarray) -> np.ndarray:
     x, y, z = np.mgrid[:nx, :ny, :nz]
     
     vessels = np.zeros_like(phantom, dtype=bool)
-    
+    rng = np.random.default_rng(12345)   # deterministic organic meander
+
     # Helper to add a vessel segment between two 3D points
     def add_vessel_segment(p1: tuple, p2: tuple, radius: float, taper: float = 0) -> None:
-        """Draw a vessel between two points with given radius."""
-        num_steps = int(np.linalg.norm(np.array(p2) - np.array(p1)) * 2) + 5
+        """Draw a vessel between two points, with a smooth random meander and
+        distal tapering so it reads as an organic vessel rather than a drawn line."""
+        p1 = np.array(p1, dtype=float); p2 = np.array(p2, dtype=float)
+        num_steps = int(np.linalg.norm(p2 - p1) * 2) + 5
+        # low-frequency sinusoidal wobble (amplitude ~1-2 voxels, random phase/freq)
+        amp = rng.uniform(0.6, 1.8, size=3)
+        phase = rng.uniform(0, 2 * np.pi, size=3)
+        freq = rng.uniform(0.7, 2.2)
         for i in range(num_steps):
             t = i / max(num_steps - 1, 1)
-            pos = np.array(p1) * (1 - t) + np.array(p2) * t
+            wobble = amp * np.sin(2 * np.pi * freq * t + phase) * np.sin(np.pi * t)  # taper wobble at ends
+            pos = p1 * (1 - t) + p2 * t + wobble
             r = radius * (1 - taper * t)
             if r < 1:
                 r = 1
             dist = np.sqrt((x - pos[0])**2 + (y - pos[1])**2 + (z - pos[2])**2)
-            vessels_local = dist < r
-            vessels.__ior__(vessels_local)
+            vessels.__ior__(dist < r)
     
     # Helper for curved vessel
     def add_curved_vessel(points: list, radius: float, taper: float = 0) -> None:
