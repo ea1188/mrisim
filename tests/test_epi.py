@@ -255,14 +255,35 @@ class TestSimulateEpi:
         gsr_ghost = ghost_ratio(np.abs(recon_ghost))
         assert gsr_ghost > gsr_clean
 
+    def _half_phantom(self, size=48):
+        # Object confined to the top half so the N/2 ghost lands in the
+        # otherwise-empty bottom half — makes ghost_ratio discriminating.
+        img = np.zeros((size, size))
+        img[size // 8: 3 * size // 8, size // 4: 3 * size // 4] = 1.0
+        return img
+
     def test_correction_reduces_ghost(self):
-        img = self._phantom(32)
-        _, ks_ghost = simulate_epi(img, phase_offset_rad=0.3)
-        recon_uncorr, _ = simulate_epi(img, phase_offset_rad=0.3, correct_ghost=False)
-        recon_corr, _   = simulate_epi(img, phase_offset_rad=0.3, correct_ghost=True)
-        gsr_uncorr = ghost_ratio(np.abs(recon_uncorr))
-        gsr_corr   = ghost_ratio(np.abs(recon_corr))
-        assert gsr_corr <= gsr_uncorr + 0.05
+        img = self._half_phantom()
+        g_clean  = ghost_ratio(np.abs(simulate_epi(img)[0]))
+        g_uncorr = ghost_ratio(np.abs(simulate_epi(img, phase_offset_rad=0.4)[0]))
+        g_corr   = ghost_ratio(np.abs(
+            simulate_epi(img, phase_offset_rad=0.4, correct_ghost=True)[0]))
+        assert g_uncorr > g_clean + 0.05      # a real ghost is present
+        assert g_corr < 0.25 * g_uncorr       # navigator correction removes most of it
+
+    def test_correction_handles_linear_ramp_ghost(self):
+        img = self._half_phantom()
+        g_uncorr = ghost_ratio(np.abs(simulate_epi(
+            img, phase_offset_rad=0.3, linear_phase_rad_per_sample=0.02)[0]))
+        g_corr = ghost_ratio(np.abs(simulate_epi(
+            img, phase_offset_rad=0.3, linear_phase_rad_per_sample=0.02,
+            correct_ghost=True)[0]))
+        assert g_corr < 0.5 * g_uncorr
+
+    def test_correction_no_ghost_is_near_identity(self):
+        img = self._half_phantom()
+        recon_corr, _ = simulate_epi(img, phase_offset_rad=0.0, correct_ghost=True)
+        np.testing.assert_allclose(np.abs(recon_corr), img, atol=1e-6)
 
     def test_kspace_is_complex(self):
         img = self._phantom()

@@ -42,41 +42,62 @@ def epi_trajectory(n_freq: int, n_phase: int,
     return kx, ky, t
 
 
-def epi_phase_correction(kspace: np.ndarray, n_ref_lines: int = 3) -> np.ndarray:
-    """Estimate and remove linear phase error between even and odd EPI lines.
+def epi_phase_correction(kspace: np.ndarray,
+                         nav_even: np.ndarray | None = None,
+                         nav_odd: np.ndarray | None = None,
+                         n_ref_lines: int = 3) -> np.ndarray:
+    """Estimate and remove the even/odd readout phase error (Nyquist ghost).
 
-    Uses reference lines (acquired without phase encoding) to estimate
-    the zeroth- and first-order phase offsets between polarity groups,
-    then applies the correction to all lines.
+    The polarity phase error must be estimated from data in which the object
+    contribution is identical for both polarities — otherwise the object's
+    natural line-to-line phase swamps the estimate. This is what navigator
+    echoes provide: the same ky=0 profile read out with both gradient
+    polarities, so taking their phase difference cancels the object and leaves
+    only the polarity error.
 
     Parameters
     ----------
-    kspace : (n_phase, n_freq) complex  raw EPI k-space
-    n_ref_lines : int  number of reference lines used for estimation
+    kspace : (n_phase, n_freq) complex  raw EPI k-space; odd lines are assumed
+        kx-reversed (acquisition order), and the correction is applied in that
+        reversed frame.
+    nav_even, nav_odd : (n_freq,) or (n_nav, n_freq) complex, or None
+        Navigator echoes at ky=0 for the even and odd readout polarity. When
+        omitted, falls back to central phase-encoded lines (approximate — the
+        object phase leaks in, so prefer supplying navigators).
+    n_ref_lines : int  number of central lines used by the fallback estimator
 
     Returns
     -------
     corrected : (n_phase, n_freq) complex
     """
     n_phase, n_freq = kspace.shape
-    # Use the first few even and odd lines as references
-    even_lines = kspace[0:2 * n_ref_lines:2]
-    odd_lines  = kspace[1:2 * n_ref_lines:2]
+    x = np.arange(n_freq, dtype=float) - n_freq / 2.0
 
-    # Average phase difference between reversed odd and even lines
-    odd_rev = odd_lines[:, ::-1]
-    phase_diff = np.angle(
-        np.mean(odd_rev * np.conj(even_lines), axis=0))  # (n_freq,)
+    if nav_even is not None and nav_odd is not None:
+        ne = np.atleast_2d(np.asarray(nav_even, dtype=complex))
+        no = np.atleast_2d(np.asarray(nav_odd, dtype=complex))
+        # Un-reverse the odd-polarity navigator to align kx, then the object
+        # cancels and only the polarity phase survives.
+        prod = np.mean(no[:, ::-1] * np.conj(ne), axis=0)
+    else:
+        # Fallback: central phase-encoded lines (object phase contaminates this).
+        c = (n_phase // 2) - (n_phase // 2) % 2          # an even line index
+        ev = kspace[c:c + 2 * n_ref_lines:2]
+        od = kspace[c + 1:c + 1 + 2 * n_ref_lines:2]
+        m = min(len(ev), len(od))
+        prod = np.mean(od[:m, ::-1] * np.conj(ev[:m]), axis=0)
 
-    # Fit zeroth + first order to the phase difference
-    x = np.arange(n_freq, dtype=float) - n_freq / 2.
-    coeffs = np.polyfit(x, phase_diff, 1)
+    # Magnitude-weighted linear fit of the phase: samples near k-space nulls
+    # (|prod|≈0) carry meaningless phase and must not bias the estimate.
+    phase_diff = np.angle(prod)
+    weights = np.abs(prod)
+    coeffs = np.polyfit(x, phase_diff, 1, w=weights)
     linear_phase = np.polyval(coeffs, x)
 
+    # Odd lines are kx-reversed in the acquisition, so apply the reversed ramp.
     corrected = kspace.copy()
-    for i in range(n_phase):
-        if i % 2 == 1:
-            corrected[i] = kspace[i] * np.exp(-1j * linear_phase)
+    for i in range(1, n_phase, 2):
+        corrected[i] = kspace[i] * np.exp(-1j * linear_phase[::-1])
     return corrected
 
 
@@ -270,13 +291,24 @@ def simulate_epi(signal_image: np.ndarray, b0_slice_hz: np.ndarray | None = None
             else:
                 kspace_epi[i] = ks_line
 
+    # Navigator echoes: the ky=0 profile read out with each gradient polarity,
+    # carrying the same polarity phase error but no phase encoding (so the
+    # object cancels when their phase difference is taken during correction).
+    nav_line = kspace_ideal[rows // 2].copy()
+    nav_even = nav_line
+    nav_odd = nav_line[::-1].copy()
+    if phase_offset_rad != 0.0 or linear_phase_rad_per_sample != 0.0:
+        ramp = phase_offset_rad + linear_phase_rad_per_sample * np.arange(cols, dtype=float)
+        nav_odd = nav_odd * np.exp(1j * ramp)
+
     # Nyquist ghost
     if phase_offset_rad != 0.0 or linear_phase_rad_per_sample != 0.0:
         kspace_epi = add_nyquist_ghost(kspace_epi, phase_offset_rad,
                                         linear_phase_rad_per_sample)
 
-    # Optional ghost correction
-    kspace_recon = epi_phase_correction(kspace_epi) if correct_ghost else kspace_epi
+    # Optional ghost correction (navigator-based: object phase cancels)
+    kspace_recon = (epi_phase_correction(kspace_epi, nav_even, nav_odd)
+                    if correct_ghost else kspace_epi)
 
     # Undo odd-line reversal before IFFT
     kspace_ordered = kspace_recon.copy()

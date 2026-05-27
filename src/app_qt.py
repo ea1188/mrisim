@@ -297,6 +297,7 @@ class MRISimulator(QMainWindow):
         self.epi_esp = Var(5)            # echo spacing, ×0.1 ms  (5 = 0.5 ms)
         self.epi_b0_hz = Var(60)         # peak B0 off-resonance, Hz
         self.epi_ghost = Var(10)         # Nyquist ghost phase, ×0.01 rad
+        self.epi_correct_ghost = Var(False)   # navigator-based ghost correction
 
         # Display options
         self.display_cmap = Var("gray")
@@ -865,6 +866,7 @@ class MRISimulator(QMainWindow):
         self._slider(epi_l, "Echo Spacing (×0.1 ms)", self.epi_esp, 3, 15)
         self._slider(epi_l, "B0 off-resonance (Hz)", self.epi_b0_hz, 0, 300)
         self._slider(epi_l, "Nyquist ghost (×0.01 rad)", self.epi_ghost, 0, 40)
+        self._checkbox(epi_l, "Ghost correction (navigator)", self.epi_correct_ghost)
         epi_hint = QLabel("Single-shot GRE-EPI: B0 warps geometry in the phase-encode (vertical) axis; even/odd phase errors give the N/2 ghost.")
         epi_hint.setWordWrap(True); epi_hint.setStyleSheet("color:#7a8aaa; font-size:9px; padding-left:4px;")
         epi_l.addWidget(epi_hint)
@@ -1066,7 +1068,7 @@ class MRISimulator(QMainWindow):
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
                 "epi_esp": self.epi_esp.get(), "epi_b0_hz": self.epi_b0_hz.get(),
-                "epi_ghost": self.epi_ghost.get(),
+                "epi_ghost": self.epi_ghost.get(), "epi_correct_ghost": self.epi_correct_ghost.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
                 "rician_bias_correction": self.rician_bias_correct.get(),
                 "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),
@@ -1297,7 +1299,7 @@ class MRISimulator(QMainWindow):
                     image, _t2s, _b0,
                     esp_ms=params.get("epi_esp", 5) / 10.0,
                     ghost_phase=params.get("epi_ghost", 0) / 100.0,
-                    correct_ghost=False)
+                    correct_ghost=params.get("epi_correct_ghost", False))
 
             _pf = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else None
             _fw = params.get("kspace_filter_window", "hamming") if params.get("kspace_filter_enabled") else None
