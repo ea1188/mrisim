@@ -575,6 +575,20 @@ def build_region(name: str) -> np.ndarray:
     raise KeyError(f"No builder for region {name!r}")
 
 
+def build_region_texture(name: str) -> "np.ndarray | None":
+    """Real-MRI anatomical texture field for *name*, aligned to build_region(name).
+
+    Returns None when the region has no real-MRI source (synthetic fallback or
+    the flat-NIfTI regions) — the renderer then uses its synthetic texture."""
+    try:
+        import os
+        from nifti_region import load_region_texture
+        _data = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+        return load_region_texture(name, _data)
+    except Exception:
+        return None
+
+
 # back-compat helper used by the earlier demo
 def generate_abdomen_axial(H: int = 260, W: int = 320, seed: int = 7) -> np.ndarray:
     gy, gx = np.ogrid[:H, :W]

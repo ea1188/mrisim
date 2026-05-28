@@ -273,10 +273,15 @@ def load_segmented_nifti(path: str, target_max: int = 256, scheme: str = "auto")
     if scheme == "auto":
         scheme = detect_scheme(np.unique(data))
 
+    zooms = img.header.get_zooms()[:3]                     # (sx, sy, sz) RAS
+    spacing_zyx = (float(zooms[2]), float(zooms[1]), float(zooms[0]))
+
     mr = _remap(data, scheme=scheme)       # still (X, Y, Z) RAS order
     vol = np.transpose(mr, (2, 1, 0))      # -> (Z, Y, X) to match get_slice
 
-    vol = _maybe_downsample(vol, target_max)   # shrink first (cheap), then fill
+    # Isotropic shape-based resample (fixes blocky reformats) capped at target_max,
+    # then synthesize the body fat/muscle envelope.
+    vol = resample_labels_isotropic(vol, spacing_zyx, max_dim=target_max)
     vol = _fill_body_fat(vol)
     return vol
 
@@ -360,6 +365,59 @@ def _maybe_downsample(vol: np.ndarray, target_max: int) -> np.ndarray:
     return vol[::step, ::step, ::step].copy()
 
 
+def resample_labels_isotropic(
+    vol: np.ndarray,
+    spacing_zyx: "tuple[float, float, float]",
+    target_mm: "float | None" = None,
+    max_dim: int = 256,
+) -> np.ndarray:
+    """Resample a uint8 label volume to (near-)isotropic voxels.
+
+    Anisotropic clinical scans (thick slices) reformat into blocky sagittal /
+    coronal images. We resample to ``target_mm`` isotropic using *shape-based*
+    interpolation: each label's binary mask is lightly smoothed, linearly
+    zoomed, and the per-voxel arg-max label is kept. That gives smooth,
+    label-preserving boundaries through-plane instead of nearest-neighbour
+    stair-steps — and it never invents a label that wasn't already present.
+
+    ``target_mm`` defaults to the finest (smallest) input spacing; the longest
+    output axis is capped at ``max_dim`` to bound memory / interactive cost.
+    Returns the input unchanged when it is already at the target sampling.
+    """
+    from scipy.ndimage import zoom, gaussian_filter
+
+    sz, sy, sx = (float(s) for s in spacing_zyx)
+    if target_mm is None:
+        target_mm = min(sz, sy, sx)
+    target_mm = max(target_mm, 1e-3)
+
+    Z, Y, X = vol.shape
+    tZ = max(1, int(round(Z * sz / target_mm)))
+    tY = max(1, int(round(Y * sy / target_mm)))
+    tX = max(1, int(round(X * sx / target_mm)))
+    longest = max(tZ, tY, tX)
+    if longest > max_dim:
+        scale = max_dim / longest
+        tZ = max(1, int(round(tZ * scale)))
+        tY = max(1, int(round(tY * scale)))
+        tX = max(1, int(round(tX * scale)))
+    if (tZ, tY, tX) == (Z, Y, X):
+        return vol
+
+    fac = (tZ / Z, tY / Y, tX / X)
+    labels = [int(v) for v in np.unique(vol) if v > 0]
+    best_val = np.zeros((tZ, tY, tX), dtype=np.float32)
+    out = np.zeros((tZ, tY, tX), dtype=np.uint8)
+    for lab in labels:
+        m = gaussian_filter((vol == lab).astype(np.float32), sigma=0.6)
+        mz = zoom(m, fac, order=1)
+        upd = mz > best_val
+        best_val[upd] = mz[upd]
+        out[upd] = lab
+    out[best_val < 0.5] = 0   # below half occupancy -> background
+    return out
+
+
 # Mapping from TotalSegmentatorMRI per-organ binary mask filename stems to
 # simulator MR tissue labels.  Used by load_totalseg_mri_subject().
 _SEG_FILE_TO_MR: dict[str, int] = {
@@ -435,16 +493,21 @@ _SEG_PRIORITY_GROUPS: list[list[str]] = [
     ["intervertebral_discs", "spinal_cord"],
 ]
 
-# Best representative TotalSegmentatorMRI subject for each body region.
-# s0001: chest+abdomen+upper pelvis at 1.5T GRE (liver, spleen, kidneys, spine)
-# s0008: dedicated pelvis FOV (sacrum, femurs, gluteal muscles, hips)
+# TotalSegmentatorMRI per-subject source: real MRI with scanner-adaptive
+# fat/muscle fill, resampled to isotropic at load. Subjects chosen for near-
+# isotropic acquisition (thin slices) AND full coverage of the region, so the
+# anatomy is real detail (not interpolated) and reformats stay crisp:
+#   s0153  abdomen — 1.1 mm, 3T, full organ coverage (liver/spleen/kidneys/pancreas)
+#   s0215  spine   — 1.17 mm isotropic, 1.5T (vertebrae, discs, cord)
+#   s0187  pelvis  — 1.5 mm, 3T (sacrum/hips/femurs, bladder)
 _REGION_TOTALSEG: dict[str, str] = {
-    "Abdomen": "s0001",
-    "Spine":   "s0001",
-    "Pelvis":  "s0008",
+    "Abdomen": "s0153",
+    "Spine":   "s0215",
+    "Pelvis":  "s0187",
 }
 
-# Fallback: flat combined NIfTI files (CT-scheme, less anatomically rich).
+# 1.5 mm-isotropic flat combined NIfTI (TotalSegmentator CT 'total' scheme),
+# used only as a fallback if the per-subject MRI data above is unavailable.
 _REGION_NIFTI = {
     "Abdomen": "s0009.nii.gz",
     "Spine":   "s0021.nii.gz",
@@ -455,35 +518,77 @@ _REGION_NIFTI = {
 def _classify_unlabeled_from_mri(
     label_vol: np.ndarray,
     mri_vol: np.ndarray,
-    fat_thresh: float = 380.0,
-    body_thresh: float = 60.0,
+    fat_thresh: "float | None" = None,
+    body_thresh: "float | None" = None,
+    fat_pct: float = 72.0,
 ) -> np.ndarray:
     """Fill unlabeled interior voxels using real MRI intensity.
 
-    Uses the MRI image to define the body boundary (intensity > body_thresh),
-    then assigns fat (label 4) to bright unlabeled voxels and muscle (label 6)
-    to medium-intensity ones.  Existing segmented labels are never overwritten.
+    Uses the MRI image to define the body boundary, then assigns fat (label 4)
+    to bright unlabeled voxels and muscle (label 6) to medium-intensity ones.
+    Existing segmented labels are never overwritten.
+
+    Thresholds are *scanner-adaptive* by default (``fat_thresh``/``body_thresh``
+    = None): they are derived per slice from the MRI intensity distribution so
+    the fill generalises across the dataset's many scanners / sequences instead
+    of assuming one fixed intensity scale. The body cut is a low percentile of
+    the positive intensities; fat is the brightest ``fat_pct`` percentile within
+    the body silhouette. Passing explicit values restores fixed-threshold mode.
     """
     out = label_vol.copy()
     nz = min(label_vol.shape[0], mri_vol.shape[0])
     for z in range(nz):
         sl = label_vol[z]
         mri_sl = mri_vol[z].astype(float)
-        body = _slice_silhouette(mri_sl > body_thresh)
+
+        if body_thresh is None:
+            pos = mri_sl[mri_sl > 0]
+            bt = max(0.10 * float(mri_sl.max()),
+                     float(np.percentile(pos, 20))) if pos.size else 0.0
+        else:
+            bt = body_thresh
+
+        body = _slice_silhouette(mri_sl > bt)
         empty = body & (sl == 0)
         if not empty.any():
             continue
-        out[z][empty & (mri_sl >= fat_thresh)] = 4   # subcutaneous / mesenteric fat
-        out[z][empty & (mri_sl < fat_thresh)] = 6    # abdominal wall / unlabeled muscle
+
+        if fat_thresh is None:
+            in_body = mri_sl[body]
+            ft = float(np.percentile(in_body, fat_pct)) if in_body.size > 10 else bt
+        else:
+            ft = fat_thresh
+
+        out[z][empty & (mri_sl >= ft)] = 4   # subcutaneous / mesenteric fat
+        out[z][empty & (mri_sl < ft)] = 6    # abdominal wall / unlabeled muscle
     return out
+
+
+def _mri_texture(mri: np.ndarray, sigma: float = 2.0,
+                 lo: float = 0.6, hi: float = 1.5) -> np.ndarray:
+    """Local-detail (anatomical texture) field of a real MRI, centred on 1.0.
+
+    The simulator renders flat per-label signal, which looks 'painted'. Real
+    parenchyma, vessels and organ heterogeneity live in the *high-frequency*
+    component of the acquired image. Dividing the MRI by a smoothed copy yields
+    a contrast-independent multiplicative texture (≈1.0 in uniform regions,
+    higher/lower on real detail) that we modulate the synthetic signal with,
+    preserving label-based TR/TE contrast while restoring realism.
+    """
+    from scipy.ndimage import gaussian_filter
+    mri = np.asarray(mri, dtype=np.float32)
+    sm = gaussian_filter(mri, sigma=sigma)
+    tex = np.where(sm > 1e-6, mri / sm, 1.0)
+    return np.clip(tex, lo, hi).astype(np.float32)
 
 
 def load_totalseg_mri_subject(
     subject_dir: str,
     target_max: int = 256,
-    fat_threshold: float = 380.0,
-    body_threshold: float = 60.0,
-) -> np.ndarray:
+    fat_threshold: "float | None" = None,
+    body_threshold: "float | None" = None,
+    with_texture: bool = False,
+) -> "np.ndarray | tuple[np.ndarray, np.ndarray]":
     """Build a rich multi-label atlas from a TotalSegmentatorMRI per-subject dir.
 
     Combines up to 56 per-organ binary masks into a single uint8 label volume,
@@ -491,8 +596,10 @@ def load_totalseg_mri_subject(
     voxels (subcutaneous fat, abdominal wall muscle, mesenteric fat) using
     intensity thresholding.
 
-    Returns a uint8 volume in simulator (Z, Y, X) convention, downsampled so
-    the longest axis <= target_max voxels.
+    Returns a uint8 volume in simulator (Z, Y, X) convention, resampled to
+    isotropic with the longest axis <= target_max. If ``with_texture`` is set,
+    returns ``(labels, texture)`` where texture is a float32 real-MRI detail
+    field at the same shape (see :func:`_mri_texture`).
     """
     import nibabel as nib
 
@@ -503,6 +610,7 @@ def load_totalseg_mri_subject(
 
     mri_img = nib.as_closest_canonical(nib.load(mri_path))
     mri_xyz = np.asarray(mri_img.dataobj).astype(np.float32)  # (X, Y, Z) RAS+
+    zooms = mri_img.header.get_zooms()[:3]                     # (sx, sy, sz)
 
     label_xyz = np.zeros(mri_xyz.shape, dtype=np.uint8)
 
@@ -522,14 +630,37 @@ def load_totalseg_mri_subject(
     label_zyx = np.transpose(label_xyz, (2, 1, 0))
     mri_zyx = np.transpose(mri_xyz, (2, 1, 0))
 
-    # Downsample with the same step so shapes stay aligned
+    # Cap the *working* grid only if the native volume is very large, so the
+    # per-slice fill stays fast without discarding resolution for normal subjects
+    # (the final isotropic resample does the real downsizing to target_max).
     m = max(label_zyx.shape)
-    step = max(1, int(np.ceil(m / target_max)))
-    label_zyx = label_zyx[::step, ::step, ::step].copy()
-    mri_zyx = mri_zyx[::step, ::step, ::step].copy()
+    work_cap = 2 * target_max
+    if m > work_cap:
+        step = int(np.ceil(m / work_cap))
+        label_zyx = label_zyx[::step, ::step, ::step].copy()
+        mri_zyx = mri_zyx[::step, ::step, ::step].copy()
+    else:
+        step = 1
 
-    label_zyx = _classify_unlabeled_from_mri(label_zyx, mri_zyx, fat_threshold, body_threshold)
-    return label_zyx
+    label_filled = _classify_unlabeled_from_mri(label_zyx, mri_zyx, fat_threshold, body_threshold)
+
+    # Resample to isotropic so sagittal/coronal reformats are smooth rather than
+    # stair-stepped. Spacing is (sz, sy, sx), scaled by any working-grid step.
+    spacing_zyx = (float(zooms[2]) * step, float(zooms[1]) * step, float(zooms[0]) * step)
+    labels_iso = resample_labels_isotropic(label_filled, spacing_zyx, max_dim=target_max)
+
+    if not with_texture:
+        return labels_iso
+
+    # Real-MRI texture, resampled (linear) to exactly match the iso label grid.
+    from scipy.ndimage import zoom
+    tex = _mri_texture(mri_zyx)
+    if tex.shape == labels_iso.shape:
+        tex_iso = tex
+    else:
+        zf = [labels_iso.shape[i] / tex.shape[i] for i in range(3)]
+        tex_iso = zoom(tex, zf, order=1).astype(np.float32)
+    return labels_iso, tex_iso
 
 
 def load_region_nifti(
@@ -551,12 +682,13 @@ def load_region_nifti(
     if subj_name is not None:
         ts_root = os.path.join(data_dir, "TotalsegmentatorMRI_dataset_v100", subj_name)
         if os.path.isdir(ts_root):
-            cache = os.path.join(ts_root, f"atlas_{target_max}.npy")
+            cache = os.path.join(ts_root, f"atlas_iso_adapt_{target_max}.npy")
             if os.path.exists(cache):
                 return np.load(cache)
             try:
-                vol = load_totalseg_mri_subject(ts_root, target_max=target_max)
+                vol, tex = load_totalseg_mri_subject(ts_root, target_max=target_max, with_texture=True)
                 np.save(cache, vol)
+                np.save(os.path.join(ts_root, f"texture_iso_adapt_{target_max}.npy"), tex)
                 return vol
             except Exception as exc:
                 print(f"nifti_region: TotalSegMRI load failed for {subj_name}: {exc}")
@@ -568,7 +700,7 @@ def load_region_nifti(
     nii_path = os.path.join(data_dir, filename)
     if not os.path.exists(nii_path):
         return None
-    cache_path = nii_path.replace(".nii.gz", "_mr.npy")
+    cache_path = nii_path.replace(".nii.gz", f"_mr_iso{target_max}.npy")
     if os.path.exists(cache_path):
         return np.load(cache_path)
     try:
@@ -578,3 +710,36 @@ def load_region_nifti(
     except Exception as exc:
         print(f"nifti_region: could not load {nii_path}: {exc}")
         return None
+
+
+def load_region_texture(
+    region: str,
+    data_dir: str,
+    *,
+    target_max: int = 256,
+) -> "np.ndarray | None":
+    """Real-MRI anatomical texture field for *region*, aligned to its label
+    volume (same shape), for multiplicative signal modulation in the renderer.
+
+    Only the TotalSegmentatorMRI per-subject sources carry a texture (the flat
+    NIfTI fallback and the brain have none). Returns ``None`` when unavailable.
+    Builds the cache on first use by loading the region (which writes both the
+    label atlas and its sibling texture file)."""
+    subj_name = _REGION_TOTALSEG.get(region)
+    if subj_name is None:
+        return None
+    ts_root = os.path.join(data_dir, "TotalsegmentatorMRI_dataset_v100", subj_name)
+    if not os.path.isdir(ts_root):
+        return None
+    tex_cache = os.path.join(ts_root, f"texture_iso_adapt_{target_max}.npy")
+    if not os.path.exists(tex_cache):
+        # Build both caches together (the atlas cache may already exist from an
+        # earlier label-only load, which wouldn't have written the texture).
+        try:
+            vol, tex = load_totalseg_mri_subject(ts_root, target_max=target_max, with_texture=True)
+            np.save(os.path.join(ts_root, f"atlas_iso_adapt_{target_max}.npy"), vol)
+            np.save(tex_cache, tex)
+        except Exception as exc:
+            print(f"nifti_region: texture build failed for {subj_name}: {exc}")
+            return None
+    return np.load(tex_cache)

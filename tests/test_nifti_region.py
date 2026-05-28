@@ -12,6 +12,7 @@ from nifti_region import (
     _fill_body_layers,
     _fill_body_fat,
     _maybe_downsample,
+    resample_labels_isotropic,
     _REGION_NIFTI,
     _REGION_TOTALSEG,
     _SEG_FILE_TO_MR,
@@ -449,6 +450,63 @@ class TestMaybeDownsample:
 
 
 # ---------------------------------------------------------------------------
+# resample_labels_isotropic
+# ---------------------------------------------------------------------------
+class TestResampleLabelsIsotropic:
+    def _anisotropic_block(self, Z=12, H=40, W=40):
+        """A thick-sliced volume: a solid label block centred in the volume."""
+        vol = np.zeros((Z, H, W), dtype=np.uint8)
+        vol[3:9, 8:32, 8:32] = 7   # liver-ish block
+        return vol
+
+    def test_identity_when_already_isotropic(self):
+        vol = self._anisotropic_block()
+        out = resample_labels_isotropic(vol, (1.5, 1.5, 1.5), max_dim=256)
+        assert out is vol  # unchanged sampling -> returned as-is
+
+    def test_thick_slices_upsample_z(self):
+        # 8 mm slices, 1.5 mm in-plane -> Z should grow ~5x toward isotropy
+        vol = self._anisotropic_block(Z=12, H=40, W=40)
+        out = resample_labels_isotropic(vol, (8.0, 1.5, 1.5), max_dim=256)
+        assert out.shape[0] > vol.shape[0]
+        # in-plane unchanged (already at target 1.5 mm)
+        assert out.shape[1:] == vol.shape[1:]
+
+    def test_output_is_near_isotropic_ratio(self):
+        vol = self._anisotropic_block(Z=10, H=50, W=50)
+        out = resample_labels_isotropic(vol, (8.0, 1.5, 1.5), max_dim=256)
+        ratio = max(out.shape) / min(out.shape)
+        assert ratio < 2.0, f"still anisotropic: {out.shape}"
+
+    def test_dtype_uint8(self):
+        vol = self._anisotropic_block()
+        out = resample_labels_isotropic(vol, (6.0, 1.5, 1.5))
+        assert out.dtype == np.uint8
+
+    def test_no_new_labels_introduced(self):
+        vol = self._anisotropic_block()
+        vol[5, 15:20, 15:20] = 9   # add a second label
+        out = resample_labels_isotropic(vol, (6.0, 1.5, 1.5))
+        assert set(np.unique(out).tolist()).issubset({0, 7, 9})
+
+    def test_label_survives_resampling(self):
+        vol = self._anisotropic_block()
+        out = resample_labels_isotropic(vol, (6.0, 1.5, 1.5))
+        assert 7 in np.unique(out)
+
+    def test_longest_axis_capped_at_max_dim(self):
+        vol = self._anisotropic_block(Z=10, H=80, W=80)
+        out = resample_labels_isotropic(vol, (8.0, 1.5, 1.5), max_dim=64)
+        assert max(out.shape) <= 64
+
+    def test_background_preserved(self):
+        vol = self._anisotropic_block()
+        out = resample_labels_isotropic(vol, (6.0, 1.5, 1.5))
+        # corners are background and must stay background
+        assert out[0, 0, 0] == 0
+
+
+# ---------------------------------------------------------------------------
 # load_segmented_nifti  (skipped if nibabel unavailable or no test file exists)
 # ---------------------------------------------------------------------------
 @pytest.mark.skipif(not HAS_NIBABEL, reason="nibabel not installed")
@@ -592,14 +650,12 @@ class TestSegFileToMr:
 # _REGION_TOTALSEG
 # ---------------------------------------------------------------------------
 class TestRegionTotalsegRegistry:
-    def test_all_three_regions_defined(self):
-        for name in ("Abdomen", "Spine", "Pelvis"):
-            assert name in _REGION_TOTALSEG, f"{name} missing from _REGION_TOTALSEG"
-
-    def test_different_subjects_for_abdomen_and_pelvis(self):
-        # Abdomen/Spine use chest scan; Pelvis uses dedicated pelvis scan
-        assert _REGION_TOTALSEG["Abdomen"] == _REGION_TOTALSEG["Spine"]
-        assert _REGION_TOTALSEG["Pelvis"] != _REGION_TOTALSEG["Abdomen"]
+    def test_all_three_regions_use_totalseg_subjects(self):
+        # All three regions use near-isotropic real-MRI subjects (adaptive fill +
+        # isotropic resample), not the thick-sliced or CT-scheme flat fallbacks.
+        for region in ("Abdomen", "Spine", "Pelvis"):
+            assert region in _REGION_TOTALSEG, f"{region} missing from _REGION_TOTALSEG"
+        assert len(set(_REGION_TOTALSEG.values())) == 3   # distinct subject per region
 
     def test_knee_not_in_registry(self):
         assert "Knee" not in _REGION_TOTALSEG
@@ -730,6 +786,18 @@ class TestLoadRegionNiftiIntegration:
         for region in ("Abdomen", "Spine", "Pelvis"):
             vol = build_region(region)
             assert vol.ndim == 3 and vol.dtype == np.uint8
+
+    def test_regions_are_volumetric_not_thick_sliced(self):
+        # Voxels are isotropic by construction (resample_labels_isotropic); here we
+        # guard against regressing to the old thick-sliced atlases (~34 slices):
+        # the volume must be genuinely 3D with a substantial through-plane extent.
+        # (The A/P axis can be a thin FOV slab on dedicated spine scans, so we
+        # check absolute extents, not a shape-aspect ratio.)
+        from body_phantoms import build_region
+        for region in ("Abdomen", "Spine", "Pelvis"):
+            vol = build_region(region)
+            assert vol.shape[0] >= 120, f"{region} too few S/I slices: {vol.shape}"
+            assert min(vol.shape) >= 40, f"{region} a degenerate axis: {vol.shape}"
 
 
 # ---------------------------------------------------------------------------
