@@ -62,6 +62,7 @@ def default_params(**overrides) -> dict:
         etl=16, echo_spacing=10.0,
         b_value=1000.0, diff_direction="Left-Right", diff_display="DWI",
         angio_type="TOF", angio_mip_slab=20, angio_azimuth=0, angio_elevation=0,
+        angio_fast=False,
         fmri_display="EPI Image", fmri_volumes=100, fmri_threshold=3.0,
         qmri_display="T1 Map (VFA)",
         field_strength="3T", contrast_enabled=False, contrast_dose=1,
@@ -91,6 +92,7 @@ class Simulator:
         self.vessels: np.ndarray | None = None        # phantom_3d_vessels (MRA)
         self.activation: np.ndarray | None = None      # activation_3d (fMRI)
         self.real_tof: np.ndarray | None = None
+        self.texture: np.ndarray | None = None          # real-MRI detail field (body regions)
         self.native_fov: float = 220.0
 
         # View / geometry state (set by the caller before simulate)
@@ -139,12 +141,15 @@ class Simulator:
         center[cfg["inplane_axis"]] = vol.shape[cfg["inplane_axis"]] / 2.0 + self.inplane_off
         return center
 
-    def _get_phantom_slice(self, orient: str, sl_idx: int, params: dict) -> np.ndarray:
-        """Phantom label slice with FOV crop / oblique sampling applied."""
+    def _get_phantom_slice(self, orient: str, sl_idx: int, params: dict,
+                           volume: "np.ndarray | None" = None) -> np.ndarray:
+        """Slice through ``volume`` (default self.volume) with the same FOV crop /
+        oblique sampling as the phantom, so companion volumes (e.g. the fMRI
+        activation map) stay pixel-aligned with the rendered phantom slice."""
+        vol = self.volume if volume is None else volume
         if self.fov_planning and (abs(self.tilt) > 0.5 or abs(self.rot) > 0.5):
             from oblique import plane_from_angles, oblique_plane
             _, row_vec, col_vec = plane_from_angles(orient, tilt_deg=self.tilt, rot_deg=self.rot)
-            vol = self.volume
             cfg = sg.cfg_for(orient)
             center = self._compute_slab_center(orient, sl_idx)
             center[cfg["through_axis"]] = float(sl_idx)
@@ -152,7 +157,7 @@ class Simulator:
             return oblique_plane(vol, row_vec, col_vec, center,
                                  shape=(max_dim, max_dim), order=0)
 
-        ph = get_slice(self.volume, orient, sl_idx)
+        ph = get_slice(vol, orient, sl_idx)
         fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self.native_fov)
         if fov_frac < 0.99:
             ph = sg.fov_crop(orient, ph, fov_frac, 0.0)
@@ -266,12 +271,19 @@ class Simulator:
                 return simulate_fa_map_3d(phantom_slice)
         elif seq == "MR Angiography":
             # Maneuverable rotating MIP of the 3D TOF volume (azimuth/elevation),
-            # the way an angiogram is reviewed — not a fixed slice.
-            return angiography.rotating_mip(self._tof_volume(TR, TE, FA),
+            # the way an angiogram is reviewed — not a fixed slice. During an
+            # interactive click-drag rotate, project a 2x-downsampled volume so the
+            # MIP stays responsive (~8x faster); full resolution renders on release.
+            tof = self._tof_volume(TR, TE, FA)
+            if params.get("angio_fast"):
+                tof = np.ascontiguousarray(tof[::2, ::2, ::2])
+            return angiography.rotating_mip(tof,
                                             params.get("angio_azimuth", 0),
                                             params.get("angio_elevation", 0))
         elif seq == "fMRI (BOLD)":
-            act = get_slice(self.activation, orient, sl_idx)
+            # Slice the activation with the SAME FOV crop / oblique geometry as the
+            # phantom so the two stay pixel-aligned (else masking raises IndexError).
+            act = self._get_phantom_slice(orient, sl_idx, params, volume=self.activation)
             if params["fmri_display"] == "EPI Image":
                 return simulate_fmri_3d_slice(phantom_slice, act, TR, TE, FA, True)
             elif params["fmri_display"] == "Activation Map":
@@ -319,16 +331,26 @@ class Simulator:
         # texture/k-space/noise pipeline and display the projection directly.
         is_map = is_map or (params["sequence"] == "MR Angiography")
 
-        # MR tissue texture: spatially-correlated multiplicative noise + PV blur.
-        # Deterministic per (orient, sl_idx) so parameter knobs don't flicker.
+        # MR tissue texture: when a real-MRI detail field is available (body
+        # regions) modulate the flat per-label signal by it, so organs show real
+        # parenchyma / vessels / heterogeneity while keeping label-based TR/TE
+        # contrast. Otherwise fall back to deterministic correlated noise.
         if not is_map and phantom_slice.shape == image.shape:
-            _rng = np.random.default_rng(
-                sl_idx * 7919 + {'axial': 0, 'coronal': 1, 'sagittal': 2}.get(orient, 0))
-            _n = gaussian_filter(_rng.standard_normal(image.shape).astype(float), sigma=2.5)
-            _n /= max(float(np.abs(_n).max()), 1e-9)
             _tm = phantom_slice > 0
             image = image.astype(float, copy=True)
-            image[_tm] = np.maximum(0.0, image[_tm] * (1.0 + 0.08 * _n[_tm]))
+            tex_slice = None
+            if self.texture is not None and self.texture.shape == self.volume.shape:
+                ts = self._get_phantom_slice(orient, sl_idx, params, volume=self.texture)
+                if ts.shape == image.shape:
+                    tex_slice = ts
+            if tex_slice is not None:
+                image[_tm] = np.maximum(0.0, image[_tm] * tex_slice[_tm])
+            else:
+                _rng = np.random.default_rng(
+                    sl_idx * 7919 + {'axial': 0, 'coronal': 1, 'sagittal': 2}.get(orient, 0))
+                _n = gaussian_filter(_rng.standard_normal(image.shape).astype(float), sigma=2.5)
+                _n /= max(float(np.abs(_n).max()), 1e-9)
+                image[_tm] = np.maximum(0.0, image[_tm] * (1.0 + 0.08 * _n[_tm]))
             # Partial-volume boundary mixing (pv tissue-fraction model)
             image = rendering.partial_volume(image, phantom_slice, params.get("pv_sigma", 10) / 10.0)
             image[~_tm] = 0.0
@@ -398,10 +420,15 @@ class Simulator:
             BW_hz = max(1.0, params["bandwidth"] * 1000.0)
             B0_snr = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
             g_factor = rendering.g_factor(R)
+            # Partial Fourier acquires only `_pf` of the phase-encode lines, so
+            # SNR drops ~sqrt(fraction) (fewer samples averaged), mirroring the
+            # scan-time reduction below.
+            pf_snr = np.sqrt(_pf) if _pf else 1.0
             eff_snr = (params["snr_level"]
                        * (vox_vol / self.VOX_REF)
                        * np.sqrt(max(1, params["NEX"]))
                        * np.sqrt(self.BW_REF / BW_hz)
+                       * pf_snr
                        / (g_factor * np.sqrt(R))
                        * (B0_snr / 3.0))
             eff_snr = float(np.clip(eff_snr, 1.0, 1e4))

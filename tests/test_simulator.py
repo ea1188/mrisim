@@ -130,6 +130,65 @@ def test_accel_lowers_snr_via_real_g_factor(sim):
     assert m3["g_factor"] > 1.2
 
 
+def test_partial_fourier_raises_noise(monkeypatch):
+    """Partial Fourier acquires fewer phase-encode lines, so SNR drops
+    ~sqrt(fraction) and the *calibrated* noise sigma rises by 1/sqrt(fraction).
+
+    The calibration sigma fed to add_rician_noise is deterministic; the metric
+    noise_sigma is re-measured off the (unseeded) noisy image, so we spy on the
+    actual sigma instead. With the tissue reference pinned, sigma == 1/eff_snr,
+    and this ratio collapses to 1.0 if the PF factor is dropped from eff_snr."""
+    import rician
+    captured = []
+    monkeypatch.setattr(rician, "add_rician_noise",
+                        lambda image, sigma, *a, **k: (captured.append(float(sigma)), image)[1])
+
+    vol = np.full((50, 70, 70), 3, np.uint8)   # uniform WM
+    s = simulator.Simulator()
+    s.volume = vol; s.vessels = vol * 0; s.activation = vol * 0
+    s.orientation = "axial"; s.slice_idx = 25; s.native_fov = 220.0
+    s._tissue_ref_signal = lambda recon, ph: 1.0   # pin reference -> isolate eff_snr
+
+    s.simulate(base_params(pf_enabled=False, pf_fraction="Full"))
+    s.simulate(base_params(pf_enabled=True, pf_fraction="5/8"))
+    sigma_full, sigma_pf = captured[0], captured[1]
+    ratio = sigma_pf / sigma_full
+    assert ratio == pytest.approx(1.0 / np.sqrt(0.625), rel=0.02)  # 1.0 without the fix
+
+
+def test_real_mri_texture_modulates_signal(monkeypatch):
+    """A real-MRI texture field multiplies the per-label signal (restoring organ
+    heterogeneity) while preserving label-based contrast. With noise disabled the
+    modulation is exact; a shape-mismatched texture is ignored (synthetic fallback)."""
+    import rician
+    monkeypatch.setattr(rician, "add_rician_noise", lambda img, s, *a, **k: img)
+    vol = np.full((40, 60, 60), 3, np.uint8)   # uniform WM
+    s = simulator.Simulator()
+    s.volume = vol; s.vessels = vol * 0; s.activation = vol * 0
+    s.orientation = "axial"; s.slice_idx = 20; s.native_fov = 220.0
+    p = base_params(sequence="Spin Echo", TR=500, TE=15, pv_sigma=0)
+
+    s.texture = np.full(vol.shape, 1.0, np.float32)
+    img1, _ = s.simulate(p); m1 = float(img1[img1 > 0].mean())
+    s.texture = np.full(vol.shape, 1.3, np.float32)
+    img2, _ = s.simulate(p); m2 = float(img2[img2 > 0].mean())
+    assert m2 / m1 == pytest.approx(1.3, rel=0.05)   # texture scales signal
+
+    s.texture = np.full((5, 5, 5), 1.3, np.float32)   # wrong shape -> ignored
+    img3, _ = s.simulate(p)
+    assert img3.shape == img1.shape
+
+
+@pytest.mark.parametrize("display", ["EPI Image", "Activation Map", "T-statistic Map"])
+def test_fmri_survives_fov_crop(sim, display):
+    """A reduced FOV crops the phantom slice; the activation slice must be cropped
+    with the SAME geometry or masking raises IndexError (regression: fMRI crash)."""
+    img, _ = sim.simulate(base_params(sequence="fMRI (BOLD)", fmri_display=display,
+                                       FOV=160, fmri_volumes=20))
+    ph = sim._get_phantom_slice("axial", sim.slice_idx, base_params(FOV=160))
+    assert img.shape == ph.shape and img.ndim == 2
+
+
 def test_synthetic_se_is_t1_weighted(sim):
     """Synthetic SE at short TR/TE shows T1 contrast (WM > GM > CSF), noiseless."""
     p = base_params(sequence="Quantitative (qMRI)", qmri_display="Synthetic SE",
