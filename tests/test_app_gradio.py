@@ -65,9 +65,9 @@ def test_compare_panels_render_independently_and_differ():
     sim_l, sim_r = Simulator(), Simulator()
 
     img_l, sim_l, img_r, sim_r = app.render_both(
-        region, "Spin Echo", "3T",
-        500.0, 15.0, 90.0, 2500.0,    # Panel A: T1-weighted
-        4000.0, 90.0, 90.0, 2500.0,   # Panel B: T2-weighted
+        region, "3T",
+        "Spin Echo", 500.0, 15.0, 90.0, 2500.0,    # Panel A: T1-weighted
+        "Spin Echo", 4000.0, 90.0, 90.0, 2500.0,   # Panel B: T2-weighted
         sim_l, sim_r,
     )
 
