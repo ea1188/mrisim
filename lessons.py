@@ -155,9 +155,19 @@ def get(key: str) -> "Lesson | None":
     return LESSONS.get(key)
 
 
+def null_ti(t1_ms: float) -> float:
+    """IR null TI (ms) for any tissue of T1 *t1_ms* — ln(2) × T1.
+
+    The general inversion-recovery null: an inverted tissue's longitudinal
+    magnetization crosses zero at ln(2) × T1. STIR uses it with fat's T1 (see
+    :func:`fat_null_ti`); FLAIR uses it with CSF's T1.
+    """
+    return FAT_NULL_FACTOR * t1_ms
+
+
 def fat_null_ti(t1_fat_ms: float) -> float:
     """STIR null TI (ms) for a fat T1 of *t1_fat_ms* — ln(2) × T1."""
-    return FAT_NULL_FACTOR * t1_fat_ms
+    return null_ti(t1_fat_ms)
 
 
 # --- Resolved, per-control view (pure; app.py maps this to gr.update) --------

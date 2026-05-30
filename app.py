@@ -44,6 +44,7 @@ from brainweb_loader import get_brainweb_or_synthetic
 from simulator import Simulator, default_params
 
 import lessons
+import annotations
 
 # Register body tissue properties with the engine's tissue tables (Abdomen,
 # Knee, Spine, Pelvis labels), exactly as the Qt app does on startup.
@@ -141,7 +142,7 @@ def render_mri(region, sequence, tr, te, flip, ti, field, sim):
     path (``_render_core``). The scan-time caption is surfaced on every render
     so the time/contrast trade-off is always visible beneath the image."""
     img, metrics, sim = _render_core(region, sequence, tr, te, flip, ti, field, sim)
-    return img, _scan_caption(metrics), sim
+    return img, _caption_block(metrics, sequence, tr, te, ti, field, region), sim
 
 
 def render_both(region, field,
@@ -169,6 +170,20 @@ def _scan_caption(metrics: dict) -> str:
     current parameters (one of the most clinically meaningful numbers)."""
     return (f"<div style='text-align:center;color:#9aa0a6;font-size:0.9em'>"
             f"⏱ Estimated scan time ≈ {_fmt_scan_time(metrics['scan_time'])}</div>")
+
+
+def _caption_block(metrics, sequence, tr, te, ti, field, region) -> str:
+    """The always-on caption beneath an image: the scan-time line plus, when a
+    teaching-meaningful condition holds, a quieter one-line annotation under it
+    (see ``annotations.py``). The annotation line is *always* emitted — empty
+    (a non-breaking space) when no rule fires — with a reserved height, so the
+    layout never shifts as annotations appear and disappear. In Compare mode
+    each panel calls this with its own params, so each gets its own annotation."""
+    note = annotations.annotation_line(
+        sequence=sequence, tr=tr, te=te, ti=ti, field=field, region=region)
+    return (_scan_caption(metrics) +
+            f"<div style='text-align:center;color:#8ab4f8;font-size:0.82em;"
+            f"font-style:italic;min-height:1.1em'>{note or '&nbsp;'}</div>")
 
 
 def _fat_null_text(field: str) -> str:
@@ -234,9 +249,13 @@ def apply_lesson(key, sim_l, sim_r):
     explanation = gr.update(value=view.explanation, visible=bool(view.explanation))
     target = (gr.update(value=_fat_null_text(view.field), visible=True)
               if view.show_target_ti else gr.update(value="", visible=False))
-    # Scan time is always shown beneath each image, in every mode.
-    scan_l = gr.update(value=_scan_caption(m_l), visible=True)
-    scan_r = gr.update(value=_scan_caption(m_r), visible=True)
+    # Scan time (plus any live annotation) is always shown beneath each image.
+    scan_l = gr.update(value=_caption_block(
+        m_l, c["sequence_l"].value, c["tr_l"].value, c["te_l"].value,
+        c["ti_l"].value, view.field, view.region), visible=True)
+    scan_r = gr.update(value=_caption_block(
+        m_r, c["sequence_r"].value, c["tr_r"].value, c["te_r"].value,
+        c["ti_r"].value, view.field, view.region), visible=True)
 
     def upd(name, **extra):
         cs = c[name]
