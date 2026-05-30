@@ -27,7 +27,7 @@ def test_render_callback_returns_2d_image():
     vol, _texture, _fov = app._region_data(region)
 
     sim = Simulator()
-    image, returned_sim = app.render_mri(
+    image, scan_caption, returned_sim = app.render_mri(
         region, "Spin Echo", tr=500.0, te=15.0, flip=90.0,
         ti=2500.0, field="3T", sim=sim,
     )
@@ -39,6 +39,9 @@ def test_render_callback_returns_2d_image():
     assert image.dtype == np.uint8
     assert image.max() > 0  # not a blank frame
 
+    # Scan-time caption is surfaced on every render (always-on under the image).
+    assert isinstance(scan_caption, str) and "scan time" in scan_caption.lower()
+
     # The same Simulator instance flows back for reuse in gr.State.
     assert returned_sim is sim
     assert returned_sim.orientation == "axial"
@@ -47,7 +50,7 @@ def test_render_callback_returns_2d_image():
 def test_render_callback_creates_simulator_when_state_empty():
     """First interaction in a fresh session (state is None) lazily builds a
     per-session Simulator rather than relying on a module global."""
-    image, sim = app.render_mri(
+    image, _scan, sim = app.render_mri(
         "Knee", "Gradient Echo", tr=300.0, te=8.0, flip=25.0,
         ti=2500.0, field="1.5T", sim=None,
     )
@@ -64,12 +67,14 @@ def test_compare_panels_render_independently_and_differ():
     vol, _texture, _fov = app._region_data(region)
     sim_l, sim_r = Simulator(), Simulator()
 
-    img_l, sim_l, img_r, sim_r = app.render_both(
+    img_l, scan_l, sim_l, img_r, scan_r, sim_r = app.render_both(
         region, "3T",
         "Spin Echo", 500.0, 15.0, 90.0, 2500.0,    # Panel A: T1-weighted
         "Spin Echo", 4000.0, 90.0, 90.0, 2500.0,   # Panel B: T2-weighted
         sim_l, sim_r,
     )
+    # Both panels surface their own scan-time caption.
+    assert "scan time" in scan_l.lower() and "scan time" in scan_r.lower()
 
     for img in (img_l, img_r):
         assert isinstance(img, np.ndarray)

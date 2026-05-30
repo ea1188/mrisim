@@ -119,19 +119,17 @@ LESSONS: dict[str, Lesson] = {
         key="SE vs FSE",
         title="SE vs FSE",
         explanation=(
-            "Conventional spin echo (SE) collects a single phase-encode line "
-            "per TR, so a heavily T2-weighted scan with a long TR runs for many "
-            "minutes. Fast (turbo) spin echo (FSE/TSE) fires a train of "
-            "refocusing pulses after each excitation, collecting several lines "
-            "per TR and cutting scan time by roughly the echo-train length. "
-            "Both panels show the same T2-weighted brain at matched TR and "
-            "effective TE — fluid bright, white matter dark — so the contrast "
-            "looks nearly the same, yet the estimated scan times shown under "
-            "each image differ dramatically. **Compare the two images and their "
-            "scan times: this is why FSE has largely replaced conventional SE "
-            "for routine T2-weighted imaging.** (FSE isn't identical — long "
-            "echo trains add mild blurring and leave fat a little brighter — but "
-            "for most clinical work the time saved wins.)"
+            "Conventional spin echo (SE) collects one line of k-space per TR, "
+            "so a T2-weighted scan with TR=4000 ms takes many minutes per "
+            "slice. Fast spin echo (FSE/TSE) fires a train of refocusing pulses "
+            "after each excitation, collecting many lines per TR and cutting "
+            "scan time by roughly the echo-train length. The two panels here "
+            "show the same T2-weighted brain — fluid bright, white matter dark "
+            "— at matched TR and effective TE. Look at the images first: the "
+            "contrast is nearly identical. Then look at the scan times shown "
+            "beneath each: SE takes about sixteen times longer than FSE for the "
+            "same picture. This is why FSE replaced conventional SE for almost "
+            "all routine T2-weighted imaging."
         ),
         region="Brain",
         field="3T",

@@ -134,13 +134,14 @@ def _render_core(region, sequence, tr, te, flip, ti, field, sim):
 
 
 def render_mri(region, sequence, tr, te, flip, ti, field, sim):
-    """Render one panel; returns ``(display_image, sim)`` for [image, state].
+    """Render one panel; returns ``(display_image, scan_caption, sim)`` for
+    [image, scan-time caption, state].
 
-    Reused unchanged by every panel and every per-panel control — there is one
-    rendering path. The metrics dict is discarded here (scan time is read via
-    ``_render_core`` where a lesson needs it)."""
-    img, _metrics, sim = _render_core(region, sequence, tr, te, flip, ti, field, sim)
-    return img, sim
+    Reused by every panel and every per-panel control — there is one rendering
+    path (``_render_core``). The scan-time caption is surfaced on every render
+    so the time/contrast trade-off is always visible beneath the image."""
+    img, metrics, sim = _render_core(region, sequence, tr, te, flip, ti, field, sim)
+    return img, _scan_caption(metrics), sim
 
 
 def render_both(region, field,
@@ -150,16 +151,24 @@ def render_both(region, field,
     """Re-render BOTH panels — used on shared-control (region/field) changes.
     Both panels point at the same module-cached region volume; only their
     parameter dicts (and per-panel sequence) differ, and the two Simulators are
-    independent so engine state never races between panels."""
-    img_l, sim_l = render_mri(region, seq_l, tr_l, te_l, flip_l, ti_l, field, sim_l)
-    img_r, sim_r = render_mri(region, seq_r, tr_r, te_r, flip_r, ti_r, field, sim_r)
-    return img_l, sim_l, img_r, sim_r
+    independent so engine state never races between panels. Returns
+    ``(img_l, scan_l, sim_l, img_r, scan_r, sim_r)``."""
+    img_l, scan_l, sim_l = render_mri(region, seq_l, tr_l, te_l, flip_l, ti_l, field, sim_l)
+    img_r, scan_r, sim_r = render_mri(region, seq_r, tr_r, te_r, flip_r, ti_r, field, sim_r)
+    return img_l, scan_l, sim_l, img_r, scan_r, sim_r
 
 
 # --- Info-text formatters ----------------------------------------------------
 def _fmt_scan_time(seconds: float) -> str:
     s = int(round(seconds))
     return f"{s // 60}:{s % 60:02d} min"
+
+
+def _scan_caption(metrics: dict) -> str:
+    """Small always-on caption shown beneath each image — the time cost of the
+    current parameters (one of the most clinically meaningful numbers)."""
+    return (f"<div style='text-align:center;color:#9aa0a6;font-size:0.9em'>"
+            f"⏱ Estimated scan time ≈ {_fmt_scan_time(metrics['scan_time'])}</div>")
 
 
 def _fat_null_text(field: str) -> str:
@@ -172,10 +181,10 @@ def _fat_null_text(field: str) -> str:
 
 # --- Per-control event handlers ----------------------------------------------
 def _on_panel_sequence(region, seq, tr, te, flip, ti, field, sim):
-    """A panel's sequence changed: re-render that panel and toggle its TI
-    slider (visible only for Inversion Recovery)."""
-    img, sim = render_mri(region, seq, tr, te, flip, ti, field, sim)
-    return img, sim, gr.update(visible=(seq == "Inversion Recovery"))
+    """A panel's sequence changed: re-render that panel (with its scan-time
+    caption) and toggle its TI slider (visible only for Inversion Recovery)."""
+    img, scan, sim = render_mri(region, seq, tr, te, flip, ti, field, sim)
+    return img, scan, sim, gr.update(visible=(seq == "Inversion Recovery"))
 
 
 def _on_field_change(field, lesson_key, region,
@@ -184,23 +193,23 @@ def _on_field_change(field, lesson_key, region,
                      sim_l, sim_r):
     """Field strength is shared: re-render both panels. If the STIR lesson is
     active, also refresh the live fat-null target text (it shifts with field)."""
-    img_l, sim_l, img_r, sim_r = render_both(
+    img_l, scan_l, sim_l, img_r, scan_r, sim_r = render_both(
         region, field, seq_l, tr_l, te_l, flip_l, ti_l,
         seq_r, tr_r, te_r, flip_r, ti_r, sim_l, sim_r)
     lesson = lessons.get(lesson_key)
     target = (gr.update(value=_fat_null_text(field), visible=True)
               if (lesson and lesson.show_target_ti) else gr.update())
-    return img_l, sim_l, img_r, sim_r, target
+    return img_l, scan_l, sim_l, img_r, scan_r, sim_r, target
 
 
 def _on_compare_toggle(compare, region, field,
                        seq_r, tr_r, te_r, flip_r, ti_r, sim_r):
-    """Show/hide the right panel. On enable, render it so it isn't stale; on
-    disable, leave its image untouched."""
+    """Show/hide the right panel. On enable, render it (with its scan caption)
+    so it isn't stale; on disable, leave its image/caption untouched."""
     if compare:
-        img_r, sim_r = render_mri(region, seq_r, tr_r, te_r, flip_r, ti_r, field, sim_r)
-        return gr.update(visible=True), img_r, sim_r
-    return gr.update(visible=False), gr.update(), sim_r
+        img_r, scan_r, sim_r = render_mri(region, seq_r, tr_r, te_r, flip_r, ti_r, field, sim_r)
+        return gr.update(visible=True), img_r, scan_r, sim_r
+    return gr.update(visible=False), gr.update(), gr.update(), sim_r
 
 
 # --- Lesson application ------------------------------------------------------
@@ -225,12 +234,9 @@ def apply_lesson(key, sim_l, sim_r):
     explanation = gr.update(value=view.explanation, visible=bool(view.explanation))
     target = (gr.update(value=_fat_null_text(view.field), visible=True)
               if view.show_target_ti else gr.update(value="", visible=False))
-    scan_l = (gr.update(value=f"**⏱ Estimated scan time: {_fmt_scan_time(m_l['scan_time'])}**",
-                        visible=True)
-              if view.show_scan_time else gr.update(value="", visible=False))
-    scan_r = (gr.update(value=f"**⏱ Estimated scan time: {_fmt_scan_time(m_r['scan_time'])}**",
-                        visible=True)
-              if view.show_scan_time else gr.update(value="", visible=False))
+    # Scan time is always shown beneath each image, in every mode.
+    scan_l = gr.update(value=_scan_caption(m_l), visible=True)
+    scan_r = gr.update(value=_scan_caption(m_r), visible=True)
 
     def upd(name, **extra):
         cs = c[name]
@@ -287,7 +293,7 @@ def build_ui() -> gr.Blocks:
                 gr.Markdown("### Panel A")
                 sequence_l = gr.Dropdown(SEQUENCES, value=_dl.sequence, label="Sequence")
                 image_l = gr.Image(label="Panel A", type="numpy", image_mode="L", height=480)
-                scan_time_l = gr.Markdown("", visible=False)
+                scan_time_l = gr.Markdown("", visible=True)
                 tr_l = gr.Slider(50, 5000, value=_dl.tr, step=10, label="TR (ms)")
                 te_l = gr.Slider(1, 300, value=_dl.te, step=1, label="TE (ms)")
                 flip_l = gr.Slider(1, 180, value=_dl.flip, step=1, label="Flip angle (°)")
@@ -298,7 +304,7 @@ def build_ui() -> gr.Blocks:
                 gr.Markdown("### Panel B")
                 sequence_r = gr.Dropdown(SEQUENCES, value=_dr.sequence, label="Sequence")
                 image_r = gr.Image(label="Panel B", type="numpy", image_mode="L", height=480)
-                scan_time_r = gr.Markdown("", visible=False)
+                scan_time_r = gr.Markdown("", visible=True)
                 tr_r = gr.Slider(50, 5000, value=_dr.tr, step=10, label="TR (ms)")
                 te_r = gr.Slider(1, 300, value=_dr.te, step=1, label="TE (ms)")
                 flip_r = gr.Slider(1, 180, value=_dr.flip, step=1, label="Flip angle (°)")
@@ -311,7 +317,7 @@ def build_ui() -> gr.Blocks:
                        sequence_l, tr_l, te_l, flip_l, ti_l,
                        sequence_r, tr_r, te_r, flip_r, ti_r,
                        sim_l, sim_r]
-        both_outputs = [image_l, sim_l, image_r, sim_r]
+        both_outputs = [image_l, scan_time_l, sim_l, image_r, scan_time_r, sim_r]
 
         # Shared controls re-render BOTH panels.
         region.change(render_both, both_inputs, both_outputs)
@@ -320,30 +326,31 @@ def build_ui() -> gr.Blocks:
                       sequence_l, tr_l, te_l, flip_l, ti_l,
                       sequence_r, tr_r, te_r, flip_r, ti_r,
                       sim_l, sim_r],
-                     [image_l, sim_l, image_r, sim_r, target_ti_text])
+                     [image_l, scan_time_l, sim_l, image_r, scan_time_r, sim_r,
+                      target_ti_text])
 
         # Per-panel sequence: render only that panel and toggle its TI slider.
         sequence_l.change(_on_panel_sequence,
                           [region, sequence_l, tr_l, te_l, flip_l, ti_l, field, sim_l],
-                          [image_l, sim_l, ti_l])
+                          [image_l, scan_time_l, sim_l, ti_l])
         sequence_r.change(_on_panel_sequence,
                           [region, sequence_r, tr_r, te_r, flip_r, ti_r, field, sim_r],
-                          [image_r, sim_r, ti_r])
+                          [image_r, scan_time_r, sim_r, ti_r])
 
         # Per-panel sliders render ONLY their own panel (independent) — the left
         # TR does not re-render the right. render_mri is reused as-is.
         left_inputs = [region, sequence_l, tr_l, te_l, flip_l, ti_l, field, sim_l]
         right_inputs = [region, sequence_r, tr_r, te_r, flip_r, ti_r, field, sim_r]
         for s in left_params:
-            s.release(render_mri, left_inputs, [image_l, sim_l])
+            s.release(render_mri, left_inputs, [image_l, scan_time_l, sim_l])
         for s in right_params:
-            s.release(render_mri, right_inputs, [image_r, sim_r])
+            s.release(render_mri, right_inputs, [image_r, scan_time_r, sim_r])
 
         # Compare toggle shows/hides Panel B (and renders it fresh on enable).
         compare.change(_on_compare_toggle,
                        [compare, region, field,
                         sequence_r, tr_r, te_r, flip_r, ti_r, sim_r],
-                       [panel_b, image_r, sim_r])
+                       [panel_b, image_r, scan_time_r, sim_r])
 
         # --- Lesson buttons: each applies its lesson (re-clickable = reset) ---
         lesson_outputs = [
