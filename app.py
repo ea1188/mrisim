@@ -128,47 +128,120 @@ def render_mri(region: str, sequence: str, tr: float, te: float,
     return _to_display(image), sim
 
 
-def _on_sequence_change(region, sequence, tr, te, flip, ti, field, sim):
-    """Sequence change also toggles TI-slider visibility (IR only)."""
-    img, sim = render_mri(region, sequence, tr, te, flip, ti, field, sim)
-    return img, sim, gr.update(visible=(sequence == "Inversion Recovery"))
+# A T2-weighted starting point for the comparison panel (long TR/TE) versus the
+# T1-weighted left default (short TR/TE) — the canonical contrast lesson, so
+# enabling Compare mode immediately shows T1 vs T2 on the same anatomy.
+_T2W_TR, _T2W_TE = 4000.0, 90.0
+
+
+def render_both(region, sequence, field,
+                tr_l, te_l, flip_l, ti_l,
+                tr_r, te_r, flip_r, ti_r,
+                sim_l, sim_r):
+    """Re-render BOTH panels — used on shared-control (region/sequence/field)
+    changes. Both panels point at the same module-cached region volume; only
+    their parameter dicts differ. The two Simulators are independent so their
+    engine state (volume/view/caches) never races between panels."""
+    img_l, sim_l = render_mri(region, sequence, tr_l, te_l, flip_l, ti_l, field, sim_l)
+    img_r, sim_r = render_mri(region, sequence, tr_r, te_r, flip_r, ti_r, field, sim_r)
+    return img_l, sim_l, img_r, sim_r
+
+
+def _on_sequence_change(region, sequence, field,
+                        tr_l, te_l, flip_l, ti_l,
+                        tr_r, te_r, flip_r, ti_r,
+                        sim_l, sim_r):
+    """Sequence is shared: re-render both panels and toggle each panel's TI
+    slider (IR shows TI, every other sequence hides it)."""
+    img_l, sim_l, img_r, sim_r = render_both(
+        region, sequence, field, tr_l, te_l, flip_l, ti_l,
+        tr_r, te_r, flip_r, ti_r, sim_l, sim_r)
+    ti_vis = gr.update(visible=(sequence == "Inversion Recovery"))
+    return img_l, sim_l, img_r, sim_r, ti_vis, ti_vis
+
+
+def _on_compare_toggle(compare, region, sequence, field,
+                       tr_r, te_r, flip_r, ti_r, sim_r):
+    """Show/hide the right panel. On enable, render it so it isn't stale; on
+    disable, leave its image untouched (gr.update())."""
+    if compare:
+        img_r, sim_r = render_mri(region, sequence, tr_r, te_r, flip_r, ti_r, field, sim_r)
+        return gr.update(visible=True), img_r, sim_r
+    return gr.update(visible=False), gr.update(), sim_r
 
 
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="MRI Simulator — Phase 1") as demo:
+    with gr.Blocks(title="MRI Simulator") as demo:
         gr.Markdown("# MRI Simulator\nInteractive spin-physics simulation. "
-                    "Move a control to re-render.")
-        sim_state = gr.State(None)
+                    "Enable **Compare mode** to view the same anatomy under two "
+                    "parameter sets side by side (e.g. T1- vs T2-weighting).")
+
+        # One Simulator per panel, each in its own session state (no shared
+        # instance — see render_both).
+        sim_l = gr.State(None)
+        sim_r = gr.State(None)
+
+        # --- Shared, top-level controls (drive both panels) ---
+        with gr.Row():
+            region = gr.Dropdown(REGIONS, value="Brain", label="Region", scale=2)
+            sequence = gr.Dropdown(SEQUENCES, value="Spin Echo", label="Sequence", scale=2)
+            field = gr.Radio(["1.5T", "3T"], value="3T", label="Field strength", scale=2)
+            compare = gr.Checkbox(value=False, label="Compare mode", scale=1)
 
         with gr.Row():
-            with gr.Column(scale=1):
-                region = gr.Dropdown(REGIONS, value="Brain", label="Region")
-                sequence = gr.Dropdown(SEQUENCES, value="Spin Echo", label="Sequence")
-                tr = gr.Slider(50, 5000, value=500, step=10, label="TR (ms)")
-                te = gr.Slider(1, 300, value=15, step=1, label="TE (ms)")
-                flip = gr.Slider(1, 180, value=90, step=1, label="Flip angle (°)")
-                ti = gr.Slider(50, 4000, value=2500, step=10, label="TI (ms)",
-                               visible=False)
-                field = gr.Radio(["1.5T", "3T"], value="3T", label="Field strength")
-            with gr.Column(scale=2):
-                output = gr.Image(label="Image", type="numpy",
-                                  image_mode="L", height=512)
+            # --- Panel A (always visible; the single-panel layout when off) ---
+            with gr.Column():
+                gr.Markdown("### Panel A")
+                image_l = gr.Image(label="Panel A", type="numpy",
+                                   image_mode="L", height=512)
+                tr_l = gr.Slider(50, 5000, value=500, step=10, label="TR (ms)")
+                te_l = gr.Slider(1, 300, value=15, step=1, label="TE (ms)")
+                flip_l = gr.Slider(1, 180, value=90, step=1, label="Flip angle (°)")
+                ti_l = gr.Slider(50, 4000, value=2500, step=10, label="TI (ms)",
+                                 visible=False)
 
-        ctrl_inputs = [region, sequence, tr, te, flip, ti, field, sim_state]
-        img_outputs = [output, sim_state]
+            # --- Panel B (revealed only in Compare mode) ---
+            with gr.Column(visible=False) as panel_b:
+                gr.Markdown("### Panel B")
+                image_r = gr.Image(label="Panel B", type="numpy",
+                                   image_mode="L", height=512)
+                tr_r = gr.Slider(50, 5000, value=_T2W_TR, step=10, label="TR (ms)")
+                te_r = gr.Slider(1, 300, value=_T2W_TE, step=1, label="TE (ms)")
+                flip_r = gr.Slider(1, 180, value=90, step=1, label="Flip angle (°)")
+                ti_r = gr.Slider(50, 4000, value=2500, step=10, label="TI (ms)",
+                                 visible=False)
 
-        # Sequence change re-renders AND toggles the TI slider.
-        sequence.change(_on_sequence_change, ctrl_inputs,
-                        [output, sim_state, ti])
+        shared = [region, sequence, field]
+        left_params = [tr_l, te_l, flip_l, ti_l]
+        right_params = [tr_r, te_r, flip_r, ti_r]
 
-        # Every other control fires one render per interaction (no full reruns).
-        region.change(render_mri, ctrl_inputs, img_outputs)
-        field.change(render_mri, ctrl_inputs, img_outputs)
-        for s in (tr, te, flip, ti):
-            s.release(render_mri, ctrl_inputs, img_outputs)
+        both_inputs = shared + left_params + right_params + [sim_l, sim_r]
+        both_outputs = [image_l, sim_l, image_r, sim_r]
 
-        # Initial render on page load.
-        demo.load(render_mri, ctrl_inputs, img_outputs)
+        # Shared controls re-render BOTH panels.
+        region.change(render_both, both_inputs, both_outputs)
+        field.change(render_both, both_inputs, both_outputs)
+        # Sequence also toggles each panel's TI slider.
+        sequence.change(_on_sequence_change, both_inputs,
+                        both_outputs + [ti_l, ti_r])
+
+        # Per-panel sliders render ONLY their own panel (independent) — moving
+        # the left TR does not re-render the right. render_mri is reused as-is:
+        # its signature is (region, sequence, tr, te, flip, ti, field, sim).
+        left_inputs = [region, sequence, tr_l, te_l, flip_l, ti_l, field, sim_l]
+        right_inputs = [region, sequence, tr_r, te_r, flip_r, ti_r, field, sim_r]
+        for s in left_params:
+            s.release(render_mri, left_inputs, [image_l, sim_l])
+        for s in right_params:
+            s.release(render_mri, right_inputs, [image_r, sim_r])
+
+        # Compare toggle shows/hides Panel B (and renders it fresh on enable).
+        compare.change(_on_compare_toggle,
+                       [compare] + shared + right_params + [sim_r],
+                       [panel_b, image_r, sim_r])
+
+        # Initial render of both panels on load (Panel B stays hidden until toggled).
+        demo.load(render_both, both_inputs, both_outputs)
 
     return demo
 
