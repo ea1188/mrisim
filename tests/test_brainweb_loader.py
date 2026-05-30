@@ -1,6 +1,10 @@
+import importlib.util
+
 import numpy as np
 import pytest
 from brainweb_loader import get_brainweb_or_synthetic, load_brainweb_phantom
+
+_HAS_BRAINWEB = importlib.util.find_spec("brainweb") is not None
 
 
 class TestGetBrainwebOrSynthetic:
@@ -39,6 +43,10 @@ class TestGetBrainwebOrSynthetic:
         assert phantom.dtype == np.uint8
 
 
+@pytest.mark.skipif(
+    not _HAS_BRAINWEB,
+    reason="requires the optional 'brainweb' package (downloads real phantom data)",
+)
 class TestLoadBrainwebPhantom:
     def test_returns_ndarray(self):
         phantom = load_brainweb_phantom(subject_num=4)
