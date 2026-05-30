@@ -53,3 +53,34 @@ def test_render_callback_creates_simulator_when_state_empty():
     )
     assert isinstance(sim, Simulator)
     assert isinstance(image, np.ndarray) and image.ndim == 2
+
+
+def test_compare_panels_render_independently_and_differ():
+    """Dual-callback path: two Simulators on the same region, left rendered
+    T1-weighted (short TR/TE) and right T2-weighted (long TR/TE). Both return
+    valid 2-D images of the right shape, and they differ — different params
+    must produce different contrast, which is the entire point of compare mode."""
+    region = "Knee"
+    vol, _texture, _fov = app._region_data(region)
+    sim_l, sim_r = Simulator(), Simulator()
+
+    img_l, sim_l, img_r, sim_r = app.render_both(
+        region, "Spin Echo", "3T",
+        500.0, 15.0, 90.0, 2500.0,    # Panel A: T1-weighted
+        4000.0, 90.0, 90.0, 2500.0,   # Panel B: T2-weighted
+        sim_l, sim_r,
+    )
+
+    for img in (img_l, img_r):
+        assert isinstance(img, np.ndarray)
+        assert img.ndim == 2
+        assert img.shape == (vol.shape[1], vol.shape[2])
+        assert img.max() > 0
+
+    # Different params → different image (the comparison is meaningful).
+    assert not np.array_equal(img_l, img_r)
+
+    # Independent Simulator instances, but both share the one cached volume
+    # (the key efficiency: one region load serves both panels).
+    assert sim_l is not sim_r
+    assert sim_l.volume is sim_r.volume
