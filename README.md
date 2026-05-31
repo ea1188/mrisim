@@ -2,13 +2,17 @@
 
 An MRI physics simulation platform written in Python. Models the signal chain from tissue properties and pulse-sequence parameters through k-space acquisition to reconstructed image, covering the major contrast mechanisms and artifacts seen in clinical MRI.
 
-![MRISim interactive simulator — a spin-echo brain slice with live T2-decay curve and acquisition controls](docs/screenshot.png)
+![MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve](docs/demo.gif)
+
+*Sweeping echo time (TE) at fixed TR — proton-density → T2-weighted contrast, with the marker moving along the live signal decay curve. Every control updates the image in real time.*
 
 ## Interactive simulator
 
 ```bash
 python src/app_qt.py
 ```
+
+![A spin-echo brain slice with the live T2-decay curve and the acquisition / measurements control panels](docs/screenshot.png)
 
 The PyQt6 app drives the physics engine in real time:
 
