@@ -494,17 +494,32 @@ _SEG_PRIORITY_GROUPS: list[list[str]] = [
 ]
 
 # TotalSegmentatorMRI per-subject source: real MRI with scanner-adaptive
-# fat/muscle fill, resampled to isotropic at load. Subjects chosen for near-
-# isotropic acquisition (thin slices) AND full coverage of the region, so the
-# anatomy is real detail (not interpolated) and reformats stay crisp:
-#   s0153  abdomen — 1.1 mm, 3T, full organ coverage (liver/spleen/kidneys/pancreas)
-#   s0215  spine   — 1.17 mm isotropic, 1.5T (vertebrae, discs, cord)
-#   s0187  pelvis  — 1.5 mm, 3T (sacrum/hips/femurs, bladder)
+# fat/muscle fill, resampled to isotropic at load. Subjects are chosen for
+# near-isotropic acquisition AND full coverage in ALL three planes (large A-P
+# extent in particular), so axial/coronal/sagittal reformats are all crisp and
+# anatomically proportioned — not a thin acquired slab that squashes in one
+# view. Picked by scanning the dataset headers (isotropy <=1.3, A-P >=200 mm,
+# L-R >=280 mm, S-I >=200 mm) then ranking by target-organ slice span:
+#   s0246  abdomen — ~1.4 mm iso, full torso, widest liver S-I span (5/5 organs)
+#   s0267  spine   — ~1.4 mm iso, full torso, longest vertebral column (246 vox)
+#   s0187  pelvis  — ~1.4 mm iso, full pelvis coverage (sacrum/hips/bladder 5/5)
 _REGION_TOTALSEG: dict[str, str] = {
-    "Abdomen": "s0153",
-    "Spine":   "s0215",
+    "Abdomen": "s0246",
+    "Spine":   "s0267",
     "Pelvis":  "s0187",
 }
+
+
+def _ts_subject_root(data_dir: str, subj_name: str) -> "str | None":
+    """Locate ``subj_name`` inside whichever TotalSegmentatorMRI dataset release
+    sits in ``data_dir`` (the dir name carries a version suffix, e.g. _v100,
+    _v200). Returns the subject path if found, else None."""
+    import glob
+    for ds in sorted(glob.glob(os.path.join(data_dir, "TotalsegmentatorMRI_dataset_v*"))):
+        cand = os.path.join(ds, subj_name)
+        if os.path.isdir(cand):
+            return cand
+    return None
 
 # 1.5 mm-isotropic flat combined NIfTI (TotalSegmentator CT 'total' scheme),
 # used only as a fallback if the per-subject MRI data above is unavailable.
@@ -680,8 +695,8 @@ def load_region_nifti(
     # --- primary: TotalSegmentatorMRI per-subject (best quality) ---
     subj_name = _REGION_TOTALSEG.get(region)
     if subj_name is not None:
-        ts_root = os.path.join(data_dir, "TotalsegmentatorMRI_dataset_v100", subj_name)
-        if os.path.isdir(ts_root):
+        ts_root = _ts_subject_root(data_dir, subj_name)
+        if ts_root is not None:
             cache = os.path.join(ts_root, f"atlas_iso_adapt_{target_max}.npy")
             if os.path.exists(cache):
                 return np.load(cache)
@@ -728,8 +743,8 @@ def load_region_texture(
     subj_name = _REGION_TOTALSEG.get(region)
     if subj_name is None:
         return None
-    ts_root = os.path.join(data_dir, "TotalsegmentatorMRI_dataset_v100", subj_name)
-    if not os.path.isdir(ts_root):
+    ts_root = _ts_subject_root(data_dir, subj_name)
+    if ts_root is None:
         return None
     tex_cache = os.path.join(ts_root, f"texture_iso_adapt_{target_max}.npy")
     if not os.path.exists(tex_cache):

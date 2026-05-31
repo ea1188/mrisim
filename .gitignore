@@ -35,4 +35,5 @@ htmlcov/
 # Project-specific
 exports/
 data/*.npy
+data/TotalsegmentatorMRI_dataset_v*/
 examples/output/
