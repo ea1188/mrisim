@@ -8,6 +8,7 @@ from scan_geometry import (
     box_rect,
     update_from_drag,
     fov_crop,
+    fov_transform,
     secondary_overlay,
     inplane_box,
     SCOUT,
@@ -468,3 +469,49 @@ class TestInplaneBox:
         b0 = inplane_box("axial", SHAPE, 0.8, 0.0)
         b1 = inplane_box("axial", SHAPE, 0.8, 5.0)
         assert abs((b1["x0"] + b1["w"]/2) - (b0["x0"] + b0["w"]/2) - 5.0) < 1.0
+
+
+class TestFovTransform:
+    """fov_transform: magnify+wraparound for small FOV, shrink+surround for large."""
+
+    def _blob(self, n=80):
+        a = np.zeros((n, n), dtype=np.uint8)
+        a[15:65, 15:65] = 2        # tissue block
+        a[35:45, 35:45] = 1        # inner structure
+        return a
+
+    def test_ratio_one_is_identity(self):
+        a = self._blob()
+        assert np.array_equal(fov_transform(a, 1.0), a)
+
+    def test_shape_preserved(self):
+        a = self._blob()
+        for r in (0.4, 0.6, 1.3, 2.0):
+            assert fov_transform(a, r).shape == a.shape
+
+    def test_labels_preserved(self):
+        """No interpolated/invented labels — only the originals survive."""
+        a = self._blob()
+        for r in (0.5, 1.5):
+            out = fov_transform(a, r)
+            assert set(np.unique(out)).issubset({0, 1, 2})
+
+    def test_small_fov_wraps(self):
+        """A FOV smaller than the object folds anatomy into more rows than it
+        originally spanned (wraparound), and fills a larger fraction of the frame."""
+        a = self._blob()
+        native_rows = np.where(a.any(axis=1))[0]
+        out = fov_transform(a, 0.5)
+        out_rows = np.where(out.any(axis=1))[0]
+        assert out.mean() > a.mean()                       # more of the frame is filled
+        assert np.ptp(out_rows) >= np.ptp(native_rows)     # anatomy spans more rows
+
+    def test_large_fov_shrinks_with_surround(self):
+        """A FOV larger than the object shrinks it toward the centre, leaving an
+        empty (background) border on all sides."""
+        a = self._blob()
+        out = fov_transform(a, 2.0)
+        assert out.mean() < a.mean()                       # object occupies less area
+        assert out[0].sum() == 0 and out[-1].sum() == 0    # empty top/bottom border
+        assert out[:, 0].sum() == 0 and out[:, -1].sum() == 0
+        assert out.max() > 0                               # object still present

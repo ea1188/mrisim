@@ -45,7 +45,7 @@ def sim(vol):
 def base_params(**over):
     p = dict(
         sequence="Spin Echo", TR=2000.0, TE=15.0, TI=2548.0, flip_angle=90.0,
-        matrix_size=64, FOV=240.0, fov_fraction=100, bandwidth=125.0, NEX=1,
+        matrix_size=64, FOV=220.0, fov_fraction=100, bandwidth=125.0, NEX=1,
         slice_thickness=1, accel_factor=1, accel_method="SENSE",
         etl=16, echo_spacing=10.0,
         b_value=1000.0, diff_direction="Left-Right", diff_display="DWI",
