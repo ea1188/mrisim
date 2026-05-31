@@ -32,6 +32,7 @@ The engine renders any labelled tissue volume under any sequence. Three sources 
 
 - **Brain (real)** — a BrainWeb digital phantom remapped to gray/white matter, CSF, skull, muscle, blood, marrow and dura, with synthetic skull-base air sinuses for realistic susceptibility/EPI behaviour. **Bundled in the repo** (`data/brainweb_sub04_anat.npy`), so the brain works out-of-the-box; falls back to a synthetic brain only if the file is removed.
 - **Body (real)** — Abdomen, Spine, Pelvis and whole-Torso regions built from the **TotalSegmentator MRI dataset** (publicly available on Zenodo). Per-subject organ masks are combined, the subcutaneous-fat / muscle-wall envelope is filled from the real MRI intensity, and a real-MRI texture field modulates the per-label signal so organs show genuine parenchymal detail rather than flat fills. Volumes are resampled to isotropic so axial/coronal/sagittal reformats stay crisp.
+- https://zenodo.org/records/14710732
 - **Body (synthetic)** — anatomically placed parametric phantoms for Abdomen, Knee, Spine and Pelvis, generated on the fly when no dataset is present. Knee is synthetic-only (the MRI dataset has no suitable knee subject).
 
 ![Real whole-torso anatomy — a coronal spin-echo slice showing heart, lungs, liver, spleen, kidneys, spine and ribs with real-MRI texture](docs/screenshot_torso.png)
