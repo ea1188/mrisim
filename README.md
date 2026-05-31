@@ -93,12 +93,30 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 Grab the build for your system from the [**latest release**](https://github.com/ea1188/mrisim/releases/latest):
 
 - **Windows** — download `MRISim-windows.exe` and double-click it.
-- **macOS** — download `MRISim-macos.zip`, unzip it, drag `MRISim.app` to *Applications*, then **right-click → Open** the first time.
+- **macOS** — download `MRISim-macos.zip`, unzip it, drag `MRISim.app` to *Applications*, then allow it on first launch (see [macOS — "can't be opened"](#macos--mrisim-cant-be-opened--apple-could-not-verify) below).
 - **Linux** — download `MRISim-linux.tar.gz`, extract it, and run `./MRISim` (needs Qt libraries: `sudo apt-get install libxcb-cursor0 libgl1`).
 
 Each download bundles Python, every dependency, the brain phantom **and the four real body regions** (Abdomen, Spine, Pelvis, whole Torso) — a few hundred MB — so there's nothing else to install and real anatomy works offline. The first launch is slower while font caches build; later launches are quick.
 
-> These builds are **unsigned**, so on first launch your OS may warn that the developer is unidentified (macOS Gatekeeper / Windows SmartScreen). That's expected — on macOS use right-click → Open; on Windows choose *More info → Run anyway*.
+> These builds are **unsigned**, so on first launch your OS may warn that the developer is unidentified (macOS Gatekeeper / Windows SmartScreen). That's expected — see below to allow it.
+
+#### macOS — "MRISim can't be opened" / "Apple could not verify…"
+
+macOS blocks unsigned apps on first launch. To allow it:
+
+1. Double-click `MRISim.app` once. You'll get a warning — click **Done** (or Cancel).
+2. Open  **System Settings → Privacy & Security**, scroll down to the **Security** section. You'll see a message like *"MRISim.app was blocked to protect your Mac."* Click **Open Anyway**.
+3. Confirm with **Open Anyway** again and authenticate (Touch ID / password) if asked.
+
+On older macOS you can instead **right-click (or Control-click) the app → Open → Open**. After you've allowed it once, it opens normally every time.
+
+If it still won't launch, you can clear the quarantine flag in Terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/MRISim.app
+```
+
+On **Windows**, if SmartScreen appears, click *More info → Run anyway*.
 
 ### Quick version (if you're comfortable with a terminal)
 
