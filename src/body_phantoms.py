@@ -566,10 +566,9 @@ def build_region(name: str) -> np.ndarray:
     """
     # Real NIfTI path
     try:
-        import os
         from nifti_region import load_region_nifti
-        _data = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-        vol = load_region_nifti(name, _data)
+        from brainweb_loader import data_dir
+        vol = load_region_nifti(name, data_dir())
         if vol is not None:
             return vol
     except Exception:
@@ -586,10 +585,9 @@ def build_region_texture(name: str) -> "np.ndarray | None":
     Returns None when the region has no real-MRI source (synthetic fallback or
     the flat-NIfTI regions) — the renderer then uses its synthetic texture."""
     try:
-        import os
         from nifti_region import load_region_texture
-        _data = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-        return load_region_texture(name, _data)
+        from brainweb_loader import data_dir
+        return load_region_texture(name, data_dir())
     except Exception:
         return None
 

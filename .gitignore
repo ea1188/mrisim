@@ -32,6 +32,12 @@ htmlcov/
 .vscode/
 .idea/
 
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+!mrisim.spec
+
 # Project-specific
 exports/
 data/*.npy
