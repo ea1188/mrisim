@@ -158,9 +158,11 @@ class Simulator:
                                  shape=(max_dim, max_dim), order=0)
 
         ph = get_slice(vol, orient, sl_idx)
-        fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self.native_fov)
-        if fov_frac < 0.99:
-            ph = sg.fov_crop(orient, ph, fov_frac, 0.0)
+        # Field of view: magnify + wraparound when smaller than the object,
+        # shrink + empty surround when larger (sg.fov_transform).
+        fov_ratio = float(params.get("FOV", 240.0)) / self.native_fov
+        if abs(fov_ratio - 1.0) > 0.01:
+            ph = sg.fov_transform(ph, fov_ratio)
         if self.fov_planning and self.inplane_fov_pct < 100:
             ph = sg.fov_crop(orient, ph, self.inplane_fov_pct / 100.0, self.inplane_off)
         return ph
@@ -179,9 +181,9 @@ class Simulator:
                         field_strength_T: float) -> np.ndarray:
         """2D B0 field slice (Hz) aligned to the (non-oblique) phantom slice."""
         sl = get_slice(self._b0_volume(field_strength_T), orient, sl_idx)
-        fov_frac = min(1.0, float(params.get("FOV", 240.0)) / self.native_fov)
-        if fov_frac < 0.99:
-            sl = sg.fov_crop(orient, sl, fov_frac, 0.0)
+        fov_ratio = float(params.get("FOV", 240.0)) / self.native_fov
+        if abs(fov_ratio - 1.0) > 0.01:
+            sl = sg.fov_transform(sl, fov_ratio)
         if self.fov_planning and self.inplane_fov_pct < 100:
             sl = sg.fov_crop(orient, sl, self.inplane_fov_pct / 100.0, self.inplane_off)
         return sl

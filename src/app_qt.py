@@ -1108,8 +1108,8 @@ class MRISimulator(QMainWindow):
         L.addWidget(spatial_sec)
         SPL = spatial_sec.inner
         self._slider(SPL, "Matrix Size", self.matrix_size, 32, 256)
-        self._slider(SPL, "FOV Coverage (%)", self.fov_fraction, 50, 100)
         self._fov_slider = self._slider(SPL, "FOV (mm)", self.FOV, 100, 500)._qslider
+        self._slider(SPL, "Phase FOV (%)", self.fov_fraction, 50, 100)
         self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
         self._slider(SPL, "Bandwidth (kHz)", self.bandwidth, 10, 500)
         self._slider(SPL, "NEX", self.NEX, 1, 8)

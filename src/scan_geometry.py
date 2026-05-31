@@ -316,3 +316,64 @@ def fov_crop(
     if cropped.size == 0:
         return slice2d
     return cropped
+
+
+def fov_transform(slice2d: np.ndarray, fov_ratio: float) -> np.ndarray:
+    """Resample a 2D slice to a display FOV that is ``fov_ratio`` × the native
+    object extent, returning an array of the *same* shape.
+
+    Models how field-of-view actually behaves on a scanner:
+
+    * ``fov_ratio < 1`` (FOV smaller than the object) — the central FOV region is
+      magnified to fill the frame; anatomy beyond the FOV folds back in the
+      **phase-encode (row) direction** (classic reduced-FOV *wraparound* /
+      aliasing), while the frequency (column) direction is oversampled and simply
+      cropped (no wrap). The true central anatomy keeps priority over the
+      wrapped-in ghost on overlap.
+    * ``fov_ratio > 1`` (FOV larger than the object) — the object shrinks toward
+      the centre with empty surround.
+    * ``fov_ratio ≈ 1`` — returned unchanged.
+
+    Nearest-neighbour resampling and overlay folding keep integer label maps
+    valid (the rendered signal inherits the wraparound through the labels).
+    """
+    from scipy.ndimage import zoom
+
+    R, C = slice2d.shape
+    if abs(fov_ratio - 1.0) < 0.01:
+        return slice2d
+
+    if fov_ratio > 1.0:
+        # Larger FOV: object occupies a smaller, centred patch with empty surround.
+        s = 1.0 / fov_ratio
+        small = zoom(slice2d, s, order=0)
+        out = np.zeros((R, C), dtype=slice2d.dtype)
+        sr = small[:R, :C]
+        r0 = max(0, (R - sr.shape[0]) // 2)
+        c0 = max(0, (C - sr.shape[1]) // 2)
+        out[r0:r0 + sr.shape[0], c0:c0 + sr.shape[1]] = sr
+        return out
+
+    # Smaller FOV: magnify, crop frequency axis, fold phase axis (wraparound).
+    z = 1.0 / fov_ratio
+    big = zoom(slice2d, z, order=0)
+    BR, BC = big.shape
+
+    # Frequency (columns): centre-crop to C (oversampled — no wrap).
+    c0 = max(0, (BC - C) // 2)
+    big = big[:, c0:c0 + C]
+    if big.shape[1] < C:
+        big = np.pad(big, ((0, 0), (0, C - big.shape[1])))
+
+    # Phase (rows): fold BR magnified rows into R display rows, centred so the
+    # middle of the object maps to the middle of the frame.
+    out = np.zeros((R, C), dtype=slice2d.dtype)
+    offset = (R - BR) // 2
+    dst = (np.arange(BR) + offset) % R
+    # Apply far-from-centre rows first so the central (true) anatomy wins overlaps.
+    order_rows = np.argsort(np.abs(np.arange(BR) - BR / 2.0))[::-1]
+    for r in order_rows:
+        row = big[r]
+        tgt = dst[r]
+        out[tgt] = np.where(row != 0, row, out[tgt])
+    return out
