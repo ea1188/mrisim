@@ -328,20 +328,20 @@ class TestGeneratePelvis3d:
 # Region registry
 # ---------------------------------------------------------------------------
 class TestRegionRegistry:
-    def test_region_names_has_all_five(self):
-        for name in ("Brain", "Abdomen", "Knee", "Spine", "Pelvis"):
+    def test_region_names_has_all_regions(self):
+        for name in ("Brain", "Abdomen", "Knee", "Spine", "Pelvis", "Torso"):
             assert name in REGION_NAMES
 
-    def test_region_sequences_has_all_five(self):
-        for name in ("Brain", "Abdomen", "Knee", "Spine", "Pelvis"):
+    def test_region_sequences_has_all_regions(self):
+        for name in ("Brain", "Abdomen", "Knee", "Spine", "Pelvis", "Torso"):
             assert name in REGION_SEQUENCES
 
     def test_brain_has_more_sequences_than_body(self):
-        for name in ("Abdomen", "Knee", "Spine", "Pelvis"):
+        for name in ("Abdomen", "Knee", "Spine", "Pelvis", "Torso"):
             assert len(REGION_SEQUENCES["Brain"]) > len(REGION_SEQUENCES[name])
 
     def test_all_body_regions_have_spin_echo(self):
-        for name in ("Abdomen", "Knee", "Spine", "Pelvis"):
+        for name in ("Abdomen", "Knee", "Spine", "Pelvis", "Torso"):
             assert "Spin Echo" in REGION_SEQUENCES[name]
 
 

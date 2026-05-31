@@ -503,10 +503,13 @@ _SEG_PRIORITY_GROUPS: list[list[str]] = [
 #   s0246  abdomen — ~1.4 mm iso, full torso, widest liver S-I span (5/5 organs)
 #   s0267  spine   — ~1.4 mm iso, full torso, longest vertebral column (246 vox)
 #   s0187  pelvis  — ~1.4 mm iso, full pelvis coverage (sacrum/hips/bladder 5/5)
+#   s0250  torso   — ~1.4 mm iso, deepest A-P (270 mm) in the dataset; lung bases
+#                    through pelvis with heart/aorta/liver/spleen/kidneys/bones
 _REGION_TOTALSEG: dict[str, str] = {
     "Abdomen": "s0246",
     "Spine":   "s0267",
     "Pelvis":  "s0187",
+    "Torso":   "s0250",
 }
 
 
