@@ -35,5 +35,7 @@ htmlcov/
 # Project-specific
 exports/
 data/*.npy
+# ...but bundle the BrainWeb brain phantom so the brain renders out-of-the-box.
+!data/brainweb_sub04_anat.npy
 data/TotalsegmentatorMRI_dataset_v*/
 examples/output/
