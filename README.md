@@ -77,37 +77,102 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ## Installation
 
+### Quick version (if you're comfortable with a terminal)
+
 Requires **Python 3.11+** (the code uses `X | Y` union type syntax).
 
 ```bash
-# 1. Get the code
 git clone https://github.com/ea1188/mrisim.git
 cd mrisim
-
-# 2. Create an isolated environment (recommended)
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-
-# 3. Install dependencies
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# 4. Launch the interactive simulator
 python src/app_qt.py
 ```
 
-That's the whole setup — the BrainWeb brain phantom is bundled in the repo, so the app opens on a real brain with **no dataset download required**. Body regions render as synthetic phantoms until you add the real-anatomy dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
+The BrainWeb brain phantom is bundled, so the app opens on a real brain with **no dataset download required**. Body regions render as synthetic phantoms until you add the real-anatomy dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
 
-The source modules import each other by bare name, so they expect `src/` on the import path. Running `python src/app_qt.py` handles this automatically (Python puts the script's directory first on `sys.path`); the test suite does the same via `tests/conftest.py`. If you import the modules yourself, run from `src/` or set `PYTHONPATH=src`.
+### Step-by-step (no terminal experience needed)
 
-### Platform notes
+Never used a terminal? Follow these in order — you only do steps 1–5 once.
 
-- **macOS / Windows** — `pip install` pulls prebuilt PyQt6 wheels; nothing else is needed.
-- **Linux** — the PyQt6 wheel needs system Qt/X11 libraries at runtime. On Debian/Ubuntu:
+**Step 1 — Install Python (version 3.11 or newer)**
+
+Go to [python.org/downloads](https://www.python.org/downloads/) and download the latest installer for your system, then run it.
+- **Windows:** on the first screen of the installer, **tick the box "Add Python to PATH"** before clicking *Install Now*. This matters — without it the commands below won't be found.
+- **macOS:** open the downloaded `.pkg` file and click through the installer.
+
+**Step 2 — Open a terminal**
+
+A "terminal" is a window where you type commands.
+- **Windows:** click Start, type `PowerShell`, and press Enter.
+- **macOS:** press `Cmd` + `Space`, type `Terminal`, and press Enter.
+- **Linux:** press `Ctrl` + `Alt` + `T`.
+
+Check Python is installed by typing this and pressing Enter:
+```bash
+python3 --version
+```
+You should see something like `Python 3.12.x`. (On Windows, if `python3` isn't found, try `python --version`.)
+
+**Step 3 — Download MRISim**
+
+The easiest way (no extra tools):
+1. Open the [latest release page](https://github.com/ea1188/mrisim/releases/latest).
+2. Under **Assets**, click **Source code (zip)** to download it.
+3. Find the downloaded `.zip` (usually in your *Downloads* folder) and unzip it. You'll get a folder like `mrisim-1.0.0`. Move it somewhere easy, e.g. your *Desktop*.
+
+**Step 4 — Point the terminal at that folder**
+
+In your terminal, type `cd ` (the letters c, d, then a space — don't press Enter yet), then **drag the unzipped folder from your file explorer onto the terminal window**. The folder's location fills in automatically. Now press Enter. For example:
+```bash
+cd /Users/yourname/Desktop/mrisim-1.0.0
+```
+
+**Step 5 — Set up and install (copy-paste one block for your system)**
+
+macOS / Linux:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Windows (PowerShell):
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+This creates a private workspace (`.venv`) and downloads everything MRISim needs. It takes a few minutes the first time. (On Windows, if you get a message about scripts being disabled, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, press `Y`, then re-run the activate line.)
+
+**Step 6 — Run the simulator**
+
+```bash
+python src/app_qt.py
+```
+A window opens showing an MRI of a brain. That's it — explore the controls on the side panels.
+
+**Coming back later**
+
+Next time, you only need to open a terminal, `cd` into the folder again (Step 4), re-activate the workspace, and run the app:
+```bash
+source .venv/bin/activate     # Windows: .venv\Scripts\Activate.ps1
+python src/app_qt.py
+```
+
+### If something goes wrong
+
+- **`python3: command not found` (or `python`):** Python isn't installed or (on Windows) "Add Python to PATH" wasn't ticked in Step 1. Reinstall Python and try again.
+- **`No such file or directory` after `cd`:** the terminal isn't in the project folder. Redo Step 4 (the `cd` + drag trick).
+- **`No module named ...` when running the app:** the install step didn't finish or the workspace isn't active. Make sure you ran the Step 5 block and see `(.venv)` at the start of your terminal line, then re-run `pip install -r requirements.txt`.
+- **Linux only — `could not load the Qt platform plugin "xcb"`:** install the system graphics libraries the window needs:
   ```bash
   sudo apt-get install libxcb-cursor0 libgl1
   ```
-  If you see `qt.qpa.plugin: could not load the Qt platform plugin "xcb"`, those libraries are missing. On a headless machine, run under a virtual display (`xvfb-run python src/app_qt.py`).
-- **Optional extras** — `nibabel` (already in `requirements.txt`) is used to load real body anatomy; the `brainweb` package is only needed if you want to regenerate the brain cache or use a different BrainWeb subject.
+  On a headless server (no screen), run under a virtual display: `xvfb-run python src/app_qt.py`.
+- **Optional extras:** `nibabel` (already installed in Step 5) loads real body anatomy; the `brainweb` package is only needed to regenerate the brain or use a different BrainWeb subject.
+
+> **Technical note:** the source modules import each other by bare name, so they expect `src/` on the import path. Running `python src/app_qt.py` handles this automatically (Python puts the script's directory first on `sys.path`), as does the test suite via `tests/conftest.py`. If you import the modules yourself, run from `src/` or set `PYTHONPATH=src`.
 
 ## Running tests
 
