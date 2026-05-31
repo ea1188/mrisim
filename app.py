@@ -302,7 +302,10 @@ def build_ui() -> gr.Blocks:
 
         # --- Shared, top-level controls ---
         with gr.Row():
-            region = gr.Dropdown(REGIONS, value="Brain", label="Region", scale=2)
+            region = gr.Dropdown(
+                REGIONS, value="Brain", label="Region", scale=2,
+                info="Opening a region for the first time builds it once "
+                     "(~1 s); it's cached and instant after that.")
             field = gr.Radio(["1.5T", "3T"], value="3T", label="Field strength", scale=2)
             compare = gr.Checkbox(value=False, label="Compare mode", scale=1)
 
