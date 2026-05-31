@@ -61,9 +61,19 @@ def test_apply_gd_does_not_mutate_input(props):
 
 def test_apply_gd_leaves_non_enhancing_labels(props):
     out = rendering.apply_gd(props, dose=0.3)
-    # Label 6 (muscle) is not in GD_TISSUE_FRACTION → unchanged
-    assert 6 not in rendering.GD_TISSUE_FRACTION
-    assert out[6]["T1"] == pytest.approx(props[6]["T1"])
+    # Gas (label 12) has a zero enhancement fraction → T1 unchanged.
+    assert rendering.GD_TISSUE_FRACTION[12] == 0.0
+    assert out[12]["T1"] == pytest.approx(props[12]["T1"])
+
+
+def test_apply_gd_enhances_blood_more_than_intact_bbb(props):
+    """Blood (intravascular) must enhance far more than intact-BBB brain."""
+    out = rendering.apply_gd(props, dose=0.3)
+    blood_drop = 1 - out[11]["T1"] / props[11]["T1"]
+    wm_drop = 1 - out[3]["T1"] / props[3]["T1"]
+    assert blood_drop > 0.4          # strong vascular enhancement
+    assert wm_drop < 0.1             # intact BBB barely changes
+    assert blood_drop > wm_drop
 
 
 # --------------------------------------------------------------------------- #
