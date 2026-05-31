@@ -88,6 +88,18 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ## Installation
 
+### Download a ready-to-run app (no Python needed)
+
+Grab the build for your system from the [**latest release**](https://github.com/ea1188/mrisim/releases/latest):
+
+- **Windows** — download `MRISim-windows.exe` and double-click it.
+- **macOS** — download `MRISim-macos.zip`, unzip it, drag `MRISim.app` to *Applications*, then **right-click → Open** the first time.
+- **Linux** — download `MRISim-linux.tar.gz`, extract it, and run `./MRISim` (needs Qt libraries: `sudo apt-get install libxcb-cursor0 libgl1`).
+
+Each download bundles Python, every dependency and the brain phantom (~300 MB), so there's nothing else to install. The first launch is slower while font caches build; later launches are quick.
+
+> These builds are **unsigned**, so on first launch your OS may warn that the developer is unidentified (macOS Gatekeeper / Windows SmartScreen). That's expected — on macOS use right-click → Open; on Windows choose *More info → Run anyway*.
+
 ### Quick version (if you're comfortable with a terminal)
 
 Requires **Python 3.11+** (the code uses `X | Y` union type syntax).

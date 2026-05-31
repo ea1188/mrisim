@@ -1,7 +1,21 @@
 import numpy as np
 import os
+import sys
 
-PHANTOM_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+
+def data_dir() -> str:
+    """Locate the bundled ``data/`` directory.
+
+    In a PyInstaller bundle the data files are unpacked under ``sys._MEIPASS``;
+    in a normal source checkout they sit one level up from ``src/``. Returns the
+    same path the source layout uses when not frozen, so tests are unaffected.
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.join(getattr(sys, "_MEIPASS", os.path.dirname(__file__)), "data")
+    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+
+
+PHANTOM_DIR = data_dir()
 
 
 def add_air_sinuses(vol: np.ndarray) -> np.ndarray:
