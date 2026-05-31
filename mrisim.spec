@@ -21,11 +21,19 @@ src_modules = sorted(
     for f in glob.glob(os.path.join("src", "*.py"))
 )
 
+# Bundle the brain phantom plus the per-region body-anatomy caches (atlas +
+# texture) for the regions in nifti_region._REGION_TOTALSEG, each preserved at
+# its data/ relative path so the frozen loader finds it under sys._MEIPASS.
+region_datas = [
+    (f, os.path.dirname(f))
+    for f in glob.glob("data/TotalsegmentatorMRI_dataset_v*/s*/*_iso_adapt_256.npy")
+]
+
 a = Analysis(
     ["src/app_qt.py"],
     pathex=["src"],
     binaries=[],
-    datas=[("data/brainweb_sub04_anat.npy", "data")],
+    datas=[("data/brainweb_sub04_anat.npy", "data")] + region_datas,
     hiddenimports=src_modules,
     hookspath=[],
     hooksconfig={},

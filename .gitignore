@@ -43,5 +43,16 @@ exports/
 data/*.npy
 # ...but bundle the BrainWeb brain phantom so the brain renders out-of-the-box.
 !data/brainweb_sub04_anat.npy
-data/TotalsegmentatorMRI_dataset_v*/
+# Keep the bulky raw TotalSegMRI dataset out of git, but DO bundle the small
+# per-region caches (atlas + texture) for the four regions the app ships, so the
+# downloaded binaries render real body anatomy. Re-including files requires
+# un-ignoring each parent directory along the path first.
+data/TotalsegmentatorMRI_dataset_v*/**
+!data/TotalsegmentatorMRI_dataset_v*/
+!data/TotalsegmentatorMRI_dataset_v*/s0246/
+!data/TotalsegmentatorMRI_dataset_v*/s0267/
+!data/TotalsegmentatorMRI_dataset_v*/s0187/
+!data/TotalsegmentatorMRI_dataset_v*/s0250/
+!data/TotalsegmentatorMRI_dataset_v*/s0*/atlas_iso_adapt_256.npy
+!data/TotalsegmentatorMRI_dataset_v*/s0*/texture_iso_adapt_256.npy
 examples/output/
