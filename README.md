@@ -112,7 +112,7 @@ pip install -r requirements.txt
 python src/app_qt.py
 ```
 
-The BrainWeb brain phantom is bundled, so the app opens on a real brain with **no dataset download required**. Body regions render as synthetic phantoms until you add the real-anatomy dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
+The BrainWeb brain **and the four default body regions** (Abdomen, Spine, Pelvis, Torso) are bundled in the repo, so the app opens on real anatomy with **no dataset download required**. Only loading *other* subjects or regions needs the raw dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
 
 ### Step-by-step (no terminal experience needed)
 
