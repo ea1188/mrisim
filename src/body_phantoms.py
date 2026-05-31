@@ -534,7 +534,7 @@ def generate_pelvis_3d(Z: int = 120, H: int = 220, W: int = 280, seed: int = 31)
 
 
 # ---- Region registry --------------------------------------------------------
-REGION_NAMES = ["Brain", "Abdomen", "Knee", "Spine", "Pelvis"]
+REGION_NAMES = ["Brain", "Abdomen", "Knee", "Spine", "Pelvis", "Torso"]
 _MSK_SEQS = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery"]
 REGION_SEQUENCES = {
     "Brain":   ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
@@ -543,12 +543,17 @@ REGION_SEQUENCES = {
     "Knee":    _MSK_SEQS,
     "Spine":   _MSK_SEQS,
     "Pelvis":  _MSK_SEQS,
+    "Torso":   _MSK_SEQS,
 }
 _BUILDERS = {
     "Abdomen": generate_abdomen_3d,
     "Knee":    generate_knee_3d,
     "Spine":   generate_spine_3d,
     "Pelvis":  generate_pelvis_3d,
+    # Torso has no bespoke synthetic generator: it is a real-data-only region
+    # (TotalSegMRI s0250). Fall back to the abdomen phantom so the dropdown
+    # entry still renders something if the dataset is absent.
+    "Torso":   generate_abdomen_3d,
 }
 
 

@@ -650,12 +650,14 @@ class TestSegFileToMr:
 # _REGION_TOTALSEG
 # ---------------------------------------------------------------------------
 class TestRegionTotalsegRegistry:
-    def test_all_three_regions_use_totalseg_subjects(self):
-        # All three regions use near-isotropic real-MRI subjects (adaptive fill +
-        # isotropic resample), not the thick-sliced or CT-scheme flat fallbacks.
-        for region in ("Abdomen", "Spine", "Pelvis"):
+    def test_all_regions_use_totalseg_subjects(self):
+        # Every configured body region uses a near-isotropic real-MRI subject
+        # (adaptive fill + isotropic resample), not the thick-sliced or CT-scheme
+        # flat fallbacks. Torso (s0250) is a real-data-only whole-torso region.
+        for region in ("Abdomen", "Spine", "Pelvis", "Torso"):
             assert region in _REGION_TOTALSEG, f"{region} missing from _REGION_TOTALSEG"
-        assert len(set(_REGION_TOTALSEG.values())) == 3   # distinct subject per region
+        # A distinct subject per region (no accidental duplicate mappings).
+        assert len(set(_REGION_TOTALSEG.values())) == len(_REGION_TOTALSEG)
 
     def test_knee_not_in_registry(self):
         assert "Knee" not in _REGION_TOTALSEG

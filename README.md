@@ -10,6 +10,7 @@ python src/app_qt.py
 
 The PyQt6 app drives the physics engine in real time:
 
+- **Anatomy** — real BrainWeb brain plus real segmented body regions (Abdomen, Spine, Pelvis, whole Torso) from the TotalSegmentator MRI dataset, each with a synthetic fallback; load any TotalSegmentator NIfTI mask from disk, or index a folder of masks by body region (see [Anatomy and phantoms](#anatomy-and-phantoms))
 - **Sequences** — Spin Echo, FSE/TSE (EPG echo train), Gradient Echo, Inversion Recovery, Diffusion (DWI with ADC/FA maps), MR Angiography (TOF / Phase Contrast), fMRI BOLD, and Quantitative (qMRI) parameter mapping
 - **qMRI maps** — T1 (variable flip angle), T2 and T2\* (multi-echo), and Synthetic SE contrast rendered from the maps
 - **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing, magnetization transfer, B1+ inhomogeneity, and automatic fat-water in-/opposed-phase (India-ink) for gradient echo
@@ -18,6 +19,26 @@ The PyQt6 app drives the physics engine in real time:
 - **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics
 
 > `src/app.py` is an earlier matplotlib/Tkinter prototype, retained only for reference and missing most of the above. Use `app_qt.py`.
+
+## Anatomy and phantoms
+
+The engine renders any labelled tissue volume under any sequence. Three sources are available, all sharing the `tissue_db` label vocabulary:
+
+- **Brain (real)** — a BrainWeb digital phantom remapped to gray/white matter, CSF, skull, muscle, blood, marrow and dura, with synthetic skull-base air sinuses for realistic susceptibility/EPI behaviour. Cached at `data/brainweb_sub04_anat.npy`; falls back to a synthetic brain if absent.
+- **Body (real)** — Abdomen, Spine, Pelvis and whole-Torso regions built from the **TotalSegmentator MRI dataset** (publicly available on Zenodo). Per-subject organ masks are combined, the subcutaneous-fat / muscle-wall envelope is filled from the real MRI intensity, and a real-MRI texture field modulates the per-label signal so organs show genuine parenchymal detail rather than flat fills. Volumes are resampled to isotropic so axial/coronal/sagittal reformats stay crisp.
+- **Body (synthetic)** — anatomically placed parametric phantoms for Abdomen, Knee, Spine and Pelvis, generated on the fly when no dataset is present. Knee is synthetic-only (the MRI dataset has no suitable knee subject).
+
+To enable real body anatomy, make sure `nibabel` is installed (it ships in `requirements.txt`) and place the dataset under `data/`:
+
+```
+data/TotalsegmentatorMRI_dataset_v200/
+  s0246/  s0267/  s0187/  s0250/  ...   # each: mri.nii.gz + segmentations/*.nii.gz
+```
+
+The loader auto-detects any `TotalsegmentatorMRI_dataset_v*` release (v1.0, v2.0, …) and caches each region as `.npy` on first load, so subsequent switches are instant. The dataset directory is git-ignored. Default region→subject mapping (chosen for near-isotropic acquisition and full coverage in all three planes) lives in `nifti_region._REGION_TOTALSEG`. You can also:
+
+- **Load File…** — load an arbitrary TotalSegmentator label mask (CT 117-class or MR 50-class, auto-detected) from disk.
+- **Browse masks** — index a whole folder of masks, classified by body region, and pick one to render.
 
 ## Physics library
 
@@ -57,12 +78,12 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 ## Installation
 
 ```bash
-git clone https://github.com/ea1188-commits/mrisim.git
+git clone https://github.com/ea1188/mrisim.git
 cd mrisim
 pip install -r requirements.txt
 ```
 
-Python 3.11+ is required (uses `X | Y` union type syntax). No external datasets are needed: when no BrainWeb/atlas cache is present, a synthetic brain (and synthetic body regions) is generated automatically on first run.
+Python 3.11+ is required (uses `X | Y` union type syntax). No external datasets are needed to run: the brain uses a cached BrainWeb phantom (with a synthetic fallback) and the body regions fall back to synthetic phantoms automatically. To render **real segmented body anatomy**, add the TotalSegmentator MRI dataset — see [Anatomy and phantoms](#anatomy-and-phantoms).
 
 ## Running tests
 
@@ -70,7 +91,7 @@ Python 3.11+ is required (uses `X | Y` union type syntax). No external datasets 
 python3.11 -m pytest tests/
 ```
 
-1635 tests, all passing. Coverage is 97%+ across all non-GUI modules.
+1,700+ tests, all passing. Coverage is 97%+ across all non-GUI modules. (Tests covering the legacy `app.py` need its `gradio` dependency, which `requirements.txt` installs.)
 
 ## Project layout
 
@@ -82,7 +103,10 @@ src/                  # all source modules (plain imports by bare name)
   simulate.py         # thin orchestration layer
   phantom.py          # 2-D brain phantom (labels 0–4)
   phantom3d.py        # 3-D synthetic brain (labels 0–5)
-  body_phantoms.py    # synthetic abdomen / knee / spine / pelvis
+  body_phantoms.py    # body region registry + synthetic abdomen/knee/spine/pelvis
+  nifti_region.py     # load real TotalSegmentator MRI anatomy (masks + texture)
+  region_index.py     # classify/index a folder of NIfTI masks by body region
+  brainweb_loader.py  # load + remap the real BrainWeb brain phantom
   tissue_db.py        # measured tissue properties at 1.5T and 3T
   kspace.py           # k-space acquisition pipeline
   epi.py              # EPI trajectory and artifacts
@@ -105,7 +129,7 @@ src/                  # all source modules (plain imports by bare name)
   dicom_export.py     # DICOM export
   ...
 tests/                # pytest suite (one file per module)
-data/                 # optional phantom/atlas cache (generated; not in the repo)
+data/                 # phantom/atlas cache + optional TotalSegMRI dataset (git-ignored)
 ```
 
 ## Physics references
