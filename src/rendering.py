@@ -27,14 +27,35 @@ import pv
 
 # Gadolinium relaxivity constants (3T, Gd-DTPA)
 GD_R1_MS: float = 4.5e-3        # (mmol/kg)^-1 · ms^-1
-# Per-label fractional Gd concentration relative to administered dose.
-# Reflects BBB integrity: scalp/CSF enhance more than brain parenchyma.
+# Per-label fractional Gd concentration relative to administered dose, i.e. how
+# much each tissue enhances. Driven by perfusion + extracellular distribution:
+# blood (intravascular) enhances most, the kidneys filter and concentrate Gd,
+# vascular organs/glands enhance moderately, and barrier tissues (intact BBB,
+# avascular cartilage, cortical bone, gas) barely change.
 GD_TISSUE_FRACTION: dict[int, float] = {
+    # Neuro (unchanged — brain contrast is separately calibrated)
     1: 0.30,   # CSF — modest (choroid plexus leak)
     2: 0.05,   # Gray matter — intact BBB
     3: 0.05,   # White matter — intact BBB
     4: 0.60,   # Fat/Scalp — no BBB, vascularised
-    5: 0.10,   # Bone
+    5: 0.10,   # Bone (skull)
+    # Body tissues
+    6: 0.25,   # Muscle — moderate perfusion
+    7: 0.45,   # Liver — arterial + portal supply
+    8: 0.55,   # Spleen — highly vascular
+    9: 0.80,   # Kidney cortex — strongly perfused, filters Gd
+    10: 0.65,  # Kidney medulla — enhances then excretes
+    11: 0.95,  # Blood — intravascular, maximal enhancement
+    12: 0.00,  # Gas
+    13: 0.05,  # Cortical bone
+    14: 0.20,  # Marrow
+    15: 0.05,  # Cartilage / disc — avascular
+    16: 0.05,  # Spinal cord — blood–cord barrier
+    17: 0.30,  # Bowel / GI — wall enhances
+    18: 0.15,  # Lung — mostly air, low parenchymal enhancement
+    19: 0.55,  # Pancreas — well-perfused gland
+    20: 0.40,  # Heart / myocardium — perfused
+    21: 0.45,  # Soft tissue / gland (prostate, adrenal, thyroid)
 }
 
 

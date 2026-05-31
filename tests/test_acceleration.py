@@ -177,6 +177,17 @@ class TestApplyParallelImaging:
                                             method="GRAPPA", rng=rng)
         assert np.all(result >= 0.0)
 
+    @pytest.mark.parametrize("R", [2, 3, 4])
+    def test_grappa_rows_not_divisible_by_R(self, R, rng):
+        """Regression: GRAPPA must not crash when rows aren't a multiple of R
+        (e.g. the 217-row brain slice). The g-factor map needs padding."""
+        img = np.abs(rng.standard_normal((217, 181)))   # 217 % 2/3/4 != 0
+        result, gfactor = apply_parallel_imaging(img, acceleration_factor=R,
+                                                 method="GRAPPA", rng=rng)
+        assert result.shape == img.shape
+        assert gfactor.shape == img.shape
+        assert np.all(gfactor >= 1.0)
+
     def test_higher_accel_higher_gfactor(self, brain_image, rng):
         _, gf2 = apply_parallel_imaging(brain_image, acceleration_factor=2, rng=rng)
         _, gf4 = apply_parallel_imaging(brain_image, acceleration_factor=4, rng=rng)

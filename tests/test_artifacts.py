@@ -181,6 +181,33 @@ class TestSusceptibilityPhysics:
                                           strength=0.5, air_labels=[99])
         np.testing.assert_array_equal(out, brain_image)
 
+    def test_only_internal_air_causes_dropout(self):
+        """Dropout occurs at an enclosed air cavity, not at the body's outer edge
+        (background air touching the image border is ignored)."""
+        n = 60
+        sl = np.zeros((n, n), dtype=np.uint8)
+        sl[10:50, 10:50] = 2                 # tissue block surrounded by background air
+        sl[28:32, 28:32] = 0                 # enclosed internal air cavity
+        img = np.where(sl > 0, 1.0, 0.0)
+        out = add_susceptibility_artifact(img, sl, strength=0.5)
+        loss = (img - out)                   # signal lost (only where tissue existed)
+        # Strong dropout right around the internal cavity...
+        near = np.zeros((n, n), bool); near[24:36, 24:36] = True
+        near &= (sl > 0)
+        assert loss[near].max() > 0.2
+        # ...decaying with distance, so the tissue corners far from the cavity
+        # (and adjacent to the background edge) lose far less signal.
+        corner = (sl > 0).copy(); corner[18:42, 18:42] = False
+        assert loss[corner].max() < 0.5 * loss[near].max()
+
+    def test_no_internal_air_no_dropout(self):
+        """A tissue block in background air with no enclosed cavity is unchanged."""
+        n = 60
+        sl = np.zeros((n, n), dtype=np.uint8); sl[10:50, 10:50] = 2
+        img = np.where(sl > 0, 1.0, 0.0)
+        out = add_susceptibility_artifact(img, sl, strength=0.8)
+        np.testing.assert_allclose(out, img, atol=1e-9)
+
 
 class TestMotionArtifactUnknownType:
     def test_unknown_motion_type_returns_same_shape(self, brain_image):

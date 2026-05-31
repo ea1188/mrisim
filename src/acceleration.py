@@ -221,8 +221,14 @@ def apply_parallel_imaging(
         rec_mean = float(recon[recon > 0].mean()) if (recon > 0).any() else 1.0
         recon = recon * (ref_mean / rec_mean)
 
-        # GRAPPA g-factor reference: SENSE g × 0.8 (GRAPPA typically lower)
-        gfactor = np.clip(g_factor_map(sm, R, noise_cov) * 0.8, 1.0, None)
+        # GRAPPA g-factor reference: SENSE g × 0.8 (GRAPPA typically lower).
+        # g_factor_map requires rows divisible by R, so pad the sensitivity maps
+        # to the next multiple of R (mirroring the SENSE branch) and crop back.
+        pad = (-rows % R) % R
+        sm_g = np.pad(sm, ((0, 0), (0, pad), (0, 0))) if pad else sm
+        gfactor = np.clip(g_factor_map(sm_g, R, noise_cov) * 0.8, 1.0, None)
+        if pad:
+            gfactor = gfactor[:rows, :]
         return recon, gfactor
 
 

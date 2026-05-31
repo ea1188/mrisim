@@ -141,8 +141,10 @@ def add_susceptibility_artifact(
     Causes local field inhomogeneity -> signal dephasing -> signal loss.
     """
     if air_labels is None:
-        air_labels = [0]
+        air_labels = [0, 12]   # background air + internal gas (bowel/lung/stomach)
     rows, cols = image.shape
+
+    from scipy.ndimage import distance_transform_edt, binary_dilation, label
 
     # Create susceptibility field map
     # Signal dropout near air-tissue boundaries
@@ -152,10 +154,21 @@ def add_susceptibility_artifact(
         air_mask = phantom_slice == air_label
         if not np.any(air_mask):
             continue
-        
-        # Distance from air-tissue boundary
-        from scipy.ndimage import distance_transform_edt, binary_dilation
-        
+
+        # Susceptibility dropout happens at INTERNAL air cavities (paranasal
+        # sinuses, mastoids, bowel/lung gas) — not at the body's outer edge.
+        # Drop any air component that touches the image border (the surrounding
+        # background air) so only enclosed cavities perturb the field.
+        comps, n = label(air_mask)
+        if n > 0:
+            border_ids = set(comps[0, :]) | set(comps[-1, :]) | \
+                         set(comps[:, 0]) | set(comps[:, -1])
+            border_ids.discard(0)
+            if border_ids:
+                air_mask = air_mask & ~np.isin(comps, list(border_ids))
+            if not air_mask.any():
+                continue
+
         # Find boundary pixels (air adjacent to tissue)
         dilated = binary_dilation(air_mask, iterations=2)
         boundary = dilated & ~air_mask
