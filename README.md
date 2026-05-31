@@ -24,7 +24,7 @@ The PyQt6 app drives the physics engine in real time:
 
 The engine renders any labelled tissue volume under any sequence. Three sources are available, all sharing the `tissue_db` label vocabulary:
 
-- **Brain (real)** — a BrainWeb digital phantom remapped to gray/white matter, CSF, skull, muscle, blood, marrow and dura, with synthetic skull-base air sinuses for realistic susceptibility/EPI behaviour. Cached at `data/brainweb_sub04_anat.npy`; falls back to a synthetic brain if absent.
+- **Brain (real)** — a BrainWeb digital phantom remapped to gray/white matter, CSF, skull, muscle, blood, marrow and dura, with synthetic skull-base air sinuses for realistic susceptibility/EPI behaviour. **Bundled in the repo** (`data/brainweb_sub04_anat.npy`), so the brain works out-of-the-box; falls back to a synthetic brain only if the file is removed.
 - **Body (real)** — Abdomen, Spine, Pelvis and whole-Torso regions built from the **TotalSegmentator MRI dataset** (publicly available on Zenodo). Per-subject organ masks are combined, the subcutaneous-fat / muscle-wall envelope is filled from the real MRI intensity, and a real-MRI texture field modulates the per-label signal so organs show genuine parenchymal detail rather than flat fills. Volumes are resampled to isotropic so axial/coronal/sagittal reformats stay crisp.
 - **Body (synthetic)** — anatomically placed parametric phantoms for Abdomen, Knee, Spine and Pelvis, generated on the fly when no dataset is present. Knee is synthetic-only (the MRI dataset has no suitable knee subject).
 
@@ -77,21 +77,47 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ## Installation
 
+Requires **Python 3.11+** (the code uses `X | Y` union type syntax).
+
 ```bash
+# 1. Get the code
 git clone https://github.com/ea1188/mrisim.git
 cd mrisim
+
+# 2. Create an isolated environment (recommended)
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Launch the interactive simulator
+python src/app_qt.py
 ```
 
-Python 3.11+ is required (uses `X | Y` union type syntax). No external datasets are needed to run: the brain uses a cached BrainWeb phantom (with a synthetic fallback) and the body regions fall back to synthetic phantoms automatically. To render **real segmented body anatomy**, add the TotalSegmentator MRI dataset — see [Anatomy and phantoms](#anatomy-and-phantoms).
+That's the whole setup — the BrainWeb brain phantom is bundled in the repo, so the app opens on a real brain with **no dataset download required**. Body regions render as synthetic phantoms until you add the real-anatomy dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
+
+The source modules import each other by bare name, so they expect `src/` on the import path. Running `python src/app_qt.py` handles this automatically (Python puts the script's directory first on `sys.path`); the test suite does the same via `tests/conftest.py`. If you import the modules yourself, run from `src/` or set `PYTHONPATH=src`.
+
+### Platform notes
+
+- **macOS / Windows** — `pip install` pulls prebuilt PyQt6 wheels; nothing else is needed.
+- **Linux** — the PyQt6 wheel needs system Qt/X11 libraries at runtime. On Debian/Ubuntu:
+  ```bash
+  sudo apt-get install libxcb-cursor0 libgl1
+  ```
+  If you see `qt.qpa.plugin: could not load the Qt platform plugin "xcb"`, those libraries are missing. On a headless machine, run under a virtual display (`xvfb-run python src/app_qt.py`).
+- **Optional extras** — `nibabel` (already in `requirements.txt`) is used to load real body anatomy; the `brainweb` package is only needed if you want to regenerate the brain cache or use a different BrainWeb subject.
 
 ## Running tests
 
+From the repository root (`tests/conftest.py` puts `src/` on the path and forces a non-interactive matplotlib backend):
+
 ```bash
-python3.11 -m pytest tests/
+pytest                  # or: python -m pytest
 ```
 
-1,700+ tests, all passing. Coverage is 97%+ across all non-GUI modules. (Tests covering the legacy `app.py` need its `gradio` dependency, which `requirements.txt` installs.)
+1,700+ tests, all passing. Coverage is 97%+ across all non-GUI modules. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
 
 ## Project layout
 
