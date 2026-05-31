@@ -31,7 +31,7 @@ The PyQt6 app drives the physics engine in real time:
 The engine renders any labelled tissue volume under any sequence. Three sources are available, all sharing the `tissue_db` label vocabulary:
 
 - **Brain (real)** — a BrainWeb digital phantom remapped to gray/white matter, CSF, skull, muscle, blood, marrow and dura, with synthetic skull-base air sinuses for realistic susceptibility/EPI behaviour. **Bundled in the repo** (`data/brainweb_sub04_anat.npy`), so the brain works out-of-the-box; falls back to a synthetic brain only if the file is removed.
-- **Body (real)** — Abdomen, Spine, Pelvis and whole-Torso regions built from the **TotalSegmentator MRI dataset** (publicly available on Zenodo). Per-subject organ masks are combined, the subcutaneous-fat / muscle-wall envelope is filled from the real MRI intensity, and a real-MRI texture field modulates the per-label signal so organs show genuine parenchymal detail rather than flat fills. Volumes are resampled to isotropic so axial/coronal/sagittal reformats stay crisp.
+- **Body (real)** — Abdomen, Spine, Pelvis and whole-Torso regions built from the **TotalSegmentator MRI dataset** (publicly available on Zenodo). Per-subject organ masks are combined, the subcutaneous-fat / muscle-wall envelope is filled from the real MRI intensity, and a real-MRI texture field modulates the per-label signal so organs show genuine parenchymal detail rather than flat fills. Volumes are resampled to isotropic so axial/coronal/sagittal reformats stay crisp. The processed caches for these four regions are **bundled in the repo and in the downloadable binaries**, so they render with no dataset download.
   - https://zenodo.org/records/14710732
 - **Body (synthetic)** — anatomically placed parametric phantoms for Abdomen, Knee, Spine and Pelvis, generated on the fly when no dataset is present. Knee is synthetic-only (the MRI dataset has no suitable knee subject).
 
@@ -39,7 +39,7 @@ The engine renders any labelled tissue volume under any sequence. Three sources 
 
 *Real whole-torso region (TotalSegmentator MRI, coronal): heart, lungs, liver, spleen, kidneys, spine and ribs rendered with real-MRI texture under a spin-echo sequence.*
 
-To enable real body anatomy, make sure `nibabel` is installed (it ships in `requirements.txt`) and place the dataset under `data/`:
+The four default regions above work out of the box (their caches are bundled). To load **other** subjects or rebuild the regions from scratch, make sure `nibabel` is installed (it ships in `requirements.txt`) and place the raw dataset under `data/`:
 
 ```
 data/TotalsegmentatorMRI_dataset_v200/
@@ -96,7 +96,7 @@ Grab the build for your system from the [**latest release**](https://github.com/
 - **macOS** — download `MRISim-macos.zip`, unzip it, drag `MRISim.app` to *Applications*, then **right-click → Open** the first time.
 - **Linux** — download `MRISim-linux.tar.gz`, extract it, and run `./MRISim` (needs Qt libraries: `sudo apt-get install libxcb-cursor0 libgl1`).
 
-Each download bundles Python, every dependency and the brain phantom (~300 MB), so there's nothing else to install. The first launch is slower while font caches build; later launches are quick.
+Each download bundles Python, every dependency, the brain phantom **and the four real body regions** (Abdomen, Spine, Pelvis, whole Torso) — a few hundred MB — so there's nothing else to install and real anatomy works offline. The first launch is slower while font caches build; later launches are quick.
 
 > These builds are **unsigned**, so on first launch your OS may warn that the developer is unidentified (macOS Gatekeeper / Windows SmartScreen). That's expected — on macOS use right-click → Open; on Windows choose *More info → Run anyway*.
 
