@@ -28,7 +28,7 @@ from PyQt6.QtGui import QImage, QPixmap, QIcon
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QSlider,
     QComboBox, QCheckBox, QRadioButton, QButtonGroup, QFrame, QScrollArea,
-    QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog,
+    QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog, QSplitter,
     QDialog, QListWidget, QListWidgetItem, QProgressDialog,
 )
 
@@ -406,13 +406,36 @@ class MRISimulator(QMainWindow):
         self.right_layout.setContentsMargins(8, 6, 8, 8)
         self.right_layout.setSpacing(2)
 
+        # The Measurements panel lives in its own scroll area so the splitter can
+        # shrink it (its content scrolls) without its size hint blocking the drag.
+        self.measurements_scroll = QScrollArea()
+        self.measurements_scroll.setWidgetResizable(True)
+        self.measurements_scroll.setStyleSheet("QScrollArea { background:#1f242b; border:none; }")
+        self.measurements_scroll.setWidget(self.right_panel)
+        self.measurements_scroll.setMinimumHeight(70)
+        self.left_scroll.setMinimumHeight(90)
+
+        # Vertical splitter: drag the handle to trade space between the parameter
+        # cards (top) and the Measurements panel (bottom).
+        self.right_split = QSplitter(Qt.Orientation.Vertical)
+        self.right_split.setObjectName("right-split")
+        self.right_split.setChildrenCollapsible(False)
+        self.right_split.setHandleWidth(7)
+        self.right_split.setStyleSheet(
+            "QSplitter#right-split::handle { background:#2c333c; margin:1px 8px; "
+            "border-radius:2px; } "
+            "QSplitter#right-split::handle:hover { background:#1bb8ad; }")
+        self.right_split.addWidget(self.left_scroll)
+        self.right_split.addWidget(self.measurements_scroll)
+        self.right_split.setStretchFactor(0, 1)   # parameter cards absorb extra space
+        self.right_split.setStretchFactor(1, 0)
+
         self.right_dock = QWidget()
         self.right_dock.setFixedWidth(338)
         dock_l = QVBoxLayout(self.right_dock)
         dock_l.setContentsMargins(0, 0, 0, 0)
         dock_l.setSpacing(2)
-        dock_l.addWidget(self.left_scroll, stretch=1)
-        dock_l.addWidget(self.right_panel)
+        dock_l.addWidget(self.right_split, stretch=1)
 
         content_row.addWidget(self.center_panel, stretch=1)
         content_row.addWidget(self.right_dock)
@@ -2545,6 +2568,10 @@ class MRISimulator(QMainWindow):
 
     def run(self) -> None:
         self.show()
+        # Default the controls/measurements split once real heights are known:
+        # give Measurements ~300px and the parameter cards the rest.
+        h = max(self.right_split.height(), 600)
+        self.right_split.setSizes([h - 300, 300])
 
 
 if __name__ == "__main__":
