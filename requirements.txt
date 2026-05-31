@@ -1,6 +1,12 @@
+# Hugging Face Space dependencies (deploy artifact — feat/spaces-deploy only).
+# The web app (app.py + src/) imports only these transitively; PyQt6 and pydicom
+# are intentionally dropped (the Space never imports them — they only bloat the
+# headless build). gradio is pinned to the version we develop against and must
+# match sdk_version in README.md's front-matter.
+#
+# Do NOT merge this file to main: main's requirements.txt keeps pyqt6/pydicom,
+# which the desktop Qt app (src/app_qt.py) and the test suite require.
+gradio==6.15.2
 numpy>=2.0
 scipy>=1.10
 matplotlib>=3.7
-pyqt6>=6.5
-pydicom>=2.4
-gradio>=5.0
