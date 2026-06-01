@@ -130,6 +130,29 @@ def test_accel_lowers_snr_via_real_g_factor(sim):
     assert m3["g_factor"] > 1.2
 
 
+def test_accel_noise_is_spatially_structured(sim, monkeypatch):
+    """Parallel imaging applies *spatially-varying* g-factor noise: the sigma fed
+    to the Rician step is a scalar without acceleration but a non-uniform 2-D map
+    with SENSE/GRAPPA (so the image shows structured g-factor noise, not a flat
+    SNR drop)."""
+    import rician
+    captured = {}
+
+    def spy(image, sigma, *a, **k):
+        captured["sigma"] = sigma
+        return image
+
+    monkeypatch.setattr(rician, "add_rician_noise", spy)
+
+    sim.simulate(base_params(accel_factor=1))
+    assert np.ndim(captured["sigma"]) == 0                 # scalar, uniform noise
+
+    sim.simulate(base_params(accel_factor=4, accel_method="SENSE"))
+    s = captured["sigma"]
+    assert np.ndim(s) == 2                                 # per-pixel sigma map
+    assert float(np.std(s)) > 0                            # genuinely non-uniform
+
+
 def test_partial_fourier_raises_noise(monkeypatch):
     """Partial Fourier acquires fewer phase-encode lines, so SNR drops
     ~sqrt(fraction) and the *calibrated* noise sigma rises by 1/sqrt(fraction).

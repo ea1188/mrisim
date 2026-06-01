@@ -408,12 +408,14 @@ class Simulator:
             reconstructed, kspace_acquired = simulate_acquisition(image, matrix, fov_frac,
                                                                   filter_window=_fw, pf_fraction=_pf)
 
+            _g_map = None
             if R > 1:
                 method = params["accel_method"]
                 if method == "CS":
                     reconstructed = apply_compressed_sensing(reconstructed, R)
                 else:
-                    reconstructed, _ = apply_parallel_imaging(reconstructed, R, method)
+                    # Keep the spatial g-factor map to shape the noise below.
+                    reconstructed, _g_map = apply_parallel_imaging(reconstructed, R, method)
 
             # --- Physical noise model (Rician), calibrated so the Noise Level
             # slider equals the tissue-average SNR at the reference protocol.
@@ -437,7 +439,17 @@ class Simulator:
             tissue_ref = self._tissue_ref_signal(reconstructed, phantom_slice)
             if tissue_ref > 0:
                 sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
-                reconstructed = rician.add_rician_noise(reconstructed, sigma)
+                sigma_map = sigma
+                # Parallel-imaging g-factor noise is spatially non-uniform (it
+                # peaks where coil unfolding is ill-conditioned). The scalar
+                # g_factor above already set the *average* SNR penalty; here we
+                # redistribute that noise by the g-factor map (mean-preserving,
+                # so calibration is unchanged) so SENSE/GRAPPA show the
+                # characteristic structured noise that intensifies with R.
+                if _g_map is not None and _g_map.shape == reconstructed.shape:
+                    gn = _g_map / max(float(np.median(_g_map)), 1e-6)
+                    sigma_map = sigma * np.clip(gn, 0.4, 4.0)
+                reconstructed = rician.add_rician_noise(reconstructed, sigma_map)
                 if params.get("rician_bias_correction"):
                     reconstructed = rician.rician_bias_correction(reconstructed, sigma)
             if params["zipper_enabled"]:
