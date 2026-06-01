@@ -1267,6 +1267,7 @@ class MRISimulator(QMainWindow):
                 "epi_esp": self.epi_esp.get(), "epi_b0_hz": self.epi_b0_hz.get(),
                 "epi_ghost": self.epi_ghost.get(), "epi_correct_ghost": self.epi_correct_ghost.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
+                "n_slices": self.n_slices.get(), "slice_gap": self.slice_gap.get(),
                 "rician_bias_correction": self.rician_bias_correct.get(),
                 "pv_sigma": self.pv_sigma.get(),
                 "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),

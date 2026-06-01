@@ -46,6 +46,34 @@ _PF_MAP: dict[str, float] = {
 }
 
 
+def _slice_profile_weights(n: int) -> np.ndarray:
+    """Through-slice weighting for an imperfect (non-rectangular) RF slice profile.
+
+    A real slice-select pulse excites the centre of the slab fully and tapers
+    toward the edges, so the displayed slice is a centre-weighted average of the
+    sub-slices, not a flat mean. Returns ``n`` normalised Gaussian-ish weights.
+    """
+    if n <= 1:
+        return np.ones(1)
+    idx = np.arange(n) - (n - 1) / 2.0
+    w = np.exp(-0.5 * (idx / max(n / 3.0, 0.5)) ** 2)
+    return w / w.sum()
+
+
+def _crosstalk_snr_factor(n_slices: int, slice_gap: float, thickness: int) -> float:
+    """SNR loss from slice cross-talk in contiguous 2-D multi-slice imaging.
+
+    With several slices and little or no gap, each slice-select pulse partially
+    saturates the edges of its neighbours, reducing signal. The loss is largest
+    at zero gap and falls off as the gap approaches the slice thickness; a single
+    slice (or a large gap) has none. Returns a factor in (0, 1].
+    """
+    if n_slices <= 1:
+        return 1.0
+    loss = 0.20 * np.exp(-float(slice_gap) / max(0.5 * thickness, 1.0))
+    return float(1.0 - loss)
+
+
 def _accel_gfactor(R: int, method: str) -> float:
     """Effective noise-amplification (g-factor) for an R-fold accelerated scan.
 
@@ -94,6 +122,7 @@ def default_params(**overrides) -> dict:
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
         rician_bias_correction=False, pv_sigma=10,
         flow_enabled=True, flow_velocity=70,
+        n_slices=1, slice_gap=0.0,
     )
     p.update(overrides)
     return p
@@ -341,7 +370,11 @@ class Simulator:
 
         if thickness > 1 and params["sequence"] not in ["MR Angiography"]:
             start = max(0, sl_idx - thickness // 2); end = min(max_sl, sl_idx + thickness // 2)
-            image = np.mean([self._simulate_single_slice(params, orient, s) for s in range(start, end + 1)], axis=0)
+            slabs = np.stack([self._simulate_single_slice(params, orient, s)
+                              for s in range(start, end + 1)])
+            # Imperfect RF slice profile: centre-weighted, not a flat average.
+            w = _slice_profile_weights(slabs.shape[0])
+            image = np.tensordot(w, slabs, axes=(0, 0))
         else:
             image = self._simulate_single_slice(params, orient, sl_idx)
 
@@ -470,11 +503,14 @@ class Simulator:
             # SNR drops ~sqrt(fraction) (fewer samples averaged), mirroring the
             # scan-time reduction below.
             pf_snr = np.sqrt(_pf) if _pf else 1.0
+            # Slice cross-talk: contiguous 2-D multi-slice loses signal.
+            xtalk = _crosstalk_snr_factor(int(params.get("n_slices", 1)),
+                                          params.get("slice_gap", 0.0), thickness)
             eff_snr = (params["snr_level"]
                        * (vox_vol / self.VOX_REF)
                        * np.sqrt(max(1, params["NEX"]))
                        * np.sqrt(self.BW_REF / BW_hz)
-                       * pf_snr
+                       * pf_snr * xtalk
                        / (g_factor * np.sqrt(R))
                        * (B0_snr / 3.0))
             eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
