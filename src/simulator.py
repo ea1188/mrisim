@@ -18,6 +18,7 @@ from scipy.ndimage import gaussian_filter
 from phantom3d import get_slice
 from kspace import simulate_acquisition
 from fse import simulate_fse_image
+import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        calculate_chemical_shift_pixels)
@@ -92,6 +93,7 @@ def default_params(**overrides) -> dict:
         b1_inhom_enabled=False, mt_enabled=False, mt_power=50,
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
         rician_bias_correction=False, pv_sigma=10,
+        flow_enabled=True, flow_velocity=70,
     )
     p.update(overrides)
     return p
@@ -399,6 +401,14 @@ class Simulator:
             if params.get("mt_enabled"):
                 image = rendering.apply_mt(image, phantom_slice, _tprops, params.get("mt_power", 0),
                                            params["sequence"], params["TR"], params["TE"], params["flip_angle"])
+
+            # Flowing blood: signal void on the spin-echo family, inflow
+            # brightening on gradient echo (static elsewhere).
+            if params.get("flow_enabled", True) and phantom_slice.shape == image.shape:
+                image = flow.apply_flow(image, phantom_slice, params["sequence"],
+                                        _tprops.get(11, {}), params["TE"],
+                                        params["flip_angle"],
+                                        velocity=params.get("flow_velocity", 70) / 100.0)
 
             # Fat-water phase cycling: automatic for GRE (SE refocuses this).
             if params["sequence"] in ("Gradient Echo", "MR Angiography") and phantom_slice.shape == image.shape:
