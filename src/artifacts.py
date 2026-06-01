@@ -219,6 +219,34 @@ def add_zipper_artifact(
     
     return result
 
+def apply_gradient_distortion(image: np.ndarray, strength: float = 0.0,
+                              kind: str = "barrel") -> np.ndarray:
+    """Geometric distortion from gradient-coil nonlinearity.
+
+    Real gradients deviate from a perfect linear field away from isocentre, so
+    spatial encoding warps the image — barrel (periphery pulled in) or pincushion
+    (pushed out) — growing with the squared distance from the centre and so most
+    visible at the edges of a large FOV. ``strength`` is a 0–1 amount (0 = none,
+    i.e. an ideally-corrected scan). Returns a remapped image of the same shape.
+    """
+    s = float(strength)
+    if s <= 0.0:
+        return image
+    from scipy.ndimage import map_coordinates
+
+    H, W = image.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    cy, cx = (H - 1) / 2.0, (W - 1) / 2.0
+    ny = (yy - cy) / max(cy, 1.0)
+    nx = (xx - cx) / max(cx, 1.0)
+    r2 = nx * nx + ny * ny                       # 0 at centre, ~1–2 at corners
+    k = 0.25 * s * (1.0 if kind == "barrel" else -1.0)
+    factor = 1.0 + k * r2                          # radial resampling factor
+    src_y = cy + (yy - cy) * factor
+    src_x = cx + (xx - cx) * factor
+    return map_coordinates(image, [src_y, src_x], order=1, mode="constant", cval=0.0)
+
+
 def calculate_chemical_shift_pixels(bandwidth_per_pixel: float, field_strength: float = 3.0) -> float:
     """Calculate chemical shift displacement in pixels.
     

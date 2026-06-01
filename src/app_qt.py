@@ -244,6 +244,8 @@ class MRISimulator(QMainWindow):
         self.flip_angle = Var(90.0)
         self.NEX = Var(1)
         self.matrix_size = Var(256)
+        self.trajectory = Var("Cartesian")
+        self.radial_spokes = Var(128)
         self.FOV = Var(240.0)
         self.fov_fraction = Var(100.0)
         self.bandwidth = Var(125.0)
@@ -330,6 +332,7 @@ class MRISimulator(QMainWindow):
         self.susceptibility_enabled = Var(False)
         self.susceptibility_strength = Var(3.0)
         self.zipper_enabled = Var(False)
+        self.gradient_distort = Var(0)   # gradient-nonlinearity distortion (% , 0 = off)
 
         # Physics effects
         self.mt_enabled = Var(False)
@@ -337,6 +340,7 @@ class MRISimulator(QMainWindow):
         self.b1_inhom_enabled = Var(False)
         self.flow_enabled = Var(True)
         self.flow_velocity = Var(70)   # integer 0–100 → 0.0–1.0 (blood velocity)
+        self.fatsat_enabled = Var(False)
 
         # Comparison
         self.compare_mode = Var(False)
@@ -1111,6 +1115,9 @@ class MRISimulator(QMainWindow):
         L.addWidget(spatial_sec)
         SPL = spatial_sec.inner
         self._slider(SPL, "Matrix Size", self.matrix_size, 32, 256)
+        self._dropdown(SPL, "Trajectory", self.trajectory,
+                       ["Cartesian", "Radial"], self.schedule_recalculate, inline=True)
+        self._slider(SPL, "Radial Spokes", self.radial_spokes, 16, 400)
         self._fov_slider = self._slider(SPL, "FOV (mm)", self.FOV, 100, 500)._qslider
         self._slider(SPL, "Phase FOV (%)", self.fov_fraction, 50, 100)
         self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
@@ -1134,6 +1141,7 @@ class MRISimulator(QMainWindow):
         self._checkbox(AL, "Chemical Shift", self.chemical_shift_enabled)
         self._checkbox(AL, "Susceptibility", self.susceptibility_enabled)
         self._slider(AL, "Susceptibility Strength", self.susceptibility_strength, 1, 10)
+        self._slider(AL, "Gradient Distortion (%)", self.gradient_distort, 0, 100)
         self._checkbox(AL, "Zipper (RF leak)", self.zipper_enabled)
         self._checkbox(AL, "Gadolinium Contrast", self.contrast_enabled)
         self._slider(AL, "Gd Dose (mmol/kg × 10)", self.contrast_dose, 1, 5)
@@ -1146,6 +1154,7 @@ class MRISimulator(QMainWindow):
         self._slider(PHL, "MT Saturation Power (%)", self.mt_power, 0, 100)
         self._checkbox(PHL, "Blood Flow (SE void / GRE inflow)", self.flow_enabled)
         self._slider(PHL, "Flow Velocity (%)", self.flow_velocity, 0, 100)
+        self._checkbox(PHL, "Fat Sat (CHESS, spectral)", self.fatsat_enabled)
         self._checkbox(PHL, "B1+ Field Inhomogeneity", self.b1_inhom_enabled)
         b1_hint = QLabel("B1+: mild at 1.5T/3T · dramatic at 7T")
         b1_hint.setStyleSheet("color:#6b7585; font-size:9px; padding-left:4px;")
@@ -1255,6 +1264,7 @@ class MRISimulator(QMainWindow):
         return {"sequence": self.sequence_type.get(), "field_strength": self.field_strength.get(),
                 "TR": self.TR.get(), "TE": self.TE.get(), "TI": self.TI.get(),
                 "flip_angle": self.flip_angle.get(), "matrix_size": self.matrix_size.get(), "FOV": self.FOV.get(),
+                "trajectory": self.trajectory.get(), "radial_spokes": self.radial_spokes.get(),
                 "fov_fraction": self.fov_fraction.get(), "bandwidth": self.bandwidth.get(), "NEX": self.NEX.get(),
                 "etl": self.etl.get(), "echo_spacing": self.echo_spacing.get(), "accel_factor": self.accel_factor.get(),
                 "accel_method": self.accel_method.get(), "b_value": self.b_value.get(),
@@ -1274,6 +1284,7 @@ class MRISimulator(QMainWindow):
                 "motion_type": self.motion_type.get(), "chemical_shift_enabled": self.chemical_shift_enabled.get(),
                 "susceptibility_enabled": self.susceptibility_enabled.get(),
                 "susceptibility_strength": self.susceptibility_strength.get(),
+                "gradient_distort": self.gradient_distort.get(),
                 "zipper_enabled": self.zipper_enabled.get(),
                 "pf_enabled": self.pf_enabled.get(), "pf_fraction": self.pf_fraction.get(),
                 "kspace_filter_enabled": self.kspace_filter_enabled.get(),
@@ -1282,7 +1293,8 @@ class MRISimulator(QMainWindow):
                 "contrast_dose": self.contrast_dose.get(),
                 "mt_enabled": self.mt_enabled.get(), "mt_power": self.mt_power.get(),
                 "b1_inhom_enabled": self.b1_inhom_enabled.get(),
-                "flow_enabled": self.flow_enabled.get(), "flow_velocity": self.flow_velocity.get()}
+                "flow_enabled": self.flow_enabled.get(), "flow_velocity": self.flow_velocity.get(),
+                "fatsat_enabled": self.fatsat_enabled.get()}
 
     def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()

@@ -267,3 +267,27 @@ class TestPeriodicMotionGhosts:
         def ghost_energy(a):
             m = a.copy(); m[20:44, :] = 0.0; return float((m ** 2).sum())
         assert ghost_energy(strong) > ghost_energy(mild)
+
+
+class TestGradientDistortion:
+    def test_zero_strength_identity(self):
+        from artifacts import apply_gradient_distortion
+        img = np.random.default_rng(0).random((40, 40))
+        np.testing.assert_array_equal(apply_gradient_distortion(img, 0.0), img)
+
+    def test_shape_preserved(self):
+        from artifacts import apply_gradient_distortion
+        img = np.random.default_rng(1).random((48, 60))
+        assert apply_gradient_distortion(img, 0.7).shape == img.shape
+
+    def test_periphery_warps_centre_fixed(self):
+        """Distortion grows with radius: the centre is essentially unchanged while
+        the periphery is displaced."""
+        from artifacts import apply_gradient_distortion
+        g = np.zeros((100, 100))
+        g[::8, :] = 1.0; g[:, ::8] = 1.0          # grid
+        out = apply_gradient_distortion(g, 0.9, kind="barrel")
+        cy = cx = 50
+        centre_change = np.abs(out[cy-3:cy+3, cx-3:cx+3] - g[cy-3:cy+3, cx-3:cx+3]).mean()
+        corner_change = np.abs(out[:12, :12] - g[:12, :12]).mean()
+        assert corner_change > centre_change

@@ -417,3 +417,30 @@ class TestGetKspaceDisplay:
         disp   = get_kspace_display(kspace)
         # log1p maps to much smaller range
         assert disp.max() < mag.max()
+
+
+# --- Radial (non-Cartesian) sampling ----------------------------------------
+import numpy as np
+from kspace import radial_sampling_mask, apply_radial_sampling
+
+
+def test_radial_mask_centre_always_sampled():
+    m = radial_sampling_mask((64, 64), n_spokes=16)
+    assert m[32, 32]                                  # DC sampled
+    assert m.dtype == bool and m.shape == (64, 64)
+
+
+def test_more_spokes_more_coverage():
+    few = radial_sampling_mask((96, 96), 24).sum()
+    many = radial_sampling_mask((96, 96), 200).sum()
+    assert many > few                                 # denser k-space coverage
+
+
+def test_radial_undersampling_adds_streak_energy_outside_object():
+    """A compact object reconstructed from few spokes spreads streak energy into
+    the surrounding background; full sampling does not."""
+    img = np.zeros((96, 96)); img[40:56, 40:56] = 1.0
+    full = apply_radial_sampling(img, 400)
+    under = apply_radial_sampling(img, 24)
+    bg = np.ones((96, 96), bool); bg[30:66, 30:66] = False   # outside the object
+    assert under[bg].std() > 3 * full[bg].std()

@@ -16,12 +16,12 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 from phantom3d import get_slice
-from kspace import simulate_acquisition
+from kspace import simulate_acquisition, apply_radial_sampling
 from fse import simulate_fse_image
 import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
-                       calculate_chemical_shift_pixels)
+                       apply_gradient_distortion, calculate_chemical_shift_pixels)
 from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d,
                                 simulate_fa_map_3d, simulate_tof_3d_slice,
                                 simulate_fmri_3d_slice, compute_activation_map_3d,
@@ -122,7 +122,8 @@ def default_params(**overrides) -> dict:
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
         rician_bias_correction=False, pv_sigma=10,
         flow_enabled=True, flow_velocity=70,
-        n_slices=1, slice_gap=0.0,
+        n_slices=1, slice_gap=0.0, gradient_distort=0, fatsat_enabled=False,
+        trajectory="Cartesian", radial_spokes=128,
     )
     p.update(overrides)
     return p
@@ -265,6 +266,22 @@ class Simulator:
             return float(bright.mean())
         mx = float(np.max(recon))
         return mx * 0.5 if mx > 0 else 0.0
+
+    @staticmethod
+    def _reference_protocol_signal(tprops: dict) -> float:
+        """Mean CSF/GM/WM signal at the SNR *reference* protocol (SE TR=500/TE=15).
+
+        The hardware noise floor is fixed, so SNR should follow the actual signal
+        level relative to this reference rather than being re-pinned to each
+        image's own (possibly collapsed) signal. Returns the reference level used
+        to scale the effective SNR.
+        """
+        vals = []
+        for lab in (1, 2, 3):
+            p = tprops.get(lab)
+            if p:
+                vals.append(p["PD"] * (1.0 - np.exp(-500.0 / p["T1"])) * np.exp(-15.0 / p["T2"]))
+        return float(np.mean(vals)) if vals else 0.0
 
     def _measure_snr(self, recon: np.ndarray, phantom_slice: np.ndarray) -> dict:
         """Console-style SNR: tissue-ROI mean / noise sigma from a signal-free region.
@@ -423,6 +440,11 @@ class Simulator:
             if params["susceptibility_enabled"] and phantom_slice.shape == image.shape:
                 image = add_susceptibility_artifact(image, phantom_slice,
                                                     params["susceptibility_strength"] / 10.0)
+            # Gradient-coil nonlinearity: geometric warp that grows with FOV
+            # (worse toward the periphery of a large field of view).
+            if params.get("gradient_distort", 0) > 0 and phantom_slice.shape == image.shape:
+                gd_str = (params["gradient_distort"] / 100.0) * (params["FOV"] / 250.0)
+                image = apply_gradient_distortion(image, min(gd_str, 1.5))
 
             # B1+ transmit inhomogeneity and MT act on the signal image before k-space.
             _field = params.get("field_strength", "3T")
@@ -434,6 +456,15 @@ class Simulator:
             if params.get("mt_enabled"):
                 image = rendering.apply_mt(image, phantom_slice, _tprops, params.get("mt_power", 0),
                                            params["sequence"], params["TR"], params["TE"], params["flip_angle"])
+
+            # Spectral (CHESS) fat saturation: null fat, with B0-dependent failure.
+            if params.get("fatsat_enabled") and phantom_slice.shape == image.shape:
+                try:
+                    _b0fs = self._b0_field_slice(orient, sl_idx, params, _B0_val)
+                    _b0fs = _b0fs if _b0fs.shape == image.shape else None
+                except Exception:
+                    _b0fs = None
+                image = rendering.apply_fat_sat(image, phantom_slice, _b0fs)
 
             # Flowing blood: signal void on the spin-echo family, inflow
             # brightening on gradient echo (static elsewhere).
@@ -493,6 +524,12 @@ class Simulator:
             method = params.get("accel_method", "SENSE")
             g_factor = _accel_gfactor(R, method)
 
+            # Non-Cartesian (radial) acquisition: under-sampled spokes leave
+            # azimuthal gaps that reconstruct as the characteristic streaks.
+            if params.get("trajectory") == "Radial":
+                reconstructed = apply_radial_sampling(
+                    reconstructed, int(params.get("radial_spokes", 128)))
+
             # --- Physical noise model (Rician), calibrated so the Noise Level
             # slider equals the tissue-average SNR at the reference protocol.
             res_mm = params["FOV"] / matrix
@@ -513,8 +550,16 @@ class Simulator:
                        * pf_snr * xtalk
                        / (g_factor * np.sqrt(R))
                        * (B0_snr / 3.0))
-            eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
             tissue_ref = self._tissue_ref_signal(reconstructed, phantom_slice)
+            # Fixed (hardware) noise floor: SNR tracks the real signal level
+            # relative to the reference protocol, so signal-collapsing sequences
+            # (high-b DWI, near-null IR) are genuinely noisier and very bright
+            # ones less. At the reference protocol the ratio is ≈1 (calibration
+            # preserved); the ratio is bounded to avoid pathological extremes.
+            ref_sig = self._reference_protocol_signal(_tprops)
+            if ref_sig > 0 and tissue_ref > 0:
+                eff_snr *= float(np.clip(tissue_ref / ref_sig, 0.04, 4.0))
+            eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
             if tissue_ref > 0:
                 sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
                 sigma_map = sigma
