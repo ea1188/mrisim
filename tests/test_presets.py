@@ -154,3 +154,32 @@ class TestEstimateSAR:
         # seq_factor defaults to 1.0; SE uses 1.5 so unknown should be less
         sar_se = estimate_sar(90, 500, sequence="SE")
         assert sar_unknown["whole_body"] < sar_se["whole_body"]
+
+
+class TestNewPresets:
+    """Post-contrast, in/opposed-phase and Torso presets added for the body work."""
+
+    def test_post_gd_presets_enable_contrast(self):
+        from presets import get_preset
+        for name in ("Brain T1 Post-Gd", "Abdomen T1 Post-Gd", "Pelvis T1 Post-Gd"):
+            p = get_preset(name)
+            assert p["contrast_enabled"] is True
+            assert p["contrast_dose"] >= 1
+
+    def test_non_contrast_presets_have_no_contrast_flag(self):
+        # Regular presets must not silently enable Gd.
+        from presets import get_preset
+        assert get_preset("Brain T1 SE").get("contrast_enabled", False) is False
+        assert get_preset("Abdomen T2 FSE").get("contrast_enabled", False) is False
+
+    def test_opposed_phase_te_shorter_than_in_phase(self):
+        from presets import get_preset
+        opp = get_preset("Abdomen Opposed-Phase")["TE"]
+        inp = get_preset("Abdomen In-Phase")["TE"]
+        assert opp < inp            # opposed-phase TE is the shorter one at 3T
+        assert opp == pytest.approx(1.15, abs=0.2)
+
+    def test_torso_presets_map_to_torso_region(self):
+        from presets import get_preset_region
+        for name in ("Torso T2 Coronal", "Torso T1 GRE", "Torso STIR Coronal"):
+            assert get_preset_region(name) == "Torso"

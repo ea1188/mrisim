@@ -2457,6 +2457,11 @@ class MRISimulator(QMainWindow):
                      ("angio_type", self.angio_type), ("angio_mip_slab", self.angio_mip_slab),
                      ("fmri_display", self.fmri_display), ("fmri_volumes", self.fmri_volumes), ("fmri_threshold", self.fmri_threshold)]:
             if k in p: v.set(p[k])
+        # Gadolinium: post-contrast presets enable it; reset to off otherwise so
+        # switching back to a non-contrast preset clears it.
+        self.contrast_enabled.set(bool(p.get("contrast_enabled", False)))
+        if "contrast_dose" in p:
+            self.contrast_dose.set(int(p["contrast_dose"]))
         self.desc_label.config(text=p.get("description", ""))
         self.on_sequence_change()
         # on_sequence_change resets TR/TE/etl for FSE; re-apply preset values
@@ -2500,7 +2505,8 @@ class MRISimulator(QMainWindow):
 
     def _get_native_fov(self) -> float:
         """Physical FOV (mm) represented by the current phantom's in-plane extent."""
-        _map = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 380.0, "Pelvis": 380.0, "Knee": 150.0}
+        _map = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 380.0, "Pelvis": 380.0,
+                "Knee": 150.0, "Torso": 400.0}
         name = self.region.get()
         for key, fov in _map.items():
             if key in name:

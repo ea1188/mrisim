@@ -438,11 +438,127 @@ PRESETS = {
         "NEX": 1,
         "description": "GRE T2* knee. Articular cartilage mapping. Sensitive to calcifications, haemosiderin, loose bodies. 3D acquisition for MPR."
     },
+
+    # ------------------------------------------------------------------ #
+    #  Post-contrast (Gadolinium)
+    # ------------------------------------------------------------------ #
+    "Brain T1 Post-Gd": {
+        "sequence": "Spin Echo",
+        "TR": 500,
+        "TE": 15,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 240,
+        "bandwidth": 125,
+        "NEX": 1,
+        "contrast_enabled": True,
+        "contrast_dose": 2,
+        "description": "T1w SE after gadolinium. Enhancing tumour, abscess rim, meningeal disease and vessels brighten where the blood–brain barrier is disrupted; normal brain barely changes."
+    },
+    "Abdomen T1 Post-Gd": {
+        "sequence": "Gradient Echo",
+        "TR": 200,
+        "TE": 4,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 500,
+        "NEX": 1,
+        "contrast_enabled": True,
+        "contrast_dose": 2,
+        "description": "Post-Gd T1 GRE (VIBE). Arterial-phase enhancement of liver, spleen, kidneys and vessels. Hypervascular lesions (HCC) enhance avidly; portal/hepatic veins brighten."
+    },
+    "Pelvis T1 Post-Gd": {
+        "sequence": "Gradient Echo",
+        "TR": 220,
+        "TE": 4,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 400,
+        "NEX": 1,
+        "contrast_enabled": True,
+        "contrast_dose": 2,
+        "description": "Post-Gd T1 GRE pelvis. Tumour and nodal enhancement; bladder, prostate/uterine and iliac vessel enhancement. Pairs with pre-contrast T1 for subtraction."
+    },
+
+    # ------------------------------------------------------------------ #
+    #  In/Opposed-phase (chemical-shift / Dixon, 3T)
+    # ------------------------------------------------------------------ #
+    "Abdomen In-Phase": {
+        "sequence": "Gradient Echo",
+        "TR": 200,
+        "TE": 2.3,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 500,
+        "NEX": 1,
+        "description": "In-phase GRE (TE≈2.3 ms at 3T): fat and water signals add. Baseline for the in/opposed-phase pair used to detect microscopic fat."
+    },
+    "Abdomen Opposed-Phase": {
+        "sequence": "Gradient Echo",
+        "TR": 200,
+        "TE": 1.15,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 500,
+        "NEX": 1,
+        "description": "Opposed-phase GRE (TE≈1.15 ms at 3T): fat and water cancel, giving India-ink organ borders and signal drop in fat-containing lesions (adrenal adenoma, fatty liver)."
+    },
+
+    # ------------------------------------------------------------------ #
+    #  Torso  (FOV 400 mm — whole chest–abdomen–pelvis atlas)
+    # ------------------------------------------------------------------ #
+    "Torso T2 Coronal": {
+        "sequence": "FSE / TSE",
+        "TR": 4500,
+        "TE": 90,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 400,
+        "bandwidth": 400,
+        "NEX": 1,
+        "etl": 32,
+        "echo_spacing": 8,
+        "description": "Coronal T2w FSE survey of the whole torso. Fluid bright; large-field overview of lungs, heart, liver, spleen, kidneys and spine in one acquisition."
+    },
+    "Torso T1 GRE": {
+        "sequence": "Gradient Echo",
+        "TR": 200,
+        "TE": 4,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 400,
+        "bandwidth": 500,
+        "NEX": 1,
+        "description": "T1w GRE torso. Anatomic overview with bright fat planes; useful pre-contrast baseline and for staging surveys."
+    },
+    "Torso STIR Coronal": {
+        "sequence": "Inversion Recovery",
+        "TR": 5000,
+        "TE": 60,
+        "TI": 265,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 400,
+        "bandwidth": 300,
+        "NEX": 1,
+        "description": "Coronal STIR torso. Fat suppressed — sensitive whole-body screen for marrow edema, metastases, lymphadenopathy and inflammation."
+    },
 }
 
 _REGION_PREFIXES: list[tuple[str, str]] = [
     ("Abdomen", "Abdomen"), ("Spine", "Spine"), ("Pelvis", "Pelvis"),
-    ("Knee", "Knee"), ("Brain", "Brain"), ("MRCP", "Abdomen"),
+    ("Knee", "Knee"), ("Torso", "Torso"), ("Brain", "Brain"), ("MRCP", "Abdomen"),
     ("DWI", "Brain"), ("ADC", "Brain"), ("TOF", "Brain"), ("fMRI", "Brain"),
 ]
 
