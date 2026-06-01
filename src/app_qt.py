@@ -338,6 +338,7 @@ class MRISimulator(QMainWindow):
         self.b1_inhom_enabled = Var(False)
         self.flow_enabled = Var(True)
         self.flow_velocity = Var(70)   # integer 0–100 → 0.0–1.0 (blood velocity)
+        self.fatsat_enabled = Var(False)
 
         # Comparison
         self.compare_mode = Var(False)
@@ -1148,6 +1149,7 @@ class MRISimulator(QMainWindow):
         self._slider(PHL, "MT Saturation Power (%)", self.mt_power, 0, 100)
         self._checkbox(PHL, "Blood Flow (SE void / GRE inflow)", self.flow_enabled)
         self._slider(PHL, "Flow Velocity (%)", self.flow_velocity, 0, 100)
+        self._checkbox(PHL, "Fat Sat (CHESS, spectral)", self.fatsat_enabled)
         self._checkbox(PHL, "B1+ Field Inhomogeneity", self.b1_inhom_enabled)
         b1_hint = QLabel("B1+: mild at 1.5T/3T · dramatic at 7T")
         b1_hint.setStyleSheet("color:#6b7585; font-size:9px; padding-left:4px;")
@@ -1285,7 +1287,8 @@ class MRISimulator(QMainWindow):
                 "contrast_dose": self.contrast_dose.get(),
                 "mt_enabled": self.mt_enabled.get(), "mt_power": self.mt_power.get(),
                 "b1_inhom_enabled": self.b1_inhom_enabled.get(),
-                "flow_enabled": self.flow_enabled.get(), "flow_velocity": self.flow_velocity.get()}
+                "flow_enabled": self.flow_enabled.get(), "flow_velocity": self.flow_velocity.get(),
+                "fatsat_enabled": self.fatsat_enabled.get()}
 
     def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()

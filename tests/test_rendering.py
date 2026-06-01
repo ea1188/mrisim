@@ -359,3 +359,27 @@ def test_epi_slice_b0_distorts_geometry():
         m = np.abs(a)
         return (m.sum(1) * np.arange(m.shape[0])).sum() / m.sum()
     assert abs(row_centroid(dist) - row_centroid(clean)) > 0.5
+
+
+# --- Spectral fat saturation (CHESS) ----------------------------------------
+def test_fat_sat_suppresses_fat_only():
+    sl = np.zeros((10, 10), dtype=np.uint8); sl[:, :5] = 4; sl[:, 5:] = 6  # fat | muscle
+    img = np.where(sl == 4, 1.0, 0.5)
+    out = rendering.apply_fat_sat(img, sl)
+    assert out[sl == 4].mean() < 0.2 * img[sl == 4].mean()   # fat nulled
+    np.testing.assert_allclose(out[sl == 6], img[sl == 6])   # water untouched
+
+
+def test_fat_sat_no_fat_unchanged():
+    sl = np.full((6, 6), 6, dtype=np.uint8)
+    img = np.ones((6, 6))
+    np.testing.assert_array_equal(rendering.apply_fat_sat(img, sl), img)
+
+
+def test_fat_sat_fails_in_off_resonance():
+    """Where B0 off-resonance is worst, suppression fails and fat signal returns."""
+    sl = np.full((10, 100), 4, dtype=np.uint8)        # all fat
+    img = np.ones((10, 100))
+    off = np.zeros((10, 100)); off[:, 96:] = 500.0     # small strong off-res patch (~4%)
+    out = rendering.apply_fat_sat(img, sl, off)
+    assert out[:, 98].mean() > 3 * out[:, 2].mean()    # failed patch much brighter than suppressed bulk

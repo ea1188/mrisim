@@ -122,7 +122,7 @@ def default_params(**overrides) -> dict:
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
         rician_bias_correction=False, pv_sigma=10,
         flow_enabled=True, flow_velocity=70,
-        n_slices=1, slice_gap=0.0, gradient_distort=0,
+        n_slices=1, slice_gap=0.0, gradient_distort=0, fatsat_enabled=False,
     )
     p.update(overrides)
     return p
@@ -455,6 +455,15 @@ class Simulator:
             if params.get("mt_enabled"):
                 image = rendering.apply_mt(image, phantom_slice, _tprops, params.get("mt_power", 0),
                                            params["sequence"], params["TR"], params["TE"], params["flip_angle"])
+
+            # Spectral (CHESS) fat saturation: null fat, with B0-dependent failure.
+            if params.get("fatsat_enabled") and phantom_slice.shape == image.shape:
+                try:
+                    _b0fs = self._b0_field_slice(orient, sl_idx, params, _B0_val)
+                    _b0fs = _b0fs if _b0fs.shape == image.shape else None
+                except Exception:
+                    _b0fs = None
+                image = rendering.apply_fat_sat(image, phantom_slice, _b0fs)
 
             # Flowing blood: signal void on the spin-echo family, inflow
             # brightening on gradient echo (static elsewhere).
