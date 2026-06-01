@@ -33,6 +33,37 @@ def inversion_recovery_signal(T1: float, T2: float, PD: float, TR: float, TE: fl
     signal = PD * abs(1 - 2 * np.exp(-TI / T1) + np.exp(-TR / T1)) * np.exp(-TE / T2)
     return signal
 
+def balanced_ssfp_signal(T1, T2, PD, TR: float, TE: float, flip_angle_deg: float):
+    """On-resonance balanced SSFP (bSSFP / TrueFISP / FIESTA) steady-state signal.
+
+    Unlike spoiled GRE, the transverse magnetization is refocused every TR, giving
+    the characteristic high signal wherever T2/T1 is large — fluid, fat and blood
+    are all bright. (Banding from off-resonance is applied separately.)
+    """
+    a = np.radians(flip_angle_deg)
+    E1 = np.exp(-TR / np.maximum(T1, 1e-6))
+    E2 = np.exp(-TR / np.maximum(T2, 1e-6))
+    denom = 1.0 - (E1 - E2) * np.cos(a) - E1 * E2
+    safe = np.where(np.abs(denom) < 1e-9, 1.0, denom)
+    sig = PD * np.sin(a) * (1.0 - E1) / safe * np.exp(-TE / np.maximum(T2, 1e-6))
+    sig = np.where(np.abs(denom) < 1e-9, 0.0, sig)
+    return float(sig) if np.ndim(sig) == 0 else sig
+
+
+def ssfp_banding(off_resonance_hz, TR_ms: float, E2, null_width: float = 0.6):
+    """bSSFP off-resonance banding factor (0–1).
+
+    The balanced steady state has a broad, flat passband (factor ≈ 1) with narrow
+    dark signal nulls where the per-TR phase β = 2π·Δf·TR passes through ±π
+    (Δf ≈ ±1/2TR). Long-T2 tissue (E2 → 1) bands deepest. Longer TR packs more
+    bands across a given off-resonance range.
+    """
+    beta = 2.0 * np.pi * np.asarray(off_resonance_hz, dtype=float) * (TR_ms / 1000.0)
+    phi = np.mod(beta, 2.0 * np.pi)          # [0, 2π)
+    d = np.abs(phi - np.pi)                   # angular distance to the null at π
+    return 1.0 - E2 * np.exp(-(d / null_width) ** 2)
+
+
 def calculate_snr(signal: float, bandwidth: float, voxel_volume: float, NEX: float) -> float:
     """Estimate relative SNR."""
     noise = np.sqrt(bandwidth)

@@ -535,10 +535,11 @@ def generate_pelvis_3d(Z: int = 120, H: int = 220, W: int = 280, seed: int = 31)
 
 # ---- Region registry --------------------------------------------------------
 REGION_NAMES = ["Brain", "Abdomen", "Knee", "Spine", "Pelvis", "Torso"]
-_MSK_SEQS = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery"]
+_MSK_SEQS = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery", "Balanced SSFP"]
 REGION_SEQUENCES = {
     "Brain":   ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-                "Echo Planar (EPI)", "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)"],
+                "Balanced SSFP", "Echo Planar (EPI)", "Diffusion (DWI)",
+                "MR Angiography", "fMRI (BOLD)"],
     "Abdomen": _MSK_SEQS,
     "Knee":    _MSK_SEQS,
     "Spine":   _MSK_SEQS,

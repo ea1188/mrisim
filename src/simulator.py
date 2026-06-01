@@ -278,7 +278,7 @@ class Simulator:
         # EPI shares the T2*-weighted GRE base; its readout artifacts are applied
         # downstream in simulate().
         seq_map = {"Spin Echo": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
-                   "Echo Planar (EPI)": "GRE"}
+                   "Echo Planar (EPI)": "GRE", "Balanced SSFP": "bSSFP"}
         if seq in seq_map:
             return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
         elif seq == "FSE / TSE":
@@ -410,6 +410,22 @@ class Simulator:
                                         params["flip_angle"],
                                         velocity=params.get("flow_velocity", 70) / 100.0)
 
+            # Balanced SSFP: off-resonance produces the characteristic signal-null
+            # bands. Off-resonance = an imperfect-shim linear gradient plus the
+            # real susceptibility field; longer TR packs more bands.
+            if params["sequence"] == "Balanced SSFP" and phantom_slice.shape == image.shape:
+                from signal_engine import ssfp_banding
+                H, W = image.shape
+                ramp = (np.arange(H)[:, None] / max(H - 1, 1) - 0.5) * 120.0   # ±60 Hz shim
+                try:
+                    b0f = self._b0_field_slice(orient, sl_idx, params, _B0_val)
+                    off = ramp + (b0f if b0f.shape == image.shape else 0.0)
+                except Exception:
+                    off = ramp
+                (T2m,) = rendering.param_maps(phantom_slice, _tprops, ("T2",))
+                E2 = np.exp(-params["TR"] / np.maximum(T2m, 1e-6))
+                image = image * ssfp_banding(off, params["TR"], E2)
+
             # Fat-water phase cycling: automatic for GRE (SE refocuses this).
             if params["sequence"] in ("Gradient Echo", "MR Angiography") and phantom_slice.shape == image.shape:
                 image = rendering.gre_fatwater_phase(image, phantom_slice, params["TE"], _B0_val)
@@ -508,7 +524,7 @@ class Simulator:
         scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000
         seq_map = {"Spin Echo": "SE", "FSE / TSE": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
                    "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI",
-                   "Echo Planar (EPI)": "EPI"}
+                   "Echo Planar (EPI)": "EPI", "Balanced SSFP": "GRE"}
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2

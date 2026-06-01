@@ -992,6 +992,7 @@ class MRISimulator(QMainWindow):
                        list(_B0_MAP.keys()), self.schedule_recalculate, inline=True)
         self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
                        ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
+                        "Balanced SSFP",
                         "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
                         "Quantitative (qMRI)", "Echo Planar (EPI)"], self.on_sequence_change)
         self.desc_label = DLabel("", base_style="color:#6b7585; font-size:9px; padding:2px 2px;")
@@ -2218,6 +2219,7 @@ class MRISimulator(QMainWindow):
         if seq == "fMRI (BOLD)": return "T2* (BOLD)"
         if seq == "Quantitative (qMRI)": return "Quantitative"
         if seq == "Echo Planar (EPI)": return "T2* (EPI)"
+        if seq == "Balanced SSFP": return "T2/T1 (bSSFP)"
         if TR < 800 and TE < 30: return "T1-weighted"
         elif TR > 2000 and TE > 60: return "T2-weighted"
         elif TR > 2000 and TE < 30: return "PD-weighted"
@@ -2494,6 +2496,9 @@ class MRISimulator(QMainWindow):
             self.ti_frame.setVisible(True)
         elif seq == "Gradient Echo":
             self.fa_frame.setVisible(True)
+        elif seq == "Balanced SSFP":
+            # Short TR, TE≈TR/2, moderate flip — the regime where bSSFP works.
+            self.fa_frame.setVisible(True); self.TR.set(5.0); self.TE.set(2.5); self.flip_angle.set(45.0)
         elif seq == "FSE / TSE":
             self.fse_frame.setVisible(True); self.TR.set(4000.0); self.TE.set(80.0); self.etl.set(16)
         elif seq == "Diffusion (DWI)":
