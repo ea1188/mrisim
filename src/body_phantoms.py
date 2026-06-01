@@ -538,7 +538,7 @@ REGION_NAMES = ["Brain", "Abdomen", "Knee", "Spine", "Pelvis", "Torso"]
 _MSK_SEQS = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery"]
 REGION_SEQUENCES = {
     "Brain":   ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-                "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)"],
+                "Echo Planar (EPI)", "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)"],
     "Abdomen": _MSK_SEQS,
     "Knee":    _MSK_SEQS,
     "Spine":   _MSK_SEQS,
