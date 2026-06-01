@@ -65,7 +65,8 @@ def radial_sampling_mask(shape: tuple[int, int], n_spokes: int) -> np.ndarray:
     dy, dx = yy - cy, xx - cx
     r = np.hypot(dy, dx)
     th = np.mod(np.arctan2(dy, dx), np.pi)               # spoke angle, [0, π)
-    tol = np.where(r > 1.0, np.arcsin(np.clip(0.7 / r, 0.0, 1.0)), np.pi)
+    inv_r = np.divide(0.7, r, out=np.zeros_like(r), where=r > 1.0)
+    tol = np.where(r > 1.0, np.arcsin(np.clip(inv_r, 0.0, 1.0)), np.pi)
     mask = np.zeros(shape, dtype=bool)
     for a in np.linspace(0.0, np.pi, max(1, int(n_spokes)), endpoint=False):
         d = np.abs(th - a)

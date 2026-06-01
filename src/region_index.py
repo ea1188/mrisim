@@ -175,7 +175,8 @@ def build_index(
     cache = {}
     if os.path.exists(cache_path):
         try:
-            cache = {e["key"]: e for e in json.load(open(cache_path))}
+            with open(cache_path) as fh:
+                cache = {e["key"]: e for e in json.load(fh)}
         except Exception:
             cache = {}
 
@@ -205,7 +206,8 @@ def build_index(
 
     if changed:
         try:
-            json.dump(entries, open(cache_path, "w"), indent=0)
+            with open(cache_path, "w") as fh:
+                json.dump(entries, fh, indent=0)
         except Exception:
             pass
     return entries
