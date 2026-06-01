@@ -18,7 +18,6 @@ from scipy.ndimage import gaussian_filter
 from phantom3d import get_slice
 from kspace import simulate_acquisition
 from fse import simulate_fse_image
-from acceleration import apply_parallel_imaging, apply_compressed_sensing
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        calculate_chemical_shift_pixels)
@@ -44,6 +43,25 @@ _B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
 _PF_MAP: dict[str, float] = {
     "Full": 1.0, "7/8": 7.0 / 8.0, "6/8": 6.0 / 8.0, "5/8": 5.0 / 8.0,
 }
+
+
+def _accel_gfactor(R: int, method: str) -> float:
+    """Effective noise-amplification (g-factor) for an R-fold accelerated scan.
+
+    A successful parallel-imaging / CS reconstruction keeps full resolution and
+    contrast; the only image cost is an SNR drop of g·√R. The g-factor depends
+    on the method: SENSE uses the coil-geometry g; GRAPPA's autocalibration
+    makes it a little lower; compressed sensing has no coil g-penalty (g≈1, it
+    trades incoherent residue for SNR instead). Returns 1.0 for R ≤ 1.
+    """
+    if R <= 1:
+        return 1.0
+    g = rendering.g_factor(R)
+    if method == "GRAPPA":
+        return 1.0 + 0.8 * (g - 1.0)
+    if method == "CS":
+        return 1.0
+    return g
 
 
 def default_params(**overrides) -> dict:
@@ -408,14 +426,13 @@ class Simulator:
             reconstructed, kspace_acquired = simulate_acquisition(image, matrix, fov_frac,
                                                                   filter_window=_fw, pf_fraction=_pf)
 
-            _g_map = None
-            if R > 1:
-                method = params["accel_method"]
-                if method == "CS":
-                    reconstructed = apply_compressed_sensing(reconstructed, R)
-                else:
-                    # Keep the spatial g-factor map to shape the noise below.
-                    reconstructed, _g_map = apply_parallel_imaging(reconstructed, R, method)
+            # Acceleration is modelled as a *successful* reconstruction: it keeps
+            # full resolution and contrast and makes the scan R× faster — the only
+            # image cost is an SNR drop of g·√R (handled in the noise model below).
+            # We deliberately do NOT run an under-sampled recon here, which would
+            # inject gross aliasing that NEX could never recover.
+            method = params.get("accel_method", "SENSE")
+            g_factor = _accel_gfactor(R, method)
 
             # --- Physical noise model (Rician), calibrated so the Noise Level
             # slider equals the tissue-average SNR at the reference protocol.
@@ -423,7 +440,6 @@ class Simulator:
             vox_vol = res_mm * res_mm * max(1, thickness)
             BW_hz = max(1.0, params["bandwidth"] * 1000.0)
             B0_snr = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-            g_factor = rendering.g_factor(R)
             # Partial Fourier acquires only `_pf` of the phase-encode lines, so
             # SNR drops ~sqrt(fraction) (fewer samples averaged), mirroring the
             # scan-time reduction below.
@@ -440,15 +456,18 @@ class Simulator:
             if tissue_ref > 0:
                 sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
                 sigma_map = sigma
-                # Parallel-imaging g-factor noise is spatially non-uniform (it
-                # peaks where coil unfolding is ill-conditioned). The scalar
-                # g_factor above already set the *average* SNR penalty; here we
-                # redistribute that noise by the g-factor map (mean-preserving,
-                # so calibration is unchanged) so SENSE/GRAPPA show the
-                # characteristic structured noise that intensifies with R.
-                if _g_map is not None and _g_map.shape == reconstructed.shape:
-                    gn = _g_map / max(float(np.median(_g_map)), 1e-6)
-                    sigma_map = sigma * np.clip(gn, 0.4, 4.0)
+                # Subtle, smooth g-factor structure: parallel-imaging noise is a
+                # little higher toward the centre (where coil unfolding is least
+                # conditioned), growing with g. Mean-preserving, so the average
+                # SNR penalty is unchanged — this is texture, not extra noise.
+                if g_factor > 1.01:
+                    H, W = reconstructed.shape
+                    yy, xx = np.ogrid[:H, :W]
+                    rr = np.sqrt(((yy - H / 2) / (H / 2 + 1e-9)) ** 2
+                                 + ((xx - W / 2) / (W / 2 + 1e-9)) ** 2)
+                    amp = min(0.5, g_factor - 1.0)
+                    prof = 1.0 + amp * (0.5 - np.clip(rr, 0.0, 1.0))
+                    sigma_map = sigma * (prof / float(prof.mean()))
                 reconstructed = rician.add_rician_noise(reconstructed, sigma_map)
                 if params.get("rician_bias_correction"):
                     reconstructed = rician.rician_bias_correction(reconstructed, sigma)
@@ -485,7 +504,7 @@ class Simulator:
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
                    "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
-                   "g_factor": rendering.g_factor(R)}
+                   "g_factor": _accel_gfactor(R, params.get("accel_method", "SENSE"))}
         if not is_map:
             snr = self._measure_snr(reconstructed, phantom_slice)
             metrics["snr_wm"] = snr["wm"]
