@@ -153,6 +153,41 @@ def test_accel_noise_is_spatially_structured(sim, monkeypatch):
     assert float(np.std(s)) > 0                            # genuinely non-uniform
 
 
+def test_acceleration_is_modest_and_nex_recovers(sim, monkeypatch):
+    """Acceleration retains image quality at a modest SNR cost (~g·√R), and NEX
+    buys it back: R=2 costs only ~1.4–1.6× more noise, and R=2 with NEX=2 returns
+    to ~the unaccelerated noise level (at the same scan time)."""
+    import rician
+    levels = []
+
+    def spy(image, sigma, *a, **k):
+        levels.append(float(np.mean(sigma)))
+        return image
+
+    monkeypatch.setattr(rician, "add_rician_noise", spy)
+
+    def noise(**kw):
+        levels.clear()
+        sim.simulate(base_params(**kw))
+        return levels[-1]
+
+    s1 = noise(accel_factor=1)
+    s2 = noise(accel_factor=2, accel_method="SENSE")
+    s2_nex2 = noise(accel_factor=2, accel_method="SENSE", NEX=2)
+
+    assert 1.3 < s2 / s1 < 1.8            # R=2: modest cost (~g·√2), not a blow-up
+    assert abs(s2_nex2 / s1 - 1.0) < 0.15  # NEX=2 recovers to ~unaccelerated noise
+
+
+def test_cs_less_noise_penalty_than_sense(sim):
+    """Compressed sensing carries no coil g-factor penalty, so at the same R it
+    reports a lower effective g (and thus less SNR loss) than SENSE."""
+    _, m_sense = sim.simulate(base_params(accel_factor=3, accel_method="SENSE"))
+    _, m_cs = sim.simulate(base_params(accel_factor=3, accel_method="CS"))
+    assert m_cs["g_factor"] < m_sense["g_factor"]
+    assert m_cs["g_factor"] == pytest.approx(1.0)
+
+
 def test_partial_fourier_raises_noise(monkeypatch):
     """Partial Fourier acquires fewer phase-encode lines, so SNR drops
     ~sqrt(fraction) and the *calibrated* noise sigma rises by 1/sqrt(fraction).
