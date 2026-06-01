@@ -51,6 +51,41 @@ def kspace_to_image(kspace: np.ndarray) -> np.ndarray:
     return np.abs(np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(kspace)))).astype(np.float64)
 
 
+def radial_sampling_mask(shape: tuple[int, int], n_spokes: int) -> np.ndarray:
+    """Boolean k-space coverage of an ``n_spokes`` radial (projection) acquisition.
+
+    Radial sampling fills k-space along spokes through the centre. The centre is
+    always densely covered (motion-robust), while the periphery is gapped when
+    there are fewer spokes than the Nyquist number — those azimuthal gaps are
+    what produce streak artifacts after reconstruction.
+    """
+    H, W = shape
+    cy, cx = H / 2.0, W / 2.0
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    dy, dx = yy - cy, xx - cx
+    r = np.hypot(dy, dx)
+    th = np.mod(np.arctan2(dy, dx), np.pi)               # spoke angle, [0, π)
+    tol = np.where(r > 1.0, np.arcsin(np.clip(0.7 / r, 0.0, 1.0)), np.pi)
+    mask = np.zeros(shape, dtype=bool)
+    for a in np.linspace(0.0, np.pi, max(1, int(n_spokes)), endpoint=False):
+        d = np.abs(th - a)
+        d = np.minimum(d, np.pi - d)                      # circular distance
+        mask |= d <= tol
+    mask[r < 1.5] = True                                  # central disc always sampled
+    return mask
+
+
+def apply_radial_sampling(image: np.ndarray, n_spokes: int) -> np.ndarray:
+    """Reconstruct ``image`` as if acquired with ``n_spokes`` radial spokes.
+
+    The image's k-space is restricted to the radial coverage and transformed
+    back, so under-sampling (few spokes) yields the characteristic radial streak
+    artifact while full sampling returns the image essentially unchanged.
+    """
+    mask = radial_sampling_mask(image.shape, n_spokes)
+    return kspace_to_image(image_to_kspace(image) * mask)
+
+
 # ---------------------------------------------------------------------------
 # Matrix size (k-space cropping)
 # ---------------------------------------------------------------------------

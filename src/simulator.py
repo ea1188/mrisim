@@ -16,7 +16,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 
 from phantom3d import get_slice
-from kspace import simulate_acquisition
+from kspace import simulate_acquisition, apply_radial_sampling
 from fse import simulate_fse_image
 import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
@@ -123,6 +123,7 @@ def default_params(**overrides) -> dict:
         rician_bias_correction=False, pv_sigma=10,
         flow_enabled=True, flow_velocity=70,
         n_slices=1, slice_gap=0.0, gradient_distort=0, fatsat_enabled=False,
+        trajectory="Cartesian", radial_spokes=128,
     )
     p.update(overrides)
     return p
@@ -522,6 +523,12 @@ class Simulator:
             # inject gross aliasing that NEX could never recover.
             method = params.get("accel_method", "SENSE")
             g_factor = _accel_gfactor(R, method)
+
+            # Non-Cartesian (radial) acquisition: under-sampled spokes leave
+            # azimuthal gaps that reconstruct as the characteristic streaks.
+            if params.get("trajectory") == "Radial":
+                reconstructed = apply_radial_sampling(
+                    reconstructed, int(params.get("radial_spokes", 128)))
 
             # --- Physical noise model (Rician), calibrated so the Noise Level
             # slider equals the tissue-average SNR at the reference protocol.

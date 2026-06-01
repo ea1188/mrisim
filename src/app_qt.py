@@ -244,6 +244,8 @@ class MRISimulator(QMainWindow):
         self.flip_angle = Var(90.0)
         self.NEX = Var(1)
         self.matrix_size = Var(256)
+        self.trajectory = Var("Cartesian")
+        self.radial_spokes = Var(128)
         self.FOV = Var(240.0)
         self.fov_fraction = Var(100.0)
         self.bandwidth = Var(125.0)
@@ -1113,6 +1115,9 @@ class MRISimulator(QMainWindow):
         L.addWidget(spatial_sec)
         SPL = spatial_sec.inner
         self._slider(SPL, "Matrix Size", self.matrix_size, 32, 256)
+        self._dropdown(SPL, "Trajectory", self.trajectory,
+                       ["Cartesian", "Radial"], self.schedule_recalculate, inline=True)
+        self._slider(SPL, "Radial Spokes", self.radial_spokes, 16, 400)
         self._fov_slider = self._slider(SPL, "FOV (mm)", self.FOV, 100, 500)._qslider
         self._slider(SPL, "Phase FOV (%)", self.fov_fraction, 50, 100)
         self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
@@ -1259,6 +1264,7 @@ class MRISimulator(QMainWindow):
         return {"sequence": self.sequence_type.get(), "field_strength": self.field_strength.get(),
                 "TR": self.TR.get(), "TE": self.TE.get(), "TI": self.TI.get(),
                 "flip_angle": self.flip_angle.get(), "matrix_size": self.matrix_size.get(), "FOV": self.FOV.get(),
+                "trajectory": self.trajectory.get(), "radial_spokes": self.radial_spokes.get(),
                 "fov_fraction": self.fov_fraction.get(), "bandwidth": self.bandwidth.get(), "NEX": self.NEX.get(),
                 "etl": self.etl.get(), "echo_spacing": self.echo_spacing.get(), "accel_factor": self.accel_factor.get(),
                 "accel_method": self.accel_method.get(), "b_value": self.b_value.get(),
