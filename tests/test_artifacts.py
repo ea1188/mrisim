@@ -231,3 +231,39 @@ class TestChemicalShiftNegative:
         out = add_chemical_shift_artifact(brain_image, brain_phantom_64,
                                           shift_pixels=-3)
         assert np.all(out >= 0)
+
+
+class TestChemicalShiftSubPixel:
+    def test_subpixel_shift_produces_fractional_values(self):
+        """A non-integer chemical shift interpolates (fractional pixel values),
+        not a whole-pixel snap."""
+        sl = np.zeros((8, 20), dtype=np.uint8); sl[:, 4:9] = 4   # fat block
+        img = np.where(sl == 4, 1.0, 0.0)
+        out = add_chemical_shift_artifact(img, sl, shift_pixels=1.4)
+        row = out[4]
+        # a partially-filled (interpolated) pixel exists between 0 and 1
+        assert np.any((row > 0.05) & (row < 0.95))
+
+    def test_zero_shift_is_noop(self):
+        sl = np.zeros((6, 10), dtype=np.uint8); sl[:, 2:5] = 4
+        img = np.where(sl == 4, 1.0, 0.3)
+        np.testing.assert_allclose(add_chemical_shift_artifact(img, sl, shift_pixels=0.0), img)
+
+
+class TestPeriodicMotionGhosts:
+    def test_periodic_motion_makes_discrete_ghosts(self):
+        """Periodic motion replicates the object at discrete ghost offsets in the
+        phase-encode direction (energy spreads into shifted copies)."""
+        img = np.zeros((64, 64)); img[26:38, 26:38] = 1.0     # compact object
+        out = add_motion_artifact(img, "periodic", amplitude=10, frequency=3)
+        # signal now appears well outside the original object rows (ghosts)
+        far = out.copy(); far[20:44, :] = 0.0
+        assert far.max() > 0.1 * out.max()
+
+    def test_stronger_motion_more_ghosting(self):
+        img = np.zeros((64, 64)); img[26:38, 26:38] = 1.0
+        mild = add_motion_artifact(img, "periodic", amplitude=3, frequency=3)
+        strong = add_motion_artifact(img, "periodic", amplitude=12, frequency=3)
+        def ghost_energy(a):
+            m = a.copy(); m[20:44, :] = 0.0; return float((m ** 2).sum())
+        assert ghost_energy(strong) > ghost_energy(mild)
