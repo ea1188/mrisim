@@ -285,3 +285,19 @@ def test_crosstalk_raises_noise(sim):
     _, m_gap = sim.simulate(base_params(n_slices=8, slice_gap=12, slice_thickness=5))
     assert m_contig["noise_sigma"] > m1["noise_sigma"]
     assert m_gap["noise_sigma"] < m_contig["noise_sigma"]
+
+
+def test_dwi_snr_falls_with_b_value(sim):
+    """Fixed noise floor: high-b DWI is genuinely noisier (SNR drops with b),
+    instead of the noise re-scaling to the attenuated signal."""
+    _, m_low = sim.simulate(base_params(sequence="Diffusion (DWI)", diff_display="DWI", b_value=0))
+    _, m_high = sim.simulate(base_params(sequence="Diffusion (DWI)", diff_display="DWI", b_value=3000))
+    assert m_high["noise_sigma"] == m_high["noise_sigma"]   # finite
+    assert m_high["snr_wm"] < 0.6 * m_low["snr_wm"]
+
+
+def test_reference_protocol_snr_preserved(sim):
+    """At the reference protocol (SE 500/15) the fixed noise floor leaves the
+    measured SNR ~ the requested snr_level (calibration unchanged)."""
+    _, m = sim.simulate(base_params(sequence="Spin Echo", TR=500, TE=15, snr_level=40))
+    assert 25 < m["snr_wm"] < 60          # within a reasonable band of the slider

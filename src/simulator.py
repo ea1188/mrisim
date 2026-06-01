@@ -266,6 +266,22 @@ class Simulator:
         mx = float(np.max(recon))
         return mx * 0.5 if mx > 0 else 0.0
 
+    @staticmethod
+    def _reference_protocol_signal(tprops: dict) -> float:
+        """Mean CSF/GM/WM signal at the SNR *reference* protocol (SE TR=500/TE=15).
+
+        The hardware noise floor is fixed, so SNR should follow the actual signal
+        level relative to this reference rather than being re-pinned to each
+        image's own (possibly collapsed) signal. Returns the reference level used
+        to scale the effective SNR.
+        """
+        vals = []
+        for lab in (1, 2, 3):
+            p = tprops.get(lab)
+            if p:
+                vals.append(p["PD"] * (1.0 - np.exp(-500.0 / p["T1"])) * np.exp(-15.0 / p["T2"]))
+        return float(np.mean(vals)) if vals else 0.0
+
     def _measure_snr(self, recon: np.ndarray, phantom_slice: np.ndarray) -> dict:
         """Console-style SNR: tissue-ROI mean / noise sigma from a signal-free region.
 
@@ -513,8 +529,16 @@ class Simulator:
                        * pf_snr * xtalk
                        / (g_factor * np.sqrt(R))
                        * (B0_snr / 3.0))
-            eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
             tissue_ref = self._tissue_ref_signal(reconstructed, phantom_slice)
+            # Fixed (hardware) noise floor: SNR tracks the real signal level
+            # relative to the reference protocol, so signal-collapsing sequences
+            # (high-b DWI, near-null IR) are genuinely noisier and very bright
+            # ones less. At the reference protocol the ratio is ≈1 (calibration
+            # preserved); the ratio is bounded to avoid pathological extremes.
+            ref_sig = self._reference_protocol_signal(_tprops)
+            if ref_sig > 0 and tissue_ref > 0:
+                eff_snr *= float(np.clip(tissue_ref / ref_sig, 0.04, 4.0))
+            eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
             if tissue_ref > 0:
                 sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
                 sigma_map = sigma
