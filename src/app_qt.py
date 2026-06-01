@@ -335,6 +335,8 @@ class MRISimulator(QMainWindow):
         self.mt_enabled = Var(False)
         self.mt_power = Var(50)      # integer 0–100 → 0.0–1.0
         self.b1_inhom_enabled = Var(False)
+        self.flow_enabled = Var(True)
+        self.flow_velocity = Var(70)   # integer 0–100 → 0.0–1.0 (blood velocity)
 
         # Comparison
         self.compare_mode = Var(False)
@@ -990,6 +992,7 @@ class MRISimulator(QMainWindow):
                        list(_B0_MAP.keys()), self.schedule_recalculate, inline=True)
         self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
                        ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
+                        "Balanced SSFP",
                         "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
                         "Quantitative (qMRI)", "Echo Planar (EPI)"], self.on_sequence_change)
         self.desc_label = DLabel("", base_style="color:#6b7585; font-size:9px; padding:2px 2px;")
@@ -1141,6 +1144,8 @@ class MRISimulator(QMainWindow):
         PHL = phys_sec.inner
         self._checkbox(PHL, "Magnetization Transfer (MT)", self.mt_enabled)
         self._slider(PHL, "MT Saturation Power (%)", self.mt_power, 0, 100)
+        self._checkbox(PHL, "Blood Flow (SE void / GRE inflow)", self.flow_enabled)
+        self._slider(PHL, "Flow Velocity (%)", self.flow_velocity, 0, 100)
         self._checkbox(PHL, "B1+ Field Inhomogeneity", self.b1_inhom_enabled)
         b1_hint = QLabel("B1+: mild at 1.5T/3T · dramatic at 7T")
         b1_hint.setStyleSheet("color:#6b7585; font-size:9px; padding-left:4px;")
@@ -1262,6 +1267,7 @@ class MRISimulator(QMainWindow):
                 "epi_esp": self.epi_esp.get(), "epi_b0_hz": self.epi_b0_hz.get(),
                 "epi_ghost": self.epi_ghost.get(), "epi_correct_ghost": self.epi_correct_ghost.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
+                "n_slices": self.n_slices.get(), "slice_gap": self.slice_gap.get(),
                 "rician_bias_correction": self.rician_bias_correct.get(),
                 "pv_sigma": self.pv_sigma.get(),
                 "motion_enabled": self.motion_enabled.get(), "motion_amplitude": self.motion_amplitude.get(),
@@ -1275,7 +1281,8 @@ class MRISimulator(QMainWindow):
                 "contrast_enabled": self.contrast_enabled.get(),
                 "contrast_dose": self.contrast_dose.get(),
                 "mt_enabled": self.mt_enabled.get(), "mt_power": self.mt_power.get(),
-                "b1_inhom_enabled": self.b1_inhom_enabled.get()}
+                "b1_inhom_enabled": self.b1_inhom_enabled.get(),
+                "flow_enabled": self.flow_enabled.get(), "flow_velocity": self.flow_velocity.get()}
 
     def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()
@@ -2213,6 +2220,7 @@ class MRISimulator(QMainWindow):
         if seq == "fMRI (BOLD)": return "T2* (BOLD)"
         if seq == "Quantitative (qMRI)": return "Quantitative"
         if seq == "Echo Planar (EPI)": return "T2* (EPI)"
+        if seq == "Balanced SSFP": return "T2/T1 (bSSFP)"
         if TR < 800 and TE < 30: return "T1-weighted"
         elif TR > 2000 and TE > 60: return "T2-weighted"
         elif TR > 2000 and TE < 30: return "PD-weighted"
@@ -2489,6 +2497,9 @@ class MRISimulator(QMainWindow):
             self.ti_frame.setVisible(True)
         elif seq == "Gradient Echo":
             self.fa_frame.setVisible(True)
+        elif seq == "Balanced SSFP":
+            # Short TR, TE≈TR/2, moderate flip — the regime where bSSFP works.
+            self.fa_frame.setVisible(True); self.TR.set(5.0); self.TE.set(2.5); self.flip_angle.set(45.0)
         elif seq == "FSE / TSE":
             self.fse_frame.setVisible(True); self.TR.set(4000.0); self.TE.set(80.0); self.etl.set(16)
         elif seq == "Diffusion (DWI)":

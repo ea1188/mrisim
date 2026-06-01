@@ -34,12 +34,29 @@ def add_motion_artifact(
     if rng is None:
         rng = np.random.default_rng()
 
-    # Generate motion trajectory (displacement per k-space line)
+    pe_axis = 0 if phase_direction == "vertical" else 1
+
     if motion_type == "periodic":
-        # Simulates breathing or pulsation
-        t = np.arange(num_lines)
-        displacement = amplitude * np.sin(2 * np.pi * frequency * t / num_lines)
-    elif motion_type == "random":
+        # Respiratory/pulsatile (sinusoidal) motion produces the hallmark
+        # *discrete* ghosts in the phase-encode direction at multiples of the
+        # motion frequency, not a diffuse blur. Their relative intensities follow
+        # the Bessel series of the periodic k-space phase modulation
+        # (Σ Jₙ² = 1, so total energy is conserved). Ghost spacing = N / cycles.
+        from scipy.special import jv
+        beta = 0.25 * float(amplitude)               # phase-modulation depth
+        cycles = max(1, int(round(frequency)))
+        spacing = max(1, num_lines // (2 * cycles))
+        out = jv(0, beta) * image
+        for n in range(1, 5):
+            c = jv(n, beta)
+            if abs(c) < 1e-3:
+                break
+            out = out + c * (np.roll(image, n * spacing, axis=pe_axis)
+                             + np.roll(image, -n * spacing, axis=pe_axis))
+        return np.abs(out)
+
+    # Generate motion trajectory (displacement per k-space line)
+    if motion_type == "random":
         # Sudden jerky movements
         displacement = np.zeros(num_lines)
         num_events = max(1, int(frequency))
@@ -92,42 +109,23 @@ def add_chemical_shift_artifact(
     shift_pixels: displacement in pixels (depends on bandwidth)
         At 125 Hz/pixel bandwidth: shift = 3.5ppm * 128MHz / 125Hz = ~3.6 pixels at 3T
     """
-    result = image.copy()
-
     # Find fat voxels
     fat_mask = phantom_slice == fat_label
-    if not np.any(fat_mask):
-        return result
+    if not np.any(fat_mask) or abs(float(shift_pixels)) < 1e-3:
+        return image.copy()
 
-    # Get fat signal values
-    fat_signal = np.zeros_like(image)
-    fat_signal[fat_mask] = image[fat_mask]
+    # Fat is misregistered along the readout (column) direction by the chemical
+    # shift. Remove it from its true position and re-deposit it displaced by the
+    # *sub-pixel* amount (linear interpolation), so the characteristic bright band
+    # (shifted fat overlapping water) and dark band (where fat was removed) form
+    # at the exact fractional offset rather than snapping to whole pixels.
+    from scipy.ndimage import shift as nd_shift
 
-    # Remove fat from original position
-    result[fat_mask] = 0
-
-    # Shift fat signal in readout direction (horizontal)
-    shift = int(round(shift_pixels))
-    if shift == 0:
-        result[fat_mask] = image[fat_mask]
-        return result
-    if shift > 0:
-        shifted_fat = np.zeros_like(fat_signal)
-        shifted_fat[:, shift:] = fat_signal[:, :-shift]
-    elif shift < 0:
-        shifted_fat = np.zeros_like(fat_signal)
-        shifted_fat[:, :shift] = fat_signal[:, -shift:]
-    else:
-        shifted_fat = fat_signal
-    
-    # Add shifted fat back (bright edge on one side, dark on other)
-    result += shifted_fat
-    
-    # Create the characteristic bright/dark band at fat-water interface
-    # Where shifted fat overlaps with water: bright band
-    # Where fat was removed: dark band
-    
-    return result
+    fat_signal = np.where(fat_mask, image, 0.0)
+    result = np.where(fat_mask, 0.0, image)
+    shifted_fat = nd_shift(fat_signal, (0.0, float(shift_pixels)),
+                           order=1, mode="constant", cval=0.0)
+    return result + shifted_fat
 
 def add_susceptibility_artifact(
     image: np.ndarray,

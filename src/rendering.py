@@ -16,6 +16,7 @@ from signal_engine import (
     spin_echo_signal,
     gradient_echo_signal,
     inversion_recovery_signal,
+    balanced_ssfp_signal,
 )
 import dixon
 import mt
@@ -97,6 +98,8 @@ def simulate_slice_props(phantom_slice: np.ndarray, TR: float, TE: float,
                                        props["PD"], TR, TE, FA)
         elif sequence == "IR":
             sig = inversion_recovery_signal(props["T1"], props["T2"], props["PD"], TR, TE, TI)
+        elif sequence == "bSSFP":
+            sig = balanced_ssfp_signal(props["T1"], props["T2"], props["PD"], TR, TE, FA)
         else:
             sig = spin_echo_signal(props["T1"], props["T2"], props["PD"], TR, TE)
         image[mask] = sig

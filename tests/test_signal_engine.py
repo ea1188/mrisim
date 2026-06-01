@@ -255,3 +255,33 @@ class TestGradientEchoSignalDenomGuard:
         """Guard must not change output for normal (non-degenerate) parameters."""
         sig = gradient_echo_signal(T1=800, T2star=60, PD=0.8, TR=500, TE=5, flip_angle_deg=30)
         assert sig > 0
+
+
+# --- Balanced SSFP -----------------------------------------------------------
+import numpy as np
+from signal_engine import balanced_ssfp_signal, ssfp_banding
+
+
+def test_bssfp_fluid_brighter_than_white_matter():
+    """bSSFP signal scales with T2/T1, so CSF (huge T2/T1) is far brighter than WM."""
+    csf = balanced_ssfp_signal(4500, 2200, 1.0, TR=5, TE=2.5, flip_angle_deg=45)
+    wm = balanced_ssfp_signal(830, 70, 0.65, TR=5, TE=2.5, flip_angle_deg=45)
+    assert csf > 2.0 * wm
+
+
+def test_bssfp_banding_passband_vs_null():
+    """On-resonance (Δf=0) the factor is ~1; at the null (Δf=1/2TR, β=π) it dips."""
+    E2 = np.exp(-5 / 2200)
+    on = ssfp_banding(0.0, 5.0, E2)
+    null = ssfp_banding(1.0 / (2 * 5e-3), 5.0, E2)   # Δf = 1/(2·TR), β = π
+    assert on > 0.95
+    assert null < 0.2
+    assert null < on
+
+
+def test_bssfp_banding_array_and_bounded():
+    E2 = np.full((4, 4), np.exp(-5 / 100))
+    off = np.linspace(-200, 200, 16).reshape(4, 4)
+    b = ssfp_banding(off, 5.0, E2)
+    assert b.shape == (4, 4)
+    assert np.all(b >= 0) and np.all(b <= 1.0001)

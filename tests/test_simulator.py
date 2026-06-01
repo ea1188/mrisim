@@ -255,3 +255,33 @@ def test_synthetic_se_is_t1_weighted(sim):
     labels = sim._get_phantom_slice("axial", sim.slice_idx, p)
     wm = np.median(img[labels == 3]); gm = np.median(img[labels == 2]); csf = np.median(img[labels == 1])
     assert wm > gm > csf
+
+
+def test_slice_profile_weights_centre_weighted():
+    """Imperfect RF slice profile weights the slab centre more than the edges."""
+    for n in (3, 5, 7):
+        w = simulator._slice_profile_weights(n)
+        assert w.shape == (n,)
+        assert np.isclose(w.sum(), 1.0)
+        assert w[n // 2] > w[0]                 # centre heavier than edge
+        assert w[0] == pytest.approx(w[-1])     # symmetric
+    assert simulator._slice_profile_weights(1).tolist() == [1.0]
+
+
+def test_crosstalk_factor_contiguous_multislice():
+    """Cross-talk loses SNR for contiguous multi-slice; a single slice or a wide
+    gap has none, and the loss falls off as the gap grows."""
+    assert simulator._crosstalk_snr_factor(1, 0.0, 5) == 1.0          # single slice: none
+    f0 = simulator._crosstalk_snr_factor(8, 0.0, 5)
+    f_gap = simulator._crosstalk_snr_factor(8, 4.0, 5)
+    assert f0 < 0.9                                                   # zero gap: real loss
+    assert f0 < f_gap < 1.0                                           # gap recovers signal
+
+
+def test_crosstalk_raises_noise(sim):
+    """Contiguous multi-slice reports more noise than a single slice; a gap recovers it."""
+    _, m1 = sim.simulate(base_params(n_slices=1, slice_gap=0, slice_thickness=5))
+    _, m_contig = sim.simulate(base_params(n_slices=8, slice_gap=0, slice_thickness=5))
+    _, m_gap = sim.simulate(base_params(n_slices=8, slice_gap=12, slice_thickness=5))
+    assert m_contig["noise_sigma"] > m1["noise_sigma"]
+    assert m_gap["noise_sigma"] < m_contig["noise_sigma"]

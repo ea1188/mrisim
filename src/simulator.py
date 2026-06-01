@@ -18,6 +18,7 @@ from scipy.ndimage import gaussian_filter
 from phantom3d import get_slice
 from kspace import simulate_acquisition
 from fse import simulate_fse_image
+import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        calculate_chemical_shift_pixels)
@@ -43,6 +44,34 @@ _B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
 _PF_MAP: dict[str, float] = {
     "Full": 1.0, "7/8": 7.0 / 8.0, "6/8": 6.0 / 8.0, "5/8": 5.0 / 8.0,
 }
+
+
+def _slice_profile_weights(n: int) -> np.ndarray:
+    """Through-slice weighting for an imperfect (non-rectangular) RF slice profile.
+
+    A real slice-select pulse excites the centre of the slab fully and tapers
+    toward the edges, so the displayed slice is a centre-weighted average of the
+    sub-slices, not a flat mean. Returns ``n`` normalised Gaussian-ish weights.
+    """
+    if n <= 1:
+        return np.ones(1)
+    idx = np.arange(n) - (n - 1) / 2.0
+    w = np.exp(-0.5 * (idx / max(n / 3.0, 0.5)) ** 2)
+    return w / w.sum()
+
+
+def _crosstalk_snr_factor(n_slices: int, slice_gap: float, thickness: int) -> float:
+    """SNR loss from slice cross-talk in contiguous 2-D multi-slice imaging.
+
+    With several slices and little or no gap, each slice-select pulse partially
+    saturates the edges of its neighbours, reducing signal. The loss is largest
+    at zero gap and falls off as the gap approaches the slice thickness; a single
+    slice (or a large gap) has none. Returns a factor in (0, 1].
+    """
+    if n_slices <= 1:
+        return 1.0
+    loss = 0.20 * np.exp(-float(slice_gap) / max(0.5 * thickness, 1.0))
+    return float(1.0 - loss)
 
 
 def _accel_gfactor(R: int, method: str) -> float:
@@ -92,6 +121,8 @@ def default_params(**overrides) -> dict:
         b1_inhom_enabled=False, mt_enabled=False, mt_power=50,
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
         rician_bias_correction=False, pv_sigma=10,
+        flow_enabled=True, flow_velocity=70,
+        n_slices=1, slice_gap=0.0,
     )
     p.update(overrides)
     return p
@@ -276,7 +307,7 @@ class Simulator:
         # EPI shares the T2*-weighted GRE base; its readout artifacts are applied
         # downstream in simulate().
         seq_map = {"Spin Echo": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
-                   "Echo Planar (EPI)": "GRE"}
+                   "Echo Planar (EPI)": "GRE", "Balanced SSFP": "bSSFP"}
         if seq in seq_map:
             return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
         elif seq == "FSE / TSE":
@@ -339,7 +370,11 @@ class Simulator:
 
         if thickness > 1 and params["sequence"] not in ["MR Angiography"]:
             start = max(0, sl_idx - thickness // 2); end = min(max_sl, sl_idx + thickness // 2)
-            image = np.mean([self._simulate_single_slice(params, orient, s) for s in range(start, end + 1)], axis=0)
+            slabs = np.stack([self._simulate_single_slice(params, orient, s)
+                              for s in range(start, end + 1)])
+            # Imperfect RF slice profile: centre-weighted, not a flat average.
+            w = _slice_profile_weights(slabs.shape[0])
+            image = np.tensordot(w, slabs, axes=(0, 0))
         else:
             image = self._simulate_single_slice(params, orient, sl_idx)
 
@@ -400,6 +435,30 @@ class Simulator:
                 image = rendering.apply_mt(image, phantom_slice, _tprops, params.get("mt_power", 0),
                                            params["sequence"], params["TR"], params["TE"], params["flip_angle"])
 
+            # Flowing blood: signal void on the spin-echo family, inflow
+            # brightening on gradient echo (static elsewhere).
+            if params.get("flow_enabled", True) and phantom_slice.shape == image.shape:
+                image = flow.apply_flow(image, phantom_slice, params["sequence"],
+                                        _tprops.get(11, {}), params["TE"],
+                                        params["flip_angle"],
+                                        velocity=params.get("flow_velocity", 70) / 100.0)
+
+            # Balanced SSFP: off-resonance produces the characteristic signal-null
+            # bands. Off-resonance = an imperfect-shim linear gradient plus the
+            # real susceptibility field; longer TR packs more bands.
+            if params["sequence"] == "Balanced SSFP" and phantom_slice.shape == image.shape:
+                from signal_engine import ssfp_banding
+                H, W = image.shape
+                ramp = (np.arange(H)[:, None] / max(H - 1, 1) - 0.5) * 120.0   # ±60 Hz shim
+                try:
+                    b0f = self._b0_field_slice(orient, sl_idx, params, _B0_val)
+                    off = ramp + (b0f if b0f.shape == image.shape else 0.0)
+                except Exception:
+                    off = ramp
+                (T2m,) = rendering.param_maps(phantom_slice, _tprops, ("T2",))
+                E2 = np.exp(-params["TR"] / np.maximum(T2m, 1e-6))
+                image = image * ssfp_banding(off, params["TR"], E2)
+
             # Fat-water phase cycling: automatic for GRE (SE refocuses this).
             if params["sequence"] in ("Gradient Echo", "MR Angiography") and phantom_slice.shape == image.shape:
                 image = rendering.gre_fatwater_phase(image, phantom_slice, params["TE"], _B0_val)
@@ -444,11 +503,14 @@ class Simulator:
             # SNR drops ~sqrt(fraction) (fewer samples averaged), mirroring the
             # scan-time reduction below.
             pf_snr = np.sqrt(_pf) if _pf else 1.0
+            # Slice cross-talk: contiguous 2-D multi-slice loses signal.
+            xtalk = _crosstalk_snr_factor(int(params.get("n_slices", 1)),
+                                          params.get("slice_gap", 0.0), thickness)
             eff_snr = (params["snr_level"]
                        * (vox_vol / self.VOX_REF)
                        * np.sqrt(max(1, params["NEX"]))
                        * np.sqrt(self.BW_REF / BW_hz)
-                       * pf_snr
+                       * pf_snr * xtalk
                        / (g_factor * np.sqrt(R))
                        * (B0_snr / 3.0))
             eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
@@ -498,7 +560,7 @@ class Simulator:
         scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000
         seq_map = {"Spin Echo": "SE", "FSE / TSE": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
                    "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI",
-                   "Echo Planar (EPI)": "EPI"}
+                   "Echo Planar (EPI)": "EPI", "Balanced SSFP": "GRE"}
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
