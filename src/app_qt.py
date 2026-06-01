@@ -330,6 +330,7 @@ class MRISimulator(QMainWindow):
         self.susceptibility_enabled = Var(False)
         self.susceptibility_strength = Var(3.0)
         self.zipper_enabled = Var(False)
+        self.gradient_distort = Var(0)   # gradient-nonlinearity distortion (% , 0 = off)
 
         # Physics effects
         self.mt_enabled = Var(False)
@@ -1134,6 +1135,7 @@ class MRISimulator(QMainWindow):
         self._checkbox(AL, "Chemical Shift", self.chemical_shift_enabled)
         self._checkbox(AL, "Susceptibility", self.susceptibility_enabled)
         self._slider(AL, "Susceptibility Strength", self.susceptibility_strength, 1, 10)
+        self._slider(AL, "Gradient Distortion (%)", self.gradient_distort, 0, 100)
         self._checkbox(AL, "Zipper (RF leak)", self.zipper_enabled)
         self._checkbox(AL, "Gadolinium Contrast", self.contrast_enabled)
         self._slider(AL, "Gd Dose (mmol/kg × 10)", self.contrast_dose, 1, 5)
@@ -1274,6 +1276,7 @@ class MRISimulator(QMainWindow):
                 "motion_type": self.motion_type.get(), "chemical_shift_enabled": self.chemical_shift_enabled.get(),
                 "susceptibility_enabled": self.susceptibility_enabled.get(),
                 "susceptibility_strength": self.susceptibility_strength.get(),
+                "gradient_distort": self.gradient_distort.get(),
                 "zipper_enabled": self.zipper_enabled.get(),
                 "pf_enabled": self.pf_enabled.get(), "pf_fraction": self.pf_fraction.get(),
                 "kspace_filter_enabled": self.kspace_filter_enabled.get(),

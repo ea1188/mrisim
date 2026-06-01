@@ -21,7 +21,7 @@ from fse import simulate_fse_image
 import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
-                       calculate_chemical_shift_pixels)
+                       apply_gradient_distortion, calculate_chemical_shift_pixels)
 from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d,
                                 simulate_fa_map_3d, simulate_tof_3d_slice,
                                 simulate_fmri_3d_slice, compute_activation_map_3d,
@@ -122,7 +122,7 @@ def default_params(**overrides) -> dict:
         epi_b0_hz=60, epi_esp=5, epi_ghost=10, epi_correct_ghost=False,
         rician_bias_correction=False, pv_sigma=10,
         flow_enabled=True, flow_velocity=70,
-        n_slices=1, slice_gap=0.0,
+        n_slices=1, slice_gap=0.0, gradient_distort=0,
     )
     p.update(overrides)
     return p
@@ -439,6 +439,11 @@ class Simulator:
             if params["susceptibility_enabled"] and phantom_slice.shape == image.shape:
                 image = add_susceptibility_artifact(image, phantom_slice,
                                                     params["susceptibility_strength"] / 10.0)
+            # Gradient-coil nonlinearity: geometric warp that grows with FOV
+            # (worse toward the periphery of a large field of view).
+            if params.get("gradient_distort", 0) > 0 and phantom_slice.shape == image.shape:
+                gd_str = (params["gradient_distort"] / 100.0) * (params["FOV"] / 250.0)
+                image = apply_gradient_distortion(image, min(gd_str, 1.5))
 
             # B1+ transmit inhomogeneity and MT act on the signal image before k-space.
             _field = params.get("field_strength", "3T")
