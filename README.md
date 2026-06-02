@@ -9,6 +9,7 @@
 
 </div>
 
+<p align="center">
   <img src="docs/demo.gif" width="840" alt="MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve" />
 </p>
 
