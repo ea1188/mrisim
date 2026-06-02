@@ -554,6 +554,106 @@ PRESETS = {
         "NEX": 1,
         "description": "Coronal STIR torso. Fat suppressed — sensitive whole-body screen for marrow edema, metastases, lymphadenopathy and inflammation."
     },
+
+    # ------------------------------------------------------------------ #
+    #  Balanced SSFP (bSSFP / TrueFISP / FIESTA)
+    # ------------------------------------------------------------------ #
+    "Brain CISS (bSSFP)": {
+        "sequence": "Balanced SSFP",
+        "TR": 6,
+        "TE": 3,
+        "TI": 150,
+        "flip_angle": 55,
+        "matrix_size": 256,
+        "FOV": 240,
+        "bandwidth": 250,
+        "NEX": 1,
+        "description": "Heavily T2/T1-weighted bSSFP (CISS/FIESTA). Very bright CSF gives a cisternographic look — cranial nerves and the internal auditory canal stand out against bright fluid. Off-resonance banding may appear."
+    },
+    "Torso Cine (bSSFP)": {
+        "sequence": "Balanced SSFP",
+        "TR": 4,
+        "TE": 2,
+        "TI": 150,
+        "flip_angle": 50,
+        "matrix_size": 256,
+        "FOV": 400,
+        "bandwidth": 400,
+        "NEX": 1,
+        "description": "Bright-blood bSSFP (the cardiac cine workhorse). Blood and fluid are bright with high SNR per unit time; banding from off-resonance grows at longer TR / higher field."
+    },
+    "Abdomen bSSFP": {
+        "sequence": "Balanced SSFP",
+        "TR": 4,
+        "TE": 2,
+        "TI": 150,
+        "flip_angle": 50,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 400,
+        "NEX": 1,
+        "description": "Single-shot bSSFP abdominal survey. Fluid-bright and motion-robust — bowel, vessels and fluid collections stand out in a fast breath-hold."
+    },
+
+    # ------------------------------------------------------------------ #
+    #  Echo-planar / spectral fat-sat / radial — showcase the engine
+    # ------------------------------------------------------------------ #
+    "Brain EPI T2*": {
+        "sequence": "Echo Planar (EPI)",
+        "TR": 3000,
+        "TE": 40,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 128,
+        "FOV": 240,
+        "bandwidth": 250,
+        "NEX": 1,
+        "description": "Single-shot gradient-echo EPI. Fast T2*-weighted readout — but the long echo train shows the EPI signatures: B0 geometric distortion near air, T2* blur, and Nyquist (N/2) ghosting."
+    },
+    "Knee PD Fat-Sat (CHESS)": {
+        "sequence": "FSE / TSE",
+        "TR": 3500,
+        "TE": 30,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 150,
+        "bandwidth": 200,
+        "NEX": 2,
+        "etl": 8,
+        "echo_spacing": 10,
+        "fatsat_enabled": True,
+        "description": "PD-weighted FSE with spectral (CHESS) fat saturation — fat dark, cartilage/fluid conspicuous. Unlike STIR it leaves water untouched, but fails where B0 is inhomogeneous."
+    },
+    "Abdomen T1 FS Post-Gd": {
+        "sequence": "Gradient Echo",
+        "TR": 200,
+        "TE": 4,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 500,
+        "NEX": 1,
+        "contrast_enabled": True,
+        "contrast_dose": 2,
+        "fatsat_enabled": True,
+        "description": "Fat-suppressed (CHESS) post-Gd T1 GRE. Suppressing bright fat maximises conspicuity of enhancing organs, vessels and lesions on the arterial/portal phase."
+    },
+    "Abdomen Radial": {
+        "sequence": "Gradient Echo",
+        "TR": 200,
+        "TE": 4,
+        "TI": 150,
+        "flip_angle": 70,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 500,
+        "NEX": 1,
+        "trajectory": "Radial",
+        "radial_spokes": 96,
+        "description": "Radial (non-Cartesian) GRE — the densely-sampled centre makes it motion-robust (free-breathing), while undersampled spokes reconstruct as the characteristic radial streaks."
+    },
 }
 
 _REGION_PREFIXES: list[tuple[str, str]] = [

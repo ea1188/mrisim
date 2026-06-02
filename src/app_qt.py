@@ -2472,10 +2472,18 @@ class MRISimulator(QMainWindow):
         self.contrast_enabled.set(bool(p.get("contrast_enabled", False)))
         if "contrast_dose" in p:
             self.contrast_dose.set(int(p["contrast_dose"]))
+        # Spectral fat-sat and k-space trajectory: apply from the preset and reset
+        # to the defaults otherwise, so switching presets clears them.
+        self.fatsat_enabled.set(bool(p.get("fatsat_enabled", False)))
+        self.trajectory.set(p.get("trajectory", "Cartesian"))
+        if "radial_spokes" in p:
+            self.radial_spokes.set(int(p["radial_spokes"]))
         self.desc_label.config(text=p.get("description", ""))
         self.on_sequence_change()
-        # on_sequence_change resets TR/TE/etl for FSE; re-apply preset values
+        # on_sequence_change resets TR/TE/FA/etl for some sequences; re-apply the
+        # preset's values so the preset stays authoritative.
         self.TR.set(float(p["TR"])); self.TE.set(float(p["TE"]))
+        self.flip_angle.set(float(p.get("flip_angle", 90)))
         if "etl" in p: self.etl.set(int(p["etl"]))
         if "echo_spacing" in p: self.echo_spacing.set(float(p["echo_spacing"]))
         self.recalculate()

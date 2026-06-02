@@ -183,3 +183,39 @@ class TestNewPresets:
         from presets import get_preset_region
         for name in ("Torso T2 Coronal", "Torso T1 GRE", "Torso STIR Coronal"):
             assert get_preset_region(name) == "Torso"
+
+
+class TestEngineShowcasePresets:
+    """Presets added for the newer sequences/effects (bSSFP, EPI, CHESS, radial)."""
+
+    def test_bssfp_presets_exist(self):
+        from presets import get_preset
+        for name in ("Brain CISS (bSSFP)", "Torso Cine (bSSFP)", "Abdomen bSSFP"):
+            assert get_preset(name)["sequence"] == "Balanced SSFP"
+
+    def test_bssfp_uses_short_tr(self):
+        from presets import get_preset
+        for name in ("Brain CISS (bSSFP)", "Torso Cine (bSSFP)", "Abdomen bSSFP"):
+            assert get_preset(name)["TR"] <= 10          # bSSFP needs short TR
+
+    def test_epi_preset(self):
+        from presets import get_preset
+        assert get_preset("Brain EPI T2*")["sequence"] == "Echo Planar (EPI)"
+
+    def test_chess_fatsat_presets_enable_it(self):
+        from presets import get_preset
+        for name in ("Knee PD Fat-Sat (CHESS)", "Abdomen T1 FS Post-Gd"):
+            assert get_preset(name)["fatsat_enabled"] is True
+
+    def test_radial_preset(self):
+        from presets import get_preset
+        p = get_preset("Abdomen Radial")
+        assert p["trajectory"] == "Radial"
+        assert p["radial_spokes"] < 256                 # under-sampled -> streaks
+
+    def test_new_presets_region_tagging(self):
+        from presets import get_preset_region
+        assert get_preset_region("Brain CISS (bSSFP)") == "Brain"
+        assert get_preset_region("Torso Cine (bSSFP)") == "Torso"
+        assert get_preset_region("Knee PD Fat-Sat (CHESS)") == "Knee"
+        assert get_preset_region("Abdomen Radial") == "Abdomen"
