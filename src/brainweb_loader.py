@@ -45,7 +45,7 @@ def add_air_sinuses(vol: np.ndarray) -> np.ndarray:
     base_z = int(bz.min()) if bz.size else (z0 + z1) // 2
 
     zz, yy, xx = np.ogrid[:Z, :Y, :X]
-    def ellipsoid(cz, cy, cxx, rz, ry, rx):
+    def ellipsoid(cz: float, cy: float, cxx: float, rz: float, ry: float, rx: float) -> np.ndarray:
         return (((zz - cz) / rz) ** 2 + ((yy - cy) / ry) ** 2
                 + ((xx - cxx) / rx) ** 2) <= 1.0
 

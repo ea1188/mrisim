@@ -14,8 +14,8 @@ def add_vessels_3d(phantom: np.ndarray) -> np.ndarray:
     def add_vessel_segment(p1: tuple, p2: tuple, radius: float, taper: float = 0) -> None:
         """Draw a vessel between two points, with a smooth random meander and
         distal tapering so it reads as an organic vessel rather than a drawn line."""
-        p1 = np.array(p1, dtype=float); p2 = np.array(p2, dtype=float)
-        num_steps = int(np.linalg.norm(p2 - p1) * 2) + 5
+        a1 = np.array(p1, dtype=float); a2 = np.array(p2, dtype=float)
+        num_steps = int(np.linalg.norm(a2 - a1) * 2) + 5
         # low-frequency sinusoidal wobble (amplitude ~1-2 voxels, random phase/freq)
         amp = rng.uniform(0.6, 1.8, size=3)
         phase = rng.uniform(0, 2 * np.pi, size=3)
@@ -23,7 +23,7 @@ def add_vessels_3d(phantom: np.ndarray) -> np.ndarray:
         for i in range(num_steps):
             t = i / max(num_steps - 1, 1)
             wobble = amp * np.sin(2 * np.pi * freq * t + phase) * np.sin(np.pi * t)  # taper wobble at ends
-            pos = p1 * (1 - t) + p2 * t + wobble
+            pos = a1 * (1 - t) + a2 * t + wobble
             r = radius * (1 - taper * t)
             if r < 1:
                 r = 1

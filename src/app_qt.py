@@ -549,7 +549,7 @@ class MRISimulator(QMainWindow):
         h, w = img.shape
         self._thumb_keepalive = getattr(self, "_thumb_keepalive", [])
         self._thumb_keepalive.append(img)  # QImage shares the buffer, keep a ref
-        qi = QImage(img.data, w, h, w, QImage.Format.Format_Grayscale8)
+        qi = QImage(img.data, w, h, w, QImage.Format.Format_Grayscale8)  # type: ignore[call-overload]
         return QPixmap.fromImage(qi)
 
     def _select_series(self, orient: str) -> None:
@@ -664,7 +664,7 @@ class MRISimulator(QMainWindow):
             if event.x is None or event.y is None:  # type: ignore[attr-defined]
                 return
             daz = (event.x - self._mra_start_x) * 0.5    # type: ignore[attr-defined]
-            dele = (event.y - self._mra_start_y) * 0.4   # type: ignore[attr-defined]  (mpl y grows up)
+            dele = (event.y - self._mra_start_y) * 0.4   # type: ignore[attr-defined]  # mpl y grows up
             self.angio_azimuth.set(int(round(self.angio_azimuth.get() + daz)) % 360)
             self.angio_elevation.set(int(np.clip(self.angio_elevation.get() + dele, -60, 60)))
             self._mra_start_x = event.x  # type: ignore[attr-defined]
@@ -1212,7 +1212,7 @@ class MRISimulator(QMainWindow):
         self.right_layout.addWidget(title)
         self._separator(self.right_layout)
 
-        self.metrics_labels = {}
+        self.metrics_labels: dict = {}
 
         def _card(key: str, label: str, value_color: str = "#1bb8ad") -> QWidget:
             card = QWidget()
@@ -1830,7 +1830,7 @@ class MRISimulator(QMainWindow):
         elif role == "secondary":
             through, sign = self._SEC_THROUGH.get(acq, ("v", 1))
             meta = {"through": through, "through_sign": sign}
-            self._scout_drag = dict(mode="move", x=px, y=py,  # type: ignore[attr-defined]
+            self._scout_drag = dict(mode="move", x=px, y=py,
                                     secondary=True, overlay=meta)
 
     def _scout_motion(self, event: object) -> None:

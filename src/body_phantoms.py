@@ -268,7 +268,7 @@ def generate_knee_3d(Z: int = 120, H: int = 160, W: int = 150, seed: int = 17) -
     n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.2, 1.8, 1.8])
     pert = n1 * 0.045 + n2 * 0.020
 
-    def E(z0, y0, x0, sz, sy, sx, ps=1.0):
+    def E(z0: float, y0: float, x0: float, sz: float, sy: float, sx: float, ps: float = 1.0) -> np.ndarray:
         dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
         return dist <= 1.0 + pert * ps
 
@@ -357,7 +357,7 @@ def generate_spine_3d(Z: int = 160, H: int = 200, W: int = 180, seed: int = 23) 
     n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.5, 2, 2])
     pert = n1 * 0.048 + n2 * 0.022
 
-    def E(z0, y0, x0, sz, sy, sx, ps=1.0):
+    def E(z0: float, y0: float, x0: float, sz: float, sy: float, sx: float, ps: float = 1.0) -> np.ndarray:
         dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
         return dist <= 1.0 + pert * ps
 
@@ -453,7 +453,7 @@ def generate_pelvis_3d(Z: int = 120, H: int = 220, W: int = 280, seed: int = 31)
     n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.5, 2.2, 2.2])
     pert = n1 * 0.050 + n2 * 0.022
 
-    def E(z0, y0, x0, sz, sy, sx, ps=1.0):
+    def E(z0: float, y0: float, x0: float, sz: float, sy: float, sx: float, ps: float = 1.0) -> np.ndarray:
         dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
         return dist <= 1.0 + pert * ps
 

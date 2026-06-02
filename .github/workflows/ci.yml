@@ -20,7 +20,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov
+        run: pip install -r requirements.txt pytest pytest-cov mypy
+
+      - name: Type check (mypy)
+        run: python -m mypy src/
 
       - name: Run tests
         run: python -m pytest tests/ --tb=short -q

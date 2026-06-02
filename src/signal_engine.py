@@ -25,7 +25,7 @@ def gradient_echo_signal(T1: float, T2star: float, PD: float, TR: float, TE: flo
     # the division is safe, then force the result to 0 via np.where.
     safe_denom = np.where(np.abs(denom) < 1e-12, 1.0, denom)
     signal = np.where(np.abs(denom) < 1e-12, 0.0, numer / safe_denom)
-    return float(signal) if np.ndim(signal) == 0 else signal
+    return float(signal) if np.ndim(signal) == 0 else signal  # type: ignore[return-value]
 
 def inversion_recovery_signal(T1: float, T2: float, PD: float, TR: float, TE: float,
                                TI: float) -> float:
@@ -33,7 +33,8 @@ def inversion_recovery_signal(T1: float, T2: float, PD: float, TR: float, TE: fl
     signal = PD * abs(1 - 2 * np.exp(-TI / T1) + np.exp(-TR / T1)) * np.exp(-TE / T2)
     return signal
 
-def balanced_ssfp_signal(T1, T2, PD, TR: float, TE: float, flip_angle_deg: float):
+def balanced_ssfp_signal(T1: float, T2: float, PD: float, TR: float, TE: float,
+                         flip_angle_deg: float) -> float:
     """On-resonance balanced SSFP (bSSFP / TrueFISP / FIESTA) steady-state signal.
 
     Unlike spoiled GRE, the transverse magnetization is refocused every TR, giving
@@ -47,10 +48,11 @@ def balanced_ssfp_signal(T1, T2, PD, TR: float, TE: float, flip_angle_deg: float
     safe = np.where(np.abs(denom) < 1e-9, 1.0, denom)
     sig = PD * np.sin(a) * (1.0 - E1) / safe * np.exp(-TE / np.maximum(T2, 1e-6))
     sig = np.where(np.abs(denom) < 1e-9, 0.0, sig)
-    return float(sig) if np.ndim(sig) == 0 else sig
+    return float(sig) if np.ndim(sig) == 0 else sig  # type: ignore[return-value]
 
 
-def ssfp_banding(off_resonance_hz, TR_ms: float, E2, null_width: float = 0.6):
+def ssfp_banding(off_resonance_hz: "float | np.ndarray", TR_ms: float,
+                 E2: "float | np.ndarray", null_width: float = 0.6) -> "np.ndarray":
     """bSSFP off-resonance banding factor (0–1).
 
     The balanced steady state has a broad, flat passband (factor ≈ 1) with narrow
