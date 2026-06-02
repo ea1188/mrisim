@@ -596,20 +596,8 @@ PRESETS = {
     },
 
     # ------------------------------------------------------------------ #
-    #  Echo-planar / spectral fat-sat / radial — showcase the engine
+    #  Spectral fat-sat / radial — showcase the engine
     # ------------------------------------------------------------------ #
-    "Brain EPI T2*": {
-        "sequence": "Echo Planar (EPI)",
-        "TR": 3000,
-        "TE": 40,
-        "TI": 150,
-        "flip_angle": 90,
-        "matrix_size": 128,
-        "FOV": 240,
-        "bandwidth": 250,
-        "NEX": 1,
-        "description": "Single-shot gradient-echo EPI. Fast T2*-weighted readout — but the long echo train shows the EPI signatures: B0 geometric distortion near air, T2* blur, and Nyquist (N/2) ghosting."
-    },
     "Knee PD Fat-Sat (CHESS)": {
         "sequence": "FSE / TSE",
         "TR": 3500,
