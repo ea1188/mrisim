@@ -1,5 +1,8 @@
 # MRI Simulator
 
+[![CI](https://github.com/ea1188/mrisim/actions/workflows/ci.yml/badge.svg)](https://github.com/ea1188/mrisim/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/ea1188/mrisim)](https://github.com/ea1188/mrisim/releases/latest)
+
 An MRI physics simulation platform written in Python. Models the signal chain from tissue properties and pulse-sequence parameters through k-space acquisition to reconstructed image, covering the major contrast mechanisms and artifacts seen in clinical MRI.
 
 ![MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve](docs/demo.gif)
@@ -17,11 +20,11 @@ python src/app_qt.py
 The PyQt6 app drives the physics engine in real time:
 
 - **Anatomy** — real BrainWeb brain plus real segmented body regions (Abdomen, Spine, Pelvis, whole Torso) from the TotalSegmentator MRI dataset, each with a synthetic fallback; load any TotalSegmentator NIfTI mask from disk, or index a folder of masks by body region (see [Anatomy and phantoms](#anatomy-and-phantoms))
-- **Sequences** — Spin Echo, FSE/TSE (EPG echo train), Gradient Echo, Inversion Recovery, Diffusion (DWI with ADC/FA maps), MR Angiography (TOF / Phase Contrast), fMRI BOLD, and Quantitative (qMRI) parameter mapping
+- **Sequences** — Spin Echo, FSE/TSE (EPG echo train), Gradient Echo, Inversion Recovery, Balanced SSFP (with off-resonance banding), Echo-Planar (EPI), Diffusion (DWI with ADC/FA maps), MR Angiography (TOF / Phase Contrast), fMRI BOLD, and Quantitative (qMRI) parameter mapping
 - **qMRI maps** — T1 (variable flip angle), T2 and T2\* (multi-echo), and Synthetic SE contrast rendered from the maps
-- **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing, magnetization transfer, B1+ inhomogeneity, and automatic fat-water in-/opposed-phase (India-ink) for gradient echo
-- **Acquisition** — matrix, FOV, bandwidth, NEX, partial Fourier, k-space apodisation, and parallel imaging (SENSE / GRAPPA / compressed sensing)
-- **Artifacts** — motion ghosting, chemical shift, susceptibility dropout, zipper
+- **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing (brain and body, blood-pool weighted), magnetization transfer, B1+ inhomogeneity, flowing-blood signal (spin-echo void / gradient-echo inflow), and three fat-suppression methods (STIR, Dixon in-/opposed-phase, spectral CHESS)
+- **Acquisition** — matrix/resolution, FOV (magnify + wraparound when small, surround when large), bandwidth, NEX, partial Fourier, k-space apodisation, parallel imaging (SENSE / GRAPPA / compressed sensing) with g·√R noise, non-Cartesian radial sampling with streaks, and imperfect slice profile + multi-slice cross-talk
+- **Artifacts** — motion ghosting (discrete respiratory ghosts), sub-pixel chemical shift, susceptibility dropout, gradient-nonlinearity geometric distortion, zipper
 - **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics
 
 > `src/app.py` is an earlier matplotlib/Tkinter prototype, retained only for reference and missing most of the above. Use `app_qt.py`.
@@ -58,6 +61,8 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 ### Signal physics
 - **Spin Echo, Gradient Echo, Inversion Recovery** — closed-form signal equations with T1/T2/PD weighting
 - **Fast Spin Echo (FSE/TSE)** — full Extended Phase Graph (EPG) echo-train simulation; handles stimulated echoes and variable flip angles
+- **Balanced SSFP (bSSFP/TrueFISP)** — refocused steady state with T2/T1-weighted bright fluid; off-resonance banding nulls at Δf = ±1/2TR
+- **Flow** — spin-echo flow void and gradient-echo inflow (time-of-flight) enhancement for moving blood
 - **fMRI BOLD** — T2\* modulation via neurovascular coupling, block-design t-statistic maps
 - **Diffusion (DWI/DTI)** — mono-exponential and tensor-based signal, ADC/FA maps
 - **MR Angiography** — Time-of-Flight inflow enhancement, Phase Contrast velocity encoding
@@ -69,8 +74,8 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 - **B1+ inhomogeneity** — Gaussian and sinusoidal transmit field maps; double-angle and AFI B1 mapping sequences
 
 ### K-space and acquisition
-- **K-space pipeline** — FFT/IFFT, matrix cropping, zero-fill interpolation, Hamming/Hanning/Blackman apodisation, partial Fourier
-- **EPI** *(library-only)* — alternating-readout trajectory, Nyquist (N/2) ghosting, B0 phase-encode distortion, T2\* blurring, phase correction
+- **K-space pipeline** — FFT/IFFT, matrix cropping, zero-fill interpolation, Hamming/Hanning/Blackman apodisation, partial Fourier; non-Cartesian radial sampling with streak artifacts
+- **EPI** — alternating-readout trajectory, Nyquist (N/2) ghosting, B0 phase-encode distortion, T2\* blurring, phase correction
 - **Parallel imaging** — full Cartesian SENSE unfolding (physics-correct g-factor), approximate GRAPPA, variable-density compressed sensing
 
 ### Field and hardware effects
@@ -82,7 +87,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 ### Geometry and output
 - **Oblique slices** — double-oblique prescription, multi-slice slabs, anisotropic voxel spacing
 - **Scan geometry** — FOV, matrix, resolution, phase-encode direction, 3-plane localizer overlays
-- **Artifacts** — motion ghosting, chemical shift displacement, susceptibility signal loss, zipper
+- **Artifacts** — motion ghosting, sub-pixel chemical shift displacement, susceptibility signal loss (internal air), gradient-nonlinearity geometric distortion, zipper
 - **Pulse sequence diagrams** — SE, GRE, IR, FSE, EPI, DWI, GRE-EPI renderers
 - **Export** — PNG/PDF report export; DICOM export *(library-only)*
 
@@ -223,7 +228,7 @@ From the repository root (`tests/conftest.py` puts `src/` on the path and forces
 pytest                  # or: python -m pytest
 ```
 
-1,700+ tests, all passing. Coverage is 97%+ across all non-GUI modules. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
+1,770+ tests, all passing. Coverage is 97%+ across all non-GUI modules. CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
 
 ## Project layout
 
@@ -255,14 +260,18 @@ src/                  # all source modules (plain imports by bare name)
   rician.py           # Rician noise model
   oblique.py          # oblique slice prescription
   scan_geometry.py    # slice prescription + 3-plane localizer geometry
-  artifacts.py        # motion, chemical shift, susceptibility, zipper
+  artifacts.py        # motion, chemical shift, susceptibility, distortion, zipper
+  flow.py             # flowing-blood signal (SE void / GRE inflow)
   pv.py               # partial volume effects
   angiography.py      # TOF and phase-contrast MRA
   dicom_export.py     # DICOM export
+  version.py          # single-source __version__
   ...
 tests/                # pytest suite (one file per module)
 data/                 # phantom/atlas cache + optional TotalSegMRI dataset (git-ignored)
 ```
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the release history and versioning policy.
 
 ## Physics references
 

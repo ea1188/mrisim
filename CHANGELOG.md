@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Changed
+- README refreshed to match the current engine: Balanced SSFP and EPI listed as
+  selectable sequences, plus flow, spectral fat-sat, radial sampling, slice
+  cross-talk and gradient-distortion features; CI and latest-release badges; a
+  link to this changelog.
+
 ## [1.0.1] — 2026-06-01
 
 Quality and tooling pass — no new user-facing features.
