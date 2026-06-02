@@ -642,6 +642,26 @@ PRESETS = {
         "radial_spokes": 96,
         "description": "Radial (non-Cartesian) GRE — the densely-sampled centre makes it motion-robust (free-breathing), while undersampled spokes reconstruct as the characteristic radial streaks."
     },
+
+    # ------------------------------------------------------------------ #
+    #  Echo-planar (EPI) — single-shot T2*, with the readout artifacts
+    # ------------------------------------------------------------------ #
+    "Brain EPI T2*": {
+        "sequence": "Echo Planar (EPI)",
+        "TR": 4000,
+        "TE": 50,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 128,
+        "FOV": 240,
+        "bandwidth": 1500,
+        "NEX": 1,
+        "epi_b0_hz": 60,
+        "epi_esp": 6,
+        "epi_ghost": 10,
+        "epi_correct_ghost": False,
+        "description": "Single-shot GRE-EPI (the BOLD/diffusion readout). T2*-weighted with bright CSF, acquired in one shot — so it carries EPI's signatures: geometric stretch in the phase-encode direction where B0 is off-resonance (frontal sinus / ear canals) and a faint N/2 (Nyquist) ghost. Turn on ghost correction to suppress the ghost."
+    },
 }
 
 _REGION_PREFIXES: list[tuple[str, str]] = [

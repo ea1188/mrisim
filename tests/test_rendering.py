@@ -349,16 +349,42 @@ def test_epi_slice_nyquist_ghost_appears():
 
 
 def test_epi_slice_b0_distorts_geometry():
-    img = np.zeros((96, 96)); img[12:40, 30:66] = 1.0
+    # A block sitting in a uniform off-resonance field: B0 must shift it bodily
+    # in the phase-encode (row) direction without destroying its signal.
+    img = np.zeros((96, 96)); img[34:62, 30:66] = 1.0
     t2s = np.full_like(img, 50.0)
-    b0 = rendering.epi_b0_field(img.shape, 150.0)
+    b0 = np.full_like(img, 80.0)            # uniform off-resonance over the object
     clean = rendering.simulate_epi_slice(img, t2s, np.zeros_like(img), 0.8, 0.0, False)
     dist  = rendering.simulate_epi_slice(img, t2s, b0, 0.8, 0.0, False)
 
     def row_centroid(a):
         m = np.abs(a)
         return (m.sum(1) * np.arange(m.shape[0])).sum() / m.sum()
+    # Geometry shifts...
     assert abs(row_centroid(dist) - row_centroid(clean)) > 0.5
+    # ...but signal is conserved (the old model collapsed it to a thin lens).
+    assert dist.sum() > 0.7 * clean.sum()
+
+
+def test_epi_slice_b0_conserves_energy_no_collapse():
+    """Regression: the EPI B0 model must warp geometry, not annihilate signal.
+
+    The previous implementation built each k-space line from the 1-D FFT of an
+    image *row* (confusing an image index with a k-space line index), which
+    destroyed >90% of the signal and collapsed brain to a thin lens.
+    """
+    rng = np.random.default_rng(0)
+    img = np.zeros((128, 128))
+    yy, xx = np.ogrid[:128, :128]
+    img[((yy - 64) ** 2 + (xx - 64) ** 2) < 48 ** 2] = 1.0
+    t2s = np.full_like(img, 50.0)
+    for peak in (20.0, 60.0, 150.0):
+        b0 = rendering.epi_b0_field(img.shape, peak)
+        out = rendering.simulate_epi_slice(img, t2s, b0, 0.5, 0.0, False)
+        # FFT is unitary, so a pure phase forward model conserves energy: the
+        # distorted image keeps essentially all the signal (allow for T2* blur
+        # and edge cropping), nowhere near the old ~95 % loss.
+        assert out.sum() > 0.7 * img.sum(), f"signal collapsed at {peak} Hz"
 
 
 # --- Spectral fat saturation (CHESS) ----------------------------------------

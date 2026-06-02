@@ -12,6 +12,25 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-06-01
+
+### Fixed
+- **EPI geometric-distortion model no longer collapses the image.** Each EPI
+  k-space line is now built from the correct ky=i row of the 2-D FT of the
+  off-resonance–modulated image, instead of the 1-D FT of image row i (which
+  confused an image-domain index with a k-space line index and destroyed ~95 %
+  of the signal, squashing brain to a thin lens). Off-resonance now warps
+  geometry in the phase-encode direction with energy conserved (Parseval), as it
+  should. Resolves the v1.1.0 known issue.
+
+### Added
+- **Brain EPI T2\*** preset — single-shot GRE-EPI (the BOLD/diffusion readout):
+  T2\*-weighted with bright CSF and EPI's signatures (phase-encode geometric
+  stretch at the frontal sinus / ear canals, faint N/2 ghost). Previously held
+  back by the distortion bug; now unblocked.
+- Regression test asserting the EPI B0 model conserves signal energy (warps,
+  not collapses) across a range of off-resonance levels.
+
 ## [1.1.0] — 2026-06-02
 
 ### Added

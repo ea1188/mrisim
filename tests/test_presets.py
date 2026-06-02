@@ -209,9 +209,17 @@ class TestEngineShowcasePresets:
         assert p["trajectory"] == "Radial"
         assert p["radial_spokes"] < 256                 # under-sampled -> streaks
 
+    def test_epi_preset(self):
+        from presets import get_preset
+        p = get_preset("Brain EPI T2*")
+        assert p["sequence"] == "Echo Planar (EPI)"
+        assert p["epi_b0_hz"] > 0                        # shows geometric distortion
+        assert p["epi_ghost"] > 0                        # shows the N/2 ghost
+
     def test_new_presets_region_tagging(self):
         from presets import get_preset_region
         assert get_preset_region("Brain CISS (bSSFP)") == "Brain"
         assert get_preset_region("Torso Cine (bSSFP)") == "Torso"
         assert get_preset_region("Knee PD Fat-Sat (CHESS)") == "Knee"
         assert get_preset_region("Abdomen Radial") == "Abdomen"
+        assert get_preset_region("Brain EPI T2*") == "Brain"

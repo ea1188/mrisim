@@ -277,19 +277,25 @@ def simulate_epi(signal_image: np.ndarray, b0_slice_hz: np.ndarray | None = None
     for i in range(1, rows, 2):
         kspace_epi[i] = kspace_ideal[i, ::-1]
 
-    # B0 phase: each line acquired at time i * esp_ms
+    # B0 phase: phase-encode line i is acquired at time t_i = i*esp_ms, so the
+    # object carries an extra off-resonance phase exp(i·2π·b0·t_i) that is
+    # (approximately) constant across the readout of that line. Line i of EPI
+    # k-space is therefore the ky=i row of the *full* 2-D FT of the
+    # phase-modulated image — NOT the 1-D FT of image row i. The old code used
+    # `b0_mod[i % rows]`, confusing an image-domain row index with a k-space
+    # line index; that injects spurious high-frequency content and collapses
+    # the reconstruction to a thin lens. With the correct row, a smoothly
+    # varying b0 produces the characteristic geometric stretch / pile-up in the
+    # phase-encode direction, and because each line is an exact FT row the total
+    # energy is conserved (Parseval) — the image warps instead of vanishing.
     if b0_slice_hz is not None:
         for i in range(rows):
             t_ms = i * esp_ms
             phase_map = epi_b0_phase_error(b0_slice_hz, t_ms)
-            # Modulate image-space signal, then add to k-space via linearity
             b0_mod = signal_image * np.exp(1j * phase_map)
-            ks_line = np.fft.fftshift(
-                np.fft.fft(np.fft.ifftshift(b0_mod[i % rows])))
-            if i % 2 == 1:
-                kspace_epi[i] = ks_line[::-1]
-            else:
-                kspace_epi[i] = ks_line
+            ks_full = np.fft.fftshift(np.fft.fft2(np.fft.ifftshift(b0_mod)))
+            ks_line = ks_full[i]
+            kspace_epi[i] = ks_line[::-1] if (i % 2 == 1) else ks_line
 
     # Navigator echoes: the ky=0 profile read out with each gradient polarity,
     # carrying the same polarity phase error but no phase encoding (so the
