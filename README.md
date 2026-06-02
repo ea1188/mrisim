@@ -1,13 +1,26 @@
-# MRISim
+<div align="center">
+
+<img src="data/logo.png" alt="MRISim logo" width="108" />
+
+<h1>MRISim</h1>
+
+<p><b>An interactive MRI physics simulator</b> — from tissue &amp; pulse-sequence parameters through k-space to the reconstructed image, in real time.</p>
 
 [![CI](https://github.com/ea1188/mrisim/actions/workflows/ci.yml/badge.svg)](https://github.com/ea1188/mrisim/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/ea1188/mrisim)](https://github.com/ea1188/mrisim/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/ea1188/mrisim?color=blue)](LICENSE)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-444d56)
+![Python](https://img.shields.io/badge/python-3.11%2B-3776AB)
 
-An MRI physics simulation platform written in Python. Models the signal chain from tissue properties and pulse-sequence parameters through k-space acquisition to reconstructed image, covering the major contrast mechanisms and artifacts seen in clinical MRI.
+</div>
 
-![MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve](docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.gif" width="840" alt="MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve" />
+</p>
 
-*Sweeping echo time (TE) at fixed TR — proton-density → T2-weighted contrast, with the marker moving along the live signal decay curve. Every control updates the image in real time.*
+<p align="center"><i>Sweeping echo time (TE) at fixed TR — proton-density → T2-weighted contrast, with the marker moving along the live signal decay curve. Every control updates the image in real time.</i></p>
+
+MRISim models the signal chain from tissue properties and pulse-sequence parameters through k-space acquisition to the reconstructed image, covering the major contrast mechanisms and artifacts seen in clinical MRI.
 
 ## Interactive simulator
 
@@ -15,7 +28,9 @@ An MRI physics simulation platform written in Python. Models the signal chain fr
 python src/app_qt.py
 ```
 
-![A spin-echo brain slice with the live T2-decay curve and the acquisition / measurements control panels](docs/screenshot.png)
+<p align="center">
+  <img src="docs/screenshot.png" width="900" alt="A spin-echo brain slice with the live T2-decay curve and the acquisition / measurements control panels" />
+</p>
 
 The PyQt6 app drives the physics engine in real time:
 
@@ -38,9 +53,11 @@ The engine renders any labelled tissue volume under any sequence. Three sources 
   - https://zenodo.org/records/14710732
 - **Body (synthetic)** — anatomically placed parametric phantoms for Abdomen, Knee, Spine and Pelvis, generated on the fly when no dataset is present. Knee is synthetic-only (the MRI dataset has no suitable knee subject).
 
-![Real whole-torso anatomy — a coronal spin-echo slice showing heart, lungs, liver, spleen, kidneys, spine and ribs with real-MRI texture](docs/screenshot_torso.png)
+<p align="center">
+  <img src="docs/screenshot_torso.png" width="900" alt="Real whole-torso anatomy — a coronal spin-echo slice showing heart, lungs, liver, spleen, kidneys, spine and ribs with real-MRI texture" />
+</p>
 
-*Real whole-torso region (TotalSegmentator MRI, coronal): heart, lungs, liver, spleen, kidneys, spine and ribs rendered with real-MRI texture under a spin-echo sequence.*
+<p align="center"><i>Real whole-torso region (TotalSegmentator MRI, coronal): heart, lungs, liver, spleen, kidneys, spine and ribs rendered with real-MRI texture under a spin-echo sequence.</i></p>
 
 The four default regions above work out of the box (their caches are bundled). To load **other** subjects or rebuild the regions from scratch, make sure `nibabel` is installed (it ships in `requirements.txt`) and place the raw dataset under `data/`:
 
