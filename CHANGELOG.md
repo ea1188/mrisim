@@ -12,6 +12,46 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-06-02
+
+A UI/UX overhaul of the interactive app plus a correctness fix to the
+pulse-sequence diagrams. No physics-engine behaviour changed; the body phantoms
+now display in radiological convention.
+
+### Added
+- **Anatomical orientation labels** (A/P/L/R/S/I) at the viewport edges, derived
+  from the slice geometry and verified against landmarks. Shown only where they
+  can be asserted safely (skipped for MRA MIPs, oblique planning and loaded
+  NIfTI of unknown convention).
+- **DICOM-style corner annotations** on the image — sequence + timing, region /
+  plane / slice, window/level and FOV — replacing the old centered title.
+- App logo (`data/logo.png`) in the header, bundled into the binaries.
+
+### Changed
+- **Visual refresh** — a clinical near-black + medical-blue theme with a single
+  palette source, refined sliders/combos/buttons/scrollbars, a framed
+  "scanner-console" viewport that separates the image/graph screen from the
+  control chrome, and a matching matplotlib theme. Renamed the app to **MRISim**.
+- **Window/level is now plain click-drag** on the image (MRA still rotates its
+  MIP on left-drag; Ctrl+left window/levels there).
+- **Body phantoms render in radiological convention** (patient-right on the
+  viewer's left), consistent with the brain; a single orientation map now serves
+  both.
+- Moved **FOV Planning** and **Signal Curve** into the Sequence & Protocol panel.
+
+### Fixed
+- **Pulse-sequence diagrams are physically correct.** They were normalised to
+  the full TR, so for the usual TE ≪ TR the events collapsed and reordered — the
+  180° could render before the 90°, phase-encode after readout, the echo
+  misplaced. Each channel now uses a local timeline (excitation → echo →
+  readout) with widths scaled to the shown window and a "↻ TR" marker. Balanced
+  SSFP, EPI and qMRI drew a mislabeled Spin-Echo diagram and now have correct
+  ones (bSSFP: alternating ±α, fully-rewound gradients, TE≈TR/2; EPI: oscillating
+  readout train; qMRI: multi-echo schematic). New `tests/test_psd.py` asserts
+  event ordering on the rendered artists.
+- Header/series-strip backgrounds now paint via the widget palette, so they
+  render correctly on all Qt platforms.
+
 ## [1.2.1] — 2026-06-01
 
 ### Changed

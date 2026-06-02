@@ -1,4 +1,4 @@
-# MRI Simulator
+# MRISim
 
 [![CI](https://github.com/ea1188/mrisim/actions/workflows/ci.yml/badge.svg)](https://github.com/ea1188/mrisim/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/ea1188/mrisim)](https://github.com/ea1188/mrisim/releases/latest)
@@ -25,7 +25,7 @@ The PyQt6 app drives the physics engine in real time:
 - **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing (brain and body, blood-pool weighted), magnetization transfer, B1+ inhomogeneity, flowing-blood signal (spin-echo void / gradient-echo inflow), and three fat-suppression methods (STIR, Dixon in-/opposed-phase, spectral CHESS)
 - **Acquisition** — matrix/resolution, FOV (magnify + wraparound when small, surround when large), bandwidth, NEX, partial Fourier, k-space apodisation, parallel imaging (SENSE / GRAPPA / compressed sensing) with g·√R noise, non-Cartesian radial sampling with streaks, and imperfect slice profile + multi-slice cross-talk
 - **Artifacts** — motion ghosting (discrete respiratory ghosts), sub-pixel chemical shift, susceptibility dropout, gradient-nonlinearity geometric distortion, zipper
-- **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics
+- **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics. The viewport carries DICOM-style corner annotations and anatomical orientation labels (radiological convention) on a dark "scanner-console" display.
 
 > `src/app.py` is an earlier matplotlib/Tkinter prototype, retained only for reference and missing most of the above. Use `app_qt.py`.
 
@@ -88,7 +88,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 - **Oblique slices** — double-oblique prescription, multi-slice slabs, anisotropic voxel spacing
 - **Scan geometry** — FOV, matrix, resolution, phase-encode direction, 3-plane localizer overlays
 - **Artifacts** — motion ghosting, sub-pixel chemical shift displacement, susceptibility signal loss (internal air), gradient-nonlinearity geometric distortion, zipper
-- **Pulse sequence diagrams** — SE, GRE, IR, FSE, EPI, DWI, GRE-EPI renderers
+- **Pulse sequence diagrams** — SE, GRE, IR, FSE, Diffusion, balanced SSFP, EPI, TOF and qMRI renderers, each on a physically-ordered local timeline (excitation → echo → readout) with the correct events per sequence
 - **Export** — PNG/PDF report export; DICOM export *(library-only)*
 
 ## Installation
@@ -228,7 +228,7 @@ From the repository root (`tests/conftest.py` puts `src/` on the path and forces
 pytest                  # or: python -m pytest
 ```
 
-1,770+ tests, all passing. Coverage is 97%+ across all non-GUI modules. CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
+1,790+ tests, all passing. Coverage is 97%+ across all non-GUI modules. CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
 
 ## Project layout
 

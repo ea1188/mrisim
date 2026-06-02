@@ -24,7 +24,7 @@ os.environ.setdefault("QT_API", "PyQt6")
 import numpy as np
 
 from PyQt6.QtCore import Qt, QTimer, QSize
-from PyQt6.QtGui import QImage, QPixmap, QIcon
+from PyQt6.QtGui import QImage, QPixmap, QIcon, QColor, QPalette
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QSlider,
     QComboBox, QCheckBox, QRadioButton, QButtonGroup, QFrame, QScrollArea,
@@ -44,7 +44,7 @@ from phantom3d import simulate_slice
 import tissue_db
 import rendering
 from kspace import get_kspace_display
-from brainweb_loader import get_brainweb_or_synthetic
+from brainweb_loader import get_brainweb_or_synthetic, data_dir
 from phantom3d_extended import (add_vessels_3d, add_activation_3d,
                                 get_diffusion_properties_3d, load_real_tof_mra)
 from presets import get_preset_names, get_preset, get_preset_region, get_preset_plane
@@ -109,47 +109,90 @@ def _fmt(val: object) -> str:
 # --------------------------------------------------------------------------- #
 #  Style
 # --------------------------------------------------------------------------- #
-GLOBAL_QSS = """
-QMainWindow { background-color: #15181c; }
-QLabel { color: #dfe3e8; font-family: Helvetica, Arial, sans-serif; }
-QScrollArea { background-color: #1f242b; border: none; }
-QWidget#controls-host { background: #1f242b; }
-QSlider::groove:horizontal { height: 5px; background: #2a313a; border-radius: 3px; }
-QSlider::sub-page:horizontal { background: #1bb8ad; border-radius: 3px; }
-QSlider::handle:horizontal { background: #1bb8ad; width: 16px; margin: -6px 0; border-radius: 8px; border: 2px solid #191d22; }
-QSlider::handle:horizontal:hover { background: #2ad0c4; }
-QComboBox { background: #262c34; border: 1px solid #3a424d; padding: 3px 6px; border-radius: 4px; color: #dfe3e8; }
-QComboBox::drop-down { border: none; width: 18px; }
-QComboBox QAbstractItemView { background: #1f242b; color: #dfe3e8; selection-background-color: #1bb8ad; }
-QCheckBox, QRadioButton { color: #c4cad2; spacing: 6px; }
-QCheckBox::indicator, QRadioButton::indicator { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #3a424d; background: #262c34; }
-QCheckBox::indicator:checked, QRadioButton::indicator:checked { background: #1bb8ad; border-color: #1bb8ad; }
-QPushButton { background: #2a313a; color: #dfe3e8; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
-QPushButton:hover { background: #3a424d; }
-QPushButton:pressed { background: #313842; }
-QPushButton#section-toggle { background: #191d22; color: #4fd6cb; font-size: 11px; font-weight: bold;
-    text-align: left; border: none; border-left: 3px solid #1bb8ad;
-    padding: 5px 10px; margin-top: 3px; border-radius: 0; }
-QPushButton#section-toggle:hover { background: #262c34; color: #7fe2da; }
-QPushButton#section-toggle:checked { border-left-color: #2ad0c4; }
-QScrollBar:vertical { background: #191d22; width: 8px; margin: 0; }
-QScrollBar::handle:vertical { background: #3a424d; border-radius: 4px; min-height: 20px; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QFrame#header-bar { background: #12161a; border-bottom: 2px solid #1bb8ad; }
-QLabel#app-logo { background: #1bb8ad; color: #0f1216; font-weight: bold; font-size: 14px;
-    border-radius: 5px; min-width: 30px; max-width: 30px; min-height: 30px; max-height: 30px; }
-QLabel#app-title { color: #f0f3f6; font-size: 15px; font-weight: bold; }
-QLabel#app-sub { color: #6b7585; font-size: 9px; }
-QFrame#chip { background: #1b2026; border: 1px solid #2a313a; border-radius: 5px; }
-QLabel#chip-cap { color: #6b7585; font-size: 8px; font-weight: bold; }
-QLabel#chip-val { color: #2ad0c4; font-size: 12px; font-weight: bold; }
-QFrame#series-strip { background: #12161a; border-top: 1px solid #2a313a; }
-QLabel#strip-cap { color: #6b7585; font-size: 9px; font-weight: bold; }
-QPushButton#thumb { background: #1b2026; color: #9aa4b2; border: 1px solid #2a313a;
-    border-radius: 5px; font-size: 10px; font-weight: bold; text-align: bottom; padding: 2px; }
-QPushButton#thumb:hover { border-color: #3a424d; color: #c4cad2; }
-QPushButton#thumb:checked { border: 2px solid #1bb8ad; color: #2ad0c4; background: #1a2329; }
-QLabel#thumb-cap { color: #9aa4b2; font-size: 9px; font-weight: bold; }
+# Palette tokens (clinical near-black + medical blue). Single source of truth so
+# the inline styles below and the matplotlib figures stay in sync.
+C_CANVAS   = "#050607"   # image / graph viewport — the "screen" (deepest black)
+C_PANEL    = "#171c23"   # control + measurement panels (lifted for separation)
+C_RAISED   = "#222932"   # cards, combos, buttons
+C_BEZEL    = "#2a323c"   # thin frame around the viewport screen
+C_HEADER   = "#0d1014"   # header bar, series strip, chip backgrounds
+C_CHIP     = "#11151a"
+C_BORDER   = "#252c34"
+C_BORDER_SOFT = "#1b222a"
+C_BORDER_HI   = "#323b46"
+C_TEXT     = "#dfe5ec"
+C_TEXT_DIM = "#9aa4b2"
+C_TEXT_FAINT = "#6b7585"
+C_ACCENT   = "#4f9cf9"
+C_ACCENT_HI = "#7fb8ff"
+C_ACCENT_DK = "#2f6fd6"     # darker accent for gradients / pressed states
+C_ACCENT_INK = "#081019"    # text on an accent fill
+
+
+def _solid_bg(widget: Any, hex_color: str) -> None:
+    """Paint a solid background via the palette (reliable everywhere, including
+    the offscreen platform where a QSS objectName background may not render)."""
+    widget.setAutoFillBackground(True)
+    pal = widget.palette()
+    pal.setColor(QPalette.ColorRole.Window, QColor(hex_color))
+    widget.setPalette(pal)
+
+GLOBAL_QSS = f"""
+QWidget {{ font-family: "SF Pro Text", "Helvetica Neue", "Segoe UI", "Inter", Helvetica, Arial, sans-serif; }}
+QMainWindow {{ background-color: {C_CANVAS}; }}
+QLabel {{ color: {C_TEXT}; }}
+QToolTip {{ background: {C_RAISED}; color: {C_TEXT}; border: 1px solid {C_ACCENT}; padding: 4px 7px; border-radius: 5px; }}
+QScrollArea {{ background-color: {C_PANEL}; border: none; }}
+QWidget#controls-host {{ background: {C_PANEL}; }}
+
+QSlider::groove:horizontal {{ height: 4px; background: #1c2027; border-radius: 2px; }}
+QSlider::sub-page:horizontal {{ background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 {C_ACCENT}, stop:1 {C_ACCENT_HI}); border-radius: 2px; }}
+QSlider::add-page:horizontal {{ background: #1c2027; border-radius: 2px; }}
+QSlider::handle:horizontal {{ background: #eaf1fb; width: 14px; height: 14px; margin: -6px 0; border-radius: 7px; border: 2px solid {C_ACCENT}; }}
+QSlider::handle:horizontal:hover {{ background: #ffffff; border-color: {C_ACCENT_HI}; }}
+
+QComboBox {{ background: {C_RAISED}; border: 1px solid {C_BORDER}; padding: 5px 9px; border-radius: 6px; color: {C_TEXT}; min-height: 15px; }}
+QComboBox:hover {{ border-color: {C_BORDER_HI}; }}
+QComboBox:focus {{ border-color: {C_ACCENT}; }}
+QComboBox::drop-down {{ border: none; width: 20px; }}
+QComboBox QAbstractItemView {{ background: {C_PANEL}; color: {C_TEXT}; border: 1px solid {C_BORDER}; selection-background-color: {C_ACCENT}; selection-color: {C_ACCENT_INK}; outline: none; padding: 2px; }}
+
+QCheckBox, QRadioButton {{ color: #c4cad2; spacing: 7px; }}
+QCheckBox::indicator, QRadioButton::indicator {{ width: 15px; height: 15px; border: 1px solid {C_BORDER}; background: {C_RAISED}; }}
+QCheckBox::indicator {{ border-radius: 4px; }}
+QRadioButton::indicator {{ border-radius: 8px; }}
+QCheckBox::indicator:hover, QRadioButton::indicator:hover {{ border-color: {C_ACCENT}; }}
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {{ background: {C_ACCENT}; border-color: {C_ACCENT}; }}
+
+QPushButton {{ background: {C_RAISED}; color: {C_TEXT}; border: 1px solid {C_BORDER}; padding: 6px 12px; border-radius: 6px; font-weight: bold; }}
+QPushButton:hover {{ background: #2b333d; border-color: {C_BORDER_HI}; }}
+QPushButton:pressed {{ background: #14191f; }}
+
+QPushButton#section-toggle {{ background: transparent; color: #cfd6df; font-size: 11px; font-weight: bold;
+    text-align: left; border: none; border-left: 2px solid {C_BORDER}; padding: 7px 10px; margin-top: 4px; border-radius: 0; }}
+QPushButton#section-toggle:hover {{ background: #20262e; color: {C_ACCENT_HI}; }}
+QPushButton#section-toggle:checked {{ color: {C_ACCENT_HI}; border-left-color: {C_ACCENT}; }}
+
+QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
+QScrollBar::handle:vertical {{ background: #2a323b; border-radius: 5px; min-height: 24px; }}
+QScrollBar::handle:vertical:hover {{ background: {C_BORDER_HI}; }}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
+
+QFrame#header-bar {{ background: {C_HEADER}; border-bottom: 1px solid {C_BORDER_SOFT}; }}
+QLabel#app-logo {{ background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {C_ACCENT_HI}, stop:1 {C_ACCENT_DK}); color: {C_ACCENT_INK}; font-weight: bold; font-size: 14px;
+    border-radius: 8px; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px; }}
+QLabel#app-title {{ color: #f2f5f8; font-size: 18px; font-weight: bold; }}
+QFrame#chip {{ background: {C_CHIP}; border: 1px solid {C_BORDER_SOFT}; border-radius: 7px; }}
+QLabel#chip-cap {{ color: {C_TEXT_FAINT}; font-size: 8px; font-weight: bold; }}
+QLabel#chip-val {{ color: {C_ACCENT_HI}; font-size: 12px; font-weight: bold; }}
+QFrame#series-strip {{ background: {C_HEADER}; border-top: 1px solid {C_BORDER_SOFT}; }}
+QLabel#strip-cap {{ color: {C_TEXT_FAINT}; font-size: 9px; font-weight: bold; }}
+QPushButton#thumb {{ background: {C_CHIP}; color: {C_TEXT_DIM}; border: 1px solid {C_BORDER_SOFT};
+    border-radius: 7px; font-size: 10px; font-weight: bold; text-align: bottom; padding: 2px; }}
+QPushButton#thumb:hover {{ border-color: {C_BORDER_HI}; color: #c4cad2; }}
+QPushButton#thumb:checked {{ border: 2px solid {C_ACCENT}; color: {C_ACCENT_HI}; background: #142231; }}
+QLabel#thumb-cap {{ color: {C_TEXT_DIM}; font-size: 9px; font-weight: bold; }}
 """
 
 
@@ -173,7 +216,7 @@ class CollapsibleSection(QWidget):
         root.addWidget(self._btn)
 
         self._body = QWidget()
-        self._body.setStyleSheet("background:#1f242b; border-left:3px solid #313842; margin-left:0;")
+        self._body.setStyleSheet(f"background:{C_PANEL}; border-left:2px solid {C_BORDER_SOFT}; margin-left:0;")
         self._inner = QVBoxLayout(self._body)
         self._inner.setContentsMargins(6, 4, 6, 8)
         self._inner.setSpacing(0)
@@ -199,7 +242,7 @@ class MRISimulator(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         from version import __version__
-        self.setWindowTitle(f"MRI Simulation Platform  v{__version__}")
+        self.setWindowTitle(f"MRISim  v{__version__}")
         self.resize(1500, 900)
 
         print("Loading 3D phantom...")
@@ -379,7 +422,13 @@ class MRISimulator(QMainWindow):
 
         # Center panel — image + PSD canvases (the dominant viewport)
         self.center_panel = QWidget()
-        self.center_panel.setStyleSheet("background:#0f1216;")
+        # Frame the viewport like a screen: deep-black background inside a thin
+        # bezel that separates it from the lighter control chrome around it.
+        # Scoped by object name so the border doesn't cascade onto the canvases.
+        self.center_panel.setObjectName("viewport")
+        self.center_panel.setStyleSheet(
+            f"QWidget#viewport {{ background:{C_CANVAS}; border:1px solid {C_BEZEL};"
+            f" border-radius:6px; }}")
         self.center_layout = QHBoxLayout(self.center_panel)
         self.center_layout.setContentsMargins(4, 4, 4, 4)
         self.center_layout.setSpacing(4)
@@ -387,17 +436,17 @@ class MRISimulator(QMainWindow):
         # Right dock — scrollable parameter cards stacked above the metrics panel
         self.left_scroll = QScrollArea()
         self.left_scroll.setWidgetResizable(True)
-        self.left_scroll.setStyleSheet("QScrollArea { background:#1f242b; border:none; }")
+        self.left_scroll.setStyleSheet(f"QScrollArea {{ background:{C_PANEL}; border:none; }}")
         self.controls_host = QWidget()
         self.controls_host.setObjectName("controls-host")
-        self.controls_host.setStyleSheet("background:#1f242b;")
+        self.controls_host.setStyleSheet(f"background:{C_PANEL};")
         self.controls_layout = QVBoxLayout(self.controls_host)
         self.controls_layout.setContentsMargins(6, 8, 6, 6)
         self.controls_layout.setSpacing(0)
         self.left_scroll.setWidget(self.controls_host)
 
         self.right_panel = QWidget()
-        self.right_panel.setStyleSheet("background:#1f242b;")
+        self.right_panel.setStyleSheet(f"background:{C_PANEL};")
         self.right_layout = QVBoxLayout(self.right_panel)
         self.right_layout.setContentsMargins(8, 6, 8, 8)
         self.right_layout.setSpacing(2)
@@ -406,7 +455,7 @@ class MRISimulator(QMainWindow):
         # shrink it (its content scrolls) without its size hint blocking the drag.
         self.measurements_scroll = QScrollArea()
         self.measurements_scroll.setWidgetResizable(True)
-        self.measurements_scroll.setStyleSheet("QScrollArea { background:#1f242b; border:none; }")
+        self.measurements_scroll.setStyleSheet(f"QScrollArea {{ background:{C_PANEL}; border:none; }}")
         self.measurements_scroll.setWidget(self.right_panel)
         self.measurements_scroll.setMinimumHeight(70)
         self.left_scroll.setMinimumHeight(90)
@@ -418,9 +467,9 @@ class MRISimulator(QMainWindow):
         self.right_split.setChildrenCollapsible(False)
         self.right_split.setHandleWidth(7)
         self.right_split.setStyleSheet(
-            "QSplitter#right-split::handle { background:#2c333c; margin:1px 8px; "
-            "border-radius:2px; } "
-            "QSplitter#right-split::handle:hover { background:#1bb8ad; }")
+            f"QSplitter#right-split::handle {{ background:{C_BORDER_SOFT}; margin:1px 10px; "
+            f"border-radius:2px; }} "
+            f"QSplitter#right-split::handle:hover {{ background:{C_ACCENT}; }}")
         self.right_split.addWidget(self.left_scroll)
         self.right_split.addWidget(self.measurements_scroll)
         self.right_split.setStretchFactor(0, 1)   # parameter cards absorb extra space
@@ -451,16 +500,27 @@ class MRISimulator(QMainWindow):
     # ------------------------------------------------------------------ #
     def build_header_bar(self) -> QFrame:
         bar = QFrame(); bar.setObjectName("header-bar"); bar.setFixedHeight(54)
+        _solid_bg(bar, C_HEADER)
         h = QHBoxLayout(bar); h.setContentsMargins(12, 6, 14, 6); h.setSpacing(10)
 
-        logo = QLabel("MR"); logo.setObjectName("app-logo")
+        logo = QLabel(); logo.setObjectName("app-logo")
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        _logo_path = os.path.join(data_dir(), "logo.png")
+        _logo_pix = QPixmap(_logo_path) if os.path.exists(_logo_path) else QPixmap()
+        if not _logo_pix.isNull():
+            logo.setPixmap(_logo_pix.scaledToHeight(
+                38, Qt.TransformationMode.SmoothTransformation))
+            # Image carries its own look; drop the gradient "MR" box styling and
+            # the fixed 32px box so the pixmap isn't clipped.
+            logo.setStyleSheet("background: transparent; min-width: 0; max-width: 16777215;"
+                               " min-height: 0; max-height: 16777215;")
+        else:
+            logo.setText("MR")   # fallback to the styled monogram box
         h.addWidget(logo)
 
         tbox = QVBoxLayout(); tbox.setSpacing(0); tbox.setContentsMargins(0, 0, 0, 0)
-        title = QLabel("MRI Simulation Platform"); title.setObjectName("app-title")
-        sub = QLabel("Educational MR Scanner Console"); sub.setObjectName("app-sub")
-        tbox.addWidget(title); tbox.addWidget(sub)
+        title = QLabel("MRISim"); title.setObjectName("app-title")
+        tbox.addWidget(title)
         tw = QWidget(); tw.setLayout(tbox); h.addWidget(tw)
 
         h.addStretch(1)
@@ -492,6 +552,7 @@ class MRISimulator(QMainWindow):
 
     def build_series_strip(self) -> QFrame:
         strip = QFrame(); strip.setObjectName("series-strip"); strip.setFixedHeight(98)
+        _solid_bg(strip, C_HEADER)
         h = QHBoxLayout(strip); h.setContentsMargins(14, 7, 14, 7); h.setSpacing(8)
         cap = QLabel("SERIES"); cap.setObjectName("strip-cap")
         h.addWidget(cap, alignment=Qt.AlignmentFlag.AlignVCenter)
@@ -551,7 +612,7 @@ class MRISimulator(QMainWindow):
 
     def build_image_display(self) -> None:
         # Scout / FOV-planning figure — 3-plane localizer (axial / coronal / sagittal)
-        self.scout_fig = Figure(figsize=(3.5, 10), facecolor="#0f1216")
+        self.scout_fig = Figure(figsize=(3.5, 10), facecolor=C_CANVAS)
         gs = self.scout_fig.add_gridspec(3, 1, hspace=0.06,
                                           left=0.02, right=0.98,
                                           top=0.98, bottom=0.02)
@@ -562,7 +623,7 @@ class MRISimulator(QMainWindow):
             self.scout_fig.add_subplot(gs[2]),  # sagittal viewer
         ]
         for ax in self.scout_axes:
-            ax.set_facecolor("#0f1216")
+            ax.set_facecolor(C_CANVAS)
         # Backward-compat alias; set dynamically in _draw_scout to the primary panel
         self.scout_ax: Any = self.scout_axes[1]
         self._scout_primary_ax: Any = None
@@ -580,16 +641,19 @@ class MRISimulator(QMainWindow):
         self._scout_box_info: dict | None = None
 
         # Main image figure
-        self.fig = Figure(figsize=(10, 5), facecolor="#0f1216")
+        self.fig = Figure(figsize=(10, 5), facecolor=C_CANVAS)
         self.axes = self.fig.subplots(1, 2)
-        self.fig.subplots_adjust(wspace=0.25)
+        # Title is gone (corner annotations now), so the viewport can use more of
+        # the figure; leave a left margin for the plot's y-label in the wspace gap.
+        self.fig.subplots_adjust(left=0.035, right=0.975, top=0.965,
+                                 bottom=0.075, wspace=0.20)
         for ax in self.axes:
-            ax.set_facecolor("#0f1216")
+            ax.set_facecolor(C_CANVAS)
         self.canvas = FigureCanvas(self.fig)
         self.center_layout.addWidget(self.canvas, stretch=3)
 
         # PSD figure (conditionally shown)
-        self.psd_fig = Figure(figsize=(4, 5), facecolor="#0f1216")
+        self.psd_fig = Figure(figsize=(4, 5), facecolor=C_CANVAS)
         self.psd_canvas = FigureCanvas(self.psd_fig)
         self.psd_canvas.setVisible(False)
         self.center_layout.addWidget(self.psd_canvas, stretch=2)
@@ -606,7 +670,7 @@ class MRISimulator(QMainWindow):
         self.canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Status bar for the live cursor readout
-        self.statusBar().setStyleSheet("color:#9aa4b2; background:#0f1216; border-top:1px solid #313842;")  # type: ignore[union-attr]
+        self.statusBar().setStyleSheet(f"color:{C_TEXT_DIM}; background:{C_HEADER}; border-top:1px solid {C_BORDER_SOFT};")  # type: ignore[union-attr]
         self._set_status_default()
 
     def _ensure_1x2_layout(self) -> None:
@@ -614,9 +678,10 @@ class MRISimulator(QMainWindow):
         if len(self.fig.axes) != 2:
             self.fig.clear()
             self.axes = self.fig.subplots(1, 2)
-            self.fig.subplots_adjust(wspace=0.25)
+            self.fig.subplots_adjust(left=0.035, right=0.975, top=0.965,
+                                     bottom=0.075, wspace=0.20)
             for ax in self.axes:
-                ax.set_facecolor("#0f1216")
+                ax.set_facecolor(C_CANVAS)
 
     # --- Window/level (matplotlib event handlers) ---
     def _on_press(self, event: object) -> None:
@@ -633,7 +698,9 @@ class MRISimulator(QMainWindow):
                 ctrl = bool(event.guiEvent.modifiers() & Qt.KeyboardModifier.ControlModifier)  # type: ignore[attr-defined]
         except Exception:
             ctrl = False
-        # Plain left-drag over the MRA MIP spins the angiogram (azimuth/elevation).
+        # Plain left-drag over the MRA MIP spins the angiogram (azimuth/elevation);
+        # the MIP is a rotatable projection, so left-drag rotates there. Hold Ctrl
+        # to window/level an MRA image instead.
         if (event.button == 1 and not ctrl  # type: ignore[attr-defined]
                 and self.sequence_type.get() == "MR Angiography"
                 and event.x is not None):  # type: ignore[attr-defined]
@@ -642,8 +709,8 @@ class MRISimulator(QMainWindow):
             self._mra_start_x = event.x        # type: ignore[attr-defined]
             self._mra_start_y = event.y        # type: ignore[attr-defined]
             return
-        # Middle / right drag, or Ctrl+left drag, adjusts W/L
-        if event.button in (2, 3) or (event.button == 1 and ctrl):  # type: ignore[attr-defined]
+        # Any other drag — plain left (the default now), middle or right — adjusts W/L.
+        if event.button in (1, 2, 3):  # type: ignore[attr-defined]
             self.wl_dragging = True
             self.wl_start_x = event.x  # type: ignore[attr-defined]
             self.wl_start_y = event.y  # type: ignore[attr-defined]
@@ -729,7 +796,7 @@ class MRISimulator(QMainWindow):
 
     def _set_status_default(self) -> None:
         self.statusBar().showMessage(  # type: ignore[union-attr]
-            "Wheel / \u2191\u2193 : slice   \u2022   Ctrl+drag : window/level   \u2022   "
+            "Wheel / \u2191\u2193 : slice   \u2022   drag : window/level   \u2022   "
             "double-click : reset   \u2022   k / m / p : k-space / multi / PSD")
 
     def _update_readout(self, event: object) -> None:
@@ -788,6 +855,33 @@ class MRISimulator(QMainWindow):
         21: (200, 150, 210, 90),   # soft tissue/gland: lavender
     }
 
+    # Anatomical edge labels (top, bottom, left, right) for the displayed image,
+    # in radiological convention — anterior up, patient-right on the viewer's LEFT.
+    # The in-plane geometry comes from get_slice + origin="lower"; the brain
+    # (BrainWeb) is already radiological, and the body phantoms are mirrored L/R at
+    # build time (see on_region_change) so a single map serves both.
+    _ORIENT_LABELS: dict[str, tuple[str, str, str, str]] = {
+        "axial":    ("A", "P", "R", "L"),
+        "coronal":  ("S", "I", "R", "L"),
+        "sagittal": ("S", "I", "A", "P"),
+    }
+    _BODY_REGIONS = frozenset({"Abdomen", "Spine", "Pelvis", "Knee", "Torso"})
+
+    def _orientation_letters(self, orient: str) -> "tuple[str, str, str, str] | None":
+        """Anatomical edge labels for the current view, or None when they can't be
+        asserted safely. Skipped for MRA (a rotatable MIP projection), for oblique
+        planning (the plane is tilted off the cardinal axes), and for loaded NIfTI
+        volumes whose axis convention is unknown — better no letters than wrong ones."""
+        if self.sequence_type.get() == "MR Angiography":
+            return None
+        if self.fov_planning.get() and (abs(self.slice_tilt.get()) > 0.5
+                                        or abs(self.slice_rot.get()) > 0.5):
+            return None
+        region = self.region.get()
+        if region == "Brain" or region in self._BODY_REGIONS:
+            return self._ORIENT_LABELS.get(orient)
+        return None   # loaded mask / unknown convention
+
     def _make_tissue_overlay(self, label_map: np.ndarray,
                               target_shape: tuple[int, int]) -> np.ndarray:
         """Return an RGBA image mapping each label to a translucent colour."""
@@ -803,6 +897,61 @@ class MRISimulator(QMainWindow):
                 rgba[mask] = color
         return rgba
 
+    def _frame_image_axes(self, ax: Any) -> None:
+        """Give an image axes a clean framed-viewport look: no ticks, a thin
+        themed border instead of the default white axis box / off-axis."""
+        ax.set_xticks([]); ax.set_yticks([])
+        for _s in ax.spines.values():
+            _s.set_visible(True); _s.set_color(C_BORDER); _s.set_linewidth(1.0)
+
+    def _annotate_image(self, ax: Any, params: dict, orient: str, sl_idx: int,
+                        width: float, center: float) -> None:
+        """DICOM-style corner annotations on the main viewport (replaces the
+        centered title): sequence identity + timing top-left, geometry top-right,
+        window/level bottom-left, FOV bottom-right. Monospace, edge-anchored and
+        outline-stroked the way a real MR workstation overlays metadata."""
+        import matplotlib.patheffects as _pe
+        stroke = [_pe.withStroke(linewidth=2.2, foreground="#05080b")]
+        ACC, LIGHT, MUTE = C_ACCENT_HI, "#eef1f5", "#9aa4b2"
+
+        def t(x: float, y: float, s: str, color: str, *, ha: str = "left",
+              size: float = 8.0, weight: str = "normal", mono: bool = True) -> None:
+            ax.text(x, y, s, transform=ax.transAxes, color=color, fontsize=size,
+                    ha=ha, va="top" if y > 0.5 else "bottom", weight=weight,
+                    family="monospace" if mono else "sans-serif",
+                    path_effects=stroke, zorder=5)
+
+        seq = params.get("sequence", "")
+        head = params.get("qmri_display", "qMRI") if seq == "Quantitative (qMRI)" else seq
+        # Top-left: identity + key parameters
+        t(0.022, 0.978, head, ACC, size=11, weight="bold", mono=False)
+        timing = f"TR {params['TR']:.0f}   TE {params['TE']:.0f}"
+        if seq in ("Inversion Recovery",):
+            timing += f"   TI {params.get('TI', 0):.0f}"
+        if seq in ("Gradient Echo", "Balanced SSFP", "MR Angiography"):
+            timing += f"   FA {params.get('flip_angle', 0):.0f}°"
+        t(0.022, 0.928, timing, LIGHT)
+        t(0.022, 0.892, f"{params.get('field_strength', '')}   "
+                        f"{int(params.get('matrix_size', 0))}²", MUTE, size=7.5)
+        # Top-right: geometry
+        t(0.978, 0.978, self.region.get(), LIGHT, ha="right")
+        t(0.978, 0.936, orient.capitalize(), MUTE, ha="right", size=7.5)
+        t(0.978, 0.900, f"Slice {sl_idx}", MUTE, ha="right", size=7.5)
+        # Bottom corners: window/level and FOV
+        t(0.022, 0.022, f"W {width:.2f}   L {center:.2f}", MUTE, size=7.5)
+        t(0.978, 0.022, f"FOV {params.get('FOV', 0):.0f} mm", MUTE, ha="right", size=7.5)
+        # Anatomical orientation markers at the mid-edges (only where verified).
+        letters = self._orientation_letters(orient)
+        if letters:
+            top, bot, lft, rgt = letters
+            for x, y, s, ha, va in [(0.5, 0.985, top, "center", "top"),
+                                    (0.5, 0.015, bot, "center", "bottom"),
+                                    (0.012, 0.5, lft, "left", "center"),
+                                    (0.988, 0.5, rgt, "right", "center")]:
+                ax.text(x, y, s, transform=ax.transAxes, color="#d7dee8",
+                        fontsize=10.5, weight="bold", ha=ha, va=va,
+                        family="sans-serif", path_effects=stroke, zorder=6)
+
     def apply_window_level(self) -> None:
         if self.current_image is None:
             return
@@ -811,21 +960,18 @@ class MRISimulator(QMainWindow):
         center = self.window_level * max_val
         width = self.window_width * max_val
         cmap = self.display_cmap.get()
-        _asp = self._get_voxel_aspect(self.orientation.get())
+        orient = self.orientation.get(); sl_idx = self.slice_idx.get()
+        _asp = self._get_voxel_aspect(orient)
         self.axes[0].clear()
         self.axes[0].imshow(img, cmap=cmap, origin="lower",
                             vmin=center - width / 2, vmax=center + width / 2,
                             aspect=_asp)
         if self.show_tissue_overlay.get():
-            orient = self.orientation.get(); sl_idx = self.slice_idx.get()
             ph_slice = self._get_current_phantom_slice(orient, sl_idx, self.get_current_params())
             self.axes[0].imshow(self._make_tissue_overlay(ph_slice, img.shape),
                                 origin="lower", aspect="auto")
-        self.axes[0].set_title(self.current_title, color="white", fontsize=10)
-        self.axes[0].set_axis_off()
-        self.axes[0].text(0.02, 0.02, f"W:{width:.3f} L:{center:.3f}",
-                          transform=self.axes[0].transAxes,
-                          color="yellow", fontsize=8, va="bottom")
+        self._frame_image_axes(self.axes[0])
+        self._annotate_image(self.axes[0], self.get_current_params(), orient, sl_idx, width, center)
         self.canvas.draw()
 
     # ------------------------------------------------------------------ #
@@ -956,11 +1102,23 @@ class MRISimulator(QMainWindow):
         parent_layout.addWidget(cb)
         return cb
 
-    def _button(self, parent_layout_or_row: Any, text: str, command: Any, color: str = "#4a4a4a") -> QPushButton:
+    def _button(self, parent_layout_or_row: Any, text: str, command: Any,
+                color: str | None = None) -> QPushButton:
         b = QPushButton(text)
-        b.setStyleSheet(f"QPushButton {{ background:{color}; color:white; border:none; "
-                        f"padding:5px 8px; border-radius:4px; font-weight:bold; }}"
-                        f"QPushButton:hover {{ background:#5a5a5a; }}")
+        if color == "accent":
+            # Primary action: filled accent with dark ink.
+            b.setStyleSheet(
+                f"QPushButton {{ background:{C_ACCENT}; color:{C_ACCENT_INK}; border:1px solid {C_ACCENT}; "
+                f"padding:6px 11px; border-radius:6px; font-weight:bold; }}"
+                f"QPushButton:hover {{ background:{C_ACCENT_HI}; border-color:{C_ACCENT_HI}; }}"
+                f"QPushButton:pressed {{ background:{C_ACCENT_DK}; }}")
+        else:
+            # Secondary action: raised surface (inherits the global QPushButton look).
+            b.setStyleSheet(
+                f"QPushButton {{ background:{C_RAISED}; color:{C_TEXT}; border:1px solid {C_BORDER}; "
+                f"padding:6px 11px; border-radius:6px; font-weight:bold; }}"
+                f"QPushButton:hover {{ background:#2b333d; border-color:{C_BORDER_HI}; }}"
+                f"QPushButton:pressed {{ background:#14191f; }}")
         b.clicked.connect(command)
         parent_layout_or_row.addWidget(b)
         return b
@@ -992,6 +1150,31 @@ class MRISimulator(QMainWindow):
         self.desc_label = DLabel("", base_style="color:#6b7585; font-size:9px; padding:2px 2px;")
         self.desc_label.setWordWrap(True)
         SL.addWidget(self.desc_label)
+        self._dropdown(SL, "Signal Curve", self.plot_curve_mode,
+                       ["TE decay", "TR recovery", "TI sweep", "Contrast Map", "Histogram"],
+                       self.schedule_recalculate, inline=True)
+
+        # FOV planning (scout) \u2014 toggle plus its slice-group / oblique controls.
+        self._checkbox(SL, "FOV Planning (scout)", self.fov_planning)
+        self.fov_planning.trace_add("write", self.on_fov_planning_toggle)
+        self.plan_frame = QWidget()
+        plan_l = QVBoxLayout(self.plan_frame); plan_l.setContentsMargins(0, 0, 0, 0); plan_l.setSpacing(1)
+        self._slider(plan_l, "# Slices", self.n_slices, 1, 32)
+        self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
+        self._slider(plan_l, "In-plane FOV (%)", self.inplane_fov_pct, 10, 100)
+        self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
+        self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
+        _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
+        _reset_btn = QPushButton("Reset Angles && FOV")
+        _reset_btn.setStyleSheet("font-size:10px; padding:3px 6px; background:#313842; color:#c4cad2; border:1px solid #313842;")
+        _reset_btn.clicked.connect(self._reset_oblique)
+        _reset_row.addWidget(_reset_btn)
+        _reset_wrap = QWidget(); _reset_wrap.setLayout(_reset_row); plan_l.addWidget(_reset_wrap)
+        hint2 = QLabel("Scout: drag box = move \u2022 edges = FOV / coverage \u2022 Tilt/Rot = oblique")
+        hint2.setStyleSheet("color:#586273; font-size:9px;")
+        plan_l.addWidget(hint2)
+        SL.addWidget(self.plan_frame)
+        self.plan_frame.setVisible(False)
 
         # \u2500\u2500 Timing \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         timing_sec = CollapsibleSection("Timing")
@@ -1062,7 +1245,7 @@ class MRISimulator(QMainWindow):
                        ["04", "05", "06", "18", "20", "38"],
                        self.on_subject_change, inline=True)
         rl_row = QHBoxLayout(); rl_row.setContentsMargins(0, 0, 0, 2)
-        self._button(rl_row, "Browse Masks\u2026", self.browse_masks, color="#2255aa")
+        self._button(rl_row, "Browse Masks\u2026", self.browse_masks, color="accent")
         self._button(rl_row, "Load File\u2026", self.load_nifti_region)
         rlwrap = QWidget(); rlwrap.setLayout(rl_row); NL.addWidget(rlwrap)
         orow = QHBoxLayout(); orow.setContentsMargins(0, 4, 0, 2)
@@ -1079,26 +1262,6 @@ class MRISimulator(QMainWindow):
         owrap = QWidget(); owrap.setLayout(orow); NL.addWidget(owrap)
         self._slice_slider = self._slider(NL, "Slice", self.slice_idx, 0, 180)._qslider
         self._checkbox(NL, "Multi-slice (3\u00d73 grid)", self.multi_slice)
-        self._checkbox(NL, "FOV Planning (scout)", self.fov_planning)
-        self.fov_planning.trace_add("write", self.on_fov_planning_toggle)
-        self.plan_frame = QWidget()
-        plan_l = QVBoxLayout(self.plan_frame); plan_l.setContentsMargins(0, 0, 0, 0); plan_l.setSpacing(1)
-        self._slider(plan_l, "# Slices", self.n_slices, 1, 32)
-        self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
-        self._slider(plan_l, "In-plane FOV (%)", self.inplane_fov_pct, 10, 100)
-        self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
-        self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
-        _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
-        _reset_btn = QPushButton("Reset Angles & FOV")
-        _reset_btn.setStyleSheet("font-size:10px; padding:3px 6px; background:#313842; color:#c4cad2; border:1px solid #313842;")
-        _reset_btn.clicked.connect(self._reset_oblique)
-        _reset_row.addWidget(_reset_btn)
-        _reset_wrap = QWidget(); _reset_wrap.setLayout(_reset_row); plan_l.addWidget(_reset_wrap)
-        hint2 = QLabel("Scout: drag box = move \u2022 edges = FOV / coverage \u2022 Tilt/Rot = oblique")
-        hint2.setStyleSheet("color:#586273; font-size:9px;")
-        plan_l.addWidget(hint2)
-        NL.addWidget(self.plan_frame)
-        self.plan_frame.setVisible(False)
 
         # \u2500\u2500 Spatial / Acquisition \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         spatial_sec = CollapsibleSection("Spatial / Acquisition")
@@ -1163,10 +1326,7 @@ class MRISimulator(QMainWindow):
         self._checkbox(DL, "Tissue label overlay", self.show_tissue_overlay)
         self._checkbox(DL, "Show k-space", self.show_kspace)
         self._checkbox(DL, "Show Pulse Sequence Diagram", self.show_psd)
-        self._dropdown(DL, "Signal Curve", self.plot_curve_mode,
-                       ["TE decay", "TR recovery", "TI sweep", "Contrast Map", "Histogram"],
-                       self.schedule_recalculate, inline=True)
-        hint = QLabel("Wheel/\u2191\u2193: slice \u2022 Ctrl+drag: W/L \u2022 dbl-click/R: reset")
+        hint = QLabel("Wheel/\u2191\u2193: slice \u2022 drag: W/L \u2022 dbl-click/R: reset")
         hint.setStyleSheet("color:#586273; font-size:9px;")
         DL.addWidget(hint)
 
@@ -1175,7 +1335,7 @@ class MRISimulator(QMainWindow):
         L.addWidget(cmp_sec)
         CL = cmp_sec.inner
         crow = QHBoxLayout(); crow.setContentsMargins(0, 0, 0, 0)
-        self._button(crow, "Set as A", self.set_protocol_a, color="#2255aa")
+        self._button(crow, "Set as A", self.set_protocol_a, color="accent")
         self._button(crow, "Compare A\u2194B", self.toggle_compare)
         self._button(crow, "Clear", self.clear_compare)
         cwrap = QWidget(); cwrap.setLayout(crow); CL.addWidget(cwrap)
@@ -1204,7 +1364,7 @@ class MRISimulator(QMainWindow):
 
         self.metrics_labels: dict = {}
 
-        def _card(key: str, label: str, value_color: str = "#1bb8ad") -> QWidget:
+        def _card(key: str, label: str, value_color: str = C_ACCENT) -> QWidget:
             card = QWidget()
             card.setStyleSheet("background:#262c34; border-radius:5px;")
             cl = QVBoxLayout(card)
@@ -1288,7 +1448,7 @@ class MRISimulator(QMainWindow):
 
     def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()
-        self.compare_status.config(text=f"A: {self.compare_params['sequence']} TR={self.compare_params['TR']:.0f}", fg="#1bb8ad")
+        self.compare_status.config(text=f"A: {self.compare_params['sequence']} TR={self.compare_params['TR']:.0f}", fg=C_ACCENT)
         self.compare_mode.set(True); self.recalculate()
 
     def toggle_compare(self) -> None:
@@ -1355,9 +1515,9 @@ class MRISimulator(QMainWindow):
         if self.compare_mode.get() and self.compare_params:
             image_a, metrics_a = self.simulate_with_params(self.compare_params)
             self.axes[0].imshow(image_a, cmap=cmap, origin="lower", aspect=_asp)
-            self.axes[0].set_title(f"A: {self.compare_params['sequence']} TR={self.compare_params['TR']:.0f}", color="white", fontsize=10); self.axes[0].set_axis_off()
+            self.axes[0].set_title(f"A · {self.compare_params['sequence']}  TR {self.compare_params['TR']:.0f}", color=C_ACCENT_HI, fontsize=10, fontweight="bold"); self._frame_image_axes(self.axes[0])
             self.axes[1].imshow(image_b, cmap=cmap, origin="lower", aspect=_asp)
-            self.axes[1].set_title(f"B: {current_params['sequence']} TR={current_params['TR']:.0f}", color="white", fontsize=10); self.axes[1].set_axis_off()
+            self.axes[1].set_title(f"B · {current_params['sequence']}  TR {current_params['TR']:.0f}", color=C_ACCENT_HI, fontsize=10, fontweight="bold"); self._frame_image_axes(self.axes[1])
             self.update_compare_metrics(metrics_a, metrics_b)
             self.current_image = None
         else:
@@ -1379,14 +1539,15 @@ class MRISimulator(QMainWindow):
                 self.axes[0].imshow(
                     self._make_tissue_overlay(ph_slice, image_b.shape),
                     origin="lower", aspect="auto")
-            self.axes[0].set_title(self.current_title, color="white", fontsize=10); self.axes[0].set_axis_off()
+            self._frame_image_axes(self.axes[0])
+            self._annotate_image(self.axes[0], current_params, orient, sl_idx, width, center)
             if self.show_kspace.get():
                 ks = self._last_kspace if self._last_kspace is not None else None
                 if ks is None:
                     from kspace import image_to_kspace
                     ks = image_to_kspace(image_b)
                 self.axes[1].imshow(get_kspace_display(ks), cmap="hot", origin="lower")
-                self.axes[1].set_title("k-Space (acquired)", color="white", fontsize=11); self.axes[1].set_axis_off()
+                self.axes[1].set_title("k-Space (acquired)", color=C_TEXT_DIM, fontsize=10); self.axes[1].set_axis_off()
             else:
                 self._plot_curves(current_params)
             self.compare_metrics_label.config(text="")
@@ -1424,7 +1585,7 @@ class MRISimulator(QMainWindow):
         cmap = self.display_cmap.get()
         _asp = self._get_voxel_aspect(orient)
         for idx, ax in enumerate(axes.flat):
-            ax.set_facecolor("#15181c")
+            ax.set_facecolor(C_CANVAS)
             sl = center_sl + (idx - 4) * spacing
             if 0 <= sl <= max_sl:
                 image = self._simulate_single_slice(params, orient, sl)
@@ -1455,7 +1616,7 @@ class MRISimulator(QMainWindow):
         self.fig.subplots_adjust(wspace=0.05, hspace=0.18)
         _asp = self._get_voxel_aspect(orient)
         for k, ax in enumerate(axes.flat):
-            ax.set_facecolor("#15181c"); ax.set_axis_off()
+            ax.set_facecolor(C_CANVAS); ax.set_axis_off()
             if k < n:
                 img = self._simulate_single_slice(params, orient, idxs[k])
                 ax.imshow(img, cmap=self.display_cmap.get(), origin="lower", aspect=_asp)
@@ -1542,7 +1703,7 @@ class MRISimulator(QMainWindow):
         for i, plane in enumerate(self._scout_plane_names):
             ax = self.scout_axes[i]
             ax.clear()
-            ax.set_facecolor("#0f1216")
+            ax.set_facecolor(C_CANVAS)
             ax.set_axis_off()
 
             # Background: slice through planned centre (sagittal needs LR flip)
@@ -1607,7 +1768,7 @@ class MRISimulator(QMainWindow):
                                  color=color, fontsize=8, pad=2)
 
             elif role == "secondary":
-                color = "#2ad0c4"
+                color = C_ACCENT_HI
                 if is_oblique:
                     cx, cy = self._display_center(plane, center)
                     _angle_var = self._ANGLE_MAP[acq]["secondary"]
@@ -1616,7 +1777,7 @@ class MRISimulator(QMainWindow):
                             ax.plot([seg[0], seg[2]], [seg[1], seg[3]],
                                     color=color, linewidth=2.0, linestyle="--")
                             ax.plot([seg[0], seg[2]], [seg[1], seg[3]], "D",
-                                    color="#1bb8ad", markersize=5,
+                                    color=C_ACCENT, markersize=5,
                                     markeredgecolor="white", markeredgewidth=0.7)
                             self._scout_angle_handles.append(
                                 (seg[0], seg[1], seg[2], seg[3], plane, _angle_var, cx, cy))
@@ -1641,13 +1802,13 @@ class MRISimulator(QMainWindow):
                         if ov_info["orient"] == "h":
                             ax.plot([lo, hi], [pos, pos], color=color, lw=lw, alpha=alpha)
                             # Endpoint markers + register as angle handle
-                            ax.plot([lo, hi], [pos, pos], "D", color="#1bb8ad",
+                            ax.plot([lo, hi], [pos, pos], "D", color=C_ACCENT,
                                     markersize=5, markeredgecolor="white", markeredgewidth=0.7)
                             self._scout_angle_handles.append(
                                 (lo, pos, hi, pos, plane, _av_s, cx_s, cy_s))
                         else:
                             ax.plot([pos, pos], [lo, hi], color=color, lw=lw, alpha=alpha)
-                            ax.plot([pos, pos], [lo, hi], "D", color="#1bb8ad",
+                            ax.plot([pos, pos], [lo, hi], "D", color=C_ACCENT,
                                     markersize=5, markeredgecolor="white", markeredgewidth=0.7)
                             self._scout_angle_handles.append(
                                 (pos, lo, pos, hi, plane, _av_s, cx_s, cy_s))
@@ -1985,7 +2146,7 @@ class MRISimulator(QMainWindow):
             ax.set_xlabel('TR (ms)', color='white')
             ax.set_ylabel('Signal (a.u.)', color='white')
             ax.set_title('T1 Recovery  (signal vs TR)', color='white', fontsize=11)
-            ax.legend(fontsize=8, facecolor='#1f242b', labelcolor='white')
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
 
         elif mode == "TI sweep":
             # Signal vs TI — most useful for IR/STIR/FLAIR education
@@ -2016,7 +2177,7 @@ class MRISimulator(QMainWindow):
             ax.set_xlabel('TI (ms)', color='white')
             ax.set_ylabel('Signal (a.u.)', color='white')
             ax.set_title('IR Signal vs TI  (— magnitude · - - signed)', color='white', fontsize=10)
-            ax.legend(fontsize=8, facecolor='#1f242b', labelcolor='white')
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
 
         elif mode == "Contrast Map":
             # 2-D WM–GM CNR heat map vs TR and TE for the current sequence
@@ -2048,7 +2209,7 @@ class MRISimulator(QMainWindow):
             ax.set_xlabel('TR (ms, log scale)', color='white')
             ax.set_ylabel('TE (ms)', color='white')
             ax.set_title('WM–GM CNR map  (brighter = better contrast)', color='white', fontsize=10)
-            ax.legend(fontsize=8, facecolor='#1f242b', labelcolor='white')
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
 
         elif mode == "Histogram":
             img = self.current_image
@@ -2056,7 +2217,7 @@ class MRISimulator(QMainWindow):
                 img_pos = img.ravel()
                 img_pos = img_pos[img_pos > 0]
                 if img_pos.size > 0:
-                    ax.hist(img_pos, bins=80, color='#1bb8ad', alpha=0.7, density=True)
+                    ax.hist(img_pos, bins=80, color=C_ACCENT, alpha=0.7, density=True)
                     # Annotate tissue ROI means using TISSUES_B0
                     _tissue_rows = [("WM", '#ff6b6b', "white_matter"),
                                     ("GM", '#69db7c', "gray_matter"),
@@ -2080,7 +2241,7 @@ class MRISimulator(QMainWindow):
                     ax.set_ylabel('Density', color='white')
                     ax.set_title('Image Histogram  (dashed = tissue signal prediction)',
                                  color='white', fontsize=10)
-                    ax.legend(fontsize=8, facecolor='#1f242b', labelcolor='white')
+                    ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
                 else:
                     ax.text(0.5, 0.5, 'No image data', ha='center', va='center',
                             transform=ax.transAxes, color='white')
@@ -2119,8 +2280,14 @@ class MRISimulator(QMainWindow):
                 ax.set_title('T2 Decay  (signal vs TE)', color='white', fontsize=11)
             ax.set_xlabel('TE (ms)', color='white')
             ax.set_ylabel('Signal (a.u.)', color='white')
-            ax.legend(fontsize=8, facecolor='#1f242b', labelcolor='white')
-        self.axes[1].tick_params(colors='white'); self.axes[1].set_facecolor('#15181c')
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
+        ax = self.axes[1]
+        ax.set_facecolor(C_HEADER)
+        ax.tick_params(colors=C_TEXT_DIM, labelsize=8, length=3)
+        for _s in ax.spines.values():
+            _s.set_color(C_BORDER)
+        ax.grid(True, color="#202830", linewidth=0.6, alpha=0.9)
+        ax.set_axisbelow(True)
 
     def update_compare_metrics(self, ma: dict, mb: dict) -> None:
         up, down = "\u2191", "\u2193"
@@ -2175,7 +2342,7 @@ class MRISimulator(QMainWindow):
             sar_text = f"{metrics['sar_head']:.1f} W/kg  \u26a0\ufe0f (safe \u2264{fa_max}\u00b0)"
         else:
             sar_text = f"{metrics['sar_head']:.1f} W/kg"
-        self.metrics_labels["sar"].config(text=sar_text, fg="#ff6b6b" if metrics["sar_exceeds"] else "#1bb8ad")
+        self.metrics_labels["sar"].config(text=sar_text, fg="#ff6b6b" if metrics["sar_exceeds"] else C_ACCENT)
 
         self.metrics_labels["weighting"].config(
             text=self.determine_weighting(params["TR"], params["TE"], params["sequence"]))
@@ -2212,7 +2379,7 @@ class MRISimulator(QMainWindow):
         if metrics["sar_exceeds"]: active.append("SAR!")
         self.metrics_labels["artifacts"].config(
             text=", ".join(active) if active else "None",
-            fg="#ff6b6b" if active else "#1bb8ad")
+            fg="#ff6b6b" if active else C_ACCENT)
 
         self._update_header()
 
@@ -2273,8 +2440,17 @@ class MRISimulator(QMainWindow):
         if name not in self._region_cache:
             self.statusBar().showMessage(f"Building {name} phantom\u2026")  # type: ignore[union-attr]
             QApplication.processEvents()
-            self._region_cache[name] = self._body_phantoms.build_region(name)
-            self._region_texture_cache[name] = self._body_phantoms.build_region_texture(name)
+            vol = self._body_phantoms.build_region(name)
+            tex = self._body_phantoms.build_region_texture(name)
+            # The body phantoms are built patient-right on the viewer's right
+            # (neurological). Mirror L/R (axis 2) so they display radiological \u2014
+            # patient-right on the viewer's left \u2014 consistent with the brain.
+            if name in self._BODY_REGIONS:
+                vol = np.ascontiguousarray(np.flip(vol, axis=2))
+                if tex is not None:
+                    tex = np.ascontiguousarray(np.flip(tex, axis=2))
+            self._region_cache[name] = vol
+            self._region_texture_cache[name] = tex
         self.phantom_3d = self._region_cache[name]
         self.texture_3d = self._region_texture_cache.get(name)
 
@@ -2397,8 +2573,8 @@ class MRISimulator(QMainWindow):
         v.addWidget(QLabel("Filter by region:")); v.addWidget(filt)
 
         listw = QListWidget()
-        listw.setStyleSheet("QListWidget{background:#15181c;color:#dfe3e8;} "
-                            "QListWidget::item:selected{background:#1bb8ad;}")
+        listw.setStyleSheet(f"QListWidget{{background:{C_PANEL};color:{C_TEXT};}} "
+                            f"QListWidget::item:selected{{background:{C_ACCENT};color:{C_ACCENT_INK};}}")
         v.addWidget(listw, stretch=1)
 
         def populate() -> None:
@@ -2418,8 +2594,8 @@ class MRISimulator(QMainWindow):
 
         btn_row = QHBoxLayout()
         load_btn = QPushButton("Load selected"); cancel_btn = QPushButton("Cancel")
-        load_btn.setStyleSheet("background:#1bb8ad;color:white;padding:6px;border-radius:4px;")
-        cancel_btn.setStyleSheet("background:#4a4a4a;color:white;padding:6px;border-radius:4px;")
+        load_btn.setStyleSheet(f"background:{C_ACCENT};color:{C_ACCENT_INK};padding:6px;border-radius:4px;font-weight:bold;")
+        cancel_btn.setStyleSheet(f"background:{C_RAISED};color:{C_TEXT};padding:6px;border-radius:4px;")
         btn_row.addStretch(1); btn_row.addWidget(cancel_btn); btn_row.addWidget(load_btn)
         v.addLayout(btn_row)
 
