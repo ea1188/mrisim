@@ -1,4 +1,3 @@
-<div align="center">
 <h1>MRISim</h1>
 <p><b>An interactive MRI physics simulator</b> — from tissue &amp; pulse-sequence parameters through k-space to the reconstructed image, in real time.</p>
 
@@ -10,7 +9,6 @@
 
 </div>
 
-<p align="center">
   <img src="docs/demo.gif" width="840" alt="MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve" />
 </p>
 
