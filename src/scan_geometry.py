@@ -197,7 +197,7 @@ def secondary_overlay(
       through       'v'|'h'  — which display axis the user must drag to move lines
       through_sign  +1|-1    — sign relating drag delta to slice_idx delta
     """
-    nZ, nY, nX = vol_shape[0], vol_shape[1], vol_shape[2]
+    nZ, nY, _nX = vol_shape[0], vol_shape[1], vol_shape[2]
     slices = prescribed_indices(acq, vol_shape, slice_idx, n_slices, thickness, gap)
 
     if acq == "axial" and viewer == "sagittal":

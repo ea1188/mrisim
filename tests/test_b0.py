@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 from b0 import (
-    GAMMA_HZ_T,
     SUSCEPTIBILITY_PPM,
     _chi_vol,
     _dipole_kernel,

@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 from phantom import create_brain_phantom, TISSUE_LABELS, TISSUE_PROPERTIES
 
 
@@ -67,7 +66,7 @@ class TestCreateBrainPhantom:
         # All ventricle pixels must be inside the skull boundary
         vent_ys, vent_xs = np.where(p == 4)
         center = 128
-        for y, x in zip(vent_ys[:10], vent_xs[:10]):
+        for _y, _x in zip(vent_ys[:10], vent_xs[:10], strict=False):
             assert p[center, center] != 0  # just confirm brain exists at center
 
 

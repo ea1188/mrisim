@@ -1,7 +1,7 @@
 from typing import Any
 
 import numpy as np
-from scipy.ndimage import gaussian_filter, binary_dilation, binary_erosion
+from scipy.ndimage import gaussian_filter
 
 def generate_synthetic_3d_brain(nx=181, ny=217, nz=181):
     """Generate a realistic 3D brain phantom with cortical folding and subcortical structures."""

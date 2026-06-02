@@ -1,0 +1,11 @@
+# Ruff configuration.
+#
+# We lint for real problems — dead code and likely bugs (pyflakes `F`, bugbear
+# `B`) — rather than stylistic line-packing. The codebase deliberately uses
+# compact `a = 1; b = 2` statements, so the E701/E702 "multiple statements on
+# one line" rules are intentionally not enabled.
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = ["F", "B"]

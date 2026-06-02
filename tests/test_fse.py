@@ -86,7 +86,7 @@ class TestEpgRun:
         # (two shifts per echo: before and after the RF pulse)
         N = ETL + 2
         Fp = np.zeros(N, dtype=complex)
-        Z  = np.zeros(N, dtype=float)
+        np.zeros(N, dtype=float)
         M0 = PD * (1.0 - np.exp(-TR / T1))
         Fp[0] = -M0
         # After ETL echoes, state at order ETL should be non-zero

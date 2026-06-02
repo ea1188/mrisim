@@ -14,7 +14,7 @@ Key references:
 from collections.abc import Callable
 
 import numpy as np
-from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
+from signal_engine import spin_echo_signal, gradient_echo_signal
 
 try:
     from phantom3d import TISSUE_PROPERTIES_3D as _DEFAULT_TISSUE

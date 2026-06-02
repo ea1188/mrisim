@@ -23,9 +23,8 @@ from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        apply_gradient_distortion, calculate_chemical_shift_pixels)
 from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d,
-                                simulate_fa_map_3d, simulate_tof_3d_slice,
-                                simulate_fmri_3d_slice, compute_activation_map_3d,
-                                compute_tstat_map_3d, simulate_tof_with_real_data)
+                                simulate_fa_map_3d, simulate_fmri_3d_slice, compute_activation_map_3d,
+                                compute_tstat_map_3d)
 from presets import estimate_sar
 
 import tissue_db
@@ -604,8 +603,8 @@ class Simulator:
                 reconstructed = image
 
         # Metrics
-        TR, TE, FA = params["TR"], params["TE"], params["flip_angle"]
-        FOV, NEX, BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
+        TR, _TE, FA = params["TR"], params["TE"], params["flip_angle"]
+        FOV, NEX, _BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
         ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
         pf_val = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else 1.0
         resolution = FOV / matrix

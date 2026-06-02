@@ -99,7 +99,7 @@ class TestDiffusionBenchmarks:
     def test_compute_adc_map_256(self, phantom256):
         """compute_adc_map on 256×256 should finish in under 0.5 s."""
         from diffusion import compute_adc_map
-        rng = np.random.default_rng(0)
+        np.random.default_rng(0)
         t = _time(lambda: compute_adc_map(phantom256, rng=np.random.default_rng(0)))
         assert t < 0.5, f"compute_adc_map took {t:.3f}s (budget 0.5s)"
 
@@ -147,7 +147,7 @@ class TestAccelerationBenchmarks:
     def test_vd_poisson_mask_256(self):
         """vd_poisson_mask on 256×256 should finish in under 0.1 s."""
         from acceleration import vd_poisson_mask
-        rng = np.random.default_rng(0)
+        np.random.default_rng(0)
         t = _time(lambda: vd_poisson_mask(256, 256, 4, rng=np.random.default_rng(0)))
         assert t < 0.1, f"vd_poisson_mask took {t:.3f}s (budget 0.1s)"
 

@@ -467,7 +467,6 @@ def simulate_tof_with_real_data(
     Higher flip angle -> more inflow enhancement -> brighter vessels
     Shorter TR -> more background suppression -> better vessel contrast
     """
-    from phantom3d import get_slice as get_slice_raw
     
     max_idx = {"axial": real_mra.shape[2], "sagittal": real_mra.shape[0], "coronal": real_mra.shape[1]}
     max_sl = max_idx[orientation] - 1

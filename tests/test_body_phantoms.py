@@ -40,7 +40,7 @@ class TestBodyTissues:
             assert 0.0 <= p["PD"] <= 1.0, f"label {lab} PD out of range"
 
     def test_t1_t2_positive(self):
-        for lab, p in BODY_TISSUES.items():
+        for _lab, p in BODY_TISSUES.items():
             assert p["T1"] > 0
             assert p["T2"] > 0
 
@@ -381,7 +381,7 @@ class TestMergeIntoEngine:
     def test_body_labels_added_to_phantom3d(self):
         import phantom3d
         # Record what was there before
-        before = set(phantom3d.TISSUE_PROPERTIES_3D.keys())
+        set(phantom3d.TISSUE_PROPERTIES_3D.keys())
         merge_into_engine()
         after = set(phantom3d.TISSUE_PROPERTIES_3D.keys())
         for lab in _BODY_ONLY:

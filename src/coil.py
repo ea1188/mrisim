@@ -290,7 +290,7 @@ def combine_sense(
     else:
         psi_inv = np.linalg.inv(np.asarray(noise_cov, dtype=complex))
 
-    out = np.zeros((rows, cols), dtype=complex)
+    np.zeros((rows, cols), dtype=complex)
     # (n_coils, rows*cols)
     S = sm.reshape(n_coils, -1)
     M = ci.reshape(n_coils, -1)

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
+from signal_engine import spin_echo_signal, gradient_echo_signal
 from phantom import create_brain_phantom, TISSUE_PROPERTIES
 
 

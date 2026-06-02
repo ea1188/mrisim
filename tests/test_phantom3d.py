@@ -188,7 +188,7 @@ class TestSimulateSlice:
 
 class TestTissueProperties3D:
     def test_required_keys(self):
-        for lab, props in TISSUE_PROPERTIES_3D.items():
+        for _lab, props in TISSUE_PROPERTIES_3D.items():
             for key in ("T1", "T2", "PD", "T2star", "name"):
                 assert key in props
 
@@ -196,7 +196,7 @@ class TestTissueProperties3D:
         assert TISSUE_PROPERTIES_3D[0]["PD"] == 0.0
 
     def test_all_values_positive(self):
-        for lab, props in TISSUE_PROPERTIES_3D.items():
+        for _lab, props in TISSUE_PROPERTIES_3D.items():
             assert props["T1"] > 0
             assert props["T2"] > 0
 
@@ -219,5 +219,5 @@ class TestTissueProperties3D:
         assert t1_values[1] == max(t1_values.values())
 
     def test_name_strings_nonempty(self):
-        for lab, props in TISSUE_PROPERTIES_3D.items():
+        for _lab, props in TISSUE_PROPERTIES_3D.items():
             assert isinstance(props["name"], str) and len(props["name"]) > 0

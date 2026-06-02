@@ -3,8 +3,6 @@
 import numpy as np
 import pytest
 from dixon import (
-    FAT_CS_PPM,
-    FAT_LABELS,
     fat_water_shift_hz,
     inphase_te_ms,
     opposed_phase_te_ms,

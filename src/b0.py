@@ -140,11 +140,11 @@ def polynomial_b0_map(
     quad = np.broadcast_to(quadratic, (ndim,))
 
     coords = [np.arange(s, dtype=float) * v - (s - 1) / 2.0 * v
-              for s, v in zip(shape, vox)]
+              for s, v in zip(shape, vox, strict=False)]
     grids = np.meshgrid(*coords, indexing="ij")
 
     b0 = np.zeros(shape, dtype=np.float64)
-    for g, L, Q in zip(grids, lin, quad):
+    for g, L, Q in zip(grids, lin, quad, strict=False):
         b0 += L * g + Q * g**2
     return b0
 
@@ -175,13 +175,13 @@ def gaussian_b0_map(
     sigma2 = (fwhm_mm / (2.0 * np.sqrt(2.0 * np.log(2.0))))**2
 
     if center is None:
-        center = [(s - 1) / 2.0 * v for s, v in zip(shape, vox)]
+        center = [(s - 1) / 2.0 * v for s, v in zip(shape, vox, strict=False)]
     center = np.asarray(center, dtype=float)
 
-    coords = [np.arange(s, dtype=float) * v for s, v in zip(shape, vox)]
+    coords = [np.arange(s, dtype=float) * v for s, v in zip(shape, vox, strict=False)]
     grids = np.meshgrid(*coords, indexing="ij")
 
-    r2 = sum((g - c)**2 for g, c in zip(grids, center))
+    r2 = sum((g - c)**2 for g, c in zip(grids, center, strict=False))
     return amplitude_hz * np.exp(-r2 / (2.0 * sigma2))
 
 
