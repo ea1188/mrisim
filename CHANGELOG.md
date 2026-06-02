@@ -12,6 +12,22 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-06-01
+
+### Changed
+- Preset dropdown is now grouped cleanly by region (Brain → Spine → Abdomen →
+  Pelvis → Knee → Torso), and within each region ordered weighting →
+  fluid-sensitive → post-contrast → advanced. Newer presets (post-Gd,
+  in/opposed-phase, bSSFP, CHESS, radial, EPI) now sit with their region instead
+  of being appended at the end.
+
+### Fixed
+- Selecting a preset now switches to the plane that study is conventionally
+  acquired in (e.g. spine and knee → sagittal, torso and MRCP → coronal) instead
+  of always staying axial.
+- Changing region no longer left the orientation radio buttons out of sync (a
+  stale label comparison meant the planning-panel radios didn't update).
+
 ## [1.2.0] — 2026-06-01
 
 ### Fixed

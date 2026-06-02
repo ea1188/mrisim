@@ -89,6 +89,45 @@ class TestGetPresetNames:
     def test_brain_t1_present(self):
         assert "Brain T1 SE" in get_preset_names()
 
+    def test_order_covers_every_preset_exactly_once(self):
+        names = get_preset_names()
+        assert sorted(names) == sorted(PRESETS.keys())   # no drops / duplicates
+        assert len(names) == len(set(names))
+
+    def test_presets_grouped_by_region(self):
+        # Within the dropdown, all presets of a region must be contiguous, so the
+        # list reads as clean clinical groups rather than scattered entries.
+        from presets import get_preset_region
+        regions = [get_preset_region(n) for n in get_preset_names()]
+        runs = [r for i, r in enumerate(regions) if i == 0 or regions[i - 1] != r]
+        assert len(runs) == len(set(runs)), \
+            f"a region is split across the order: {runs}"
+
+
+class TestGetPresetPlane:
+    def test_every_preset_has_a_valid_plane(self):
+        from presets import get_preset_plane
+        for name in get_preset_names():
+            assert get_preset_plane(name) in ("axial", "sagittal", "coronal")
+
+    def test_named_planes_match(self):
+        from presets import get_preset_plane
+        assert get_preset_plane("Spine T1 Sagittal") == "sagittal"
+        assert get_preset_plane("Spine Axial T2") == "axial"
+        assert get_preset_plane("Torso T2 Coronal") == "coronal"
+        assert get_preset_plane("Knee PD FSE") == "sagittal"
+        assert get_preset_plane("MRCP") == "coronal"
+
+    def test_default_is_axial(self):
+        from presets import get_preset_plane
+        assert get_preset_plane("Brain T1 SE") == "axial"
+        assert get_preset_plane("Nonexistent Preset XYZ") == "axial"
+
+    def test_plane_map_keys_are_real_presets(self):
+        from presets import _PRESET_PLANE
+        for name in _PRESET_PLANE:
+            assert name in PRESETS, f"plane map references unknown preset {name!r}"
+
 
 class TestEstimateSAR:
     def test_returns_dict(self):
