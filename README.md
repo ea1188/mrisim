@@ -7,7 +7,7 @@
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-444d56)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB)
 
-[![Download MRISim](https://img.shields.io/badge/%E2%AC%87%20Download%20MRISim-no%20Python%20needed-2563eb?style=for-the-badge)](https://github.com/ea1188/mrisim/releases/latest)
+[![Download MRISim](https://img.shields.io/badge/%E2%AC%87%20Download%20MRISim-2563eb?style=for-the-badge)](https://github.com/ea1188/mrisim/releases/latest)
 
 </div>
 
