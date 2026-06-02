@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- 7 clinical presets showcasing the newer sequences/effects: Brain CISS, Torso
+  Cine and Abdomen balanced SSFP; Brain EPI T2\*; Knee and Abdomen spectral-
+  (CHESS) fat-sat; and a motion-robust Abdomen radial acquisition. The preset
+  loader now applies (and resets) the fat-sat and trajectory controls.
+
 ### Changed
 - README refreshed to match the current engine: Balanced SSFP and EPI listed as
   selectable sequences, plus flow, spectral fat-sat, radial sampling, slice
