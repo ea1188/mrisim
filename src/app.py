@@ -9,7 +9,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk
 
-from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
+from signal_engine import spin_echo_signal, gradient_echo_signal
 from phantom3d import get_slice, simulate_slice, TISSUE_PROPERTIES_3D
 from kspace import simulate_acquisition, get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic
@@ -18,13 +18,12 @@ from phantom3d_extended import (add_vessels_3d, add_activation_3d,
                                 simulate_tof_3d_slice, simulate_fmri_3d_slice,
                                 compute_activation_map_3d, compute_tstat_map_3d,
                                 get_diffusion_properties_3d, load_real_tof_mra, simulate_tof_with_real_data)
-from fmri import compute_temporal_snr
-from presets import PRESETS, get_preset_names, get_preset, estimate_sar
+from presets import get_preset_names, get_preset, estimate_sar
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        calculate_chemical_shift_pixels)
-from fse import simulate_fse_image, fse_scan_time, compute_fse_echo_train
-from acceleration import apply_parallel_imaging, compute_acceleration_metrics, apply_compressed_sensing
+from fse import simulate_fse_image, compute_fse_echo_train
+from acceleration import apply_parallel_imaging, apply_compressed_sensing
 
 class MRISimulator:
     def __init__(self) -> None:
@@ -408,7 +407,7 @@ class MRISimulator:
             reconstructed = image
         
         # Metrics
-        TR, TE, FA = params["TR"], params["TE"], params["flip_angle"]
+        TR, _TE, FA = params["TR"], params["TE"], params["flip_angle"]
         FOV, NEX, BW = params["FOV"], params["NEX"], params["bandwidth"]*1000
         ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
         resolution = FOV/matrix; voxel_vol = resolution*resolution*thickness

@@ -420,7 +420,6 @@ class TestGetKspaceDisplay:
 
 
 # --- Radial (non-Cartesian) sampling ----------------------------------------
-import numpy as np
 from kspace import radial_sampling_mask, apply_radial_sampling
 
 

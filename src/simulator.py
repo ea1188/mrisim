@@ -23,9 +23,8 @@ from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        apply_gradient_distortion, calculate_chemical_shift_pixels)
 from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d,
-                                simulate_fa_map_3d, simulate_tof_3d_slice,
-                                simulate_fmri_3d_slice, compute_activation_map_3d,
-                                compute_tstat_map_3d, simulate_tof_with_real_data)
+                                simulate_fa_map_3d, simulate_fmri_3d_slice, compute_activation_map_3d,
+                                compute_tstat_map_3d)
 from presets import estimate_sar
 
 import tissue_db
@@ -93,7 +92,7 @@ def _accel_gfactor(R: int, method: str) -> float:
     return g
 
 
-def default_params(**overrides) -> dict:
+def default_params(**overrides: object) -> dict:
     """A complete params dict for Simulator.simulate(), with sensible defaults.
 
     This is the input contract for headless/scripted use — override any subset:
@@ -169,6 +168,7 @@ class Simulator:
         segmentation, so its MIP is hazy — the synthetic tree projects cleaner.)
         """
         vol = self.vessels
+        assert vol is not None
         key = (vol.shape, int(vol.sum()), round(TR, 1), round(TE, 1), round(FA, 1))
         if self._tof_cache is None or self._tof_cache[0] != key:
             self._tof_cache = (key, angiography.tof_intensity_volume(vol, TR, TE, FA))
@@ -176,6 +176,7 @@ class Simulator:
 
     # --- geometry -----------------------------------------------------------
     def get_max_slice_idx(self) -> int:
+        assert self.volume is not None
         dims = {"axial": self.volume.shape[0],
                 "sagittal": self.volume.shape[2],
                 "coronal": self.volume.shape[1]}
@@ -184,6 +185,7 @@ class Simulator:
     def _compute_slab_center(self, orient: str, sl_idx: int) -> np.ndarray:
         """(Z, Y, X) voxel-index centre of the currently prescribed slab."""
         vol = self.volume
+        assert vol is not None
         nZ, nY, nX = vol.shape
         cfg = sg.cfg_for(orient)
         center = np.array([nZ / 2.0, nY / 2.0, nX / 2.0])
@@ -197,6 +199,7 @@ class Simulator:
         oblique sampling as the phantom, so companion volumes (e.g. the fMRI
         activation map) stay pixel-aligned with the rendered phantom slice."""
         vol = self.volume if volume is None else volume
+        assert vol is not None
         if self.fov_planning and (abs(self.tilt) > 0.5 or abs(self.rot) > 0.5):
             from oblique import plane_from_angles, oblique_plane
             _, row_vec, col_vec = plane_from_angles(orient, tilt_deg=self.tilt, rot_deg=self.rot)
@@ -221,6 +224,7 @@ class Simulator:
     def _b0_volume(self, field_strength_T: float) -> np.ndarray:
         """3D susceptibility B0 field (Hz) for the active volume, cached."""
         vol = self.volume
+        assert vol is not None
         key = (vol.shape, int(vol.sum()), round(float(field_strength_T), 3))
         if self._b0_cache is None or self._b0_cache[0] != key:
             field = b0.susceptibility_b0_map(vol, field_strength_T=field_strength_T)
@@ -240,7 +244,7 @@ class Simulator:
 
     # --- SNR measurement ----------------------------------------------------
     @staticmethod
-    def _resize_nn(arr: np.ndarray, shape) -> np.ndarray:
+    def _resize_nn(arr: np.ndarray, shape: "tuple[int, ...]") -> np.ndarray:
         """Nearest-neighbor resize of a label map to `shape` (no scipy needed)."""
         if arr.shape == tuple(shape):
             return arr
@@ -380,6 +384,7 @@ class Simulator:
 
     # --- full acquisition ---------------------------------------------------
     def simulate(self, params: dict) -> tuple[np.ndarray, dict]:
+        assert self.volume is not None
         orient = self.orientation; sl_idx = self.slice_idx
         matrix = params["matrix_size"]; fov_frac = params["fov_fraction"] / 100.0
         thickness = int(params["slice_thickness"]); R = params["accel_factor"]
@@ -391,7 +396,7 @@ class Simulator:
                               for s in range(start, end + 1)])
             # Imperfect RF slice profile: centre-weighted, not a flat average.
             w = _slice_profile_weights(slabs.shape[0])
-            image = np.tensordot(w, slabs, axes=(0, 0))
+            image: np.ndarray = np.tensordot(w, slabs, axes=(0, 0))
         else:
             image = self._simulate_single_slice(params, orient, sl_idx)
 
@@ -459,6 +464,7 @@ class Simulator:
 
             # Spectral (CHESS) fat saturation: null fat, with B0-dependent failure.
             if params.get("fatsat_enabled") and phantom_slice.shape == image.shape:
+                _b0fs: "np.ndarray | None"
                 try:
                     _b0fs = self._b0_field_slice(orient, sl_idx, params, _B0_val)
                     _b0fs = _b0fs if _b0fs.shape == image.shape else None
@@ -597,8 +603,8 @@ class Simulator:
                 reconstructed = image
 
         # Metrics
-        TR, TE, FA = params["TR"], params["TE"], params["flip_angle"]
-        FOV, NEX, BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
+        TR, _TE, FA = params["TR"], params["TE"], params["flip_angle"]
+        FOV, NEX, _BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
         ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
         pf_val = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else 1.0
         resolution = FOV / matrix

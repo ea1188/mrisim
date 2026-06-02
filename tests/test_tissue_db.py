@@ -1,4 +1,3 @@
-import pytest
 from tissue_db import properties, apply_to_engine, FIELD_STRENGTHS, _RAW
 
 
@@ -27,12 +26,12 @@ class TestProperties:
 
     def test_t1_positive(self):
         for field in ["1.5T", "3T"]:
-            for lab, p in properties(field).items():
+            for _lab, p in properties(field).items():
                 assert p["T1"] > 0
 
     def test_t2_positive(self):
         for field in ["1.5T", "3T"]:
-            for lab, p in properties(field).items():
+            for _lab, p in properties(field).items():
                 assert p["T2"] > 0
 
     def test_t1_3t_generally_longer_than_15t(self):

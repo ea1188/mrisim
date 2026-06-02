@@ -102,7 +102,7 @@ class TestGetDiffusionProperties3d:
 
     def test_required_keys_per_label(self, small_brain):
         props = get_diffusion_properties_3d(small_brain)
-        for lab, d in props.items():
+        for _lab, d in props.items():
             assert "ADC" in d and "FA" in d
 
     def test_background_adc_zero(self, small_brain):

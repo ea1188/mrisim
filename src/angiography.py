@@ -219,14 +219,14 @@ if __name__ == "__main__":
     
     # Test TOF
     tof = simulate_tof_mra(phantom, TR=25, TE=4, flip_angle=60)
-    print(f"\nTOF MRA:")
+    print("\nTOF MRA:")
     print(f"  Blood signal: {tof[phantom==5].mean():.4f}")
     print(f"  Brain signal: {tof[phantom==2].mean():.4f}")
     print(f"  Vessel/Brain ratio: {tof[phantom==5].mean()/tof[phantom==2].mean():.1f}x")
     
     # Test Phase Contrast
     mag, phase, speed = simulate_phase_contrast(phantom, venc=80, flow_velocity=60)
-    print(f"\nPhase Contrast:")
+    print("\nPhase Contrast:")
     print(f"  Blood phase: {phase[phantom==5].mean():.3f} rad")
     print(f"  Static phase: {phase[phantom==2].mean():.3f} rad")
     print(f"  Speed in vessels: {speed[phantom==5].mean():.1f} cm/s")

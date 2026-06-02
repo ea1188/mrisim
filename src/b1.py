@@ -6,7 +6,6 @@ their effect on SE/GRE/IR signal, and flip-angle mapping sequences.
 """
 
 import numpy as np
-from signal_engine import spin_echo_signal, gradient_echo_signal, inversion_recovery_signal
 
 
 # ---------------------------------------------------------------------------

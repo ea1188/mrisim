@@ -7,7 +7,6 @@ from mt import (
     gaussian_lineshape,
     lorentzian_lineshape,
     saturation_rate_bound,
-    saturation_rate_free,
     mt_steady_state,
     mt_ratio,
     simulate_mt_weighted,

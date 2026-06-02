@@ -258,7 +258,6 @@ class TestGradientEchoSignalDenomGuard:
 
 
 # --- Balanced SSFP -----------------------------------------------------------
-import numpy as np
 from signal_engine import balanced_ssfp_signal, ssfp_banding
 
 

@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from flow import apply_flow, BLOOD_LABEL
 import tissue_db

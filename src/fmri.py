@@ -179,7 +179,7 @@ def compute_t_statistic_map(
     
     # Simulate time series with noise
     n_rest = num_volumes // 2
-    n_active = num_volumes // 2
+    num_volumes // 2
     
     # Add temporal noise
     sigma = np.max(rest_image) * noise_level / 100
@@ -217,7 +217,6 @@ def compute_temporal_snr(TR: float, TE: float, flip_angle: float, num_volumes: i
     return tsnr
 
 if __name__ == "__main__":
-    from phantom import TISSUE_PROPERTIES
     
     phantom, activation = create_fmri_phantom(256)
     print(f"Activation range: {activation[activation>0].min():.2f} - {activation.max():.2f}%")

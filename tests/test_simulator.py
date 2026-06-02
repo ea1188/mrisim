@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 import simulator
-from phantom3d import generate_synthetic_3d_brain, get_slice
+from phantom3d import generate_synthetic_3d_brain
 from phantom3d_extended import add_vessels_3d, add_activation_3d
 
 

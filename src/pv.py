@@ -190,7 +190,7 @@ def simulate_thick_slice(vol_3d: np.ndarray, center_z: int,
     sig_dict = _signal_per_label(props, TR_ms, TE_ms, sequence, TI_ms, flip_angle_deg)
 
     out = np.zeros(vol_3d.shape[1:], dtype=np.float64)
-    for z, w in zip(z_indices, weights):
+    for z, w in zip(z_indices, weights, strict=False):
         plane = vol_3d[int(z)]
         for lab, sig in sig_dict.items():
             out += w * (plane == lab).astype(float) * sig

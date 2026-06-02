@@ -11,7 +11,6 @@ from scan_geometry import (
     fov_transform,
     secondary_overlay,
     inplane_box,
-    SCOUT,
 )
 from phantom3d import generate_synthetic_3d_brain
 

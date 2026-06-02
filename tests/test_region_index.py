@@ -1,5 +1,4 @@
 import json
-import os
 import pytest
 from region_index import (
     TS_CT_NAMES,
@@ -14,7 +13,7 @@ from region_index import (
 )
 
 try:
-    import nibabel as _nib
+    import nibabel as _nib  # noqa: F401  (availability check)
     HAS_NIBABEL = True
 except ImportError:
     HAS_NIBABEL = False
@@ -80,7 +79,7 @@ class TestTsMrNames:
         assert max(TS_MR_NAMES) == 50
 
     def test_all_values_are_strings(self):
-        for k, v in TS_MR_NAMES.items():
+        for _k, v in TS_MR_NAMES.items():
             assert isinstance(v, str)
 
     def test_spot_checks(self):

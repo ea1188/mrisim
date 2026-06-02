@@ -77,7 +77,7 @@ def param_maps(phantom_slice: np.ndarray, tprops: dict,
     for lab, p in tprops.items():
         mask = phantom_slice == lab
         if mask.any():
-            for m, k in zip(maps, keys):
+            for m, k in zip(maps, keys, strict=False):
                 m[mask] = float(p.get(k, p.get("T2", 0.0)))
     return maps
 

@@ -23,7 +23,6 @@ from pydicom.uid import (
     generate_uid,
     MRImageStorage,
 )
-from pydicom.sequence import Sequence as DicomSequence
 
 
 # ---------------------------------------------------------------------------

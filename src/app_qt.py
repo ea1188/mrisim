@@ -40,26 +40,15 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from psd import draw_psd
 
 from signal_engine import spin_echo_signal, gradient_echo_signal
-from phantom3d import get_slice, simulate_slice
+from phantom3d import simulate_slice
 import tissue_db
-import qmri
 import rendering
-import rician
-import b0
-from kspace import simulate_acquisition, get_kspace_display
+from kspace import get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic
 from phantom3d_extended import (add_vessels_3d, add_activation_3d,
-                                simulate_diffusion_3d_slice, simulate_adc_map_3d, simulate_fa_map_3d,
-                                simulate_tof_3d_slice, simulate_fmri_3d_slice,
-                                compute_activation_map_3d, compute_tstat_map_3d,
-                                get_diffusion_properties_3d, load_real_tof_mra, simulate_tof_with_real_data)
-from fmri import compute_temporal_snr
-from presets import PRESETS, get_preset_names, get_preset, get_preset_region, estimate_sar
-from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
-                       add_susceptibility_artifact, add_zipper_artifact,
-                       calculate_chemical_shift_pixels)
-from fse import simulate_fse_image, fse_scan_time, compute_fse_echo_train
-from acceleration import apply_parallel_imaging, compute_acceleration_metrics, apply_compressed_sensing
+                                get_diffusion_properties_3d, load_real_tof_mra)
+from presets import get_preset_names, get_preset, get_preset_region
+from fse import compute_fse_echo_train
 from simulator import Simulator, _B0_MAP, _PF_MAP
 
 # SAR scaling factor per sequence type (relative to SE reference) — used by the
@@ -209,7 +198,8 @@ class CollapsibleSection(QWidget):
 class MRISimulator(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("MRI Simulation Platform")
+        from version import __version__
+        self.setWindowTitle(f"MRI Simulation Platform  v{__version__}")
         self.resize(1500, 900)
 
         print("Loading 3D phantom...")
@@ -549,7 +539,7 @@ class MRISimulator(QMainWindow):
         h, w = img.shape
         self._thumb_keepalive = getattr(self, "_thumb_keepalive", [])
         self._thumb_keepalive.append(img)  # QImage shares the buffer, keep a ref
-        qi = QImage(img.data, w, h, w, QImage.Format.Format_Grayscale8)
+        qi = QImage(img.data, w, h, w, QImage.Format.Format_Grayscale8)  # type: ignore[call-overload]
         return QPixmap.fromImage(qi)
 
     def _select_series(self, orient: str) -> None:
@@ -664,7 +654,7 @@ class MRISimulator(QMainWindow):
             if event.x is None or event.y is None:  # type: ignore[attr-defined]
                 return
             daz = (event.x - self._mra_start_x) * 0.5    # type: ignore[attr-defined]
-            dele = (event.y - self._mra_start_y) * 0.4   # type: ignore[attr-defined]  (mpl y grows up)
+            dele = (event.y - self._mra_start_y) * 0.4   # type: ignore[attr-defined]  # mpl y grows up
             self.angio_azimuth.set(int(round(self.angio_azimuth.get() + daz)) % 360)
             self.angio_elevation.set(int(np.clip(self.angio_elevation.get() + dele, -60, 60)))
             self._mra_start_x = event.x  # type: ignore[attr-defined]
@@ -1212,7 +1202,7 @@ class MRISimulator(QMainWindow):
         self.right_layout.addWidget(title)
         self._separator(self.right_layout)
 
-        self.metrics_labels = {}
+        self.metrics_labels: dict = {}
 
         def _card(key: str, label: str, value_color: str = "#1bb8ad") -> QWidget:
             card = QWidget()
@@ -1830,7 +1820,7 @@ class MRISimulator(QMainWindow):
         elif role == "secondary":
             through, sign = self._SEC_THROUGH.get(acq, ("v", 1))
             meta = {"through": through, "through_sign": sign}
-            self._scout_drag = dict(mode="move", x=px, y=py,  # type: ignore[attr-defined]
+            self._scout_drag = dict(mode="move", x=px, y=py,
                                     secondary=True, overlay=meta)
 
     def _scout_motion(self, event: object) -> None:
@@ -2034,7 +2024,7 @@ class MRISimulator(QMainWindow):
             te_vals = np.linspace(5, 200, 60)
             TR_g, TE_g = np.meshgrid(tr_vals, te_vals)
             wm = TISSUES_B0["white_matter"]; gm = TISSUES_B0["gray_matter"]
-            csf = TISSUES_B0["csf"]
+            TISSUES_B0["csf"]
             if seq == "Gradient Echo":
                 a = np.radians(FA)
                 def gre_sig(p: dict, TRg: np.ndarray, TEg: np.ndarray) -> np.ndarray:
@@ -2071,7 +2061,7 @@ class MRISimulator(QMainWindow):
                     _tissue_rows = [("WM", '#ff6b6b', "white_matter"),
                                     ("GM", '#69db7c', "gray_matter"),
                                     ("CSF", '#74c0fc', "csf")]
-                    y_top = ax.get_ylim()[1] if ax.get_ylim()[1] > 0 else 1.0
+                    ax.get_ylim()[1] if ax.get_ylim()[1] > 0 else 1.0
                     for tlabel, color, key in _tissue_rows:
                         props = TISSUES_B0[key]
                         if seq == "Spin Echo":

@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 from epi import (
     epi_trajectory,
-    epi_phase_correction,
     add_nyquist_ghost,
     ghost_ratio,
     epi_b0_phase_error,

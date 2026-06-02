@@ -24,7 +24,7 @@ from nifti_region import (
 # nibabel is optional; skip load_segmented_nifti tests if absent
 nibabel = pytest.importorskip  # just the marker function
 try:
-    import nibabel as _nib
+    import nibabel as _nib  # noqa: F401  (availability check)
     HAS_NIBABEL = True
 except ImportError:
     HAS_NIBABEL = False
@@ -46,7 +46,7 @@ class TestExtraMrProperties:
                 assert k in p, f"label {lab} missing key {k}"
 
     def test_pd_in_unit_interval(self):
-        for lab, p in EXTRA_MR_PROPERTIES.items():
+        for _lab, p in EXTRA_MR_PROPERTIES.items():
             assert 0.0 <= p["PD"] <= 1.0
 
 

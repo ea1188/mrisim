@@ -3,7 +3,7 @@ matplotlib.use('Agg')
 import numpy as np
 import pytest
 from simulate import simulate_spin_echo, simulate_gradient_echo, add_noise, display_image
-from phantom import create_brain_phantom, TISSUE_PROPERTIES
+from phantom import create_brain_phantom
 
 
 @pytest.fixture(scope="module")
@@ -129,7 +129,6 @@ class TestSimulatePhysics:
         """For very long TR, GRE signal pattern approaches SE ordering."""
         img_gre = simulate_gradient_echo(phantom64, TR=10000, TE=10, flip_angle=90)
         img_se  = simulate_spin_echo(phantom64, TR=10000, TE=10)
-        brain = phantom64 > 0
         # Both should be mostly PD-weighted — same tissue ordering
         if np.any(phantom64 == 1) and np.any(phantom64 == 3):
             gre_csf_wm = img_gre[phantom64 == 1].mean() / (img_gre[phantom64 == 3].mean() + 1e-9)

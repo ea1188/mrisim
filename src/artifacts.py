@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.ndimage import gaussian_filter
 
 def add_motion_artifact(
     image: np.ndarray,
