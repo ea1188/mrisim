@@ -13,6 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install headless Qt system libraries
+        # The GUI smoke tests boot PyQt6 under QT_QPA_PLATFORM=offscreen, which
+        # still needs these shared libraries (libEGL.so.1 et al.) on a bare runner.
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libdbus-1-3
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
