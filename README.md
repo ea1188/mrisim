@@ -1,9 +1,6 @@
 <div align="center">
-
 <img src="data/logo.png" alt="MRISim logo" width="108" />
-
 <h1>MRISim</h1>
-
 <p><b>An interactive MRI physics simulator</b> — from tissue &amp; pulse-sequence parameters through k-space to the reconstructed image, in real time.</p>
 
 [![CI](https://github.com/ea1188/mrisim/actions/workflows/ci.yml/badge.svg)](https://github.com/ea1188/mrisim/actions/workflows/ci.yml)
