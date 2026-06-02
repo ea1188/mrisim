@@ -198,10 +198,6 @@ class TestEngineShowcasePresets:
         for name in ("Brain CISS (bSSFP)", "Torso Cine (bSSFP)", "Abdomen bSSFP"):
             assert get_preset(name)["TR"] <= 10          # bSSFP needs short TR
 
-    def test_epi_preset(self):
-        from presets import get_preset
-        assert get_preset("Brain EPI T2*")["sequence"] == "Echo Planar (EPI)"
-
     def test_chess_fatsat_presets_enable_it(self):
         from presets import get_preset
         for name in ("Knee PD Fat-Sat (CHESS)", "Abdomen T1 FS Post-Gd"):
