@@ -373,7 +373,6 @@ def test_epi_slice_b0_conserves_energy_no_collapse():
     image *row* (confusing an image index with a k-space line index), which
     destroyed >90% of the signal and collapsed brain to a thin lens.
     """
-    rng = np.random.default_rng(0)
     img = np.zeros((128, 128))
     yy, xx = np.ogrid[:128, :128]
     img[((yy - 64) ** 2 + (xx - 64) ** 2) < 48 ** 2] = 1.0
