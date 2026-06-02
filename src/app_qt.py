@@ -47,7 +47,7 @@ from kspace import get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic
 from phantom3d_extended import (add_vessels_3d, add_activation_3d,
                                 get_diffusion_properties_3d, load_real_tof_mra)
-from presets import get_preset_names, get_preset, get_preset_region
+from presets import get_preset_names, get_preset, get_preset_region, get_preset_plane
 from fse import compute_fse_echo_train
 from simulator import Simulator, _B0_MAP, _PF_MAP
 
@@ -2291,14 +2291,14 @@ class MRISimulator(QMainWindow):
             combo.setCurrentText(self.sequence_type.get())
             combo.blockSignals(False)
 
-        # Recentre to a sensible slice for the new volume and refresh ranges
+        # Recentre to a sensible slice for the new volume and refresh ranges.
+        # Default a new region to axial; the orientation pickers are synced via
+        # _set_orientation (which also recentres the slice and refreshes ranges).
         if self.orientation.get() != "axial":
-            self.orientation.set("axial")
-            for b in self._orient_group.buttons():
-                if b.text() == "Ax":
-                    b.blockSignals(True); b.setChecked(True); b.blockSignals(False)
-        self.slice_idx.set(self.get_max_slice_idx() // 2)
-        self._refresh_slice_range()
+            self._set_orientation("axial")
+        else:
+            self.slice_idx.set(self.get_max_slice_idx() // 2)
+            self._refresh_slice_range()
 
         # Sync FOV slider range and default to the native physical extent of the new region
         if self._fov_slider is not None:
@@ -2450,6 +2450,21 @@ class MRISimulator(QMainWindow):
             self.orientation.set(orient)
             self.on_orientation_change()
 
+    def _set_orientation(self, orient: str) -> None:
+        """Programmatically switch the acquisition plane and sync both pickers
+        (planning radios + series thumbnails) plus the slice range, without
+        firing the per-widget callbacks. The caller is expected to recalculate."""
+        if orient not in ("axial", "sagittal", "coronal"):
+            return
+        self.orientation.set(orient)
+        rb = getattr(self, "_orient_radios", {}).get(orient)
+        if rb is not None:
+            rb.blockSignals(True); rb.setChecked(True); rb.blockSignals(False)
+        for o, b in getattr(self, "_series_thumbs", {}).items():
+            b.blockSignals(True); b.setChecked(o == orient); b.blockSignals(False)
+        self.slice_idx.set(self.get_max_slice_idx() // 2)
+        self._refresh_slice_range()
+
     def on_preset_change(self) -> None:
         name = self.preset_name.get()
         if name in ["(Custom)", ""]:
@@ -2459,6 +2474,9 @@ class MRISimulator(QMainWindow):
         region = get_preset_region(name)
         if region and region != self.region.get():
             self.region.set(region); self.on_region_change()
+        # Switch to the plane this study is conventionally acquired in (on_region_change
+        # forces axial for a new region, so apply the preset's plane afterwards).
+        self._set_orientation(get_preset_plane(name))
         self.sequence_type.set(p["sequence"]); self.TR.set(float(p["TR"])); self.TE.set(float(p["TE"]))
         self.TI.set(float(p.get("TI", 150))); self.flip_angle.set(float(p.get("flip_angle", 90)))
         self.matrix_size.set(int(p.get("matrix_size", 256))); self.FOV.set(float(p.get("FOV", 240)))

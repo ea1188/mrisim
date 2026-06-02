@@ -679,9 +679,67 @@ def get_preset_region(name: str) -> str | None:
     return None
 
 
+# Acquisition plane per preset. Anything not listed defaults to axial — the most
+# common acquisition plane — so only the presets conventionally acquired in
+# another plane are named here. Selecting a preset then also picks the plane it
+# is normally read in (e.g. spine sagittal, knee sagittal, torso coronal).
+_PRESET_PLANE: dict[str, str] = {
+    "Brain MPRAGE": "sagittal",            # 3-D IR-GRE, acquired sagittal
+    "Spine T1 Sagittal": "sagittal",
+    "Spine T2 Sagittal": "sagittal",
+    "Spine STIR": "sagittal",
+    "Spine Axial T2": "axial",
+    "Knee PD FSE": "sagittal",
+    "Knee T2 Fat-Sat": "sagittal",
+    "Knee GRE T2*": "sagittal",
+    "Knee PD Fat-Sat (CHESS)": "sagittal",
+    "Torso T2 Coronal": "coronal",
+    "Torso T1 GRE": "coronal",
+    "Torso STIR Coronal": "coronal",
+    "Torso Cine (bSSFP)": "coronal",
+    "MRCP": "coronal",                     # coronal thick-slab over the biliary tree
+}
+
+
+def get_preset_plane(name: str) -> str:
+    """Acquisition plane for a preset: 'axial', 'sagittal' or 'coronal'."""
+    return _PRESET_PLANE.get(name, "axial")
+
+
+# Dropdown display order: grouped by region, and within each region ordered
+# weighting → fluid-sensitive → post-contrast → advanced. Any preset not listed
+# here is appended in definition order, so a newly added preset still appears.
+_PRESET_ORDER: list[str] = [
+    # Brain — structural
+    "Brain T1 SE", "Brain T2 SE", "Brain PD", "Brain FLAIR", "Brain STIR",
+    "Brain MPRAGE", "Brain SWI", "Brain GRE T2*", "Brain GRE T1",
+    "Brain T1 Post-Gd", "Brain CISS (bSSFP)", "Brain EPI T2*",
+    # Brain — diffusion / function / angiography
+    "DWI Stroke", "DWI High-b", "ADC Map",
+    "fMRI BOLD Standard", "fMRI High Resolution",
+    "TOF MRA Circle of Willis", "TOF MRA Thin Slab",
+    # Spine
+    "Spine T1 Sagittal", "Spine T2 Sagittal", "Spine STIR", "Spine Axial T2",
+    # Abdomen
+    "Abdomen T1 GRE", "Abdomen T2 FSE", "Abdomen STIR",
+    "Abdomen In-Phase", "Abdomen Opposed-Phase", "Abdomen DWI",
+    "Abdomen T1 Post-Gd", "Abdomen T1 FS Post-Gd",
+    "Abdomen bSSFP", "Abdomen Radial", "MRCP",
+    # Pelvis
+    "Pelvis T1 SE", "Pelvis T2 High-Res", "Pelvis STIR", "Pelvis DWI",
+    "Pelvis T1 Post-Gd",
+    # Knee
+    "Knee PD FSE", "Knee T2 Fat-Sat", "Knee GRE T2*", "Knee PD Fat-Sat (CHESS)",
+    # Torso
+    "Torso T2 Coronal", "Torso T1 GRE", "Torso STIR Coronal", "Torso Cine (bSSFP)",
+]
+
+
 def get_preset_names() -> list[str]:
-    """Return list of preset names grouped by category."""
-    return list(PRESETS.keys())
+    """Preset names in grouped display order (any unlisted appended last)."""
+    ordered = [n for n in _PRESET_ORDER if n in PRESETS]
+    extra = [n for n in PRESETS if n not in _PRESET_ORDER]
+    return ordered + extra
 
 
 def get_preset(name: str) -> dict | None:
