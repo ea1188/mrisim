@@ -198,7 +198,8 @@ class CollapsibleSection(QWidget):
 class MRISimulator(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("MRI Simulation Platform")
+        from version import __version__
+        self.setWindowTitle(f"MRI Simulation Platform  v{__version__}")
         self.resize(1500, 900)
 
         print("Loading 3D phantom...")
