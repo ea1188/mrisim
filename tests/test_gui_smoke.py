@@ -260,12 +260,28 @@ class _Ev:
 
 
 def test_scroll_steps_slice(win):
-    set_state(win, sequence="Spin Echo")
+    set_state(win, sequence="Spin Echo", slice_thickness=1)
     win.slice_idx.set(40)
     win._on_scroll(_Ev(button="up", step=1))
     assert win.slice_idx.get() == 41
     win._on_scroll(_Ev(button="down", step=-1))
     assert win.slice_idx.get() == 40
+
+
+def test_scroll_steps_by_slice_thickness(win):
+    """The wheel advances a whole slice-thickness (contiguous slices), so a 6 mm
+    slice jumps 6 voxels per detent rather than 1."""
+    set_state(win, sequence="Spin Echo", slice_thickness=6)
+    win.slice_idx.set(40)
+    win._on_scroll(_Ev(button="up", step=1))
+    assert win.slice_idx.get() == 46
+    win._on_scroll(_Ev(button="down", step=-1))
+    assert win.slice_idx.get() == 40
+    # MRA ignores slice thickness → always one voxel per detent
+    set_state(win, sequence="MR Angiography", slice_thickness=6)
+    win.slice_idx.set(40)
+    win._on_scroll(_Ev(button="up", step=1))
+    assert win.slice_idx.get() == 41
 
 
 def test_left_drag_sets_window_level(win):
@@ -388,7 +404,7 @@ def test_curve_modes_render(win, mode, seq):
 #  Keyboard navigation / toggles (_on_key)
 # --------------------------------------------------------------------------- #
 def test_key_navigation_and_toggles(win):
-    set_state(win, sequence="Spin Echo")
+    set_state(win, sequence="Spin Echo", slice_thickness=1)   # 1 slice == 1 voxel
     win.slice_idx.set(40)
     win._on_key(_Ev(key="up"));       assert win.slice_idx.get() == 41
     win._on_key(_Ev(key="down"));     assert win.slice_idx.get() == 40
