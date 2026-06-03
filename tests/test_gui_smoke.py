@@ -247,14 +247,15 @@ class _GUIEvent:
 
 class _Ev:
     """Minimal stand-in for a matplotlib backend event."""
-    def __init__(self, button=None, x=120, y=120, dblclick=False, step=0, ctrl=False):
+    def __init__(self, button=None, x=120, y=120, dblclick=False, step=0, ctrl=False,
+                 xdata=None, ydata=None, inaxes=None, key=None):
         self.button = button
         self.x = x; self.y = y
         self.dblclick = dblclick
         self.step = step
         self.guiEvent = _GUIEvent(ctrl)
-        self.xdata = self.ydata = self.inaxes = None
-        self.key = None
+        self.xdata = xdata; self.ydata = ydata; self.inaxes = inaxes
+        self.key = key
 
 
 def test_scroll_steps_slice(win):
@@ -366,3 +367,267 @@ def test_bssfp_curve_is_brighter_for_fluid(win):
     assert csf is not None and wm is not None and csf.size and wm.size
     assert csf.max() > wm.max(), "bSSFP CSF should be brighter than WM"
     win.plot_curve_mode.set("TE decay")                    # restore default
+
+
+# --------------------------------------------------------------------------- #
+#  All signal-curve modes render for representative sequences
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("mode", ["TE decay", "TR recovery", "TI sweep",
+                                  "Contrast Map", "Histogram"])
+@pytest.mark.parametrize("seq", ["Spin Echo", "Gradient Echo", "Inversion Recovery"])
+def test_curve_modes_render(win, mode, seq):
+    set_state(win, sequence=seq)
+    win.plot_curve_mode.set(mode)
+    win.recalculate()                       # exercises the mode's _plot_curves branch
+    assert len(win.axes[1].get_children()) > 0
+    win.plot_curve_mode.set("TE decay")
+
+
+# --------------------------------------------------------------------------- #
+#  Keyboard navigation / toggles (_on_key)
+# --------------------------------------------------------------------------- #
+def test_key_navigation_and_toggles(win):
+    set_state(win, sequence="Spin Echo")
+    win.slice_idx.set(40)
+    win._on_key(_Ev(key="up"));       assert win.slice_idx.get() == 41
+    win._on_key(_Ev(key="down"));     assert win.slice_idx.get() == 40
+    win._on_key(_Ev(key="pageup"));   assert win.slice_idx.get() == 45
+    win._on_key(_Ev(key="pagedown")); assert win.slice_idx.get() == 40
+    for key, var in [("k", win.show_kspace), ("m", win.multi_slice), ("p", win.show_psd)]:
+        before = var.get()
+        win._on_key(_Ev(key=key))
+        assert var.get() is not before
+    win.window_width = 0.3
+    win._on_key(_Ev(key="r"))         # reset W/L
+    assert win.window_width == 1.0
+    set_state(win)                    # restore toggles/layout
+
+
+# --------------------------------------------------------------------------- #
+#  Cursor readout (_update_readout) — over the image and off it
+# --------------------------------------------------------------------------- #
+def test_cursor_readout(win):
+    set_state(win, sequence="Spin Echo")
+    H, W = win.current_image.shape[:2]
+    win._update_readout(_Ev(xdata=W // 2, ydata=H // 2, inaxes=win.axes[0]))
+    msg = win.statusBar().currentMessage()
+    assert "signal:" in msg and "slice" in msg
+    win._update_readout(_Ev(xdata=None, ydata=None, inaxes=win.axes[1]))   # off-image branch
+
+
+# --------------------------------------------------------------------------- #
+#  Export wrappers + protocol round-trip (writes only to a tmp dir)
+# --------------------------------------------------------------------------- #
+def test_export_and_load_protocol_roundtrip(win, tmp_path, monkeypatch):
+    import export, app_qt
+    monkeypatch.setattr(export, "EXPORT_DIR", str(tmp_path))
+    set_state(win, sequence="Spin Echo")
+    win.TE.set(42.0)
+    win.export_current_image()                 # writes a PNG to tmp
+    win.export_current_protocol()
+    win.export_current_report()
+    saved = list(tmp_path.glob("*"))
+    assert any(p.suffix == ".png" for p in saved) and any(p.suffix == ".json" for p in saved)
+
+    proto = next(p for p in saved if p.suffix == ".json")
+    monkeypatch.setattr(app_qt.QFileDialog, "getOpenFileName",
+                        staticmethod(lambda *a, **k: (str(proto), "")))
+    win.TE.set(11.0)
+    win.load_protocol_file()
+    assert win.TE.get() == pytest.approx(42.0)  # restored from the protocol
+
+
+# --------------------------------------------------------------------------- #
+#  Misc methods
+# --------------------------------------------------------------------------- #
+def test_brain_subject_change(win):
+    set_state(win, region="Brain")
+    win.brain_subject.set("05")
+    win.on_subject_change()                    # loads (or falls back) + rebuilds Brain
+    assert win.region.get() == "Brain"
+    assert_good_image(set_state(win, region="Brain"), "subject 05")
+    win.brain_subject.set("04"); win.on_subject_change()   # restore default subject
+
+
+def test_reset_oblique(win):
+    set_state(win, sequence="Spin Echo")
+    win.fov_planning.set(True)
+    win.slice_tilt.set(20.0); win.slice_rot.set(10.0)
+    win._reset_oblique()
+    assert win.slice_tilt.get() == 0.0 and win.slice_rot.get() == 0.0
+    assert win.inplane_fov_pct.get() == 100
+    set_state(win)
+
+
+@pytest.mark.parametrize("TR,TE,seq,expected", [
+    (500, 15, "Spin Echo", "T1-weighted"),
+    (4000, 90, "Spin Echo", "T2-weighted"),
+    (4000, 15, "Spin Echo", "PD-weighted"),
+    (1500, 40, "Spin Echo", "Mixed"),
+    (5, 2.5, "Balanced SSFP", "T2/T1 (bSSFP)"),
+    (4000, 50, "Echo Planar (EPI)", "T2* (EPI)"),
+])
+def test_determine_weighting(win, TR, TE, seq, expected):
+    assert win.determine_weighting(TR, TE, seq) == expected
+
+
+def test_compare_toggle_and_clear(win):
+    set_state(win, sequence="Spin Echo")
+    win.set_protocol_a()
+    assert win.compare_mode.get()
+    win.toggle_compare(); win.recalculate()      # toggle off
+    assert not win.compare_mode.get()
+    win.toggle_compare(); win.recalculate()      # toggle back on
+    assert win.compare_mode.get()
+    win.clear_compare()
+    assert not win.compare_mode.get() and win.compare_params is None
+
+
+# --------------------------------------------------------------------------- #
+#  Scout / FOV-planning interaction (_scout_press / _motion / _release)
+# --------------------------------------------------------------------------- #
+def _scout_primary_axis(win):
+    plane = next(p for p, ov in win._scout_overlays.items() if ov["role"] == "primary")
+    return win.scout_axes[win._scout_plane_names.index(plane)]
+
+
+def _axis_center(ax):
+    xl, yl = ax.get_xlim(), ax.get_ylim()
+    return (xl[0] + xl[1]) / 2, (yl[0] + yl[1]) / 2
+
+
+def test_scout_move_drag(win):
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.fov_planning.set(True)                   # draws scout → sets _scout_box_info
+    info = win._scout_box_info
+    assert info is not None
+    ax = _scout_primary_axis(win)
+    cx, cy = info["x0"] + info["w"] / 2, info["y0"] + info["h"] / 2
+    win._scout_press(_Ev(xdata=cx, ydata=cy, inaxes=ax))
+    assert win._scout_drag is not None
+    win._scout_motion(_Ev(xdata=cx + 4, ydata=cy + 12, inaxes=ax))
+    win._scout_release(_Ev(xdata=cx, ydata=cy, inaxes=ax))
+    assert win._scout_drag is None
+    set_state(win)
+
+
+def test_scout_oblique_and_secondary_drag(win):
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.fov_planning.set(True)
+    win.slice_tilt.set(12.0)                      # oblique primary-drag branch
+    win._draw_scout(win.get_current_params())
+    ax = _scout_primary_axis(win)
+    cx, cy = _axis_center(ax)
+    win._scout_press(_Ev(xdata=cx, ydata=cy, inaxes=ax))
+    win._scout_motion(_Ev(xdata=cx + 6, ydata=cy + 6, inaxes=ax))
+    win._scout_release(_Ev(xdata=cx, ydata=cy, inaxes=ax))
+    # secondary panel drag
+    sec_plane = next((p for p, ov in win._scout_overlays.items()
+                      if ov["role"] == "secondary"), None)
+    if sec_plane is not None:
+        sax = win.scout_axes[win._scout_plane_names.index(sec_plane)]
+        win._scout_press(_Ev(xdata=cx, ydata=cy, inaxes=sax))
+        win._scout_motion(_Ev(xdata=cx, ydata=cy + 8, inaxes=sax))
+        win._scout_release(_Ev(xdata=cx, ydata=cy, inaxes=sax))
+    win._reset_oblique()
+    set_state(win)
+
+
+def test_load_nifti_region(win, tmp_path, monkeypatch):
+    """Load an external segmented NIfTI mask (success + empty-dialog + error)."""
+    import nibabel as nib
+    import app_qt
+    data = np.zeros((40, 40, 40), dtype=np.int16)   # TotalSeg-style label mask
+    data[8:32, 10:30, 10:30] = 5
+    data[12:28, 12:28, 12:28] = 3
+    data[20:30, 14:26, 14:26] = 13
+    p = tmp_path / "mask.nii.gz"
+    nib.save(nib.Nifti1Image(data, np.eye(4)), str(p))
+
+    # empty dialog → no-op
+    monkeypatch.setattr(app_qt.QFileDialog, "getOpenFileName",
+                        staticmethod(lambda *a, **k: ("", "")))
+    r0 = win.region.get(); win.load_nifti_region()
+    assert win.region.get() == r0
+
+    # real path → loaded as a "Real:" region and renders
+    monkeypatch.setattr(app_qt.QFileDialog, "getOpenFileName",
+                        staticmethod(lambda *a, **k: (str(p), "")))
+    win.load_nifti_region()
+    assert win.region.get().startswith("Real:")
+    win.recalculate()
+    assert_good_image(win.current_image, "loaded NIfTI")
+    # unknown axis convention → orientation labels suppressed
+    assert win._orientation_letters("axial") is None
+
+    # error path (bad file)
+    win._load_mask_path("/no/such/file.nii.gz")
+    assert "fail" in win.statusBar().currentMessage().lower()
+
+    set_state(win, region="Brain")                  # restore
+
+
+def test_browse_masks_indexes_folder(win, tmp_path, monkeypatch):
+    """Folder picker → index → picker. Real folder scan, stubbed index + picker."""
+    import nibabel as nib
+    import app_qt
+    import region_index
+    nib.save(nib.Nifti1Image(np.zeros((8, 8, 8), np.int16), np.eye(4)),
+             str(tmp_path / "m.nii.gz"))             # so _mask_files() finds one
+    entry = {"region": "Abdomen", "file": "m.nii.gz", "anatomy": "liver",
+             "path": str(tmp_path / "m.nii.gz"), "scheme": "mr"}
+
+    def fake_build_index(folder, progress=None):
+        if progress:
+            progress(1, 1, "m.nii.gz")               # exercise the progress callback
+        return [entry]
+    monkeypatch.setattr(region_index, "build_index", fake_build_index)
+    monkeypatch.setattr(app_qt.QFileDialog, "getExistingDirectory",
+                        staticmethod(lambda *a, **k: str(tmp_path)))
+    captured = {}
+    monkeypatch.setattr(win, "_show_mask_picker", lambda e: captured.update(e=e))
+    win.browse_masks()
+    assert captured.get("e") == [entry]
+
+    # empty folder → "no files" early return
+    (tmp_path / "empty").mkdir()
+    monkeypatch.setattr(app_qt.QFileDialog, "getExistingDirectory",
+                        staticmethod(lambda *a, **k: str(tmp_path / "empty")))
+    win.browse_masks()                               # returns without calling picker
+
+
+def test_show_mask_picker_loads_selection(win, tmp_path, monkeypatch):
+    """Drive the modal picker: select the first item and 'Load selected'."""
+    import nibabel as nib
+    import app_qt
+    from PyQt6.QtWidgets import QListWidget, QPushButton
+    data = np.zeros((32, 32, 32), np.int16); data[8:24, 8:24, 8:24] = 5
+    p = tmp_path / "pick.nii.gz"
+    nib.save(nib.Nifti1Image(data, np.eye(4)), str(p))
+    entry = {"region": "Abdomen", "file": "pick.nii.gz", "anatomy": "liver",
+             "path": str(p), "scheme": "mr"}
+
+    def fake_exec(dlg):
+        lw = dlg.findChild(QListWidget); lw.setCurrentRow(0)
+        for b in dlg.findChildren(QPushButton):
+            if b.text() == "Load selected":
+                b.click(); break                     # → do_load → dlg.accept()
+        return dlg.result()
+    monkeypatch.setattr(app_qt.QDialog, "exec", fake_exec)
+    win._show_mask_picker([entry])
+    assert win.region.get().startswith("Real:")
+    set_state(win, region="Brain")
+
+
+def test_scout_angle_handle_drag(win):
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.fov_planning.set(True)
+    if not win._scout_angle_handles:
+        pytest.skip("no angle handles drawn for this geometry")
+    lx0, ly0, lx1, ly1, plane, _var, _cx, _cy = win._scout_angle_handles[0]
+    ax = win.scout_axes[win._scout_plane_names.index(plane)]
+    win._scout_press(_Ev(xdata=lx0, ydata=ly0, inaxes=ax))     # endpoint → angle drag
+    win._scout_motion(_Ev(xdata=lx0 + 5, ydata=ly0 + 5, inaxes=ax))
+    win._scout_release(_Ev(xdata=lx0, ydata=ly0, inaxes=ax))
+    win._reset_oblique()
+    set_state(win)
