@@ -198,6 +198,12 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.snr_level = Var(35.0)
         self.show_kspace = Var(False)
         self.slice_thickness = Var(5.0)
+        # 3-D (slab) acquisition
+        self.acq3d = Var(False)
+        self.n_partitions = Var(32)
+        self.kz_pf_enabled = Var(False)
+        self._acq3d_key: tuple | None = None   # prescription cache for reformat
+        self._acq3d_metrics: dict = {}
         self.multi_slice = Var(False)
         self.show_psd = Var(False)
 
@@ -1042,6 +1048,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._fov_slider = self._slider(SPL, "FOV (mm)", self.FOV, 100, 500)._qslider
         self._slider(SPL, "Phase FOV (%)", self.fov_fraction, 50, 100)
         self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
+        self._checkbox(SPL, "3D acquisition (slab)", self.acq3d)
+        self._slider(SPL, "3D Partitions", self.n_partitions, 4, 64)
+        self._checkbox(SPL, "kz Partial Fourier", self.kz_pf_enabled)
         self._slider(SPL, "Bandwidth (kHz)", self.bandwidth, 10, 500)
         self._slider(SPL, "NEX", self.NEX, 1, 8)
         self._slider(SPL, "Acceleration (R)", self.accel_factor, 1, 4)
@@ -1212,7 +1221,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 "mt_enabled": self.mt_enabled.get(), "mt_power": self.mt_power.get(),
                 "b1_inhom_enabled": self.b1_inhom_enabled.get(),
                 "flow_enabled": self.flow_enabled.get(), "flow_velocity": self.flow_velocity.get(),
-                "fatsat_enabled": self.fatsat_enabled.get()}
+                "fatsat_enabled": self.fatsat_enabled.get(),
+                "acq3d": self.acq3d.get(), "n_partitions": self.n_partitions.get(),
+                "kz_pf": 0.75 if self.kz_pf_enabled.get() else None,
+                "slab_sharpness": 0.85}
 
     def set_protocol_a(self) -> None:
         self.compare_params = self.get_current_params()
@@ -1256,6 +1268,28 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._last_kspace = self.sim.last_kspace
         return image, metrics
 
+    # Sequences whose 3D toggle takes effect (mirrors simulator._ACQ3D_SEQUENCES).
+    _ACQ3D_SEQUENCES = frozenset({"Spin Echo", "Gradient Echo",
+                                  "Inversion Recovery", "Balanced SSFP"})
+
+    def _acquire_or_reformat(self, params: dict) -> "tuple[np.ndarray, dict]":
+        """Main-view render. In 3D mode the slab is acquired once; changing only
+        the view plane or slice **reformats** the stored recon block (no re-scan).
+        A scan-affecting change, or scrolling outside the slab, re-acquires."""
+        if not (params.get("acq3d") and params["sequence"] in self._ACQ3D_SEQUENCES):
+            return self.simulate_with_params(params)
+        key = tuple((k, repr(v)) for k, v in sorted(params.items())
+                    if k not in ("acq3d",))          # orient/slice live on self, not params
+        orient, sl = self.orientation.get(), self.slice_idx.get()
+        if key == self._acq3d_key and self.sim._recon3d is not None:
+            self._sync_sim()
+            img = self.sim.reslice_3d(orient, sl)
+            if img is not None:                      # in-slab reslice / reformat
+                return img, self._acq3d_metrics
+        img, m = self.simulate_with_params(params)   # acquire (re-centres the slab)
+        self._acq3d_key, self._acq3d_metrics = key, m
+        return img, m
+
     # --- Display ---
     def recalculate(self, *args: object) -> None:
         current_params = self.get_current_params()
@@ -1275,7 +1309,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # Restore 1x2 layout if coming back from multi-slice 3x3 grid
         self._ensure_1x2_layout()
 
-        image_b, metrics_b = self.simulate_with_params(current_params)
+        image_b, metrics_b = self._acquire_or_reformat(current_params)
         self.axes[0].clear(); self.axes[1].clear()
 
         cmap = self.display_cmap.get()

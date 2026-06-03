@@ -449,16 +449,13 @@ class Simulator:
         recon_slab, _ = acquire_3d(slab, matrix, n_kz=n_part, pf_kz=kz_pf,
                                    profile=profile, filter_window=fw)
 
-        self._recon3d = np.moveaxis(recon_slab, 0, through)    # raw (Z,Y,X) sub-block
-        self._recon3d_geom = {"orient": orient, "through": through,
-                              "start": start, "n_part": n_part, "matrix": matrix}
-
-        image = self.reslice_3d(orient, sl_idx)
-        assert image is not None
+        recon_block = np.moveaxis(recon_slab, 0, through)      # raw (Z,Y,X) sub-block
         # Raw (un-FOV-transformed) label slice, aligned with the raw-rendered recon.
         phantom_slice = get_slice(vol, orient, sl_idx)
+        clean_central = get_slice(recon_block, orient, sl_idx - start)
 
         # 3-D noise: thin partition (in-plane voxel only) but √(n_part·NEX) gain.
+        # Applied to the whole recon block so every reformat is noise-consistent.
         res_mm = params["FOV"] / matrix
         vox_vol = res_mm * res_mm
         BW_hz = max(1.0, params["bandwidth"] * 1000.0)
@@ -468,15 +465,21 @@ class Simulator:
                    * snr_3d_gain(n_part, params["NEX"])
                    * np.sqrt(self.BW_REF / BW_hz) * pf_snr * (B0_snr / 3.0))
         ref_sig = self._reference_protocol_signal(tprops)
-        tissue_ref = self._tissue_ref_signal(image, phantom_slice)
+        tissue_ref = self._tissue_ref_signal(clean_central, phantom_slice)
         if ref_sig > 0 and tissue_ref > 0:
             eff_snr *= float(np.clip(tissue_ref / ref_sig, 0.04, 4.0))
         eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
         if tissue_ref > 0:
             sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
-            image = rician.add_rician_noise(image, sigma)
+            recon_block = rician.add_rician_noise(recon_block, sigma)
             if params.get("rician_bias_correction"):
-                image = rician.rician_bias_correction(image, sigma)
+                recon_block = rician.rician_bias_correction(recon_block, sigma)
+
+        self._recon3d = recon_block
+        self._recon3d_geom = {"orient": orient, "through": through,
+                              "start": start, "n_part": n_part, "matrix": matrix}
+        image = self.reslice_3d(orient, sl_idx)
+        assert image is not None
 
         # Metrics — 3-D scan time also encodes the kz partitions (the 3-D trade-off:
         # longer scan, but the √Nz SNR gain above).
