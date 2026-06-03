@@ -599,8 +599,7 @@ def test_browse_masks_indexes_folder(win, tmp_path, monkeypatch):
 def test_show_mask_picker_loads_selection(win, tmp_path, monkeypatch):
     """Drive the modal picker: select the first item and 'Load selected'."""
     import nibabel as nib
-    import app_qt
-    from PyQt6.QtWidgets import QListWidget, QPushButton
+    from PyQt6.QtWidgets import QDialog, QListWidget, QPushButton
     data = np.zeros((32, 32, 32), np.int16); data[8:24, 8:24, 8:24] = 5
     p = tmp_path / "pick.nii.gz"
     nib.save(nib.Nifti1Image(data, np.eye(4)), str(p))
@@ -613,7 +612,7 @@ def test_show_mask_picker_loads_selection(win, tmp_path, monkeypatch):
             if b.text() == "Load selected":
                 b.click(); break                     # → do_load → dlg.accept()
         return dlg.result()
-    monkeypatch.setattr(app_qt.QDialog, "exec", fake_exec)
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
     win._show_mask_picker([entry])
     assert win.region.get().startswith("Real:")
     set_state(win, region="Brain")
