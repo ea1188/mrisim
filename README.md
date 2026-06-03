@@ -40,6 +40,12 @@ The PyQt6 app drives the physics engine in real time:
 - **Artifacts** — motion ghosting (discrete respiratory ghosts), sub-pixel chemical shift, susceptibility dropout, gradient-nonlinearity geometric distortion, zipper
 - **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics. The viewport carries DICOM-style corner annotations and anatomical orientation labels (radiological convention) on a dark "scanner-console" display. Scroll the wheel (or arrow keys) to page through contiguous slices a slice-thickness at a time, PACS-style.
 
+<p align="center">
+  <img src="docs/demo_3d.gif" width="840" alt="3D slab acquisition with any-plane reformat: enabling 3D acquisition adds a 3D SLAB badge, and rotating the view to coronal/sagittal reformats the once-acquired slab live (flagged REFORMAT) instead of re-scanning" />
+</p>
+
+<p align="center"><i>True 3D (slab) acquisition: the slab is acquired once (<code>3D SLAB</code> badge), then rotating to coronal/sagittal <b>reformats</b> the same recon block live — no re-scan — with the viewport flagging the reformat and the acquired plane.</i></p>
+
 > `src/app.py` is an earlier matplotlib/Tkinter prototype, retained only for reference and missing most of the above. Use `app_qt.py`.
 
 ## Anatomy and phantoms
