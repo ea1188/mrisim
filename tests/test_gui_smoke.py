@@ -65,8 +65,18 @@ def win():
 # --------------------------------------------------------------------------- #
 def set_state(w, *, region="Brain", sequence="Spin Echo",
               orientation="axial", **params):
-    """Drive the window the way a user would: region → sequence → plane → params,
-    then render. Returns the reconstructed image."""
+    """Drive the window the way a user would: reset the view to a clean single-
+    image baseline, then region → sequence → plane → params, then render.
+    Returns the reconstructed image."""
+    # Reset view toggles so each test starts clean (these only fire a harmless
+    # checkbox-sync trace, not a recalc).
+    for v in (w.show_kspace, w.multi_slice, w.show_psd,
+              w.show_tissue_overlay, w.compare_mode):
+        v.set(False)
+    w.compare_params = None
+    if w.fov_planning.get():        # this one recalcs + restores the layout
+        w.fov_planning.set(False)
+    w._ensure_1x2_layout()          # back to the normal 2-axes figure
     if w.region.get() != region:
         w.region.set(region); w.on_region_change()
     w.sequence_type.set(sequence); w.on_sequence_change()
@@ -159,3 +169,152 @@ def test_region_change_resets_to_axial(win):
     assert win.orientation.get() == "axial", "new region should default to axial"
     win.recalculate()
     assert_good_image(win.current_image, "Pelvis axial")
+
+
+# --------------------------------------------------------------------------- #
+#  Layer D — display modes / toggles (assert matplotlib state, not Qt visibility)
+# --------------------------------------------------------------------------- #
+def test_show_kspace(win):
+    set_state(win, sequence="Spin Echo")
+    win.show_kspace.set(True); win.recalculate()
+    assert len(win.axes[1].images) > 0, "k-space not shown in the side panel"
+    assert_good_image(win.current_image, "kspace mode")
+
+
+def test_show_psd_draws(win):
+    set_state(win, sequence="Spin Echo")
+    win.show_psd.set(True); win.recalculate()
+    assert win.psd_fig._suptitle is not None, "PSD not drawn"
+
+
+def test_tissue_overlay(win):
+    set_state(win, sequence="Spin Echo")
+    win.show_tissue_overlay.set(True); win.recalculate()
+    assert len(win.axes[0].images) >= 2, "overlay not composited over the image"
+    assert_good_image(win.current_image, "overlay")
+
+
+def test_multi_slice_grid(win):
+    set_state(win, sequence="Spin Echo")
+    win.multi_slice.set(True); win.recalculate()
+    assert len(win.fig.axes) >= 4, "multi-slice grid not rendered"
+
+
+def test_fov_planning_scout(win):
+    set_state(win, sequence="Spin Echo")
+    win.fov_planning.set(True)              # trace → on_fov_planning_toggle recalcs
+    n_imgs = sum(len(ax.images) for ax in win.scout_axes)
+    assert n_imgs > 0, "3-plane localizer did not draw"
+
+
+def test_compare_mode(win):
+    set_state(win, sequence="Spin Echo")
+    win.set_protocol_a()                    # capture A and enter compare
+    win.sequence_type.set("Gradient Echo"); win.on_sequence_change(); win.recalculate()
+    assert win.compare_mode.get()
+    assert len(win.axes[0].images) > 0 and len(win.axes[1].images) > 0, "A|B not shown"
+    win.clear_compare()
+
+
+# --------------------------------------------------------------------------- #
+#  Layer E — PSD reflects the selected sequence (GUI passes the right one)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("seq,keyword", [
+    ("Balanced SSFP", "SSFP"),           # these three used to fall back to
+    ("Echo Planar (EPI)", "EPI"),        # a mislabeled Spin-Echo diagram
+    ("Quantitative (qMRI)", "qMRI"),
+    ("Inversion Recovery", "Inversion"),
+])
+def test_psd_matches_sequence_via_gui(win, seq, keyword):
+    set_state(win, sequence=seq)
+    win.show_psd.set(True); win.recalculate()
+    title = win.psd_fig._suptitle.get_text()
+    assert keyword.lower() in title.lower(), f"{seq} drew PSD {title!r}"
+
+
+# --------------------------------------------------------------------------- #
+#  Layer F — interaction handlers (synthetic matplotlib events)
+# --------------------------------------------------------------------------- #
+class _GUIEvent:
+    def __init__(self, ctrl=False):
+        from PyQt6.QtCore import Qt
+        self._m = (Qt.KeyboardModifier.ControlModifier if ctrl
+                   else Qt.KeyboardModifier.NoModifier)
+
+    def modifiers(self):
+        return self._m
+
+
+class _Ev:
+    """Minimal stand-in for a matplotlib backend event."""
+    def __init__(self, button=None, x=120, y=120, dblclick=False, step=0, ctrl=False):
+        self.button = button
+        self.x = x; self.y = y
+        self.dblclick = dblclick
+        self.step = step
+        self.guiEvent = _GUIEvent(ctrl)
+        self.xdata = self.ydata = self.inaxes = None
+        self.key = None
+
+
+def test_scroll_steps_slice(win):
+    set_state(win, sequence="Spin Echo")
+    win.slice_idx.set(40)
+    win._on_scroll(_Ev(button="up", step=1))
+    assert win.slice_idx.get() == 41
+    win._on_scroll(_Ev(button="down", step=-1))
+    assert win.slice_idx.get() == 40
+
+
+def test_left_drag_sets_window_level(win):
+    set_state(win, sequence="Spin Echo")
+    win.window_width = 1.0; win.window_level = 0.5
+    win._on_press(_Ev(button=1, x=100, y=100))
+    win._on_motion(_Ev(button=1, x=160, y=140))
+    win._on_release(_Ev(button=1))
+    assert (win.window_width, win.window_level) != (1.0, 0.5)
+
+
+def test_double_click_resets_window_level(win):
+    set_state(win, sequence="Spin Echo")
+    win.window_width = 0.4; win.window_level = 0.2
+    win._on_press(_Ev(button=1, dblclick=True))
+    assert win.window_width == 1.0 and win.window_level == 0.5
+
+
+def test_mra_left_drag_rotates_not_window_level(win):
+    set_state(win, sequence="MR Angiography")
+    az0 = win.angio_azimuth.get()
+    wl0 = (win.window_width, win.window_level)
+    win._on_press(_Ev(button=1, x=100, y=100))        # plain left on MRA → rotate
+    assert win._mra_dragging is True
+    win._on_motion(_Ev(button=1, x=175, y=100))
+    win._on_release(_Ev(button=1))
+    assert win.angio_azimuth.get() != az0, "MRA left-drag should rotate the MIP"
+    assert (win.window_width, win.window_level) == wl0, "MRA rotate must not W/L"
+
+
+def test_mra_ctrl_drag_does_window_level(win):
+    set_state(win, sequence="MR Angiography")
+    win.window_width = 1.0; win.window_level = 0.5
+    win._on_press(_Ev(button=1, x=100, y=100, ctrl=True))   # Ctrl → W/L even on MRA
+    assert win._mra_dragging is False
+    win._on_motion(_Ev(button=1, x=150, y=130))
+    win._on_release(_Ev(button=1))
+    assert (win.window_width, win.window_level) != (1.0, 0.5)
+
+
+# --------------------------------------------------------------------------- #
+#  Layer G — every region builds, renders, and resets to axial
+# --------------------------------------------------------------------------- #
+from body_phantoms import REGION_NAMES  # noqa: E402
+
+
+@pytest.mark.parametrize("region", REGION_NAMES)
+def test_region_renders_and_resets_axial(win, region):
+    set_state(win, region="Brain")
+    win._set_orientation("sagittal")
+    win.region.set(region); win.on_region_change()
+    assert win.orientation.get() == "axial", f"{region}: did not reset to axial"
+    win.recalculate()
+    assert_good_image(win.current_image, region)
