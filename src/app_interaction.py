@@ -30,6 +30,9 @@ class InteractionMixin(_Base):
     field_strength: Any
     orientation: Any
     slice_idx: Any
+    slice_thickness: Any
+    acq3d: Any
+    _ACQ3D_SEQUENCES: Any
     angio_azimuth: Any
     angio_elevation: Any
     show_kspace: Any
@@ -115,10 +118,24 @@ class InteractionMixin(_Base):
             self.recalculate()
 
     # --- Workstation navigation -------------------------------------------- #
-    def _change_slice(self, delta: int) -> None:
-        """Step the current slice by +/- delta, clamped to the volume bounds."""
+    def _slice_step(self) -> int:
+        """Voxels advanced per slice-step. In the normal 2-D path one step is a
+        whole slice-thickness, so the wheel/arrows flip through *contiguous*
+        slices the way a PACS series does (a 5 mm slice advances 5 voxels, not 1).
+        Reformatting a 3-D slab steps one partition, and MRA (which ignores slice
+        thickness) steps one voxel."""
+        seq = self.sequence_type.get()
+        if self.acq3d.get() and seq in self._ACQ3D_SEQUENCES:
+            return 1
+        if seq == "MR Angiography":
+            return 1
+        return max(1, int(round(self.slice_thickness.get())))
+
+    def _change_slice(self, n_slices: int) -> None:
+        """Step by +/- n_slices, where each slice is one slice-thickness of
+        voxels (see _slice_step), clamped to the volume bounds."""
         max_sl = self.get_max_slice_idx()
-        new_idx = int(np.clip(self.slice_idx.get() + delta, 0, max_sl))
+        new_idx = int(np.clip(self.slice_idx.get() + n_slices * self._slice_step(), 0, max_sl))
         if new_idx != self.slice_idx.get():
             self.slice_idx.set(new_idx)   # updates the slider via its trace
             self.recalculate()             # immediate feedback while scrolling
