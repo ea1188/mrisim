@@ -36,8 +36,9 @@ The PyQt6 app drives the physics engine in real time:
 - **qMRI maps** — T1 (variable flip angle), T2 and T2\* (multi-echo), and Synthetic SE contrast rendered from the maps
 - **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing (brain and body, blood-pool weighted), magnetization transfer, B1+ inhomogeneity, flowing-blood signal (spin-echo void / gradient-echo inflow), and three fat-suppression methods (STIR, Dixon in-/opposed-phase, spectral CHESS)
 - **Acquisition** — matrix/resolution, FOV (magnify + wraparound when small, surround when large), bandwidth, NEX, partial Fourier, k-space apodisation, parallel imaging (SENSE / GRAPPA / compressed sensing) with g·√R noise, non-Cartesian radial sampling with streaks, and imperfect slice profile + multi-slice cross-talk
+- **True 3D (slab) acquisition** — for SE / GRE / IR / bSSFP, excite a slab and phase-encode the slice (kz) direction too, reconstructing a contiguous partition stack with real through-plane resolution, kz partial Fourier, slab-profile edge falloff and the √Nz SNR gain. The slab is acquired **once** and **reformats to any plane** as you change orientation/slice (the viewport flags the acquired plane vs. a reformat); re-acquisition happens only when the prescription changes
 - **Artifacts** — motion ghosting (discrete respiratory ghosts), sub-pixel chemical shift, susceptibility dropout, gradient-nonlinearity geometric distortion, zipper
-- **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics. The viewport carries DICOM-style corner annotations and anatomical orientation labels (radiological convention) on a dark "scanner-console" display.
+- **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics. The viewport carries DICOM-style corner annotations and anatomical orientation labels (radiological convention) on a dark "scanner-console" display. Scroll the wheel (or arrow keys) to page through contiguous slices a slice-thickness at a time, PACS-style.
 
 > `src/app.py` is an earlier matplotlib/Tkinter prototype, retained only for reference and missing most of the above. Use `app_qt.py`.
 
@@ -89,6 +90,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ### K-space and acquisition
 - **K-space pipeline** — FFT/IFFT, matrix cropping, zero-fill interpolation, Hamming/Hanning/Blackman apodisation, partial Fourier; non-Cartesian radial sampling with streak artifacts
+- **3-D slab acquisition** — 3-D FFT slab encode with kz phase-encoding and partial Fourier, super-Gaussian slab-excitation profile, and the √(Nz·NEX) SNR gain; energy-conserving (Parseval). Drives the simulator's acquire-once / reformat-any-plane 3-D mode
 - **EPI** — alternating-readout trajectory, Nyquist (N/2) ghosting, B0 phase-encode distortion, T2\* blurring, phase correction
 - **Parallel imaging** — full Cartesian SENSE unfolding (physics-correct g-factor), approximate GRAPPA, variable-density compressed sensing
 
@@ -242,7 +244,7 @@ From the repository root (`tests/conftest.py` puts `src/` on the path and forces
 pytest                  # or: python -m pytest
 ```
 
-1,790+ tests, all passing. Coverage is 97%+ across all non-GUI modules. CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
+1,950+ tests, all passing. Coverage is 97%+ across all non-GUI modules, and the PyQt GUI is now exercised by a headless smoke-test harness (~94%). CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
 
 ## Project layout
 
@@ -260,6 +262,7 @@ src/                  # all source modules (plain imports by bare name)
   brainweb_loader.py  # load + remap the real BrainWeb brain phantom
   tissue_db.py        # measured tissue properties at 1.5T and 3T
   kspace.py           # k-space acquisition pipeline
+  acquisition3d.py    # true 3-D slab acquisition (kz encode, reformat)
   epi.py              # EPI trajectory and artifacts
   fse.py              # FSE/EPG echo-train simulation
   acceleration.py     # SENSE / GRAPPA / compressed sensing
