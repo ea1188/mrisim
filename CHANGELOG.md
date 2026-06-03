@@ -12,6 +12,22 @@ frozen.)
 
 ## [Unreleased]
 
+### Fixed
+- **Signal-vs-parameter curves now use the same tested equations as the image.**
+  A GUI physics audit found the side-panel curves were computed inline and had
+  drifted: Balanced SSFP, EPI and qMRI fell through to the **Inversion-Recovery**
+  equation (so e.g. the bSSFP curve showed CSF *darkest* while the image is
+  fluid-*bright*), and the Gradient-Echo curve used a `T2·0.6` approximation
+  instead of the measured **T2\***. All curve modes (TE decay, TR recovery,
+  contrast map, histogram prediction) now route through `signal_engine`, so the
+  plotted curve provably tracks the picture.
+
+### Added
+- Headless GUI smoke-test harness (`tests/test_gui_smoke.py`): boots the window
+  offscreen and exercises every sequence, preset, orientation, display mode and
+  interaction handler — lifting `app_qt.py` from 0 % to ~72 % coverage. CI now
+  installs the headless-Qt system libraries.
+
 ## [1.2.2] — 2026-06-02
 
 A UI/UX overhaul of the interactive app plus a correctness fix to the

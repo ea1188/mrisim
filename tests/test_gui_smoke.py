@@ -318,3 +318,51 @@ def test_region_renders_and_resets_axial(win, region):
     assert win.orientation.get() == "axial", f"{region}: did not reset to axial"
     win.recalculate()
     assert_good_image(win.current_image, region)
+
+
+# --------------------------------------------------------------------------- #
+#  Signal-curve physics — the curve uses the same library equations as the image
+# --------------------------------------------------------------------------- #
+def test_curve_signal_matches_library_per_sequence(win):
+    """Regression for the GUI physics audit: the plotted signal curve must use
+    the tested signal_engine equations, not inline approximations.
+      * GRE/EPI use the measured T2* (was an inline T2·0.6 approximation), and
+      * bSSFP/EPI/qMRI no longer fall through to the Inversion-Recovery equation.
+    """
+    from signal_engine import (spin_echo_signal, gradient_echo_signal,
+                               inversion_recovery_signal, balanced_ssfp_signal)
+    p = {"T1": 1000.0, "T2": 100.0, "T2star": 55.0, "PD": 1.0}   # T2*≠0.6·T2 (=60)
+    TR, TE, TI, FA = 500.0, 20.0, 150.0, 40.0
+    cs = win._curve_signal
+
+    assert cs("Spin Echo", p, TR, TE, TI, FA) == pytest.approx(
+        spin_echo_signal(p["T1"], p["T2"], p["PD"], TR, TE))
+    assert cs("Inversion Recovery", p, TR, TE, TI, FA) == pytest.approx(
+        inversion_recovery_signal(p["T1"], p["T2"], p["PD"], TR, TE, TI))
+    # GRE / EPI: measured T2*, not T2·0.6
+    gre = cs("Gradient Echo", p, TR, TE, TI, FA)
+    assert gre == pytest.approx(gradient_echo_signal(p["T1"], 55.0, p["PD"], TR, TE, FA))
+    assert gre != pytest.approx(gradient_echo_signal(p["T1"], 60.0, p["PD"], TR, TE, FA))
+    assert cs("Echo Planar (EPI)", p, TR, TE, TI, FA) == pytest.approx(gre)
+    # bSSFP: balanced steady state, NOT the IR equation it used to fall through to
+    ssfp = cs("Balanced SSFP", p, 5.0, 2.5, TI, FA)
+    assert ssfp == pytest.approx(balanced_ssfp_signal(p["T1"], p["T2"], p["PD"], 5.0, 2.5, FA))
+    assert ssfp != pytest.approx(inversion_recovery_signal(p["T1"], p["T2"], p["PD"], 5.0, 2.5, TI))
+
+
+def test_bssfp_curve_is_brighter_for_fluid(win):
+    """At the GUI level: with the bSSFP curve fixed, CSF outshines white matter
+    in TR-recovery mode (it read darkest under the old IR fall-through)."""
+    import matplotlib.colors as mcolors
+    win.plot_curve_mode.set("TR recovery")
+    set_state(win, sequence="Balanced SSFP")
+    win.recalculate()
+    lines = {c: None for c in ("#74c0fc", "#ff6b6b")}      # CSF, WM
+    for ln in win.axes[1].lines:
+        for c in lines:
+            if mcolors.same_color(ln.get_color(), c):
+                lines[c] = np.asarray(ln.get_ydata(), float)
+    csf, wm = lines["#74c0fc"], lines["#ff6b6b"]
+    assert csf is not None and wm is not None and csf.size and wm.size
+    assert csf.max() > wm.max(), "bSSFP CSF should be brighter than WM"
+    win.plot_curve_mode.set("TE decay")                    # restore default
