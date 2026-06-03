@@ -13,6 +13,7 @@ Layers implemented here:
 """
 import numpy as np
 import pytest
+from PyQt6.QtWidgets import QFileDialog
 
 from presets import (get_preset, get_preset_names, get_preset_region,
                      get_preset_plane)
@@ -419,7 +420,7 @@ def test_cursor_readout(win):
 #  Export wrappers + protocol round-trip (writes only to a tmp dir)
 # --------------------------------------------------------------------------- #
 def test_export_and_load_protocol_roundtrip(win, tmp_path, monkeypatch):
-    import export, app_qt
+    import export
     monkeypatch.setattr(export, "EXPORT_DIR", str(tmp_path))
     set_state(win, sequence="Spin Echo")
     win.TE.set(42.0)
@@ -430,7 +431,7 @@ def test_export_and_load_protocol_roundtrip(win, tmp_path, monkeypatch):
     assert any(p.suffix == ".png" for p in saved) and any(p.suffix == ".json" for p in saved)
 
     proto = next(p for p in saved if p.suffix == ".json")
-    monkeypatch.setattr(app_qt.QFileDialog, "getOpenFileName",
+    monkeypatch.setattr(QFileDialog, "getOpenFileName",
                         staticmethod(lambda *a, **k: (str(proto), "")))
     win.TE.set(11.0)
     win.load_protocol_file()
@@ -536,7 +537,6 @@ def test_scout_oblique_and_secondary_drag(win):
 def test_load_nifti_region(win, tmp_path, monkeypatch):
     """Load an external segmented NIfTI mask (success + empty-dialog + error)."""
     import nibabel as nib
-    import app_qt
     data = np.zeros((40, 40, 40), dtype=np.int16)   # TotalSeg-style label mask
     data[8:32, 10:30, 10:30] = 5
     data[12:28, 12:28, 12:28] = 3
@@ -545,13 +545,13 @@ def test_load_nifti_region(win, tmp_path, monkeypatch):
     nib.save(nib.Nifti1Image(data, np.eye(4)), str(p))
 
     # empty dialog → no-op
-    monkeypatch.setattr(app_qt.QFileDialog, "getOpenFileName",
+    monkeypatch.setattr(QFileDialog, "getOpenFileName",
                         staticmethod(lambda *a, **k: ("", "")))
     r0 = win.region.get(); win.load_nifti_region()
     assert win.region.get() == r0
 
     # real path → loaded as a "Real:" region and renders
-    monkeypatch.setattr(app_qt.QFileDialog, "getOpenFileName",
+    monkeypatch.setattr(QFileDialog, "getOpenFileName",
                         staticmethod(lambda *a, **k: (str(p), "")))
     win.load_nifti_region()
     assert win.region.get().startswith("Real:")
@@ -570,7 +570,6 @@ def test_load_nifti_region(win, tmp_path, monkeypatch):
 def test_browse_masks_indexes_folder(win, tmp_path, monkeypatch):
     """Folder picker → index → picker. Real folder scan, stubbed index + picker."""
     import nibabel as nib
-    import app_qt
     import region_index
     nib.save(nib.Nifti1Image(np.zeros((8, 8, 8), np.int16), np.eye(4)),
              str(tmp_path / "m.nii.gz"))             # so _mask_files() finds one
@@ -582,7 +581,7 @@ def test_browse_masks_indexes_folder(win, tmp_path, monkeypatch):
             progress(1, 1, "m.nii.gz")               # exercise the progress callback
         return [entry]
     monkeypatch.setattr(region_index, "build_index", fake_build_index)
-    monkeypatch.setattr(app_qt.QFileDialog, "getExistingDirectory",
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory",
                         staticmethod(lambda *a, **k: str(tmp_path)))
     captured = {}
     monkeypatch.setattr(win, "_show_mask_picker", lambda e: captured.update(e=e))
@@ -591,7 +590,7 @@ def test_browse_masks_indexes_folder(win, tmp_path, monkeypatch):
 
     # empty folder → "no files" early return
     (tmp_path / "empty").mkdir()
-    monkeypatch.setattr(app_qt.QFileDialog, "getExistingDirectory",
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory",
                         staticmethod(lambda *a, **k: str(tmp_path / "empty")))
     win.browse_masks()                               # returns without calling picker
 
