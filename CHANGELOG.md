@@ -12,6 +12,43 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-06-03
+
+True 3-D (slab) acquisition with **any-plane reformat** — acquire a slab once and
+view it in any orientation — plus PACS-style slice scrolling. No 2-D physics
+changed.
+
+### Added
+- **True 3-D slab acquisition** (`acquisition3d.py`, new). Unlike the 2-D path
+  (which averages adjacent slices), this excites a slab and phase-encodes the
+  slice (kz) direction as well, reconstructing a contiguous partition stack with
+  a 3-D FFT. Models the real 3-D phenomena: through-plane (kz) resolution, kz
+  partial Fourier, the imperfect-slab excitation profile (darker edge
+  partitions), and the **√Nz SNR advantage** a 3-D encode has over a single 2-D
+  slice. Available for Spin Echo, Gradient Echo, Inversion Recovery and Balanced
+  SSFP via a **3D acquisition (slab)** checkbox with **partitions** and **kz
+  Partial Fourier** controls.
+- **Any-plane reformat.** A 3-D slab is acquired **once**; changing the view
+  plane or slice **reformats** the stored recon block instead of re-scanning
+  (re-acquiring only when the prescription actually changes). The viewport shows
+  a `3D SLAB · Np` badge and a `REFORMAT ⟵ <acquired plane>` tag when the view
+  differs from the acquired plane, and the metrics panel surfaces the partition
+  count and the exact √Nz SNR gain.
+- Quantitative 3-D validation in `tests/test_physics_validation.py`: the exact
+  √(Nz·NEX) gain, a thin 3-D partition out-SNRing a 2-D slice of equal thickness,
+  through-plane blur scaling as FOVz/n_kz, slab-profile edge attenuation, and kz
+  partial Fourier shortening the scan by its fraction.
+
+### Changed
+- **Scrolling now steps one slice-thickness** (the wheel and arrow keys advance a
+  whole slice, flipping through contiguous slices the way a PACS series does — a
+  5 mm slice moves 5 voxels per detent, not 1). The slice **slider** still gives
+  per-voxel control. 3-D reformat steps one partition; MRA (which ignores slice
+  thickness) steps one voxel.
+- **`app_qt.py` refactored** into focused mixins (theme, curves, scout, regions,
+  interaction, metrics, export) over the same window class — no behaviour change,
+  but the GUI is now covered by a headless smoke-test harness at ~94 %.
+
 ## [1.2.3] — 2026-06-02
 
 ### Fixed
