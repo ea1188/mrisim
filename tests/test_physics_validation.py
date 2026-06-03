@@ -14,6 +14,9 @@ References
 * Neuro relaxation — Stanisz et al., MRM 2005;54:507; Wansapura et al., JMRI 1999.
 * Fat–water shift: 3.5 ppm × γ (42.577 MHz/T) × B0.
 * Balanced SSFP off-resonance nulls at Δf = ±1/(2·TR).
+* 3-D slab encoding — √Nz SNR advantage and through-plane (kz) resolution:
+  Bernstein, King & Zhou §11.4 (3-D acquisition); Brown et al., "MRI: Physical
+  Principles and Sequence Design" (2014), ch. on 3-D Fourier imaging.
 """
 import numpy as np
 import pytest
@@ -23,6 +26,7 @@ import tissue_db
 from dixon import fat_water_shift_hz
 from artifacts import calculate_chemical_shift_pixels
 from diffusion import diffusion_signal
+from acquisition3d import snr_3d_gain, slab_excitation_profile, acquire_3d
 
 
 # --------------------------------------------------------------------------- #
@@ -182,3 +186,88 @@ class TestGadolinium:
         f = rendering.GD_TISSUE_FRACTION
         assert f[11] == max(f.values())                      # intravascular = maximal
         assert f[11] > f[3]                                  # blood ≫ intact-BBB WM
+
+
+# --------------------------------------------------------------------------- #
+# 3-D (slab) acquisition — through-plane encoding physics
+# --------------------------------------------------------------------------- #
+def _synthetic_brain_volume(Z=40, Y=48, X=44):
+    """A small labelled WM/GM/CSF sphere for fast end-to-end 3-D checks."""
+    z, y, x = np.ogrid[:Z, :Y, :X]
+    r = np.sqrt(((z - Z / 2) / (Z / 2.4)) ** 2 + ((y - Y / 2) / (Y / 2.4)) ** 2
+                + ((x - X / 2) / (X / 2.4)) ** 2)
+    vol = np.zeros((Z, Y, X), dtype=np.uint8)
+    vol[r < 1.0] = 3                                          # white matter
+    vol[r < 0.7] = 2                                          # gray matter
+    vol[r < 0.35] = 1                                         # CSF
+    return vol
+
+
+class Test3DAcquisition:
+    """A 3-D Fourier encode phase-encodes the slice (kz) axis as well, so it
+    samples the whole slab on every encode (√Nz averaging gain) and resolves
+    through-plane structure to FOVz/n_kz — neither of which a 2-D multi-slice
+    acquisition can do. These pin those two textbook results quantitatively."""
+
+    def test_snr_gain_is_exactly_sqrt_nz(self):
+        """The 3-D averaging gain over one 2-D slice is exactly √(Nz·NEX)."""
+        assert snr_3d_gain(64) == pytest.approx(8.0)         # √64
+        assert snr_3d_gain(16, nex=4) == pytest.approx(8.0)  # √(16·4)
+        # doubling the partitions raises SNR by √2, not ×2
+        assert snr_3d_gain(64) / snr_3d_gain(32) == pytest.approx(np.sqrt(2.0))
+
+    def test_3d_thin_partition_beats_2d_thin_slice(self):
+        """The headline 3-D advantage: a thin 3-D partition has far higher SNR
+        than a 2-D slice of the same thickness, because the kz encode averages
+        the whole slab. Empirically ~√Nz (compressed by the noise floor)."""
+        from simulator import Simulator, default_params
+        s = Simulator()
+        s.volume = _synthetic_brain_volume()
+        s.orientation, s.slice_idx = "axial", 20
+
+        def snr(**kw):
+            p = default_params(sequence="Gradient Echo", TR=30, TE=6,
+                               flip_angle=30, matrix_size=44, snr_level=2, **kw)
+            return float(np.mean([s.simulate(p)[1]["snr_wm"] for _ in range(6)]))
+
+        snr_3d = snr(acq3d=True, n_partitions=32)
+        snr_2d = snr(acq3d=False, slice_thickness=1)
+        assert snr_3d > 2.0 * snr_2d, f"3-D gain absent: 3D={snr_3d:.1f} 2D={snr_2d:.1f}"
+
+    def test_through_plane_resolution_scales_with_n_kz(self):
+        """Halving the kz encodes roughly doubles the through-plane blur: a sharp
+        z-edge spreads over ≈ FOVz/n_kz partitions."""
+        slab = np.zeros((32, 24, 24)); slab[:16] = 1.0       # sharp z-edge at centre
+
+        def edge_width(n_kz):
+            recon, _ = acquire_3d(slab, matrix_xy=24, n_kz=n_kz)
+            zp = recon.mean(axis=(1, 2))
+            return int(np.sum((zp > 0.2) & (zp < 0.8)))      # 20–80 % transition
+
+        w4, w8 = edge_width(4), edge_width(8)
+        assert w4 > w8                                        # fewer encodes → blurrier
+        assert w4 == pytest.approx(2 * w8, rel=0.5)          # ∝ 1/n_kz
+
+    def test_slab_profile_attenuates_edge_partitions(self):
+        """An imperfect RF slab excitation darkens the outermost partitions; a
+        softer profile spreads that roll-off further in from the edge."""
+        sharp = slab_excitation_profile(32, sharpness=0.85)
+        assert sharp[0] < 0.02 * sharp[16]                   # outer partition nearly nulled
+        soft = slab_excitation_profile(32, sharpness=0.4)
+        # the softer profile keeps fewer partitions at full excitation
+        assert np.sum(soft > 0.9) < np.sum(sharp > 0.9)
+
+    def test_kz_partial_fourier_shortens_scan_by_its_fraction(self):
+        """Acquiring only a fraction of kz cuts 3-D scan time by that fraction."""
+        from simulator import Simulator, default_params
+        s = Simulator()
+        s.volume = _synthetic_brain_volume()
+        s.orientation, s.slice_idx = "axial", 20
+
+        def scan(**kw):
+            p = default_params(sequence="Gradient Echo", TR=30, TE=6,
+                               flip_angle=30, matrix_size=44, acq3d=True,
+                               n_partitions=32, **kw)
+            return s.simulate(p)[1]["scan_time"]
+
+        assert scan(kz_pf=0.75) / scan() == pytest.approx(0.75, rel=0.02)
