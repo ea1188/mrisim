@@ -12,6 +12,8 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.2.3] — 2026-06-02
+
 ### Fixed
 - **Signal-vs-parameter curves now use the same tested equations as the image.**
   A GUI physics audit found the side-panel curves were computed inline and had
