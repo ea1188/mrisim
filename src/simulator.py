@@ -17,6 +17,7 @@ from scipy.ndimage import gaussian_filter
 
 from phantom3d import get_slice
 from kspace import simulate_acquisition, apply_radial_sampling
+from acquisition3d import acquire_3d, slab_excitation_profile, snr_3d_gain
 from fse import simulate_fse_image
 import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
@@ -37,6 +38,11 @@ import scan_geometry as sg
 
 
 # Field-strength label → Tesla (labels match tissue_db.FIELD_STRENGTHS).
+# Sequences that support a true 3-D (slab) acquisition. Map/projection sequences
+# (MRA MIP, DWI/fMRI/qMRI maps) keep their own paths and ignore the 3-D toggle.
+_ACQ3D_SEQUENCES = frozenset({"Spin Echo", "Gradient Echo",
+                              "Inversion Recovery", "Balanced SSFP"})
+
 _B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
 
 # Partial-Fourier fractions (string label → actual fraction).
@@ -157,6 +163,10 @@ class Simulator:
         self._b0_cache: tuple | None = None
         self._tof_cache: tuple | None = None
         self.last_kspace: np.ndarray | None = None
+        # 3-D acquisition: the reconstructed slab (raw Z,Y,X sub-block) + geometry,
+        # reused by reslice_3d so orientation changes reformat rather than re-scan.
+        self._recon3d: np.ndarray | None = None
+        self._recon3d_geom: dict | None = None
 
     def _tof_volume(self, TR: float, TE: float, FA: float) -> np.ndarray:
         """3D TOF intensity volume for the rotating MIP, cached.
@@ -383,12 +393,116 @@ class Simulator:
         return np.zeros((181, 181), dtype=float)
 
     # --- full acquisition ---------------------------------------------------
+    _THROUGH_AXIS = {"axial": 0, "coronal": 1, "sagittal": 2}
+
+    def reslice_3d(self, orient: str, sl_idx: int) -> "np.ndarray | None":
+        """Reformat the stored 3-D recon block at ``orient``/``sl_idx``.
+
+        The block is a raw (Z,Y,X) sub-volume covering the full extent in two
+        axes and the acquired slab in the third, so ``get_slice`` reformats any
+        plane with the same display convention as the phantom. Returns None when
+        the requested slice falls outside the acquired slab."""
+        if self._recon3d is None or self._recon3d_geom is None:
+            return None
+        g = self._recon3d_geom
+        ax = self._THROUGH_AXIS[orient]
+        if ax == g["through"]:
+            local = sl_idx - g["start"]
+            if not (0 <= local < g["n_part"]):
+                return None
+            return get_slice(self._recon3d, orient, local)
+        if not (0 <= sl_idx < self._recon3d.shape[ax]):
+            return None
+        return get_slice(self._recon3d, orient, sl_idx)
+
+    def _simulate_3d(self, params: dict, orient: str, sl_idx: int,
+                     matrix: int) -> "tuple[np.ndarray, dict]":
+        """True 3-D slab acquisition. Renders a slab in raw volume coordinates,
+        encodes/reconstructs it in 3-D (acquisition3d), stores the recon block,
+        and returns the (reformatted) display slice + metrics."""
+        assert self.volume is not None
+        vol = self.volume
+        through = self._THROUGH_AXIS[orient]
+        n_part = int(np.clip(int(params.get("n_partitions", 16)), 2, vol.shape[through]))
+        start = int(np.clip(sl_idx - n_part // 2, 0, max(0, vol.shape[through] - n_part)))
+
+        field = params.get("field_strength", "3T")
+        tprops = tissue_db.properties(field)
+        if params.get("contrast_enabled") and params.get("contrast_dose", 0) > 0:
+            tprops = rendering.apply_gd(tprops, params["contrast_dose"] * 0.1)
+        code = {"Spin Echo": "SE", "Gradient Echo": "GRE",
+                "Inversion Recovery": "IR", "Balanced SSFP": "bSSFP"}[params["sequence"]]
+        TR, TE, TI, FA = params["TR"], params["TE"], params["TI"], params["flip_angle"]
+        if TE >= TR:
+            TE = TR - 5
+
+        # Per-tissue signal for each raw partition (no orientation/FOV transform;
+        # get_slice applies the display transform, so reformats stay consistent).
+        slab = np.stack([rendering.simulate_slice_props(
+            np.take(vol, p, axis=through), TR, TE, code, TI, FA, tprops)
+            for p in range(start, start + n_part)])           # (n_part, d1, d2)
+
+        profile = slab_excitation_profile(n_part, params.get("slab_sharpness", 0.85))
+        kz_pf = params.get("kz_pf")
+        fw = (params.get("kspace_filter_window", "hamming")
+              if params.get("kspace_filter_enabled") else None)
+        recon_slab, _ = acquire_3d(slab, matrix, n_kz=n_part, pf_kz=kz_pf,
+                                   profile=profile, filter_window=fw)
+
+        self._recon3d = np.moveaxis(recon_slab, 0, through)    # raw (Z,Y,X) sub-block
+        self._recon3d_geom = {"orient": orient, "through": through,
+                              "start": start, "n_part": n_part, "matrix": matrix}
+
+        image = self.reslice_3d(orient, sl_idx)
+        assert image is not None
+        # Raw (un-FOV-transformed) label slice, aligned with the raw-rendered recon.
+        phantom_slice = get_slice(vol, orient, sl_idx)
+
+        # 3-D noise: thin partition (in-plane voxel only) but √(n_part·NEX) gain.
+        res_mm = params["FOV"] / matrix
+        vox_vol = res_mm * res_mm
+        BW_hz = max(1.0, params["bandwidth"] * 1000.0)
+        B0_snr = _B0_MAP.get(field, 3.0)
+        pf_snr = float(np.sqrt(kz_pf)) if kz_pf else 1.0
+        eff_snr = (params["snr_level"] * (vox_vol / self.VOX_REF)
+                   * snr_3d_gain(n_part, params["NEX"])
+                   * np.sqrt(self.BW_REF / BW_hz) * pf_snr * (B0_snr / 3.0))
+        ref_sig = self._reference_protocol_signal(tprops)
+        tissue_ref = self._tissue_ref_signal(image, phantom_slice)
+        if ref_sig > 0 and tissue_ref > 0:
+            eff_snr *= float(np.clip(tissue_ref / ref_sig, 0.04, 4.0))
+        eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
+        if tissue_ref > 0:
+            sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
+            image = rician.add_rician_noise(image, sigma)
+            if params.get("rician_bias_correction"):
+                image = rician.rician_bias_correction(image, sigma)
+
+        # Metrics — 3-D scan time also encodes the kz partitions (the 3-D trade-off:
+        # longer scan, but the √Nz SNR gain above).
+        NEX, R = params["NEX"], params["accel_factor"]
+        scan_time = TR * matrix * n_part * NEX * (kz_pf or 1.0) / max(1, R) / 1000.0
+        B0_sar = _B0_MAP.get(field, 3.0)
+        sar = estimate_sar(FA, TR, sequence={"Spin Echo": "SE", "Gradient Echo": "GRE",
+                           "Inversion Recovery": "IR", "Balanced SSFP": "GRE"}[params["sequence"]])
+        sar_head = sar["head"] * (B0_sar / 3.0) ** 2
+        snr = self._measure_snr(image, phantom_slice)
+        metrics = {"scan_time": scan_time, "resolution": res_mm,
+                   "snr_wm": snr["wm"], "snr_gm": snr["gm"], "noise_sigma": snr["sigma"],
+                   "snr_eff": snr["wm"] / np.sqrt(max(scan_time / 60.0, 1e-6)),
+                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2, "g_factor": 1.0}
+        self.last_kspace = None
+        return image, metrics
+
     def simulate(self, params: dict) -> tuple[np.ndarray, dict]:
         assert self.volume is not None
         orient = self.orientation; sl_idx = self.slice_idx
         matrix = params["matrix_size"]; fov_frac = params["fov_fraction"] / 100.0
         thickness = int(params["slice_thickness"]); R = params["accel_factor"]
         max_sl = self.get_max_slice_idx()
+
+        if params.get("acq3d") and params["sequence"] in _ACQ3D_SEQUENCES:
+            return self._simulate_3d(params, orient, sl_idx, matrix)
 
         if thickness > 1 and params["sequence"] not in ["MR Angiography"]:
             start = max(0, sl_idx - thickness // 2); end = min(max_sl, sl_idx + thickness // 2)
