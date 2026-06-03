@@ -39,7 +39,8 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from psd import draw_psd
 
-from signal_engine import spin_echo_signal, gradient_echo_signal
+from signal_engine import (spin_echo_signal, gradient_echo_signal,
+                           inversion_recovery_signal, balanced_ssfp_signal)
 from phantom3d import simulate_slice
 import tissue_db
 import rendering
@@ -2068,6 +2069,22 @@ class MRISimulator(QMainWindow):
             self._scout_drag = None
             self.recalculate()
 
+    @staticmethod
+    def _curve_signal(seq: str, props: dict, TR: Any, TE: Any, TI: float, FA: float) -> Any:
+        """Per-tissue signal from the *same* tested library equations the image
+        uses, so the plotted curve provably tracks the picture. TR/TE may be
+        scalars or numpy arrays (the swept axis). GRE/EPI use the measured T2*
+        (not an inline T2 approximation); bSSFP/EPI no longer fall through to IR."""
+        T1, T2, PD = props["T1"], props["T2"], props["PD"]
+        T2star = props.get("T2star", T2)
+        if seq in ("Gradient Echo", "Echo Planar (EPI)"):
+            return gradient_echo_signal(T1, T2star, PD, TR, TE, FA)
+        if seq == "Balanced SSFP":
+            return balanced_ssfp_signal(T1, T2, PD, TR, TE, FA)
+        if seq == "Inversion Recovery":
+            return inversion_recovery_signal(T1, T2, PD, TR, TE, TI)
+        return spin_echo_signal(T1, T2, PD, TR, TE)   # SE / FSE / qMRI / default
+
     def _plot_curves(self, params: dict) -> None:
         seq, TR, TE, TI, FA = params["sequence"], params["TR"], params["TE"], params["TI"], params["flip_angle"]
         ax = self.axes[1]
@@ -2133,14 +2150,7 @@ class MRISimulator(QMainWindow):
                             ("CSF",          '#74c0fc', "csf")]
             for tlabel, color, key in _tissue_rows:
                 props = TISSUES_B0[key]
-                if seq == "Spin Echo":
-                    sig = props["PD"] * (1 - np.exp(-tr_range / props["T1"])) * np.exp(-TE / props["T2"])
-                elif seq == "Gradient Echo":
-                    a = np.radians(FA); E1v = np.exp(-tr_range / props["T1"])
-                    denom = np.where(np.abs(1 - np.cos(a) * E1v) < 1e-9, 1e-9, 1 - np.cos(a) * E1v)
-                    sig = props["PD"] * np.sin(a) * (1 - E1v) / denom * np.exp(-TE / (props["T2"] * 0.6))
-                else:  # IR
-                    sig = props["PD"] * np.abs(1 - 2 * np.exp(-TI / props["T1"]) + np.exp(-tr_range / props["T1"])) * np.exp(-TE / props["T2"])
+                sig = self._curve_signal(seq, props, tr_range, TE, TI, FA)
                 ax.plot(tr_range, sig, color=color, linewidth=2, label=tlabel)
             ax.axvline(x=TR, color='yellow', linestyle='--', alpha=0.7, label=f'TR={TR:.0f}')
             ax.set_xlabel('TR (ms)', color='white')
@@ -2185,20 +2195,8 @@ class MRISimulator(QMainWindow):
             te_vals = np.linspace(5, 200, 60)
             TR_g, TE_g = np.meshgrid(tr_vals, te_vals)
             wm = TISSUES_B0["white_matter"]; gm = TISSUES_B0["gray_matter"]
-            TISSUES_B0["csf"]
-            if seq == "Gradient Echo":
-                a = np.radians(FA)
-                def gre_sig(p: dict, TRg: np.ndarray, TEg: np.ndarray) -> np.ndarray:
-                    E1g = np.exp(-TRg / p["T1"])
-                    d = np.where(np.abs(1 - np.cos(a) * E1g) < 1e-9, 1e-9, 1 - np.cos(a) * E1g)
-                    return p["PD"] * np.sin(a) * (1 - E1g) / d * np.exp(-TEg / (p["T2"] * 0.6))
-                s_wm = gre_sig(wm, TR_g, TE_g); s_gm = gre_sig(gm, TR_g, TE_g)
-            elif seq == "Inversion Recovery":
-                s_wm = wm["PD"] * np.abs(1 - 2*np.exp(-TI/wm["T1"]) + np.exp(-TR_g/wm["T1"])) * np.exp(-TE_g/wm["T2"])
-                s_gm = gm["PD"] * np.abs(1 - 2*np.exp(-TI/gm["T1"]) + np.exp(-TR_g/gm["T1"])) * np.exp(-TE_g/gm["T2"])
-            else:  # SE / FSE
-                s_wm = wm["PD"] * (1 - np.exp(-TR_g / wm["T1"])) * np.exp(-TE_g / wm["T2"])
-                s_gm = gm["PD"] * (1 - np.exp(-TR_g / gm["T1"])) * np.exp(-TE_g / gm["T2"])
+            s_wm = self._curve_signal(seq, wm, TR_g, TE_g, TI, FA)
+            s_gm = self._curve_signal(seq, gm, TR_g, TE_g, TI, FA)
             cnr_map = np.abs(s_wm - s_gm)
             ax.imshow(cnr_map, origin='lower', aspect='auto', cmap='hot',
                       extent=[np.log10(200), np.log10(6000), 5, 200], vmin=0)
@@ -2225,16 +2223,7 @@ class MRISimulator(QMainWindow):
                     ax.get_ylim()[1] if ax.get_ylim()[1] > 0 else 1.0
                     for tlabel, color, key in _tissue_rows:
                         props = TISSUES_B0[key]
-                        if seq == "Spin Echo":
-                            mean_sig = props["PD"] * (1 - np.exp(-TR / props["T1"])) * np.exp(-TE / props["T2"])
-                        elif seq == "Gradient Echo":
-                            a = np.radians(FA); E1 = np.exp(-TR / props["T1"])
-                            denom = 1 - np.cos(a) * E1
-                            mean_sig = (props["PD"] * np.sin(a) * (1 - E1) / max(abs(denom), 1e-9)
-                                        * np.exp(-TE / (props["T2"] * 0.6)))
-                        else:
-                            mean_sig = (props["PD"] * abs(1 - 2*np.exp(-TI/props["T1"]) + np.exp(-TR/props["T1"]))
-                                        * np.exp(-TE / props["T2"]))
+                        mean_sig = float(self._curve_signal(seq, props, TR, TE, TI, FA))
                         ax.axvline(x=mean_sig, color=color, linestyle='--', linewidth=1.5, alpha=0.85,
                                    label=f'{tlabel}≈{mean_sig:.3f}')
                     ax.set_xlabel('Pixel Value', color='white')
@@ -2256,16 +2245,7 @@ class MRISimulator(QMainWindow):
                             ("CSF",          '#74c0fc', "csf")]
             for tlabel, color, key in _tissue_rows:
                 props = TISSUES_B0[key]
-                if seq == "Spin Echo":
-                    sig = props["PD"] * (1 - np.exp(-TR / props["T1"])) * np.exp(-te_range / props["T2"])
-                elif seq == "Gradient Echo":
-                    a = np.radians(FA); E1 = np.exp(-TR / props["T1"])
-                    denom = 1 - np.cos(a) * E1
-                    sig = (props["PD"] * np.sin(a) * (1 - E1) / max(abs(denom), 1e-9)
-                           * np.exp(-te_range / (props["T2"] * 0.6)))
-                else:  # IR — show the magnitude decay at current TI
-                    sig = (props["PD"] * abs(1 - 2*np.exp(-TI/props["T1"]) + np.exp(-TR/props["T1"]))
-                           * np.exp(-te_range / props["T2"]))
+                sig = self._curve_signal(seq, props, TR, te_range, TI, FA)
                 ax.plot(te_range, sig, color=color, linewidth=2, label=tlabel)
 
             ax.axvline(x=TE, color='yellow', linestyle='--', alpha=0.7, label=f'TE={TE:.0f}')
@@ -2276,6 +2256,10 @@ class MRISimulator(QMainWindow):
             elif seq == "Inversion Recovery":
                 ax.set_title(f'IR T2 Decay at TI={TI:.0f}ms  (use TI sweep for null points)',
                              color='white', fontsize=10)
+            elif seq == "Balanced SSFP":
+                ax.set_title('bSSFP Signal vs TE  (T2/T1 — bright fluid)', color='white', fontsize=10)
+            elif seq == "Echo Planar (EPI)":
+                ax.set_title('EPI T2* Decay  (signal vs TE)', color='white', fontsize=10)
             else:
                 ax.set_title('T2 Decay  (signal vs TE)', color='white', fontsize=11)
             ax.set_xlabel('TE (ms)', color='white')
