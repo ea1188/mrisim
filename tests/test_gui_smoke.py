@@ -72,7 +72,7 @@ def set_state(w, *, region="Brain", sequence="Spin Echo",
     # Reset view toggles so each test starts clean (these only fire a harmless
     # checkbox-sync trace, not a recalc).
     for v in (w.show_kspace, w.multi_slice, w.show_psd,
-              w.show_tissue_overlay, w.compare_mode):
+              w.show_tissue_overlay, w.compare_mode, w.acq3d):
         v.set(False)
     w.compare_params = None
     if w.fov_planning.get():        # this one recalcs + restores the layout
@@ -629,3 +629,34 @@ def test_scout_angle_handle_drag(win):
     win._scout_release(_Ev(xdata=lx0, ydata=ly0, inaxes=ax))
     win._reset_oblique()
     set_state(win)
+
+
+# --------------------------------------------------------------------------- #
+#  3-D (slab) acquisition + any-plane reformat
+# --------------------------------------------------------------------------- #
+def test_3d_acquisition_renders(win):
+    set_state(win, sequence="Gradient Echo")
+    win.acq3d.set(True); win.n_partitions.set(24); win.recalculate()
+    assert_good_image(win.current_image, "3D acquisition")
+    assert win.sim._recon3d is not None
+    win.acq3d.set(False); win.recalculate()
+
+
+def test_3d_reformat_reuses_block(win):
+    set_state(win, sequence="Gradient Echo")
+    win._set_orientation("axial"); win.slice_idx.set(90)
+    win.acq3d.set(True); win.n_partitions.set(20); win.recalculate()
+    block = id(win.sim._recon3d)
+    win._set_orientation("coronal"); win.recalculate()      # reformat the slab
+    assert id(win.sim._recon3d) == block, "orientation change must reformat, not re-scan"
+    assert_good_image(win.current_image, "3D reformat")
+    win.acq3d.set(False); win._set_orientation("axial"); win.recalculate()
+
+
+def test_3d_param_change_reacquires(win):
+    set_state(win, sequence="Spin Echo")
+    win.acq3d.set(True); win.n_partitions.set(16); win.recalculate()
+    block = id(win.sim._recon3d)
+    win.TE.set(win.TE.get() + 25); win.recalculate()        # scan-affecting change
+    assert id(win.sim._recon3d) != block, "param change must re-acquire"
+    win.acq3d.set(False); win.recalculate()
