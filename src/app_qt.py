@@ -38,7 +38,6 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 
 from psd import draw_psd
 
-import tissue_db
 import rendering
 from kspace import get_kspace_display
 from brainweb_loader import get_brainweb_or_synthetic, data_dir
@@ -112,6 +111,7 @@ from app_theme import (  # noqa: E402
 from app_curves import CurvesMixin  # noqa: E402
 from app_scout import ScoutMixin  # noqa: E402
 from app_regions import RegionMixin  # noqa: E402
+from app_interaction import InteractionMixin  # noqa: E402
 
 
 class CollapsibleSection(QWidget):
@@ -156,7 +156,7 @@ class CollapsibleSection(QWidget):
         return self._inner
 
 
-class MRISimulator(RegionMixin, ScoutMixin, CurvesMixin, QMainWindow):
+class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin, CurvesMixin, QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         from version import __version__
@@ -601,151 +601,6 @@ class MRISimulator(RegionMixin, ScoutMixin, CurvesMixin, QMainWindow):
             for ax in self.axes:
                 ax.set_facecolor(C_CANVAS)
 
-    # --- Window/level (matplotlib event handlers) ---
-    def _on_press(self, event: object) -> None:
-        # Double-click left = reset
-        if event.button == 1 and getattr(event, "dblclick", False):  # type: ignore[attr-defined]
-            self.window_width = 1.0
-            self.window_level = 0.5
-            if self.current_image is not None:
-                self.apply_window_level()
-            return
-        ctrl = False
-        try:
-            if event.guiEvent is not None:  # type: ignore[attr-defined]
-                ctrl = bool(event.guiEvent.modifiers() & Qt.KeyboardModifier.ControlModifier)  # type: ignore[attr-defined]
-        except Exception:
-            ctrl = False
-        # Plain left-drag over the MRA MIP spins the angiogram (azimuth/elevation);
-        # the MIP is a rotatable projection, so left-drag rotates there. Hold Ctrl
-        # to window/level an MRA image instead.
-        if (event.button == 1 and not ctrl  # type: ignore[attr-defined]
-                and self.sequence_type.get() == "MR Angiography"
-                and event.x is not None):  # type: ignore[attr-defined]
-            self._mra_dragging = True
-            self._mra_rotating = True          # request the fast (downsampled) MIP
-            self._mra_start_x = event.x        # type: ignore[attr-defined]
-            self._mra_start_y = event.y        # type: ignore[attr-defined]
-            return
-        # Any other drag — plain left (the default now), middle or right — adjusts W/L.
-        if event.button in (1, 2, 3):  # type: ignore[attr-defined]
-            self.wl_dragging = True
-            self.wl_start_x = event.x  # type: ignore[attr-defined]
-            self.wl_start_y = event.y  # type: ignore[attr-defined]
-
-    def _on_motion(self, event: object) -> None:
-        # MRA rotate: horizontal drag = azimuth, vertical drag = elevation.
-        if getattr(self, "_mra_dragging", False):
-            if event.x is None or event.y is None:  # type: ignore[attr-defined]
-                return
-            daz = (event.x - self._mra_start_x) * 0.5    # type: ignore[attr-defined]
-            dele = (event.y - self._mra_start_y) * 0.4   # type: ignore[attr-defined]  # mpl y grows up
-            self.angio_azimuth.set(int(round(self.angio_azimuth.get() + daz)) % 360)
-            self.angio_elevation.set(int(np.clip(self.angio_elevation.get() + dele, -60, 60)))
-            self._mra_start_x = event.x  # type: ignore[attr-defined]
-            self._mra_start_y = event.y  # type: ignore[attr-defined]
-            self.recalculate()
-            return
-        # Live cursor readout (only over the main image axis) when not dragging
-        if not self.wl_dragging:
-            self._update_readout(event)
-            return
-        if self.current_image is None:
-            return
-        if event.x is None or event.y is None:  # type: ignore[attr-defined]
-            return
-        self.window_width += (event.x - self.wl_start_x) * 0.005  # type: ignore[attr-defined]
-        # matplotlib's y grows upward (opposite of Tk), so '+=' preserves drag direction
-        self.window_level += (event.y - self.wl_start_y) * 0.003  # type: ignore[attr-defined]
-        self.window_width = np.clip(self.window_width, 0.05, 3.0)
-        self.window_level = np.clip(self.window_level, 0.0, 1.0)
-        self.wl_start_x = event.x  # type: ignore[attr-defined]
-        self.wl_start_y = event.y  # type: ignore[attr-defined]
-        self.apply_window_level()
-
-    def _on_release(self, event: object) -> None:
-        self.wl_dragging = False
-        if getattr(self, "_mra_dragging", False):
-            self._mra_dragging = False
-            self._mra_rotating = False   # back to full-resolution MIP
-            self.recalculate()
-
-    # --- Workstation navigation -------------------------------------------- #
-    def _change_slice(self, delta: int) -> None:
-        """Step the current slice by +/- delta, clamped to the volume bounds."""
-        max_sl = self.get_max_slice_idx()
-        new_idx = int(np.clip(self.slice_idx.get() + delta, 0, max_sl))
-        if new_idx != self.slice_idx.get():
-            self.slice_idx.set(new_idx)   # updates the slider via its trace
-            self.recalculate()             # immediate feedback while scrolling
-
-    def _on_scroll(self, event: object) -> None:
-        # Wheel up = next slice, wheel down = previous (radiology convention)
-        step = 1 if event.button == "up" else -1  # type: ignore[attr-defined]
-        # event.step carries magnitude on trackpads; use its sign if present
-        if getattr(event, "step", 0):
-            step = 1 if event.step > 0 else -1  # type: ignore[attr-defined]
-        self._change_slice(step)
-
-    def _on_key(self, event: object) -> None:
-        k = (event.key or "").lower()  # type: ignore[attr-defined]
-        if k in ("up", "right", "+", "="):
-            self._change_slice(1)
-        elif k in ("down", "left", "-"):
-            self._change_slice(-1)
-        elif k == "pageup":
-            self._change_slice(5)
-        elif k == "pagedown":
-            self._change_slice(-5)
-        elif k == "k":
-            self.show_kspace.set(not self.show_kspace.get()); self.recalculate()
-        elif k == "m":
-            self.multi_slice.set(not self.multi_slice.get()); self.recalculate()
-        elif k == "p":
-            self.show_psd.set(not self.show_psd.get()); self.recalculate()
-        elif k == "r":  # reset window/level
-            self.window_width = 1.0; self.window_level = 0.5
-            if self.current_image is not None:
-                self.apply_window_level()
-
-    # --- Cursor readout ----------------------------------------------------- #
-    TISSUE_LABELS = {0: "Background", 1: "CSF", 2: "Gray Matter", 3: "White Matter",
-                     4: "Fat", 5: "Muscle/Skin", 6: "Skull", 7: "Vessel", 8: "Marrow"}
-
-    def _set_status_default(self) -> None:
-        self.statusBar().showMessage(  # type: ignore[union-attr]
-            "Wheel / \u2191\u2193 : slice   \u2022   drag : window/level   \u2022   "
-            "double-click : reset   \u2022   k / m / p : k-space / multi / PSD")
-
-    def _update_readout(self, event: object) -> None:
-        if self.current_image is None or event.inaxes is not self.axes[0]:  # type: ignore[attr-defined]
-            self._set_status_default()
-            return
-        if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
-            return
-        img = self.current_image
-        H, W = img.shape[:2]
-        col = int(np.clip(round(event.xdata), 0, W - 1))  # type: ignore[attr-defined]
-        row = int(np.clip(round(event.ydata), 0, H - 1))  # type: ignore[attr-defined]
-        signal = float(img[row, col])
-
-        # Map the cursor's fractional position onto the phantom label volume,
-        # which may differ in matrix size from the reconstructed image.
-        tissue = ""
-        try:
-            ph = self._get_current_phantom_slice(
-                self.orientation.get(), self.slice_idx.get(), self.get_current_params())
-            py = int(np.clip(round(event.ydata / H * ph.shape[0]), 0, ph.shape[0] - 1))  # type: ignore[attr-defined]
-            px = int(np.clip(round(event.xdata / W * ph.shape[1]), 0, ph.shape[1] - 1))  # type: ignore[attr-defined]
-            label = int(round(float(ph[py, px])))
-            props = tissue_db.properties(self.field_strength.get()).get(label)
-            tissue = props["name"] if props else f"Tissue {label}"
-        except Exception:
-            tissue = "n/a"
-
-        self.statusBar().showMessage(  # type: ignore[union-attr]
-            f"({col}, {row})   \u2022   {tissue}   \u2022   signal: {signal:.3f}   "
-            f"\u2022   slice {self.slice_idx.get()}/{self.get_max_slice_idx()}")
 
     # RGBA colours for each tissue label (R, G, B, A) — used by the overlay.
     _TISSUE_COLORS: dict[int, tuple[int, int, int, int]] = {
