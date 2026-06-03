@@ -4,7 +4,8 @@ from typing import Any
 import numpy as np
 
 import rendering
-from simulator import _B0_MAP
+from acquisition3d import snr_3d_gain
+from simulator import _ACQ3D_SEQUENCES, _B0_MAP
 from app_theme import C_ACCENT
 
 # Relative SAR weighting per sequence (RF duty cycle), used by the SAR readout.
@@ -54,7 +55,9 @@ class MetricsMixin:
         self.metrics_labels["resolution"].config(text=f"{resolution:.2f} mm")
         self.metrics_labels["voxel_size"].config(text=f"{resolution:.2f}x{resolution:.2f}x{thickness}mm")
         self.metrics_labels["matrix_display"].config(text=f"{matrix}x{matrix}")
-        self.metrics_labels["slice_info"].config(text=f"{orient.capitalize()} #{sl_idx}")
+        is_3d = bool(params.get("acq3d")) and params["sequence"] in _ACQ3D_SEQUENCES
+        slice_txt = f"{orient.capitalize()} #{sl_idx}" + ("  ·  3D slab" if is_3d else "")
+        self.metrics_labels["slice_info"].config(text=slice_txt)
 
         # Scan time with per-factor breakdown
         st = metrics["scan_time"]
@@ -115,6 +118,9 @@ class MetricsMixin:
         if pf_on: active.append(f"PF({pf_label})")
         if params.get("kspace_filter_enabled"): active.append(f"Filter({params.get('kspace_filter_window','')})")
         if matrix < 128: active.append("Blur")
+        if is_3d:
+            n_part = int(params.get("n_partitions", 0))
+            active.append(f"3D×{n_part}part (√Nz {snr_3d_gain(n_part):.1f}×)")
         if metrics["sar_exceeds"]: active.append("SAR!")
         self.metrics_labels["artifacts"].config(
             text=", ".join(active) if active else "None",

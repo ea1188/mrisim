@@ -711,6 +711,15 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         t(0.978, 0.978, self.region.get(), LIGHT, ha="right")
         t(0.978, 0.936, orient.capitalize(), MUTE, ha="right", size=7.5)
         t(0.978, 0.900, f"Slice {sl_idx}", MUTE, ha="right", size=7.5)
+        # 3-D slab: flag the acquisition mode, and whether this view is a reformat
+        # of the once-acquired slab (the headline "acquire once, view any plane").
+        if params.get("acq3d") and seq in self._ACQ3D_SEQUENCES:
+            t(0.022, 0.856, f"3D SLAB · {int(params.get('n_partitions', 0))}p",
+              ACC, size=7.5, weight="bold")
+            geom = getattr(self.sim, "_recon3d_geom", None)
+            if geom and geom.get("orient") and geom["orient"] != orient:
+                t(0.978, 0.864, f"REFORMAT ⟵ {geom['orient'].capitalize()}",
+                  ACC, ha="right", size=7.5, weight="bold")
         # Bottom corners: window/level and FOV
         t(0.022, 0.022, f"W {width:.2f}   L {center:.2f}", MUTE, size=7.5)
         t(0.978, 0.022, f"FOV {params.get('FOV', 0):.0f} mm", MUTE, ha="right", size=7.5)

@@ -676,3 +676,28 @@ def test_3d_param_change_reacquires(win):
     win.TE.set(win.TE.get() + 25); win.recalculate()        # scan-affecting change
     assert id(win.sim._recon3d) != block, "param change must re-acquire"
     win.acq3d.set(False); win.recalculate()
+
+
+def _overlay_text(win):
+    return " ".join(t.get_text() for t in win.axes[0].texts)
+
+
+def test_3d_overlay_badge_and_reformat_tag(win):
+    """The 3-D slab badge always shows in 3-D mode; the REFORMAT tag appears only
+    when the view plane differs from the acquired plane."""
+    set_state(win, sequence="Gradient Echo")
+    win._set_orientation("axial"); win.slice_idx.set(90)
+    win.acq3d.set(True); win.n_partitions.set(20); win.recalculate()
+    txt = _overlay_text(win)
+    assert "3D SLAB" in txt and "20p" in txt
+    assert "REFORMAT" not in txt, "acquired plane is not a reformat"
+    # metrics panel also surfaces the 3-D slab + the √Nz SNR gain (√20 ≈ 4.5)
+    assert "3D slab" in win.metrics_labels["slice_info"].text()
+    arts = win.metrics_labels["artifacts"].text()
+    assert "3D×20part" in arts and "4.5" in arts
+    win._set_orientation("coronal"); win.recalculate()      # now a reformat
+    txt = _overlay_text(win)
+    assert "REFORMAT" in txt and "Axial" in txt
+    win.acq3d.set(False); win._set_orientation("axial"); win.recalculate()
+    assert "3D SLAB" not in _overlay_text(win)               # gone in 2-D mode
+    assert "3D slab" not in win.metrics_labels["slice_info"].text()
