@@ -68,6 +68,10 @@
           <button id="exitAB" type="button" hidden>Exit compare</button>
         </div>
         <p class="hint" id="abdelta"></p>
+        <div class="btnrow">
+          <button id="copylink" type="button" title="Copy a shareable link to this exact setup">Copy link</button>
+          <button id="download" type="button" title="Download the current image as PNG">Download PNG</button>
+        </div>
       </div>
 
       <div class="group">
@@ -107,6 +111,20 @@
         <label class="check"><input type="checkbox" id="fatsat" /> Fat saturation</label>
         <label class="check"><input type="checkbox" id="gd" /> Gadolinium</label>
         <label class="check"><input type="checkbox" id="flow" /> Flow enhancement</label>
+      </div>
+
+      <div class="group">
+        <h2>Acquisition</h2>
+        <label>Matrix <output id="matrix-val">256</output>
+          <input type="range" id="matrix" min="96" max="320" step="32" value="256" /></label>
+        <label>Bandwidth (kHz) <output id="bw-val">125</output>
+          <input type="range" id="bw" min="16" max="500" step="2" value="125" /></label>
+        <label>NEX (averages) <output id="nex-val">1</output>
+          <input type="range" id="nex" min="1" max="8" step="1" value="1" /></label>
+        <label id="bval-row" hidden>b-value (s/mm²) <output id="bval-val">1000</output>
+          <input type="range" id="bval" min="0" max="3000" step="50" value="1000" /></label>
+        <label id="etl-row" hidden>Echo train (ETL) <output id="etl-val">16</output>
+          <input type="range" id="etl" min="2" max="32" step="1" value="16" /></label>
       </div>
 
       <div class="group">
