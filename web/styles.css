@@ -130,6 +130,11 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
 .intro-card ul { margin: 0 0 18px; padding-left: 18px; }
 .intro-card li { margin: 9px 0; color: #c4cad2; line-height: 1.45; }
 .intro-card b { color: var(--accent-hi); font-weight: 700; }
+.intro-note {
+  color: var(--text-faint); font-size: 12px; line-height: 1.45;
+  border-top: 1px solid var(--border); padding-top: 12px; margin: 0 0 16px;
+}
+.intro-note a, .splash-note a { color: var(--accent-hi); }
 kbd {
   background: var(--raised); border: 1px solid var(--border-hi); border-bottom-width: 2px;
   border-radius: 5px; padding: 0 6px; font-size: 11px; font-family: inherit; color: var(--text);
