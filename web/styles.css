@@ -26,9 +26,8 @@ body {
 .splash-card { text-align: center; width: min(440px, 88vw); }
 .splash-card h1 { margin: 14px 0 6px; font-size: 30px; letter-spacing: .5px; }
 .splash-card .logo {
-  width: 56px; height: 56px; margin: 0 auto; display: grid; place-items: center;
-  border-radius: 12px; font-weight: 800; color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-hi), #2f6fd6);
+  width: 104px; height: 104px; margin: 0 auto 4px; display: block;
+  object-fit: contain; filter: drop-shadow(0 4px 18px rgba(127, 184, 255, 0.18));
 }
 #splash-status { color: var(--text-dim); min-height: 1.2em; }
 .splash-note { color: var(--text-faint); font-size: 11px; margin-top: 18px; }
@@ -42,9 +41,7 @@ body {
 }
 .brand { display: flex; align-items: center; gap: 9px; font-size: 16px; }
 .logo-sm {
-  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
-  font-weight: 800; font-size: 12px; color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-hi), #2f6fd6);
+  width: 34px; height: 34px; object-fit: contain; display: block;
 }
 .tag { color: var(--text-faint); font-size: 11px; border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px; }
 .topchips { display: flex; gap: 8px; margin-left: auto; }
