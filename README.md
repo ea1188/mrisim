@@ -14,6 +14,8 @@
 </div>
 
 > **▶ [Run MRISim in your browser](https://ea1188.github.io/mrisim/)** — the full physics engine runs client-side via Pyodide, no install. Sequences, contrast, 3D slab acquisition, presets, A/B compare and a 3-plane localizer, all live. (First load fetches ~30–50&nbsp;MB; cached afterwards.)
+> 
+> For the fullest, most robust experience, use the downloadable desktop app. 
 
 <p align="center">
   <img src="docs/demo.gif" width="840" alt="MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve" />
