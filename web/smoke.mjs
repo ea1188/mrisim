@@ -41,7 +41,7 @@ try {
   // First-run intro must appear, then dismiss it (it overlays the controls).
   await page.waitForSelector("#intro:not([hidden])", { timeout: 10_000 });
   await page.click("#intro-ok");
-  await page.waitForSelector("#intro[hidden]", { timeout: 5_000 });
+  await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
 
   // Metrics must have populated (not the "—" placeholder).
   const scan = await page.textContent("#x-scan");
@@ -75,7 +75,7 @@ try {
   const delta = await page.textContent("#abdelta");
   if (!delta || !/SNR/.test(delta)) fail("compare delta did not populate: " + delta);
   await page.click("#exitAB");
-  await page.waitForSelector("#wrapB[hidden]", { timeout: 5_000 });
+  await page.waitForSelector("#wrapB", { state: "hidden", timeout: 5_000 });
 
   // Window/level drag must change the image (single render path).
   const beforeWL = await page.getAttribute("#mainImage", "src");
