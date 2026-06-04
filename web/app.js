@@ -1,12 +1,9 @@
-/* MRISim browser edition — boots Pyodide, loads the Qt-free engine (web_adapter),
-   and wires the HTML controls to it. Python renders the image/curve to PNG and
-   returns JSON metrics; this file is just the control shell. */
+/* MRISim browser edition — control shell. Pyodide + the engine run in a web
+   worker (worker.js); this file wires the HTML controls and talks to the worker
+   over a small request/response protocol so renders never freeze the UI. */
 "use strict";
 
 const $ = (id) => document.getElementById(id);
-let pyodide = null;
-let renderFn = null;        // PyProxy: web_adapter.render_json
-let scoutFn = null;         // PyProxy: web_adapter.render_scout_json
 let booted = false;
 
 let compareMode = false;
@@ -20,32 +17,36 @@ const SEQ_TI = new Set(["Inversion Recovery"]);
 const SEQ_SLOW_FIRST = new Set(["MR Angiography"]);
 const ACQ3D_SEQ = new Set(["Spin Echo", "Gradient Echo", "Inversion Recovery", "Balanced SSFP"]);
 
+// --- Worker plumbing -------------------------------------------------------- //
+const worker = new Worker("worker.js");
+let reqId = 0;
+const pending = new Map();           // id -> {resolve, reject}
+
+function call(type, payload) {
+  return new Promise((resolve, reject) => {
+    const id = ++reqId;
+    pending.set(id, { resolve, reject });
+    worker.postMessage({ id, type, payload });
+  });
+}
+
+worker.onmessage = (e) => {
+  const m = e.data;
+  if (m.type === "progress") { setSplash(m.pct, m.msg); return; }
+  if (m.type === "ready") { onReady(m.info); return; }
+  if (m.type === "error") { setSplash(100, "Failed to start: " + m.msg); return; }
+  const p = pending.get(m.id);
+  if (!p) return;
+  pending.delete(m.id);
+  if (m.error) p.reject(new Error(m.error)); else p.resolve(m.result);
+};
+
 function setSplash(pct, msg) {
   $("splash-bar").style.width = pct + "%";
   if (msg) $("splash-status").textContent = msg;
 }
 
-async function boot() {
-  setSplash(8, "Loading Pyodide…");
-  pyodide = await loadPyodide();
-  setSplash(30, "Loading numpy / scipy / matplotlib…");
-  await pyodide.loadPackage(["numpy", "scipy", "matplotlib"]);
-
-  setSplash(62, "Loading MRISim engine…");
-  const zip = await (await fetch("mrisim_src.zip")).arrayBuffer();
-  await pyodide.unpackArchive(zip, "zip", { extractDir: "/src" });
-
-  setSplash(74, "Loading brain phantom…");
-  pyodide.FS.mkdirTree("/data");
-  const npy = new Uint8Array(await (await fetch("data/brainweb_sub04_anat.npy")).arrayBuffer());
-  pyodide.FS.writeFile("/data/brainweb_sub04_anat.npy", npy);
-
-  setSplash(86, "Starting engine…");
-  pyodide.runPython("import sys; sys.path.insert(0, '/src')");
-  const info = JSON.parse(pyodide.runPython("import json, web_adapter; json.dumps(web_adapter.init())"));
-  renderFn = pyodide.runPython("web_adapter.render_json");
-  scoutFn = pyodide.runPython("web_adapter.render_scout_json");
-
+function onReady(info) {
   buildControls(info);
   setSplash(100, "Ready");
   $("splash").style.display = "none";
@@ -54,10 +55,10 @@ async function boot() {
   render();
 }
 
+// --- Controls --------------------------------------------------------------- //
 function buildControls(info) {
   const reg = $("region");
   info.regions.forEach((r) => reg.add(new Option(r, r)));
-  // Sequences supported in the web build (engine + a manageable control set).
   const seqs = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
     "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
     "Quantitative (qMRI)", "Echo Planar (EPI)"];
@@ -78,7 +79,6 @@ function buildControls(info) {
   });
   wireWindowLevel();
 
-  // Sliders mirror their value to the <output> and trigger a debounced render.
   ["tr", "te", "ti", "fa", "np", "slice"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
@@ -96,11 +96,9 @@ function buildControls(info) {
   syncVisibility();
 }
 
-function onSequenceOrRegion(e) {
+async function onSequenceOrRegion(e) {
   if (e.target.id === "region") {
-    // Region change resizes the volume; refresh the slice range from the engine.
-    const d = JSON.parse(pyodide.runPython(
-      `import json; json.dumps(web_adapter.set_region(${JSON.stringify(curRegion())}))`));
+    const d = await call("setRegion", curRegion());   // resizes the volume
     $("slice").max = d.max_slice;
     $("slice").value = Math.floor(d.max_slice / 2);
     setOrient("axial");
@@ -153,18 +151,15 @@ function collectPayload() {
 }
 
 // --- Presets ---------------------------------------------------------------- //
-function onPreset() {
+async function onPreset() {
   const name = $("preset").value;
   if (!name) return;                  // "— custom —"
-  const bundle = JSON.parse(pyodide.runPython(
-    `import json; json.dumps(web_adapter.apply_preset(${JSON.stringify(name)}))`));
+  const bundle = await call("preset", name);
   applyingPreset = true;
-  // Region (reload + reslice) if it differs.
   if (bundle.region && bundle.region !== curRegion()
       && [...$("region").options].some((o) => o.value === bundle.region)) {
     $("region").value = bundle.region;
-    const d = JSON.parse(pyodide.runPython(
-      `import json; json.dumps(web_adapter.set_region(${JSON.stringify(bundle.region)}))`));
+    const d = await call("setRegion", bundle.region);
     $("slice").max = d.max_slice;
     $("slice").value = Math.floor(d.max_slice / 2);
   }
@@ -231,28 +226,27 @@ function wireWindowLevel() {
   img.addEventListener("dblclick", () => { winW = 1.0; winL = 0.5; schedule(); });
 }
 
-let timer = null, pending = false, running = false;
+// --- Render orchestration (async, via the worker) --------------------------- //
+let timer = null, pending2 = false, running = false;
 function schedule() {
   if (!booted) return;
   if (!applyingPreset) $("preset").value = "";   // manual tweak → "custom"
   clearTimeout(timer);
-  timer = setTimeout(render, 120);   // debounce rapid slider input
+  timer = setTimeout(render, 90);    // debounce; the worker keeps the UI free
 }
 
 async function render() {
-  if (running) { pending = true; return; }     // coalesce overlapping renders
+  if (running) { pending2 = true; return; }      // coalesce overlapping renders
   running = true;
   if (SEQ_SLOW_FIRST.has($("sequence").value)) {
     $("hint").textContent = "Building vessel model (one-time, may take ~1 min)…";
   }
   document.body.classList.add("busy");
-  // Yield so the busy state + hint paint before the (blocking) Pyodide render.
-  await new Promise((r) => setTimeout(r, 0));
   try {
     if (compareMode) {
       const B = collectPayload();
-      const resA = JSON.parse(renderFn(JSON.stringify(protocolA || B)));
-      const resB = JSON.parse(renderFn(JSON.stringify(B)));
+      const resA = await call("render", protocolA || B);
+      const resB = await call("render", B);
       $("mainImage").src = resA.image;
       $("mainImageB").src = resB.image;
       $("curveImage").src = resB.curve;
@@ -260,21 +254,21 @@ async function render() {
       syncSlice(resB);
       showDelta(resA.metrics, resB.metrics);
     } else {
-      applyResult(JSON.parse(renderFn(JSON.stringify(collectPayload()))));
+      applyResult(await call("render", collectPayload()));
     }
     if ($("fovplan").checked) {
       const p = collectPayload();
-      const s = JSON.parse(scoutFn(JSON.stringify(
-        { region: p.region, orientation: p.orientation, slice_idx: p.slice_idx })));
+      const s = await call("scout",
+        { region: p.region, orientation: p.orientation, slice_idx: p.slice_idx });
       $("scoutImage").src = s.scout;
     }
   } catch (err) {
-    $("hint").textContent = "Render error: " + err;
+    $("hint").textContent = "Render error: " + err.message;
     console.error(err);
   } finally {
     document.body.classList.remove("busy");
     running = false;
-    if (pending) { pending = false; schedule(); }
+    if (pending2) { pending2 = false; schedule(); }
   }
 }
 
@@ -321,5 +315,3 @@ function weighting(seq, tr, te) {
   if (tr > 2000 && te < 30) return "PD";
   return "Mixed";
 }
-
-boot().catch((e) => { setSplash(100, "Failed to start: " + e); console.error(e); });
