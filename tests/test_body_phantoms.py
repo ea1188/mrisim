@@ -441,3 +441,34 @@ class TestRenderSlice:
         img_text = render_slice(abdomen_label_map, TR=500, TE=15, texture=0.1, blur=0, seed=0)
         brain_mask = abdomen_label_map > 0
         assert not np.allclose(img_clean[brain_mask], img_text[brain_mask])
+
+
+class TestSyntheticTexture:
+    """The procedural texture field that gives synthetic regions parenchymal
+    detail (used in the browser build and for the synthetic knee)."""
+
+    def test_texture_shape_and_multiplicative_range(self):
+        import body_phantoms as bp
+        vol = bp.build_region("Knee")
+        tex = bp.synthetic_texture_3d(vol, seed=1)
+        assert tex.shape == vol.shape
+        assert 0.4 < float(tex.min()) and float(tex.max()) < 1.8
+        assert 0.9 < float(tex.mean()) < 1.1          # centred on 1.0 (multiplicative)
+
+    def test_fluid_smoother_than_parenchyma(self):
+        """Per-tissue amplitude: fluid (label 1) varies less than bowel (17)."""
+        import numpy as np
+        import body_phantoms as bp
+        vol = np.zeros((12, 40, 40), dtype=np.uint8)
+        vol[:, 8:20, 8:32] = 1                         # fluid block
+        vol[:, 22:34, 8:32] = 17                       # bowel block
+        tex = bp.synthetic_texture_3d(vol, seed=2)
+        assert tex[vol == 1].std() < tex[vol == 17].std()
+
+    def test_build_region_texture_synthetic_fallback(self):
+        """A synthetic region (knee — no real-MRI source) now yields a procedural
+        texture rather than None, so organs aren't flat fills."""
+        import body_phantoms as bp
+        vol = bp.build_region("Knee")
+        tex = bp.build_region_texture("Knee", vol)
+        assert tex is not None and tex.shape == vol.shape

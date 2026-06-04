@@ -580,17 +580,61 @@ def build_region(name: str) -> np.ndarray:
     raise KeyError(f"No builder for region {name!r}")
 
 
-def build_region_texture(name: str) -> "np.ndarray | None":
-    """Real-MRI anatomical texture field for *name*, aligned to build_region(name).
+# Per-tissue texture amplitude (multiplicative ± fraction) for the synthetic
+# texture field — how heterogeneous each tissue looks. Fluid/bone are smooth;
+# parenchyma, marrow, bowel and fat are mottled.
+_TEXTURE_AMP = {
+    1: 0.025,  4: 0.11,  5: 0.04,  6: 0.09,  7: 0.12,  8: 0.12,  9: 0.12,
+    10: 0.12, 11: 0.06, 13: 0.04, 14: 0.13, 15: 0.06, 16: 0.06, 17: 0.15,
+    18: 0.14, 19: 0.12, 20: 0.10, 21: 0.10,
+}
+_TEXTURE_DEFAULT = 0.08
 
-    Returns None when the region has no real-MRI source (synthetic fallback or
-    the flat-NIfTI regions) — the renderer then uses its synthetic texture."""
+
+def synthetic_texture_3d(label_vol: np.ndarray, seed: int = 0) -> np.ndarray:
+    """A multiplicative MR-texture field (≈1.0) aligned to ``label_vol``.
+
+    Sums a few octaves of band-limited value noise (coarse parenchymal mottle +
+    finer speckle) and scales it per tissue (``_TEXTURE_AMP``), so synthetic
+    organs/muscle/marrow read like real parenchyma instead of flat fills, while
+    fluid and bone stay smooth. Computed once per region (cached by the caller)
+    and consistent across slices/orientations."""
+    from scipy.ndimage import gaussian_filter
+    rng = np.random.default_rng(seed)
+    field = np.zeros(label_vol.shape, dtype=np.float64)
+    for sigma, weight in ((1.0, 0.5), (3.0, 0.8), (7.0, 0.5)):
+        n = gaussian_filter(rng.standard_normal(label_vol.shape), sigma)
+        std = float(n.std())
+        if std > 1e-9:
+            field += weight * (n / std)
+    fstd = float(field.std())
+    if fstd > 1e-9:
+        field /= fstd                                  # unit-std composite noise
+    amp = np.full(label_vol.shape, _TEXTURE_DEFAULT, dtype=np.float64)
+    for lab, a in _TEXTURE_AMP.items():
+        amp[label_vol == lab] = a
+    return np.clip(1.0 + amp * field, 0.45, 1.7).astype(np.float32)
+
+
+def build_region_texture(name: str, label_vol: "np.ndarray | None" = None) -> "np.ndarray | None":
+    """Anatomical texture field for *name*, aligned to build_region(name).
+
+    Prefers the real-MRI detail field (TotalSegmentator regions); otherwise — for
+    the synthetic phantoms (knee, and any region without the dataset, e.g. the
+    browser build) — returns a procedural :func:`synthetic_texture_3d` so organs
+    show parenchymal texture rather than flat fills. ``label_vol`` lets the caller
+    pass the already-built volume to avoid rebuilding it."""
     try:
         from nifti_region import load_region_texture
         from brainweb_loader import data_dir
-        return load_region_texture(name, data_dir())
+        tex = load_region_texture(name, data_dir())
+        if tex is not None:
+            return tex
     except Exception:
-        return None
+        pass
+    vol = label_vol if label_vol is not None else build_region(name)
+    seed = abs(hash(name)) % (2 ** 32)
+    return synthetic_texture_3d(vol, seed=seed)
 
 
 # back-compat helper used by the earlier demo
