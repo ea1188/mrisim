@@ -38,6 +38,11 @@ try {
     { timeout: 30_000 },
   );
 
+  // First-run intro must appear, then dismiss it (it overlays the controls).
+  await page.waitForSelector("#intro:not([hidden])", { timeout: 10_000 });
+  await page.click("#intro-ok");
+  await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
+
   // Metrics must have populated (not the "—" placeholder).
   const scan = await page.textContent("#x-scan");
   const snr = await page.textContent("#x-snr");
@@ -70,7 +75,7 @@ try {
   const delta = await page.textContent("#abdelta");
   if (!delta || !/SNR/.test(delta)) fail("compare delta did not populate: " + delta);
   await page.click("#exitAB");
-  await page.waitForSelector("#wrapB[hidden]", { timeout: 5_000 });
+  await page.waitForSelector("#wrapB", { state: "hidden", timeout: 5_000 });
 
   // Window/level drag must change the image (single render path).
   const beforeWL = await page.getAttribute("#mainImage", "src");
@@ -107,8 +112,17 @@ try {
   if (sliceAfter === sliceBefore) fail("scout click did not move the slice (before=" + sliceBefore + ")");
   await page.uncheck("#fovplan");
 
+  // Keyboard slice navigation (blur any focused control first — the handler
+  // intentionally ignores keys while an input/select is focused).
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  const kBefore = await page.inputValue("#slice");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.waitForTimeout(600);
+  if (await page.inputValue("#slice") === kBefore) fail("keyboard did not change the slice");
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, sequence/preset, A/B compare, window-level, and FOV scout all work.");
+  console.log("SMOKE OK — render, metrics, intro, sequence/preset, A/B compare, window-level, FOV scout, and keyboard nav all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {

@@ -7,6 +7,10 @@
   --accent: #4f9cf9; --accent-hi: #7fb8ff; --accent-ink: #081019;
 }
 * { box-sizing: border-box; }
+/* The [hidden] attribute must always win over element display rules below
+   (e.g. #intro/#app/#wrapB/#scoutwrap set display, which would otherwise keep a
+   hidden element laid out and intercepting clicks). */
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--canvas); color: var(--text);
@@ -115,7 +119,46 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
 .hint { color: var(--text-faint); font-size: 11px; margin-top: 12px; min-height: 1em; }
 .busy #mainImage { opacity: .55; transition: opacity .1s; }
 
-@media (max-width: 900px) {
-  #app { grid-template-columns: 1fr; height: auto; }
-  .curvewrap { height: 200px; }
+/* Intro / onboarding modal */
+#intro {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: rgba(3, 5, 8, 0.72); padding: 16px;
+}
+.intro-card {
+  width: min(520px, 94vw); background: var(--panel); border: 1px solid var(--border-hi);
+  border-radius: 14px; padding: 22px 24px; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+}
+.intro-card h2 { margin: 0 0 2px; font-size: 22px; }
+.intro-sub { color: var(--text-dim); margin: 0 0 14px; }
+.intro-card ul { margin: 0 0 18px; padding-left: 18px; }
+.intro-card li { margin: 9px 0; color: #c4cad2; line-height: 1.45; }
+.intro-card b { color: var(--accent-hi); font-weight: 700; }
+kbd {
+  background: var(--raised); border: 1px solid var(--border-hi); border-bottom-width: 2px;
+  border-radius: 5px; padding: 0 6px; font-size: 11px; font-family: inherit; color: var(--text);
+}
+#intro-ok {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dk, #2f6fd6)); color: #fff;
+  border: none; border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+#intro-ok:hover { filter: brightness(1.08); }
+#help {
+  background: var(--raised); border: 1px solid var(--border); color: var(--text-dim);
+  width: 26px; height: 26px; border-radius: 50%; font-weight: 800; cursor: pointer; padding: 0;
+}
+#help:hover { color: var(--accent-hi); border-color: var(--accent); }
+
+/* Responsive — stack to a single column with the image first on narrow screens. */
+@media (max-width: 920px) {
+  #app { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .viewport { order: -1; min-height: 56vh; }
+  .images { flex-direction: column; }
+  .panel { max-height: none; }
+  .topchips { display: none; }
+  .tag { display: none; }
+}
+@media (max-width: 560px) {
+  .group h2 { margin-top: 2px; }
+  .curvewrap { height: 170px; }
+  .scoutwrap { height: 120px; }
 }
