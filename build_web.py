@@ -82,6 +82,16 @@ def _bundle_regions() -> None:
                  if os.path.exists(os.path.join(out, f"{region}_{k}.npy"))) // (1024 * 1024)
         print(f"  region {region}: bundled real atlas {vol.shape} (~{mb} MB)")
 
+    # Knee: the processed KneeBones3Dify cache (atlas uint8 + texture float16).
+    knee = os.path.join(ROOT, "data", "knee_kb3d")
+    if os.path.exists(os.path.join(knee, "atlas.npy")):
+        shutil.copy2(os.path.join(knee, "atlas.npy"), os.path.join(out, "Knee_atlas.npy"))
+        if os.path.exists(os.path.join(knee, "texture.npy")):
+            shutil.copy2(os.path.join(knee, "texture.npy"), os.path.join(out, "Knee_texture.npy"))
+        print("  region Knee: bundled real atlas (KneeBones3Dify)")
+    else:
+        print("  region Knee: no real atlas cache — browser uses synthetic")
+
 
 if __name__ == "__main__":
     build()

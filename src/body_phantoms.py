@@ -14,6 +14,8 @@ Volume axis convention matches phantom3d.get_slice:
     axis 1 = coronal index (anterior->posterior, Y)
     axis 2 = sagittal index (left->right, X)
 """
+import os
+
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
@@ -562,7 +564,7 @@ def build_region(name: str) -> np.ndarray:
     body equivalent of BrainWeb).  Falls back to the synthetic generator if the
     data file is absent or nibabel is unavailable.
     """
-    # Real NIfTI path
+    # Real NIfTI path (TotalSegmentator MRI body atlases)
     try:
         from nifti_region import load_region_nifti
         from brainweb_loader import data_dir
@@ -571,10 +573,25 @@ def build_region(name: str) -> np.ndarray:
             return vol
     except Exception:
         pass
+    # Real Knee atlas (KneeBones3Dify, processed by scripts/build_knee_atlas.py)
+    if name == "Knee":
+        knee = _load_knee_cache("atlas")
+        if knee is not None:
+            return knee
     # Synthetic fallback
     if name in _BUILDERS:
         return _BUILDERS[name]()
     raise KeyError(f"No builder for region {name!r}")
+
+
+def _load_knee_cache(which: str) -> "np.ndarray | None":
+    """Load the real Knee atlas/texture cache (data/knee_kb3d/{which}.npy)."""
+    try:
+        from brainweb_loader import data_dir
+        path = os.path.join(data_dir(), "knee_kb3d", f"{which}.npy")
+        return np.load(path) if os.path.exists(path) else None
+    except Exception:
+        return None
 
 
 # Per-tissue texture amplitude (multiplicative ± fraction) for the synthetic
@@ -616,11 +633,11 @@ def synthetic_texture_3d(label_vol: np.ndarray, seed: int = 0) -> np.ndarray:
 def build_region_texture(name: str, label_vol: "np.ndarray | None" = None) -> "np.ndarray | None":
     """Anatomical texture field for *name*, aligned to build_region(name).
 
-    Prefers the real-MRI detail field (TotalSegmentator regions); otherwise — for
-    the synthetic phantoms (knee, and any region without the dataset, e.g. the
-    browser build) — returns a procedural :func:`synthetic_texture_3d` so organs
-    show parenchymal texture rather than flat fills. ``label_vol`` lets the caller
-    pass the already-built volume to avoid rebuilding it."""
+    Prefers the real-MRI detail field — the TotalSegmentator body atlases and the
+    real Knee atlas (KneeBones3Dify); otherwise, for the synthetic phantoms (and
+    any region without a cache), returns a procedural :func:`synthetic_texture_3d`
+    so tissues show parenchymal texture rather than flat fills. ``label_vol`` lets
+    the caller pass the already-built volume to avoid rebuilding it."""
     try:
         from nifti_region import load_region_texture
         from brainweb_loader import data_dir
@@ -629,6 +646,10 @@ def build_region_texture(name: str, label_vol: "np.ndarray | None" = None) -> "n
             return tex
     except Exception:
         pass
+    if name == "Knee":
+        knee_tex = _load_knee_cache("texture")
+        if knee_tex is not None:
+            return knee_tex.astype(np.float32)
     vol = label_vol if label_vol is not None else build_region(name)
     seed = abs(hash(name)) % (2 ** 32)
     return synthetic_texture_3d(vol, seed=seed)

@@ -449,7 +449,7 @@ class TestSyntheticTexture:
 
     def test_texture_shape_and_multiplicative_range(self):
         import body_phantoms as bp
-        vol = bp.build_region("Knee")
+        vol = bp.generate_knee_3d()                    # the synthetic fallback phantom
         tex = bp.synthetic_texture_3d(vol, seed=1)
         assert tex.shape == vol.shape
         assert 0.4 < float(tex.min()) and float(tex.max()) < 1.8
@@ -465,10 +465,23 @@ class TestSyntheticTexture:
         tex = bp.synthetic_texture_3d(vol, seed=2)
         assert tex[vol == 1].std() < tex[vol == 17].std()
 
-    def test_build_region_texture_synthetic_fallback(self):
-        """A synthetic region (knee — no real-MRI source) now yields a procedural
-        texture rather than None, so organs aren't flat fills."""
+    def test_synthetic_texture_for_a_phantom(self):
+        """A synthetic phantom yields a procedural texture (not None), so tissues
+        aren't flat fills."""
+        import body_phantoms as bp
+        vol = bp.generate_knee_3d()
+        tex = bp.build_region_texture("Knee", vol)
+        assert tex is not None and tex.shape[0] > 0
+
+
+class TestRealKnee:
+    """The real Knee atlas (KneeBones3Dify cache, data/knee_kb3d/)."""
+
+    def test_knee_region_is_real_atlas(self):
+        import numpy as np
         import body_phantoms as bp
         vol = bp.build_region("Knee")
+        assert vol.shape != (120, 160, 150)            # not the synthetic phantom
+        assert set(np.unique(vol).tolist()) >= {0, 13, 14}   # bg + cortical bone + marrow
         tex = bp.build_region_texture("Knee", vol)
         assert tex is not None and tex.shape == vol.shape
