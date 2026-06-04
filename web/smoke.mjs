@@ -136,8 +136,24 @@ try {
   ]);
   if (!download.suggestedFilename().endsWith(".png")) fail("download is not a .png: " + download.suggestedFilename());
 
+  // Guided lessons: open the picker, start a lesson, advance a step.
+  await page.click("#lessons-btn");
+  await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  await page.click("#lesson-list .lesson-item");
+  await page.waitForSelector("#lesson-panel:not([hidden])", { timeout: 5_000 });
+  const step1 = await page.textContent("#lesson-step");
+  const imgBeforeStep = await page.getAttribute("#mainImage", "src");
+  await page.click("#lesson-next");
+  await page.waitForFunction(
+    (prev) => document.getElementById("lesson-step").textContent !== prev, step1, { timeout: 5_000 });
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+    imgBeforeStep, { timeout: 15_000 });
+  await page.click("#lesson-exit");
+  await page.waitForSelector("#lesson-panel", { state: "hidden", timeout: 5_000 });
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, intro, sequence/preset, A/B compare, window-level, FOV scout, keyboard nav, new controls, share-URL, and download all work.");
+  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, and guided lessons all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {

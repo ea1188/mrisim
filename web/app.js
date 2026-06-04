@@ -75,25 +75,34 @@ function stateToHash() {
   history.replaceState(null, "", "#" + q);
 }
 
+// Apply a plain state object (short keys, same as the URL hash) to the controls.
+// Only keys present are set, so callers can override a subset (presets, lessons,
+// shared links). Booleans for the checkbox keys.
+async function applyState(st) {
+  applyingPreset = true;
+  if (st.region && st.region !== curRegion()
+      && [...$("region").options].some((o) => o.value === st.region)) {
+    $("region").value = st.region;
+    const d = await call("setRegion", st.region);
+    $("slice").max = d.max_slice;
+  }
+  if (st.seq) $("sequence").value = st.seq;
+  if (st.orient) setOrient(st.orient);
+  if (st.field) $("field").value = st.field;
+  const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
+  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "bval", "etl", "np"].forEach(sv);
+  ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  syncVisibility();
+  applyingPreset = false;
+}
+
 async function applyHashState() {
   const h = location.hash.slice(1);
   if (!h) return false;
   const p = new URLSearchParams(h);
-  applyingPreset = true;
-  if (p.has("region") && [...$("region").options].some((o) => o.value === p.get("region"))) {
-    $("region").value = p.get("region");
-    const d = await call("setRegion", p.get("region"));
-    $("slice").max = d.max_slice;
-  }
-  if (p.has("seq")) $("sequence").value = p.get("seq");
-  if (p.has("orient")) setOrient(p.get("orient"));
-  if (p.has("field")) $("field").value = p.get("field");
-  const sv = (key) => { if (p.has(key)) { $(key).value = p.get(key); const o = $(key + "-val"); if (o) o.value = $(key).value; } };
-  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "bval", "etl", "np"].forEach(sv);
-  [["fatsat", "fatsat"], ["gd", "gd"], ["flow", "flow"], ["acq3d", "acq3d"], ["kzpf", "kzpf"]]
-    .forEach(([id, k]) => { if (p.has(k)) $(id).checked = p.get(k) === "1"; });
-  syncVisibility();
-  applyingPreset = false;
+  const st = {};
+  for (const [k, v] of p) st[k] = ["fatsat", "gd", "flow", "acq3d", "kzpf"].includes(k) ? v === "1" : v;
+  await applyState(st);
   return true;
 }
 
@@ -124,6 +133,98 @@ function maybeShowIntro() {
   $("intro-ok").addEventListener("click", hideIntro);
   $("help").addEventListener("click", showIntro);
   try { if (!localStorage.getItem("mrisim_seen")) showIntro(); } catch (e) { /* private mode */ }
+}
+
+// --- Guided lessons --------------------------------------------------------- //
+const LESSONS = [
+  {
+    title: "T1, T2 & PD contrast",
+    blurb: "Why CSF flips from dark to bright as you change TR and TE.",
+    steps: [
+      { text: "<b>T1-weighted.</b> Short TR / short TE on a spin echo. Short-T1 tissues (fat, white matter) recover fast and look bright; fluid (CSF) recovers slowly and stays <b>dark</b>.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12 } },
+      { text: "<b>T2-weighted.</b> Lengthen TR (drop T1 weighting) and TE (add T2 weighting). Fluid has a long T2, so <b>CSF is now the brightest</b> — the classic flip. Watch the ventricles.",
+        state: { tr: 4000, te: 100 } },
+      { text: "<b>Proton-density.</b> Long TR, short TE — little T1 or T2 weighting, so contrast tracks tissue water content. Gray matter is slightly brighter than white. The 'in-between' weighting.",
+        state: { tr: 4000, te: 12 } },
+    ],
+  },
+  {
+    title: "Nulling a tissue: FLAIR & STIR",
+    blurb: "Inversion recovery and choosing TI to zero out CSF or fat.",
+    steps: [
+      { text: "<b>Inversion recovery</b> flips the magnetization 180°, then waits a time <b>TI</b> before imaging. Each tissue crosses zero signal at TI ≈ T1·ln2 — pick TI to <b>null</b> a tissue.",
+        state: { region: "Brain", seq: "Inversion Recovery", orient: "axial", slice: 90, tr: 9000, ti: 2548, te: 100 } },
+      { text: "<b>FLAIR.</b> At 3 T, TI ≈ 2550 ms nulls CSF — fluid goes dark while T2 contrast remains, so periventricular lesions stand out against black CSF. The workhorse brain sequence.",
+        state: { tr: 9000, ti: 2548, te: 100 } },
+      { text: "<b>STIR.</b> Drop TI to ~265 ms and shorten TR — now <b>fat</b> is nulled instead (short-T1 inversion recovery), used to suppress fat and reveal edema.",
+        state: { tr: 6000, ti: 265, te: 30 } },
+    ],
+  },
+  {
+    title: "SNR vs. scan time",
+    blurb: "The fundamental tradeoff — averaging, matrix, bandwidth.",
+    steps: [
+      { text: "Watch the <b>SNR</b> and <b>scan time</b> readouts on the right. Baseline: one average, 256 matrix.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 15, nex: 1, matrix: 256, bw: 125 } },
+      { text: "<b>Averaging (NEX = 4).</b> SNR rises by √4 = <b>2×</b>, but scan time grows <b>4×</b>. Averaging buys SNR at a steep time cost.",
+        state: { nex: 4 } },
+      { text: "<b>Resolution.</b> Back to NEX 1, matrix 128: faster and higher SNR per (larger) voxel, but coarser detail. Resolution, SNR and time are always in tension.",
+        state: { nex: 1, matrix: 128 } },
+    ],
+  },
+  {
+    title: "3D slab acquisition & reformat",
+    blurb: "Acquire a slab once, then view any plane.",
+    steps: [
+      { text: "Enable <b>3D slab acquisition</b> on a gradient echo. The slab is phase-encoded through-plane (kz) and acquired <b>once</b> — note the <code>3D SLAB</code> badge.",
+        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true, np: 32 } },
+      { text: "Switch to <b>coronal</b>: the same acquired slab is <b>reformatted live</b> — no re-scan (see the <code>REFORMAT</code> tag). That's the headline of 3D imaging.",
+        state: { orient: "coronal", slice: 110 } },
+      { text: "And <b>sagittal</b>, still from the one acquisition. 3D gives thin contiguous partitions and a √Nz SNR advantage over single 2D slices.",
+        state: { orient: "sagittal", slice: 90 } },
+    ],
+  },
+];
+
+let lessonIdx = -1, stepIdx = 0;
+
+function wireLessons() {
+  const list = $("lesson-list");
+  LESSONS.forEach((L, i) => {
+    const b = document.createElement("button");
+    b.className = "lesson-item";
+    b.innerHTML = `<b>${L.title}</b><span>${L.blurb}</span>`;
+    b.addEventListener("click", () => { $("lesson-picker").hidden = true; startLesson(i); });
+    list.appendChild(b);
+  });
+  $("lessons-btn").addEventListener("click", () => { $("lesson-picker").hidden = false; });
+  $("lesson-picker-close").addEventListener("click", () => { $("lesson-picker").hidden = true; });
+  $("lesson-exit").addEventListener("click", exitLesson);
+  $("lesson-prev").addEventListener("click", () => { if (stepIdx > 0) { stepIdx--; applyStep(); } });
+  $("lesson-next").addEventListener("click", () => {
+    if (stepIdx < LESSONS[lessonIdx].steps.length - 1) { stepIdx++; applyStep(); } else exitLesson();
+  });
+}
+
+function startLesson(i) {
+  lessonIdx = i; stepIdx = 0;
+  if (compareMode) setCompare(false);
+  ["gd", "flow", "fatsat", "acq3d", "kzpf"].forEach((id) => { $(id).checked = false; });  // clean baseline
+  $("lesson-panel").hidden = false;
+  applyStep();
+}
+function exitLesson() { lessonIdx = -1; $("lesson-panel").hidden = true; }
+
+async function applyStep() {
+  const L = LESSONS[lessonIdx], s = L.steps[stepIdx];
+  $("lesson-title").textContent = L.title;
+  $("lesson-step").innerHTML = s.text;
+  $("lesson-progress").textContent = `Step ${stepIdx + 1} / ${L.steps.length}`;
+  $("lesson-prev").disabled = stepIdx === 0;
+  $("lesson-next").textContent = stepIdx === L.steps.length - 1 ? "Finish" : "Next ›";
+  await applyState(s.state);
+  render();
 }
 
 // --- Keyboard + wheel slice navigation -------------------------------------- //
@@ -181,6 +282,7 @@ function buildControls(info) {
   wireWindowLevel();
   wireScout();
   wireKeyboard();
+  wireLessons();
 
   ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "bval", "etl"].forEach((id) => {
     $(id).addEventListener("input", () => {

@@ -43,6 +43,30 @@
     </div>
   </div>
 
+  <!-- Lesson picker (populated from app.js) -->
+  <div id="lesson-picker" hidden>
+    <div class="intro-card">
+      <h2>Guided lessons</h2>
+      <p class="intro-sub">Short walkthroughs — each step sets up the scanner and explains what you see.</p>
+      <div id="lesson-list"></div>
+      <button id="lesson-picker-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <!-- Active-lesson panel (floats over the viewport) -->
+  <aside id="lesson-panel" hidden>
+    <div class="lp-head"><span id="lesson-title"></span>
+      <button id="lesson-exit" type="button" title="Exit lesson">✕</button></div>
+    <p id="lesson-step"></p>
+    <div class="lp-foot">
+      <span id="lesson-progress"></span>
+      <span class="lp-btns">
+        <button id="lesson-prev" type="button">‹ Back</button>
+        <button id="lesson-next" type="button">Next ›</button>
+      </span>
+    </div>
+  </aside>
+
   <header id="topbar">
     <div class="brand"><img class="logo-sm" src="logo.png" alt="" /><b>MRISim</b>
       <span class="tag">browser edition</span></div>
@@ -51,6 +75,7 @@
       <span class="chip"><i>SNR (WM)</i><b id="m-snrwm">—</b></span>
       <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
     </div>
+    <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">📖 Lessons</button>
     <button id="help" class="ghlink" type="button" title="Show the intro">?</button>
     <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
