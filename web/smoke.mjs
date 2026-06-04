@@ -121,8 +121,23 @@ try {
   await page.waitForTimeout(600);
   if (await page.inputValue("#slice") === kBefore) fail("keyboard did not change the slice");
 
+  // A new acquisition control (NEX) must re-render and the URL must stay shareable.
+  const beforeNex = await page.getAttribute("#mainImage", "src");
+  await page.evaluate(() => { const e = document.getElementById("nex"); e.value = 3; e.dispatchEvent(new Event("input")); });
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+    beforeNex, { timeout: 15_000 });
+  if (!(await page.evaluate(() => location.hash.length > 1))) fail("URL hash was not updated for sharing");
+
+  // Download must produce a .png.
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.click("#download"),
+  ]);
+  if (!download.suggestedFilename().endsWith(".png")) fail("download is not a .png: " + download.suggestedFilename());
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, intro, sequence/preset, A/B compare, window-level, FOV scout, and keyboard nav all work.");
+  console.log("SMOKE OK — render, metrics, intro, sequence/preset, A/B compare, window-level, FOV scout, keyboard nav, new controls, share-URL, and download all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {

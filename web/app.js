@@ -47,14 +47,74 @@ function setSplash(pct, msg) {
   if (msg) $("splash-status").textContent = msg;
 }
 
-function onReady(info) {
+async function onReady(info) {
   buildControls(info);
   setSplash(100, "Ready");
   $("splash").style.display = "none";
   $("app").hidden = false;
   booted = true;
+  await applyHashState();        // restore a shared prescription, if the URL has one
   render();
   maybeShowIntro();
+}
+
+// --- Shareable URL state + export ------------------------------------------- //
+const HASH_KEYS = {
+  region: () => curRegion(), seq: () => $("sequence").value, orient: () => curOrient(),
+  slice: () => $("slice").value, field: () => $("field").value,
+  tr: () => $("tr").value, te: () => $("te").value, ti: () => $("ti").value, fa: () => $("fa").value,
+  matrix: () => $("matrix").value, bw: () => $("bw").value, nex: () => $("nex").value,
+  bval: () => $("bval").value, etl: () => $("etl").value,
+  fatsat: () => ($("fatsat").checked ? 1 : 0), gd: () => ($("gd").checked ? 1 : 0),
+  flow: () => ($("flow").checked ? 1 : 0), acq3d: () => ($("acq3d").checked ? 1 : 0),
+  np: () => $("np").value, kzpf: () => ($("kzpf").checked ? 1 : 0),
+};
+
+function stateToHash() {
+  const q = Object.entries(HASH_KEYS).map(([k, f]) => `${k}=${encodeURIComponent(f())}`).join("&");
+  history.replaceState(null, "", "#" + q);
+}
+
+async function applyHashState() {
+  const h = location.hash.slice(1);
+  if (!h) return false;
+  const p = new URLSearchParams(h);
+  applyingPreset = true;
+  if (p.has("region") && [...$("region").options].some((o) => o.value === p.get("region"))) {
+    $("region").value = p.get("region");
+    const d = await call("setRegion", p.get("region"));
+    $("slice").max = d.max_slice;
+  }
+  if (p.has("seq")) $("sequence").value = p.get("seq");
+  if (p.has("orient")) setOrient(p.get("orient"));
+  if (p.has("field")) $("field").value = p.get("field");
+  const sv = (key) => { if (p.has(key)) { $(key).value = p.get(key); const o = $(key + "-val"); if (o) o.value = $(key).value; } };
+  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "bval", "etl", "np"].forEach(sv);
+  [["fatsat", "fatsat"], ["gd", "gd"], ["flow", "flow"], ["acq3d", "acq3d"], ["kzpf", "kzpf"]]
+    .forEach(([id, k]) => { if (p.has(k)) $(id).checked = p.get(k) === "1"; });
+  syncVisibility();
+  applyingPreset = false;
+  return true;
+}
+
+function flash(btn, msg) {
+  const t = btn.textContent; btn.textContent = msg;
+  setTimeout(() => { btn.textContent = t; }, 1200);
+}
+
+async function copyLink() {
+  stateToHash();
+  try { await navigator.clipboard.writeText(location.href); flash($("copylink"), "Copied!"); }
+  catch (e) { flash($("copylink"), "Copy failed"); }
+}
+
+function downloadPNG() {
+  const src = $("mainImage").src;
+  if (!src || !src.startsWith("data:image")) return;
+  const a = document.createElement("a");
+  a.href = src;
+  a.download = `mrisim_${$("sequence").value.replace(/\W+/g, "_")}_${curOrient()}_${$("slice").value}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 // --- Onboarding ------------------------------------------------------------- //
@@ -122,12 +182,14 @@ function buildControls(info) {
   wireScout();
   wireKeyboard();
 
-  ["tr", "te", "ti", "fa", "np", "slice"].forEach((id) => {
+  ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "bval", "etl"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
       schedule();
     });
   });
+  $("copylink").addEventListener("click", copyLink);
+  $("download").addEventListener("click", downloadPNG);
   [reg, seq, $("field")].forEach((el) => el.addEventListener("change", onSequenceOrRegion));
   ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((id) =>
     $(id).addEventListener("change", () => { if (id === "acq3d") syncVisibility(); schedule(); }));
@@ -154,6 +216,8 @@ function syncVisibility() {
   const s = $("sequence").value;
   $("fa-row").hidden = !SEQ_FA.has(s);
   $("ti-row").hidden = !SEQ_TI.has(s);
+  $("bval-row").hidden = s !== "Diffusion (DWI)";
+  $("etl-row").hidden = s !== "FSE / TSE";
   const is3d = ACQ3D_SEQ.has(s);
   $("acq3d").disabled = !is3d;
   if (!is3d) $("acq3d").checked = false;
@@ -177,10 +241,13 @@ function collectPayload() {
     sequence: s,
     TR: +$("tr").value, TE: +$("te").value, TI: +$("ti").value,
     flip_angle: +$("fa").value, field_strength: $("field").value,
+    matrix_size: +$("matrix").value, bandwidth: +$("bw").value, NEX: +$("nex").value,
     fatsat_enabled: $("fatsat").checked,
     contrast_enabled: $("gd").checked, contrast_dose: $("gd").checked ? 5 : 0,
     flow_enabled: $("flow").checked,
   };
+  if (s === "Diffusion (DWI)") params.b_value = +$("bval").value;
+  if (s === "FSE / TSE") params.etl = +$("etl").value;
   if (ACQ3D_SEQ.has(s) && $("acq3d").checked) {
     params.acq3d = true;
     params.n_partitions = +$("np").value;
@@ -211,6 +278,8 @@ async function onPreset() {
   const set = (id, v) => { if (v !== undefined && v !== null) { $(id).value = v; const o = $(id + "-val"); if (o) o.value = v; } };
   if (p.sequence) $("sequence").value = p.sequence;
   set("tr", p.TR); set("te", p.TE); set("ti", p.TI); set("fa", p.flip_angle);
+  set("matrix", p.matrix_size); set("bw", p.bandwidth); set("nex", p.NEX);
+  set("bval", p.b_value); set("etl", p.etl);
   if (p.field_strength) $("field").value = p.field_strength;
   $("fatsat").checked = !!p.fatsat_enabled;
   $("gd").checked = !!p.contrast_enabled;
@@ -347,6 +416,7 @@ async function render() {
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
     }
+    if (!compareMode) stateToHash();   // keep the URL shareable/current
   } catch (err) {
     $("hint").textContent = "Render error: " + err.message;
     console.error(err);
