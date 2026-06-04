@@ -262,7 +262,11 @@ From the repository root (`tests/conftest.py` puts `src/` on the path and forces
 pytest                  # or: python -m pytest
 ```
 
-1,950+ tests, all passing. Coverage is 97%+ across all non-GUI modules, and the PyQt GUI is now exercised by a headless smoke-test harness (~94%). CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
+2,000+ tests, all passing. Coverage is 97%+ across all non-GUI modules, and the PyQt GUI is now exercised by a headless smoke-test harness (~94%). CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push. (The tests covering the legacy `src/app.py` prototype need its `gradio` dependency, which `requirements.txt` installs.)
+
+## Validation
+
+[**`docs/VALIDATION.md`**](docs/VALIDATION.md) is a generated benchmark report that pins the engine's quantitative behaviour to the literature: measured 1.5 T / 3 T tissue relaxation vs published means (Wansapura 1999, Stanisz 2005, de Bazelaire 2004), the contrast/nulling each clinical weighting produces (T1w WM > GM > CSF, T2w CSF > GM > WM, FLAIR/STIR nulls), and analytic landmarks (Ernst angle, bSSFP banding null at 1/2TR, fat–water shift at 3.5 ppm·γ·B0). Every row carries a PASS/FAIL tolerance, and `tests/test_validation_report.py` fails if any check regresses — so the report can't drift from the physics. Regenerate with `python scripts/validation_report.py`.
 
 ## Project layout
 
