@@ -78,7 +78,7 @@ class RegionMixin(_Base):
             self.statusBar().showMessage(f"Building {name} phantom\u2026")  # type: ignore[union-attr]
             QApplication.processEvents()
             vol = self._body_phantoms.build_region(name)
-            tex = self._body_phantoms.build_region_texture(name)
+            tex = self._body_phantoms.build_region_texture(name, vol)
             # The body phantoms are built patient-right on the viewer's right
             # (neurological). Mirror L/R (axis 2) so they display radiological \u2014
             # patient-right on the viewer's left \u2014 consistent with the brain.

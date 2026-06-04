@@ -123,7 +123,7 @@ class WebHost(CurvesMixin):
                 tex = None
             else:
                 vol = body_phantoms.build_region(name)
-                tex = body_phantoms.build_region_texture(name)
+                tex = body_phantoms.build_region_texture(name, vol)
                 # Body phantoms are built neurological; mirror L/R (axis 2) to
                 # match the radiological brain — same as app_regions.on_region_change.
                 if name in _BODY_REGIONS:
