@@ -21,6 +21,21 @@
     </div>
   </div>
 
+  <!-- First-run intro (shown once; dismissal remembered in localStorage). -->
+  <div id="intro" hidden>
+    <div class="intro-card">
+      <h2>Welcome to MRISim</h2>
+      <p class="intro-sub">The real MRI physics engine, running in your browser.</p>
+      <ul>
+        <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel.</li>
+        <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets).</li>
+        <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
+        <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>) and click a panel to reposition the slice.</li>
+      </ul>
+      <button id="intro-ok" type="button">Got it</button>
+    </div>
+  </div>
+
   <header id="topbar">
     <div class="brand"><span class="logo-sm">MRI</span><b>MRISim</b>
       <span class="tag">browser edition</span></div>
@@ -29,6 +44,7 @@
       <span class="chip"><i>SNR (WM)</i><b id="m-snrwm">—</b></span>
       <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
     </div>
+    <button id="help" class="ghlink" type="button" title="Show the intro">?</button>
     <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 

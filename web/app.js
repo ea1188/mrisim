@@ -54,6 +54,46 @@ function onReady(info) {
   $("app").hidden = false;
   booted = true;
   render();
+  maybeShowIntro();
+}
+
+// --- Onboarding ------------------------------------------------------------- //
+function showIntro() { $("intro").hidden = false; }
+function hideIntro() { $("intro").hidden = true; localStorage.setItem("mrisim_seen", "1"); }
+function maybeShowIntro() {
+  $("intro-ok").addEventListener("click", hideIntro);
+  $("help").addEventListener("click", showIntro);
+  try { if (!localStorage.getItem("mrisim_seen")) showIntro(); } catch (e) { /* private mode */ }
+}
+
+// --- Keyboard + wheel slice navigation -------------------------------------- //
+function setSlice(v) {
+  const sl = $("slice");
+  v = Math.max(0, Math.min(+sl.max, v));
+  if (v === +sl.value) return;
+  sl.value = v; $("slice-val").value = v; schedule();
+}
+
+function wireKeyboard() {
+  document.addEventListener("keydown", (e) => {
+    if (!$("intro").hidden && e.key === "Escape") { hideIntro(); return; }
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || "")) return;
+    const k = e.key.toLowerCase();
+    let step = null;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") step = 1;
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") step = -1;
+    else if (e.key === "PageUp") step = 5;
+    else if (e.key === "PageDown") step = -5;
+    else if (k === "r") { winW = 1.0; winL = 0.5; schedule(); e.preventDefault(); return; }
+    else if (k === "f") { const c = $("fovplan"); c.checked = !c.checked; c.dispatchEvent(new Event("change")); e.preventDefault(); return; }
+    if (step === null) return;
+    e.preventDefault();
+    setSlice(+$("slice").value + step);
+  });
+  $("mainImage").addEventListener("wheel", (e) => {
+    e.preventDefault();
+    setSlice(+$("slice").value + (e.deltaY < 0 ? 1 : -1));
+  }, { passive: false });
 }
 
 // --- Controls --------------------------------------------------------------- //
@@ -80,6 +120,7 @@ function buildControls(info) {
   });
   wireWindowLevel();
   wireScout();
+  wireKeyboard();
 
   ["tr", "te", "ti", "fa", "np", "slice"].forEach((id) => {
     $(id).addEventListener("input", () => {
