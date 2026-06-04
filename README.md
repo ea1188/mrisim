@@ -7,9 +7,13 @@
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-444d56)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB)
 
-[![Download MRISim](https://img.shields.io/badge/%E2%AC%87%20Download%20MRISim-2563eb?style=for-the-badge)](https://github.com/ea1188/mrisim/releases/latest)
+[![Try MRISim in your browser](https://img.shields.io/badge/%E2%96%B6%20Try%20it%20in%20your%20browser-4f9cf9?style=for-the-badge)](https://ea1188.github.io/mrisim/)
+&nbsp;
+[![Download MRISim](https://img.shields.io/badge/%E2%AC%87%20Download%20desktop%20app-2563eb?style=for-the-badge)](https://github.com/ea1188/mrisim/releases/latest)
 
 </div>
+
+> **▶ [Run MRISim in your browser](https://ea1188.github.io/mrisim/)** — the full physics engine runs client-side via Pyodide, no install. Sequences, contrast, 3D slab acquisition, presets, A/B compare and a 3-plane localizer, all live. (First load fetches ~30–50&nbsp;MB; cached afterwards.)
 
 <p align="center">
   <img src="docs/demo.gif" width="840" alt="MRISim — sweeping echo time (TE) on a spin-echo brain: contrast shifts from proton-density to T2-weighted as the CSF brightens, with the marker tracking the live signal-vs-TE curve" />
@@ -114,6 +118,10 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 - **Export** — PNG/PDF report export; DICOM export *(library-only)*
 
 ## Installation
+
+### Run in your browser (nothing to install)
+
+The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)**. The real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/) — pick a sequence, sweep TR/TE/flip, switch anatomy and orientation, toggle 3D slab acquisition, apply presets, compare A/B, and pop up the 3-plane localizer, all rendered by the same code as the desktop app. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards; the body regions are generated in-browser. Loading external NIfTI, the real segmented body atlases, and DICOM export remain desktop-only.
 
 ### Download a ready-to-run app (no Python needed)
 
