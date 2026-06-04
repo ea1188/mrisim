@@ -12,7 +12,7 @@ from signal_engine import (spin_echo_signal, gradient_echo_signal,
                            inversion_recovery_signal, balanced_ssfp_signal)
 from fse import compute_fse_echo_train
 from phantom3d_extended import get_diffusion_properties_3d
-from app_theme import C_CHIP, C_BORDER, C_TEXT, C_HEADER, C_TEXT_DIM, C_ACCENT
+from theme_colors import C_CHIP, C_BORDER, C_TEXT, C_HEADER, C_TEXT_DIM, C_ACCENT
 
 
 class CurvesMixin:
