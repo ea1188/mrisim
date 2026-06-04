@@ -1,0 +1,39 @@
+name: Deploy web to Pages
+
+# Builds the static Pyodide bundle and publishes web/ to GitHub Pages, so MRISim
+# runs in the browser at https://ea1188.github.io/mrisim/ with no install.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "src/**", "build_web.py", ".github/workflows/deploy-web.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let the latest push win.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build the web bundle (engine zip + brain phantom)
+        run: python build_web.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v4

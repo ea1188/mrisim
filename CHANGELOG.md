@@ -12,6 +12,28 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-06-04
+
+**MRISim now runs in the browser** — the full physics engine, client-side via
+Pyodide, shareable by link with no install. No desktop behaviour changed.
+
+### Added
+- **Browser build** at https://ea1188.github.io/mrisim/. The unchanged Qt-free
+  engine runs in [Pyodide](https://pyodide.org/); a thin HTML/JS shell drives it
+  and Python renders the image, signal curve and localizer to PNG. Covers the
+  core loop (sequences, timing, field, orientation/slice, contrast toggles), **3D
+  slab acquisition with any-plane reformat**, **clinical presets**, **A/B
+  compare** with a SNR/CNR/scan-time delta, **window/level** drag, and a
+  **3-plane FOV-planning localizer**. Real brain (fetched once) + synthetic body
+  regions (generated in-browser); loading external NIfTI / real body atlases and
+  DICOM export stay desktop-only.
+- New `web/` static bundle, `build_web.py`, and a deploy workflow publishing to
+  GitHub Pages on every `main` push.
+- `web_adapter.py` (Qt-free) drives the engine for the browser; `render_overlay.py`
+  and `theme_colors.py` factor the DICOM annotations / 3D badges / palette out of
+  the desktop UI so the browser reuses the exact same rendering. 72 headless
+  adapter tests, plus a headless-Chromium (Playwright) smoke in CI.
+
 ## [1.3.0] — 2026-06-03
 
 True 3-D (slab) acquisition with **any-plane reformat** — acquire a slab once and
