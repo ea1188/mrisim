@@ -64,10 +64,14 @@ def _crop_to_body(vol, body):
 
 def build(raw_dir):
     vol, bone = _downsample(*_load_raw(raw_dir))
-    # DICOM slice 0 is superior (z descends with index); flip axis0 so it runs
-    # inferior→superior like the TotalSegmentator body atlases (axis0 increasing =
-    # superior), otherwise the knee renders upside-down relative to every region.
-    vol, bone = vol[::-1], bone[::-1]
+    # Reorient the raw DICOM to the body-atlas storage convention so the knee
+    # composes through the same engine + load_region path as every BODY_REGION.
+    # nifti_region builds those atlases as axis0↑=Superior, axis1↑=Anterior,
+    # axis2↑=Right (RAS+ transposed to Z,Y,X). This DICOM's tags (IOP/IPP) give
+    # axis0↑=Inferior, axis1↑=Posterior, axis2↑=Left — the opposite on all three
+    # axes — so flip all three. (Without this the knee was upside-down, then
+    # A-P-mirrored, then L-R-mirrored.)
+    vol, bone = vol[::-1, ::-1, ::-1], bone[::-1, ::-1, ::-1]
     v = vol / max(np.percentile(vol[vol > 0], 99), 1e-3)
     v = np.clip(v, 0, 1.6)
 
