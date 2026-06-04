@@ -35,7 +35,7 @@ async function boot() {
 }
 
 // Regions backed by a real segmented atlas that's lazy-fetched on first use.
-const REAL_REGIONS = new Set(["Abdomen", "Spine", "Pelvis", "Torso"]);
+const REAL_REGIONS = new Set(["Abdomen", "Spine", "Pelvis", "Torso", "Knee"]);
 const fetchedRegions = new Set();
 
 async function ensureRegionData(name) {

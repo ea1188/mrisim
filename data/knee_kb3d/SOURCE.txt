@@ -1,0 +1,20 @@
+Real Knee atlas — data source & attribution
+============================================
+
+The MRISim "Knee" region is built from:
+
+  KneeBones3Dify-Annotated-Dataset (v1.0.0)
+  Diego Romano et al.
+  Zenodo: https://zenodo.org/records/10534328
+  DOI: 10.5281/zenodo.10534328
+  License: Creative Commons Attribution 4.0 International (CC-BY-4.0)
+
+A single 3-D isotropic T2 (3D SST2) right-knee MRI series (286 × 512 × 512 @
+0.35 mm) with per-slice bone ground-truth masks.
+
+The files in this directory (atlas.npy, texture.npy) are a DERIVED WORK produced
+by scripts/build_knee_atlas.py: the bone masks split into cortical shell +
+marrow, the surrounding soft tissue classified from the real T2 intensity into
+subcutaneous fat / muscle / joint fluid / articular cartilage / skin, and the
+real intensity normalised into a ~1.0 multiplicative texture field. Redistributed
+here under CC-BY-4.0 with attribution to the original authors above.
