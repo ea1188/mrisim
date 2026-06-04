@@ -21,14 +21,14 @@ from presets import (get_preset, get_preset_names, get_preset_region,
 # The sequences offered in the GUI dropdown (app_qt build_controls).
 SEQUENCES = [
     "Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-    "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
-    "Quantitative (qMRI)", "Echo Planar (EPI)",
+    "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "Susceptibility (SWI)",
+    "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)",
 ]
 
 # Full-FOV anatomical images — the energy-spread (anti-collapse) check is only
 # meaningful for these; MRA MIPs, activation/qMRI maps are legitimately sparse.
 ANATOMICAL = {"Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-              "Balanced SSFP", "Echo Planar (EPI)"}
+              "Balanced SSFP", "Echo Planar (EPI)", "Susceptibility (SWI)"}
 
 # Radiological orientation labels (top, bottom, left, right) — brain and body
 # share this map after the body phantoms were mirrored to radiological.

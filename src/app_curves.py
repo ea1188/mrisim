@@ -29,7 +29,7 @@ class CurvesMixin:
         (not an inline T2 approximation); bSSFP/EPI no longer fall through to IR."""
         T1, T2, PD = props["T1"], props["T2"], props["PD"]
         T2star = props.get("T2star", T2)
-        if seq in ("Gradient Echo", "Echo Planar (EPI)"):
+        if seq in ("Gradient Echo", "Echo Planar (EPI)", "Susceptibility (SWI)"):
             return gradient_echo_signal(T1, T2star, PD, TR, TE, FA)
         if seq == "Balanced SSFP":
             return balanced_ssfp_signal(T1, T2, PD, TR, TE, FA)

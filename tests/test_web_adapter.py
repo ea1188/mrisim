@@ -18,8 +18,8 @@ _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 SEQUENCES = [
     "Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-    "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
-    "Quantitative (qMRI)", "Echo Planar (EPI)",
+    "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "Susceptibility (SWI)",
+    "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)",
 ]
 
 

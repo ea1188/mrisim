@@ -12,10 +12,10 @@ let applyingPreset = false; // suppress the custom-reset while a preset populate
 let winW = 1.0, winL = 0.5; // window/level (normalised), driven by image drag
 let scoutPanels = [];       // per-panel click→slice geometry from the last scout
 
-const SEQ_FA = new Set(["Gradient Echo", "Balanced SSFP", "MR Angiography"]);
+const SEQ_FA = new Set(["Gradient Echo", "Balanced SSFP", "MR Angiography", "Susceptibility (SWI)"]);
 const SEQ_TI = new Set(["Inversion Recovery"]);
-// Sequences needing the ~1-minute TOF vessel build the first time (see web_adapter).
-const SEQ_SLOW_FIRST = new Set(["MR Angiography"]);
+// Sequences needing the ~1-minute vessel-tree build the first time (see web_adapter).
+const SEQ_SLOW_FIRST = new Set(["MR Angiography", "Susceptibility (SWI)"]);
 const ACQ3D_SEQ = new Set(["Spin Echo", "Gradient Echo", "Inversion Recovery", "Balanced SSFP"]);
 
 // --- Worker plumbing -------------------------------------------------------- //
@@ -262,8 +262,8 @@ function buildControls(info) {
   const reg = $("region");
   info.regions.forEach((r) => reg.add(new Option(r, r)));
   const seqs = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-    "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
-    "Quantitative (qMRI)", "Echo Planar (EPI)"];
+    "Balanced SSFP", "Diffusion (DWI)", "MR Angiography", "Susceptibility (SWI)",
+    "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)"];
   const seq = $("sequence");
   seqs.forEach((s) => seq.add(new Option(s, s)));
   const presetSel = $("preset");

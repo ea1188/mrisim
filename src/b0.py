@@ -105,8 +105,19 @@ def susceptibility_b0_map(
     -------
     b0_hz : ndarray float64, shape (nz, ny, nx)  [Hz]
     """
-    chi = _chi_vol(label_vol) * 1e-6   # ppm → dimensionless
-    K = _dipole_kernel(label_vol.shape, voxel_size)
+    return field_from_chi(_chi_vol(label_vol), voxel_size, field_strength_T)
+
+
+def field_from_chi(
+    chi_ppm: np.ndarray,
+    voxel_size: tuple[float, ...] = (1., 1., 1.),
+    field_strength_T: float = 1.5,
+) -> np.ndarray:
+    """B0 field map (Hz) from a susceptibility map (ppm) via the dipole forward
+    model ΔB0 = B0·IFFT(FFT(χ)·K). Exposed so callers can build a custom χ — e.g.
+    SWI adding paramagnetic venous blood on top of the tissue susceptibility."""
+    chi = np.asarray(chi_ppm, dtype=np.float64) * 1e-6   # ppm → dimensionless
+    K = _dipole_kernel(chi.shape, voxel_size)
     db0_T = field_strength_T * np.real(np.fft.ifftn(np.fft.fftn(chi) * K))
     return db0_T * GAMMA_HZ_T
 

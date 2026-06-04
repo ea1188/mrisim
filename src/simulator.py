@@ -33,6 +33,7 @@ import qmri
 import rendering
 import rician
 import b0
+import swi
 import angiography
 import scan_geometry as sg
 
@@ -44,6 +45,7 @@ _ACQ3D_SEQUENCES = frozenset({"Spin Echo", "Gradient Echo",
                               "Inversion Recovery", "Balanced SSFP"})
 
 _B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
+_BLOOD_LABEL = 11   # tissue_db: Blood / vascular (the painted vessel tree)
 
 # Partial-Fourier fractions (string label → actual fraction).
 _PF_MAP: dict[str, float] = {
@@ -161,6 +163,7 @@ class Simulator:
 
         # Caches / outputs
         self._b0_cache: tuple | None = None
+        self._swi_vein_cache: tuple | None = None
         self._tof_cache: tuple | None = None
         self.last_kspace: np.ndarray | None = None
         # 3-D acquisition: the reconstructed slab (raw Z,Y,X sub-block) + geometry,
@@ -241,10 +244,38 @@ class Simulator:
             self._b0_cache = (key, field)
         return self._b0_cache[1]
 
+    def _swi_b0_volume(self, field_strength_T: float) -> np.ndarray:
+        """Susceptibility B0 field (Hz) driving the SWI phase mask.
+
+        Where a vessel tree is present (brain), the field is the dipole field of
+        the vessels as **paramagnetic venous blood** (deoxy, ≈ +0.45 ppm vs
+        tissue): veins accrue negative phase and darken, parenchyma stays ≈ flat —
+        the clean SWI venogram. (The raw tissue susceptibility field is dominated
+        by air–tissue boundaries whose phase wraps and speckles the parenchyma, so
+        it is not used here.) Without vessels (body) it falls back to the tissue
+        susceptibility field."""
+        vessels = self.vessels
+        assert self.volume is not None
+        if vessels is None or vessels.shape != self.volume.shape:
+            return self._b0_volume(field_strength_T)
+        # `vessels` is the full labelled volume with the vascular tree painted as
+        # blood (label 11); the venous mask is that label, not every voxel.
+        vein_mask = vessels == _BLOOD_LABEL
+        if not vein_mask.any():
+            return self._b0_volume(field_strength_T)
+        key = (vessels.shape, int(vein_mask.sum()), round(float(field_strength_T), 3))
+        if self._swi_vein_cache is None or self._swi_vein_cache[0] != key:
+            vein_chi = 0.45 * vein_mask.astype(np.float64)
+            vein_field = b0.field_from_chi(vein_chi, field_strength_T=field_strength_T)
+            self._swi_vein_cache = (key, vein_field)
+        return self._swi_vein_cache[1]
+
     def _b0_field_slice(self, orient: str, sl_idx: int, params: dict,
-                        field_strength_T: float) -> np.ndarray:
+                        field_strength_T: float,
+                        field_vol: "np.ndarray | None" = None) -> np.ndarray:
         """2D B0 field slice (Hz) aligned to the (non-oblique) phantom slice."""
-        sl = get_slice(self._b0_volume(field_strength_T), orient, sl_idx)
+        vol = field_vol if field_vol is not None else self._b0_volume(field_strength_T)
+        sl = get_slice(vol, orient, sl_idx)
         fov_ratio = float(params.get("FOV", 240.0)) / self.native_fov
         if abs(fov_ratio - 1.0) > 0.01:
             sl = sg.fov_transform(sl, fov_ratio)
@@ -341,6 +372,18 @@ class Simulator:
                    "Echo Planar (EPI)": "GRE", "Balanced SSFP": "bSSFP"}
         if seq in seq_map:
             return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
+        elif seq == "Susceptibility (SWI)":
+            # Long-TE GRE magnitude × a negative phase mask from the local
+            # susceptibility field (tissue + paramagnetic venous blood), so veins
+            # / iron / microbleeds darken. swi.py does the homodyne + masking.
+            mag = rendering.simulate_slice_props(phantom_slice, TR, TE, "GRE", TI, FA, tprops)
+            B0_T = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
+            field = self._b0_field_slice(orient, sl_idx, params, B0_T,
+                                         field_vol=self._swi_b0_volume(B0_T))
+            if field.shape != mag.shape:                      # geometry guard
+                return mag
+            phase = swi.field_to_phase(field, TE)
+            return swi.swi_combine(mag, phase, power=4, hp_sigma=8.0)
         elif seq == "FSE / TSE":
             return simulate_fse_image(phantom_slice, TR, TE, params["etl"], params["echo_spacing"], tprops)
         elif seq == "Diffusion (DWI)":

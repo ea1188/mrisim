@@ -166,8 +166,8 @@ class WebHost(CurvesMixin):
     def _sync_sim(self, orient: str, sl_idx: int, sequence: str = "") -> None:
         """Push the current view/aux state onto the Simulator before a render —
         the web equivalent of app_qt._sync_sim (no FOV-planning / oblique here)."""
-        if sequence == "MR Angiography":
-            self._ensure_vessels()
+        if sequence in ("MR Angiography", "Susceptibility (SWI)"):
+            self._ensure_vessels()   # SWI darkens the venous tree too
         s = self.sim
         s.orientation = orient
         s.slice_idx = sl_idx
