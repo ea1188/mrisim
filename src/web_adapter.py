@@ -99,6 +99,7 @@ class WebHost(CurvesMixin):
         self._region_aux_cache: dict[str, tuple] = {}   # (vessels, activation) per region
         self._vessels: Any = None       # TOF vessel tree (MRA), brain only
         self._activation: Any = None    # fMRI activation, brain only
+        self._scout_panels: list = []   # per-panel click→slice geometry
         # Agg figures for the two panels.
         self.fig = Figure(figsize=(5.2, 5.2), facecolor=_C_CANVAS)
         self.img_ax = self.fig.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -304,6 +305,24 @@ class WebHost(CurvesMixin):
                 ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
             ax.set_title(name.capitalize(), color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
+
+        # Per-panel geometry so the front-end can map a click → a new slice along
+        # the acquisition through-axis. box = [left, top, right, bottom] in image
+        # fraction (y from the top); map says whether a click's row or column sets
+        # the slice (or "none" for the acquired plane itself).
+        panels = []
+        for ax, name in zip(self.scout_axes, names, strict=True):
+            ra, ca = self._PANEL_AXES[name]
+            pos = ax.get_position()
+            box = [float(pos.x0), float(1.0 - pos.y1), float(pos.x1), float(1.0 - pos.y0)]
+            if acq_axis == ra:
+                mp, n, flip = "row", int(vol.shape[ra]), False
+            elif acq_axis == ca:
+                mp, n, flip = "col", int(vol.shape[ca]), (name == "sagittal")
+            else:
+                mp, n, flip = "none", 0, False
+            panels.append({"name": name, "box": box, "map": mp, "n": n, "flip": flip})
+        self._scout_panels = panels
         return _png_b64(self.scout_fig)
 
 
@@ -342,7 +361,9 @@ def render_scout(payload: dict) -> str:
 
 
 def render_scout_json(payload_json: str) -> str:
-    return json.dumps({"scout": _host().render_scout(json.loads(payload_json))})
+    h = _host()
+    png = h.render_scout(json.loads(payload_json))
+    return json.dumps({"scout": png, "panels": h._scout_panels})
 
 
 def apply_preset(name: str) -> dict:

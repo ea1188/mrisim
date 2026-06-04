@@ -89,6 +89,22 @@ try {
   await page.waitForFunction(
     () => { const s = document.getElementById("scoutImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
     { timeout: 20_000 });
+  // Clicking a cross panel of the localizer must move the slice. Force axial so
+  // the middle (coronal) panel is a genuine cross panel, and wait for the scout
+  // image to decode (naturalWidth) before mapping a click onto it.
+  await page.click('#orientation button[data-v="axial"]');
+  await page.waitForTimeout(1500);
+  await page.waitForFunction(
+    () => { const i = document.getElementById("scoutImage"); return i && i.naturalWidth > 0; },
+    { timeout: 15_000 });
+  const sliceBefore = await page.inputValue("#slice");
+  const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { w: r.width, h: r.height }; });
+  // Element-relative click so events target the scout image regardless of layout.
+  // Middle (coronal) panel, low → a row-mapped cross panel in axial acquisition.
+  await page.click("#scoutImage", { position: { x: sb.w * 0.5, y: sb.h * 0.82 } });
+  await page.waitForTimeout(800);
+  const sliceAfter = await page.inputValue("#slice");
+  if (sliceAfter === sliceBefore) fail("scout click did not move the slice (before=" + sliceBefore + ")");
   await page.uncheck("#fovplan");
 
   if (errors.length) fail("console/page errors during smoke");
