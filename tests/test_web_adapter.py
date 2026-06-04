@@ -170,6 +170,16 @@ def test_scout_renders(orient):
     out = json.loads(wa.render_scout_json(json.dumps(
         {"region": "Brain", "orientation": orient, "slice_idx": 80})))
     _decode(out["scout"], f"scout_json {orient}")
+    # Panel geometry drives the click-to-move-slice interaction.
+    panels = out["panels"]
+    assert len(panels) == 3
+    for p in panels:
+        assert set(p) >= {"name", "box", "map", "n", "flip"}
+        assert len(p["box"]) == 4
+        assert p["map"] in ("row", "col", "none")
+    # exactly one panel is the acquired plane (no remap); the other two reposition
+    assert sum(p["map"] == "none" for p in panels) == 1
+    assert all(p["n"] > 0 for p in panels if p["map"] != "none")
 
 
 def test_render_json_roundtrip():

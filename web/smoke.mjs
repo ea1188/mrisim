@@ -89,6 +89,13 @@ try {
   await page.waitForFunction(
     () => { const s = document.getElementById("scoutImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
     { timeout: 20_000 });
+  // Clicking a cross panel of the localizer must move the slice.
+  const sliceBefore = await page.inputValue("#slice");
+  const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+  // Click low in the right-hand (sagittal) panel — a cross panel in axial acq.
+  await page.mouse.click(sb.x + sb.w * 0.83, sb.y + sb.h * 0.75);
+  await page.waitForFunction(
+    (prev) => document.getElementById("slice").value !== prev, sliceBefore, { timeout: 15_000 });
   await page.uncheck("#fovplan");
 
   if (errors.length) fail("console/page errors during smoke");

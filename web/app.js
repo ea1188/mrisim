@@ -10,6 +10,7 @@ let compareMode = false;
 let protocolA = null;       // snapshot payload for the "A" side of a comparison
 let applyingPreset = false; // suppress the custom-reset while a preset populates
 let winW = 1.0, winL = 0.5; // window/level (normalised), driven by image drag
+let scoutPanels = [];       // per-panel click→slice geometry from the last scout
 
 const SEQ_FA = new Set(["Gradient Echo", "Balanced SSFP", "MR Angiography"]);
 const SEQ_TI = new Set(["Inversion Recovery"]);
@@ -78,6 +79,7 @@ function buildControls(info) {
     if ($("fovplan").checked) render();
   });
   wireWindowLevel();
+  wireScout();
 
   ["tr", "te", "ti", "fa", "np", "slice"].forEach((id) => {
     $(id).addEventListener("input", () => {
@@ -226,6 +228,47 @@ function wireWindowLevel() {
   img.addEventListener("dblclick", () => { winW = 1.0; winL = 0.5; schedule(); });
 }
 
+// --- Interactive scout: click/drag a localizer panel to move the slice ------- //
+function imgFraction(img, cx, cy) {
+  const r = img.getBoundingClientRect();
+  if (!img.naturalWidth || !r.width) return null;
+  const nAR = img.naturalWidth / img.naturalHeight, eAR = r.width / r.height;
+  let cw, ch, ox, oy;            // the image content box within the element (object-fit: contain)
+  if (eAR > nAR) { ch = r.height; cw = ch * nAR; ox = (r.width - cw) / 2; oy = 0; }
+  else { cw = r.width; ch = cw / nAR; ox = 0; oy = (r.height - ch) / 2; }
+  const fx = (cx - r.left - ox) / cw, fy = (cy - r.top - oy) / ch;
+  return (fx >= 0 && fx <= 1 && fy >= 0 && fy <= 1) ? { fx, fy } : null;
+}
+
+function wireScout() {
+  const img = $("scoutImage");
+  img.style.cursor = "crosshair";
+  let dragging = false;
+  const apply = (e) => {
+    const f = imgFraction(img, e.clientX, e.clientY);
+    if (!f) return;
+    for (const p of scoutPanels) {
+      if (p.map === "none") continue;
+      const [l, t, r, b] = p.box;
+      if (f.fx < l || f.fx > r || f.fy < t || f.fy > b) continue;
+      let slice;
+      if (p.map === "row") {                       // y → slice (origin at bottom)
+        slice = Math.round(((b - f.fy) / (b - t)) * (p.n - 1));
+      } else {                                     // x → slice (flip for sagittal Y)
+        const col = ((f.fx - l) / (r - l)) * (p.n - 1);
+        slice = Math.round(p.flip ? (p.n - 1 - col) : col);
+      }
+      slice = Math.max(0, Math.min(p.n - 1, slice));
+      $("slice").value = slice; $("slice-val").value = slice;
+      schedule();
+      return;
+    }
+  };
+  img.addEventListener("mousedown", (e) => { dragging = true; apply(e); e.preventDefault(); });
+  window.addEventListener("mousemove", (e) => { if (dragging) apply(e); });
+  window.addEventListener("mouseup", () => { dragging = false; });
+}
+
 // --- Render orchestration (async, via the worker) --------------------------- //
 let timer = null, pending2 = false, running = false;
 function schedule() {
@@ -261,6 +304,7 @@ async function render() {
       const s = await call("scout",
         { region: p.region, orientation: p.orientation, slice_idx: p.slice_idx });
       $("scoutImage").src = s.scout;
+      scoutPanels = s.panels || [];
     }
   } catch (err) {
     $("hint").textContent = "Render error: " + err.message;
