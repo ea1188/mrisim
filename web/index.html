@@ -36,6 +36,18 @@
     <!-- Controls -->
     <section class="panel" id="controls">
       <div class="group">
+        <h2>Protocol</h2>
+        <label>Preset
+          <select id="preset"><option value="">— custom —</option></select></label>
+        <div class="btnrow">
+          <button id="setA" type="button">Set as A</button>
+          <button id="compare" type="button">Compare A/B</button>
+          <button id="exitAB" type="button" hidden>Exit compare</button>
+        </div>
+        <p class="hint" id="abdelta"></p>
+      </div>
+
+      <div class="group">
         <h2>Anatomy &amp; Sequence</h2>
         <label>Region
           <select id="region"></select></label>
@@ -84,7 +96,16 @@
 
     <!-- Viewport -->
     <section class="viewport">
-      <div class="imgwrap"><img id="mainImage" alt="reconstructed MR image" /></div>
+      <div class="images">
+        <div class="imgwrap" id="wrapA">
+          <span class="abtag" id="tagA" hidden>A</span>
+          <img id="mainImage" alt="reconstructed MR image" title="drag = window/level · double-click = reset" />
+        </div>
+        <div class="imgwrap" id="wrapB" hidden>
+          <span class="abtag">B</span>
+          <img id="mainImageB" alt="comparison image" />
+        </div>
+      </div>
       <div class="curvewrap"><img id="curveImage" alt="signal curve" /></div>
     </section>
 

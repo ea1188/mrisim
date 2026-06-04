@@ -149,6 +149,18 @@ def test_sample_presets_render():
     assert rendered >= 3, "expected several Brain presets to render"
 
 
+def test_window_level_changes_image():
+    """The window/level passed in the payload must change the rendered PNG (the
+    web window/level drag drives this)."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 95,
+            "params": {"sequence": "Spin Echo"}}
+    a = wa.render(base)["image"]
+    b = wa.render({**base, "window_width": 0.4, "window_level": 0.3})["image"]
+    _decode(a, "default W/L"); _decode(b, "custom W/L")
+    assert a != b, "window/level did not affect the image"
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",

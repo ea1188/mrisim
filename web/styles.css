@@ -77,14 +77,30 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
 
 /* Viewport */
 .viewport { display: grid; grid-template-rows: 1fr auto; gap: 10px; min-width: 0; }
+.images { display: flex; gap: 10px; min-height: 0; }
+.images .imgwrap { flex: 1; min-width: 0; }
 .imgwrap, .curvewrap {
+  position: relative;
   background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
   display: grid; place-items: center; overflow: hidden;
 }
 .imgwrap { min-height: 0; }
 .curvewrap { height: 220px; }
-#mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; }
-#curveImage { max-width: 100%; max-height: 100%; }
+#mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: ns-resize; }
+#curveImage, #mainImageB { max-width: 100%; max-height: 100%; }
+.abtag {
+  position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
+  color: var(--accent-ink); background: var(--accent-hi); border-radius: 5px; padding: 1px 7px;
+}
+
+/* Buttons */
+.btnrow { display: flex; gap: 6px; margin-top: 8px; }
+.btnrow button {
+  flex: 1; background: var(--raised); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 4px; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.btnrow button:hover { border-color: var(--border-hi); }
+.btnrow button.on { background: #142231; color: var(--accent-hi); border-color: var(--accent); }
 
 /* Metrics */
 #metrics table { width: 100%; border-collapse: collapse; }
