@@ -152,8 +152,16 @@ try {
   await page.click("#lesson-exit");
   await page.waitForSelector("#lesson-panel", { state: "hidden", timeout: 5_000 });
 
+  // Real body atlas: switching to Abdomen lazy-fetches its segmented atlas and
+  // renders real anatomy.
+  const beforeRegion = await page.getAttribute("#mainImage", "src");
+  await page.selectOption("#region", "Abdomen");
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s.startsWith("data:image/png") && s !== prev; },
+    beforeRegion, { timeout: 45_000 });        // includes the one-time atlas fetch
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, and guided lessons all work.");
+  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, lessons, and real body atlas all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {

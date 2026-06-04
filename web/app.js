@@ -31,6 +31,14 @@ function call(type, payload) {
   });
 }
 
+// Region switch can lazy-fetch a real atlas (~20 MB the first time); show a note.
+async function loadRegion(name) {
+  $("hint").textContent = `Loading ${name} anatomy\u2026`;
+  document.body.classList.add("busy");
+  try { return await call("setRegion", name); }
+  finally { document.body.classList.remove("busy"); $("hint").textContent = ""; }
+}
+
 worker.onmessage = (e) => {
   const m = e.data;
   if (m.type === "progress") { setSplash(m.pct, m.msg); return; }
@@ -83,7 +91,7 @@ async function applyState(st) {
   if (st.region && st.region !== curRegion()
       && [...$("region").options].some((o) => o.value === st.region)) {
     $("region").value = st.region;
-    const d = await call("setRegion", st.region);
+    const d = await loadRegion(st.region);
     $("slice").max = d.max_slice;
   }
   if (st.seq) $("sequence").value = st.seq;
@@ -305,7 +313,7 @@ function buildControls(info) {
 
 async function onSequenceOrRegion(e) {
   if (e.target.id === "region") {
-    const d = await call("setRegion", curRegion());   // resizes the volume
+    const d = await loadRegion(curRegion());   // resizes the volume (may fetch a real atlas)
     $("slice").max = d.max_slice;
     $("slice").value = Math.floor(d.max_slice / 2);
     setOrient("axial");
@@ -372,7 +380,7 @@ async function onPreset() {
   if (bundle.region && bundle.region !== curRegion()
       && [...$("region").options].some((o) => o.value === bundle.region)) {
     $("region").value = bundle.region;
-    const d = await call("setRegion", bundle.region);
+    const d = await loadRegion(bundle.region);
     $("slice").max = d.max_slice;
     $("slice").value = Math.floor(d.max_slice / 2);
   }

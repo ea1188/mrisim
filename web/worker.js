@@ -34,18 +34,35 @@ async function boot() {
   post({ type: "ready", info });
 }
 
-// Each request is handled synchronously inside the worker (Pyodide is sync);
-// the worker's own thread means the page stays responsive regardless.
-self.onmessage = (e) => {
+// Regions backed by a real segmented atlas that's lazy-fetched on first use.
+const REAL_REGIONS = new Set(["Abdomen", "Spine", "Pelvis", "Torso"]);
+const fetchedRegions = new Set();
+
+async function ensureRegionData(name) {
+  if (!REAL_REGIONS.has(name) || fetchedRegions.has(name)) return;
+  pyodide.FS.mkdirTree("/data/regions");
+  for (const kind of ["atlas", "texture"]) {
+    const r = await fetch(`data/regions/${name}_${kind}.npy`);
+    if (!r.ok) continue;                       // texture optional / region absent
+    pyodide.FS.writeFile(`/data/regions/${name}_${kind}.npy`,
+      new Uint8Array(await r.arrayBuffer()));
+  }
+  fetchedRegions.add(name);
+}
+
+// Pyodide is synchronous, but the worker thread keeps the page responsive.
+// setRegion may first fetch the region's real atlas, so the handler is async.
+self.onmessage = async (e) => {
   const { id, type, payload } = e.data;
   try {
     let result;
     if (type === "render") result = JSON.parse(renderFn(JSON.stringify(payload)));
     else if (type === "scout") result = JSON.parse(scoutFn(JSON.stringify(payload)));
-    else if (type === "setRegion")
+    else if (type === "setRegion") {
+      await ensureRegionData(payload);         // lazy-load the real atlas if needed
       result = JSON.parse(pyodide.runPython(
         `import json; json.dumps(web_adapter.set_region(${JSON.stringify(payload)}))`));
-    else if (type === "preset")
+    } else if (type === "preset")
       result = JSON.parse(pyodide.runPython(
         `import json; json.dumps(web_adapter.apply_preset(${JSON.stringify(payload)}))`));
     else throw new Error("unknown request type: " + type);

@@ -29,8 +29,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Build the web bundle (engine zip + brain phantom)
-        run: python build_web.py
+      - name: Build the web bundle (engine zip + brain + real region atlases)
+        run: |
+          pip install numpy
+          python build_web.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -17,6 +17,7 @@ Public surface the JS shell (and the headless tests) call:
 import base64
 import io
 import json
+import os
 from typing import Any
 
 import matplotlib
@@ -33,7 +34,7 @@ from simulator import Simulator, default_params, _ACQ3D_SEQUENCES
 
 # Regions offered in the web build: real brain + the synthetic body phantoms
 # (no multi-GB dataset download). Real TotalSegmentator body is desktop-only.
-WEB_REGIONS = ["Brain", "Abdomen", "Knee", "Spine", "Pelvis"]
+WEB_REGIONS = ["Brain", "Abdomen", "Spine", "Pelvis", "Torso", "Knee"]
 _BODY_REGIONS = render_overlay.BODY_REGIONS
 _C_PANEL = "#11151a"
 _C_CANVAS = "#050607"
@@ -122,10 +123,20 @@ class WebHost(CurvesMixin):
                     vol = generate_synthetic_3d_brain()
                 tex = None
             else:
-                vol = body_phantoms.build_region(name)
-                tex = body_phantoms.build_region_texture(name, vol)
-                # Body phantoms are built neurological; mirror L/R (axis 2) to
-                # match the radiological brain — same as app_regions.on_region_change.
+                atlas_file = f"/data/regions/{name}_atlas.npy"
+                if os.path.exists(atlas_file):
+                    # Real segmented atlas bundled + lazy-fetched for the browser.
+                    vol = np.load(atlas_file)
+                    tex_file = f"/data/regions/{name}_texture.npy"
+                    tex = (np.load(tex_file).astype(np.float32)
+                           if os.path.exists(tex_file) else None)
+                else:
+                    # Synthetic phantom (no real atlas — e.g. Knee), or the desktop
+                    # dataset path when running outside the browser.
+                    vol = body_phantoms.build_region(name)
+                    tex = body_phantoms.build_region_texture(name, vol)
+                # Body volumes are built neurological; mirror L/R (axis 2) to match
+                # the radiological brain — same as app_regions.on_region_change.
                 if name in _BODY_REGIONS:
                     vol = np.ascontiguousarray(np.flip(vol, axis=2))
                     if tex is not None:

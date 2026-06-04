@@ -21,7 +21,9 @@ jobs:
           python-version: "3.11"
 
       - name: Build the web bundle
-        run: python build_web.py
+        run: |
+          pip install numpy
+          python build_web.py
 
       - uses: actions/setup-node@v4
         with:
