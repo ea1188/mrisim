@@ -161,6 +161,17 @@ def test_window_level_changes_image():
     assert a != b, "window/level did not affect the image"
 
 
+@pytest.mark.parametrize("orient", ["axial", "coronal", "sagittal"])
+def test_scout_renders(orient):
+    """The 3-plane FOV-planning localizer renders a real PNG for every plane."""
+    wa.init()
+    png = wa.render_scout({"region": "Brain", "orientation": orient, "slice_idx": 80})
+    _decode(png, f"scout {orient}")
+    out = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": orient, "slice_idx": 80})))
+    _decode(out["scout"], f"scout_json {orient}")
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",

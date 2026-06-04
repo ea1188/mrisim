@@ -105,6 +105,9 @@ class WebHost(CurvesMixin):
         self.curve_fig = Figure(figsize=(5.4, 3.8), facecolor=_C_PANEL)
         self.curve_ax = self.curve_fig.add_subplot(111)
         self.axes = [self.img_ax, self.curve_ax]   # CurvesMixin draws on axes[1]
+        # 3-plane localizer (FOV planning) — one row of three panels.
+        self.scout_fig = Figure(figsize=(7.8, 2.8), facecolor=_C_CANVAS)
+        self.scout_axes = self.scout_fig.subplots(1, 3)
         self.load_region("Brain")
 
     # --- anatomy ------------------------------------------------------------ #
@@ -256,6 +259,53 @@ class WebHost(CurvesMixin):
         self._plot_curves(params)              # shared desktop curve code
         return _png_b64(self.curve_fig)
 
+    # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
+    # (row_axis, col_axis) of each scout panel in (Z,Y,X) volume terms; the
+    # remaining axis is the panel's through-plane normal.
+    _PANEL_AXES = {"axial": (1, 2), "coronal": (0, 2), "sagittal": (0, 1)}
+    _ACQ_AXIS = {"axial": 0, "coronal": 1, "sagittal": 2}
+
+    def render_scout(self, payload: dict) -> str:
+        """Render the 3-plane localizer with the current slice marked on the two
+        cross panels and the acquired plane framed — the FOV-planning view."""
+        from oblique import three_scouts
+        from phantom3d import simulate_slice
+        region = payload.get("region", self.region.get())
+        if region != self.region.get():
+            self.load_region(region)
+        orient = payload.get("orientation", self.orientation.get())
+        vol = self.sim.volume
+        assert vol is not None
+        nz, ny, nx = vol.shape
+        max_sl = self.sim.get_max_slice_idx()
+        sl = int(np.clip(int(payload.get("slice_idx", self.slice_idx.get())), 0, max_sl))
+        ctr = {"axial": (sl, ny // 2, nx // 2), "coronal": (nz // 2, sl, nx // 2),
+               "sagittal": (nz // 2, ny // 2, sl)}[orient]
+        scouts = three_scouts(vol, ctr)
+        acq_axis = self._ACQ_AXIS[orient]
+        names = ["axial", "coronal", "sagittal"]
+
+        for ax, name in zip(self.scout_axes, names, strict=True):
+            ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
+            bg = scouts[name]
+            if name == "sagittal":
+                bg = np.fliplr(bg)
+            ax.imshow(simulate_slice(bg, 600, 12, "SE"), cmap="gray",
+                      origin="lower", aspect="auto")
+            ra, ca = self._PANEL_AXES[name]
+            if acq_axis == ra:                          # slice cuts along a row
+                ax.axhline(sl, color="#ffdd44", lw=1.6)
+            elif acq_axis == ca:                        # slice cuts along a column
+                col = (ny - 1 - sl) if name == "sagittal" else sl
+                ax.axvline(col, color="#ffdd44", lw=1.6)
+            else:                                        # this panel IS the plane
+                for sp in ax.spines.values():
+                    sp.set_visible(True); sp.set_color("#ffdd44"); sp.set_linewidth(2.2)
+                ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
+            ax.set_title(name.capitalize(), color="#9aa4b2", fontsize=8, pad=2)
+        self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
+        return _png_b64(self.scout_fig)
+
 
 # --- module-level API the JS shell / tests call ----------------------------- #
 _HOST: "WebHost | None" = None
@@ -285,6 +335,14 @@ def render(payload: dict) -> dict:
 
 def render_json(payload_json: str) -> str:
     return json.dumps(_host().render(json.loads(payload_json)))
+
+
+def render_scout(payload: dict) -> str:
+    return _host().render_scout(payload)
+
+
+def render_scout_json(payload_json: str) -> str:
+    return json.dumps({"scout": _host().render_scout(json.loads(payload_json))})
 
 
 def apply_preset(name: str) -> dict:
