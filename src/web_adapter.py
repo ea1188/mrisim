@@ -213,11 +213,13 @@ class WebHost(CurvesMixin):
 
         params = default_params(**payload.get("params", {}))
         self._sync_sim(orient, sl, params["sequence"])
+        ww = float(payload.get("window_width", 1.0))
+        wl = float(payload.get("window_level", 0.5))
 
         image, metrics = self._acquire_or_reformat(params)
         self.current_image = image
         return {
-            "image": self._draw_image(image, params, orient, sl),
+            "image": self._draw_image(image, params, orient, sl, ww, wl),
             "curve": self._draw_curve(params),
             "metrics": _jsonable(metrics),
             "dims": self.dims(),
@@ -227,12 +229,11 @@ class WebHost(CurvesMixin):
         }
 
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
-                    sl_idx: int) -> str:
+                    sl_idx: int, ww: float = 1.0, wl: float = 0.5) -> str:
         ax = self.img_ax
         ax.clear()
         mx = float(np.max(img)) if float(np.max(img)) > 0 else 1.0
-        ww, wl = 1.0, 0.5                       # default window/level
-        center, width = wl * mx, ww * mx
+        center, width = wl * mx, max(0.01, ww) * mx   # window/level (normalised)
         ax.imshow(img, cmap="gray", origin="lower", aspect=1.0,
                   vmin=center - width / 2, vmax=center + width / 2)
         render_overlay.frame_image_axes(ax)

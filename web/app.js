@@ -8,6 +8,11 @@ let pyodide = null;
 let renderFn = null;        // PyProxy: web_adapter.render_json
 let booted = false;
 
+let compareMode = false;
+let protocolA = null;       // snapshot payload for the "A" side of a comparison
+let applyingPreset = false; // suppress the custom-reset while a preset populates
+let winW = 1.0, winL = 0.5; // window/level (normalised), driven by image drag
+
 const SEQ_FA = new Set(["Gradient Echo", "Balanced SSFP", "MR Angiography"]);
 const SEQ_TI = new Set(["Inversion Recovery"]);
 // Sequences needing the ~1-minute TOF vessel build the first time (see web_adapter).
@@ -56,8 +61,16 @@ function buildControls(info) {
     "Quantitative (qMRI)", "Echo Planar (EPI)"];
   const seq = $("sequence");
   seqs.forEach((s) => seq.add(new Option(s, s)));
+  const presetSel = $("preset");
+  info.presets.forEach((p) => presetSel.add(new Option(p, p)));
   $("slice").max = info.max_slice;
   $("slice").value = Math.floor(info.max_slice / 2);
+
+  presetSel.addEventListener("change", onPreset);
+  $("setA").addEventListener("click", setProtocolA);
+  $("compare").addEventListener("click", () => setCompare(!compareMode));
+  $("exitAB").addEventListener("click", () => setCompare(false));
+  wireWindowLevel();
 
   // Sliders mirror their value to the <output> and trigger a debounced render.
   ["tr", "te", "ti", "fa", "np", "slice"].forEach((id) => {
@@ -128,13 +141,94 @@ function collectPayload() {
   }
   return {
     region: curRegion(), orientation: curOrient(),
-    slice_idx: +$("slice").value, curve_mode: "TE decay", params,
+    slice_idx: +$("slice").value, curve_mode: "TE decay",
+    window_width: winW, window_level: winL, params,
   };
+}
+
+// --- Presets ---------------------------------------------------------------- //
+function onPreset() {
+  const name = $("preset").value;
+  if (!name) return;                  // "— custom —"
+  const bundle = JSON.parse(pyodide.runPython(
+    `import json; json.dumps(web_adapter.apply_preset(${JSON.stringify(name)}))`));
+  applyingPreset = true;
+  // Region (reload + reslice) if it differs.
+  if (bundle.region && bundle.region !== curRegion()
+      && [...$("region").options].some((o) => o.value === bundle.region)) {
+    $("region").value = bundle.region;
+    const d = JSON.parse(pyodide.runPython(
+      `import json; json.dumps(web_adapter.set_region(${JSON.stringify(bundle.region)}))`));
+    $("slice").max = d.max_slice;
+    $("slice").value = Math.floor(d.max_slice / 2);
+  }
+  setOrient(bundle.orientation || "axial");
+  const p = bundle.params || {};
+  const set = (id, v) => { if (v !== undefined && v !== null) { $(id).value = v; const o = $(id + "-val"); if (o) o.value = v; } };
+  if (p.sequence) $("sequence").value = p.sequence;
+  set("tr", p.TR); set("te", p.TE); set("ti", p.TI); set("fa", p.flip_angle);
+  if (p.field_strength) $("field").value = p.field_strength;
+  $("fatsat").checked = !!p.fatsat_enabled;
+  $("gd").checked = !!p.contrast_enabled;
+  $("flow").checked = !!p.flow_enabled;
+  $("acq3d").checked = !!p.acq3d;
+  syncVisibility();
+  applyingPreset = false;
+  $("preset").value = name;           // keep the chosen preset shown
+  render();
+}
+
+// --- A/B compare ------------------------------------------------------------ //
+function setProtocolA() {
+  protocolA = collectPayload();
+  $("setA").classList.add("on");
+  if (!compareMode) setCompare(true); else render();
+}
+
+function setCompare(on) {
+  compareMode = on;
+  if (on && !protocolA) protocolA = collectPayload();
+  $("compare").classList.toggle("on", on);
+  $("exitAB").hidden = !on;
+  $("wrapB").hidden = !on;
+  $("tagA").hidden = !on;
+  if (!on) { $("abdelta").textContent = ""; $("setA").classList.remove("on"); }
+  render();
+}
+
+function showDelta(mA, mB) {
+  const arrow = (a, b) => (b > a ? "↑" : b < a ? "↓" : "=");
+  const pct = (a, b) => (a ? Math.round(Math.abs(b - a) / a * 100) : 0);
+  const cnr = (m) => Math.abs(m.snr_wm - m.snr_gm);
+  $("abdelta").innerHTML =
+    `B vs A — SNR ${arrow(mA.snr_wm, mB.snr_wm)} ${pct(mA.snr_wm, mB.snr_wm)}% · ` +
+    `CNR ${arrow(cnr(mA), cnr(mB))} ${pct(cnr(mA), cnr(mB))}% · ` +
+    `time ${arrow(mA.scan_time, mB.scan_time)} ${pct(mA.scan_time, mB.scan_time)}%`;
+}
+
+// --- Window/level drag on the main image ------------------------------------ //
+function wireWindowLevel() {
+  const img = $("mainImage");
+  let dragging = false, lx = 0, ly = 0;
+  img.addEventListener("mousedown", (e) => {
+    if (compareMode) return;           // A/B images are fixed-W/L
+    dragging = true; lx = e.clientX; ly = e.clientY; e.preventDefault();
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    winW = Math.min(3, Math.max(0.05, winW + (e.clientX - lx) * 0.004));
+    winL = Math.min(1, Math.max(0, winL - (e.clientY - ly) * 0.003));
+    lx = e.clientX; ly = e.clientY;
+    schedule();
+  });
+  window.addEventListener("mouseup", () => { dragging = false; });
+  img.addEventListener("dblclick", () => { winW = 1.0; winL = 0.5; schedule(); });
 }
 
 let timer = null, pending = false, running = false;
 function schedule() {
   if (!booted) return;
+  if (!applyingPreset) $("preset").value = "";   // manual tweak → "custom"
   clearTimeout(timer);
   timer = setTimeout(render, 120);   // debounce rapid slider input
 }
@@ -142,16 +236,26 @@ function schedule() {
 async function render() {
   if (running) { pending = true; return; }     // coalesce overlapping renders
   running = true;
-  const payload = collectPayload();
-  if (SEQ_SLOW_FIRST.has(payload.params.sequence)) {
+  if (SEQ_SLOW_FIRST.has($("sequence").value)) {
     $("hint").textContent = "Building vessel model (one-time, may take ~1 min)…";
   }
   document.body.classList.add("busy");
   // Yield so the busy state + hint paint before the (blocking) Pyodide render.
   await new Promise((r) => setTimeout(r, 0));
   try {
-    const res = JSON.parse(renderFn(JSON.stringify(payload)));
-    applyResult(res);
+    if (compareMode) {
+      const B = collectPayload();
+      const resA = JSON.parse(renderFn(JSON.stringify(protocolA || B)));
+      const resB = JSON.parse(renderFn(JSON.stringify(B)));
+      $("mainImage").src = resA.image;
+      $("mainImageB").src = resB.image;
+      $("curveImage").src = resB.curve;
+      setMetrics(resB);
+      syncSlice(resB);
+      showDelta(resA.metrics, resB.metrics);
+    } else {
+      applyResult(JSON.parse(renderFn(JSON.stringify(collectPayload()))));
+    }
   } catch (err) {
     $("hint").textContent = "Render error: " + err;
     console.error(err);
@@ -167,24 +271,30 @@ function fmtTime(s) {
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-function applyResult(res) {
-  $("mainImage").src = res.image;
-  $("curveImage").src = res.curve;
-  const m = res.metrics;
+function syncSlice(res) {
   $("slice").max = res.max_slice;
   if (+$("slice").value !== res.slice_idx) $("slice").value = res.slice_idx;
   $("slice-val").value = res.slice_idx;
-  // Metrics panel
+}
+
+function setMetrics(res) {
+  const m = res.metrics;
   $("x-res").textContent = m.resolution.toFixed(2) + " mm";
   $("x-scan").textContent = fmtTime(m.scan_time);
   $("x-snr").textContent = `${m.snr_wm.toFixed(1)} / ${m.snr_gm.toFixed(1)}`;
   $("x-cnr").textContent = Math.abs(m.snr_wm - m.snr_gm).toFixed(1);
   $("x-sar").textContent = m.sar_head.toFixed(1) + " W/kg" + (m.sar_exceeds ? " ⚠" : "");
-  // Top chips
   $("m-scan").textContent = fmtTime(m.scan_time);
   $("m-snrwm").textContent = m.snr_wm.toFixed(1);
   $("m-weight").textContent = weighting($("sequence").value, +$("tr").value, +$("te").value);
   if (!SEQ_SLOW_FIRST.has($("sequence").value)) $("hint").textContent = "";
+}
+
+function applyResult(res) {
+  $("mainImage").src = res.image;
+  $("curveImage").src = res.curve;
+  syncSlice(res);
+  setMetrics(res);
 }
 
 function weighting(seq, tr, te) {

@@ -50,8 +50,41 @@ try {
   const src2 = await page.getAttribute("#mainImage", "src");
   if (!src2 || !src2.startsWith("data:image/png")) fail("re-render after sequence change failed");
 
+  // Applying a preset must repopulate controls and re-render.
+  const presets = await page.$$eval("#preset option", (os) => os.map((o) => o.value).filter(Boolean));
+  if (presets.length === 0) fail("no presets listed");
+  const before = await page.getAttribute("#mainImage", "src");
+  await page.selectOption("#preset", presets[0]);
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+    before, { timeout: 30_000 });
+
+  // A/B compare: snapshot A, tweak B, expect two images + a delta line.
+  await page.click("#setA");
+  await page.waitForSelector("#wrapB:not([hidden])", { timeout: 10_000 });
+  await page.fill("#tr", "2500").catch(() => {});      // range fill may no-op; fall back
+  await page.evaluate(() => { const t = document.getElementById("tr"); t.value = 3000; t.dispatchEvent(new Event("input")); });
+  await page.waitForTimeout(2500);
+  const imgB = await page.getAttribute("#mainImageB", "src");
+  if (!imgB || !imgB.startsWith("data:image/png")) fail("compare B image did not render");
+  const delta = await page.textContent("#abdelta");
+  if (!delta || !/SNR/.test(delta)) fail("compare delta did not populate: " + delta);
+  await page.click("#exitAB");
+  await page.waitForSelector("#wrapB[hidden]", { timeout: 5_000 });
+
+  // Window/level drag must change the image (single render path).
+  const beforeWL = await page.getAttribute("#mainImage", "src");
+  const box = await page.$eval("#mainImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await page.mouse.move(box.x, box.y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 80, box.y + 50, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+    beforeWL, { timeout: 15_000 });
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — image rendered, metrics populated, re-render works.");
+  console.log("SMOKE OK — render, metrics, sequence/preset, A/B compare, and window-level all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {
