@@ -89,11 +89,18 @@ try {
   await page.waitForFunction(
     () => { const s = document.getElementById("scoutImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
     { timeout: 20_000 });
-  // Clicking a cross panel of the localizer must move the slice.
+  // Clicking a cross panel of the localizer must move the slice. Force axial so
+  // the middle (coronal) panel is a genuine cross panel, and wait for the scout
+  // image to decode (naturalWidth) before mapping a click onto it.
+  await page.click('#orientation button[data-v="axial"]');
+  await page.waitForTimeout(1500);
+  await page.waitForFunction(
+    () => { const i = document.getElementById("scoutImage"); return i && i.naturalWidth > 0; },
+    { timeout: 15_000 });
   const sliceBefore = await page.inputValue("#slice");
   const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
-  // Click low in the right-hand (sagittal) panel — a cross panel in axial acq.
-  await page.mouse.click(sb.x + sb.w * 0.83, sb.y + sb.h * 0.75);
+  // Middle (coronal) panel, low → a row-mapped cross panel in axial acquisition.
+  await page.mouse.click(sb.x + sb.w * 0.5, sb.y + sb.h * 0.82);
   await page.waitForFunction(
     (prev) => document.getElementById("slice").value !== prev, sliceBefore, { timeout: 15_000 });
   await page.uncheck("#fovplan");
