@@ -99,15 +99,10 @@ try {
     { timeout: 15_000 });
   const sliceBefore = await page.inputValue("#slice");
   const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
-  const dbg = await page.evaluate(() => ({
-    orient: document.querySelector("#orientation button.on")?.dataset.v,
-    panels: (window.__scoutPanels || []).map((p) => ({ name: p.name, map: p.map, box: p.box.map((v) => +v.toFixed(2)) })),
-    nat: [document.getElementById("scoutImage").naturalWidth, document.getElementById("scoutImage").naturalHeight],
-    rect: (() => { const r = document.getElementById("scoutImage").getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })(),
-  }));
-  console.error("DBG scout:", JSON.stringify(dbg), "rect=", JSON.stringify(sb), "sliceBefore=", sliceBefore);
+  console.error("DBG scout: sliceBefore=", sliceBefore, "rect=", JSON.stringify(sb));
+  // Element-relative click so events target the scout image regardless of layout.
   // Middle (coronal) panel, low → a row-mapped cross panel in axial acquisition.
-  await page.mouse.click(sb.x + sb.w * 0.5, sb.y + sb.h * 0.82);
+  await page.click("#scoutImage", { position: { x: sb.w * 0.5, y: sb.h * 0.82 } });
   await page.waitForTimeout(800);
   const sliceAfter = await page.inputValue("#slice");
   console.error("DBG sliceAfter=", sliceAfter);
