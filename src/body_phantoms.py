@@ -252,91 +252,88 @@ def generate_abdomen_3d(Z: int = 160, H: int = 200, W: int = 256, seed: int = 7)
 
 # ---- Knee ------------------------------------------------------------------- #
 def generate_knee_3d(Z: int = 120, H: int = 160, W: int = 150, seed: int = 17) -> np.ndarray:
-    """Knee MRI phantom.  Axis0=S→I (femur→tibia), Axis1=A→P, Axis2=M→L.
+    """Detailed knee MRI phantom. Axis0 = S→I (femur→tibia), Axis1 = A→P,
+    Axis2 = M→L. Built with the :mod:`anatomy` toolkit so structures are
+    anatomically shaped (cortical-shell bones, cartilage coats, crescent menisci,
+    cord-like cruciates/tendons/vessels) rather than ellipsoid blobs.
 
-    Structures: distal femur (medial > lateral condyle), patella, femoral &
-    tibial articular cartilage, medial and lateral menisci, Hoffa\'s fat pad,
-    patellar tendon, cruciate ligaments, popliteal vessels, fibula, and the
-    surrounding muscle groups.
+    Structures: distal femur (bean-shaped condyles, intercondylar notch),
+    patella, proximal tibia & fibula (cortex + marrow); femoral/tibial articular
+    cartilage; medial (C) and lateral (O) menisci; ACL + PCL; patellar and
+    quadriceps tendons; Hoffa's fat pad; joint fluid; popliteal artery, vein and
+    tibial nerve; anterior (extensor) and posterior (flexor) muscle compartments
+    separated by an intermuscular fat septum, under subcutaneous fat + skin.
     """
-    rng = np.random.default_rng(seed)
-    phantom = np.zeros((Z, H, W), dtype=np.uint8)
-    gz, gy, gx = np.ogrid[:Z, :H, :W]
+    import anatomy
+    b = anatomy.Builder(Z, H, W, seed=seed)
     cz, cy, cx = Z // 2, H // 2, W // 2
+    FAT, MUSCLE, FLUID, CART = 4, 6, 1, 15
+    SKIN = 5
 
-    n1 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[2.5, 3.5, 3.5])
-    n2 = gaussian_filter(rng.standard_normal((Z, H, W)), sigma=[1.2, 1.8, 1.8])
-    pert = n1 * 0.045 + n2 * 0.020
+    # Subcutaneous fat envelope + skin rind + muscle core (fat rim between = SC fat)
+    body = b.ellipsoid((cz, cy, cx), (Z * 0.52, H * 0.47, W * 0.46))
+    b.paint(body, FAT)
+    b.coat(body, 1.5, SKIN)                                          # thin skin rind
+    muscle = b.ellipsoid((cz, cy, cx), (Z * 0.52, H * 0.42, W * 0.41), ps=0.6)
+    b.paint(muscle, MUSCLE)
+    # Short, curved intermuscular fat planes between the posterior flexor heads
+    # (kept subtle and off-axis so they don't read as a geometric grid).
+    for sx, sgn in ((cx - W * 0.16, -1), (cx + W * 0.16, 1)):
+        sep = b.tube((cz, cy + H * 0.34, sx), (cz, cy + H * 0.10, sx + sgn * W * 0.06),
+                     W * 0.012, ps=0.8)
+        b.paint(sep & muscle, FAT)
 
-    def E(z0: float, y0: float, x0: float, sz: float, sy: float, sx: float, ps: float = 1.0) -> np.ndarray:
-        dist = (gz - z0) ** 2 / sz ** 2 + (gy - y0) ** 2 / sy ** 2 + (gx - x0) ** 2 / sx ** 2
-        return dist <= 1.0 + pert * ps
+    INF = b.gz > int(Z * 0.54)                                      # tibia half
 
-    # Outer soft-tissue envelope
-    body = E(cz, cy, cx, Z * 0.50, H * 0.47, W * 0.46)
-    phantom[body] = 4
-    muscle = E(cz, cy, cx, Z * 0.50, H * 0.43, W * 0.42, 0.6)
-    phantom[muscle] = 6
+    # ---- Distal femur: two bean-shaped condyles (medial larger) + notch ---- #
+    cond = np.zeros((Z, H, W), bool)
+    for cx_c, ry, rx, big in [(cx - W * 0.15, 0.22, 0.17, 1.0), (cx + W * 0.14, 0.20, 0.15, 0.9)]:
+        e1 = b.ellipsoid((Z * 0.22, cy - H * 0.02, cx_c), (Z * 0.30 * big, H * ry, W * rx), ps=0.4)
+        e2 = b.ellipsoid((Z * 0.30, cy + H * 0.06, cx_c), (Z * 0.18 * big, H * ry * 0.7, W * rx * 0.8), ps=0.4)
+        cond |= (e1 | e2)
+    cond &= b.gz < int(Z * 0.52)
+    b.bone(cond, rim=2.0)
+    # femoral articular cartilage on the inferior (joint-facing) condyle surface
+    b.coat(cond, 2.2, CART, where=(b.gz > int(Z * 0.30)))
 
-    # ---- Femur (superior: z=0..Z*0.42) --- medial condyle slightly larger
-    for cx_c, rsz, rsy, rsx in [
-        (cx - W * 0.15, Z * 0.26, H * 0.23, W * 0.16),   # medial (larger)
-        (cx + W * 0.13, Z * 0.24, H * 0.21, W * 0.14),   # lateral (smaller)
-    ]:
-        phantom[E(Z * 0.20, cy, cx_c, rsz, rsy, rsx, 0.4)] = 13
-        phantom[E(Z * 0.20, cy, cx_c, rsz * 0.72, rsy * 0.68, rsx * 0.70, 0)] = 14
+    # Patella (anterior) + quadriceps tendon above it
+    pat = b.ellipsoid((Z * 0.12, cy - H * 0.30, cx), (Z * 0.10, H * 0.11, W * 0.10), ps=0.2)
+    b.bone(pat, rim=1.6)
+    b.coat(pat, 1.6, CART, where=(b.gy > cy - H * 0.30))            # retropatellar cartilage
+    b.paint(b.tube((0, cy - H * 0.34, cx), (Z * 0.10, cy - H * 0.31, cx), W * 0.07, taper=0.2), MUSCLE)
 
-    # Patella (anterior, superior)
-    phantom[E(Z * 0.12, cy - H * 0.29, cx, Z * 0.10, H * 0.12, W * 0.09, 0.2)] = 13
-    phantom[E(Z * 0.12, cy - H * 0.29, cx, Z * 0.07, H * 0.08, W * 0.06, 0)] = 14
+    # ---- Proximal tibia + fibula (cortex + marrow) ------------------------- #
+    tib = b.ellipsoid((Z * 0.80, cy, cx - W * 0.02), (Z * 0.40, H * 0.22, W * 0.20), ps=0.3) & INF
+    b.bone(tib, rim=2.2)
+    b.coat(tib, 2.0, CART, where=(b.gz < int(Z * 0.66)))           # tibial plateau cartilage
+    fib = b.tube((Z * 0.55, cy + H * 0.06, cx + W * 0.31), (Z, cy + H * 0.06, cx + W * 0.30), W * 0.05, ps=0.3) & INF
+    b.bone(fib, rim=1.4)
 
-    # Quadriceps tendon (anterior, above patella)
-    phantom[E(Z * 0.04, cy - H * 0.31, cx, Z * 0.05, H * 0.07, W * 0.06, 0)] = 6
+    # ---- Joint: fluid film, menisci, cruciates ----------------------------- #
+    joint = (b.gz >= int(Z * 0.48)) & (b.gz <= int(Z * 0.54))
+    articular = b.ellipsoid((Z * 0.51, cy, cx), (Z * 0.10, H * 0.26, W * 0.34))
+    b.paint(joint & articular & (b.vol == MUSCLE), FLUID)           # thin synovial film
+    # menisci — wedges between femur and tibia; medial C-shape, lateral fuller O
+    mz = Z * 0.51
+    b.paint(b.tube((mz, cy - H * 0.10, cx - W * 0.22), (mz, cy + H * 0.12, cx - W * 0.10), W * 0.05, ps=0.5), CART)
+    lat = b.ellipsoid((mz, cy, cx + W * 0.14), (Z * 0.05, H * 0.10, W * 0.09))
+    b.paint(lat, CART)
+    b.paint(b.ellipsoid((mz, cy, cx + W * 0.14), (Z * 0.06, H * 0.05, W * 0.05)) & (b.vol == CART), FLUID)
+    # ACL (anterolateral → posteromedial) and PCL (crossing) in the notch
+    b.paint(b.tube((Z * 0.40, cy - H * 0.10, cx + W * 0.06), (Z * 0.58, cy + H * 0.12, cx - W * 0.05), W * 0.030, ps=0.4), MUSCLE)
+    b.paint(b.tube((Z * 0.40, cy + H * 0.10, cx - W * 0.05), (Z * 0.58, cy - H * 0.06, cx + W * 0.05), W * 0.034, ps=0.4), MUSCLE)
 
-    # ---- Joint space (z=Z*0.38..Z*0.62) ------------------------------------
-    # Femoral condyle articular cartilage
-    for cx_c in (cx - W * 0.15, cx + W * 0.13):
-        phantom[E(Z * 0.42, cy - H * 0.01, cx_c, Z * 0.055, H * 0.025, W * 0.115, 0)] = 15
+    # Hoffa's infrapatellar fat pad (anterior to the notch, below patella)
+    b.paint(b.ellipsoid((Z * 0.46, cy - H * 0.22, cx), (Z * 0.12, H * 0.10, W * 0.20), ps=0.5) & (b.vol == MUSCLE), FAT)
+    # Patellar tendon (patella → tibial tuberosity)
+    b.paint(b.tube((Z * 0.20, cy - H * 0.33, cx), (Z * 0.60, cy - H * 0.28, cx), W * 0.06, taper=0.1), MUSCLE)
 
-    # Medial meniscus: C-shaped (open posterolaterally) — two-arc approximation
-    med_m_z = Z * 0.50
-    phantom[E(med_m_z, cy, cx - W * 0.15, Z * 0.08, H * 0.055, W * 0.060)] = 15
-    phantom[E(med_m_z, cy + H * 0.08, cx - W * 0.18, Z * 0.06, H * 0.040, W * 0.045)] = 15
-    # Lateral meniscus: complete ring (smaller)
-    phantom[E(med_m_z, cy, cx + W * 0.13, Z * 0.08, H * 0.050, W * 0.052)] = 15
-    phantom[E(med_m_z, cy, cx + W * 0.13, Z * 0.09, H * 0.025, W * 0.026, 0) & (phantom == 15)] = 1
+    # Popliteal artery + vein and tibial nerve (posterior)
+    for dx, r, lab in [(-W * 0.05, W * 0.035, 11), (W * 0.02, W * 0.045, 11), (W * 0.09, W * 0.030, 6)]:
+        b.paint(b.tube((0, cy + H * 0.34, cx + dx), (Z, cy + H * 0.36, cx + dx), r, ps=0.4) & body, lab)
 
-    # Tibial plateau cartilage
-    for cx_c in (cx - W * 0.15, cx + W * 0.13):
-        phantom[E(Z * 0.58, cy + H * 0.04, cx_c, Z * 0.045, H * 0.020, W * 0.115, 0)] = 15
-
-    # Joint fluid (intercondylar space)
-    phantom[E(Z * 0.50, cy, cx, Z * 0.12, H * 0.070, W * 0.36) & (phantom == 6)] = 1
-
-    # Cruciate ligaments (fibrous cords in notch)
-    phantom[E(Z * 0.50, cy, cx, Z * 0.14, H * 0.060, W * 0.028, 0)] = 6
-
-    # Hoffa\'s fat pad (anterior, below patella)
-    phantom[E(Z * 0.55, cy - H * 0.20, cx, Z * 0.10, H * 0.09, W * 0.19, 0.5) & muscle] = 4
-
-    # ---- Tibia + fibula (z=Z*0.58..1.0) ------------------------------------
-    tib_z = E(cz * 1.4, cy, cx - W * 0.03, Z * 0.35, H * 0.24, W * 0.19, 0.3)
-    phantom[tib_z & (gz > int(Z * 0.55))] = 13
-    phantom[E(cz * 1.4, cy, cx - W * 0.03, Z * 0.35, H * 0.17, W * 0.13, 0) & (gz > int(Z * 0.55))] = 14
-
-    fib_cx = cx + W * 0.30
-    phantom[E(cz * 1.3, cy + H * 0.08, fib_cx, Z * 0.32, H * 0.065, W * 0.040, 0.3) & (gz > int(Z * 0.50))] = 13
-    phantom[E(cz * 1.3, cy + H * 0.08, fib_cx, Z * 0.32, H * 0.038, W * 0.022, 0) & (gz > int(Z * 0.50))] = 14
-
-    # Patellar tendon (anterior, below patella to tibial tuberosity)
-    phantom[E(Z * 0.44, cy - H * 0.28, cx, Z * 0.12, H * 0.08, W * 0.05, 0)] = 6
-
-    # Popliteal vessels (posterior)
-    for dx in (-W * 0.035, W * 0.035):
-        phantom[E(cz, cy + H * 0.36, cx + dx, Z * 0.40, H * 0.038, W * 0.030, 0) & body] = 11
-
-    phantom[~body] = 0
-    return phantom
+    b.vol[~body] = 0
+    return b.vol
 
 
 # ---- Spine ------------------------------------------------------------------ #
