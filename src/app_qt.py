@@ -44,6 +44,7 @@ from phantom3d_extended import (add_vessels_3d, add_activation_3d,
                                 load_real_tof_mra)
 from presets import get_preset_names, get_preset, get_preset_region, get_preset_plane
 from simulator import Simulator, _B0_MAP, _PF_MAP
+import render_overlay
 
 # SAR scaling factor per sequence type (relative to SE reference) — used by the
 # metrics display's max-safe-FA hint (the simulation SAR lives in simulator.py).
@@ -604,136 +605,39 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
 
     # RGBA colours for each tissue label (R, G, B, A) — used by the overlay.
-    _TISSUE_COLORS: dict[int, tuple[int, int, int, int]] = {
-        0:  (0,   0,   0,   0),    # background: transparent
-        1:  (0,   200, 255, 110),  # CSF/fluid: cyan
-        2:  (255, 140, 0,   90),   # gray matter: orange
-        3:  (255, 220, 50,  90),   # white matter: yellow
-        4:  (255, 255, 80,  80),   # fat: bright yellow
-        5:  (190, 190, 190, 100),  # skull/bone: gray
-        6:  (220, 60,  60,  90),   # muscle: red
-        7:  (180, 100, 30,  90),   # liver: brown
-        8:  (160, 80,  200, 90),   # spleen: purple
-        9:  (255, 145, 110, 90),   # kidney cortex: salmon
-        10: (210, 100, 80,  90),   # kidney medulla: dark salmon
-        11: (255, 30,  30,  110),  # blood: bright red
-        12: (20,  20,  20,  120),  # gas: near-black
-        13: (200, 200, 200, 100),  # cortical bone: light gray
-        14: (255, 185, 185, 90),   # marrow: pale pink
-        15: (100, 200, 255, 90),   # cartilage/disc: light blue
-        16: (50,  230, 100, 90),   # spinal cord: green
-        17: (200, 165, 100, 90),   # bowel: tan
-        18: (150, 200, 150, 80),   # lung: pale green
-        19: (255, 200, 100, 90),   # pancreas: amber
-        20: (255, 100, 150, 90),   # heart: pink
-        21: (200, 150, 210, 90),   # soft tissue/gland: lavender
-    }
-
-    # Anatomical edge labels (top, bottom, left, right) for the displayed image,
-    # in radiological convention — anterior up, patient-right on the viewer's LEFT.
-    # The in-plane geometry comes from get_slice + origin="lower"; the brain
-    # (BrainWeb) is already radiological, and the body phantoms are mirrored L/R at
-    # build time (see on_region_change) so a single map serves both.
-    _ORIENT_LABELS: dict[str, tuple[str, str, str, str]] = {
-        "axial":    ("A", "P", "R", "L"),
-        "coronal":  ("S", "I", "R", "L"),
-        "sagittal": ("S", "I", "A", "P"),
-    }
-    _BODY_REGIONS = frozenset({"Abdomen", "Spine", "Pelvis", "Knee", "Torso"})
+    # Overlay data (tissue colours, orientation labels, body-region set) is shared
+    # Qt-free in render_overlay — single source of truth for the desktop app and
+    # the browser adapter.
+    _TISSUE_COLORS = render_overlay.TISSUE_COLORS
+    _ORIENT_LABELS = render_overlay.ORIENT_LABELS
+    _BODY_REGIONS = render_overlay.BODY_REGIONS
 
     def _orientation_letters(self, orient: str) -> "tuple[str, str, str, str] | None":
-        """Anatomical edge labels for the current view, or None when they can't be
-        asserted safely. Skipped for MRA (a rotatable MIP projection), for oblique
-        planning (the plane is tilted off the cardinal axes), and for loaded NIfTI
-        volumes whose axis convention is unknown — better no letters than wrong ones."""
-        if self.sequence_type.get() == "MR Angiography":
-            return None
-        if self.fov_planning.get() and (abs(self.slice_tilt.get()) > 0.5
-                                        or abs(self.slice_rot.get()) > 0.5):
-            return None
-        region = self.region.get()
-        if region == "Brain" or region in self._BODY_REGIONS:
-            return self._ORIENT_LABELS.get(orient)
-        return None   # loaded mask / unknown convention
+        """Anatomical edge labels for the current view (delegates to the shared,
+        Qt-free render_overlay so the desktop app and the browser agree)."""
+        return render_overlay.orientation_letters(
+            orient, sequence=self.sequence_type.get(), region=self.region.get(),
+            fov_planning=self.fov_planning.get(),
+            tilt=self.slice_tilt.get(), rot=self.slice_rot.get())
 
     def _make_tissue_overlay(self, label_map: np.ndarray,
                               target_shape: tuple[int, int]) -> np.ndarray:
         """Return an RGBA image mapping each label to a translucent colour."""
-        if label_map.shape != target_shape:
-            from scipy.ndimage import zoom
-            scale = (target_shape[0] / label_map.shape[0],
-                     target_shape[1] / label_map.shape[1])
-            label_map = zoom(label_map, scale, order=0)
-        rgba = np.zeros((*target_shape, 4), dtype=np.uint8)
-        for lab, color in self._TISSUE_COLORS.items():
-            mask = label_map == lab
-            if mask.any():
-                rgba[mask] = color
-        return rgba
+        return render_overlay.tissue_overlay(label_map, target_shape)
 
     def _frame_image_axes(self, ax: Any) -> None:
-        """Give an image axes a clean framed-viewport look: no ticks, a thin
-        themed border instead of the default white axis box / off-axis."""
-        ax.set_xticks([]); ax.set_yticks([])
-        for _s in ax.spines.values():
-            _s.set_visible(True); _s.set_color(C_BORDER); _s.set_linewidth(1.0)
+        """Give an image axes a clean framed-viewport look (shared helper)."""
+        render_overlay.frame_image_axes(ax)
 
     def _annotate_image(self, ax: Any, params: dict, orient: str, sl_idx: int,
                         width: float, center: float) -> None:
-        """DICOM-style corner annotations on the main viewport (replaces the
-        centered title): sequence identity + timing top-left, geometry top-right,
-        window/level bottom-left, FOV bottom-right. Monospace, edge-anchored and
-        outline-stroked the way a real MR workstation overlays metadata."""
-        import matplotlib.patheffects as _pe
-        stroke = [_pe.withStroke(linewidth=2.2, foreground="#05080b")]
-        ACC, LIGHT, MUTE = C_ACCENT_HI, "#eef1f5", "#9aa4b2"
-
-        def t(x: float, y: float, s: str, color: str, *, ha: str = "left",
-              size: float = 8.0, weight: str = "normal", mono: bool = True) -> None:
-            ax.text(x, y, s, transform=ax.transAxes, color=color, fontsize=size,
-                    ha=ha, va="top" if y > 0.5 else "bottom", weight=weight,
-                    family="monospace" if mono else "sans-serif",
-                    path_effects=stroke, zorder=5)
-
-        seq = params.get("sequence", "")
-        head = params.get("qmri_display", "qMRI") if seq == "Quantitative (qMRI)" else seq
-        # Top-left: identity + key parameters
-        t(0.022, 0.978, head, ACC, size=11, weight="bold", mono=False)
-        timing = f"TR {params['TR']:.0f}   TE {params['TE']:.0f}"
-        if seq in ("Inversion Recovery",):
-            timing += f"   TI {params.get('TI', 0):.0f}"
-        if seq in ("Gradient Echo", "Balanced SSFP", "MR Angiography"):
-            timing += f"   FA {params.get('flip_angle', 0):.0f}°"
-        t(0.022, 0.928, timing, LIGHT)
-        t(0.022, 0.892, f"{params.get('field_strength', '')}   "
-                        f"{int(params.get('matrix_size', 0))}²", MUTE, size=7.5)
-        # Top-right: geometry
-        t(0.978, 0.978, self.region.get(), LIGHT, ha="right")
-        t(0.978, 0.936, orient.capitalize(), MUTE, ha="right", size=7.5)
-        t(0.978, 0.900, f"Slice {sl_idx}", MUTE, ha="right", size=7.5)
-        # 3-D slab: flag the acquisition mode, and whether this view is a reformat
-        # of the once-acquired slab (the headline "acquire once, view any plane").
-        if params.get("acq3d") and seq in self._ACQ3D_SEQUENCES:
-            t(0.022, 0.856, f"3D SLAB · {int(params.get('n_partitions', 0))}p",
-              ACC, size=7.5, weight="bold")
-            geom = getattr(self.sim, "_recon3d_geom", None)
-            if geom and geom.get("orient") and geom["orient"] != orient:
-                t(0.978, 0.864, f"REFORMAT ⟵ {geom['orient'].capitalize()}",
-                  ACC, ha="right", size=7.5, weight="bold")
-        # Bottom corners: window/level and FOV
-        t(0.022, 0.022, f"W {width:.2f}   L {center:.2f}", MUTE, size=7.5)
-        t(0.978, 0.022, f"FOV {params.get('FOV', 0):.0f} mm", MUTE, ha="right", size=7.5)
-        # Anatomical orientation markers at the mid-edges (only where verified).
-        letters = self._orientation_letters(orient)
-        if letters:
-            top, bot, lft, rgt = letters
-            for x, y, s, ha, va in [(0.5, 0.985, top, "center", "top"),
-                                    (0.5, 0.015, bot, "center", "bottom"),
-                                    (0.012, 0.5, lft, "left", "center"),
-                                    (0.988, 0.5, rgt, "right", "center")]:
-                ax.text(x, y, s, transform=ax.transAxes, color="#d7dee8",
-                        fontsize=10.5, weight="bold", ha=ha, va=va,
-                        family="sans-serif", path_effects=stroke, zorder=6)
+        """DICOM-style corner annotations + 3-D badges + orientation letters on
+        the main viewport (delegates to the shared, Qt-free render_overlay)."""
+        render_overlay.annotate_image(
+            ax, params, orient, sl_idx, width, center,
+            region=self.region.get(),
+            letters=self._orientation_letters(orient),
+            recon_geom=getattr(self.sim, "_recon3d_geom", None))
 
     def apply_window_level(self) -> None:
         if self.current_image is None:
