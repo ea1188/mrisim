@@ -98,14 +98,12 @@ try {
     () => { const i = document.getElementById("scoutImage"); return i && i.naturalWidth > 0; },
     { timeout: 15_000 });
   const sliceBefore = await page.inputValue("#slice");
-  const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
-  console.error("DBG scout: sliceBefore=", sliceBefore, "rect=", JSON.stringify(sb));
+  const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { w: r.width, h: r.height }; });
   // Element-relative click so events target the scout image regardless of layout.
   // Middle (coronal) panel, low → a row-mapped cross panel in axial acquisition.
   await page.click("#scoutImage", { position: { x: sb.w * 0.5, y: sb.h * 0.82 } });
   await page.waitForTimeout(800);
   const sliceAfter = await page.inputValue("#slice");
-  console.error("DBG sliceAfter=", sliceAfter);
   if (sliceAfter === sliceBefore) fail("scout click did not move the slice (before=" + sliceBefore + ")");
   await page.uncheck("#fovplan");
 

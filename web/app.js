@@ -305,7 +305,6 @@ async function render() {
         { region: p.region, orientation: p.orientation, slice_idx: p.slice_idx });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
-      window.__scoutPanels = scoutPanels;   // exposed for the smoke test
     }
   } catch (err) {
     $("hint").textContent = "Render error: " + err.message;
