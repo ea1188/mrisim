@@ -406,7 +406,7 @@ def draw_psd(
         draw_spin_echo_psd(fig, TR, TE)
     elif sequence == "FSE / TSE":
         draw_fse_psd(fig, TR, TE, etl, echo_spacing)
-    elif sequence == "Gradient Echo":
+    elif sequence in ("Gradient Echo", "Susceptibility (SWI)"):
         draw_gradient_echo_psd(fig, TR, TE, flip_angle)
     elif sequence == "Inversion Recovery":
         draw_inversion_recovery_psd(fig, TR, TE, TI)

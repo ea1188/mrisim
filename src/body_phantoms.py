@@ -539,7 +539,7 @@ _MSK_SEQS = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery", "B
 REGION_SEQUENCES = {
     "Brain":   ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
                 "Balanced SSFP", "Echo Planar (EPI)", "Diffusion (DWI)",
-                "MR Angiography", "fMRI (BOLD)"],
+                "MR Angiography", "Susceptibility (SWI)", "fMRI (BOLD)"],
     "Abdomen": _MSK_SEQS,
     "Knee":    _MSK_SEQS,
     "Spine":   _MSK_SEQS,

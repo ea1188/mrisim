@@ -134,6 +134,7 @@ class MetricsMixin:
         if seq == "fMRI (BOLD)": return "T2* (BOLD)"
         if seq == "Quantitative (qMRI)": return "Quantitative"
         if seq == "Echo Planar (EPI)": return "T2* (EPI)"
+        if seq == "Susceptibility (SWI)": return "T2* (SWI)"
         if seq == "Balanced SSFP": return "T2/T1 (bSSFP)"
         if TR < 800 and TE < 30: return "T1-weighted"
         elif TR > 2000 and TE > 60: return "T2-weighted"

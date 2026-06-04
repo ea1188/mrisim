@@ -832,8 +832,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
                        ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
                         "Balanced SSFP",
-                        "Diffusion (DWI)", "MR Angiography", "fMRI (BOLD)",
-                        "Quantitative (qMRI)", "Echo Planar (EPI)"], self.on_sequence_change)
+                        "Diffusion (DWI)", "MR Angiography", "Susceptibility (SWI)",
+                        "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)"],
+                       self.on_sequence_change)
         self.desc_label = DLabel("", base_style="color:#6b7585; font-size:9px; padding:2px 2px;")
         self.desc_label.setWordWrap(True)
         SL.addWidget(self.desc_label)
