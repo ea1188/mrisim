@@ -64,7 +64,7 @@ const HASH_KEYS = {
   slice: () => $("slice").value, field: () => $("field").value,
   tr: () => $("tr").value, te: () => $("te").value, ti: () => $("ti").value, fa: () => $("fa").value,
   matrix: () => $("matrix").value, bw: () => $("bw").value, nex: () => $("nex").value,
-  bval: () => $("bval").value, etl: () => $("etl").value,
+  bval: () => $("bval").value, etl: () => $("etl").value, thick: () => $("thick").value,
   fatsat: () => ($("fatsat").checked ? 1 : 0), gd: () => ($("gd").checked ? 1 : 0),
   flow: () => ($("flow").checked ? 1 : 0), acq3d: () => ($("acq3d").checked ? 1 : 0),
   np: () => $("np").value, kzpf: () => ($("kzpf").checked ? 1 : 0),
@@ -90,7 +90,7 @@ async function applyState(st) {
   if (st.orient) setOrient(st.orient);
   if (st.field) $("field").value = st.field;
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
-  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "bval", "etl", "np"].forEach(sv);
+  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   syncVisibility();
   applyingPreset = false;
@@ -284,7 +284,7 @@ function buildControls(info) {
   wireKeyboard();
   wireLessons();
 
-  ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "bval", "etl"].forEach((id) => {
+  ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "thick", "bval", "etl"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
       schedule();
@@ -344,6 +344,7 @@ function collectPayload() {
     TR: +$("tr").value, TE: +$("te").value, TI: +$("ti").value,
     flip_angle: +$("fa").value, field_strength: $("field").value,
     matrix_size: +$("matrix").value, bandwidth: +$("bw").value, NEX: +$("nex").value,
+    slice_thickness: +$("thick").value,
     fatsat_enabled: $("fatsat").checked,
     contrast_enabled: $("gd").checked, contrast_dose: $("gd").checked ? 5 : 0,
     flow_enabled: $("flow").checked,
@@ -381,7 +382,7 @@ async function onPreset() {
   if (p.sequence) $("sequence").value = p.sequence;
   set("tr", p.TR); set("te", p.TE); set("ti", p.TI); set("fa", p.flip_angle);
   set("matrix", p.matrix_size); set("bw", p.bandwidth); set("nex", p.NEX);
-  set("bval", p.b_value); set("etl", p.etl);
+  set("bval", p.b_value); set("etl", p.etl); set("thick", p.slice_thickness);
   if (p.field_strength) $("field").value = p.field_strength;
   $("fatsat").checked = !!p.fatsat_enabled;
   $("gd").checked = !!p.contrast_enabled;
