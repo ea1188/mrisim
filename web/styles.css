@@ -7,6 +7,10 @@
   --accent: #4f9cf9; --accent-hi: #7fb8ff; --accent-ink: #081019;
 }
 * { box-sizing: border-box; }
+/* The [hidden] attribute must always win over element display rules below
+   (e.g. #intro/#app/#wrapB/#scoutwrap set display, which would otherwise keep a
+   hidden element laid out and intercepting clicks). */
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--canvas); color: var(--text);
