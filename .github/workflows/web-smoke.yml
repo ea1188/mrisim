@@ -1,0 +1,42 @@
+name: Web build smoke
+
+# Real headless-browser check that the Pyodide web build boots and renders.
+# Builds the static bundle, serves it, and drives it in headless Chromium.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "src/**", "build_web.py", ".github/workflows/web-smoke.yml"]
+  pull_request:
+    paths: ["web/**", "src/**", "build_web.py", ".github/workflows/web-smoke.yml"]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build the web bundle
+        run: python build_web.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright (Chromium)
+        run: |
+          npm init -y
+          npm install playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Serve the bundle
+        run: |
+          python -m http.server 8765 --directory web &
+          for i in $(seq 1 20); do curl -sf http://localhost:8765/ >/dev/null && break; sleep 0.5; done
+
+      - name: Smoke test (headless Chromium boots Pyodide and renders)
+        run: node web/smoke.mjs http://localhost:8765/

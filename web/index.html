@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MRISim — interactive MRI physics in your browser</title>
+  <meta name="description" content="An interactive MRI physics simulator running entirely in your browser via Pyodide — no install." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- First-load splash: Pyodide + numpy/scipy/matplotlib + the brain (~30–50 MB,
+       cached after the first visit). -->
+  <div id="splash">
+    <div class="splash-card">
+      <div class="logo">MRI</div>
+      <h1>MRISim</h1>
+      <p id="splash-status">Starting…</p>
+      <div class="bar"><div id="splash-bar"></div></div>
+      <p class="splash-note">Runs the real Python engine in your browser via Pyodide.
+        First load downloads ~30–50&nbsp;MB (cached afterwards).</p>
+    </div>
+  </div>
+
+  <header id="topbar">
+    <div class="brand"><span class="logo-sm">MRI</span><b>MRISim</b>
+      <span class="tag">browser edition</span></div>
+    <div class="topchips">
+      <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>
+      <span class="chip"><i>SNR (WM)</i><b id="m-snrwm">—</b></span>
+      <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
+    </div>
+    <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
+  </header>
+
+  <main id="app" hidden>
+    <!-- Controls -->
+    <section class="panel" id="controls">
+      <div class="group">
+        <h2>Anatomy &amp; Sequence</h2>
+        <label>Region
+          <select id="region"></select></label>
+        <label>Sequence
+          <select id="sequence"></select></label>
+        <label>Field strength
+          <select id="field"><option>1.5T</option><option selected>3T</option></select></label>
+        <label>Orientation
+          <div class="radios" id="orientation">
+            <button data-v="axial" class="on">Axial</button>
+            <button data-v="coronal">Coronal</button>
+            <button data-v="sagittal">Sagittal</button>
+          </div>
+        </label>
+        <label>Slice <output id="slice-val"></output>
+          <input type="range" id="slice" min="0" max="180" value="90" /></label>
+      </div>
+
+      <div class="group">
+        <h2>Timing</h2>
+        <label>TR (ms) <output id="tr-val">500</output>
+          <input type="range" id="tr" min="20" max="6000" step="10" value="500" /></label>
+        <label>TE (ms) <output id="te-val">15</output>
+          <input type="range" id="te" min="2" max="300" step="1" value="15" /></label>
+        <label id="ti-row" hidden>TI (ms) <output id="ti-val">800</output>
+          <input type="range" id="ti" min="50" max="3000" step="10" value="800" /></label>
+        <label id="fa-row">Flip angle (°) <output id="fa-val">90</output>
+          <input type="range" id="fa" min="1" max="180" step="1" value="90" /></label>
+      </div>
+
+      <div class="group">
+        <h2>Contrast &amp; effects</h2>
+        <label class="check"><input type="checkbox" id="fatsat" /> Fat saturation</label>
+        <label class="check"><input type="checkbox" id="gd" /> Gadolinium</label>
+        <label class="check"><input type="checkbox" id="flow" /> Flow enhancement</label>
+      </div>
+
+      <div class="group">
+        <h2>3D acquisition</h2>
+        <label class="check"><input type="checkbox" id="acq3d" /> 3D slab (acquire once, reformat any plane)</label>
+        <label id="np-row" hidden>Partitions <output id="np-val">32</output>
+          <input type="range" id="np" min="4" max="64" step="1" value="32" /></label>
+        <label class="check" id="kzpf-row" hidden><input type="checkbox" id="kzpf" /> kz partial Fourier</label>
+      </div>
+    </section>
+
+    <!-- Viewport -->
+    <section class="viewport">
+      <div class="imgwrap"><img id="mainImage" alt="reconstructed MR image" /></div>
+      <div class="curvewrap"><img id="curveImage" alt="signal curve" /></div>
+    </section>
+
+    <!-- Metrics -->
+    <section class="panel" id="metrics">
+      <h2>Measurements</h2>
+      <table>
+        <tr><td>Resolution</td><td id="x-res">—</td></tr>
+        <tr><td>Scan time</td><td id="x-scan">—</td></tr>
+        <tr><td>SNR (WM / GM)</td><td id="x-snr">—</td></tr>
+        <tr><td>CNR (WM–GM)</td><td id="x-cnr">—</td></tr>
+        <tr><td>SAR (head)</td><td id="x-sar">—</td></tr>
+      </table>
+      <p class="hint" id="hint"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
