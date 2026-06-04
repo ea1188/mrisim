@@ -227,6 +227,10 @@ class WebHost(CurvesMixin):
         self.plot_curve_mode.set(payload.get("curve_mode", "TE decay"))
 
         params = default_params(**payload.get("params", {}))
+        # Display each region at its native field of view (no FOV control in the
+        # web UI) so the body isn't magnified — default_params' 240 mm would zoom
+        # ~1.6x into a 380 mm abdomen.
+        params["FOV"] = _NATIVE_FOV.get(region, params.get("FOV", 240.0))
         self._sync_sim(orient, sl, params["sequence"])
         ww = float(payload.get("window_width", 1.0))
         wl = float(payload.get("window_level", 0.5))
