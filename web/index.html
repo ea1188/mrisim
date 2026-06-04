@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MRISim — interactive MRI physics in your browser</title>
   <meta name="description" content="An interactive MRI physics simulator running entirely in your browser via Pyodide — no install." />
+  <link rel="icon" href="logo.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,7 +13,7 @@
        cached after the first visit). -->
   <div id="splash">
     <div class="splash-card">
-      <div class="logo">MRI</div>
+      <img class="logo" src="logo.png" alt="MRISim logo" />
       <h1>MRISim</h1>
       <p id="splash-status">Starting…</p>
       <div class="bar"><div id="splash-bar"></div></div>
@@ -37,7 +38,7 @@
   </div>
 
   <header id="topbar">
-    <div class="brand"><span class="logo-sm">MRI</span><b>MRISim</b>
+    <div class="brand"><img class="logo-sm" src="logo.png" alt="" /><b>MRISim</b>
       <span class="tag">browser edition</span></div>
     <div class="topchips">
       <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>

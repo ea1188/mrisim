@@ -39,6 +39,12 @@ def build() -> None:
         print(f"WARNING: {src_npy} not found — the web build will fall back to a "
               f"synthetic brain.")
 
+    # 3. Copy the app logo (shared with the desktop header).
+    src_logo = os.path.join(ROOT, "data", "logo.png")
+    if os.path.exists(src_logo):
+        shutil.copy2(src_logo, os.path.join(WEB, "logo.png"))
+        print("copied logo.png")
+
 
 if __name__ == "__main__":
     build()
