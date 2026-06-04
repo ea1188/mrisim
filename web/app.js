@@ -6,6 +6,7 @@
 const $ = (id) => document.getElementById(id);
 let pyodide = null;
 let renderFn = null;        // PyProxy: web_adapter.render_json
+let scoutFn = null;         // PyProxy: web_adapter.render_scout_json
 let booted = false;
 
 let compareMode = false;
@@ -43,6 +44,7 @@ async function boot() {
   pyodide.runPython("import sys; sys.path.insert(0, '/src')");
   const info = JSON.parse(pyodide.runPython("import json, web_adapter; json.dumps(web_adapter.init())"));
   renderFn = pyodide.runPython("web_adapter.render_json");
+  scoutFn = pyodide.runPython("web_adapter.render_scout_json");
 
   buildControls(info);
   setSplash(100, "Ready");
@@ -70,6 +72,10 @@ function buildControls(info) {
   $("setA").addEventListener("click", setProtocolA);
   $("compare").addEventListener("click", () => setCompare(!compareMode));
   $("exitAB").addEventListener("click", () => setCompare(false));
+  $("fovplan").addEventListener("change", () => {
+    $("scoutwrap").hidden = !$("fovplan").checked;
+    if ($("fovplan").checked) render();
+  });
   wireWindowLevel();
 
   // Sliders mirror their value to the <output> and trigger a debounced render.
@@ -255,6 +261,12 @@ async function render() {
       showDelta(resA.metrics, resB.metrics);
     } else {
       applyResult(JSON.parse(renderFn(JSON.stringify(collectPayload()))));
+    }
+    if ($("fovplan").checked) {
+      const p = collectPayload();
+      const s = JSON.parse(scoutFn(JSON.stringify(
+        { region: p.region, orientation: p.orientation, slice_idx: p.slice_idx })));
+      $("scoutImage").src = s.scout;
     }
   } catch (err) {
     $("hint").textContent = "Render error: " + err;

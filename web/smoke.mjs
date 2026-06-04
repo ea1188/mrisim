@@ -83,8 +83,16 @@ try {
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     beforeWL, { timeout: 15_000 });
 
+  // FOV-planning scout: toggling on must render the 3-plane localizer.
+  await page.check("#fovplan");
+  await page.waitForSelector("#scoutwrap:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const s = document.getElementById("scoutImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 20_000 });
+  await page.uncheck("#fovplan");
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, sequence/preset, A/B compare, and window-level all work.");
+  console.log("SMOKE OK — render, metrics, sequence/preset, A/B compare, window-level, and FOV scout all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {
