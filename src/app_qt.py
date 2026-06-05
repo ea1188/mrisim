@@ -157,8 +157,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         super().__init__()
         from version import __version__
         self.setWindowTitle(f"MRISim  v{__version__}")
-        # App/window icon (title bar, dock, taskbar) — our logo.
-        _icon_path = os.path.join(data_dir(), "logo.png")
+        # App/window icon (title bar, dock, taskbar) — the rounded app icon, with
+        # the plain logo as a fallback.
+        _icon_path = os.path.join(data_dir(), "app_icon.png")
+        if not os.path.exists(_icon_path):
+            _icon_path = os.path.join(data_dir(), "logo.png")
         if os.path.exists(_icon_path):
             _icon = QIcon(_icon_path)
             self.setWindowIcon(_icon)

@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.5.1] — 2026-06-05
+
+### Changed
+- **Desktop app icon** is now the `logobackground.png` artwork with macOS-style
+  rounded corners — the runtime window/dock/taskbar icon and the packaged
+  `.app` (macOS) / `.exe` (Windows) file icon.
+
 ## [1.5.0] — 2026-06-05
 
 Real anatomy everywhere, a much richer browser FOV-planning workflow, and the
