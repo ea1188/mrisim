@@ -157,6 +157,14 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         super().__init__()
         from version import __version__
         self.setWindowTitle(f"MRISim  v{__version__}")
+        # App/window icon (title bar, dock, taskbar) — our logo.
+        _icon_path = os.path.join(data_dir(), "logo.png")
+        if os.path.exists(_icon_path):
+            _icon = QIcon(_icon_path)
+            self.setWindowIcon(_icon)
+            _app = QApplication.instance()
+            if isinstance(_app, QApplication):
+                _app.setWindowIcon(_icon)
         self.resize(1500, 900)
 
         print("Loading 3D phantom...")

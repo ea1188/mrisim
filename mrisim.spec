@@ -27,6 +27,11 @@ src_modules = sorted(
 region_datas = [
     (f, os.path.dirname(f))
     for f in glob.glob("data/TotalsegmentatorMRI_dataset_v*/s*/*_iso_adapt_256.npy")
+] + [
+    # Real Knee atlas + texture (KneeBones3Dify, CC-BY). Without this the frozen
+    # app can't find data/knee_kb3d/ and falls back to the synthetic knee.
+    (f, os.path.dirname(f))
+    for f in glob.glob("data/knee_kb3d/*.npy")
 ]
 
 a = Analysis(
@@ -62,13 +67,16 @@ if is_mac:
         coll,
         name="MRISim.app",
         bundle_identifier="org.mrisim.app",
+        icon="data/logo.icns",                 # Finder / dock icon = our logo
         info_plist={"NSHighResolutionCapable": True},
     )
 else:
-    # One-file executable for Windows / Linux.
+    # One-file executable for Windows / Linux. icon= embeds the Windows .ico
+    # (ignored on Linux, where desktop icons come from a .desktop entry).
     exe = EXE(
         pyz, a.scripts, a.binaries, a.datas, [],
         name="MRISim",
         console=False,
         upx=False,
+        icon="data/logo.ico",
     )
