@@ -472,33 +472,88 @@ function imgFraction(img, cx, cy) {
   return (fx >= 0 && fx <= 1 && fy >= 0 && fy <= 1) ? { fx, fy } : null;
 }
 
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+function panelAt(f) {
+  for (const p of scoutPanels) {
+    const [l, t, r, b] = p.box;
+    if (f.fx >= l && f.fx <= r && f.fy >= t && f.fy <= b) return p;
+  }
+  return null;
+}
+function panelLocal(p, f) {            // 0..1 within the panel (y from top)
+  const [l, t, r, b] = p.box;
+  return { px: (f.fx - l) / (r - l), py: (f.fy - t) / (b - t) };
+}
+function bandLocal(p) {                // panel-local position of the slice band line
+  const s = +$("slice").value;
+  if (p.map === "row") return 1 - s / (p.n - 1);          // y (origin at bottom)
+  const col = p.flip ? (p.n - 1 - s) : s;
+  return col / (p.n - 1);                                  // x
+}
+
+// Interactive localizer: drag the FOV box to resize, the box interior (or click
+// elsewhere on the acquired panel) to recenter the in-plane FOV, the slice band
+// on a cross panel to angle the plane (oblique), or elsewhere to move the slice.
 function wireScout() {
   const img = $("scoutImage");
   img.style.cursor = "crosshair";
-  let dragging = false;
-  const apply = (e) => {
+  let drag = null;
+
+  const start = (f) => {
+    const p = panelAt(f); if (!p) return null;
+    const loc = panelLocal(p, f);
+    if (p.role === "acq") {
+      const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+      const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1),
+                            Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
+      return { mode: edge > 0.72 ? "resize" : "recenter", p };
+    }
+    const bp = bandLocal(p);
+    const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.10
+                                 : Math.abs(loc.px - bp) < 0.10;
+    if (near) return { mode: "oblique", p, l0: loc, tilt0: planTilt, rot0: planRot };
+    return { mode: "slice", p };
+  };
+
+  const apply = (f) => {
+    if (!drag) return;
+    const p = drag.p, loc = panelLocal(p, f);
+    if (drag.mode === "slice") {
+      let s = p.map === "row" ? (1 - loc.py) * (p.n - 1)
+                              : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
+      s = clampN(Math.round(s), 0, p.n - 1);
+      $("slice").value = s; $("slice-val").value = s;
+    } else if (drag.mode === "recenter") {           // set in-plane FOV centre
+      const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
+      planOff = p.ip_sign * u * p.ip_axis_len;
+    } else if (drag.mode === "resize") {             // grow/shrink the FOV box
+      const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+      const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
+      const pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
+      $("ipfov").value = pct; $("ipfov-val").value = pct;
+    } else if (drag.mode === "oblique") {            // angle the plane off-axis
+      if (p.map === "row") planTilt = clampN(drag.tilt0 + (drag.l0.py - loc.py) * 90, -45, 45);
+      else planRot = clampN(drag.rot0 + (loc.px - drag.l0.px) * 90, -45, 45);
+    }
+    schedule();
+  };
+
+  img.addEventListener("mousedown", (e) => {
     const f = imgFraction(img, e.clientX, e.clientY);
     if (!f) return;
-    for (const p of scoutPanels) {
-      if (p.map === "none") continue;
-      const [l, t, r, b] = p.box;
-      if (f.fx < l || f.fx > r || f.fy < t || f.fy > b) continue;
-      let slice;
-      if (p.map === "row") {                       // y → slice (origin at bottom)
-        slice = Math.round(((b - f.fy) / (b - t)) * (p.n - 1));
-      } else {                                     // x → slice (flip for sagittal Y)
-        const col = ((f.fx - l) / (r - l)) * (p.n - 1);
-        slice = Math.round(p.flip ? (p.n - 1 - col) : col);
-      }
-      slice = Math.max(0, Math.min(p.n - 1, slice));
-      $("slice").value = slice; $("slice-val").value = slice;
-      schedule();
-      return;
-    }
-  };
-  img.addEventListener("mousedown", (e) => { dragging = true; apply(e); e.preventDefault(); });
-  window.addEventListener("mousemove", (e) => { if (dragging) apply(e); });
-  window.addEventListener("mouseup", () => { dragging = false; });
+    drag = start(f); apply(f); e.preventDefault();
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!drag) return;
+    const f = imgFraction(img, e.clientX, e.clientY);
+    if (f) apply(f);
+  });
+  window.addEventListener("mouseup", () => { drag = null; });
+  img.addEventListener("dblclick", (e) => {          // reset to straight / full FOV
+    planOff = 0; planTilt = 0; planRot = 0;
+    $("ipfov").value = 100; $("ipfov-val").value = 100;
+    schedule(); e.preventDefault();
+  });
 }
 
 // --- Render orchestration (async, via the worker) --------------------------- //
@@ -543,7 +598,7 @@ async function render() {
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
       $("oblique-readout").textContent =
-        `Oblique: ${planTilt.toFixed(0)}° / ${planRot.toFixed(0)}°  ·  drag the slice band to angle, the FOV box to resize`;
+        `Oblique ${planTilt.toFixed(0)}° / ${planRot.toFixed(0)}°  ·  drag band = angle, FOV box = resize/move, dbl-click = reset`;
     }
     if (!compareMode) stateToHash();   // keep the URL shareable/current
   } catch (err) {

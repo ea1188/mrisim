@@ -110,6 +110,20 @@ try {
   await page.waitForTimeout(800);
   const sliceAfter = await page.inputValue("#slice");
   if (sliceAfter === sliceBefore) fail("scout click did not move the slice (before=" + sliceBefore + ")");
+
+  // Dragging the slice band on a cross panel must angle the plane (oblique). The
+  // band now sits at y≈0.82 of the coronal panel (the slice we just moved to);
+  // grab it and drag up — the oblique readout must report a non-zero angle.
+  const sr = await page.$eval("#scoutImage", (el) => {
+    const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+  await page.mouse.move(sr.x + sr.w * 0.5, sr.y + sr.h * 0.82);
+  await page.mouse.down();
+  await page.mouse.move(sr.x + sr.w * 0.6, sr.y + sr.h * 0.55, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForTimeout(900);
+  const readout = await page.textContent("#oblique-readout");
+  if (/Oblique\s+0°\s*\/\s*0°/.test(readout || "")) fail("oblique drag did not angle the plane (" + readout + ")");
+
   await page.uncheck("#fovplan");
 
   // Keyboard slice navigation (blur any focused control first — the handler
