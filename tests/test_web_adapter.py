@@ -182,6 +182,43 @@ def test_scout_renders(orient):
     assert all(p["n"] > 0 for p in panels if p["map"] != "none")
 
 
+def test_scout_acq_panel_has_fov_box():
+    """The acquired-plane panel reports a draggable FOV-box rect (image fraction)."""
+    wa.init()
+    out = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+         "inplane_fov_pct": 60, "inplane_off": 0,
+         "params": {"sequence": "Spin Echo", "slice_thickness": 5}})))
+    acq = [p for p in out["panels"] if p.get("role") == "acq"]
+    assert len(acq) == 1
+    fb = acq[0]["fov_box"]
+    assert len(fb) == 4 and all(0.0 <= v <= 1.0 for v in fb)
+    # 60% FOV → box noticeably smaller than the full panel in both dims
+    assert 0.4 < fb[2] < 0.8 and 0.4 < fb[3] < 0.8
+
+
+def test_fov_planning_crop_changes_main_image():
+    """Turning on FOV planning with a reduced in-plane FOV crops the main image."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo"}}
+    full = wa.render(dict(base))
+    cropped = wa.render({**base, "fov_planning": True,
+                         "inplane_fov_pct": 50, "inplane_off": 0, "tilt": 0, "rot": 0})
+    assert full["image"] != cropped["image"]
+
+
+def test_oblique_planning_changes_main_image():
+    """A non-zero tilt angle under FOV planning re-samples an oblique slice."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "fov_planning": True, "inplane_fov_pct": 100, "inplane_off": 0,
+            "params": {"sequence": "Spin Echo"}}
+    straight = wa.render({**base, "tilt": 0, "rot": 0})
+    oblique = wa.render({**base, "tilt": 20, "rot": 0})
+    assert straight["image"] != oblique["image"]
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",

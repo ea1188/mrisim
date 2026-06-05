@@ -11,6 +11,7 @@ let protocolA = null;       // snapshot payload for the "A" side of a comparison
 let applyingPreset = false; // suppress the custom-reset while a preset populates
 let winW = 1.0, winL = 0.5; // window/level (normalised), driven by image drag
 let scoutPanels = [];       // per-panel click→slice geometry from the last scout
+let planOff = 0, planTilt = 0, planRot = 0;  // in-plane FOV offset + oblique angles (drag-set)
 
 const SEQ_FA = new Set(["Gradient Echo", "Balanced SSFP", "MR Angiography", "Susceptibility (SWI)"]);
 const SEQ_TI = new Set(["Inversion Recovery"]);
@@ -284,9 +285,12 @@ function buildControls(info) {
   $("compare").addEventListener("click", () => setCompare(!compareMode));
   $("exitAB").addEventListener("click", () => setCompare(false));
   $("fovplan").addEventListener("change", () => {
-    $("scoutwrap").hidden = !$("fovplan").checked;
-    if ($("fovplan").checked) render();
+    const on = $("fovplan").checked;
+    $("scoutwrap").hidden = !on;
+    $("planctl").hidden = !on;
+    render();   // re-render so the main image picks up / drops the FOV crop
   });
+  $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; schedule(); });
   wireWindowLevel();
   wireScout();
   wireKeyboard();
@@ -364,11 +368,18 @@ function collectPayload() {
     params.n_partitions = +$("np").value;
     params.kz_pf = $("kzpf").checked ? 0.75 : null;
   }
-  return {
+  const out = {
     region: curRegion(), orientation: curOrient(),
     slice_idx: +$("slice").value, curve_mode: "TE decay",
     window_width: winW, window_level: winL, params,
   };
+  if ($("fovplan").checked) {                 // graphic FOV box + oblique prescription
+    out.fov_planning = true;
+    out.inplane_fov_pct = +$("ipfov").value;
+    out.inplane_off = planOff;
+    out.tilt = planTilt; out.rot = planRot;
+  }
+  return out;
 }
 
 // --- Presets ---------------------------------------------------------------- //
@@ -508,6 +519,7 @@ async function render() {
   document.body.classList.add("busy");
   try {
     if (compareMode) {
+      const reqSlice = +$("slice").value;   // guard against stale slice clobber
       const B = collectPayload();
       const resA = await call("render", protocolA || B);
       const resB = await call("render", B);
@@ -515,17 +527,23 @@ async function render() {
       $("mainImageB").src = resB.image;
       $("curveImage").src = resB.curve;
       setMetrics(resB);
-      syncSlice(resB);
+      syncSlice(resB, reqSlice);
       showDelta(resA.metrics, resB.metrics);
     } else {
-      applyResult(await call("render", collectPayload()));
+      const reqSlice = +$("slice").value;   // guard against stale slice clobber
+      applyResult(await call("render", collectPayload()), reqSlice);
     }
     if ($("fovplan").checked) {
       const p = collectPayload();
-      const s = await call("scout",
-        { region: p.region, orientation: p.orientation, slice_idx: p.slice_idx });
+      const s = await call("scout", {
+        region: p.region, orientation: p.orientation, slice_idx: p.slice_idx,
+        params: p.params, inplane_fov_pct: p.inplane_fov_pct ?? 100,
+        inplane_off: planOff, tilt: planTilt, rot: planRot,
+      });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
+      $("oblique-readout").textContent =
+        `Oblique: ${planTilt.toFixed(0)}° / ${planRot.toFixed(0)}°  ·  drag the slice band to angle, the FOV box to resize`;
     }
     if (!compareMode) stateToHash();   // keep the URL shareable/current
   } catch (err) {
@@ -543,8 +561,12 @@ function fmtTime(s) {
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-function syncSlice(res) {
+function syncSlice(res, reqSlice) {
   $("slice").max = res.max_slice;
+  // Don't clobber a slice the user changed (keyboard/wheel/scout) while this
+  // async render was in flight — only correct the slider when it still holds the
+  // value this render was issued for (e.g. the server clamped it).
+  if (reqSlice !== undefined && +$("slice").value !== reqSlice) return;
   if (+$("slice").value !== res.slice_idx) $("slice").value = res.slice_idx;
   $("slice-val").value = res.slice_idx;
 }
@@ -562,10 +584,10 @@ function setMetrics(res) {
   if (!SEQ_SLOW_FIRST.has($("sequence").value)) $("hint").textContent = "";
 }
 
-function applyResult(res) {
+function applyResult(res, reqSlice) {
   $("mainImage").src = res.image;
   $("curveImage").src = res.curve;
-  syncSlice(res);
+  syncSlice(res, reqSlice);
   setMetrics(res);
 }
 

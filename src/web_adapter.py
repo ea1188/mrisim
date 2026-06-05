@@ -192,6 +192,21 @@ class WebHost(CurvesMixin):
         s.inplane_fov_pct = 100.0
         s.inplane_off = 0.0
 
+    def _apply_planning(self, payload: dict) -> None:
+        """When the FOV-planning localizer is active, push its in-plane FOV box
+        (graphic shrink/shift of the acquired field) and oblique tilt/rot angles
+        onto the Simulator so the main image reflects the prescription. The engine
+        already honours these via scan_geometry.fov_crop + oblique sampling; here
+        we just relay the localizer's state (mirrors app_qt._sync_sim's planning)."""
+        if not payload.get("fov_planning"):
+            return
+        s = self.sim
+        s.fov_planning = True
+        s.inplane_fov_pct = float(np.clip(payload.get("inplane_fov_pct", 100.0), 20.0, 100.0))
+        s.inplane_off = float(payload.get("inplane_off", 0.0))
+        s.tilt = float(np.clip(payload.get("tilt", 0.0), -45.0, 45.0))
+        s.rot = float(np.clip(payload.get("rot", 0.0), -45.0, 45.0))
+
     def dims(self) -> dict:
         v = self.sim.volume
         assert v is not None
@@ -227,11 +242,12 @@ class WebHost(CurvesMixin):
         self.plot_curve_mode.set(payload.get("curve_mode", "TE decay"))
 
         params = default_params(**payload.get("params", {}))
-        # Display each region at its native field of view (no FOV control in the
-        # web UI) so the body isn't magnified — default_params' 240 mm would zoom
-        # ~1.6x into a 380 mm abdomen.
+        # Display each region at its native field of view so the body isn't
+        # magnified — default_params' 240 mm would zoom ~1.6x into a 380 mm
+        # abdomen. (The interactive in-plane FOV box is a separate crop below.)
         params["FOV"] = _NATIVE_FOV.get(region, params.get("FOV", 240.0))
         self._sync_sim(orient, sl, params["sequence"])
+        self._apply_planning(payload)   # in-plane FOV box + oblique angulation
         ww = float(payload.get("window_width", 1.0))
         wl = float(payload.get("window_level", 0.5))
 
@@ -282,10 +298,13 @@ class WebHost(CurvesMixin):
     _ACQ_AXIS = {"axial": 0, "coronal": 1, "sagittal": 2}
 
     def render_scout(self, payload: dict) -> str:
-        """Render the 3-plane localizer with the current slice marked on the two
-        cross panels and the acquired plane framed — the FOV-planning view."""
+        """Render the 3-plane localizer with the prescription overlaid: the slice
+        drawn as a band of its true thickness (the whole slab when 3-D), the FOV
+        box on the acquired plane, and crosshairs through the prescribed centre."""
+        from matplotlib.patches import Rectangle
         from oblique import three_scouts
         from phantom3d import simulate_slice
+        import scan_geometry as sg
         region = payload.get("region", self.region.get())
         if region != self.region.get():
             self.load_region(region)
@@ -295,48 +314,88 @@ class WebHost(CurvesMixin):
         nz, ny, nx = vol.shape
         max_sl = self.sim.get_max_slice_idx()
         sl = int(np.clip(int(payload.get("slice_idx", self.slice_idx.get())), 0, max_sl))
-        ctr = {"axial": (sl, ny // 2, nx // 2), "coronal": (nz // 2, sl, nx // 2),
-               "sagittal": (nz // 2, ny // 2, sl)}[orient]
-        scouts = three_scouts(vol, ctr)
+        p = payload.get("params", {})
         acq_axis = self._ACQ_AXIS[orient]
         names = ["axial", "coronal", "sagittal"]
+        amber, dim = "#ffdd44", "#6f7886"
+
+        # In-plane FOV box (square fraction) + its centre offset along the
+        # acquired plane's in-plane axis; the crosshair follows that centre.
+        fov_frac = float(np.clip(payload.get("inplane_fov_pct", 100.0), 20.0, 100.0)) / 100.0
+        ip_axis = sg.SCOUT[orient]["inplane_axis"]
+        ip_off = float(payload.get("inplane_off", 0.0))
+        ctr = [nz // 2, ny // 2, nx // 2]
+        ctr[acq_axis] = sl
+        ctr[ip_axis] = int(np.clip(vol.shape[ip_axis] / 2.0 + ip_off, 0, vol.shape[ip_axis] - 1))
+        scouts = three_scouts(vol, tuple(ctr))
+
+        # Through-direction band half-width (voxels). A 3-D slab spans exactly
+        # n_partitions voxels; a 2-D slice spans slice_thickness / voxel size.
+        native_fov = _NATIVE_FOV.get(region, 220.0)
+        voxel_mm = native_fov / float(nx)
+        acq3d = bool(p.get("acq3d")) and p.get("sequence") in _ACQ3D_SEQUENCES
+        if acq3d:
+            half = max(0.6, int(p.get("n_partitions", 16)) / 2.0)
+            band_lbl = f"slab · {int(p.get('n_partitions', 16))}p"
+        else:
+            half = max(0.6, (float(p.get("slice_thickness", 5)) / max(voxel_mm, 1e-3)) / 2.0)
+            band_lbl = f"{float(p.get('slice_thickness', 5)):.0f} mm"
 
         for ax, name in zip(self.scout_axes, names, strict=True):
             ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
             bg = scouts[name]
             if name == "sagittal":
                 bg = np.fliplr(bg)
+            H, W = bg.shape
             ax.imshow(simulate_slice(bg, 600, 12, "SE"), cmap="gray",
                       origin="lower", aspect="auto")
             ra, ca = self._PANEL_AXES[name]
-            if acq_axis == ra:                          # slice cuts along a row
-                ax.axhline(sl, color="#ffdd44", lw=1.6)
-            elif acq_axis == ca:                        # slice cuts along a column
+            title = name.capitalize()
+            # crosshair through the prescribed centre (col flips for sagittal Y)
+            chx = (ny - 1 - ctr[ca]) if name == "sagittal" else ctr[ca]
+            ax.axvline(chx, color=dim, lw=0.6, alpha=0.5)
+            ax.axhline(ctr[ra], color=dim, lw=0.6, alpha=0.5)
+            if acq_axis == ra:                          # slice band runs in rows
+                ax.axhspan(sl - half, sl + half, color=amber, alpha=0.22, lw=0)
+                ax.axhline(sl, color=amber, lw=1.4)
+            elif acq_axis == ca:                        # slice band runs in cols
                 col = (ny - 1 - sl) if name == "sagittal" else sl
-                ax.axvline(col, color="#ffdd44", lw=1.6)
+                bw = half
+                ax.axvspan(col - bw, col + bw, color=amber, alpha=0.22, lw=0)
+                ax.axvline(col, color=amber, lw=1.4)
             else:                                        # this panel IS the plane
-                for sp in ax.spines.values():
-                    sp.set_visible(True); sp.set_color("#ffdd44"); sp.set_linewidth(2.2)
+                fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
+                ax.add_patch(Rectangle((fb["x0"], fb["y0"]), fb["w"], fb["h"],
+                             fill=False, edgecolor=amber, linewidth=1.8, linestyle=(0, (4, 2))))
+                for spn in ax.spines.values():
+                    spn.set_visible(True); spn.set_color("#2a323c"); spn.set_linewidth(1.2)
                 ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
-            ax.set_title(name.capitalize(), color="#9aa4b2", fontsize=8, pad=2)
+                title = f"{name.capitalize()}  ·  {band_lbl}"
+            ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
 
-        # Per-panel geometry so the front-end can map a click → a new slice along
-        # the acquisition through-axis. box = [left, top, right, bottom] in image
-        # fraction (y from the top); map says whether a click's row or column sets
-        # the slice (or "none" for the acquired plane itself).
+        # Per-panel geometry for the front-end: click→slice on the cross panels,
+        # plus the FOV-box rect (image fraction) on the acquired-plane panel so it
+        # can be dragged. box = [left, top, right, bottom] in figure fraction.
         panels = []
         for ax, name in zip(self.scout_axes, names, strict=True):
             ra, ca = self._PANEL_AXES[name]
             pos = ax.get_position()
             box = [float(pos.x0), float(1.0 - pos.y1), float(pos.x1), float(1.0 - pos.y0)]
+            entry: dict = {"name": name, "box": box}
             if acq_axis == ra:
-                mp, n, flip = "row", int(vol.shape[ra]), False
+                entry.update(map="row", n=int(vol.shape[ra]), flip=False, role="cross")
             elif acq_axis == ca:
-                mp, n, flip = "col", int(vol.shape[ca]), (name == "sagittal")
+                entry.update(map="col", n=int(vol.shape[ca]), flip=(name == "sagittal"),
+                             role="cross")
             else:
-                mp, n, flip = "none", 0, False
-            panels.append({"name": name, "box": box, "map": mp, "n": n, "flip": flip})
+                fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
+                H, W = scouts[name].shape          # panel image is H rows × W cols
+                entry.update(map="none", n=0, flip=False, role="acq",
+                             ip_axis_len=int(vol.shape[ip_axis]),
+                             fov_box=[fb["x0"] / W, 1.0 - (fb["y0"] + fb["h"]) / H,
+                                      fb["w"] / W, fb["h"] / H])
+            panels.append(entry)
         self._scout_panels = panels
         return _png_b64(self.scout_fig)
 
