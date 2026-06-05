@@ -5,7 +5,7 @@ name: Deploy web to Pages
 on:
   push:
     branches: [main]
-    paths: ["web/**", "src/**", "build_web.py", ".github/workflows/deploy-web.yml"]
+    paths: ["web/**", "src/**", "build_web.py", "data/knee_kb3d/**", ".github/workflows/deploy-web.yml"]
   workflow_dispatch:
 
 permissions:
