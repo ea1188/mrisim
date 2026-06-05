@@ -12,6 +12,35 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-06-05
+
+Real anatomy everywhere, a much richer browser FOV-planning workflow, and the
+app now wears our logo.
+
+### Added
+- **Real body & knee anatomy in the browser.** The TotalSegmentator
+  Abdomen/Spine/Pelvis/Torso atlases and a real **Knee** (KneeBones3Dify,
+  CC-BY-4.0) are fetched on demand in the browser — the same segmented anatomy
+  the desktop uses, replacing the in-browser synthetic body.
+- **Interactive FOV planning** in the browser localizer. The slice is drawn as a
+  band of its true thickness (the whole slab in 3-D) with crosshairs through the
+  prescribed centre; an in-plane **FOV box** (with a FOV % control) you can drag
+  to resize or recentre; and **oblique angulation** by dragging the slice band
+  (tilt/rot), with the band redrawn at the prescribed angle and the main image
+  re-sampled obliquely. Double-click resets.
+- **Desktop app icon** — the MRISim logo is now the window / dock / taskbar icon
+  and the packaged `.app` (macOS) / `.exe` (Windows) file icon.
+
+### Changed / Fixed
+- **Real Knee anatomy** (KneeBones3Dify) on both desktop and browser, now bundled
+  into the desktop release binaries — a frozen build previously couldn't find the
+  cache and fell back to the synthetic knee.
+- **Knee orientation** corrected to the radiological body-atlas convention
+  (superior-up, anterior, patient-right) on web and desktop.
+- Browser trunk regions render at their **native FOV** (no spurious
+  magnification), and the **signal-curve graph** now fills the panel width so it
+  is actually readable.
+
 ## [1.4.0] — 2026-06-04
 
 **MRISim now runs in the browser** — the full physics engine, client-side via
