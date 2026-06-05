@@ -91,9 +91,12 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
   display: grid; place-items: center; overflow: hidden;
 }
 .imgwrap { min-height: 0; }
-.curvewrap { height: 220px; }
+/* The curve panel fills the viewport width (it was letterboxed small in a fixed
+   220px box); a wide figure keeps it short enough not to crowd the image. */
+.curvewrap { padding: 4px; }
 #mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: ns-resize; }
-#curveImage, #mainImageB { max-width: 100%; max-height: 100%; }
+#mainImageB { max-width: 100%; max-height: 100%; }
+#curveImage { width: 100%; height: auto; display: block; }
 .abtag {
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
   color: var(--accent-ink); background: var(--accent-hi); border-radius: 5px; padding: 1px 7px;
@@ -189,7 +192,6 @@ kbd {
 }
 @media (max-width: 560px) {
   .group h2 { margin-top: 2px; }
-  .curvewrap { height: 170px; }
   .scoutwrap { height: 120px; }
 }
 
