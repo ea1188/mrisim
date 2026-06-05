@@ -519,6 +519,7 @@ async function render() {
   document.body.classList.add("busy");
   try {
     if (compareMode) {
+      const reqSlice = +$("slice").value;   // guard against stale slice clobber
       const B = collectPayload();
       const resA = await call("render", protocolA || B);
       const resB = await call("render", B);
@@ -526,10 +527,11 @@ async function render() {
       $("mainImageB").src = resB.image;
       $("curveImage").src = resB.curve;
       setMetrics(resB);
-      syncSlice(resB);
+      syncSlice(resB, reqSlice);
       showDelta(resA.metrics, resB.metrics);
     } else {
-      applyResult(await call("render", collectPayload()));
+      const reqSlice = +$("slice").value;   // guard against stale slice clobber
+      applyResult(await call("render", collectPayload()), reqSlice);
     }
     if ($("fovplan").checked) {
       const p = collectPayload();
@@ -559,8 +561,12 @@ function fmtTime(s) {
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-function syncSlice(res) {
+function syncSlice(res, reqSlice) {
   $("slice").max = res.max_slice;
+  // Don't clobber a slice the user changed (keyboard/wheel/scout) while this
+  // async render was in flight — only correct the slider when it still holds the
+  // value this render was issued for (e.g. the server clamped it).
+  if (reqSlice !== undefined && +$("slice").value !== reqSlice) return;
   if (+$("slice").value !== res.slice_idx) $("slice").value = res.slice_idx;
   $("slice-val").value = res.slice_idx;
 }
@@ -578,10 +584,10 @@ function setMetrics(res) {
   if (!SEQ_SLOW_FIRST.has($("sequence").value)) $("hint").textContent = "";
 }
 
-function applyResult(res) {
+function applyResult(res, reqSlice) {
   $("mainImage").src = res.image;
   $("curveImage").src = res.curve;
-  syncSlice(res);
+  syncSlice(res, reqSlice);
   setMetrics(res);
 }
 
