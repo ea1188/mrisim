@@ -104,7 +104,7 @@ class WebHost(CurvesMixin):
         # Agg figures for the two panels.
         self.fig = Figure(figsize=(5.2, 5.2), facecolor=_C_CANVAS)
         self.img_ax = self.fig.add_axes((0.0, 0.0, 1.0, 1.0))
-        self.curve_fig = Figure(figsize=(5.4, 3.8), facecolor=_C_PANEL)
+        self.curve_fig = Figure(figsize=(7.2, 3.2), facecolor=_C_PANEL)
         self.curve_ax = self.curve_fig.add_subplot(111)
         self.axes = [self.img_ax, self.curve_ax]   # CurvesMixin draws on axes[1]
         # 3-plane localizer (FOV planning) — one row of three panels.
@@ -289,6 +289,8 @@ class WebHost(CurvesMixin):
             sp.set_color("#252c34")
         ax.grid(True, color="#1b222a", linewidth=0.6)
         self._plot_curves(params)              # shared desktop curve code
+        # Keep axis labels off the edges at the wide, short web aspect.
+        self.curve_fig.subplots_adjust(left=0.085, right=0.985, top=0.9, bottom=0.17)
         return _png_b64(self.curve_fig)
 
     # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
