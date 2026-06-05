@@ -326,6 +326,8 @@ class WebHost(CurvesMixin):
         fov_frac = float(np.clip(payload.get("inplane_fov_pct", 100.0), 20.0, 100.0)) / 100.0
         ip_axis = sg.SCOUT[orient]["inplane_axis"]
         ip_off = float(payload.get("inplane_off", 0.0))
+        tilt = float(payload.get("tilt", 0.0))
+        rot = float(payload.get("rot", 0.0))
         ctr = [nz // 2, ny // 2, nx // 2]
         ctr[acq_axis] = sl
         ctr[ip_axis] = int(np.clip(vol.shape[ip_axis] / 2.0 + ip_off, 0, vol.shape[ip_axis] - 1))
@@ -358,13 +360,27 @@ class WebHost(CurvesMixin):
             ax.axvline(chx, color=dim, lw=0.6, alpha=0.5)
             ax.axhline(ctr[ra], color=dim, lw=0.6, alpha=0.5)
             if acq_axis == ra:                          # slice band runs in rows
-                ax.axhspan(sl - half, sl + half, color=amber, alpha=0.22, lw=0)
-                ax.axhline(sl, color=amber, lw=1.4)
+                if abs(tilt) > 0.5:                      # oblique: angle the band
+                    m = np.tan(np.radians(tilt))
+                    xs = np.array([0.0, W - 1.0]); ys = sl + (xs - W / 2) * m
+                    op = half / max(np.cos(np.radians(tilt)), 0.3)
+                    ax.fill_between(xs, ys - op, ys + op, color=amber, alpha=0.20, lw=0)
+                    ax.plot(xs, ys, color=amber, lw=1.6)
+                else:
+                    ax.axhspan(sl - half, sl + half, color=amber, alpha=0.22, lw=0)
+                    ax.axhline(sl, color=amber, lw=1.4)
             elif acq_axis == ca:                        # slice band runs in cols
                 col = (ny - 1 - sl) if name == "sagittal" else sl
-                bw = half
-                ax.axvspan(col - bw, col + bw, color=amber, alpha=0.22, lw=0)
-                ax.axvline(col, color=amber, lw=1.4)
+                ang = -rot if name == "sagittal" else rot   # x is flipped for sagittal
+                if abs(rot) > 0.5:                       # oblique: angle the band
+                    m = np.tan(np.radians(ang))
+                    ys = np.array([0.0, H - 1.0]); xs = col + (ys - H / 2) * m
+                    op = half / max(np.cos(np.radians(rot)), 0.3)
+                    ax.fill_betweenx(ys, xs - op, xs + op, color=amber, alpha=0.20, lw=0)
+                    ax.plot(xs, ys, color=amber, lw=1.6)
+                else:
+                    ax.axvspan(col - half, col + half, color=amber, alpha=0.22, lw=0)
+                    ax.axvline(col, color=amber, lw=1.4)
             else:                                        # this panel IS the plane
                 fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
                 ax.add_patch(Rectangle((fb["x0"], fb["y0"]), fb["w"], fb["h"],
@@ -373,6 +389,7 @@ class WebHost(CurvesMixin):
                     spn.set_visible(True); spn.set_color("#2a323c"); spn.set_linewidth(1.2)
                 ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
                 title = f"{name.capitalize()}  ·  {band_lbl}"
+            ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)   # angled band can't expand the view
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
 
@@ -393,8 +410,13 @@ class WebHost(CurvesMixin):
             else:
                 fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
                 H, W = scouts[name].shape          # panel image is H rows × W cols
+                # ip_dir/ip_sign: which panel screen axis is the in-plane (offset)
+                # axis, and the sign relating a downward/rightward drag to +off.
+                ip_dir, ip_sign = {"axial": ("x", 1), "coronal": ("x", 1),
+                                   "sagittal": ("y", -1)}[orient]
                 entry.update(map="none", n=0, flip=False, role="acq",
                              ip_axis_len=int(vol.shape[ip_axis]),
+                             ip_dir=ip_dir, ip_sign=ip_sign,
                              fov_box=[fb["x0"] / W, 1.0 - (fb["y0"] + fb["h"]) / H,
                                       fb["w"] / W, fb["h"] / H])
             panels.append(entry)
