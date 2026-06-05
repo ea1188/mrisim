@@ -37,7 +37,7 @@ python src/app_qt.py
 
 The PyQt6 app drives the physics engine in real time:
 
-- **Anatomy** — real BrainWeb brain plus real segmented body regions (Abdomen, Spine, Pelvis, whole Torso) from the TotalSegmentator MRI dataset, each with a synthetic fallback; load any TotalSegmentator NIfTI mask from disk, or index a folder of masks by body region (see [Anatomy and phantoms](#anatomy-and-phantoms))
+- **Anatomy** — real BrainWeb brain plus real segmented body regions (Abdomen, Spine, Pelvis, whole Torso) from the TotalSegmentator MRI dataset and a real Knee (KneeBones3Dify), each with a synthetic fallback; load any TotalSegmentator NIfTI mask from disk, or index a folder of masks by body region (see [Anatomy and phantoms](#anatomy-and-phantoms))
 - **Sequences** — Spin Echo, FSE/TSE (EPG echo train), Gradient Echo, Inversion Recovery, Balanced SSFP (with off-resonance banding), Echo-Planar (EPI), Diffusion (DWI with ADC/FA maps), MR Angiography (TOF / Phase Contrast), Susceptibility-Weighted Imaging (SWI), fMRI BOLD, and Quantitative (qMRI) parameter mapping
 - **qMRI maps** — T1 (variable flip angle), T2 and T2\* (multi-echo), and Synthetic SE contrast rendered from the maps
 - **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing (brain and body, blood-pool weighted), magnetization transfer, B1+ inhomogeneity, flowing-blood signal (spin-echo void / gradient-echo inflow), and three fat-suppression methods (STIR, Dixon in-/opposed-phase, spectral CHESS)
@@ -125,9 +125,9 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ### Run in your browser (nothing to install)
 
-The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)**. The real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/) — pick a sequence, sweep TR/TE/flip, switch anatomy and orientation, toggle 3D slab acquisition, apply presets, compare A/B, and pop up the 3-plane localizer, all rendered by the same code as the desktop app. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards. **The body regions use the same real segmented anatomy as the desktop** — the Abdomen/Spine/Pelvis/Torso atlases are fetched on demand (~20 MB each, when you select them); the Knee is synthetic (no real atlas). Loading external NIfTI and DICOM export remain desktop-only.
+The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)**. The real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/) — pick a sequence, sweep TR/TE/flip, switch anatomy and orientation, toggle 3D slab acquisition, apply presets, compare A/B, and plan on the 3-plane localizer, all rendered by the same code as the desktop app. The localizer is interactive: the slice shows as a band of its true thickness (the whole slab in 3-D), and you can drag the FOV box to resize/recentre it, drag the slice band to angle the plane (oblique), and click a cross panel to move the slice. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards. **The body regions use the same real segmented anatomy as the desktop** — the Abdomen/Spine/Pelvis/Torso *and Knee* atlases are fetched on demand (~10–20 MB each, when you select them). Loading external NIfTI and DICOM export remain desktop-only.
 
-> **For the fullest, most robust experience, use the downloadable desktop app.** The browser edition is newer and a convenience subset — it covers the core interactive simulator, but the desktop build is more complete and battle-tested (real segmented body atlases, NIfTI/DICOM, the full FOV-planning/oblique workflow, faster rendering). If something feels limited or slow in the browser, the [desktop download](https://github.com/ea1188/mrisim/releases/latest) is the reference experience.
+> **For the fullest, most robust experience, use the downloadable desktop app.** The browser edition is newer and a convenience subset — it covers the core interactive simulator (now including interactive FOV planning with oblique), but the desktop build is more complete and battle-tested (multi-slice/gap prescription, NIfTI/DICOM import-export, the full FOV-planning workflow, faster rendering). If something feels limited or slow in the browser, the [desktop download](https://github.com/ea1188/mrisim/releases/latest) is the reference experience.
 
 ### Download a ready-to-run app (no Python needed)
 
@@ -137,7 +137,7 @@ Grab the build for your system from the [**latest release**](https://github.com/
 - **macOS** — download `MRISim-macos.zip`, unzip it, drag `MRISim.app` to *Applications*, then allow it on first launch (see [macOS — "can't be opened"](#macos--mrisim-cant-be-opened--apple-could-not-verify) below).
 - **Linux** — download `MRISim-linux.tar.gz`, extract it, and run `./MRISim` (needs Qt libraries: `sudo apt-get install libxcb-cursor0 libgl1`).
 
-Each download bundles Python, every dependency, the brain phantom **and the four real body regions** (Abdomen, Spine, Pelvis, whole Torso) — a few hundred MB — so there's nothing else to install and real anatomy works offline. The first launch is slower while font caches build; later launches are quick.
+Each download bundles Python, every dependency, the brain phantom **and the five real body regions** (Abdomen, Spine, Pelvis, whole Torso, and the Knee) — a few hundred MB — so there's nothing else to install and real anatomy works offline. The first launch is slower while font caches build; later launches are quick.
 
 > These builds are **unsigned**, so on first launch your OS may warn that the developer is unidentified (macOS Gatekeeper / Windows SmartScreen). That's expected — see below to allow it.
 
