@@ -192,3 +192,6 @@ kbd {
   .curvewrap { height: 170px; }
   .scoutwrap { height: 120px; }
 }
+
+/* FOV-planning helper text under the localizer toggle */
+.tiny { color: var(--text-faint); font-size: 11px; margin: 4px 0 0; line-height: 1.35; }
