@@ -333,17 +333,29 @@ class WebHost(CurvesMixin):
         ctr[ip_axis] = int(np.clip(vol.shape[ip_axis] / 2.0 + ip_off, 0, vol.shape[ip_axis] - 1))
         scouts = three_scouts(vol, tuple(ctr))
 
-        # Through-direction band half-width (voxels). A 3-D slab spans exactly
-        # n_partitions voxels; a 2-D slice spans slice_thickness / voxel size.
+        # Acquisition-plane normal (with oblique tilt/rot) + per-region voxel
+        # size, then the true slab / multi-slice band projected onto each scout
+        # via the companion oblique.scout_band — the same geometry the desktop
+        # localizer uses. A 3-D slab is one band n_partitions voxels thick; a 2-D
+        # acquisition is n_slices parallel slices of slice_thickness with a gap.
+        from oblique import plane_from_angles, scout_band
         native_fov = _NATIVE_FOV.get(region, 220.0)
         voxel_mm = native_fov / float(nx)
+        normal = plane_from_angles(orient, tilt_deg=tilt, rot_deg=rot)[0]
         acq3d = bool(p.get("acq3d")) and p.get("sequence") in _ACQ3D_SEQUENCES
         if acq3d:
-            half = max(0.6, int(p.get("n_partitions", 16)) / 2.0)
+            n_eff = 1
+            thick_mm, gap_mm = int(p.get("n_partitions", 16)) * voxel_mm, 0.0
             band_lbl = f"slab · {int(p.get('n_partitions', 16))}p"
         else:
-            half = max(0.6, (float(p.get("slice_thickness", 5)) / max(voxel_mm, 1e-3)) / 2.0)
-            band_lbl = f"{float(p.get('slice_thickness', 5)):.0f} mm"
+            n_eff = int(np.clip(int(p.get("n_slices", 1)), 1, 32))
+            thick_mm = float(p.get("slice_thickness", 5))
+            gap_mm = float(p.get("slice_gap", 0.0))
+            band_lbl = f"{n_eff} × {thick_mm:.0f} mm" if n_eff > 1 else f"{thick_mm:.0f} mm"
+        band = scout_band(vol.shape, normal,
+                          (float(ctr[0]), float(ctr[1]), float(ctr[2])),
+                          n_slices=n_eff, thickness_mm=thick_mm, gap_mm=gap_mm,
+                          voxel_size=(voxel_mm, voxel_mm, voxel_mm))
 
         for ax, name in zip(self.scout_axes, names, strict=True):
             ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
@@ -355,33 +367,11 @@ class WebHost(CurvesMixin):
                       origin="lower", aspect="auto")
             ra, ca = self._PANEL_AXES[name]
             title = name.capitalize()
-            # crosshair through the prescribed centre (col flips for sagittal Y)
-            chx = (ny - 1 - ctr[ca]) if name == "sagittal" else ctr[ca]
-            ax.axvline(chx, color=dim, lw=0.6, alpha=0.5)
+            fc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
+            # crosshair through the prescribed centre (x flips for sagittal Y)
+            ax.axvline(fc(ctr[ca]), color=dim, lw=0.6, alpha=0.5)
             ax.axhline(ctr[ra], color=dim, lw=0.6, alpha=0.5)
-            if acq_axis == ra:                          # slice band runs in rows
-                if abs(tilt) > 0.5:                      # oblique: angle the band
-                    m = np.tan(np.radians(tilt))
-                    xs = np.array([0.0, W - 1.0]); ys = sl + (xs - W / 2) * m
-                    op = half / max(np.cos(np.radians(tilt)), 0.3)
-                    ax.fill_between(xs, ys - op, ys + op, color=amber, alpha=0.20, lw=0)
-                    ax.plot(xs, ys, color=amber, lw=1.6)
-                else:
-                    ax.axhspan(sl - half, sl + half, color=amber, alpha=0.22, lw=0)
-                    ax.axhline(sl, color=amber, lw=1.4)
-            elif acq_axis == ca:                        # slice band runs in cols
-                col = (ny - 1 - sl) if name == "sagittal" else sl
-                ang = -rot if name == "sagittal" else rot   # x is flipped for sagittal
-                if abs(rot) > 0.5:                       # oblique: angle the band
-                    m = np.tan(np.radians(ang))
-                    ys = np.array([0.0, H - 1.0]); xs = col + (ys - H / 2) * m
-                    op = half / max(np.cos(np.radians(rot)), 0.3)
-                    ax.fill_betweenx(ys, xs - op, xs + op, color=amber, alpha=0.20, lw=0)
-                    ax.plot(xs, ys, color=amber, lw=1.6)
-                else:
-                    ax.axvspan(col - half, col + half, color=amber, alpha=0.22, lw=0)
-                    ax.axvline(col, color=amber, lw=1.4)
-            else:                                        # this panel IS the plane
+            if name == orient:                           # this panel IS the plane
                 fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
                 ax.add_patch(Rectangle((fb["x0"], fb["y0"]), fb["w"], fb["h"],
                              fill=False, edgecolor=amber, linewidth=1.8, linestyle=(0, (4, 2))))
@@ -389,7 +379,19 @@ class WebHost(CurvesMixin):
                     spn.set_visible(True); spn.set_color("#2a323c"); spn.set_linewidth(1.2)
                 ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
                 title = f"{name.capitalize()}  ·  {band_lbl}"
-            ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)   # angled band can't expand the view
+            else:                                        # cross panel: the slab band
+                ov = band[name]
+                e0, e1 = ov["edges"]
+                if e0 and e1:                            # shade the slab coverage
+                    ax.fill([fc(e0[0]), fc(e0[2]), fc(e1[2]), fc(e1[0])],
+                            [e0[1], e0[3], e1[3], e1[1]], color=amber, alpha=0.16, lw=0)
+                segs = ov["slices"]; mid = len(segs) // 2
+                for j, seg in enumerate(segs):
+                    if seg is None:
+                        continue
+                    ax.plot([fc(seg[0]), fc(seg[2])], [seg[1], seg[3]], color=amber,
+                            lw=1.5 if j == mid else 0.8, alpha=0.95 if j == mid else 0.6)
+            ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)   # band can't expand the view
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
 

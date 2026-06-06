@@ -296,7 +296,7 @@ function buildControls(info) {
   wireKeyboard();
   wireLessons();
 
-  ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "thick", "bval", "etl"].forEach((id) => {
+  ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
       schedule();
@@ -357,6 +357,7 @@ function collectPayload() {
     flip_angle: +$("fa").value, field_strength: $("field").value,
     matrix_size: +$("matrix").value, bandwidth: +$("bw").value, NEX: +$("nex").value,
     slice_thickness: +$("thick").value,
+    n_slices: +$("nslices").value, slice_gap: +$("sgap").value,
     fatsat_enabled: $("fatsat").checked,
     contrast_enabled: $("gd").checked, contrast_dose: $("gd").checked ? 5 : 0,
     flow_enabled: $("flow").checked,
