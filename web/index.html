@@ -33,7 +33,7 @@
         <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel.</li>
         <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets).</li>
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
-        <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The slice shows as a band of its true thickness (the whole slab in 3-D). Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset.</li>
+        <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
       </ul>
       <p class="intro-note">This browser edition is a convenience subset. For the fullest, most
         robust experience — real body atlases, NIfTI/DICOM, the complete planning workflow and
@@ -120,6 +120,10 @@
         <div id="planctl" hidden>
           <label>In-plane FOV (%) <output id="ipfov-val">100</output>
             <input type="range" id="ipfov" min="30" max="100" step="5" value="100" /></label>
+          <label># Slices <output id="nslices-val">1</output>
+            <input type="range" id="nslices" min="1" max="32" step="1" value="1" /></label>
+          <label>Slice gap (mm) <output id="sgap-val">0</output>
+            <input type="range" id="sgap" min="0" max="10" step="1" value="0" /></label>
           <p class="tiny" id="oblique-readout">Oblique: 0° / 0°  ·  drag the slice band to angle, the FOV box to resize</p>
         </div>
       </div>

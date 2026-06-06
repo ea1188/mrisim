@@ -219,6 +219,31 @@ def test_oblique_planning_changes_main_image():
     assert straight["image"] != oblique["image"]
 
 
+def test_multislice_scout_renders():
+    """A multi-slice prescription renders the localizer with the slice stack."""
+    wa.init()
+    out = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+         "params": {"sequence": "Spin Echo", "slice_thickness": 4,
+                    "n_slices": 9, "slice_gap": 2}})))
+    _decode(out["scout"], "multislice scout")
+
+
+def test_multislice_crosstalk_lowers_snr():
+    """Contiguous multi-slice (no gap) costs SNR via cross-talk; a gap recovers it."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 2500, "TE": 30, "slice_thickness": 4}}
+
+    def snr(ns, gap):
+        p = {**base, "params": {**base["params"], "n_slices": ns, "slice_gap": gap}}
+        return wa.render(p)["metrics"]["snr_wm"]
+
+    one, packed, gapped = snr(1, 0), snr(16, 0), snr(16, 8)
+    assert packed < one            # cross-talk penalty
+    assert gapped > packed         # a gap recovers signal
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",
