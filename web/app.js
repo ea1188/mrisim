@@ -443,21 +443,41 @@ function showDelta(mA, mB) {
 }
 
 // --- Window/level drag on the main image ------------------------------------ //
+// Window/level is applied INSTANTLY client-side while dragging: the current
+// image is re-windowed with a CSS filter (no server round-trip), then one
+// accurate server render lands on release. The transform from the baseline the
+// image was rendered at (w0,l0) to the live (winW,winL) is linear, y = a·x + b
+// with a = w0/winW, b = ((l0-w0/2)-(winL-winW/2))/winW, realised as
+// brightness(bf)·contrast(cf): cf = 1−2b, bf = a/cf.
+function wlFilter(w0, l0) {
+  const a = w0 / winW;
+  const b = ((l0 - w0 / 2) - (winL - winW / 2)) / winW;
+  const cf = Math.min(8, Math.max(0.05, 1 - 2 * b));
+  const bf = Math.min(8, Math.max(0, a / cf));
+  return `brightness(${bf}) contrast(${cf})`;
+}
+
 function wireWindowLevel() {
   const img = $("mainImage");
-  let dragging = false, lx = 0, ly = 0;
+  let dragging = false, lx = 0, ly = 0, w0 = 1, l0 = 0.5;
   img.addEventListener("mousedown", (e) => {
     if (compareMode) return;           // A/B images are fixed-W/L
-    dragging = true; lx = e.clientX; ly = e.clientY; e.preventDefault();
+    dragging = true; lx = e.clientX; ly = e.clientY;
+    w0 = winW; l0 = winL;              // baseline the current image was rendered at
+    e.preventDefault();
   });
   window.addEventListener("mousemove", (e) => {
     if (!dragging) return;
     winW = Math.min(3, Math.max(0.05, winW + (e.clientX - lx) * 0.004));
     winL = Math.min(1, Math.max(0, winL - (e.clientY - ly) * 0.003));
     lx = e.clientX; ly = e.clientY;
-    schedule();
+    img.style.filter = wlFilter(w0, l0);   // instant preview, no server call
   });
-  window.addEventListener("mouseup", () => { dragging = false; });
+  window.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    schedule();                            // one accurate render at the final W/L
+  });
   img.addEventListener("dblclick", () => { winW = 1.0; winL = 0.5; schedule(); });
 }
 
@@ -642,6 +662,7 @@ function setMetrics(res) {
 
 function applyResult(res, reqSlice) {
   $("mainImage").src = res.image;
+  $("mainImage").style.filter = "";   // server image is correctly windowed; drop the live W/L preview filter
   $("curveImage").src = res.curve;
   syncSlice(res, reqSlice);
   setMetrics(res);
