@@ -97,6 +97,14 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
 #mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: ns-resize; }
 #mainImageB { max-width: 100%; max-height: 100%; }
 #curveImage, #cmapImage { width: 100%; height: auto; display: block; }
+.mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.mathbox { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
+.mathbox .m-tissue { color: var(--text-dim); font-size: 11px; margin-bottom: 4px; }
+.mathbox .m-eq { color: var(--accent-hi); }
+.mathbox .m-sub { color: var(--text); }
+.mathbox .m-res { margin-top: 4px; }
+.mathbox .m-res b { color: var(--accent-hi); }
+.mathbox sup { font-size: 0.78em; }
 .abtag {
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
   color: var(--accent-ink); background: var(--accent-hi); border-radius: 5px; padding: 1px 7px;

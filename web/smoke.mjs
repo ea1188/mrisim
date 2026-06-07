@@ -95,6 +95,15 @@ try {
     () => { const p = document.getElementById("probe"); return p && !p.hidden && /T1\s/.test(p.textContent || ""); },
     { timeout: 5_000 });
 
+  // "Show the math": toggle on, hover, and the equation panel must populate.
+  await page.check("#mathshow");
+  await page.mouse.move(box.x - 6, box.y - 6);
+  await page.mouse.move(box.x, box.y);
+  await page.waitForFunction(
+    () => { const m = document.getElementById("math"); return m && /S\s*=/.test(m.textContent || "") && /signal/i.test(m.textContent || ""); },
+    { timeout: 5_000 });
+  await page.uncheck("#mathshow");
+
   // FOV-planning scout: toggling on must render the 3-plane localizer.
   await page.check("#fovplan");
   await page.waitForSelector("#scoutwrap:not([hidden])", { timeout: 5_000 });

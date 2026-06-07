@@ -102,11 +102,12 @@ async function applyState(st) {
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // Reflect the teaching panels a lesson/share-link may have toggled.
   $("scoutwrap").hidden = !$("fovplan").checked;
   $("planctl").hidden = !$("fovplan").checked;
   $("cmapwrap").hidden = !$("cmap").checked;
+  $("mathwrap").hidden = !$("mathshow").checked;
   syncVisibility();
   applyingPreset = false;
 }
@@ -334,6 +335,7 @@ function buildControls(info) {
   });
   $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; schedule(); });
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
+  $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   wireWindowLevel();
   wireScout();
   wireProbe();
@@ -730,8 +732,37 @@ function wireProbe() {
     if (!t) { box.hidden = true; return; }
     box.textContent = `${t.name} · T1 ${Math.round(t.T1)} / T2 ${Math.round(t.T2)} ms · PD ${t.PD.toFixed(2)}`;
     box.hidden = false;
+    if ($("mathshow").checked) $("math").innerHTML = mathHTML(t);   // "Show the math"
   });
   img.addEventListener("mouseleave", () => { box.hidden = true; });
+}
+
+// Build the signal-equation HTML for the hovered tissue at the current protocol.
+// The final S is the server's value (same equation as the picture); the symbolic
+// + substituted lines are formatted client-side from the known TR/TE/TI/FA.
+function mathHTML(t) {
+  const seq = $("sequence").value;
+  const TR = +$("tr").value, TE = +$("te").value, TI = +$("ti").value, FA = +$("fa").value;
+  const T1 = Math.round(t.T1), T2 = Math.round(t.T2), T2s = Math.round(t.T2star ?? t.T2);
+  const PD = t.PD.toFixed(2), e = (n, d) => `e<sup>−${Math.round(n)}/${d}</sup>`;
+  const head = `<div class="m-tissue"><b>${t.name}</b> · T1 ${T1} · T2 ${T2} ms · PD ${PD} · ${seq}</div>`;
+  let sym, sub;
+  if (seq === "Gradient Echo" || seq === "Echo Planar (EPI)" || seq === "Susceptibility (SWI)") {
+    sym = `S = PD·sinα·(1−e<sup>−TR/T1</sup>)⁄(1−cosα·e<sup>−TR/T1</sup>)·e<sup>−TE/T2*</sup>`;
+    sub = `= ${PD}·sin${FA}°·(1−${e(TR, T1)})⁄(1−cos${FA}°·${e(TR, T1)})·${e(TE, T2s)}`;
+  } else if (seq === "Inversion Recovery") {
+    sym = `S = PD·|1−2e<sup>−TI/T1</sup>+e<sup>−TR/T1</sup>|·e<sup>−TE/T2</sup>`;
+    sub = `= ${PD}·|1−2·e<sup>−${Math.round(TI)}/${T1}</sup>+${e(TR, T1)}|·${e(TE, T2)}`;
+  } else if (seq === "Balanced SSFP") {
+    sym = `S ≈ PD·sinα · (T2/T1-weighted balanced steady state)`;
+    sub = "";
+  } else {   // SE / FSE / qMRI / default
+    const E1 = (1 - Math.exp(-TR / t.T1)).toFixed(2), E2 = Math.exp(-TE / t.T2).toFixed(2);
+    sym = `S = PD·(1−e<sup>−TR/T1</sup>)·e<sup>−TE/T2</sup>`;
+    sub = `= ${PD}·(1−${e(TR, T1)})·${e(TE, T2)} = ${PD}·${E1}·${E2}`;
+  }
+  return head + `<div class="m-eq">${sym}</div>` + (sub ? `<div class="m-sub">${sub}</div>` : "")
+    + `<div class="m-res">signal S = <b>${t.S.toFixed(3)}</b></div>`;
 }
 
 function weighting(seq, tr, te) {
