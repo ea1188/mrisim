@@ -1,0 +1,14 @@
+Real lumbar Spine region — SPIDER dataset
+==========================================
+
+Atlas + texture (atlas.npy, texture.npy) are processed by
+scripts/build_spider_spine.py from one subject's T2 study of:
+
+  J. van der Graaf et al., "SPIDER - Lumbar spine segmentation in MR images:
+  a dataset and a public benchmark", Zenodo, https://zenodo.org/records/10159290
+  License: CC-BY-4.0
+
+Sagittal lumbar T1/T2 MRI with per-structure masks (vertebrae, intervertebral
+discs, spinal canal). Only the small processed cache is committed here; the raw
+3.7 GB image archive is not redistributed — the build script pulls a single
+subject's image on demand via HTTP range requests.

@@ -40,7 +40,7 @@ _BODY_REGIONS = render_overlay.BODY_REGIONS
 _C_PANEL = "#11151a"
 _C_CANVAS = "#050607"
 # Physical in-plane FOV (mm) per region — same map as app_qt._get_native_fov.
-_NATIVE_FOV = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 380.0,
+_NATIVE_FOV = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 320.0,
                "Pelvis": 380.0, "Knee": 150.0, "Torso": 400.0}
 
 
