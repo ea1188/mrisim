@@ -292,6 +292,7 @@ function buildControls(info) {
     render();   // re-render so the main image picks up / drops the FOV crop
   });
   $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; schedule(); });
+  $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   wireWindowLevel();
   wireScout();
   wireProbe();
@@ -375,6 +376,7 @@ function collectPayload() {
     region: curRegion(), orientation: curOrient(),
     slice_idx: +$("slice").value, curve_mode: "TE decay",
     window_width: winW, window_level: winL, params,
+    contrast_map: $("cmap").checked,
   };
   if ($("fovplan").checked) {                 // graphic FOV box + oblique prescription
     out.fov_planning = true;
@@ -668,6 +670,7 @@ function applyResult(res, reqSlice) {
   $("curveImage").src = res.curve;
   probe = res.probe || null;          // aligned label map for the hover tissue readout
   if (probe) probe.bytes = Uint8Array.from(atob(probe.labels), (c) => c.charCodeAt(0));
+  if (res.cmap) $("cmapImage").src = res.cmap;   // TR×TE contrast landscape
   syncSlice(res, reqSlice);
   setMetrics(res);
 }
