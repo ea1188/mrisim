@@ -12,6 +12,38 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-06-07
+
+A real lumbar spine, a more detailed knee, richer browser FOV planning, and new
+tools for connecting the picture to the physics.
+
+### Added
+- **Real SPIDER lumbar Spine.** Replaces the torso-cropped TotalSegmentator spine
+  with a sagittal lumbar T2 study from the **SPIDER** dataset (van der Graaf et
+  al., Zenodo 10159290, CC-BY-4.0): vertebrae (cortical + marrow), intervertebral
+  discs and the spinal canal (CSF + cord) individually segmented.
+  `scripts/build_spider_spine.py` range-extracts one subject from the 3.7 GB
+  archive (a seekable HTTP file over `zipfile`) rather than downloading it whole.
+- **Cursor tissue probe** — hover the image to read the tissue and its T1/T2/PD
+  under the cursor.
+- **"Show the math"** — the active sequence's signal equation with the hovered
+  tissue's T1/T2/PD and your TR/TE plugged in, and the resulting signal.
+- **TR×TE contrast map** — the whole contrast landscape for a region's tissue
+  pair (bright = high contrast), with the current protocol marked.
+- **Richer browser FOV planning** — multi-slice + slice-gap prescription (with the
+  real slice-cross-talk SNR penalty), a true oblique scout band, and **instant
+  client-side window/level**.
+- **Six more clinical presets** (47 → 53): Knee T1 FSE / bSSFP Cartilage, Spine T1
+  Post-Gd / GRE-MERGE, Pelvis MR Urography, Torso DWIBS.
+- **Three guided lessons** driving the new features.
+
+### Changed / Fixed
+- **Knee menisci, cruciates and tendons** now render as distinct dark
+  fibrocartilage (new `Ligament/Meniscus` tissue, very short T2), instead of being
+  lumped into muscle.
+- Regions **open on their canonical plane** — spine and knee sagittal (their
+  native acquisition), everything else axial.
+
 ## [1.5.1] — 2026-06-05
 
 ### Changed
