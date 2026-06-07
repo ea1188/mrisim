@@ -100,8 +100,13 @@ async function applyState(st) {
   if (st.orient) setOrient(st.orient);
   if (st.field) $("field").value = st.field;
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
-  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
+   "nslices", "sgap", "ipfov"].forEach(sv);
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  // Reflect the teaching panels a lesson/share-link may have toggled.
+  $("scoutwrap").hidden = !$("fovplan").checked;
+  $("planctl").hidden = !$("fovplan").checked;
+  $("cmapwrap").hidden = !$("cmap").checked;
   syncVisibility();
   applyingPreset = false;
 }
@@ -193,6 +198,42 @@ const LESSONS = [
         state: { orient: "coronal", slice: 110 } },
       { text: "And <b>sagittal</b>, still from the one acquisition. 3D gives thin contiguous partitions and a √Nz SNR advantage over single 2D slices.",
         state: { orient: "sagittal", slice: 90 } },
+    ],
+  },
+  {
+    title: "Where contrast comes from",
+    blurb: "Read the whole TR×TE landscape, not just one curve.",
+    steps: [
+      { text: "Turn on the <b>Contrast map (TR×TE)</b> below the curve. It shades how strongly two tissues differ across every TR/TE — <b>bright = high contrast</b>, and the circle is your current protocol. Start T1-weighted: short TR, short TE.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, cmap: true } },
+      { text: "Slide to <b>T2-weighted</b> (long TR, long TE). The marker climbs into the bright lobe where gray/white matter — and especially CSF — separate most. The picture's contrast follows the map.",
+        state: { tr: 4000, te: 100 } },
+      { text: "Now <b>proton-density</b> (long TR, short TE): GM/WM contrast comes purely from water content. Notice the dark <b>low-contrast band</b> a protocol must avoid — that's where the two tissues' signals cross and the image goes flat.",
+        state: { tr: 4000, te: 15 } },
+    ],
+  },
+  {
+    title: "Multi-slice cross-talk & the gap",
+    blurb: "Why packing slices tight costs SNR — and the gap that fixes it.",
+    steps: [
+      { text: "Open <b>FOV planning</b> and watch the <b>SNR</b> readout. One slice, baseline — the localizer shows a single band of the slice thickness.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 2000, te: 15, fovplan: true, nslices: 1, sgap: 0 } },
+      { text: "Prescribe a <b>contiguous stack</b> — 16 slices, no gap. The bands fill the slab on the cross panels, but SNR <b>drops</b>: each slice-select pulse saturates the edges of its neighbours (cross-talk).",
+        state: { nslices: 16, sgap: 0 } },
+      { text: "Add a <b>slice gap</b> (5 mm). The bands separate and the SNR <b>recovers</b> — the classic reason for an inter-slice gap. The trade is coverage vs. signal.",
+        state: { nslices: 16, sgap: 5 } },
+    ],
+  },
+  {
+    title: "A tour of the real anatomy",
+    blurb: "The same physics on real brain, knee and body atlases.",
+    steps: [
+      { text: "Real <b>brain</b> (BrainWeb), T1-weighted. <b>Hover the image</b> to read each tissue's T1/T2/PD under the cursor — white matter bright, CSF dark.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, fovplan: false, cmap: false } },
+      { text: "Switch to the real <b>knee</b> (a 3-D T2 dataset). A fat-suppressed STIR lights up joint fluid and marrow oedema against nulled fat — the workhorse MSK contrast.",
+        state: { region: "Knee", seq: "Inversion Recovery", orient: "sagittal", slice: 100, tr: 4000, ti: 265, te: 60 } },
+      { text: "And the real <b>abdomen</b> (TotalSegmentator), T2 FSE: fluid-filled structures bright, solid organs mid-grey. Same equations, real segmented anatomy — hover to confirm the tissue.",
+        state: { region: "Abdomen", seq: "FSE / TSE", orient: "axial", slice: 55, tr: 4000, te: 90, etl: 32 } },
     ],
   },
 ];
