@@ -110,9 +110,11 @@ def build(subject: int) -> None:
     msk = zoom(msk, zf, order=0)
 
     # Orient to the body-atlas convention (axis0↑=Superior, axis1↑=Anterior,
-    # axis2↑=Right); SPIDER T2 comes in head-first sagittal — flip axis0 so the
-    # vertebrae run inferior→superior like every other region.
-    img, msk = img[::-1], msk[::-1]
+    # axis2↑=Right). Measured from this study's anatomy: vertebrae enlarge toward
+    # low axis0 (L5 inferior), so axis0↑ is ALREADY superior — leave it. The canal
+    # (posterior) sits at high axis1, i.e. axis1↑=Posterior, so flip axis1 to put
+    # the anterior vertebral bodies at high axis1 like every other region.
+    img, msk = img[:, ::-1], msk[:, ::-1]
 
     v = img / max(np.percentile(img[img > 0], 99), 1e-3)
     v = np.clip(v, 0, 1.6)
