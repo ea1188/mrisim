@@ -285,12 +285,19 @@ class WebHost(CurvesMixin):
         lab8 = np.clip(lab[::step, ::step], 0, 255).astype(np.uint8)
         H, W = lab8.shape
         props = tissue_db.properties(params.get("field_strength", "3T"))
+        seq = params["sequence"]
+        ti, fa = params.get("TI", 150), params.get("flip_angle", 90)
         tissues = {}
         for v in np.unique(lab8):
             pr = props.get(int(v))
             if pr:
+                # The pixel's predicted signal from the SAME equation the image
+                # uses, so "Show the math" reproduces the picture exactly.
+                sig = float(self._curve_signal(seq, pr, params["TR"], params["TE"], ti, fa))
                 tissues[int(v)] = {"name": pr["name"], "T1": float(pr["T1"]),
-                                   "T2": float(pr["T2"]), "PD": float(pr["PD"])}
+                                   "T2": float(pr["T2"]), "PD": float(pr["PD"]),
+                                   "T2star": float(pr.get("T2star", pr["T2"])),
+                                   "S": abs(sig)}
         return {"labels": base64.b64encode(lab8.tobytes()).decode("ascii"),
                 "h": int(H), "w": int(W), "tissues": tissues}
 

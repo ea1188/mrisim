@@ -262,6 +262,19 @@ def test_render_returns_aligned_tissue_probe():
         assert {"name", "T1", "T2", "PD"} <= set(info)
 
 
+def test_probe_carries_signal_for_show_the_math():
+    """Each probe tissue includes the predicted signal S (for the 'show the math'
+    panel), and it matches the spin-echo equation S = PD·(1−e^−TR/T1)·e^−TE/T2."""
+    import math
+    wa.init()
+    res = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                     "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15}})
+    wm = next(v for v in res["probe"]["tissues"].values() if v["name"] == "White matter")
+    assert {"S", "T2star"} <= set(wm)
+    expect = wm["PD"] * (1 - math.exp(-500 / wm["T1"])) * math.exp(-15 / wm["T2"])
+    assert abs(wm["S"] - expect) < 1e-3
+
+
 def test_contrast_map_opt_in():
     """The TR×TE contrast map is returned only when requested, as a valid PNG."""
     wa.init()

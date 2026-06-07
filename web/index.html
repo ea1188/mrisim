@@ -35,6 +35,7 @@
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
         <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
         <li><b>Contrast map</b> — toggle the TR×TE map to see the whole contrast landscape for a tissue pair (bright = high contrast), with your current protocol marked — so you can see <i>where</i> contrast comes from, not just one curve.</li>
+        <li><b>Show the math</b> — toggle it on, then hover a pixel to see the active sequence's signal equation with that tissue's T1/T2/PD and your TR/TE plugged in, and the resulting signal — the number that becomes the pixel.</li>
       </ul>
       <p class="intro-note">This browser edition is a convenience subset. For the fullest, most
         robust experience — real body atlases, NIfTI/DICOM, the complete planning workflow and
@@ -128,6 +129,7 @@
           <p class="tiny" id="oblique-readout">Oblique: 0° / 0°  ·  drag the slice band to angle, the FOV box to resize</p>
         </div>
         <label class="check"><input type="checkbox" id="cmap" /> Contrast map (TR×TE)</label>
+        <label class="check"><input type="checkbox" id="mathshow" /> Show the math (hover a pixel)</label>
       </div>
 
       <div class="group">
@@ -190,6 +192,7 @@
       <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>
       <div class="curvewrap"><img id="curveImage" alt="signal curve" /></div>
       <div class="curvewrap" id="cmapwrap" hidden><img id="cmapImage" alt="TR×TE contrast map" /></div>
+      <div class="mathwrap" id="mathwrap" hidden><div class="mathbox" id="math">Hover a pixel to see its signal equation.</div></div>
     </section>
 
     <!-- Metrics -->
