@@ -662,6 +662,42 @@ PRESETS = {
         "epi_correct_ghost": False,
         "description": "Single-shot GRE-EPI (the BOLD/diffusion readout). T2*-weighted with bright CSF, acquired in one shot — so it carries EPI's signatures: geometric stretch in the phase-encode direction where B0 is off-resonance (frontal sinus / ear canals) and a faint N/2 (Nyquist) ghost. Turn on ghost correction to suppress the ghost."
     },
+
+    # ------------------------------------------------------------------ #
+    #  Additional region protocols (MSK / spine / body)
+    # ------------------------------------------------------------------ #
+    "Knee T1 FSE": {
+        "sequence": "FSE / TSE", "TR": 650, "TE": 12, "TI": 150, "flip_angle": 90,
+        "matrix_size": 320, "FOV": 150, "bandwidth": 200, "NEX": 1, "etl": 4,
+        "description": "T1 FSE of the knee. Short TR/TE: fatty marrow and subcutaneous fat are bright, fluid is dark. Best for marrow infiltration, occult fractures and overall bone/anatomy."
+    },
+    "Knee bSSFP Cartilage": {
+        "sequence": "Balanced SSFP", "TR": 12, "TE": 6, "TI": 150, "flip_angle": 40,
+        "matrix_size": 320, "FOV": 150, "bandwidth": 350, "NEX": 2,
+        "description": "Balanced SSFP (FISP-type) of the knee. T2/T1-weighted bright fluid against intermediate cartilage gives a high cartilage–fluid–bone contrast for the articular surfaces; off-resonance can band at long TR."
+    },
+    "Spine T1 Post-Gd": {
+        "sequence": "Spin Echo", "TR": 600, "TE": 12, "TI": 150, "flip_angle": 90,
+        "matrix_size": 320, "FOV": 380, "bandwidth": 150, "NEX": 2,
+        "contrast_enabled": True, "contrast_dose": 4,
+        "description": "Post-gadolinium T1 of the spine. Enhancing tumour, infection (discitis/epidural abscess) and active inflammation brighten; compare with the pre-contrast T1 to spot true enhancement."
+    },
+    "Spine GRE T2* (MERGE)": {
+        "sequence": "Gradient Echo", "TR": 700, "TE": 18, "TI": 150, "flip_angle": 20,
+        "matrix_size": 320, "FOV": 380, "bandwidth": 200, "NEX": 1,
+        "description": "Axial T2*-weighted GRE of the cord (MERGE/MEDIC-type). Bright CSF myelographic effect outlines the cord and exiting nerve roots; T2* makes haemorrhage and disc/osteophyte bloom dark."
+    },
+    "Pelvis MR Urography": {
+        "sequence": "FSE / TSE", "TR": 8000, "TE": 800, "TI": 150, "flip_angle": 90,
+        "matrix_size": 256, "FOV": 380, "bandwidth": 250, "NEX": 1, "etl": 160,
+        "description": "Heavily T2-weighted (very long TE) coronal slab — only near-static fluid stays bright, so urine in the collecting systems, ureters and bladder lights up like a urogram while everything else darkens (the same trick as MRCP)."
+    },
+    "Torso DWIBS": {
+        "sequence": "Diffusion (DWI)", "TR": 4000, "TE": 70, "TI": 150, "flip_angle": 90,
+        "matrix_size": 128, "FOV": 400, "bandwidth": 1500, "NEX": 2, "b_value": 800,
+        "fatsat_enabled": True,
+        "description": "Diffusion-weighted whole-body imaging with background suppression. Fat-suppressed high-b diffusion leaves restricted tissue — nodes, cellular tumour — bright on a dark background; read alongside the ADC map to confirm true restriction."
+    },
 }
 
 _REGION_PREFIXES: list[tuple[str, str]] = [
@@ -693,6 +729,12 @@ _PRESET_PLANE: dict[str, str] = {
     "Knee T2 Fat-Sat": "sagittal",
     "Knee GRE T2*": "sagittal",
     "Knee PD Fat-Sat (CHESS)": "sagittal",
+    "Knee T1 FSE": "sagittal",
+    "Knee bSSFP Cartilage": "sagittal",
+    "Spine T1 Post-Gd": "sagittal",
+    "Spine GRE T2* (MERGE)": "axial",
+    "Pelvis MR Urography": "coronal",
+    "Torso DWIBS": "coronal",
     "Torso T2 Coronal": "coronal",
     "Torso T1 GRE": "coronal",
     "Torso STIR Coronal": "coronal",
@@ -720,6 +762,7 @@ _PRESET_ORDER: list[str] = [
     "TOF MRA Circle of Willis", "TOF MRA Thin Slab",
     # Spine
     "Spine T1 Sagittal", "Spine T2 Sagittal", "Spine STIR", "Spine Axial T2",
+    "Spine T1 Post-Gd", "Spine GRE T2* (MERGE)",
     # Abdomen
     "Abdomen T1 GRE", "Abdomen T2 FSE", "Abdomen STIR",
     "Abdomen In-Phase", "Abdomen Opposed-Phase", "Abdomen DWI",
@@ -727,11 +770,13 @@ _PRESET_ORDER: list[str] = [
     "Abdomen bSSFP", "Abdomen Radial", "MRCP",
     # Pelvis
     "Pelvis T1 SE", "Pelvis T2 High-Res", "Pelvis STIR", "Pelvis DWI",
-    "Pelvis T1 Post-Gd",
+    "Pelvis T1 Post-Gd", "Pelvis MR Urography",
     # Knee
-    "Knee PD FSE", "Knee T2 Fat-Sat", "Knee GRE T2*", "Knee PD Fat-Sat (CHESS)",
+    "Knee PD FSE", "Knee T1 FSE", "Knee T2 Fat-Sat", "Knee PD Fat-Sat (CHESS)",
+    "Knee GRE T2*", "Knee bSSFP Cartilage",
     # Torso
     "Torso T2 Coronal", "Torso T1 GRE", "Torso STIR Coronal", "Torso Cine (bSSFP)",
+    "Torso DWIBS",
 ]
 
 
