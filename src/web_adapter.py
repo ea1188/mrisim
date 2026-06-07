@@ -28,6 +28,7 @@ from matplotlib.figure import Figure
 import render_overlay
 import body_phantoms
 import brainweb_loader
+import tissue_db
 import presets as presets_mod
 from app_curves import CurvesMixin
 from simulator import Simulator, default_params, _ACQ3D_SEQUENCES
@@ -261,7 +262,33 @@ class WebHost(CurvesMixin):
             "max_slice": max_sl,
             "slice_idx": sl,
             "orientation": orient,
+            "probe": self._probe_data(orient, sl, params),
         }
+
+    def _probe_data(self, orient: str, sl: int, params: dict) -> "dict | None":
+        """A compact label map of the displayed slice + a tissue table (name,
+        T1/T2/PD at the current field), so the front-end can show what's under the
+        cursor with no server round-trip. The label slice carries the same
+        FOV-crop/oblique geometry as the rendered image (sim._get_phantom_slice)."""
+        try:
+            lab = np.asarray(self.sim._get_phantom_slice(orient, sl, params))
+        except Exception:
+            return None
+        if lab.ndim != 2:
+            return None
+        cap = 160                                  # keep the payload small
+        step = max(1, int(np.ceil(max(lab.shape) / cap)))
+        lab8 = np.clip(lab[::step, ::step], 0, 255).astype(np.uint8)
+        H, W = lab8.shape
+        props = tissue_db.properties(params.get("field_strength", "3T"))
+        tissues = {}
+        for v in np.unique(lab8):
+            pr = props.get(int(v))
+            if pr:
+                tissues[int(v)] = {"name": pr["name"], "T1": float(pr["T1"]),
+                                   "T2": float(pr["T2"]), "PD": float(pr["PD"])}
+        return {"labels": base64.b64encode(lab8.tobytes()).decode("ascii"),
+                "h": int(H), "w": int(W), "tissues": tissues}
 
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
                     sl_idx: int, ww: float = 1.0, wl: float = 0.5) -> str:

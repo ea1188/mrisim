@@ -31,7 +31,7 @@
       <p class="intro-sub">The real MRI physics engine, running in your browser.</p>
       <ul>
         <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel.</li>
-        <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets).</li>
+        <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets); <b>hover</b> the image to read the tissue and its T1/T2/PD under the cursor.</li>
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
         <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
       </ul>
@@ -177,7 +177,8 @@
       <div class="images">
         <div class="imgwrap" id="wrapA">
           <span class="abtag" id="tagA" hidden>A</span>
-          <img id="mainImage" alt="reconstructed MR image" title="drag = window/level · double-click = reset" />
+          <img id="mainImage" alt="reconstructed MR image" title="drag = window/level · double-click = reset · hover = inspect tissue" />
+          <div class="probe" id="probe" hidden></div>
         </div>
         <div class="imgwrap" id="wrapB" hidden>
           <span class="abtag">B</span>

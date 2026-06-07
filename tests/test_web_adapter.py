@@ -244,6 +244,24 @@ def test_multislice_crosstalk_lowers_snr():
     assert gapped > packed         # a gap recovers signal
 
 
+def test_render_returns_aligned_tissue_probe():
+    """render() returns a compact label map + tissue table for the cursor probe,
+    aligned to the image (centre of an axial brain slice is CSF, not background)."""
+    import base64
+    wa.init()
+    res = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                     "params": {"sequence": "Spin Echo", "field_strength": "3T"}})
+    pb = res["probe"]
+    assert pb and pb["h"] > 0 and pb["w"] > 0 and max(pb["h"], pb["w"]) <= 160
+    lab = np.frombuffer(base64.b64decode(pb["labels"]), dtype=np.uint8)
+    assert lab.size == pb["h"] * pb["w"]
+    centre = int(lab.reshape(pb["h"], pb["w"])[pb["h"] // 2, pb["w"] // 2])
+    assert centre in pb["tissues"] or str(centre) in pb["tissues"]
+    # every present label has a name + T1/T2/PD
+    for info in pb["tissues"].values():
+        assert {"name", "T1", "T2", "PD"} <= set(info)
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",
