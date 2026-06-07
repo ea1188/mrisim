@@ -105,10 +105,11 @@ class RegionMixin(_Base):
             combo.blockSignals(False)
 
         # Recentre to a sensible slice for the new volume and refresh ranges.
-        # Default a new region to axial; the orientation pickers are synced via
-        # _set_orientation (which also recentres the slice and refreshes ranges).
-        if self.orientation.get() != "axial":
-            self._set_orientation("axial")
+        # Default to the region's canonical plane (spine/knee read best sagittal);
+        # _set_orientation also recentres the slice and refreshes ranges.
+        _plane = {"Spine": "sagittal", "Knee": "sagittal"}.get(name, "axial")
+        if self.orientation.get() != _plane:
+            self._set_orientation(_plane)
         else:
             self.slice_idx.set(self.get_max_slice_idx() // 2)
             self._refresh_slice_range()

@@ -329,11 +329,14 @@ from body_phantoms import REGION_NAMES  # noqa: E402
 
 
 @pytest.mark.parametrize("region", REGION_NAMES)
-def test_region_renders_and_resets_axial(win, region):
+def test_region_resets_to_canonical_plane(win, region):
+    # Selecting a region opens it on its canonical plane: spine/knee read best
+    # sagittal (a stack of sagittal slices), everything else axial.
+    expected = {"Spine": "sagittal", "Knee": "sagittal"}.get(region, "axial")
     set_state(win, region="Brain")
-    win._set_orientation("sagittal")
+    win._set_orientation("coronal")
     win.region.set(region); win.on_region_change()
-    assert win.orientation.get() == "axial", f"{region}: did not reset to axial"
+    assert win.orientation.get() == expected, f"{region}: expected {expected}"
     win.recalculate()
     assert_good_image(win.current_image, region)
 

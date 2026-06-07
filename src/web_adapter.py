@@ -42,6 +42,8 @@ _C_CANVAS = "#050607"
 # Physical in-plane FOV (mm) per region — same map as app_qt._get_native_fov.
 _NATIVE_FOV = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 320.0,
                "Pelvis": 380.0, "Knee": 150.0, "Torso": 400.0}
+# Canonical default plane per region (spine/knee read best sagittal, not axial).
+_REGION_PLANE = {"Spine": "sagittal", "Knee": "sagittal"}
 
 
 class _Var:
@@ -162,7 +164,7 @@ class WebHost(CurvesMixin):
         _vessels, self._activation = self._region_aux_cache[name]
         self._vessels = _vessels
         self._acq3d_key = None                 # new anatomy invalidates the slab
-        self.orientation.set("axial")
+        self.orientation.set(_REGION_PLANE.get(name, "axial"))   # canonical plane
         self.slice_idx.set(self.sim.get_max_slice_idx() // 2)
         return {"dims": self.dims(), "max_slice": self.sim.get_max_slice_idx()}
 
