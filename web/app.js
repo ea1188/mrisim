@@ -19,6 +19,9 @@ const SEQ_TI = new Set(["Inversion Recovery"]);
 // Sequences needing the ~1-minute vessel-tree build the first time (see web_adapter).
 const SEQ_SLOW_FIRST = new Set(["MR Angiography", "Susceptibility (SWI)"]);
 const ACQ3D_SEQ = new Set(["Spin Echo", "Gradient Echo", "Inversion Recovery", "Balanced SSFP"]);
+// Canonical default plane per region — the spine/knee are acquired/best seen
+// sagittal, so opening them axial would show a coarse reformat.
+const REGION_PLANE = { Spine: "sagittal", Knee: "sagittal" };
 
 // --- Worker plumbing -------------------------------------------------------- //
 const worker = new Worker("worker.js");
@@ -366,7 +369,7 @@ async function onSequenceOrRegion(e) {
     const d = await loadRegion(curRegion());   // resizes the volume (may fetch a real atlas)
     $("slice").max = d.max_slice;
     $("slice").value = Math.floor(d.max_slice / 2);
-    setOrient("axial");
+    setOrient(REGION_PLANE[curRegion()] || "axial");   // open on the region's canonical plane
   }
   syncVisibility();
   schedule();
