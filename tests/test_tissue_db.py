@@ -74,8 +74,8 @@ class TestProperties:
                     f"Label {lab} at {field}: T2star={p['T2star']} > T2={p['T2']}"
                 )
 
-    def test_twenty_two_labels(self):
-        assert len(_RAW) == 22  # labels 0-21
+    def test_label_count(self):
+        assert len(_RAW) == 23  # labels 0-22 (22 = ligament/meniscus)
 
     def test_bone_short_t2(self):
         p = properties("3T")[5]

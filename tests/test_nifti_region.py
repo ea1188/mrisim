@@ -37,8 +37,8 @@ class TestExtraMrProperties:
     def test_no_background_label(self):
         assert 0 not in EXTRA_MR_PROPERTIES
 
-    def test_all_labels_1_to_21(self):
-        assert set(EXTRA_MR_PROPERTIES.keys()) == set(range(1, 22))
+    def test_all_labels_1_to_22(self):
+        assert set(EXTRA_MR_PROPERTIES.keys()) == set(range(1, 23))
 
     def test_required_keys(self):
         for lab, p in EXTRA_MR_PROPERTIES.items():

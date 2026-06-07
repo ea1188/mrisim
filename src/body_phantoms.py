@@ -28,7 +28,7 @@ BODY_TISSUES = _tdb.properties("3T")
 
 # Labels that belong to body anatomy (not in the brain table) — these get added
 # to the engine's property dict; brain labels 0-5 are left untouched.
-_BODY_ONLY = (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21)
+_BODY_ONLY = (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
 
 
 def merge_into_engine() -> None:

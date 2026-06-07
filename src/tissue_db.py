@@ -48,6 +48,9 @@ _RAW = {
     19: (584,  46,   725,  43,   0.75, 30,   "Pancreas"),
     20: (1030, 40,   1471, 47,   0.80, 35,   "Heart/Myocardium"),
     21: (900,  55,   1100, 50,   0.78, 42,   "Soft tissue/Gland"),
+    # Dense fibrous tissue — menisci, ligaments, tendons. Very short T2 → dark on
+    # every sequence (the classic "black" of a meniscus or the patellar tendon).
+    22: (920,  8,    1000, 6,    0.40, 5,    "Ligament/Meniscus"),
 }
 
 FIELD_STRENGTHS = ["1.5T", "3T"]
