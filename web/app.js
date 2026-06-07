@@ -12,6 +12,7 @@ let applyingPreset = false; // suppress the custom-reset while a preset populate
 let winW = 1.0, winL = 0.5; // window/level (normalised), driven by image drag
 let scoutPanels = [];       // per-panel click→slice geometry from the last scout
 let planOff = 0, planTilt = 0, planRot = 0;  // in-plane FOV offset + oblique angles (drag-set)
+let probe = null;           // {bytes, w, h, tissues} aligned label map for the cursor readout
 
 const SEQ_FA = new Set(["Gradient Echo", "Balanced SSFP", "MR Angiography", "Susceptibility (SWI)"]);
 const SEQ_TI = new Set(["Inversion Recovery"]);
@@ -293,6 +294,7 @@ function buildControls(info) {
   $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; schedule(); });
   wireWindowLevel();
   wireScout();
+  wireProbe();
   wireKeyboard();
   wireLessons();
 
@@ -664,8 +666,28 @@ function applyResult(res, reqSlice) {
   $("mainImage").src = res.image;
   $("mainImage").style.filter = "";   // server image is correctly windowed; drop the live W/L preview filter
   $("curveImage").src = res.curve;
+  probe = res.probe || null;          // aligned label map for the hover tissue readout
+  if (probe) probe.bytes = Uint8Array.from(atob(probe.labels), (c) => c.charCodeAt(0));
   syncSlice(res, reqSlice);
   setMetrics(res);
+}
+
+// Hover the main image to read the tissue + T1/T2/PD under the cursor (a
+// client-side lookup into the per-render label map — no server round-trip).
+function wireProbe() {
+  const img = $("mainImage"), box = $("probe");
+  img.addEventListener("mousemove", (e) => {
+    if (compareMode || !probe) { box.hidden = true; return; }
+    const f = imgFraction(img, e.clientX, e.clientY);
+    if (!f) { box.hidden = true; return; }
+    const col = Math.max(0, Math.min(probe.w - 1, Math.round(f.fx * (probe.w - 1))));
+    const row = Math.max(0, Math.min(probe.h - 1, Math.round((1 - f.fy) * (probe.h - 1))));
+    const t = probe.tissues[probe.bytes[row * probe.w + col]];
+    if (!t) { box.hidden = true; return; }
+    box.textContent = `${t.name} · T1 ${Math.round(t.T1)} / T2 ${Math.round(t.T2)} ms · PD ${t.PD.toFixed(2)}`;
+    box.hidden = false;
+  });
+  img.addEventListener("mouseleave", () => { box.hidden = true; });
 }
 
 function weighting(seq, tr, te) {

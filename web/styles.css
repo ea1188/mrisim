@@ -101,6 +101,13 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
   color: var(--accent-ink); background: var(--accent-hi); border-radius: 5px; padding: 1px 7px;
 }
+.probe {
+  position: absolute; left: 8px; bottom: 8px; z-index: 3; pointer-events: none;
+  background: rgba(5, 8, 11, 0.74); color: var(--accent-hi);
+  border: 1px solid var(--border); border-radius: 6px; padding: 3px 9px;
+  font-size: 11px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  max-width: calc(100% - 16px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* Buttons */
 .btnrow { display: flex; gap: 6px; margin-top: 8px; }

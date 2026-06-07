@@ -88,6 +88,13 @@ try {
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     beforeWL, { timeout: 15_000 });
 
+  // Cursor tissue probe: hovering the image shows a tissue + T1/T2/PD readout.
+  await page.mouse.move(box.x - 4, box.y - 4);
+  await page.mouse.move(box.x, box.y);            // ensure a mousemove fires over the image
+  await page.waitForFunction(
+    () => { const p = document.getElementById("probe"); return p && !p.hidden && /T1\s/.test(p.textContent || ""); },
+    { timeout: 5_000 });
+
   // FOV-planning scout: toggling on must render the 3-plane localizer.
   await page.check("#fovplan");
   await page.waitForSelector("#scoutwrap:not([hidden])", { timeout: 5_000 });
