@@ -1467,7 +1467,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
     def _get_native_fov(self) -> float:
         """Physical FOV (mm) represented by the current phantom's in-plane extent."""
-        _map = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 380.0, "Pelvis": 380.0,
+        _map = {"Brain": 220.0, "Abdomen": 380.0, "Spine": 320.0, "Pelvis": 380.0,
                 "Knee": 150.0, "Torso": 400.0}
         name = self.region.get()
         for key, fov in _map.items():

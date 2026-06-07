@@ -564,6 +564,11 @@ def build_region(name: str) -> np.ndarray:
     body equivalent of BrainWeb).  Falls back to the synthetic generator if the
     data file is absent or nibabel is unavailable.
     """
+    # Processed real atlases that take precedence over the TotalSegmentator atlas:
+    # the Knee (KneeBones3Dify) and the SPIDER lumbar Spine.
+    cached = _load_cache(_CACHE_SUBDIR.get(name), "atlas")
+    if cached is not None:
+        return cached
     # Real NIfTI path (TotalSegmentator MRI body atlases)
     try:
         from nifti_region import load_region_nifti
@@ -573,22 +578,23 @@ def build_region(name: str) -> np.ndarray:
             return vol
     except Exception:
         pass
-    # Real Knee atlas (KneeBones3Dify, processed by scripts/build_knee_atlas.py)
-    if name == "Knee":
-        knee = _load_knee_cache("atlas")
-        if knee is not None:
-            return knee
     # Synthetic fallback
     if name in _BUILDERS:
         return _BUILDERS[name]()
     raise KeyError(f"No builder for region {name!r}")
 
 
-def _load_knee_cache(which: str) -> "np.ndarray | None":
-    """Load the real Knee atlas/texture cache (data/knee_kb3d/{which}.npy)."""
+# Regions backed by a processed real cache under data/<subdir>/{atlas,texture}.npy.
+_CACHE_SUBDIR = {"Knee": "knee_kb3d", "Spine": "spider_spine"}
+
+
+def _load_cache(subdir: "str | None", which: str) -> "np.ndarray | None":
+    """Load a processed real atlas/texture cache (data/<subdir>/<which>.npy)."""
+    if not subdir:
+        return None
     try:
         from brainweb_loader import data_dir
-        path = os.path.join(data_dir(), "knee_kb3d", f"{which}.npy")
+        path = os.path.join(data_dir(), subdir, f"{which}.npy")
         return np.load(path) if os.path.exists(path) else None
     except Exception:
         return None
@@ -638,6 +644,9 @@ def build_region_texture(name: str, label_vol: "np.ndarray | None" = None) -> "n
     any region without a cache), returns a procedural :func:`synthetic_texture_3d`
     so tissues show parenchymal texture rather than flat fills. ``label_vol`` lets
     the caller pass the already-built volume to avoid rebuilding it."""
+    cached_tex = _load_cache(_CACHE_SUBDIR.get(name), "texture")
+    if cached_tex is not None:
+        return cached_tex.astype(np.float32)
     try:
         from nifti_region import load_region_texture
         from brainweb_loader import data_dir
@@ -646,10 +655,6 @@ def build_region_texture(name: str, label_vol: "np.ndarray | None" = None) -> "n
             return tex
     except Exception:
         pass
-    if name == "Knee":
-        knee_tex = _load_knee_cache("texture")
-        if knee_tex is not None:
-            return knee_tex.astype(np.float32)
     vol = label_vol if label_vol is not None else build_region(name)
     seed = abs(hash(name)) % (2 ** 32)
     return synthetic_texture_3d(vol, seed=seed)

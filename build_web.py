@@ -19,8 +19,10 @@ BRAIN_NPY = "brainweb_sub04_anat.npy"
 # Real segmented body regions (TotalSegmentator MRI) → the subject whose cached
 # atlas/texture the desktop uses. Bundled into the web build so the browser shows
 # the same accurate anatomy as the desktop (lazy-fetched per region).
-_REGION_SUBJECT = {"Abdomen": "s0246", "Spine": "s0267",
-                   "Pelvis": "s0187", "Torso": "s0250"}
+_REGION_SUBJECT = {"Abdomen": "s0246", "Pelvis": "s0187", "Torso": "s0250"}
+# Regions served from a processed real cache (data/<subdir>/{atlas,texture}.npy)
+# instead of the TotalSegmentator atlas: the Knee and the SPIDER lumbar Spine.
+_REGION_CACHE = {"Knee": "knee_kb3d", "Spine": "spider_spine"}
 
 
 def build() -> None:
@@ -82,15 +84,16 @@ def _bundle_regions() -> None:
                  if os.path.exists(os.path.join(out, f"{region}_{k}.npy"))) // (1024 * 1024)
         print(f"  region {region}: bundled real atlas {vol.shape} (~{mb} MB)")
 
-    # Knee: the processed KneeBones3Dify cache (atlas uint8 + texture float16).
-    knee = os.path.join(ROOT, "data", "knee_kb3d")
-    if os.path.exists(os.path.join(knee, "atlas.npy")):
-        shutil.copy2(os.path.join(knee, "atlas.npy"), os.path.join(out, "Knee_atlas.npy"))
-        if os.path.exists(os.path.join(knee, "texture.npy")):
-            shutil.copy2(os.path.join(knee, "texture.npy"), os.path.join(out, "Knee_texture.npy"))
-        print("  region Knee: bundled real atlas (KneeBones3Dify)")
-    else:
-        print("  region Knee: no real atlas cache — browser uses synthetic")
+    # Processed real caches (atlas uint8 + texture float16): Knee, SPIDER Spine.
+    for region, subdir in _REGION_CACHE.items():
+        src = os.path.join(ROOT, "data", subdir)
+        if os.path.exists(os.path.join(src, "atlas.npy")):
+            shutil.copy2(os.path.join(src, "atlas.npy"), os.path.join(out, f"{region}_atlas.npy"))
+            if os.path.exists(os.path.join(src, "texture.npy")):
+                shutil.copy2(os.path.join(src, "texture.npy"), os.path.join(out, f"{region}_texture.npy"))
+            print(f"  region {region}: bundled real atlas ({subdir})")
+        else:
+            print(f"  region {region}: no real atlas cache — browser uses synthetic")
 
 
 if __name__ == "__main__":

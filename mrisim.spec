@@ -28,10 +28,11 @@ region_datas = [
     (f, os.path.dirname(f))
     for f in glob.glob("data/TotalsegmentatorMRI_dataset_v*/s*/*_iso_adapt_256.npy")
 ] + [
-    # Real Knee atlas + texture (KneeBones3Dify, CC-BY). Without this the frozen
-    # app can't find data/knee_kb3d/ and falls back to the synthetic knee.
+    # Processed real caches (CC-BY): the Knee (KneeBones3Dify) and the SPIDER
+    # lumbar Spine. Without these the frozen app can't find data/<dir>/ and falls
+    # back to the synthetic phantom / TotalSegmentator atlas.
     (f, os.path.dirname(f))
-    for f in glob.glob("data/knee_kb3d/*.npy")
+    for f in glob.glob("data/knee_kb3d/*.npy") + glob.glob("data/spider_spine/*.npy")
 ]
 
 a = Analysis(
