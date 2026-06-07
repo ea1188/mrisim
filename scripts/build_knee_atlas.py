@@ -28,7 +28,7 @@ from scipy.ndimage import (binary_closing, binary_dilation, binary_erosion,
 
 # tissue_db labels
 BG, FLUID, FAT, SKIN, MUSCLE = 0, 1, 4, 5, 6
-BONE_CORTICAL, MARROW, CARTILAGE = 13, 14, 15
+BONE_CORTICAL, MARROW, CARTILAGE, LIGAMENT = 13, 14, 15, 22
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "knee_kb3d")
 TARGET_MAX = 256
@@ -91,10 +91,14 @@ def build(raw_dir):
     soft = body & ~bone
     # subcutaneous fat = bright AND within ~6 voxels of the skin boundary
     rim = body & ~binary_erosion(body, iterations=6)
-    p60, p85 = np.percentile(v[soft], 60), np.percentile(v[soft], 85)
+    p25, p60, p85 = np.percentile(v[soft], (25, 60, 85))
     lab[soft] = MUSCLE
     lab[soft & (v > p60) & rim] = FAT             # subcutaneous fat
     lab[soft & (v > p85) & ~rim] = FLUID          # bright focal interior = effusion/fluid
+    # dense fibrous tissue — menisci (dark wedges at the tibiofemoral joint line),
+    # cruciates in the notch, the patellar/quadriceps tendons: all very low signal,
+    # so dark *interior* soft tissue (below the skin rim) maps to ligament/meniscus.
+    lab[soft & (v < p25) & ~rim] = LIGAMENT
     # articular cartilage: a thin bright coat on the bone surface
     coat = binary_dilation(bone, iterations=2) & ~bone & body
     lab[coat & (v > p60)] = CARTILAGE

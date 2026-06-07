@@ -50,6 +50,7 @@ TISSUE_COLORS: dict[int, tuple[int, int, int, int]] = {
     19: (255, 200, 100, 90),   # pancreas: amber
     20: (255, 100, 150, 90),   # heart: pink
     21: (200, 150, 210, 90),   # soft tissue/gland: lavender
+    22: (90,  120, 130, 110),  # ligament/meniscus: dark slate
 }
 
 
