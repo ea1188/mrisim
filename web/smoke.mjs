@@ -133,6 +133,14 @@ try {
 
   await page.uncheck("#fovplan");
 
+  // Contrast map (TR×TE): toggling on must render the landscape panel.
+  await page.check("#cmap");
+  await page.waitForSelector("#cmapwrap:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const s = document.getElementById("cmapImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 20_000 });
+  await page.uncheck("#cmap");
+
   // Keyboard slice navigation (blur any focused control first — the handler
   // intentionally ignores keys while an input/select is focused).
   await page.evaluate(() => document.activeElement && document.activeElement.blur());

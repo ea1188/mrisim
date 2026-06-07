@@ -96,7 +96,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
 .curvewrap { padding: 4px; }
 #mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: ns-resize; }
 #mainImageB { max-width: 100%; max-height: 100%; }
-#curveImage { width: 100%; height: auto; display: block; }
+#curveImage, #cmapImage { width: 100%; height: auto; display: block; }
 .abtag {
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
   color: var(--accent-ink); background: var(--accent-hi); border-radius: 5px; padding: 1px 7px;

@@ -111,6 +111,9 @@ class WebHost(CurvesMixin):
         # 3-plane localizer (FOV planning) — one row of three panels.
         self.scout_fig = Figure(figsize=(7.8, 2.8), facecolor=_C_CANVAS)
         self.scout_axes = self.scout_fig.subplots(1, 3)
+        # TR×TE contrast-landscape map (optional teaching panel).
+        self.cmap_fig = Figure(figsize=(7.2, 3.0), facecolor=_C_PANEL)
+        self.cmap_ax = self.cmap_fig.add_subplot(111)
         self.load_region("Brain")
 
     # --- anatomy ------------------------------------------------------------ #
@@ -263,6 +266,7 @@ class WebHost(CurvesMixin):
             "slice_idx": sl,
             "orientation": orient,
             "probe": self._probe_data(orient, sl, params),
+            "cmap": self._draw_contrast_map(params) if payload.get("contrast_map") else None,
         }
 
     def _probe_data(self, orient: str, sl: int, params: dict) -> "dict | None":
@@ -319,6 +323,46 @@ class WebHost(CurvesMixin):
         # Keep axis labels off the edges at the wide, short web aspect.
         self.curve_fig.subplots_adjust(left=0.085, right=0.985, top=0.9, bottom=0.17)
         return _png_b64(self.curve_fig)
+
+    # Tissue pair whose contrast the TR×TE map shows, by region (tissue_db labels).
+    _CMAP_PAIR = {"Brain": (2, 3), "Knee": (4, 1), "Spine": (1, 14),
+                  "Abdomen": (4, 1), "Pelvis": (4, 1), "Torso": (4, 1)}
+
+    def _draw_contrast_map(self, params: dict) -> str:
+        """A TR×TE contrast landscape: |S_a − S_b| for a representative tissue
+        pair across the whole TR/TE plane (same signal equations as the curve),
+        with the current protocol marked — so you can *see* where contrast lives
+        rather than reading one curve."""
+        seq = params["sequence"]
+        ti, fa = params.get("TI", 150), params.get("flip_angle", 90)
+        tdb = tissue_db.properties(params.get("field_strength", "3T"))
+        la, lb = self._CMAP_PAIR.get(self.region.get(), (2, 3))
+        pa, pb = tdb.get(la), tdb.get(lb)
+        ax = self.cmap_ax
+        ax.clear(); ax.set_facecolor(_C_PANEL)
+        ax.tick_params(colors="#c4cad2", labelsize=7)
+        if pa and pb:
+            trv = np.linspace(50.0, 5000.0, 150)
+            tev = np.linspace(2.0, 200.0, 150)
+            sa = np.abs(np.asarray(self._curve_signal(seq, pa, trv[:, None], tev[None, :], ti, fa)))
+            sb = np.abs(np.asarray(self._curve_signal(seq, pb, trv[:, None], tev[None, :], ti, fa)))
+            cnr = np.abs(sa - sb)
+            mx = float(cnr.max()) or 1.0
+            ax.imshow(cnr / mx, origin="lower", aspect="auto", cmap="magma", vmin=0, vmax=1,
+                      extent=(float(tev[0]), float(tev[-1]), float(trv[0]), float(trv[-1])))
+            ax.plot(params["TE"], params["TR"], "o", mfc="none", mec="#7fb8ff", ms=11, mew=2.2)
+            ax.axvline(params["TE"], color="#7fb8ff", lw=0.5, alpha=0.5)
+            ax.axhline(params["TR"], color="#7fb8ff", lw=0.5, alpha=0.5)
+            ax.set_xlabel("TE (ms)", color="#c4cad2", fontsize=8)
+            ax.set_ylabel("TR (ms)", color="#c4cad2", fontsize=8)
+            ax.set_title(f"Contrast  {pa['name']} vs {pb['name']}   ·   {seq}"
+                         "   (bright = high contrast)", color="#9aa4b2", fontsize=8)
+        else:
+            ax.text(0.5, 0.5, "contrast map n/a for this region", color="#6b7585",
+                    ha="center", va="center", transform=ax.transAxes)
+            ax.set_axis_off()
+        self.cmap_fig.subplots_adjust(left=0.085, right=0.985, top=0.88, bottom=0.17)
+        return _png_b64(self.cmap_fig)
 
     # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
     # (row_axis, col_axis) of each scout panel in (Z,Y,X) volume terms; the

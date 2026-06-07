@@ -262,6 +262,16 @@ def test_render_returns_aligned_tissue_probe():
         assert {"name", "T1", "T2", "PD"} <= set(info)
 
 
+def test_contrast_map_opt_in():
+    """The TR×TE contrast map is returned only when requested, as a valid PNG."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15}}
+    assert wa.render(base)["cmap"] is None                 # off by default
+    on = wa.render({**base, "contrast_map": True})
+    _decode(on["cmap"], "contrast map")
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",
