@@ -62,6 +62,7 @@ function setSplash(pct, msg) {
 
 async function onReady(info) {
   buildControls(info);
+  if (info.version) document.querySelector(".tag").textContent = "browser edition · v" + info.version;
   setSplash(100, "Ready");
   $("splash").style.display = "none";
   $("app").hidden = false;
