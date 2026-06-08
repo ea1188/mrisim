@@ -25,9 +25,29 @@ _REGION_SUBJECT = {"Abdomen": "s0246", "Pelvis": "s0187", "Torso": "s0250"}
 _REGION_CACHE = {"Knee": "knee_kb3d", "Spine": "spider_spine"}
 
 
+def _build_id() -> str:
+    """A token that changes every deploy (commit sha, else timestamp) — used to
+    cache-bust the worker's engine/anatomy fetches so updates are never stale."""
+    import subprocess
+    import time
+    try:
+        sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                             capture_output=True, text=True, cwd=ROOT, timeout=10)
+        if sha.returncode == 0 and sha.stdout.strip():
+            return sha.stdout.strip()
+    except Exception:
+        pass
+    return str(int(time.time()))
+
+
 def build() -> None:
     os.makedirs(WEB, exist_ok=True)
     os.makedirs(os.path.join(WEB, "data"), exist_ok=True)
+
+    # Stamp the per-deploy cache-buster the worker imports (build_id.js, git-ignored).
+    with open(os.path.join(WEB, "build_id.js"), "w") as f:
+        f.write(f'BUILD_ID = "{_build_id()}";\n')
+    print(f"wrote build_id.js  (BUILD_ID={_build_id()})")
 
     # 1. Zip the Python engine. Flat layout so Pyodide can `sys.path.insert('/src')`.
     zip_path = os.path.join(WEB, "mrisim_src.zip")
