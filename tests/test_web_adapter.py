@@ -335,6 +335,31 @@ def test_artifacts_change_the_image(extra):
     assert clean["image"] != dirty["image"], f"artifact had no effect: {extra}"
 
 
+def test_measure_ruler_reports_fov_scale():
+    """A ruler spanning the full image height must read ≈ the region's field of
+    view in mm (the brain's native FOV is 220 mm)."""
+    wa.init()
+    wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+               "params": {"sequence": "Spin Echo"}})
+    # Full-height vertical line down the image centre.
+    res = wa.measure({"kind": "ruler", "points": [[0.5, 0.0], [0.5, 1.0]]})
+    assert res["ok"] and res["kind"] == "ruler"
+    assert 210 < res["mm"] < 230, f"full-height ruler should be ~220 mm, got {res['mm']:.1f}"
+
+
+def test_measure_roi_separates_tissue_from_background():
+    """An ROI over central brain tissue must read a much higher mean signal than
+    one over a background corner — the ROI reads the true image, not the display."""
+    wa.init()
+    wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+               "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}})
+    tissue = wa.measure({"kind": "roi", "points": [[0.45, 0.45], [0.55, 0.55]]})
+    corner = wa.measure({"kind": "roi", "points": [[0.85, 0.05], [0.95, 0.15]]})
+    assert tissue["ok"] and corner["ok"]
+    assert tissue["n"] > 0 and tissue["mean"] > 3 * corner["mean"]
+    assert tissue["area_mm2"] > 0 and tissue["snr"] > 0
+
+
 def test_contrast_map_opt_in():
     """The TR×TE contrast map is returned only when requested, as a valid PNG."""
     wa.init()

@@ -11,6 +11,9 @@ let protocolA = null;       // snapshot payload for the "A" side of a comparison
 let applyingPreset = false; // suppress the custom-reset while a preset populates
 let winW = 1.0, winL = 0.5; // window/level (normalised), driven by image drag
 let scoutPanels = [];       // per-panel click→slice geometry from the last scout
+let measureMode = "off";    // "off" | "ruler" | "roi"
+let measureDrag = null;     // {p0,p1} fractions while dragging a measurement
+let measureShape = null;    // last completed {kind,p0,p1} (kept drawn until cleared)
 let planOff = 0, planTilt = 0, planRot = 0;  // in-plane FOV offset + oblique angles (drag-set)
 let probe = null;           // {bytes, w, h, tissues} aligned label map for the cursor readout
 
@@ -273,6 +276,18 @@ const LESSONS = [
     ],
   },
   {
+    title: "Measuring the image — ruler, ROI & SNR",
+    blurb: "Use the on-image tools to read distance, signal and noise.",
+    steps: [
+      { text: "Open the <b>Measure</b> panel on the left and pick <b>Ruler</b>, then drag a line across the image — say the width of the ventricles. The readout shows the <b>distance in mm</b>, calibrated to the field of view shown in the corner.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 4000, te: 100, nex: 1 } },
+      { text: "Now pick <b>ROI</b> and drag a small ellipse over <b>white matter</b> — it reports the <b>mean signal</b> and the <b>noise (SD)</b>. Drag another ROI over a <b>dark background corner</b>: its mean is ~0 and its SD <i>is</i> the image noise. SNR ≈ tissue mean ÷ background SD.",
+        state: {} },
+      { text: "Raise <b>NEX</b> to 4 and watch your tissue ROI: the <b>mean holds</b> but the background SD <b>drops</b>, so SNR climbs by √4 = 2× (at 4× the scan time). The on-image ROI turns the SNR–time tradeoff into something you can measure yourself.",
+        state: { nex: 4 } },
+    ],
+  },
+  {
     title: "When images go wrong — artifacts",
     blurb: "Motion, chemical shift and dropout — and the setting that fixes each.",
     steps: [
@@ -449,6 +464,7 @@ function buildControls(info) {
   wireWindowLevel();
   wireScout();
   wireProbe();
+  wireMeasure();
   wireKeyboard();
   wireLessons();
 
@@ -638,7 +654,7 @@ function wireWindowLevel() {
   const img = $("mainImage");
   let dragging = false, lx = 0, ly = 0, w0 = 1, l0 = 0.5;
   img.addEventListener("mousedown", (e) => {
-    if (compareMode) return;           // A/B images are fixed-W/L
+    if (compareMode || measureMode !== "off") return;   // measuring owns the drag
     dragging = true; lx = e.clientX; ly = e.clientY;
     w0 = winW; l0 = winL;              // baseline the current image was rendered at
     e.preventDefault();
@@ -847,6 +863,20 @@ function applyResult(res, reqSlice) {
   if (res.cmap) $("cmapImage").src = res.cmap;   // TR×TE contrast landscape
   syncSlice(res, reqSlice);
   setMetrics(res);
+  refreshMeasure();                   // keep a placed ruler/ROI aligned + live on the new image
+}
+
+// After a new image lands, redraw any placed measurement (geometry is FOV-stable)
+// and refresh an ROI's statistics against the new slice.
+async function refreshMeasure() {
+  if (!measureShape) return;
+  requestAnimationFrame(() => drawMeasure(measureShape));   // re-place once the <img> has laid out
+  if (measureShape.kind !== "roi") return;
+  try {
+    const res = await call("measure", { kind: "roi",
+      points: [[measureShape.p0.fx, measureShape.p0.fy], [measureShape.p1.fx, measureShape.p1.fy]] });
+    showMeasureResult(res);
+  } catch (_e) { /* ignore races */ }
 }
 
 // Hover the main image to read the tissue + T1/T2/PD under the cursor (a
@@ -854,7 +884,7 @@ function applyResult(res, reqSlice) {
 function wireProbe() {
   const img = $("mainImage"), box = $("probe");
   img.addEventListener("mousemove", (e) => {
-    if (compareMode || !probe) { box.hidden = true; return; }
+    if (compareMode || !probe || measureMode !== "off") { box.hidden = true; return; }
     const f = imgFraction(img, e.clientX, e.clientY);
     if (!f) { box.hidden = true; return; }
     const col = Math.max(0, Math.min(probe.w - 1, Math.round(f.fx * (probe.w - 1))));
@@ -866,6 +896,95 @@ function wireProbe() {
     if ($("mathshow").checked) $("math").innerHTML = mathHTML(t);   // "Show the math"
   });
   img.addEventListener("mouseleave", () => { box.hidden = true; });
+}
+
+// --- On-image measurement: ruler (mm) and ROI (mean / SD / SNR) -------------- //
+// Fraction (over the image content) → pixel within #wrapA, accounting for the
+// letterbox of object-fit and the image being centred in the wrap.
+function fracToWrapPx(fx, fy) {
+  const img = $("mainImage"), wr = $("wrapA").getBoundingClientRect();
+  const r = img.getBoundingClientRect();
+  const nAR = img.naturalWidth / img.naturalHeight, eAR = r.width / r.height;
+  let cw, ch, ox, oy;
+  if (eAR > nAR) { ch = r.height; cw = ch * nAR; ox = (r.width - cw) / 2; oy = 0; }
+  else { cw = r.width; ch = cw / nAR; ox = 0; oy = (r.height - ch) / 2; }
+  return { x: (r.left - wr.left) + ox + fx * cw, y: (r.top - wr.top) + oy + fy * ch };
+}
+
+function drawMeasure(shape) {
+  const svg = $("measure-svg");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  if (!shape) return;
+  const NS = "http://www.w3.org/2000/svg";
+  const a = fracToWrapPx(shape.p0.fx, shape.p0.fy), b = fracToWrapPx(shape.p1.fx, shape.p1.fy);
+  if (shape.kind === "ruler") {
+    const ln = document.createElementNS(NS, "line");
+    ln.setAttribute("x1", a.x); ln.setAttribute("y1", a.y);
+    ln.setAttribute("x2", b.x); ln.setAttribute("y2", b.y);
+    ln.setAttribute("class", "m-line"); svg.appendChild(ln);
+    for (const p of [a, b]) {
+      const d = document.createElementNS(NS, "circle");
+      d.setAttribute("cx", p.x); d.setAttribute("cy", p.y); d.setAttribute("r", 2.6);
+      d.setAttribute("class", "m-end"); svg.appendChild(d);
+    }
+  } else {
+    const el = document.createElementNS(NS, "ellipse");
+    el.setAttribute("cx", (a.x + b.x) / 2); el.setAttribute("cy", (a.y + b.y) / 2);
+    el.setAttribute("rx", Math.abs(b.x - a.x) / 2); el.setAttribute("ry", Math.abs(b.y - a.y) / 2);
+    el.setAttribute("class", "m-roi"); svg.appendChild(el);
+  }
+}
+
+function clearMeasure() {
+  measureShape = null; measureDrag = null; drawMeasure(null);
+  $("measure-readout").textContent = measureMode === "off"
+    ? "Pick Ruler or ROI, then drag on the image."
+    : (measureMode === "ruler" ? "Drag a line across the image." : "Drag to place an ROI.");
+}
+
+function showMeasureResult(res) {
+  const out = $("measure-readout");
+  if (!res || !res.ok) { out.textContent = "—"; return; }
+  if (res.kind === "ruler") out.innerHTML = `Distance <b>${res.mm.toFixed(1)} mm</b>`;
+  else out.innerHTML = `ROI <b>${res.n}</b> px · mean <b>${res.mean.toFixed(3)}</b> · `
+    + `SD <b>${res.sd.toFixed(3)}</b> · SNR <b>${res.snr.toFixed(1)}</b> · ${Math.round(res.area_mm2)} mm²`;
+}
+
+function wireMeasure() {
+  const img = $("mainImage");
+  img.addEventListener("mousedown", (e) => {
+    if (measureMode === "off" || compareMode) return;
+    const f = imgFraction(img, e.clientX, e.clientY); if (!f) return;
+    measureDrag = { p0: f, p1: f };
+    e.preventDefault(); e.stopPropagation();
+    drawMeasure({ kind: measureMode, ...measureDrag });
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!measureDrag) return;
+    measureDrag.p1 = imgFraction(img, e.clientX, e.clientY) || measureDrag.p1;
+    drawMeasure({ kind: measureMode, ...measureDrag });
+  });
+  window.addEventListener("mouseup", async () => {
+    if (!measureDrag) return;
+    const shape = { kind: measureMode, ...measureDrag };
+    measureShape = shape; measureDrag = null;
+    drawMeasure(shape);
+    try {
+      const res = await call("measure", { kind: shape.kind,
+        points: [[shape.p0.fx, shape.p0.fy], [shape.p1.fx, shape.p1.fy]] });
+      showMeasureResult(res);
+    } catch (_e) { /* a stale render can race; ignore */ }
+  });
+  $("measuremode").querySelectorAll("button").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      $("measuremode").querySelectorAll("button").forEach((x) => x.classList.remove("on"));
+      btn.classList.add("on");
+      measureMode = btn.dataset.m;
+      $("wrapA").classList.toggle("measuring", measureMode !== "off");
+      clearMeasure();
+    }));
+  $("measure-clear").addEventListener("click", clearMeasure);
+  window.addEventListener("resize", () => drawMeasure(measureShape));
 }
 
 // Build the signal-equation HTML for the hovered tissue at the current protocol.

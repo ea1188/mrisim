@@ -7,7 +7,7 @@
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js");
 
 let pyodide = null;
-let renderFn = null, scoutFn = null;
+let renderFn = null, scoutFn = null, measureFn = null;
 const post = (m) => self.postMessage(m);
 
 // Per-deploy cache-buster: build_web.py writes build_id.js with the commit/build
@@ -38,6 +38,7 @@ async function boot() {
     "import json, web_adapter; json.dumps(web_adapter.init())"));
   renderFn = pyodide.runPython("web_adapter.render_json");
   scoutFn = pyodide.runPython("web_adapter.render_scout_json");
+  measureFn = pyodide.runPython("web_adapter.measure_json");
   post({ type: "ready", info });
 }
 
@@ -65,6 +66,7 @@ self.onmessage = async (e) => {
     let result;
     if (type === "render") result = JSON.parse(renderFn(JSON.stringify(payload)));
     else if (type === "scout") result = JSON.parse(scoutFn(JSON.stringify(payload)));
+    else if (type === "measure") result = JSON.parse(measureFn(JSON.stringify(payload)));
     else if (type === "setRegion") {
       await ensureRegionData(payload);         // lazy-load the real atlas if needed
       result = JSON.parse(pyodide.runPython(

@@ -340,6 +340,59 @@ class WebHost(CurvesMixin):
         return {"labels": base64.b64encode(lab8.tobytes()).decode("ascii"),
                 "h": int(H), "w": int(W), "tissues": tissues}
 
+    def _frac_to_pixel(self, fx: float, fy: float) -> "tuple[float, float]":
+        """Map a point given as a fraction of the displayed image element
+        (fx left→right, fy top→bottom) onto (col, row) of the current image
+        array, undoing the letterbox the square-pixel framing introduces and the
+        origin='lower' y-flip. Uses the axes box/limits left by the last render."""
+        ax = self.img_ax
+        pos = ax.get_position()
+        x0, y0, w, h = pos.x0, pos.y0, pos.width, pos.height
+        (xl0, xl1), (yl0, yl1) = ax.get_xlim(), ax.get_ylim()
+        figx, figy = fx, 1.0 - fy                          # figure frac (y is bottom-up)
+        ax_fx = float(np.clip((figx - x0) / w, 0.0, 1.0)) if w else 0.0
+        ax_fy = float(np.clip((figy - y0) / h, 0.0, 1.0)) if h else 0.0
+        col = xl0 + ax_fx * (xl1 - xl0)
+        row = yl0 + ax_fy * (yl1 - yl0)                    # origin lower → ax_fy=0 at row≈0
+        return col, row
+
+    def measure(self, payload: dict) -> dict:
+        """Geometry/intensity readout for the on-image ruler and ROI tools.
+
+        payload = {kind: "ruler"|"roi", points: [[fx,fy], ...]} where each point is
+        a fraction of the displayed image element. Distances use the region's true
+        field of view; ROI statistics read the *real* signal image (current_image),
+        not the windowed display, so mean/SD/SNR are physically meaningful."""
+        img = self.current_image
+        if img is None or getattr(img, "ndim", 0) != 2:
+            return {"ok": False}
+        H, W = img.shape
+        fov = float(_NATIVE_FOV.get(self.region.get(), 240.0))
+        mm_per_px = fov / max(H, W)                         # square (isotropic) pixels
+        pts = [self._frac_to_pixel(float(p[0]), float(p[1]))
+               for p in payload.get("points", [])]
+        kind = payload.get("kind")
+        if kind == "ruler" and len(pts) >= 2:
+            (c0, r0), (c1, r1) = pts[0], pts[1]
+            dist_px = float(np.hypot(c1 - c0, r1 - r0))
+            return {"ok": True, "kind": "ruler", "mm": dist_px * mm_per_px,
+                    "px": dist_px}
+        if kind == "roi" and len(pts) >= 2:
+            (c0, r0), (c1, r1) = pts[0], pts[1]
+            cc, rc = (c0 + c1) / 2.0, (r0 + r1) / 2.0       # ellipse centre + radii
+            ra, rb = max(abs(c1 - c0) / 2.0, 0.5), max(abs(r1 - r0) / 2.0, 0.5)
+            yy, xx = np.ogrid[:H, :W]
+            mask = ((xx - cc) / ra) ** 2 + ((yy - rc) / rb) ** 2 <= 1.0
+            vals = img[mask]
+            n = int(vals.size)
+            if n == 0:
+                return {"ok": False}
+            mean, sd = float(vals.mean()), float(vals.std())
+            return {"ok": True, "kind": "roi", "mean": mean, "sd": sd, "n": n,
+                    "area_mm2": n * mm_per_px * mm_per_px,
+                    "snr": (mean / sd) if sd > 1e-9 else 0.0}
+        return {"ok": False}
+
     # Short, beginner-friendly names for the anatomy-label overlay.
     _ANATOMY_NAMES = {1: "CSF", 2: "Gray matter", 3: "White matter", 4: "Fat",
                       5: "Skull", 6: "Muscle", 7: "Liver", 8: "Spleen", 9: "Kidney",
@@ -667,6 +720,14 @@ def render(payload: dict) -> dict:
 
 def render_json(payload_json: str) -> str:
     return json.dumps(_host().render(json.loads(payload_json)))
+
+
+def measure(payload: dict) -> dict:
+    return _host().measure(payload)
+
+
+def measure_json(payload_json: str) -> str:
+    return json.dumps(_host().measure(json.loads(payload_json)))
 
 
 def render_scout(payload: dict) -> str:
