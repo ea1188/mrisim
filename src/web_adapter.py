@@ -348,6 +348,23 @@ class WebHost(CurvesMixin):
                       19: "Pancreas", 20: "Heart", 21: "Soft tissue", 22: "Ligament",
                       23: "Lesion"}
 
+    @staticmethod
+    def _label_rowh(h_img: float) -> float:
+        """Approximate the anatomy-label text height in image pixels (the labels
+        are drawn at a fixed point size on a fixed-size figure)."""
+        return max(10.0, 0.030 * h_img)
+
+    @staticmethod
+    def _label_box(cx: float, cy: float, text: str, rowh: float) -> tuple:
+        """Axis-aligned bounding box (x0, y0, x1, y1) a label occupies, used both
+        to de-overlap labels at draw time and to regression-test that they don't."""
+        half_w = 0.30 * rowh * max(len(text), 1)
+        return (cx - half_w, cy - rowh * 0.55, cx + half_w, cy + rowh * 0.55)
+
+    @staticmethod
+    def _boxes_hit(a: tuple, b: tuple) -> bool:
+        return not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3])
+
     def _draw_anatomy_labels(self, ax: Any, orient: str, sl: int, params: dict,
                              img_shape: tuple) -> None:
         """Label the major structures on the image by name (largest region per
@@ -364,7 +381,8 @@ class WebHost(CurvesMixin):
         H, W = lab.shape
         sy, sx = img_shape[0] / H, img_shape[1] / W
         total = max(int((lab > 0).sum()), 1)
-        stroke = [_pe.withStroke(linewidth=2.4, foreground="#05080b")]
+        # One placement per tissue, at the centroid of its largest component.
+        cands = []
         for v in np.unique(lab):
             if v == 0 or v == 12:                          # skip background / gas
                 continue
@@ -376,9 +394,32 @@ class WebHost(CurvesMixin):
             cc, n = _cc(mask)
             big = 1 + int(np.argmax(np.bincount(cc.flat)[1:]))
             ys, xs = np.where(cc == big)
-            ax.text(xs.mean() * sx, ys.mean() * sy, self._ANATOMY_NAMES.get(int(v), f"#{v}"),
-                    color="#ffe08a", fontsize=8.5, ha="center", va="center", weight="bold",
-                    family="sans-serif", path_effects=stroke, zorder=7)
+            cands.append((int(mask.sum()), float(xs.mean() * sx), float(ys.mean() * sy),
+                          self._ANATOMY_NAMES.get(int(v), f"#{v}")))
+        if not cands:
+            return
+        # Place biggest structures first (they keep their natural spot); nudge the
+        # smaller labels vertically so names don't overlap (e.g. gray/white matter
+        # share a centre, and the lesion sits inside white matter).
+        cands.sort(key=lambda c: -c[0])
+        Himg, Wimg = img_shape[0], img_shape[1]
+        rowh = self._label_rowh(Himg)                      # ≈ text height in image px
+        placed: list = []
+        stroke = [_pe.withStroke(linewidth=2.4, foreground="#05080b")]
+        for _size, cx, cy, text in cands:
+            cx = float(np.clip(cx, 0.04 * Wimg, 0.96 * Wimg))
+            ny = cy
+            for k in (0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5):
+                cand_y = float(np.clip(cy + k * 1.06 * rowh, rowh, Himg - rowh))
+                box = self._label_box(cx, cand_y, text, rowh)
+                if not any(self._boxes_hit(box, pb) for pb in placed):
+                    ny = cand_y
+                    placed.append(box)
+                    break
+            else:                                          # no clear slot — place anyway
+                placed.append(self._label_box(cx, ny, text, rowh))
+            ax.text(cx, ny, text, color="#ffe08a", fontsize=8.5, ha="center", va="center",
+                    weight="bold", family="sans-serif", path_effects=stroke, zorder=7)
 
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
                     sl_idx: int, ww: float = 1.0, wl: float = 0.5,

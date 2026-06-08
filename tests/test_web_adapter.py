@@ -286,6 +286,38 @@ def test_anatomy_labels_change_image():
     assert plain != labeled, "anatomy labels did not change the image"
 
 
+def test_anatomy_labels_do_not_overlap():
+    """The named-structure labels must be de-overlapped — placing several tissues
+    whose centroids coincide (gray/white matter, CSF, and the lesion inside WM)
+    must still yield non-overlapping label boxes."""
+    wa.init()
+    host = wa._host()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12},
+            "lesion": True, "label_anatomy": True}
+    host.render(base)                                       # sets up sim + last image
+
+    class _Rec:
+        def __init__(self):
+            self.calls = []
+
+        def text(self, x, y, s, **_kw):
+            self.calls.append((x, y, s))
+
+    rec = _Rec()
+    params = wa.default_params(sequence="Spin Echo", TR=500, TE=12)
+    img_shape = host.current_image.shape
+    host._draw_anatomy_labels(rec, "axial", 90, params, img_shape)
+    assert len(rec.calls) >= 4, f"too few labels drawn ({len(rec.calls)})"
+
+    rowh = host._label_rowh(img_shape[0])
+    boxes = [(host._label_box(x, y, s, rowh), s) for x, y, s in rec.calls]
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            assert not host._boxes_hit(boxes[i][0], boxes[j][0]), \
+                f"labels overlap: {boxes[i][1]!r} & {boxes[j][1]!r}"
+
+
 def test_contrast_map_opt_in():
     """The TR×TE contrast map is returned only when requested, as a valid PNG."""
     wa.init()
