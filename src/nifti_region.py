@@ -18,9 +18,11 @@ import numpy as np
 
 # Tissue properties come from the authoritative tissue_db (1.5T/3T aware). This
 # is only used as a fallback for register_properties(); the app drives rendering
-# via tissue_db.apply_to_engine() at the selected field strength.
+# via tissue_db.apply_to_engine() at the selected field strength. Labels 1-22 are
+# the NIfTI/TotalSegmentator body vocabulary; label 23 (the demo WM lesion) is a
+# synthetic brain-only label and is intentionally excluded here.
 import tissue_db as _tdb
-EXTRA_MR_PROPERTIES = {k: v for k, v in _tdb.properties("3T").items() if k >= 1}
+EXTRA_MR_PROPERTIES = {k: v for k, v in _tdb.properties("3T").items() if 1 <= k <= 22}
 
 TS_TO_MR = {
     1: 8,  # spleen

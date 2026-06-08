@@ -51,6 +51,12 @@ _RAW = {
     # Dense fibrous tissue — menisci, ligaments, tendons. Very short T2 → dark on
     # every sequence (the classic "black" of a meniscus or the patellar tendon).
     22: (920,  8,    1000, 6,    0.40, 5,    "Ligament/Meniscus"),
+    # Demyelinating white-matter lesion (e.g. MS plaque) — raised free water, so
+    # T1 and T2 both lengthen relative to white matter. The teaching point: its
+    # T1 sits close enough to WM that it nearly vanishes on a T1-weighted scan,
+    # yet its long T2 makes it bright on T2/FLAIR. Used by the browser "add a
+    # lesion" demo (painted into brain WM); not part of any body phantom.
+    23: (1100, 150,  1350, 180,  0.82, 120,  "Lesion (WM)"),
 }
 
 FIELD_STRENGTHS = ["1.5T", "3T"]

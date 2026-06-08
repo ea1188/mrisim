@@ -105,6 +105,16 @@ try {
     await page.uncheck("#labelanat");
   }
 
+  // "Add a lesion" demo: toggling it on must re-render the brain image.
+  {
+    const before = await page.getAttribute("#mainImage", "src");
+    await page.check("#lesion");
+    await page.waitForFunction(
+      (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+      before, { timeout: 15_000 });
+    await page.uncheck("#lesion");
+  }
+
   // Cursor tissue probe: hovering the image shows a tissue + T1/T2/PD readout.
   await page.mouse.move(box.x - 4, box.y - 4);
   await page.mouse.move(box.x, box.y);            // ensure a mousemove fires over the image

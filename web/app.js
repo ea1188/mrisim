@@ -131,7 +131,7 @@ async function applyState(st) {
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat", "lesion"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // Reflect the teaching panels a lesson/share-link may have toggled.
   $("scoutwrap").hidden = !$("fovplan").checked;
   $("planctl").hidden = !$("fovplan").checked;
@@ -219,6 +219,19 @@ const LESSONS = [
         state: { seq: "Inversion Recovery", tr: 9000, ti: 2548, te: 100 } },
       { text: "Last one: <b>Gradient Echo</b> — a fast recipe used for 3-D scans and angiography. The point isn't to memorise them: it's that each sequence is just a different recipe that makes a chosen tissue stand out. When you're ready, the lessons below open up TR, TE, nulling, SNR and FOV planning one at a time.",
         state: { seq: "Gradient Echo", tr: 400, te: 8 } },
+    ],
+  },
+  {
+    title: "Start here — spot the lesion (why it matters)",
+    blurb: "The payoff: find a hidden lesion, and see why FLAIR exists.",
+    beginner: true,
+    steps: [
+      { text: "I've added a small <b>lesion</b> to the white matter (tick <b>Add a lesion</b> any time to do this yourself). This is a <b>T1-weighted</b> scan — and the lesion is <b>nearly invisible</b>: its T1 is close to normal white matter, so it barely stands out. Stare at the white matter; you might just make out a faint patch. This is why T1 alone can miss disease.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, lesion: true, labelanat: false, fovplan: false, cmap: false, mathshow: false } },
+      { text: "Now <b>T2-weighted</b> (long TR, long TE). The lesion holds extra water → long T2 → it lights up <b>bright</b>. Suddenly obvious. This is the find-the-fluid rule from the last lesson working <i>for</i> you: pathology usually means extra water, and water is bright on T2.",
+        state: { tr: 4000, te: 100 } },
+      { text: "One problem: bright lesions next to the <b>bright CSF</b> of the ventricles can hide. <b>FLAIR</b> fixes it — it's a T2 scan with the CSF signal switched off, so fluid goes black while the lesion stays bright. That contrast is exactly why FLAIR is run on nearly every brain MRI. Tick <b>Label the anatomy</b> to confirm which bright spot is the lesion.",
+        state: { seq: "Inversion Recovery", tr: 9000, ti: 2548, te: 100, labelanat: true } },
     ],
   },
   {
@@ -418,6 +431,7 @@ function buildControls(info) {
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
+  $("lesion").addEventListener("change", render);      // re-render with/without the demo lesion
   wireWindowLevel();
   wireScout();
   wireProbe();
@@ -466,6 +480,10 @@ function syncVisibility() {
   const on3d = is3d && $("acq3d").checked;
   $("np-row").hidden = !on3d;
   $("kzpf-row").hidden = !on3d;
+  // The demo lesion is painted into brain white matter — only offer it on Brain.
+  const brain = curRegion() === "Brain";
+  $("lesion-row").hidden = !brain;
+  if (!brain) $("lesion").checked = false;
 }
 
 const curRegion = () => $("region").value;
@@ -503,6 +521,7 @@ function collectPayload() {
     window_width: winW, window_level: winL, params,
     contrast_map: $("cmap").checked,
     label_anatomy: $("labelanat").checked,
+    lesion: $("lesion").checked,
   };
   if ($("fovplan").checked) {                 // graphic FOV box + oblique prescription
     out.fov_planning = true;

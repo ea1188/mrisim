@@ -12,6 +12,32 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-06-08
+
+A teaching release focused on someone **new to radiology** — naming what you see,
+explaining every control in plain language, a beginner lesson track, and a demo
+lesion that shows *why* MRI uses so many sequences.
+
+### Added
+- **Name the anatomy** — a "Label the anatomy" toggle draws the major structures'
+  names directly on the image (largest region per tissue), as a beginner aid.
+- **Plain-language help** — a clinical one-liner under the sequence picker
+  ("what each sequence is for"), and plain-English tooltips on every acquisition
+  control (TR/TE/TI/FA/matrix/bandwidth/NEX/slice/b-value/ETL).
+- **"Start here" beginner lessons** — a reading-first lesson track for newcomers
+  (*What is an MRI image?*, *Dark or bright? T1 vs T2*, *Why so many sequences?*,
+  *Spot the lesion*), shown as its own section above the physics lessons. The
+  steps drive the new toggles so the UI demonstrates what the text describes.
+- **Demo pathology** — an "Add a lesion" toggle paints a white-matter lesion into
+  the brain. By its tissue properties it is **nearly invisible on T1 but bright on
+  T2/FLAIR** — the concrete payoff that motivates multi-sequence imaging. Backed
+  by a new tissue (label 23, "Lesion (WM)") in the authoritative `tissue_db`.
+
+### Fixed
+- The "Label the anatomy" names are now **de-overlapped** — structures that share
+  a centre (gray/white matter, CSF, the lesion inside white matter) no longer
+  print on top of one another.
+
 ## [1.6.1] — 2026-06-08
 
 Visual-quality and robustness refinements.

@@ -103,6 +103,7 @@ class WebHost(CurvesMixin):
         self._region_aux_cache: dict[str, tuple] = {}   # (vessels, activation) per region
         self._vessels: Any = None       # TOF vessel tree (MRA), brain only
         self._activation: Any = None    # fMRI activation, brain only
+        self._lesion_vol: Any = None    # brain volume with a demo WM lesion painted in
         self._scout_panels: list = []   # per-panel click→slice geometry
         # Agg figures for the two panels.
         self.fig = Figure(figsize=(5.2, 5.2), facecolor=_C_CANVAS)
@@ -180,6 +181,34 @@ class WebHost(CurvesMixin):
             self._region_aux_cache[name] = (vessels, activation)
         self._vessels = vessels
 
+    def _lesion_volume(self) -> np.ndarray:
+        """Return the brain volume with a single demo demyelinating lesion painted
+        into periventricular white matter (label 23). Built once and cached. The
+        lesion is a small sphere intersected with WM so it sits realistically in
+        white matter near a ventricle, where it is visible on the default axial
+        slice — and, by its tissue properties, nearly invisible on T1 yet bright
+        on T2/FLAIR (the whole point of the demo)."""
+        if self._lesion_vol is not None:
+            return self._lesion_vol
+        base = self._region_cache["Brain"]
+        vol = base.copy()
+        wm = vol == 3                                   # white matter
+        z = vol.shape[0] // 2                           # the default axial slice
+        # Pick a guaranteed-WM seed on that slice, biased lateral+anterior so the
+        # lesion lands in one hemisphere's periventricular WM (not the midline).
+        ys, xs = np.where(wm[z])
+        if len(ys):
+            y0, y1 = ys.min(), ys.max()
+            cy = int(y0 + 0.40 * (y1 - y0))             # anterior-ish
+            row = xs[ys == cy] if (ys == cy).any() else xs
+            cx = int(np.percentile(row, 72))            # lateral, off midline
+            r = max(4, int(round(min(vol.shape[1], vol.shape[2]) * 0.035)))
+            zz, yy, xx = np.ogrid[:vol.shape[0], :vol.shape[1], :vol.shape[2]]
+            sphere = ((zz - z) ** 2 + (yy - cy) ** 2 + (xx - cx) ** 2) <= r * r
+            vol[sphere & wm] = 23
+        self._lesion_vol = vol
+        return vol
+
     def _sync_sim(self, orient: str, sl_idx: int, sequence: str = "") -> None:
         """Push the current view/aux state onto the Simulator before a render —
         the web equivalent of app_qt._sync_sim (no FOV-planning / oblique here)."""
@@ -247,6 +276,13 @@ class WebHost(CurvesMixin):
         self.slice_idx.set(sl)
         self.plot_curve_mode.set(payload.get("curve_mode", "TE decay"))
 
+        # Demo pathology: paint a white-matter lesion into the brain when asked
+        # (it nearly vanishes on T1 but lights up on T2/FLAIR — see _lesion_volume).
+        if payload.get("lesion") and region == "Brain":
+            self.sim.volume = self._lesion_volume()
+        else:
+            self.sim.volume = self._region_cache[region]
+
         params = default_params(**payload.get("params", {}))
         # Display each region at its native field of view so the body isn't
         # magnified — default_params' 240 mm would zoom ~1.6x into a 380 mm
@@ -309,7 +345,25 @@ class WebHost(CurvesMixin):
                       5: "Skull", 6: "Muscle", 7: "Liver", 8: "Spleen", 9: "Kidney",
                       10: "Kidney", 11: "Vessel", 13: "Bone", 14: "Marrow",
                       15: "Disc", 16: "Cord", 17: "Bowel", 18: "Lung",
-                      19: "Pancreas", 20: "Heart", 21: "Soft tissue", 22: "Ligament"}
+                      19: "Pancreas", 20: "Heart", 21: "Soft tissue", 22: "Ligament",
+                      23: "Lesion"}
+
+    @staticmethod
+    def _label_rowh(h_img: float) -> float:
+        """Approximate the anatomy-label text height in image pixels (the labels
+        are drawn at a fixed point size on a fixed-size figure)."""
+        return max(10.0, 0.030 * h_img)
+
+    @staticmethod
+    def _label_box(cx: float, cy: float, text: str, rowh: float) -> tuple:
+        """Axis-aligned bounding box (x0, y0, x1, y1) a label occupies, used both
+        to de-overlap labels at draw time and to regression-test that they don't."""
+        half_w = 0.30 * rowh * max(len(text), 1)
+        return (cx - half_w, cy - rowh * 0.55, cx + half_w, cy + rowh * 0.55)
+
+    @staticmethod
+    def _boxes_hit(a: tuple, b: tuple) -> bool:
+        return not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3])
 
     def _draw_anatomy_labels(self, ax: Any, orient: str, sl: int, params: dict,
                              img_shape: tuple) -> None:
@@ -327,19 +381,45 @@ class WebHost(CurvesMixin):
         H, W = lab.shape
         sy, sx = img_shape[0] / H, img_shape[1] / W
         total = max(int((lab > 0).sum()), 1)
-        stroke = [_pe.withStroke(linewidth=2.4, foreground="#05080b")]
+        # One placement per tissue, at the centroid of its largest component.
+        cands = []
         for v in np.unique(lab):
             if v == 0 or v == 12:                          # skip background / gas
                 continue
             mask = lab == v
-            if mask.sum() < 0.012 * total:                 # skip slivers to avoid clutter
+            # The demo lesion (23) is small but is the point — always name it;
+            # otherwise skip slivers to avoid clutter.
+            if v != 23 and mask.sum() < 0.012 * total:
                 continue
             cc, n = _cc(mask)
             big = 1 + int(np.argmax(np.bincount(cc.flat)[1:]))
             ys, xs = np.where(cc == big)
-            ax.text(xs.mean() * sx, ys.mean() * sy, self._ANATOMY_NAMES.get(int(v), f"#{v}"),
-                    color="#ffe08a", fontsize=8.5, ha="center", va="center", weight="bold",
-                    family="sans-serif", path_effects=stroke, zorder=7)
+            cands.append((int(mask.sum()), float(xs.mean() * sx), float(ys.mean() * sy),
+                          self._ANATOMY_NAMES.get(int(v), f"#{v}")))
+        if not cands:
+            return
+        # Place biggest structures first (they keep their natural spot); nudge the
+        # smaller labels vertically so names don't overlap (e.g. gray/white matter
+        # share a centre, and the lesion sits inside white matter).
+        cands.sort(key=lambda c: -c[0])
+        Himg, Wimg = img_shape[0], img_shape[1]
+        rowh = self._label_rowh(Himg)                      # ≈ text height in image px
+        placed: list = []
+        stroke = [_pe.withStroke(linewidth=2.4, foreground="#05080b")]
+        for _size, cx, cy, text in cands:
+            cx = float(np.clip(cx, 0.04 * Wimg, 0.96 * Wimg))
+            ny = cy
+            for k in (0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5):
+                cand_y = float(np.clip(cy + k * 1.06 * rowh, rowh, Himg - rowh))
+                box = self._label_box(cx, cand_y, text, rowh)
+                if not any(self._boxes_hit(box, pb) for pb in placed):
+                    ny = cand_y
+                    placed.append(box)
+                    break
+            else:                                          # no clear slot — place anyway
+                placed.append(self._label_box(cx, ny, text, rowh))
+            ax.text(cx, ny, text, color="#ffe08a", fontsize=8.5, ha="center", va="center",
+                    weight="bold", family="sans-serif", path_effects=stroke, zorder=7)
 
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
                     sl_idx: int, ww: float = 1.0, wl: float = 0.5,
