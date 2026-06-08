@@ -108,6 +108,7 @@
           <select id="region"></select></label>
         <label>Sequence
           <select id="sequence"></select></label>
+        <p class="tiny" id="seq-help"></p>
         <label>Field strength
           <select id="field"><option>1.5T</option><option selected>3T</option></select></label>
         <label>Orientation
@@ -136,13 +137,13 @@
 
       <div class="group">
         <h2>Timing</h2>
-        <label>TR (ms) <output id="tr-val">500</output>
+        <label title="Repetition time — delay between excitations. Long TR lets tissues recover and reduces T1 weighting.">TR (ms) <output id="tr-val">500</output>
           <input type="range" id="tr" min="20" max="6000" step="10" value="500" /></label>
-        <label>TE (ms) <output id="te-val">15</output>
+        <label title="Echo time — delay before reading the signal. Long TE adds T2 weighting (long-T2 tissue like fluid stays bright).">TE (ms) <output id="te-val">15</output>
           <input type="range" id="te" min="2" max="300" step="1" value="15" /></label>
-        <label id="ti-row" hidden>TI (ms) <output id="ti-val">800</output>
+        <label id="ti-row" hidden title="Inversion time — delay after the 180° inversion. Pick it to null a tissue: FLAIR nulls CSF, STIR nulls fat.">TI (ms) <output id="ti-val">800</output>
           <input type="range" id="ti" min="50" max="3000" step="10" value="800" /></label>
-        <label id="fa-row">Flip angle (°) <output id="fa-val">90</output>
+        <label id="fa-row" title="Flip angle — how far the magnetisation is tipped. Smaller angles speed up gradient-echo (the Ernst angle maximises signal).">Flip angle (°) <output id="fa-val">90</output>
           <input type="range" id="fa" min="1" max="180" step="1" value="90" /></label>
       </div>
 
@@ -155,17 +156,17 @@
 
       <div class="group">
         <h2>Acquisition</h2>
-        <label>Matrix <output id="matrix-val">256</output>
+        <label title="Matrix — number of pixels across. Higher = finer detail, but lower SNR and a longer scan.">Matrix <output id="matrix-val">256</output>
           <input type="range" id="matrix" min="96" max="320" step="32" value="256" /></label>
-        <label>Bandwidth (kHz) <output id="bw-val">125</output>
+        <label title="Receiver bandwidth — wider is faster and cuts chemical-shift, but lowers SNR (∝ 1/√BW).">Bandwidth (kHz) <output id="bw-val">125</output>
           <input type="range" id="bw" min="16" max="500" step="2" value="125" /></label>
-        <label>NEX (averages) <output id="nex-val">1</output>
+        <label title="Averages (NEX) — repeat the acquisition to raise SNR by √NEX, at a proportional time cost.">NEX (averages) <output id="nex-val">1</output>
           <input type="range" id="nex" min="1" max="8" step="1" value="1" /></label>
-        <label>Slice thickness (mm) <output id="thick-val">5</output>
+        <label title="Slice thickness — thicker slices have more signal (SNR) but blur small detail through the slice.">Slice thickness (mm) <output id="thick-val">5</output>
           <input type="range" id="thick" min="1" max="10" step="1" value="5" /></label>
-        <label id="bval-row" hidden>b-value (s/mm²) <output id="bval-val">1000</output>
+        <label id="bval-row" hidden title="b-value — diffusion-weighting strength. Higher b suppresses freely-moving water and highlights restricted diffusion.">b-value (s/mm²) <output id="bval-val">1000</output>
           <input type="range" id="bval" min="0" max="3000" step="50" value="1000" /></label>
-        <label id="etl-row" hidden>Echo train (ETL) <output id="etl-val">16</output>
+        <label id="etl-row" hidden title="Echo train length — echoes per excitation in FSE. Longer trains scan faster but add blur and shift the effective TE.">Echo train (ETL) <output id="etl-val">16</output>
           <input type="range" id="etl" min="2" max="32" step="1" value="16" /></label>
       </div>
 

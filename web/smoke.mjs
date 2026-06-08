@@ -53,6 +53,9 @@ try {
   if (!scan || scan.includes("—")) fail("scan-time metric did not populate: " + scan);
   if (!snr || snr.includes("—")) fail("SNR metric did not populate: " + snr);
 
+  // The plain-language clinical blurb under the sequence picker must populate.
+  if (!((await page.textContent("#seq-help")) || "").trim()) fail("sequence help blurb is empty");
+
   // Changing the sequence must re-render without throwing.
   await page.selectOption("#sequence", "Gradient Echo");
   await page.waitForTimeout(1500);
