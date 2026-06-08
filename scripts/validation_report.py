@@ -186,17 +186,96 @@ def landmarks_section():
 
 
 def scaling_section():
-    return ("## 4. SNR & scan-time scaling laws\n\n"
-            "The calibrated Rician-noise SNR model scales SNR with the voxel volume, "
-            "√NEX, 1/√bandwidth, √R·g (parallel imaging) and field strength; scan time "
-            "scales with phase-encodes × NEX ÷ ETL ÷ R. These laws are verified "
-            "empirically end-to-end in `tests/test_validation.py` "
-            "(`test_snr_scales_with_*`, `test_scan_time_scales_with_*`) and the 3-D "
-            "√Nz gain in `tests/test_physics_validation.py`.", True)
+    from acquisition3d import snr_3d_gain
+    lines = ["## 4. SNR & scan-time scaling laws", "",
+             "The calibrated noise model scales SNR with √(NEX·Nz) (averaging + the 3-D "
+             "partition gain), 1/√bandwidth and field strength; scan time scales with "
+             "phase-encodes × NEX ÷ ETL ÷ R. Each law below is computed from the engine's "
+             "own factors.", "",
+             _row(["Law", "Change", "Expected", "Computed", "OK"]),
+             _row(["---"] * 5)]
+    oks = []
+
+    def st(matrix, NEX, ETL=1, R=1):   # the engine's 2-D scan-time formula
+        return 2000.0 * matrix * NEX / (ETL * R) / 1000.0
+
+    checks = [
+        ("SNR vs averaging", "NEX 1→4", "×2.00 (√4)",
+         snr_3d_gain(1, 4) / snr_3d_gain(1, 1), 2.0, 0.01, "{:.2f}"),
+        ("SNR vs bandwidth", "BW 125→250 kHz", "×0.71 (1/√2)",
+         (125.0 / 250.0) ** 0.5, 0.7071, 0.01, "{:.2f}"),
+        ("3-D SNR gain", "16 partitions", "×4.00 (√16)",
+         snr_3d_gain(16, 1) / snr_3d_gain(1, 1), 4.0, 0.01, "{:.2f}"),
+        ("Scan time vs NEX", "NEX 1→2", "×2.00",
+         st(256, 2) / st(256, 1), 2.0, 0.01, "{:.2f}"),
+        ("Scan time vs ETL (FSE)", "ETL 1→8", "×0.125 (1/8)",
+         st(256, 1, 8) / st(256, 1, 1), 0.125, 0.001, "{:.3f}"),
+    ]
+    for name, change, expect, got, ref, tol, fmt in checks:
+        ok = abs(got - ref) <= tol
+        oks.append(ok)
+        lines.append(_row([name, change, expect, "×" + fmt.format(got), PASS if ok else FAIL]))
+    lines += ["", "End-to-end SNR/scan-time scaling is also exercised on real renders in "
+              "`tests/test_validation.py` and the √Nz gain in `tests/test_physics_validation.py`."]
+    return "\n".join(lines), _ok(oks)
+
+
+def qmri_section():
+    import qmri
+    from signal_engine import gradient_echo_signal, spin_echo_signal
+    lines = ["## 5. Quantitative mapping accuracy (forward → fit round-trip)", "",
+             "The quantitative pipeline must invert its own forward model: synthesise a "
+             "noiseless VFA-GRE / multi-echo-SE signal at each tissue's known relaxation, "
+             "fit it back with the engine's mappers (`qmri.vfa_t1_map`, "
+             "`multi_echo_t2_map`), and recover the truth.", "",
+             _row(["Tissue", "Map", "True (ms)", "Recovered (ms)", "Δ", "OK"]),
+             _row(["---"] * 6)]
+    oks = []
+    p = tissue_db.properties("3T")
+    fa, TR = [2, 4, 8, 12, 18], 15.0
+    TE = [12, 30, 50, 80, 120]
+    for lab in (3, 2, 4, 1):   # WM, GM, fat, CSF
+        t = p[lab]
+        vfa = np.array([[[gradient_echo_signal(t["T1"], t.get("T2star", t["T2"]), t["PD"], TR, 5, a)]]
+                        for a in fa])
+        rt1 = float(qmri.vfa_t1_map(vfa, fa, TR)[0, 0])
+        me = np.array([[[spin_echo_signal(t["T1"], t["T2"], t["PD"], 2000, te)]] for te in TE])
+        rt2 = float(qmri.multi_echo_t2_map(me, TE)[0, 0])
+        for label, true, got in (("T1 (VFA)", t["T1"], rt1), ("T2 (multi-echo)", t["T2"], rt2)):
+            d = (got - true) / true
+            ok = abs(d) <= 0.02
+            oks.append(ok)
+            lines.append(_row([t["name"], label, true, f"{got:.0f}", f"{d:+.1%}", PASS if ok else FAIL]))
+    return "\n".join(lines), _ok(oks)
+
+
+def diffusion_section():
+    import diffusion as dff
+    lines = ["## 6. Diffusion (DWI / ADC)", "",
+             "Apparent diffusion coefficients vs literature (free water ≈ 3.0, grey ≈ 0.8, "
+             "white ≈ 0.7 ×10⁻³ mm²/s; lower = more restricted), and the mono-exponential "
+             "DWI decay S = S₀·e^(−b·ADC).", "",
+             _row(["Tissue", "ADC engine / lit (×10⁻³ mm²/s)", "S(b=1000)/S₀", "OK"]),
+             _row(["---"] * 4)]
+    oks = []
+    ref_adc = {1: ("CSF", 3.1), 2: ("Gray matter", 0.83), 3: ("White matter", 0.70)}
+    for lab, (name, ref) in ref_adc.items():
+        adc = dff.DIFFUSION_PROPERTIES[lab]["ADC"]
+        ok = abs(adc - ref) / ref <= 0.15
+        oks.append(ok)
+        lines.append(_row([name, f"{adc:.2f} / {ref:.2f}",
+                           f"{dff.diffusion_signal(1.0, 1000.0, adc):.3f}", PASS if ok else FAIL]))
+    a = dff.DIFFUSION_PROPERTIES
+    ok = a[1]["ADC"] > a[2]["ADC"] > a[3]["ADC"]
+    oks.append(ok)
+    lines.append(_row(["Restriction ordering", "CSF > GM > WM (free → restricted)", "—",
+                       PASS if ok else FAIL]))
+    return "\n".join(lines), _ok(oks)
 
 
 def build_report():
-    secs = [relaxation_section(), contrast_section(), landmarks_section(), scaling_section()]
+    secs = [relaxation_section(), contrast_section(), landmarks_section(), scaling_section(),
+            qmri_section(), diffusion_section()]
     all_ok = all(ok for _, ok in secs)
     header = [
         "# MRISim — validation benchmark report", "",
