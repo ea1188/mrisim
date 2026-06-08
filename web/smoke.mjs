@@ -127,6 +127,30 @@ try {
     await page.uncheck("#motion");
   }
 
+  // Measurement tools: pick Ruler, drag a line, and the readout must report mm;
+  // then ROI must report a mean/SNR. (Drag over the image element.)
+  {
+    await page.click('#measuremode button[data-m="ruler"]');
+    const ir = await page.$eval("#mainImage", (el) => {
+      const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    await page.mouse.move(ir.x + ir.w * 0.35, ir.y + ir.h * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(ir.x + ir.w * 0.65, ir.y + ir.h * 0.5, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(
+      () => /mm/.test(document.getElementById("measure-readout").textContent || ""),
+      { timeout: 10_000 });
+    await page.click('#measuremode button[data-m="roi"]');
+    await page.mouse.move(ir.x + ir.w * 0.45, ir.y + ir.h * 0.45);
+    await page.mouse.down();
+    await page.mouse.move(ir.x + ir.w * 0.55, ir.y + ir.h * 0.55, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(
+      () => /SNR/.test(document.getElementById("measure-readout").textContent || ""),
+      { timeout: 10_000 });
+    await page.click('#measuremode button[data-m="off"]');
+  }
+
   // Cursor tissue probe: hovering the image shows a tissue + T1/T2/PD readout.
   await page.mouse.move(box.x - 4, box.y - 4);
   await page.mouse.move(box.x, box.y);            // ensure a mousemove fires over the image
