@@ -529,9 +529,11 @@ def _host() -> WebHost:
 
 def init() -> dict:
     """Boot the host (loads the brain) and report the available choices."""
+    from version import __version__
     h = _host()
     return {"regions": WEB_REGIONS, "presets": presets_mod.get_preset_names(),
-            "dims": h.dims(), "max_slice": h.sim.get_max_slice_idx()}
+            "dims": h.dims(), "max_slice": h.sim.get_max_slice_idx(),
+            "version": __version__}
 
 
 def set_region(name: str) -> dict:

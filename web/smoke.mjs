@@ -43,6 +43,10 @@ try {
   await page.click("#intro-ok");
   await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
 
+  // The topbar shows the running engine version (e.g. "browser edition · v1.6.1").
+  const tag = await page.textContent(".tag");
+  if (!/v\d+\.\d+/.test(tag || "")) fail("version not shown in topbar: " + tag);
+
   // Metrics must have populated (not the "—" placeholder).
   const scan = await page.textContent("#x-scan");
   const snr = await page.textContent("#x-snr");
