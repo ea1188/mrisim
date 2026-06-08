@@ -12,6 +12,21 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.6.1] — 2026-06-08
+
+Visual-quality and robustness refinements.
+
+### Changed / Fixed
+- Images now **auto-window to the foreground's robust intensity range** (1st–99th
+  percentile), so every region/sequence opens well-windowed instead of dark and
+  washed out (the spine T2 in particular).
+- The **spine and knee textures are denoised** — they read like real MRI rather
+  than salt-and-pepper speckle.
+- The **lumbar-spine presets use the 320 mm SPIDER field of view** (was 380), so
+  they fill the frame instead of opening zoomed-out.
+- Browser engine/atlas fetches are **cache-busted per deploy**, so an updated
+  (or fixed) atlas is always fetched fresh rather than served stale.
+
 ## [1.6.0] — 2026-06-07
 
 A real lumbar spine, a more detailed knee, richer browser FOV planning, and new
