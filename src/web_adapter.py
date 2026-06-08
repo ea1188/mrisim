@@ -308,7 +308,17 @@ class WebHost(CurvesMixin):
         ax = self.img_ax
         ax.clear()
         mx = float(np.max(img)) if float(np.max(img)) > 0 else 1.0
-        center, width = wl * mx, max(0.01, ww) * mx   # window/level (normalised)
+        # Auto-window to the image's robust intensity range (1st–99th percentile of
+        # the foreground) so the default W/L (ww=1, wl=0.5) shows a well-windowed
+        # picture instead of crushing dark tissue against a single bright pixel.
+        # The W/L drag then scales (ww) / shifts (wl) the window over that range.
+        nz = img[img > 1e-6]
+        if nz.size:
+            lo, hi = (float(v) for v in np.percentile(nz, (1.0, 99.0)))
+            base, rng = lo, max(hi - lo, mx * 0.05)
+        else:
+            base, rng = 0.0, mx
+        center, width = base + wl * rng, max(0.01, ww) * rng
         ax.imshow(img, cmap="gray", origin="lower", aspect=1.0,
                   vmin=center - width / 2, vmax=center + width / 2)
         render_overlay.frame_image_axes(ax)
