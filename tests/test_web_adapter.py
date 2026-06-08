@@ -296,6 +296,41 @@ def test_contrast_map_opt_in():
     _decode(on["cmap"], "contrast map")
 
 
+def test_lesion_demo_appears_and_is_brain_only():
+    """The demo lesion changes the image, shows up as label 23 in the probe table,
+    and only paints into the brain (a body region ignores the flag)."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}}
+    off = wa.render(base)
+    on = wa.render({**base, "lesion": True})
+    _decode(on["image"], "lesion")
+    assert off["image"] != on["image"], "lesion did not change the image"
+    assert "23" not in {str(k) for k in off["probe"]["tissues"]}, "lesion present when off"
+    assert "23" in {str(k) for k in on["probe"]["tissues"]}, "lesion missing from probe"
+    # A body region must not gain a (brain-white-matter) lesion.
+    body = wa.render({"region": "Abdomen", "orientation": "axial", "slice_idx": 55,
+                      "params": {"sequence": "FSE / TSE"}, "lesion": True})
+    assert "23" not in {str(k) for k in body["probe"]["tissues"]}, "lesion leaked into body"
+
+
+def test_lesion_hides_on_t1_but_bright_on_t2():
+    """The teaching invariant: the lesion is far more conspicuous against white
+    matter on T2 than on T1 (its T1 sits close to WM; its T2 is long)."""
+    wa.init()
+    props = __import__("tissue_db").properties("3T")
+    wm, les = props[3], props[23]
+
+    def se(p, tr, te):
+        import numpy as _np
+        return p["PD"] * (1 - _np.exp(-tr / p["T1"])) * _np.exp(-te / p["T2"])
+
+    t1_ratio = se(les, 500, 12) / se(wm, 500, 12)        # ~1 → invisible
+    t2_ratio = se(les, 4000, 100) / se(wm, 4000, 100)    # ≫1 → bright
+    assert abs(t1_ratio - 1.0) < 0.15, f"lesion too obvious on T1 ({t1_ratio:.2f})"
+    assert t2_ratio > 1.8, f"lesion not bright enough on T2 ({t2_ratio:.2f})"
+
+
 def test_render_json_roundtrip():
     wa.init()
     payload = json.dumps({"region": "Brain", "orientation": "axial",
