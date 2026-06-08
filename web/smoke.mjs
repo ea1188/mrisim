@@ -194,6 +194,10 @@ try {
   // Guided lessons: open the picker, start a lesson, advance a step.
   await page.click("#lessons-btn");
   await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  // The beginner "Start here" track must be present and listed first.
+  const sections = await page.$$eval("#lesson-list .lesson-section", (ps) => ps.map((p) => p.textContent));
+  if (!sections.some((s) => /start here/i.test(s || ""))) fail("beginner 'Start here' lesson section missing");
+  if (!(await page.$("#lesson-list .lesson-item.beginner"))) fail("no beginner lesson rendered");
   await page.click("#lesson-list .lesson-item");
   await page.waitForSelector("#lesson-panel:not([hidden])", { timeout: 5_000 });
   const step1 = await page.textContent("#lesson-step");

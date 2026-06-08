@@ -179,6 +179,9 @@ kbd {
 .lesson-item:hover { border-color: var(--accent); }
 .lesson-item b { display: block; color: var(--accent-hi); margin-bottom: 2px; }
 .lesson-item span { color: var(--text-dim); font-size: 12px; }
+.lesson-item.beginner { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: color-mix(in srgb, var(--accent) 8%, var(--raised)); }
+.lesson-section { margin: 10px 2px 2px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
+.lesson-section:first-child { margin-top: 0; }
 #lesson-picker-close { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
 
 /* Active-lesson panel */
