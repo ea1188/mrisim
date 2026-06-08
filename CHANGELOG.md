@@ -12,6 +12,24 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-06-08
+
+Hands-on teaching: see what goes wrong, and measure what you see.
+
+### Added
+- **Artifacts (teaching)** — the browser now exposes the artifacts the engine
+  already models: **motion** (ghosting, with periodic/random/linear types),
+  **chemical shift** (fat/water misregistration), and **susceptibility** (dropout
+  near air/bone). Each toggle carries a plain-language fix-it hint (raise NEX /
+  raise bandwidth / shorten TE or use spin echo), and a new lesson "When images
+  go wrong — artifacts" walks all three.
+- **Measurement tools** — an on-image **ruler** (distance in mm, calibrated to
+  the region's field of view) and **ROI** (mean signal, noise SD, SNR and area).
+  ROI statistics read the real signal image, not the windowed display, so the
+  numbers are physically meaningful; a placed ROI stays live as you scrub slices.
+  New lesson "Measuring the image — ruler, ROI & SNR" ties the ROI to the
+  SNR/NEX tradeoff.
+
 ## [1.7.0] — 2026-06-08
 
 A teaching release focused on someone **new to radiology** — naming what you see,
