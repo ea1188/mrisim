@@ -33,6 +33,11 @@ lesion that shows *why* MRI uses so many sequences.
   T2/FLAIR** — the concrete payoff that motivates multi-sequence imaging. Backed
   by a new tissue (label 23, "Lesion (WM)") in the authoritative `tissue_db`.
 
+### Fixed
+- The "Label the anatomy" names are now **de-overlapped** — structures that share
+  a centre (gray/white matter, CSF, the lesion inside white matter) no longer
+  print on top of one another.
+
 ## [1.6.1] — 2026-06-08
 
 Visual-quality and robustness refinements.
