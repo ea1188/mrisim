@@ -115,6 +115,18 @@ try {
     await page.uncheck("#lesion");
   }
 
+  // Teaching artifacts: enabling motion must re-render and reveal the motion-type
+  // selector; the engine applies the (already-tested) ghosting.
+  {
+    const before = await page.getAttribute("#mainImage", "src");
+    await page.check("#motion");
+    await page.waitForSelector("#motiontype-row:not([hidden])", { timeout: 5_000 });
+    await page.waitForFunction(
+      (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+      before, { timeout: 15_000 });
+    await page.uncheck("#motion");
+  }
+
   // Cursor tissue probe: hovering the image shows a tissue + T1/T2/PD readout.
   await page.mouse.move(box.x - 4, box.y - 4);
   await page.mouse.move(box.x, box.y);            // ensure a mousemove fires over the image

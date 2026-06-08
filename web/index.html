@@ -156,6 +156,21 @@
       </div>
 
       <div class="group">
+        <h2>Artifacts (teaching)</h2>
+        <p class="tiny">Switch on a common artifact to learn what it looks like and which setting fixes it.</p>
+        <label class="check" title="Patient motion replicates the image as ghosts along the phase-encode direction. Averaging or motion-correction reduces it."><input type="checkbox" id="motion" /> Motion (ghosting)</label>
+        <label id="motiontype-row" hidden>Motion type
+          <select id="motiontype">
+            <option value="periodic">Periodic (breathing)</option>
+            <option value="random">Random (sudden)</option>
+            <option value="linear">Linear (drift)</option>
+          </select></label>
+        <label class="check" title="Fat and water resonate at slightly different frequencies, so fat shifts along the readout direction — worse at low bandwidth and high field. Raise the bandwidth to reduce it."><input type="checkbox" id="chemshift" /> Chemical shift (fat/water)</label>
+        <label class="check" title="Field distortion near air/bone interfaces causes signal dropout and warping — worst on gradient-echo and long TE."><input type="checkbox" id="suscept" /> Susceptibility (dropout)</label>
+        <p class="tiny" id="artifact-help"></p>
+      </div>
+
+      <div class="group">
         <h2>Acquisition</h2>
         <label title="Matrix — number of pixels across. Higher = finer detail, but lower SNR and a longer scan.">Matrix <output id="matrix-val">256</output>
           <input type="range" id="matrix" min="96" max="320" step="32" value="256" /></label>

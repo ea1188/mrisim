@@ -131,7 +131,9 @@ async function applyState(st) {
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat", "lesion"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat", "lesion",
+   "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  if (st.motiontype) $("motiontype").value = st.motiontype;
   // Reflect the teaching panels a lesson/share-link may have toggled.
   $("scoutwrap").hidden = !$("fovplan").checked;
   $("planctl").hidden = !$("fovplan").checked;
@@ -268,6 +270,18 @@ const LESSONS = [
         state: { nex: 4 } },
       { text: "<b>Resolution.</b> Back to NEX 1, matrix 128: faster and higher SNR per (larger) voxel, but coarser detail. Resolution, SNR and time are always in tension.",
         state: { nex: 1, matrix: 128 } },
+    ],
+  },
+  {
+    title: "When images go wrong — artifacts",
+    blurb: "Motion, chemical shift and dropout — and the setting that fixes each.",
+    steps: [
+      { text: "<b>Motion.</b> The patient moved during the scan, so the image <b>repeats as ghosts</b> along the phase-encode direction. Watch the faint copies marching across the brain. The fix: averaging (raise <b>NEX</b>), faster sequences, or a breath-hold. (Tick <b>Motion</b> under Artifacts to do this yourself.)",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 15, motion: true, motiontype: "periodic", chemshift: false, suscept: false } },
+      { text: "<b>Chemical shift.</b> Fat and water resonate at slightly different frequencies, so <b>fat is mis-mapped along the readout</b> — see the bright/dark edge where the fatty scalp meets brain. It worsens at <b>low bandwidth</b> and high field. The fix: raise the receiver <b>bandwidth</b> (try the slider) or use fat-sat.",
+        state: { motion: false, chemshift: true, bw: 32 } },
+      { text: "<b>Susceptibility.</b> Near air/bone (sinuses, ear canals) the field distorts and signal <b>drops out and blooms</b> — worst on <b>gradient echo</b> and at long TE. The fix: shorten TE, or use a spin echo (its 180° refocuses the dephasing). Flip the sequence to Spin Echo and watch the dropout shrink.",
+        state: { chemshift: false, suscept: true, seq: "Gradient Echo", te: 40 } },
     ],
   },
   {
@@ -449,6 +463,9 @@ function buildControls(info) {
   [reg, seq, $("field")].forEach((el) => el.addEventListener("change", onSequenceOrRegion));
   ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((id) =>
     $(id).addEventListener("change", () => { if (id === "acq3d") syncVisibility(); schedule(); }));
+  ["motion", "chemshift", "suscept"].forEach((id) =>
+    $(id).addEventListener("change", () => { syncVisibility(); schedule(); }));
+  $("motiontype").addEventListener("change", schedule);
   $("orientation").querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => {
       $("orientation").querySelectorAll("button").forEach((x) => x.classList.remove("on"));
@@ -484,6 +501,13 @@ function syncVisibility() {
   const brain = curRegion() === "Brain";
   $("lesion-row").hidden = !brain;
   if (!brain) $("lesion").checked = false;
+  // Motion type only matters when motion is on; show a fix-it hint per artifact.
+  $("motiontype-row").hidden = !$("motion").checked;
+  const tips = [];
+  if ($("motion").checked) tips.push("Motion: ghosts repeat along phase-encode — averaging (NEX) or breath-hold reduces them.");
+  if ($("chemshift").checked) tips.push("Chemical shift: fat shifts along readout — raise the bandwidth (or fat-sat) to shrink it.");
+  if ($("suscept").checked) tips.push("Susceptibility: dropout near air/bone — shorten TE or use spin echo instead of gradient echo.");
+  $("artifact-help").textContent = tips.join("  ");
 }
 
 const curRegion = () => $("region").value;
@@ -507,6 +531,10 @@ function collectPayload() {
     fatsat_enabled: $("fatsat").checked,
     contrast_enabled: $("gd").checked, contrast_dose: $("gd").checked ? 5 : 0,
     flow_enabled: $("flow").checked,
+    // Teaching artifacts (the engine already models these; here we just expose them).
+    motion_enabled: $("motion").checked, motion_type: $("motiontype").value,
+    chemical_shift_enabled: $("chemshift").checked,
+    susceptibility_enabled: $("suscept").checked,
   };
   if (s === "Diffusion (DWI)") params.b_value = +$("bval").value;
   if (s === "FSE / TSE") params.etl = +$("etl").value;

@@ -318,6 +318,23 @@ def test_anatomy_labels_do_not_overlap():
                 f"labels overlap: {boxes[i][1]!r} & {boxes[j][1]!r}"
 
 
+@pytest.mark.parametrize("extra", [
+    {"motion_enabled": True, "motion_type": "periodic"},
+    {"chemical_shift_enabled": True, "bandwidth": 32},
+    {"susceptibility_enabled": True},
+])
+def test_artifacts_change_the_image(extra):
+    """Each teaching artifact the browser exposes (motion, chemical shift,
+    susceptibility) must flow through to the engine and visibly alter the image."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15}}
+    clean = wa.render(base)
+    dirty = wa.render({**base, "params": {**base["params"], **extra}})
+    _assert_good_render(dirty, str(extra))
+    assert clean["image"] != dirty["image"], f"artifact had no effect: {extra}"
+
+
 def test_contrast_map_opt_in():
     """The TR×TE contrast map is returned only when requested, as a valid PNG."""
     wa.init()
