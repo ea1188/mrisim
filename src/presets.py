@@ -294,7 +294,7 @@ PRESETS = {
         "TI": 150,
         "flip_angle": 90,
         "matrix_size": 256,
-        "FOV": 380,
+        "FOV": 320,
         "bandwidth": 125,
         "NEX": 2,
         "description": "Sagittal T1w spine. Normal marrow fat bright. Disc herniation, marrow infiltration (metastases appear dark)."
@@ -306,7 +306,7 @@ PRESETS = {
         "TI": 150,
         "flip_angle": 90,
         "matrix_size": 256,
-        "FOV": 380,
+        "FOV": 320,
         "bandwidth": 125,
         "NEX": 2,
         "etl": 16,
@@ -320,7 +320,7 @@ PRESETS = {
         "TI": 265,
         "flip_angle": 90,
         "matrix_size": 256,
-        "FOV": 380,
+        "FOV": 320,
         "bandwidth": 125,
         "NEX": 2,
         "description": "Sagittal STIR spine. Fat-suppressed — marrow fat dark. Highly sensitive for bone marrow edema, fractures, metastases, discitis."
@@ -332,7 +332,7 @@ PRESETS = {
         "TI": 150,
         "flip_angle": 90,
         "matrix_size": 256,
-        "FOV": 380,
+        "FOV": 320,
         "bandwidth": 200,
         "NEX": 2,
         "etl": 16,
@@ -678,13 +678,13 @@ PRESETS = {
     },
     "Spine T1 Post-Gd": {
         "sequence": "Spin Echo", "TR": 600, "TE": 12, "TI": 150, "flip_angle": 90,
-        "matrix_size": 320, "FOV": 380, "bandwidth": 150, "NEX": 2,
+        "matrix_size": 320, "FOV": 320, "bandwidth": 150, "NEX": 2,
         "contrast_enabled": True, "contrast_dose": 4,
         "description": "Post-gadolinium T1 of the spine. Enhancing tumour, infection (discitis/epidural abscess) and active inflammation brighten; compare with the pre-contrast T1 to spot true enhancement."
     },
     "Spine GRE T2* (MERGE)": {
         "sequence": "Gradient Echo", "TR": 700, "TE": 18, "TI": 150, "flip_angle": 20,
-        "matrix_size": 320, "FOV": 380, "bandwidth": 200, "NEX": 1,
+        "matrix_size": 320, "FOV": 320, "bandwidth": 200, "NEX": 1,
         "description": "Axial T2*-weighted GRE of the cord (MERGE/MEDIC-type). Bright CSF myelographic effect outlines the cord and exiting nerve roots; T2* makes haemorrhage and disc/osteophyte bloom dark."
     },
     "Pelvis MR Urography": {
