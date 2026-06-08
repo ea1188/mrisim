@@ -19,6 +19,30 @@ const SEQ_TI = new Set(["Inversion Recovery"]);
 // Sequences needing the ~1-minute vessel-tree build the first time (see web_adapter).
 const SEQ_SLOW_FIRST = new Set(["MR Angiography", "Susceptibility (SWI)"]);
 const ACQ3D_SEQ = new Set(["Spin Echo", "Gradient Echo", "Inversion Recovery", "Balanced SSFP"]);
+
+// Plain-language "what this is clinically for" blurb under the sequence picker.
+// Fixed-role sequences key off the name; SE/FSE/GRE key off the computed weighting.
+const SEQ_HELP = {
+  "Diffusion (DWI)": "Restricted diffusion lights up — acute stroke, abscess, dense tumour. Always read with the ADC map to rule out T2 shine-through.",
+  "MR Angiography": "Flowing blood is bright (time-of-flight) — maps vessels with no contrast injection.",
+  "Susceptibility (SWI)": "Blood products, iron and calcium go dark — microbleeds, veins, mineralisation.",
+  "fMRI (BOLD)": "T2*-sensitive to the blood-oxygenation change with neural activity — functional mapping.",
+  "Echo Planar (EPI)": "Single-shot T2* readout (the engine behind DWI/fMRI): very fast, but prone to distortion and ghosting.",
+  "Balanced SSFP": "Bright fluid and blood (T2/T1 contrast), fast — cardiac cine, MRCP-type and fetal imaging.",
+  "Inversion Recovery": "A 180° pulse then a delay (TI) nulls one tissue: FLAIR (TI≈2500 ms) blacks out CSF so lesions pop; STIR (TI≈250 ms) blacks out fat to reveal oedema.",
+  "Quantitative (qMRI)": "Fits the actual T1/T2/PD value at every pixel instead of a single weighted picture.",
+};
+const WEIGHT_HELP = {
+  "T1": "T1-weighted: fat and white matter bright, fluid (CSF) dark. Anatomy and post-contrast enhancement.",
+  "T2": "T2-weighted: fluid and most pathology bright, white matter darker. The workhorse for lesions, oedema and tumours.",
+  "PD": "Proton-density: little T1/T2 weighting, so contrast tracks tissue water. Good for cartilage and subtle lesions.",
+  "Mixed": "Mixed weighting — push TR/TE toward T1 (both short) or T2 (both long) for cleaner contrast.",
+};
+function updateSeqHelp() {
+  const seq = $("sequence").value;
+  $("seq-help").textContent =
+    SEQ_HELP[seq] || WEIGHT_HELP[weighting(seq, +$("tr").value, +$("te").value)] || "";
+}
 // Canonical default plane per region — the spine/knee are acquired/best seen
 // sagittal, so opening them axial would show a coarse reformat.
 const REGION_PLANE = { Spine: "sagittal", Knee: "sagittal" };
@@ -69,6 +93,7 @@ async function onReady(info) {
   booted = true;
   await applyHashState();        // restore a shared prescription, if the URL has one
   render();
+  updateSeqHelp();
   maybeShowIntro();
 }
 
@@ -633,6 +658,7 @@ let timer = null, pending2 = false, running = false;
 function schedule() {
   if (!booted) return;
   if (!applyingPreset) $("preset").value = "";   // manual tweak → "custom"
+  updateSeqHelp();                                // keep the clinical blurb current
   clearTimeout(timer);
   timer = setTimeout(render, 90);    // debounce; the worker keeps the UI free
 }
