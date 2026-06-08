@@ -132,11 +132,11 @@ The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.githu
 
 ### Download a ready-to-run app (no Python needed)
 
-Grab the build for your system from the [**latest release**](https://github.com/ea1188/mrisim/releases/latest):
+Grab the build for your system (these links always serve the [**latest release**](https://github.com/ea1188/mrisim/releases/latest), currently **v1.6.1**):
 
-- **Windows** — download `MRISim-windows.exe` and double-click it.
-- **macOS** — download `MRISim-macos.zip`, unzip it, drag `MRISim.app` to *Applications*, then allow it on first launch (see [macOS — "can't be opened"](#macos--mrisim-cant-be-opened--apple-could-not-verify) below).
-- **Linux** — download `MRISim-linux.tar.gz`, extract it, and run `./MRISim` (needs Qt libraries: `sudo apt-get install libxcb-cursor0 libgl1`).
+- **Windows** — download [`MRISim-windows.exe`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-windows.exe) and double-click it.
+- **macOS** — download [`MRISim-macos.zip`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-macos.zip), unzip it, drag `MRISim.app` to *Applications*, then allow it on first launch (see [macOS — "can't be opened"](#macos--mrisim-cant-be-opened--apple-could-not-verify) below).
+- **Linux** — download [`MRISim-linux.tar.gz`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-linux.tar.gz), extract it, and run `./MRISim` (needs Qt libraries: `sudo apt-get install libxcb-cursor0 libgl1`).
 
 Each download bundles Python, every dependency, the brain phantom **and the five real body regions** (Abdomen, Spine, Pelvis, whole Torso, and the Knee) — a few hundred MB — so there's nothing else to install and real anatomy works offline. The first launch is slower while font caches build; later launches are quick.
 
