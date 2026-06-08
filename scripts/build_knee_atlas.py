@@ -110,9 +110,12 @@ def build(raw_dir):
     lab[~body] = BG
 
     # texture = real intensity, normalised to a ~1.0 multiplicative field
+    # Texture = the real T2 intensity, lightly denoised and normalised to a ~1.0
+    # multiplicative field, so tissues keep parenchymal detail without speckle.
+    vs = gaussian_filter(v, 0.7)
     tex = np.ones(v.shape, dtype=np.float32)
-    mean = float(v[body].mean())
-    tex[body] = np.clip(v[body] / max(mean, 1e-3), 0.4, 1.8)
+    mean = float(vs[body].mean())
+    tex[body] = np.clip(vs[body] / max(mean, 1e-3), 0.5, 1.7)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     np.save(os.path.join(OUT_DIR, "atlas.npy"), lab)
