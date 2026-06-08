@@ -106,7 +106,7 @@ async function applyState(st) {
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // Reflect the teaching panels a lesson/share-link may have toggled.
   $("scoutwrap").hidden = !$("fovplan").checked;
   $("planctl").hidden = !$("fovplan").checked;
@@ -340,6 +340,7 @@ function buildControls(info) {
   $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; schedule(); });
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
+  $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
   wireWindowLevel();
   wireScout();
   wireProbe();
@@ -424,6 +425,7 @@ function collectPayload() {
     slice_idx: +$("slice").value, curve_mode: "TE decay",
     window_width: winW, window_level: winL, params,
     contrast_map: $("cmap").checked,
+    label_anatomy: $("labelanat").checked,
   };
   if ($("fovplan").checked) {                 // graphic FOV box + oblique prescription
     out.fov_planning = true;

@@ -275,6 +275,17 @@ def test_probe_carries_signal_for_show_the_math():
     assert abs(wm["S"] - expect) < 1e-3
 
 
+def test_anatomy_labels_change_image():
+    """The 'label the anatomy' overlay draws named structures onto the image."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}}
+    plain = wa.render(base)["image"]
+    labeled = wa.render({**base, "label_anatomy": True})["image"]
+    _decode(plain, "plain"); _decode(labeled, "labeled")
+    assert plain != labeled, "anatomy labels did not change the image"
+
+
 def test_contrast_map_opt_in():
     """The TR×TE contrast map is returned only when requested, as a valid PNG."""
     wa.init()

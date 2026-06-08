@@ -92,6 +92,16 @@ try {
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     beforeWL, { timeout: 15_000 });
 
+  // "Label the anatomy" must re-render the image (named structures drawn on it).
+  {
+    const before = await page.getAttribute("#mainImage", "src");
+    await page.check("#labelanat");
+    await page.waitForFunction(
+      (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+      before, { timeout: 15_000 });
+    await page.uncheck("#labelanat");
+  }
+
   // Cursor tissue probe: hovering the image shows a tissue + T1/T2/PD readout.
   await page.mouse.move(box.x - 4, box.y - 4);
   await page.mouse.move(box.x, box.y);            // ensure a mousemove fires over the image
