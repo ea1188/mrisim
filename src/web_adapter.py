@@ -260,7 +260,8 @@ class WebHost(CurvesMixin):
         image, metrics = self._acquire_or_reformat(params)
         self.current_image = image
         return {
-            "image": self._draw_image(image, params, orient, sl, ww, wl),
+            "image": self._draw_image(image, params, orient, sl, ww, wl,
+                                      label_anatomy=bool(payload.get("label_anatomy"))),
             "curve": self._draw_curve(params),
             "metrics": _jsonable(metrics),
             "dims": self.dims(),
@@ -303,8 +304,46 @@ class WebHost(CurvesMixin):
         return {"labels": base64.b64encode(lab8.tobytes()).decode("ascii"),
                 "h": int(H), "w": int(W), "tissues": tissues}
 
+    # Short, beginner-friendly names for the anatomy-label overlay.
+    _ANATOMY_NAMES = {1: "CSF", 2: "Gray matter", 3: "White matter", 4: "Fat",
+                      5: "Skull", 6: "Muscle", 7: "Liver", 8: "Spleen", 9: "Kidney",
+                      10: "Kidney", 11: "Vessel", 13: "Bone", 14: "Marrow",
+                      15: "Disc", 16: "Cord", 17: "Bowel", 18: "Lung",
+                      19: "Pancreas", 20: "Heart", 21: "Soft tissue", 22: "Ligament"}
+
+    def _draw_anatomy_labels(self, ax: Any, orient: str, sl: int, params: dict,
+                             img_shape: tuple) -> None:
+        """Label the major structures on the image by name (largest region per
+        tissue) — a beginner aid so you learn what you're looking at. Uses the
+        same co-registered label slice as the cursor probe."""
+        import matplotlib.patheffects as _pe
+        from scipy.ndimage import label as _cc
+        try:
+            lab = np.asarray(self.sim._get_phantom_slice(orient, sl, params))
+        except Exception:
+            return
+        if lab.ndim != 2:
+            return
+        H, W = lab.shape
+        sy, sx = img_shape[0] / H, img_shape[1] / W
+        total = max(int((lab > 0).sum()), 1)
+        stroke = [_pe.withStroke(linewidth=2.4, foreground="#05080b")]
+        for v in np.unique(lab):
+            if v == 0 or v == 12:                          # skip background / gas
+                continue
+            mask = lab == v
+            if mask.sum() < 0.012 * total:                 # skip slivers to avoid clutter
+                continue
+            cc, n = _cc(mask)
+            big = 1 + int(np.argmax(np.bincount(cc.flat)[1:]))
+            ys, xs = np.where(cc == big)
+            ax.text(xs.mean() * sx, ys.mean() * sy, self._ANATOMY_NAMES.get(int(v), f"#{v}"),
+                    color="#ffe08a", fontsize=8.5, ha="center", va="center", weight="bold",
+                    family="sans-serif", path_effects=stroke, zorder=7)
+
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
-                    sl_idx: int, ww: float = 1.0, wl: float = 0.5) -> str:
+                    sl_idx: int, ww: float = 1.0, wl: float = 0.5,
+                    label_anatomy: bool = False) -> str:
         ax = self.img_ax
         ax.clear()
         mx = float(np.max(img)) if float(np.max(img)) > 0 else 1.0
@@ -328,6 +367,8 @@ class WebHost(CurvesMixin):
             ax, params, orient, sl_idx, width, center,
             region=self.region.get(), letters=letters,
             recon_geom=getattr(self.sim, "_recon3d_geom", None))
+        if label_anatomy:
+            self._draw_anatomy_labels(ax, orient, sl_idx, params, img.shape)
         return _png_b64(self.fig)
 
     def _draw_curve(self, params: dict) -> str:
