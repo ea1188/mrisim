@@ -183,6 +183,45 @@ function maybeShowIntro() {
 // --- Guided lessons --------------------------------------------------------- //
 const LESSONS = [
   {
+    title: "Start here — what is an MRI image?",
+    blurb: "New to MRI? Read this first. What the greys actually mean.",
+    beginner: true,
+    steps: [
+      { text: "This is a single <b>slice</b> through the head — a thin slab of tissue, seen from above. Every pixel is a <b>brightness</b>: how much signal that bit of tissue gave back. <b>Bright = lots of signal, dark = little.</b> MRI doesn't measure 'density' like a CT — it measures how the tissue's water responds to the scan. Nothing to do yet; just look.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, fovplan: false, cmap: false, mathshow: false, labelanat: false } },
+      { text: "Don't know what you're looking at? Tick <b>Label the anatomy</b> (I just did) and the main structures get named on the image. The big paired blobs deep in the middle are the <b>ventricles</b> — fluid spaces. The outer ribbon is <b>grey matter</b>; the bright bulk inside is <b>white matter</b>.",
+        state: { labelanat: true } },
+      { text: "Now <b>hover your mouse over any pixel.</b> A readout shows which <b>tissue</b> it is and its three key numbers — <b>T1, T2 and PD</b>. Those three properties (plus your scan settings) are <i>all</i> that decide how bright a pixel is. The next lessons show how. Untick the labels whenever you want a clean image.",
+        state: { labelanat: true } },
+    ],
+  },
+  {
+    title: "Start here — dark or bright? T1 vs T2",
+    blurb: "The one rule that tells the two commonest scans apart.",
+    beginner: true,
+    steps: [
+      { text: "Look at the <b>fluid in the ventricles</b> (centre). Right now it's <b>dark</b>. This is a <b>T1-weighted</b> scan — fat and white matter are bright, water/fluid is dark. Memory hook: on <b>T1, fluid is dark</b>. (T1 scans look 'anatomical' — close to how you'd picture the tissue.)",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, labelanat: false } },
+      { text: "I changed two settings (TR and TE — more on those later). Watch the <b>ventricles flip to bright.</b> This is a <b>T2-weighted</b> scan: now <b>fluid is bright</b>. T2 is how you spot disease — most problems (swelling, fluid, inflammation) light up bright. Memory hook: <b>T2, fluid is bright.</b>",
+        state: { tr: 4000, te: 100 } },
+      { text: "That's the whole trick for reading a scan at a glance: <b>find the fluid (the ventricles, or the eyeballs).</b> Dark fluid → T1. Bright fluid → T2. Flip back and forth with <b>Back</b> / <b>Next</b> until it sticks — it's the single most useful habit in MRI.",
+        state: { tr: 500, te: 12 } },
+    ],
+  },
+  {
+    title: "Start here — why so many sequences?",
+    blurb: "What 'sequence' means, and why there are dozens of them.",
+    beginner: true,
+    steps: [
+      { text: "A <b>sequence</b> is the recipe of radio pulses and timings the scanner plays. Different recipes make different tissues bright or dark — so radiologists run several per study, each tuned to show something. Read the <b>plain-language note under the Sequence menu</b>: it says what each one is for. This is <b>Spin Echo</b>, the reliable all-rounder.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 4000, te: 100, labelanat: false } },
+      { text: "Switch to <b>FLAIR</b> (an inversion-recovery trick). It's a T2 scan but with the <b>bright fluid switched off</b> — the ventricles go black. Why? So a bright spot sitting <i>next to</i> fluid isn't hidden by it. FLAIR is the workhorse for finding brain lesions. Notice the note under the menu changed too.",
+        state: { seq: "Inversion Recovery", tr: 9000, ti: 2548, te: 100 } },
+      { text: "Last one: <b>Gradient Echo</b> — a fast recipe used for 3-D scans and angiography. The point isn't to memorise them: it's that each sequence is just a different recipe that makes a chosen tissue stand out. When you're ready, the lessons below open up TR, TE, nulling, SNR and FOV planning one at a time.",
+        state: { seq: "Gradient Echo", tr: 400, te: 8 } },
+    ],
+  },
+  {
     title: "T1, T2 & PD contrast",
     blurb: "Why CSF flips from dark to bright as you change TR and TE.",
     steps: [
@@ -272,9 +311,22 @@ let lessonIdx = -1, stepIdx = 0;
 
 function wireLessons() {
   const list = $("lesson-list");
+  let firstBeginner = true, firstAdvanced = true;
   LESSONS.forEach((L, i) => {
+    // Section dividers: the beginner "Start here" track, then the rest.
+    if (L.beginner && firstBeginner) {
+      firstBeginner = false;
+      const h = document.createElement("p"); h.className = "lesson-section";
+      h.textContent = "New to MRI? Start here";
+      list.appendChild(h);
+    } else if (!L.beginner && firstAdvanced) {
+      firstAdvanced = false;
+      const h = document.createElement("p"); h.className = "lesson-section";
+      h.textContent = "Go deeper — the physics";
+      list.appendChild(h);
+    }
     const b = document.createElement("button");
-    b.className = "lesson-item";
+    b.className = "lesson-item" + (L.beginner ? " beginner" : "");
     b.innerHTML = `<b>${L.title}</b><span>${L.blurb}</span>`;
     b.addEventListener("click", () => { $("lesson-picker").hidden = true; startLesson(i); });
     list.appendChild(b);
