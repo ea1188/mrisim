@@ -217,7 +217,7 @@ class WebHost(CurvesMixin):
     _PATHOLOGY = {"lesion": 23, "stroke": 24, "hemorrhage": 25, "tumor": 26,
                   "abscess": 27}
     _PATHOLOGY_R = {"lesion": 0.035, "stroke": 0.045, "hemorrhage": 0.032,
-                    "tumor": 0.05, "abscess": 0.060}
+                    "tumor": 0.05, "abscess": 0.068}
 
     def _pathology_volume(self, kind: str) -> np.ndarray:
         """Return the brain volume with a demo lesion of `kind` painted into the
@@ -246,7 +246,7 @@ class WebHost(CurvesMixin):
                 # A mass that displaces parenchyma (WM or cortex): outer shell is
                 # the enhancing rim, inner ball is the pus core.
                 para = (vol == 3) | (vol == 2)
-                r_in = max(2, r - 3)
+                r_in = max(2, r - 5)                     # ~5-voxel rim survives PV blur
                 vol[(dist2 <= r * r) & para] = 28        # rim (capsule)
                 vol[(dist2 <= r_in * r_in) & para] = 27  # core (pus)
             else:

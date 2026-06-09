@@ -461,6 +461,16 @@ def test_abscess_has_dwi_bright_core_and_enhancing_rim():
     core, wm = mean_of(27, {"sequence": "Diffusion (DWI)", "b_value": 1000, "diff_display": "DWI"})
     assert core > wm, f"abscess core should be bright on DWI (core {core:.3f} vs WM {wm:.3f})"
 
+    # T2: bright pus core, T2-hypointense (dark) rim — the classic ring.
+    wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+               "pathology": "abscess", "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}})
+    sl = _np.asarray(h.sim._get_phantom_slice("axial", 90,
+                     _dp(sequence="Spin Echo", TR=4000, TE=100)))
+    rim_vals, wm_t2 = h.current_image[sl == 28], float(h.current_image[sl == 3].mean())
+    core_t2 = float(h.current_image[sl == 27].mean())
+    assert core_t2 > wm_t2, "pus core should be bright on T2"
+    assert float((rim_vals < wm_t2).mean()) > 0.4, "rim should be T2-hypointense (dark ring)"
+
     p = {"sequence": "Spin Echo", "TR": 600, "TE": 12}
     pre, _ = mean_of(28, {**p, "contrast_enabled": False})
     post, _ = mean_of(28, {**p, "contrast_enabled": True, "contrast_dose": 10})

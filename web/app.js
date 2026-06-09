@@ -350,7 +350,7 @@ const LESSONS = [
         state: { seq: "Spin Echo", tr: 600, te: 12, pathology: "tumor", gd: true } },
       { text: "Finally a <b>brain abscess</b> — the case that needs <i>two</i> sequences. On <b>DWI</b> its pus core restricts diffusion and lights up <b>bright</b> (this is how an abscess is told apart from a necrotic tumour, whose core does <i>not</i> restrict).",
         state: { seq: "Diffusion (DWI)", bval: 1000, pathology: "abscess", gd: false, labelanat: false } },
-      { text: "Now switch to <b>T1 with gadolinium</b> (Spin Echo + Gadolinium): the abscess shows a <b>thin enhancing rim</b> around the non-enhancing core — the classic 'ring enhancement'. Bright core on DWI <i>and</i> a smooth enhancing rim = abscess. Four lesions, four sequences — that's why an MRI study is never just one scan.",
+      { text: "Now switch to <b>T1 with gadolinium</b> (Spin Echo + Gadolinium): the abscess shows a <b>thin enhancing rim</b> around the non-enhancing core — the classic 'ring enhancement'. (On <b>T2</b> the same capsule is a <b>dark ring</b> around the bright pus.) Bright core on DWI <i>and</i> a smooth enhancing rim = abscess. Four lesions, four sequences — that's why an MRI study is never just one scan.",
         state: { seq: "Spin Echo", tr: 600, te: 12, pathology: "abscess", gd: true, labelanat: true } },
     ],
   },
