@@ -60,6 +60,19 @@ def test_every_sequence_renders(seq):
     assert r["orientation"] == "axial" and r["slice_idx"] == 95
 
 
+def test_precomputed_vessels_match_add_vessels_3d():
+    """The shipped vessel-index file must reconstruct exactly what add_vessels_3d
+    builds — a drift guard so the precomputed SWI/MRA tree never goes stale."""
+    from phantom3d_extended import add_vessels_3d
+    wa.init()
+    h = wa._host()
+    brain = h._region_cache["Brain"]
+    fast = h._load_precomputed_vessels(brain)
+    assert fast is not None, "precomputed vessel index missing — run scripts/build_brain_vessels.py"
+    assert np.array_equal(fast, add_vessels_3d(brain)), \
+        "precomputed vessels drifted from add_vessels_3d; regenerate brain_vessels_idx.npy"
+
+
 @pytest.mark.parametrize("orient", ["axial", "coronal", "sagittal"])
 def test_every_orientation_renders(orient):
     wa.init()

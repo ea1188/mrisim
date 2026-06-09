@@ -31,6 +31,13 @@ async function boot() {
   pyodide.FS.mkdirTree("/data");
   const npy = new Uint8Array(await (await fetch(bust("data/brainweb_sub04_anat.npy"))).arrayBuffer());
   pyodide.FS.writeFile("/data/brainweb_sub04_anat.npy", npy);
+  // Precomputed vessel-tree indices (~50 KB) so SWI / MR-angiography don't stall
+  // ~1 min building them in-browser. Best-effort: the engine falls back to
+  // building them if the file is missing.
+  try {
+    const v = new Uint8Array(await (await fetch(bust("data/brain_vessels_idx.npy"))).arrayBuffer());
+    pyodide.FS.writeFile("/data/brain_vessels_idx.npy", v);
+  } catch (e) { /* engine will build vessels on demand */ }
 
   post({ type: "progress", pct: 86, msg: "Starting engine…" });
   pyodide.runPython("import sys; sys.path.insert(0, '/src')");
