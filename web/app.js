@@ -180,8 +180,18 @@ function downloadPNG() {
 }
 
 // --- Onboarding ------------------------------------------------------------- //
-function showIntro() { $("intro").hidden = false; }
-function hideIntro() { $("intro").hidden = true; localStorage.setItem("mrisim_seen", "1"); }
+let lastDialogFocus = null;   // element to restore focus to when a dialog closes
+function openDialog(id, focusId) {
+  lastDialogFocus = document.activeElement;
+  $(id).hidden = false;
+  const f = $(focusId); if (f) f.focus();
+}
+function closeDialog(id) {
+  $(id).hidden = true;
+  if (lastDialogFocus && typeof lastDialogFocus.focus === "function") lastDialogFocus.focus();
+}
+function showIntro() { openDialog("intro", "intro-ok"); }
+function hideIntro() { closeDialog("intro"); localStorage.setItem("mrisim_seen", "1"); }
 function maybeShowIntro() {
   $("intro-ok").addEventListener("click", hideIntro);
   $("help").addEventListener("click", showIntro);
@@ -403,8 +413,8 @@ function wireLessons() {
     b.addEventListener("click", () => { $("lesson-picker").hidden = true; startLesson(i); });
     list.appendChild(b);
   });
-  $("lessons-btn").addEventListener("click", () => { $("lesson-picker").hidden = false; });
-  $("lesson-picker-close").addEventListener("click", () => { $("lesson-picker").hidden = true; });
+  $("lessons-btn").addEventListener("click", () => openDialog("lesson-picker", "lesson-picker-close"));
+  $("lesson-picker-close").addEventListener("click", () => closeDialog("lesson-picker"));
   $("lesson-exit").addEventListener("click", exitLesson);
   $("lesson-prev").addEventListener("click", () => { if (stepIdx > 0) { stepIdx--; applyStep(); } });
   $("lesson-next").addEventListener("click", () => {
@@ -455,7 +465,11 @@ function setSlice(v) {
 
 function wireKeyboard() {
   document.addEventListener("keydown", (e) => {
-    if (!$("intro").hidden && e.key === "Escape") { hideIntro(); return; }
+    if (e.key === "Escape") {
+      if (!$("intro").hidden) { hideIntro(); return; }
+      if (!$("lesson-picker").hidden) { closeDialog("lesson-picker"); return; }
+      if (!$("lesson-panel").hidden) { exitLesson(); return; }
+    }
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || "")) return;
     const k = e.key.toLowerCase();
     let step = null;

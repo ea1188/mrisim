@@ -40,6 +40,13 @@ frozen.)
   spoken value-with-unit** (e.g. "Repetition time TR, 500 milliseconds"), toggle
   groups report their pressed state, and the main regions are labelled landmarks.
   Narrow layouts use larger, more legible type.
+- **Accessible dialogs, announcements and reduced motion.** The intro and lesson
+  pickers are proper labelled **modal dialogs** — focus moves into them on open,
+  returns to the trigger on close, and **Escape** dismisses them. Dynamic readouts
+  (measurement results, the A/B compare delta, status/hint lines, the active lesson
+  step and sequence blurb) are **live regions** so screen-reader users hear them.
+  The build now honours **`prefers-reduced-motion`**, dropping the splash-bar fill,
+  busy fade and transitions.
 
 ## [1.9.0] — 2026-06-08
 

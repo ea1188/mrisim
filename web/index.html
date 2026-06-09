@@ -25,9 +25,9 @@
   </div>
 
   <!-- First-run intro (shown once; dismissal remembered in localStorage). -->
-  <div id="intro" hidden>
+  <div id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="intro-h">
     <div class="intro-card">
-      <h2>Welcome to MRISim</h2>
+      <h2 id="intro-h">Welcome to MRISim</h2>
       <p class="intro-sub">The real MRI physics engine, running in your browser.</p>
       <ul>
         <li><b>New to MRI?</b> Open <b>📖 Lessons</b> and start the <b>“Start here”</b> track — three short reading-first walkthroughs. Or tick <b>Label the anatomy</b> to name the structures and <b>hover</b> any pixel to see which tissue it is and its T1/T2/PD.</li>
@@ -47,9 +47,9 @@
   </div>
 
   <!-- Lesson picker (populated from app.js) -->
-  <div id="lesson-picker" hidden>
+  <div id="lesson-picker" hidden role="dialog" aria-modal="true" aria-labelledby="lp-h">
     <div class="intro-card">
-      <h2>Guided lessons</h2>
+      <h2 id="lp-h">Guided lessons</h2>
       <p class="intro-sub">Short walkthroughs — each step sets up the scanner and explains what you see.</p>
       <div id="lesson-list"></div>
       <button id="lesson-picker-close" type="button">Close</button>
@@ -57,10 +57,10 @@
   </div>
 
   <!-- Active-lesson panel (floats over the viewport) -->
-  <aside id="lesson-panel" hidden>
+  <aside id="lesson-panel" hidden role="region" aria-labelledby="lesson-title">
     <div class="lp-head"><span id="lesson-title"></span>
-      <button id="lesson-exit" type="button" title="Exit lesson">✕</button></div>
-    <p id="lesson-step"></p>
+      <button id="lesson-exit" type="button" title="Exit lesson" aria-label="Exit lesson">✕</button></div>
+    <p id="lesson-step" aria-live="polite"></p>
     <div class="lp-foot">
       <span id="lesson-progress"></span>
       <span class="lp-btns">
@@ -95,7 +95,7 @@
           <button id="compare" type="button">Compare A/B</button>
           <button id="exitAB" type="button" hidden>Exit compare</button>
         </div>
-        <p class="hint" id="abdelta"></p>
+        <p class="hint" id="abdelta" role="status" aria-live="polite"></p>
         <div class="btnrow">
           <button id="copylink" type="button" title="Copy a shareable link to this exact setup">Copy link</button>
           <button id="download" type="button" title="Download the current image as PNG">Download PNG</button>
@@ -108,7 +108,7 @@
           <select id="region"></select></label>
         <label>Sequence
           <select id="sequence"></select></label>
-        <p class="tiny" id="seq-help"></p>
+        <p class="tiny" id="seq-help" aria-live="polite"></p>
         <label>Field strength
           <select id="field"><option>1.5T</option><option selected>3T</option></select></label>
         <label>Orientation
@@ -202,7 +202,7 @@
           <button data-m="ruler" aria-pressed="false">Ruler</button>
           <button data-m="roi" aria-pressed="false">ROI</button>
         </div>
-        <p class="tiny" id="measure-readout">Pick Ruler or ROI, then drag on the image.</p>
+        <p class="tiny" id="measure-readout" role="status" aria-live="polite">Pick Ruler or ROI, then drag on the image.</p>
         <button id="measure-clear" type="button">Clear</button>
       </div>
 
@@ -247,7 +247,7 @@
         <tr><td>CNR (WM–GM)</td><td id="x-cnr">—</td></tr>
         <tr><td>SAR (head)</td><td id="x-sar">—</td></tr>
       </table>
-      <p class="hint" id="hint"></p>
+      <p class="hint" id="hint" role="status" aria-live="polite"></p>
     </section>
   </main>
 
