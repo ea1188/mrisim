@@ -20,6 +20,12 @@ frozen.)
   core is what distinguishes an abscess from a necrotic tumour. Adds tissue labels
   27 (core) and 28 (rim); the "Pathology → the right sequence" lesson gains an
   abscess capstone showing it needs *two* sequences.
+- **Compare two pathologies side-by-side.** A/B compare now **captions each panel**
+  with what it shows (e.g. "Abscess · DWI" vs "Tumour · DWI"), and guided-lesson
+  steps can stage a comparison directly. New lesson "Abscess vs. tumour — the DWI
+  test" puts the two next to each other: the abscess's pus core restricts diffusion
+  (bright) while the tumour's necrotic core facilitates it (dark) — the single
+  finding that tells these look-alike ring-enhancing masses apart.
 
 ### Changed
 - **MR angiography / SWI are now instant in the browser.** The deterministic

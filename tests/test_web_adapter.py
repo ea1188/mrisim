@@ -477,6 +477,28 @@ def test_abscess_has_dwi_bright_core_and_enhancing_rim():
     assert post > pre * 1.2, f"abscess rim should enhance with Gd (pre {pre:.3f} → post {post:.3f})"
 
 
+def test_abscess_core_brighter_than_tumour_core_on_dwi():
+    """The diagnostic dilemma behind the compare-pathologies lesson: on DWI the
+    abscess's pus core restricts (bright) while the tumour's necrotic core
+    facilitates (dark) — so the abscess core reads clearly brighter."""
+    wa.init()
+    h = wa._host()
+    import numpy as _np
+    from simulator import default_params as _dp
+    dwi = {"sequence": "Diffusion (DWI)", "b_value": 1000, "diff_display": "DWI"}
+
+    def core(kind, label):
+        wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                   "pathology": kind, "params": dwi})
+        sl = _np.asarray(h.sim._get_phantom_slice("axial", 90, _dp(**dwi)))
+        return float(h.current_image[sl == label].mean())
+
+    abscess = core("abscess", 27)
+    tumour = core("tumor", 26)
+    assert abscess > tumour * 1.3, \
+        f"abscess core should be brighter on DWI than tumour core ({abscess:.3f} vs {tumour:.3f})"
+
+
 def test_lesion_hides_on_t1_but_bright_on_t2():
     """The teaching invariant: the lesion is far more conspicuous against white
     matter on T2 than on T1 (its T1 sits close to WM; its T2 is long)."""

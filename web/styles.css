@@ -123,6 +123,12 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
   color: var(--accent-ink); background: var(--accent-hi); border-radius: 5px; padding: 1px 7px;
 }
+/* Compare-mode caption: what each side actually is (pathology · sequence). */
+.ab-caption {
+  position: absolute; top: 7px; left: 34px; right: 8px; z-index: 2; text-align: right;
+  font-weight: 700; font-size: 11px; color: var(--accent-hi);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); pointer-events: none;
+}
 .probe {
   position: absolute; left: 8px; bottom: 8px; z-index: 3; pointer-events: none;
   background: rgba(5, 8, 11, 0.74); color: var(--accent-hi);
