@@ -40,6 +40,9 @@ try {
 
   // First-run intro must appear, then dismiss it (it overlays the controls).
   await page.waitForSelector("#intro:not([hidden])", { timeout: 10_000 });
+  // Accessibility: the intro is a labelled modal dialog.
+  if ((await page.getAttribute("#intro", "role")) !== "dialog") fail("intro is not role=dialog");
+  if ((await page.getAttribute("#intro", "aria-modal")) !== "true") fail("intro not aria-modal");
   await page.click("#intro-ok");
   await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
 
@@ -269,6 +272,12 @@ try {
   if (!download.suggestedFilename().endsWith(".png")) fail("download is not a .png: " + download.suggestedFilename());
 
   // Guided lessons: open the picker, start a lesson, advance a step.
+  await page.click("#lessons-btn");
+  await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  // Accessibility: the picker is a dialog and Escape closes it (then reopen).
+  if ((await page.getAttribute("#lesson-picker", "role")) !== "dialog") fail("lesson-picker not role=dialog");
+  await page.keyboard.press("Escape");
+  await page.waitForSelector("#lesson-picker", { state: "hidden", timeout: 5_000 });
   await page.click("#lessons-btn");
   await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
   // The beginner "Start here" track must be present and listed first.

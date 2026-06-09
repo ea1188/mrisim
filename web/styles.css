@@ -277,3 +277,14 @@ kbd {
 
 /* FOV-planning helper text under the localizer toggle */
 .tiny { color: var(--text-faint); font-size: 11px; margin: 4px 0 0; line-height: 1.35; }
+
+/* Honour users who prefer reduced motion: drop the splash-bar fill, busy fade
+   and any transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
