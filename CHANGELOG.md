@@ -12,6 +12,28 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-06-08
+
+Reach and clinical relevance: works on a touchscreen, and shows *why* each
+sequence exists.
+
+### Added
+- **Demo pathologies → the right sequence** — the brain "Pathology" selector now
+  offers four lesions, each revealed by a specific sequence: a **white-matter
+  lesion** (T2/FLAIR), an **acute infarct** with restricted diffusion (bright on
+  DWI, dark on ADC), a **microhaemorrhage** that blooms dark on SWI, and an
+  **enhancing tumour** that brightens on T1 after gadolinium. Each behaviour is
+  driven by the tested engine (diffusion ADC, susceptibility χ, Gd uptake) keyed
+  to new tissue labels 24–26. New lesson "Pathology → the right sequence".
+- **Touch support** — the image interactions (window/level, the scout localizer,
+  and the ruler/ROI measure) now work with a finger on a tablet or phone (Pointer
+  Events + `touch-action: none`); slice navigation uses the Slice slider on touch.
+
+### Fixed
+- The browser now syncs the engine's tissue table to the authoritative
+  `tissue_db` at the selected field (as the desktop does), so the DWI/SWI paths
+  use consistent properties.
+
 ## [1.8.0] — 2026-06-08
 
 Hands-on teaching: see what goes wrong, and measure what you see.
