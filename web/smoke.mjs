@@ -81,6 +81,8 @@ try {
   if (!imgB || !imgB.startsWith("data:image/png")) fail("compare B image did not render");
   const delta = await page.textContent("#abdelta");
   if (!delta || !/SNR/.test(delta)) fail("compare delta did not populate: " + delta);
+  // Each compare panel is captioned with what it shows (sequence at minimum).
+  if (!((await page.textContent("#capB")) || "").trim()) fail("compare caption B is empty");
   await page.click("#exitAB");
   await page.waitForSelector("#wrapB", { state: "hidden", timeout: 5_000 });
 

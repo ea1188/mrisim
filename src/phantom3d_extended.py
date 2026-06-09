@@ -210,7 +210,7 @@ def get_diffusion_properties_3d(phantom: np.ndarray | None) -> dict[int, dict[st
         23: {"ADC": 0.95, "FA": 0.10},   # WM lesion — vasogenic, mildly elevated
         24: {"ADC": 0.25, "FA": 0.10},   # acute infarct — restricted (cytotoxic)
         25: {"ADC": 0.60, "FA": 0.10},   # microhaemorrhage
-        26: {"ADC": 0.95, "FA": 0.10},   # tumour
+        26: {"ADC": 1.25, "FA": 0.10},   # tumour — facilitated (necrotic core ≠ abscess)
         27: {"ADC": 0.28, "FA": 0.10},   # abscess core — pus restricts diffusion
         28: {"ADC": 0.80, "FA": 0.10},   # abscess rim (capsule)
     }

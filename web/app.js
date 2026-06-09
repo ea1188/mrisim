@@ -355,6 +355,17 @@ const LESSONS = [
     ],
   },
   {
+    title: "Abscess vs. tumour — the DWI test",
+    blurb: "Two lesions that look identical on contrast — and the one sequence that splits them.",
+    steps: [
+      { text: "Here's a <b>ring-enhancing</b> mass on T1 + gadolinium. The problem: a <b>brain abscess</b> and a <b>necrotic tumour</b> can look <i>identical</i> like this — both are a bright rim around a dark centre. Yet the treatment is opposite (drain the pus vs. resect/biopsy the tumour), so you have to tell them apart.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 600, te: 12, pathology: "abscess", gd: true, labelanat: false } },
+      { text: "<b>DWI splits them.</b> Same lesion on the left and right, now on diffusion. <b>Left — abscess:</b> the pus restricts diffusion, so the <b>core is bright</b>. <b>Right — necrotic tumour:</b> the core diffuses freely, so it stays <b>dark</b>. That one difference — a bright DWI core — is what calls it an abscess. (Each panel is labelled with what it is.)",
+        state: { seq: "Diffusion (DWI)", bval: 1000, pathology: "abscess", gd: false },
+        compareWith: { seq: "Diffusion (DWI)", bval: 1000, pathology: "tumor", gd: false } },
+    ],
+  },
+  {
     title: "A tour of the real anatomy",
     blurb: "The same physics on real brain, knee and body atlases.",
     steps: [
@@ -408,7 +419,10 @@ function startLesson(i) {
   $("lesson-panel").hidden = false;
   applyStep();
 }
-function exitLesson() { lessonIdx = -1; $("lesson-panel").hidden = true; }
+function exitLesson() {
+  lessonIdx = -1; $("lesson-panel").hidden = true;
+  if (compareMode) setCompare(false);   // a lesson may have ended in a comparison
+}
 
 async function applyStep() {
   const L = LESSONS[lessonIdx], s = L.steps[stepIdx];
@@ -418,7 +432,17 @@ async function applyStep() {
   $("lesson-prev").disabled = stepIdx === 0;
   $("lesson-next").textContent = stepIdx === L.steps.length - 1 ? "Finish" : "Next ›";
   await applyState(s.state);
-  render();
+  // A step may stage a side-by-side comparison: `state` becomes panel A and
+  // `compareWith` (a second state) becomes panel B, in compare mode.
+  if (s.compareWith) {
+    protocolA = collectPayload();
+    $("setA").classList.add("on");
+    await applyState(s.compareWith);
+    setCompare(true);                  // renders A (snapshot) vs B (current)
+  } else {
+    if (compareMode) setCompare(false);
+    render();
+  }
 }
 
 // --- Keyboard + wheel slice navigation -------------------------------------- //
@@ -640,8 +664,23 @@ function setCompare(on) {
   $("exitAB").hidden = !on;
   $("wrapB").hidden = !on;
   $("tagA").hidden = !on;
-  if (!on) { $("abdelta").textContent = ""; $("setA").classList.remove("on"); }
+  if (!on) {
+    $("abdelta").textContent = ""; $("setA").classList.remove("on");
+    $("capA").hidden = true; $("capB").hidden = true;
+  }
   render();
+}
+
+const PATHOLOGY_LABEL = { lesion: "WM lesion", stroke: "Stroke",
+  hemorrhage: "Microhaemorrhage", tumor: "Tumour", abscess: "Abscess" };
+
+// A short human label for a compare panel: pathology · sequence (· +Gd).
+function captionFor(payload) {
+  const bits = [];
+  if (payload.pathology && PATHOLOGY_LABEL[payload.pathology]) bits.push(PATHOLOGY_LABEL[payload.pathology]);
+  if (payload.params?.sequence) bits.push(payload.params.sequence);
+  if (payload.params?.contrast_enabled) bits.push("+Gd");
+  return bits.join(" · ");
 }
 
 function showDelta(mA, mB) {
@@ -813,7 +852,8 @@ async function render() {
     if (compareMode) {
       const reqSlice = +$("slice").value;   // guard against stale slice clobber
       const B = collectPayload();
-      const resA = await call("render", protocolA || B);
+      const A = protocolA || B;
+      const resA = await call("render", A);
       const resB = await call("render", B);
       $("mainImage").src = resA.image;
       $("mainImageB").src = resB.image;
@@ -821,6 +861,11 @@ async function render() {
       setMetrics(resB);
       syncSlice(resB, reqSlice);
       showDelta(resA.metrics, resB.metrics);
+      // Label each side with what it actually shows (e.g. "Abscess · DWI").
+      for (const [id, p] of [["capA", A], ["capB", B]]) {
+        const t = captionFor(p);
+        $(id).textContent = t; $(id).hidden = !t;
+      }
     } else {
       const reqSlice = +$("slice").value;   // guard against stale slice clobber
       applyResult(await call("render", collectPayload()), reqSlice);
