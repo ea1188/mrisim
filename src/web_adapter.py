@@ -457,6 +457,21 @@ class WebHost(CurvesMixin):
                       27: "Abscess", 28: "Rim"}
 
     @staticmethod
+    def _interior_anchor(mask: np.ndarray) -> "tuple[int, int, int]":
+        """(row, col, size) of the most interior point of `mask`'s largest
+        connected component — the distance-transform peak, guaranteed to lie
+        inside the component. Unlike the centroid, this sits ON the tissue even
+        for ring/ribbon shapes (skull, scalp, cortex). size is the component area."""
+        from scipy.ndimage import distance_transform_edt as _edt
+        from scipy.ndimage import label as _cc
+        cc, _ = _cc(mask)
+        if cc.max() == 0:
+            return 0, 0, 0
+        comp = cc == 1 + int(np.argmax(np.bincount(cc.flat)[1:]))
+        py, px = np.unravel_index(int(np.argmax(_edt(comp))), comp.shape)
+        return int(py), int(px), int(comp.sum())
+
+    @staticmethod
     def _label_rowh(h_img: float) -> float:
         """Approximate the anatomy-label text height in image pixels (the labels
         are drawn at a fixed point size on a fixed-size figure)."""
@@ -479,7 +494,6 @@ class WebHost(CurvesMixin):
         tissue) — a beginner aid so you learn what you're looking at. Uses the
         same co-registered label slice as the cursor probe."""
         import matplotlib.patheffects as _pe
-        from scipy.ndimage import label as _cc
         try:
             lab = np.asarray(self.sim._get_phantom_slice(orient, sl, params))
         except Exception:
@@ -489,7 +503,8 @@ class WebHost(CurvesMixin):
         H, W = lab.shape
         sy, sx = img_shape[0] / H, img_shape[1] / W
         total = max(int((lab > 0).sum()), 1)
-        # One placement per tissue, at the centroid of its largest component.
+        # One placement per tissue, anchored *inside* its largest component (the
+        # interior anchor sits ON the tissue, unlike the centroid).
         cands = []
         for v in np.unique(lab):
             if v == 0 or v == 12:                          # skip background / gas
@@ -499,10 +514,8 @@ class WebHost(CurvesMixin):
             # them; otherwise skip slivers to avoid clutter.
             if not (23 <= v <= 28) and mask.sum() < 0.012 * total:
                 continue
-            cc, n = _cc(mask)
-            big = 1 + int(np.argmax(np.bincount(cc.flat)[1:]))
-            ys, xs = np.where(cc == big)
-            cands.append((int(mask.sum()), float(xs.mean() * sx), float(ys.mean() * sy),
+            py, px, size = self._interior_anchor(mask)
+            cands.append((size, float(px * sx), float(py * sy),
                           self._ANATOMY_NAMES.get(int(v), f"#{v}")))
         if not cands:
             return
