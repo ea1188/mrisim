@@ -57,6 +57,19 @@ _RAW = {
     # yet its long T2 makes it bright on T2/FLAIR. Used by the browser "add a
     # lesion" demo (painted into brain WM); not part of any body phantom.
     23: (1100, 150,  1350, 180,  0.82, 120,  "Lesion (WM)"),
+    # --- Browser demo pathologies (brain-only; see web_adapter). Each is tuned so
+    #     a *specific* sequence reveals it — the rest of its behaviour (restricted
+    #     diffusion, paramagnetic susceptibility, Gd uptake) lives in the diffusion,
+    #     b0 and gadolinium tables keyed by these same labels. ---
+    # Acute infarct: cytotoxic oedema. Mild T1/T2 lengthening; the giveaway is
+    # restricted diffusion (low ADC) → bright on DWI, dark on the ADC map.
+    24: (1100, 95,   1300, 110,  0.80, 80,   "Acute infarct"),
+    # Microhaemorrhage: blood-breakdown products are strongly paramagnetic, so a
+    # very short T2* makes it bloom dark on SWI / gradient echo.
+    25: (900,  46,   1000, 40,   0.70, 8,    "Microhaemorrhage"),
+    # Enhancing tumour: long T1/T2 (cellular + oedema); breaks the blood–brain
+    # barrier, so it takes up gadolinium and brightens on T1-post-contrast.
+    26: (1300, 100,  1600, 120,  0.85, 90,   "Tumour (enhancing)"),
 }
 
 FIELD_STRENGTHS = ["1.5T", "3T"]

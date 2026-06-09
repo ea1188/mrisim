@@ -121,7 +121,14 @@
         <label>Slice <output id="slice-val"></output>
           <input type="range" id="slice" min="0" max="180" value="90" /></label>
         <label class="check"><input type="checkbox" id="labelanat" /> Label the anatomy (name the structures)</label>
-        <label class="check" id="lesion-row" title="Paint a demo white-matter lesion into the brain — it nearly vanishes on T1 but lights up on T2/FLAIR"><input type="checkbox" id="lesion" /> Add a lesion (demo pathology)</label>
+        <label id="pathology-row" title="Paint a demo lesion into the brain — each one is revealed by a specific sequence">Pathology (demo)
+          <select id="pathology">
+            <option value="">None</option>
+            <option value="lesion">White-matter lesion · T2/FLAIR</option>
+            <option value="stroke">Acute stroke · DWI</option>
+            <option value="hemorrhage">Microhaemorrhage · SWI</option>
+            <option value="tumor">Enhancing tumour · T1 + Gd</option>
+          </select></label>
         <label class="check"><input type="checkbox" id="fovplan" /> FOV planning (3-plane localizer)</label>
         <div id="planctl" hidden>
           <label>In-plane FOV (%) <output id="ipfov-val">100</output>

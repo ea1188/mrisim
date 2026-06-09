@@ -57,6 +57,10 @@ GD_TISSUE_FRACTION: dict[int, float] = {
     19: 0.55,  # Pancreas — well-perfused gland
     20: 0.40,  # Heart / myocardium — perfused
     21: 0.45,  # Soft tissue / gland (prostate, adrenal, thyroid)
+    # Demo pathologies (brain-only): the enhancing tumour breaks the blood–brain
+    # barrier and takes up Gd strongly → bright on T1-post-contrast. The WM lesion
+    # / infarct / haemorrhage don't appreciably enhance (omitted → unchanged).
+    26: 0.85,  # Tumour (enhancing)
 }
 
 

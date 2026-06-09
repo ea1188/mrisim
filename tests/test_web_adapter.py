@@ -370,22 +370,60 @@ def test_contrast_map_opt_in():
     _decode(on["cmap"], "contrast map")
 
 
-def test_lesion_demo_appears_and_is_brain_only():
-    """The demo lesion changes the image, shows up as label 23 in the probe table,
-    and only paints into the brain (a body region ignores the flag)."""
+@pytest.mark.parametrize("kind,label", [
+    ("lesion", 23), ("stroke", 24), ("hemorrhage", 25), ("tumor", 26)])
+def test_pathology_appears_and_is_brain_only(kind, label):
+    """Each demo pathology changes the image, shows up as its tissue label in the
+    probe table, and only paints into the brain (a body region ignores it)."""
     wa.init()
     base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
             "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}}
     off = wa.render(base)
-    on = wa.render({**base, "lesion": True})
-    _decode(on["image"], "lesion")
-    assert off["image"] != on["image"], "lesion did not change the image"
-    assert "23" not in {str(k) for k in off["probe"]["tissues"]}, "lesion present when off"
-    assert "23" in {str(k) for k in on["probe"]["tissues"]}, "lesion missing from probe"
-    # A body region must not gain a (brain-white-matter) lesion.
+    on = wa.render({**base, "pathology": kind})
+    _decode(on["image"], kind)
+    assert off["image"] != on["image"], f"{kind} did not change the image"
+    assert str(label) not in {str(k) for k in off["probe"]["tissues"]}, "present when off"
+    assert str(label) in {str(k) for k in on["probe"]["tissues"]}, f"{kind} missing from probe"
+    # A body region must not gain a (brain-white-matter) pathology.
     body = wa.render({"region": "Abdomen", "orientation": "axial", "slice_idx": 55,
-                      "params": {"sequence": "FSE / TSE"}, "lesion": True})
-    assert "23" not in {str(k) for k in body["probe"]["tissues"]}, "lesion leaked into body"
+                      "params": {"sequence": "FSE / TSE"}, "pathology": kind})
+    assert str(label) not in {str(k) for k in body["probe"]["tissues"]}, f"{kind} leaked into body"
+
+
+def test_legacy_lesion_flag_still_works():
+    """The old boolean `lesion: true` payload still paints the WM lesion (label 23)."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}}
+    on = wa.render({**base, "lesion": True})
+    assert "23" in {str(k) for k in on["probe"]["tissues"]}
+
+
+def test_pathologies_show_on_their_sequence():
+    """The teaching invariant: stroke is bright on DWI, the tumour enhances with Gd.
+    (SWI/haemorrhage is covered by the susceptibility table, which is slow to render
+    here as it builds the venous map.)"""
+    wa.init()
+    h = wa._host()
+    import numpy as _np
+    from simulator import default_params as _dp
+
+    def region_vs_wm(kind, label, params):
+        wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                   "pathology": kind, "params": params})
+        sl = _np.asarray(h.sim._get_phantom_slice("axial", 90, _dp(**params)))
+        return float(h.current_image[sl == label].mean()), float(h.current_image[sl == 3].mean())
+
+    # Acute infarct: restricted diffusion → brighter than white matter on DWI.
+    inf, wm = region_vs_wm("stroke", 24,
+                           {"sequence": "Diffusion (DWI)", "b_value": 1000, "diff_display": "DWI"})
+    assert inf > wm, f"stroke should be bright on DWI (infarct {inf:.3f} vs WM {wm:.3f})"
+
+    # Enhancing tumour: T1 signal rises with gadolinium.
+    p = {"sequence": "Spin Echo", "TR": 600, "TE": 12}
+    pre, _ = region_vs_wm("tumor", 26, {**p, "contrast_enabled": False})
+    post, _ = region_vs_wm("tumor", 26, {**p, "contrast_enabled": True, "contrast_dose": 10})
+    assert post > pre * 1.2, f"tumour should enhance with Gd (pre {pre:.3f} → post {post:.3f})"
 
 
 def test_lesion_hides_on_t1_but_bright_on_t2():

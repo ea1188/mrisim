@@ -124,14 +124,14 @@ try {
     await page.uncheck("#labelanat");
   }
 
-  // "Add a lesion" demo: toggling it on must re-render the brain image.
+  // Demo pathology: selecting one (stroke) must re-render the brain image.
   {
     const before = await page.getAttribute("#mainImage", "src");
-    await page.check("#lesion");
+    await page.selectOption("#pathology", "stroke");
     await page.waitForFunction(
       (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
       before, { timeout: 15_000 });
-    await page.uncheck("#lesion");
+    await page.selectOption("#pathology", "");
   }
 
   // Teaching artifacts: enabling motion must re-render and reveal the motion-type

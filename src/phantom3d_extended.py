@@ -204,6 +204,13 @@ def get_diffusion_properties_3d(phantom: np.ndarray | None) -> dict[int, dict[st
         4: {"ADC": 0.05, "FA": 0.0},
         5: {"ADC": 0.0, "FA": 0.0},
         6: {"ADC": 1.0, "FA": 0.0},
+        # Demo pathologies (brain-only). Acute infarct restricts diffusion (low
+        # ADC) → bright on DWI; the others diffuse near-normally so they don't
+        # spuriously light up on DWI (the default ADC=0 would make them bright).
+        23: {"ADC": 0.95, "FA": 0.10},   # WM lesion — vasogenic, mildly elevated
+        24: {"ADC": 0.25, "FA": 0.10},   # acute infarct — restricted (cytotoxic)
+        25: {"ADC": 0.60, "FA": 0.10},   # microhaemorrhage
+        26: {"ADC": 0.95, "FA": 0.10},   # tumour
     }
 
 def simulate_diffusion_3d_slice(

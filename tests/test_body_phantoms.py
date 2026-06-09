@@ -28,7 +28,7 @@ _gy, _gx = np.ogrid[:H, :W]
 # ---------------------------------------------------------------------------
 class TestBodyTissues:
     def test_all_labels_present(self):
-        assert set(BODY_TISSUES.keys()) == set(range(24))
+        assert set(BODY_TISSUES.keys()) == set(range(27))
 
     def test_required_keys_per_label(self):
         for lab, p in BODY_TISSUES.items():
