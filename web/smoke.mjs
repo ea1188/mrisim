@@ -84,6 +84,11 @@ try {
   await page.click("#exitAB");
   await page.waitForSelector("#wrapB", { state: "hidden", timeout: 5_000 });
 
+  // Touch support: the image must opt out of the browser's touch gestures so a
+  // finger can drag window/level / measure instead of scrolling the page.
+  const touchAction = await page.$eval("#mainImage", (el) => getComputedStyle(el).touchAction);
+  if (touchAction !== "none") fail("mainImage touch-action should be none, got: " + touchAction);
+
   // Window/level drag must change the image (single render path).
   const beforeWL = await page.getAttribute("#mainImage", "src");
   const box = await page.$eval("#mainImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
@@ -94,6 +99,20 @@ try {
   await page.waitForFunction(
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     beforeWL, { timeout: 15_000 });
+
+  // Touch path: a finger drag (pointerType "touch") must also drive window/level.
+  const beforeTouch = await page.getAttribute("#mainImage", "src");
+  await page.evaluate(({ x, y }) => {
+    const img = document.getElementById("mainImage");
+    const pe = (t, cx, cy) => new PointerEvent(t, { pointerType: "touch", pointerId: 1, clientX: cx, clientY: cy, bubbles: true, cancelable: true });
+    img.dispatchEvent(pe("pointerdown", x, y));
+    window.dispatchEvent(pe("pointermove", x - 70, y - 40));
+    window.dispatchEvent(pe("pointermove", x - 90, y - 60));
+    window.dispatchEvent(pe("pointerup", x - 90, y - 60));
+  }, box);
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+    beforeTouch, { timeout: 15_000 });
 
   // "Label the anatomy" must re-render the image (named structures drawn on it).
   {
