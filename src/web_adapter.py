@@ -170,17 +170,43 @@ class WebHost(CurvesMixin):
         self.slice_idx.set(self.sim.get_max_slice_idx() // 2)
         return {"dims": self.dims(), "max_slice": self.sim.get_max_slice_idx()}
 
+    # Precomputed brain vessel tree: the indices add_vessels_3d changes (label 11).
+    # Shipped by build_web (scripts/build_brain_vessels.py) so the browser skips the
+    # ~minute build that MR-angiography / SWI would otherwise stall on.
+    _VESSELS_IDX = "/data/brain_vessels_idx.npy"
+
     def _ensure_vessels(self) -> None:
-        """Build the TOF vessel tree on demand (it is ~a minute, so we avoid
-        paying it unless an MR-Angiography render actually needs it). Cached on
-        the brain region so it is built at most once."""
+        """Make the TOF vessel tree available for the brain (MR-angiography / SWI).
+        Prefer the precomputed index file (sub-millisecond reconstruction); fall
+        back to building it in-process (~a minute) when the file isn't present —
+        e.g. the desktop/test path. Cached so it is paid at most once."""
         name = self.region.get()
         vessels, activation = self._region_aux_cache.get(name, (None, None))
         if vessels is None and name == "Brain":
-            from phantom3d_extended import add_vessels_3d
-            vessels = add_vessels_3d(self._region_cache[name])
+            base = self._region_cache[name]
+            vessels = self._load_precomputed_vessels(base)
+            if vessels is None:
+                from phantom3d_extended import add_vessels_3d
+                vessels = add_vessels_3d(base)
             self._region_aux_cache[name] = (vessels, activation)
         self._vessels = vessels
+
+    def _load_precomputed_vessels(self, base: np.ndarray) -> "np.ndarray | None":
+        """Rebuild the vessel volume from the shipped index file, or None if it is
+        absent or doesn't match this phantom (then the caller computes it)."""
+        path = self._VESSELS_IDX if os.path.exists(self._VESSELS_IDX) else \
+            os.path.join(os.path.dirname(__file__), "..", "data", "brain_vessels_idx.npy")
+        if not os.path.exists(path):
+            return None
+        try:
+            idx = np.load(path)
+            if idx.size == 0 or int(idx.max()) >= base.size:
+                return None                          # mismatched phantom → recompute
+            vessels = base.copy()
+            vessels.reshape(-1)[idx] = 11            # label 11 = Blood (vessels)
+            return vessels
+        except Exception:
+            return None
 
     # Demo pathologies → tissue label painted into brain white matter. Each label's
     # sequence-specific behaviour (T1/T2, restricted diffusion, paramagnetic

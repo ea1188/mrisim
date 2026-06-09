@@ -15,6 +15,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "src")
 WEB = os.path.join(ROOT, "web")
 BRAIN_NPY = "brainweb_sub04_anat.npy"
+BRAIN_VESSELS = "brain_vessels_idx.npy"
 
 # Real segmented body regions (TotalSegmentator MRI) → the subject whose cached
 # atlas/texture the desktop uses. Bundled into the web build so the browser shows
@@ -67,6 +68,16 @@ def build() -> None:
     else:
         print(f"WARNING: {src_npy} not found — the web build will fall back to a "
               f"synthetic brain.")
+
+    # 2b. Copy the precomputed brain vessel-tree indices (label-11 voxels), so MR
+    #     angiography / SWI skip the ~minute add_vessels_3d build in the browser.
+    src_vidx = os.path.join(ROOT, "data", BRAIN_VESSELS)
+    if os.path.exists(src_vidx):
+        shutil.copy2(src_vidx, os.path.join(WEB, "data", BRAIN_VESSELS))
+        print(f"copied {BRAIN_VESSELS}  ({os.path.getsize(src_vidx) // 1024} KB)")
+    else:
+        print(f"WARNING: {src_vidx} not found — SWI/MRA will build vessels in-browser "
+              f"(~1 min). Run scripts/build_brain_vessels.py to generate it.")
 
     # 3. Copy the app logo (shared with the desktop header).
     src_logo = os.path.join(ROOT, "data", "logo.png")

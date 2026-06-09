@@ -43,6 +43,8 @@ exports/
 data/*.npy
 # ...but bundle the BrainWeb brain phantom so the brain renders out-of-the-box.
 !data/brainweb_sub04_anat.npy
+# ...and the precomputed brain vessel-tree indices (so SWI/MRA skip the ~1 min build).
+!data/brain_vessels_idx.npy
 # Keep the bulky raw TotalSegMRI dataset out of git, but DO bundle the small
 # per-region caches (atlas + texture) for the four regions the app ships, so the
 # downloaded binaries render real body anatomy. Re-including files requires

@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Changed
+- **MR angiography / SWI are now instant in the browser.** The deterministic
+  TOF vessel tree is precomputed (`scripts/build_brain_vessels.py`) and shipped
+  as a ~50 KB index file, so the first SWI / MR-angiography render rebuilds it in
+  under a millisecond instead of stalling ~1 minute building it in-browser. The
+  engine falls back to building it in-process when the file is absent.
+
 ## [1.9.0] — 2026-06-08
 
 Reach and clinical relevance: works on a touchscreen, and shows *why* each
