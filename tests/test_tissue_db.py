@@ -75,7 +75,7 @@ class TestProperties:
                 )
 
     def test_label_count(self):
-        assert len(_RAW) == 27  # labels 0-26 (22 = ligament, 23-26 = demo pathologies)
+        assert len(_RAW) == 29  # labels 0-28 (22 = ligament, 23-28 = demo pathologies)
 
     def test_bone_short_t2(self):
         p = properties("3T")[5]

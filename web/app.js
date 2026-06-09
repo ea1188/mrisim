@@ -346,8 +346,12 @@ const LESSONS = [
         state: { region: "Brain", seq: "Diffusion (DWI)", orient: "axial", slice: 90, bval: 1000, pathology: "stroke", labelanat: false, gd: false } },
       { text: "Now a <b>microhaemorrhage</b> on <b>SWI</b>. It's packed with paramagnetic blood-breakdown products that distort the local field, so it <b>blooms dark</b> — appearing far larger than its true size — while staying nearly invisible on conventional sequences. SWI is the sequence for old blood, calcium and small vessels. (First SWI render builds the venous map — give it a moment.)",
         state: { seq: "Susceptibility (SWI)", te: 40, pathology: "hemorrhage" } },
-      { text: "Finally an <b>enhancing tumour</b>. It breaks the blood–brain barrier, so it takes up contrast. Compare T1 <b>before</b> and <b>after</b> gadolinium (toggle <b>Gadolinium</b>): the tumour <b>brightens</b> — 'enhancement', the hallmark of an aggressive or breakdown lesion. Three lesions, three sequences — that's why an MRI study is never just one scan.",
+      { text: "Next an <b>enhancing tumour</b>. It breaks the blood–brain barrier, so it takes up contrast. Compare T1 <b>before</b> and <b>after</b> gadolinium (toggle <b>Gadolinium</b>): the tumour <b>brightens</b> — 'enhancement', the hallmark of an aggressive or breakdown lesion.",
         state: { seq: "Spin Echo", tr: 600, te: 12, pathology: "tumor", gd: true } },
+      { text: "Finally a <b>brain abscess</b> — the case that needs <i>two</i> sequences. On <b>DWI</b> its pus core restricts diffusion and lights up <b>bright</b> (this is how an abscess is told apart from a necrotic tumour, whose core does <i>not</i> restrict).",
+        state: { seq: "Diffusion (DWI)", bval: 1000, pathology: "abscess", gd: false, labelanat: false } },
+      { text: "Now switch to <b>T1 with gadolinium</b> (Spin Echo + Gadolinium): the abscess shows a <b>thin enhancing rim</b> around the non-enhancing core — the classic 'ring enhancement'. Bright core on DWI <i>and</i> a smooth enhancing rim = abscess. Four lesions, four sequences — that's why an MRI study is never just one scan.",
+        state: { seq: "Spin Echo", tr: 600, te: 12, pathology: "abscess", gd: true, labelanat: true } },
     ],
   },
   {

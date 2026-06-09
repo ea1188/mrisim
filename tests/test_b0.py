@@ -23,7 +23,7 @@ class TestSusceptibilityPpm:
     def test_has_body_labels_0_to_21(self):
         # Body/neuro labels 0-21, plus the brain-only demo pathologies 23-26.
         assert set(range(22)).issubset(SUSCEPTIBILITY_PPM.keys())
-        assert set(SUSCEPTIBILITY_PPM.keys()) == set(range(22)) | {23, 24, 25, 26}
+        assert set(SUSCEPTIBILITY_PPM.keys()) == set(range(22)) | {23, 24, 25, 26, 27, 28}
 
     def test_background_zero(self):
         assert SUSCEPTIBILITY_PPM[0] == 0.0

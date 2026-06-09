@@ -70,6 +70,13 @@ _RAW = {
     # Enhancing tumour: long T1/T2 (cellular + oedema); breaks the blood–brain
     # barrier, so it takes up gadolinium and brightens on T1-post-contrast.
     26: (1300, 100,  1600, 120,  0.85, 90,   "Tumour (enhancing)"),
+    # Abscess — two parts. The pus-filled core is proteinaceous fluid (bright on
+    # T2) that, crucially, restricts diffusion → bright on DWI / dark on ADC. The
+    # capsule (rim) has a shorter T2 (a dark ring on T2) and takes up gadolinium
+    # avidly → a bright enhancing rim on T1-post-contrast. (Core diffusion / rim
+    # enhancement live in the diffusion and gadolinium tables.)
+    27: (1400, 120,  1700, 130,  0.90, 100,  "Abscess core"),
+    28: (1000, 80,   1200, 75,   0.78, 55,   "Abscess rim"),
 }
 
 FIELD_STRENGTHS = ["1.5T", "3T"]
