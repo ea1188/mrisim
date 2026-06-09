@@ -103,7 +103,8 @@ class WebHost(CurvesMixin):
         self._region_aux_cache: dict[str, tuple] = {}   # (vessels, activation) per region
         self._vessels: Any = None       # TOF vessel tree (MRA), brain only
         self._activation: Any = None    # fMRI activation, brain only
-        self._lesion_vol: Any = None    # brain volume with a demo WM lesion painted in
+        self._lesion_vol: dict = {}     # demo-pathology volumes, cached per kind
+        self._applied_field: Any = None  # field the engine's global tissue table is set to
         self._scout_panels: list = []   # per-panel click→slice geometry
         # Agg figures for the two panels.
         self.fig = Figure(figsize=(5.2, 5.2), facecolor=_C_CANVAS)
@@ -181,15 +182,21 @@ class WebHost(CurvesMixin):
             self._region_aux_cache[name] = (vessels, activation)
         self._vessels = vessels
 
-    def _lesion_volume(self) -> np.ndarray:
-        """Return the brain volume with a single demo demyelinating lesion painted
-        into periventricular white matter (label 23). Built once and cached. The
-        lesion is a small sphere intersected with WM so it sits realistically in
-        white matter near a ventricle, where it is visible on the default axial
-        slice — and, by its tissue properties, nearly invisible on T1 yet bright
-        on T2/FLAIR (the whole point of the demo)."""
-        if self._lesion_vol is not None:
-            return self._lesion_vol
+    # Demo pathologies → tissue label painted into brain white matter. Each label's
+    # sequence-specific behaviour (T1/T2, restricted diffusion, paramagnetic
+    # susceptibility, Gd uptake) is defined in tissue_db / phantom3d_extended /
+    # b0 / rendering, keyed by these labels.
+    _PATHOLOGY = {"lesion": 23, "stroke": 24, "hemorrhage": 25, "tumor": 26}
+    _PATHOLOGY_R = {"lesion": 0.035, "stroke": 0.045, "hemorrhage": 0.032, "tumor": 0.05}
+
+    def _pathology_volume(self, kind: str) -> np.ndarray:
+        """Return the brain volume with a demo lesion of `kind` painted into
+        periventricular white matter (a sphere intersected with WM, near the
+        default axial slice so it's visible). Cached per kind."""
+        label = self._PATHOLOGY[kind]
+        cached = self._lesion_vol.get(kind) if isinstance(self._lesion_vol, dict) else None
+        if cached is not None:
+            return cached
         base = self._region_cache["Brain"]
         vol = base.copy()
         wm = vol == 3                                   # white matter
@@ -202,11 +209,11 @@ class WebHost(CurvesMixin):
             cy = int(y0 + 0.40 * (y1 - y0))             # anterior-ish
             row = xs[ys == cy] if (ys == cy).any() else xs
             cx = int(np.percentile(row, 72))            # lateral, off midline
-            r = max(4, int(round(min(vol.shape[1], vol.shape[2]) * 0.035)))
+            r = max(3, int(round(min(vol.shape[1], vol.shape[2]) * self._PATHOLOGY_R[kind])))
             zz, yy, xx = np.ogrid[:vol.shape[0], :vol.shape[1], :vol.shape[2]]
             sphere = ((zz - z) ** 2 + (yy - cy) ** 2 + (xx - cx) ** 2) <= r * r
-            vol[sphere & wm] = 23
-        self._lesion_vol = vol
+            vol[sphere & wm] = label
+        self._lesion_vol[kind] = vol
         return vol
 
     def _sync_sim(self, orient: str, sl_idx: int, sequence: str = "") -> None:
@@ -276,10 +283,12 @@ class WebHost(CurvesMixin):
         self.slice_idx.set(sl)
         self.plot_curve_mode.set(payload.get("curve_mode", "TE decay"))
 
-        # Demo pathology: paint a white-matter lesion into the brain when asked
-        # (it nearly vanishes on T1 but lights up on T2/FLAIR — see _lesion_volume).
-        if payload.get("lesion") and region == "Brain":
-            self.sim.volume = self._lesion_volume()
+        # Demo pathology: paint a lesion into the brain when asked. Each kind is
+        # revealed by a specific sequence (lesion→T2/FLAIR, stroke→DWI,
+        # hemorrhage→SWI, tumor→T1+Gd). Accept the legacy `lesion: true` too.
+        patho = payload.get("pathology") or ("lesion" if payload.get("lesion") else "")
+        if patho in self._PATHOLOGY and region == "Brain":
+            self.sim.volume = self._pathology_volume(patho)
         else:
             self.sim.volume = self._region_cache[region]
 
@@ -288,6 +297,13 @@ class WebHost(CurvesMixin):
         # magnified — default_params' 240 mm would zoom ~1.6x into a 380 mm
         # abdomen. (The interactive in-plane FOV box is a separate crop below.)
         params["FOV"] = _NATIVE_FOV.get(region, params.get("FOV", 240.0))
+        # Keep the engine's global tissue table (used by the DWI/SWI paths) synced
+        # to the authoritative tissue_db at the selected field — as the desktop does
+        # — so demo-pathology labels (23–26) render on those sequences too.
+        field = params.get("field_strength", "3T")
+        if field != self._applied_field:
+            tissue_db.apply_to_engine(field)
+            self._applied_field = field
         self._sync_sim(orient, sl, params["sequence"])
         self._apply_planning(payload)   # in-plane FOV box + oblique angulation
         ww = float(payload.get("window_width", 1.0))
@@ -399,7 +415,7 @@ class WebHost(CurvesMixin):
                       10: "Kidney", 11: "Vessel", 13: "Bone", 14: "Marrow",
                       15: "Disc", 16: "Cord", 17: "Bowel", 18: "Lung",
                       19: "Pancreas", 20: "Heart", 21: "Soft tissue", 22: "Ligament",
-                      23: "Lesion"}
+                      23: "Lesion", 24: "Infarct", 25: "Haemorrhage", 26: "Tumour"}
 
     @staticmethod
     def _label_rowh(h_img: float) -> float:
@@ -440,9 +456,9 @@ class WebHost(CurvesMixin):
             if v == 0 or v == 12:                          # skip background / gas
                 continue
             mask = lab == v
-            # The demo lesion (23) is small but is the point — always name it;
-            # otherwise skip slivers to avoid clutter.
-            if v != 23 and mask.sum() < 0.012 * total:
+            # Demo pathologies (23–26) are small but are the point — always name
+            # them; otherwise skip slivers to avoid clutter.
+            if not (23 <= v <= 26) and mask.sum() < 0.012 * total:
                 continue
             cc, n = _cc(mask)
             big = 1 + int(np.argmax(np.bincount(cc.flat)[1:]))

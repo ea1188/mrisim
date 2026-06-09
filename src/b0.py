@@ -30,6 +30,14 @@ SUSCEPTIBILITY_PPM = {
     19: -9.05,  # subcutaneous fat (same as fat)
     20: -9.05,  # heart
     21: -9.05,  # trachea / airway wall
+    # Demo pathologies (brain-only). The microhaemorrhage is strongly paramagnetic
+    # (blood-breakdown products) → a large susceptibility jump from tissue that
+    # blooms dark on SWI / gradient echo. The others are tissue-like so they don't
+    # spuriously bloom (an absent label would default to χ=0, ~9 ppm off tissue).
+    23: -9.05,  # WM lesion
+    24: -9.05,  # acute infarct
+    25: -8.40,  # microhaemorrhage — paramagnetic (hemosiderin ~+0.65 ppm vs tissue), blooms dark on SWI
+    26: -9.05,  # tumour
 }
 
 

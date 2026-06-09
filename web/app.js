@@ -134,9 +134,12 @@ async function applyState(st) {
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat", "lesion",
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat",
    "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   if (st.motiontype) $("motiontype").value = st.motiontype;
+  // Pathology select (back-compat: the old boolean `lesion` maps to "lesion").
+  if (st.pathology !== undefined) $("pathology").value = st.pathology;
+  else if (st.lesion !== undefined) $("pathology").value = st.lesion ? "lesion" : "";
   // Reflect the teaching panels a lesson/share-link may have toggled.
   $("scoutwrap").hidden = !$("fovplan").checked;
   $("planctl").hidden = !$("fovplan").checked;
@@ -231,8 +234,8 @@ const LESSONS = [
     blurb: "The payoff: find a hidden lesion, and see why FLAIR exists.",
     beginner: true,
     steps: [
-      { text: "I've added a small <b>lesion</b> to the white matter (tick <b>Add a lesion</b> any time to do this yourself). This is a <b>T1-weighted</b> scan — and the lesion is <b>nearly invisible</b>: its T1 is close to normal white matter, so it barely stands out. Stare at the white matter; you might just make out a faint patch. This is why T1 alone can miss disease.",
-        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, lesion: true, labelanat: false, fovplan: false, cmap: false, mathshow: false } },
+      { text: "I've added a small <b>lesion</b> to the white matter (choose one any time under <b>Pathology</b>). This is a <b>T1-weighted</b> scan — and the lesion is <b>nearly invisible</b>: its T1 is close to normal white matter, so it barely stands out. Stare at the white matter; you might just make out a faint patch. This is why T1 alone can miss disease.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, pathology: "lesion", labelanat: false, fovplan: false, cmap: false, mathshow: false } },
       { text: "Now <b>T2-weighted</b> (long TR, long TE). The lesion holds extra water → long T2 → it lights up <b>bright</b>. Suddenly obvious. This is the find-the-fluid rule from the last lesson working <i>for</i> you: pathology usually means extra water, and water is bright on T2.",
         state: { tr: 4000, te: 100 } },
       { text: "One problem: bright lesions next to the <b>bright CSF</b> of the ventricles can hide. <b>FLAIR</b> fixes it — it's a T2 scan with the CSF signal switched off, so fluid goes black while the lesion stays bright. That contrast is exactly why FLAIR is run on nearly every brain MRI. Tick <b>Label the anatomy</b> to confirm which bright spot is the lesion.",
@@ -333,6 +336,18 @@ const LESSONS = [
         state: { nslices: 16, sgap: 0 } },
       { text: "Add a <b>slice gap</b> (5 mm). The bands separate and the SNR <b>recovers</b> — the classic reason for an inter-slice gap. The trade is coverage vs. signal.",
         state: { nslices: 16, sgap: 5 } },
+    ],
+  },
+  {
+    title: "Pathology → the right sequence",
+    blurb: "Why we run DWI, SWI and post-contrast: each catches a different lesion.",
+    steps: [
+      { text: "Under <b>Pathology</b> I've added an <b>acute stroke</b>. It restricts water diffusion, so on <b>DWI</b> (high b-value) it lights up <b>bright</b> while normal brain darkens — the earliest, most sensitive sign of infarction, often positive within minutes. On routine T1/T2 it can be subtle; DWI makes it obvious.",
+        state: { region: "Brain", seq: "Diffusion (DWI)", orient: "axial", slice: 90, bval: 1000, pathology: "stroke", labelanat: false, gd: false } },
+      { text: "Now a <b>microhaemorrhage</b> on <b>SWI</b>. It's packed with paramagnetic blood-breakdown products that distort the local field, so it <b>blooms dark</b> — appearing far larger than its true size — while staying nearly invisible on conventional sequences. SWI is the sequence for old blood, calcium and small vessels. (First SWI render builds the venous map — give it a moment.)",
+        state: { seq: "Susceptibility (SWI)", te: 40, pathology: "hemorrhage" } },
+      { text: "Finally an <b>enhancing tumour</b>. It breaks the blood–brain barrier, so it takes up contrast. Compare T1 <b>before</b> and <b>after</b> gadolinium (toggle <b>Gadolinium</b>): the tumour <b>brightens</b> — 'enhancement', the hallmark of an aggressive or breakdown lesion. Three lesions, three sequences — that's why an MRI study is never just one scan.",
+        state: { seq: "Spin Echo", tr: 600, te: 12, pathology: "tumor", gd: true } },
     ],
   },
   {
@@ -460,7 +475,7 @@ function buildControls(info) {
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
-  $("lesion").addEventListener("change", render);      // re-render with/without the demo lesion
+  $("pathology").addEventListener("change", render);   // re-render with/without the demo pathology
   wireWindowLevel();
   wireScout();
   wireProbe();
@@ -513,10 +528,10 @@ function syncVisibility() {
   const on3d = is3d && $("acq3d").checked;
   $("np-row").hidden = !on3d;
   $("kzpf-row").hidden = !on3d;
-  // The demo lesion is painted into brain white matter — only offer it on Brain.
+  // The demo pathologies are painted into brain white matter — only offer on Brain.
   const brain = curRegion() === "Brain";
-  $("lesion-row").hidden = !brain;
-  if (!brain) $("lesion").checked = false;
+  $("pathology-row").hidden = !brain;
+  if (!brain) $("pathology").value = "";
   // Motion type only matters when motion is on; show a fix-it hint per artifact.
   $("motiontype-row").hidden = !$("motion").checked;
   const tips = [];
@@ -565,7 +580,7 @@ function collectPayload() {
     window_width: winW, window_level: winL, params,
     contrast_map: $("cmap").checked,
     label_anatomy: $("labelanat").checked,
-    lesion: $("lesion").checked,
+    pathology: $("pathology").value,
   };
   if ($("fovplan").checked) {                 // graphic FOV box + oblique prescription
     out.fov_planning = true;
