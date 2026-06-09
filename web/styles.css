@@ -94,7 +94,11 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
 /* The curve panel fills the viewport width (it was letterboxed small in a fixed
    220px box); a wide figure keeps it short enough not to crowd the image. */
 .curvewrap { padding: 4px; }
-#mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: ns-resize; }
+/* touch-action:none lets a finger drag window/level, the scout and measurements
+   without the browser hijacking the gesture to scroll/zoom the page. */
+#mainImage { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: ns-resize;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+#scoutImage { touch-action: none; user-select: none; -webkit-user-drag: none; }
 /* On-image measurement overlay (ruler / ROI). Drawn in wrap-pixel coords; never
    intercepts pointer events so the image keeps receiving the drag. */
 #measure-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }

@@ -653,24 +653,26 @@ function wlFilter(w0, l0) {
 function wireWindowLevel() {
   const img = $("mainImage");
   let dragging = false, lx = 0, ly = 0, w0 = 1, l0 = 0.5;
-  img.addEventListener("mousedown", (e) => {
+  img.addEventListener("pointerdown", (e) => {
     if (compareMode || measureMode !== "off") return;   // measuring owns the drag
     dragging = true; lx = e.clientX; ly = e.clientY;
     w0 = winW; l0 = winL;              // baseline the current image was rendered at
     e.preventDefault();
   });
-  window.addEventListener("mousemove", (e) => {
+  window.addEventListener("pointermove", (e) => {
     if (!dragging) return;
     winW = Math.min(3, Math.max(0.05, winW + (e.clientX - lx) * 0.004));
     winL = Math.min(1, Math.max(0, winL - (e.clientY - ly) * 0.003));
     lx = e.clientX; ly = e.clientY;
     img.style.filter = wlFilter(w0, l0);   // instant preview, no server call
   });
-  window.addEventListener("mouseup", () => {
+  const endWL = () => {
     if (!dragging) return;
     dragging = false;
     schedule();                            // one accurate render at the final W/L
-  });
+  };
+  window.addEventListener("pointerup", endWL);
+  window.addEventListener("pointercancel", endWL);
   img.addEventListener("dblclick", () => { winW = 1.0; winL = 0.5; schedule(); });
 }
 
@@ -752,17 +754,18 @@ function wireScout() {
     schedule();
   };
 
-  img.addEventListener("mousedown", (e) => {
+  img.addEventListener("pointerdown", (e) => {
     const f = imgFraction(img, e.clientX, e.clientY);
     if (!f) return;
     drag = start(f); apply(f); e.preventDefault();
   });
-  window.addEventListener("mousemove", (e) => {
+  window.addEventListener("pointermove", (e) => {
     if (!drag) return;
     const f = imgFraction(img, e.clientX, e.clientY);
     if (f) apply(f);
   });
-  window.addEventListener("mouseup", () => { drag = null; });
+  window.addEventListener("pointerup", () => { drag = null; });
+  window.addEventListener("pointercancel", () => { drag = null; });
   img.addEventListener("dblclick", (e) => {          // reset to straight / full FOV
     planOff = 0; planTilt = 0; planRot = 0;
     $("ipfov").value = 100; $("ipfov-val").value = 100;
@@ -952,19 +955,19 @@ function showMeasureResult(res) {
 
 function wireMeasure() {
   const img = $("mainImage");
-  img.addEventListener("mousedown", (e) => {
+  img.addEventListener("pointerdown", (e) => {
     if (measureMode === "off" || compareMode) return;
     const f = imgFraction(img, e.clientX, e.clientY); if (!f) return;
     measureDrag = { p0: f, p1: f };
     e.preventDefault(); e.stopPropagation();
     drawMeasure({ kind: measureMode, ...measureDrag });
   });
-  window.addEventListener("mousemove", (e) => {
+  window.addEventListener("pointermove", (e) => {
     if (!measureDrag) return;
     measureDrag.p1 = imgFraction(img, e.clientX, e.clientY) || measureDrag.p1;
     drawMeasure({ kind: measureMode, ...measureDrag });
   });
-  window.addEventListener("mouseup", async () => {
+  const endMeasure = async () => {
     if (!measureDrag) return;
     const shape = { kind: measureMode, ...measureDrag };
     measureShape = shape; measureDrag = null;
@@ -974,7 +977,9 @@ function wireMeasure() {
         points: [[shape.p0.fx, shape.p0.fy], [shape.p1.fx, shape.p1.fy]] });
       showMeasureResult(res);
     } catch (_e) { /* a stale render can race; ignore */ }
-  });
+  };
+  window.addEventListener("pointerup", endMeasure);
+  window.addEventListener("pointercancel", () => { measureDrag = null; });
   $("measuremode").querySelectorAll("button").forEach((btn) =>
     btn.addEventListener("click", () => {
       $("measuremode").querySelectorAll("button").forEach((x) => x.classList.remove("on"));
