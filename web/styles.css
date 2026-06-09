@@ -66,8 +66,41 @@ select {
   border-radius: 6px; padding: 6px 8px;
 }
 select:focus { border-color: var(--accent); outline: none; }
-input[type=range] { accent-color: var(--accent); height: 18px; }
-input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+
+/* Sliders: a custom, larger thumb so they're easy to grab (mouse and touch) and
+   keyboard-operable with a clear focus ring. */
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; margin-top: 6px; height: 22px; background: transparent; cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: var(--border); }
+input[type=range]::-moz-range-track { height: 5px; border-radius: 3px; background: var(--border); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; margin-top: -8px;
+  width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 2px solid #0b0f14;
+}
+input[type=range]::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 2px solid #0b0f14;
+}
+input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--accent-hi); }
+input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--accent-hi); }
+
+/* Visible keyboard focus on every interactive control (mouse clicks stay clean). */
+button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent-hi); outline-offset: 2px; border-radius: 4px;
+}
+
+/* Touch devices: enlarge the hit targets (thumb, checkboxes, buttons). */
+@media (pointer: coarse) {
+  input[type=range] { height: 34px; }
+  input[type=range]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -12px; }
+  input[type=range]::-moz-range-thumb { width: 28px; height: 28px; }
+  input[type=checkbox] { width: 22px; height: 22px; }
+  .radios button, .btnrow button, select, #measure-clear, .lp-btns button { min-height: 42px; }
+  label.check { padding: 4px 0; }
+  .lesson-item { padding: 14px 13px; }
+}
 
 .radios { display: flex; gap: 5px; margin-top: 5px; }
 .radios button {
@@ -222,15 +255,24 @@ kbd {
 /* Responsive — stack to a single column with the image first on narrow screens. */
 @media (max-width: 920px) {
   #app { grid-template-columns: 1fr; height: auto; overflow: visible; }
-  .viewport { order: -1; min-height: 56vh; }
+  .viewport { order: -1; min-height: 52vh; }
   .images { flex-direction: column; }
   .panel { max-height: none; }
-  .topchips { display: none; }
-  .tag { display: none; }
+  /* More legible controls on tablets/phones. */
+  label { font-size: 12px; margin-top: 13px; }
+  output { font-size: 13px; }
+  .group h2 { font-size: 12px; }
+  label.check { font-size: 13px; }
 }
 @media (max-width: 560px) {
+  #topbar { gap: 10px; padding: 8px 12px; flex-wrap: wrap; }
+  .topchips { display: none; }     /* the Measurements panel below shows these */
+  .tag { display: none; }
+  .brand { font-size: 15px; }
+  .ghlink { font-size: 13px; }
   .group h2 { margin-top: 2px; }
   .scoutwrap { height: 120px; }
+  .viewport { min-height: 46vh; }
 }
 
 /* FOV-planning helper text under the localizer toggle */

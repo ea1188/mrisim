@@ -33,6 +33,13 @@ frozen.)
   as a ~50 KB index file, so the first SWI / MR-angiography render rebuilds it in
   under a millisecond instead of stalling ~1 minute building it in-browser. The
   engine falls back to building it in-process when the file is absent.
+- **Easier, more accessible controls (PC & mobile).** Sliders have a larger,
+  easier-to-grab thumb that **grows further on touch devices** (bigger tap targets
+  for buttons and checkboxes too), and every control shows a clear **keyboard focus
+  ring**. Each parameter slider now announces a proper **screen-reader name and
+  spoken value-with-unit** (e.g. "Repetition time TR, 500 milliseconds"), toggle
+  groups report their pressed state, and the main regions are labelled landmarks.
+  Narrow layouts use larger, more legible type.
 
 ## [1.9.0] — 2026-06-08
 

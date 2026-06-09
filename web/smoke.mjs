@@ -56,6 +56,16 @@ try {
   // The plain-language clinical blurb under the sequence picker must populate.
   if (!((await page.textContent("#seq-help")) || "").trim()) fail("sequence help blurb is empty");
 
+  // Accessibility: sliders carry a screen-reader name + a spoken value-with-unit,
+  // and the value text updates as the slider moves.
+  const trLabel = await page.getAttribute("#tr", "aria-label");
+  if (!trLabel || !/TR/.test(trLabel)) fail("TR slider missing aria-label: " + trLabel);
+  const vt0 = await page.getAttribute("#tr", "aria-valuetext");
+  if (!vt0 || !/milliseconds/.test(vt0)) fail("TR slider missing aria-valuetext: " + vt0);
+  await page.evaluate(() => { const t = document.getElementById("tr"); t.value = 2000; t.dispatchEvent(new Event("input")); });
+  const vt1 = await page.getAttribute("#tr", "aria-valuetext");
+  if (vt1 === vt0) fail("TR aria-valuetext did not update on change: " + vt1);
+
   // Changing the sequence must re-render without throwing.
   await page.selectOption("#sequence", "Gradient Echo");
   await page.waitForTimeout(1500);
