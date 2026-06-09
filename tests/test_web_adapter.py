@@ -384,7 +384,8 @@ def test_contrast_map_opt_in():
 
 
 @pytest.mark.parametrize("kind,label", [
-    ("lesion", 23), ("stroke", 24), ("hemorrhage", 25), ("tumor", 26)])
+    ("lesion", 23), ("stroke", 24), ("hemorrhage", 25), ("tumor", 26),
+    ("abscess", 27)])
 def test_pathology_appears_and_is_brain_only(kind, label):
     """Each demo pathology changes the image, shows up as its tissue label in the
     probe table, and only paints into the brain (a body region ignores it)."""
@@ -437,6 +438,43 @@ def test_pathologies_show_on_their_sequence():
     pre, _ = region_vs_wm("tumor", 26, {**p, "contrast_enabled": False})
     post, _ = region_vs_wm("tumor", 26, {**p, "contrast_enabled": True, "contrast_dose": 10})
     assert post > pre * 1.2, f"tumour should enhance with Gd (pre {pre:.3f} → post {post:.3f})"
+
+
+def test_abscess_has_dwi_bright_core_and_enhancing_rim():
+    """An abscess paints two labels: a pus core (27) that restricts diffusion
+    (bright on DWI) and a capsule/rim (28) that enhances with gadolinium."""
+    wa.init()
+    h = wa._host()
+    import numpy as _np
+    from simulator import default_params as _dp
+
+    # Both components must be painted, distinct, and on the default slice.
+    vol = h._pathology_volume("abscess")
+    assert (vol == 27).sum() > 0 and (vol == 28).sum() > 0, "abscess core/rim not painted"
+
+    def mean_of(label, params):
+        wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                   "pathology": "abscess", "params": params})
+        sl = _np.asarray(h.sim._get_phantom_slice("axial", 90, _dp(**params)))
+        return float(h.current_image[sl == label].mean()), float(h.current_image[sl == 3].mean())
+
+    core, wm = mean_of(27, {"sequence": "Diffusion (DWI)", "b_value": 1000, "diff_display": "DWI"})
+    assert core > wm, f"abscess core should be bright on DWI (core {core:.3f} vs WM {wm:.3f})"
+
+    # T2: bright pus core, T2-hypointense (dark) rim — the classic ring.
+    wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+               "pathology": "abscess", "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}})
+    sl = _np.asarray(h.sim._get_phantom_slice("axial", 90,
+                     _dp(sequence="Spin Echo", TR=4000, TE=100)))
+    rim_vals, wm_t2 = h.current_image[sl == 28], float(h.current_image[sl == 3].mean())
+    core_t2 = float(h.current_image[sl == 27].mean())
+    assert core_t2 > wm_t2, "pus core should be bright on T2"
+    assert float((rim_vals < wm_t2).mean()) > 0.4, "rim should be T2-hypointense (dark ring)"
+
+    p = {"sequence": "Spin Echo", "TR": 600, "TE": 12}
+    pre, _ = mean_of(28, {**p, "contrast_enabled": False})
+    post, _ = mean_of(28, {**p, "contrast_enabled": True, "contrast_dose": 10})
+    assert post > pre * 1.2, f"abscess rim should enhance with Gd (pre {pre:.3f} → post {post:.3f})"
 
 
 def test_lesion_hides_on_t1_but_bright_on_t2():

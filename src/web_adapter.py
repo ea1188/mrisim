@@ -212,14 +212,18 @@ class WebHost(CurvesMixin):
     # sequence-specific behaviour (T1/T2, restricted diffusion, paramagnetic
     # susceptibility, Gd uptake) is defined in tissue_db / phantom3d_extended /
     # b0 / rendering, keyed by these labels.
-    _PATHOLOGY = {"lesion": 23, "stroke": 24, "hemorrhage": 25, "tumor": 26}
-    _PATHOLOGY_R = {"lesion": 0.035, "stroke": 0.045, "hemorrhage": 0.032, "tumor": 0.05}
+    # Single-label pathologies map kind → label. The abscess is special: a pus
+    # core (27, restricted diffusion) inside an enhancing capsule/rim (28).
+    _PATHOLOGY = {"lesion": 23, "stroke": 24, "hemorrhage": 25, "tumor": 26,
+                  "abscess": 27}
+    _PATHOLOGY_R = {"lesion": 0.035, "stroke": 0.045, "hemorrhage": 0.032,
+                    "tumor": 0.05, "abscess": 0.068}
 
     def _pathology_volume(self, kind: str) -> np.ndarray:
-        """Return the brain volume with a demo lesion of `kind` painted into
-        periventricular white matter (a sphere intersected with WM, near the
-        default axial slice so it's visible). Cached per kind."""
-        label = self._PATHOLOGY[kind]
+        """Return the brain volume with a demo lesion of `kind` painted into the
+        brain near the default axial slice so it's visible. Cached per kind. Most
+        kinds are a single sphere intersected with white matter; the abscess is a
+        pus core (27) inside an enhancing rim shell (28)."""
         cached = self._lesion_vol.get(kind) if isinstance(self._lesion_vol, dict) else None
         if cached is not None:
             return cached
@@ -237,8 +241,16 @@ class WebHost(CurvesMixin):
             cx = int(np.percentile(row, 72))            # lateral, off midline
             r = max(3, int(round(min(vol.shape[1], vol.shape[2]) * self._PATHOLOGY_R[kind])))
             zz, yy, xx = np.ogrid[:vol.shape[0], :vol.shape[1], :vol.shape[2]]
-            sphere = ((zz - z) ** 2 + (yy - cy) ** 2 + (xx - cx) ** 2) <= r * r
-            vol[sphere & wm] = label
+            dist2 = (zz - z) ** 2 + (yy - cy) ** 2 + (xx - cx) ** 2
+            if kind == "abscess":
+                # A mass that displaces parenchyma (WM or cortex): outer shell is
+                # the enhancing rim, inner ball is the pus core.
+                para = (vol == 3) | (vol == 2)
+                r_in = max(2, r - 5)                     # ~5-voxel rim survives PV blur
+                vol[(dist2 <= r * r) & para] = 28        # rim (capsule)
+                vol[(dist2 <= r_in * r_in) & para] = 27  # core (pus)
+            else:
+                vol[(dist2 <= r * r) & wm] = self._PATHOLOGY[kind]
         self._lesion_vol[kind] = vol
         return vol
 
@@ -441,7 +453,8 @@ class WebHost(CurvesMixin):
                       10: "Kidney", 11: "Vessel", 13: "Bone", 14: "Marrow",
                       15: "Disc", 16: "Cord", 17: "Bowel", 18: "Lung",
                       19: "Pancreas", 20: "Heart", 21: "Soft tissue", 22: "Ligament",
-                      23: "Lesion", 24: "Infarct", 25: "Haemorrhage", 26: "Tumour"}
+                      23: "Lesion", 24: "Infarct", 25: "Haemorrhage", 26: "Tumour",
+                      27: "Abscess", 28: "Rim"}
 
     @staticmethod
     def _label_rowh(h_img: float) -> float:
@@ -482,9 +495,9 @@ class WebHost(CurvesMixin):
             if v == 0 or v == 12:                          # skip background / gas
                 continue
             mask = lab == v
-            # Demo pathologies (23–26) are small but are the point — always name
+            # Demo pathologies (23–28) are small but are the point — always name
             # them; otherwise skip slivers to avoid clutter.
-            if not (23 <= v <= 26) and mask.sum() < 0.012 * total:
+            if not (23 <= v <= 28) and mask.sum() < 0.012 * total:
                 continue
             cc, n = _cc(mask)
             big = 1 + int(np.argmax(np.bincount(cc.flat)[1:]))

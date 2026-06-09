@@ -61,6 +61,9 @@ GD_TISSUE_FRACTION: dict[int, float] = {
     # barrier and takes up Gd strongly → bright on T1-post-contrast. The WM lesion
     # / infarct / haemorrhage don't appreciably enhance (omitted → unchanged).
     26: 0.85,  # Tumour (enhancing)
+    # Abscess: the capsule (rim) enhances avidly with Gd → a bright ring; the
+    # necrotic pus core does not enhance (omitted → unchanged).
+    28: 0.85,  # Abscess rim (enhancing capsule)
 }
 
 

@@ -12,6 +12,15 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Brain abscess demo pathology** — a two-part lesion with the classic triad: a
+  pus core that restricts diffusion (bright on DWI, dark on ADC) and is bright on
+  T2, inside a capsule that is **T2-hypointense (a dark ring)** yet **enhances with
+  gadolinium** (a bright "ring-enhancing" rim on T1-post-contrast). The DWI-bright
+  core is what distinguishes an abscess from a necrotic tumour. Adds tissue labels
+  27 (core) and 28 (rim); the "Pathology → the right sequence" lesson gains an
+  abscess capstone showing it needs *two* sequences.
+
 ### Changed
 - **MR angiography / SWI are now instant in the browser.** The deterministic
   TOF vessel tree is precomputed (`scripts/build_brain_vessels.py`) and shipped

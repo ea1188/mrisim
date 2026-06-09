@@ -38,6 +38,8 @@ SUSCEPTIBILITY_PPM = {
     24: -9.05,  # acute infarct
     25: -8.40,  # microhaemorrhage — paramagnetic (hemosiderin ~+0.65 ppm vs tissue), blooms dark on SWI
     26: -9.05,  # tumour
+    27: -9.05,  # abscess core
+    28: -9.05,  # abscess rim
 }
 
 
