@@ -299,6 +299,36 @@ def test_anatomy_labels_change_image():
     assert plain != labeled, "anatomy labels did not change the image"
 
 
+def test_interior_anchor_is_on_a_ring_not_its_hollow_centre():
+    """The label anchor must sit ON the structure. A ring's centroid is its hollow
+    centre (off-tissue); the interior anchor must land on the ring itself."""
+    yy, xx = np.ogrid[:60, :60]
+    d = np.hypot(yy - 30, xx - 30)
+    ring = (d > 18) & (d < 24)
+    r, c, size = wa.WebHost._interior_anchor(ring)
+    assert ring[r, c], "anchor fell in the ring's hollow centre (off-tissue)"
+    assert size == int(ring.sum())
+
+
+def test_anatomy_label_anchors_land_on_their_tissue():
+    """On the real brain, every named structure's anchor must sit on that tissue —
+    not, as the centroid did, pile every ring/ribbon label near the brain centre."""
+    wa.init()
+    h = wa._host()
+    from simulator import default_params as _dp
+    params = _dp(sequence="Spin Echo", TR=500, TE=12)
+    lab = np.asarray(h.sim._get_phantom_slice("axial", 90, params))
+    total = max(int((lab > 0).sum()), 1)
+    checked = 0
+    for v in np.unique(lab):
+        if v == 0 or v == 12 or (lab == v).sum() < 0.012 * total:
+            continue
+        r, c, _ = h._interior_anchor(lab == v)
+        assert lab[r, c] == v, f"label {v} anchored off its tissue at ({r},{c})"
+        checked += 1
+    assert checked >= 4, "expected several brain tissues to be labelled"
+
+
 def test_anatomy_labels_do_not_overlap():
     """The named-structure labels must be de-overlapped — placing several tissues
     whose centroids coincide (gray/white matter, CSF, and the lesion inside WM)

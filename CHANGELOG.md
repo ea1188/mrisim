@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Fixed
+- **"Label the anatomy" now points at the right structure.** Names were placed at
+  each tissue's centroid, which for ring/ribbon shapes (skull, scalp, cortex) falls
+  *outside* the tissue — so "Skull" and "Muscle" landed in the middle of the brain.
+  Each label is now anchored at the most interior point of the structure (the
+  distance-transform peak), which is guaranteed to sit on the tissue.
+
 ### Added
 - **Brain abscess demo pathology** — a two-part lesion with the classic triad: a
   pus core that restricts diffusion (bright on DWI, dark on ADC) and is bright on
