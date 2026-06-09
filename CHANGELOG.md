@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-06-09
+
+Clinical depth and accessibility: a ring-enhancing abscess, instant SWI/MRA, a
+side-by-side diagnostic comparison, correct anatomy labels, and a thorough
+PC / mobile / screen-reader accessibility overhaul.
+
 ### Fixed
 - **"Label the anatomy" now points at the right structure.** Names were placed at
   each tissue's centroid, which for ring/ribbon shapes (skull, scalp, cortex) falls
