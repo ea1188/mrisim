@@ -73,7 +73,7 @@
   <header id="topbar">
     <div class="brand"><img class="logo-sm" src="logo.png" alt="" /><b>MRISim</b>
       <span class="tag">browser edition</span></div>
-    <div class="topchips">
+    <div class="topchips" role="group" aria-label="Quick metrics">
       <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>
       <span class="chip"><i>SNR (WM)</i><b id="m-snrwm">—</b></span>
       <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
@@ -85,7 +85,7 @@
 
   <main id="app" hidden>
     <!-- Controls -->
-    <section class="panel" id="controls">
+    <section class="panel" id="controls" aria-label="Scan controls">
       <div class="group">
         <h2>Protocol</h2>
         <label>Preset
@@ -112,10 +112,10 @@
         <label>Field strength
           <select id="field"><option>1.5T</option><option selected>3T</option></select></label>
         <label>Orientation
-          <div class="radios" id="orientation">
-            <button data-v="axial" class="on">Axial</button>
-            <button data-v="coronal">Coronal</button>
-            <button data-v="sagittal">Sagittal</button>
+          <div class="radios" id="orientation" role="group" aria-label="Slice orientation">
+            <button data-v="axial" class="on" aria-pressed="true">Axial</button>
+            <button data-v="coronal" aria-pressed="false">Coronal</button>
+            <button data-v="sagittal" aria-pressed="false">Sagittal</button>
           </div>
         </label>
         <label>Slice <output id="slice-val"></output>
@@ -197,10 +197,10 @@
       <div class="group">
         <h2>Measure</h2>
         <p class="tiny">Measure on the image: a ruler reads distance in mm; an ROI reads mean signal, noise (SD) and SNR.</p>
-        <div class="radios" id="measuremode">
-          <button data-m="off" class="on">Off</button>
-          <button data-m="ruler">Ruler</button>
-          <button data-m="roi">ROI</button>
+        <div class="radios" id="measuremode" role="group" aria-label="Measurement tool">
+          <button data-m="off" class="on" aria-pressed="true">Off</button>
+          <button data-m="ruler" aria-pressed="false">Ruler</button>
+          <button data-m="roi" aria-pressed="false">ROI</button>
         </div>
         <p class="tiny" id="measure-readout">Pick Ruler or ROI, then drag on the image.</p>
         <button id="measure-clear" type="button">Clear</button>
@@ -216,7 +216,7 @@
     </section>
 
     <!-- Viewport -->
-    <section class="viewport">
+    <section class="viewport" aria-label="Image viewport">
       <div class="images">
         <div class="imgwrap" id="wrapA">
           <span class="abtag" id="tagA" hidden>A</span>
@@ -238,7 +238,7 @@
     </section>
 
     <!-- Metrics -->
-    <section class="panel" id="metrics">
+    <section class="panel" id="metrics" aria-label="Measurements">
       <h2>Measurements</h2>
       <table>
         <tr><td>Resolution</td><td id="x-res">—</td></tr>

@@ -131,7 +131,7 @@ async function applyState(st) {
   if (st.seq) $("sequence").value = st.seq;
   if (st.orient) setOrient(st.orient);
   if (st.field) $("field").value = st.field;
-  const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; } };
+  const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; updateSliderAria(key); } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat",
@@ -450,7 +450,7 @@ function setSlice(v) {
   const sl = $("slice");
   v = Math.max(0, Math.min(+sl.max, v));
   if (v === +sl.value) return;
-  sl.value = v; $("slice-val").value = v; schedule();
+  sl.value = v; $("slice-val").value = v; updateSliderAria("slice"); schedule();
 }
 
 function wireKeyboard() {
@@ -499,7 +499,7 @@ function buildControls(info) {
     $("planctl").hidden = !on;
     render();   // re-render so the main image picks up / drops the FOV crop
   });
-  $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; schedule(); });
+  $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
@@ -511,9 +511,11 @@ function buildControls(info) {
   wireKeyboard();
   wireLessons();
 
+  setupSliderA11y();
   ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
+      updateSliderAria(id);
       schedule();
     });
   });
@@ -571,8 +573,11 @@ function syncVisibility() {
 
 const curRegion = () => $("region").value;
 function setOrient(v) {
-  $("orientation").querySelectorAll("button").forEach((b) =>
-    b.classList.toggle("on", b.dataset.v === v));
+  $("orientation").querySelectorAll("button").forEach((b) => {
+    const on = b.dataset.v === v;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on);
+  });
 }
 function curOrient() {
   return $("orientation").querySelector("button.on").dataset.v;
@@ -673,6 +678,30 @@ function setCompare(on) {
 
 const PATHOLOGY_LABEL = { lesion: "WM lesion", stroke: "Stroke",
   hemorrhage: "Microhaemorrhage", tumor: "Tumour", abscess: "Abscess" };
+
+// Accessible name + spoken unit for each slider, so a screen reader announces
+// "Repetition time TR, 500 milliseconds" rather than a bare "500".
+const SLIDER_A11Y = {
+  tr: ["Repetition time TR", "milliseconds"], te: ["Echo time TE", "milliseconds"],
+  ti: ["Inversion time TI", "milliseconds"], fa: ["Flip angle", "degrees"],
+  matrix: ["Matrix size", ""], bw: ["Receiver bandwidth", "kilohertz"],
+  nex: ["Averages NEX", ""], thick: ["Slice thickness", "millimeters"],
+  bval: ["b-value", "seconds per square millimetre"], etl: ["Echo train length", "echoes"],
+  np: ["Partitions", ""], slice: ["Slice", ""], nslices: ["Number of slices", "slices"],
+  sgap: ["Slice gap", "millimeters"], ipfov: ["In-plane field of view", "percent"],
+};
+function updateSliderAria(id) {
+  const el = $(id), spec = SLIDER_A11Y[id];
+  if (!el || !spec) return;
+  el.setAttribute("aria-valuetext", `${el.value} ${spec[1]}`.trim());
+}
+function setupSliderA11y() {
+  for (const id of Object.keys(SLIDER_A11Y)) {
+    const el = $(id); if (!el) continue;
+    el.setAttribute("aria-label", SLIDER_A11Y[id][0]);
+    updateSliderAria(id);
+  }
+}
 
 // A short human label for a compare panel: pathology · sequence (· +Gd).
 function captionFor(payload) {
@@ -1046,8 +1075,11 @@ function wireMeasure() {
   window.addEventListener("pointercancel", () => { measureDrag = null; });
   $("measuremode").querySelectorAll("button").forEach((btn) =>
     btn.addEventListener("click", () => {
-      $("measuremode").querySelectorAll("button").forEach((x) => x.classList.remove("on"));
-      btn.classList.add("on");
+      $("measuremode").querySelectorAll("button").forEach((x) => {
+        const on = x === btn;
+        x.classList.toggle("on", on);
+        x.setAttribute("aria-pressed", on);
+      });
       measureMode = btn.dataset.m;
       $("wrapA").classList.toggle("measuring", measureMode !== "off");
       clearMeasure();
