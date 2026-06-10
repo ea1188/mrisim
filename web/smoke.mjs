@@ -265,6 +265,19 @@ try {
 
   await page.uncheck("#fovplan");
 
+  step("3D slab");
+  // 3D slab acquisition: enabling it on a slab-capable sequence must reveal the
+  // slab controls and a readout reporting the partition geometry + √Nz SNR gain.
+  await page.selectOption("#sequence", "Gradient Echo");
+  await page.check("#acq3d");
+  await page.waitForSelector("#np-row:not([hidden])", { timeout: 5_000 });
+  await page.waitForSelector("#slabsharp-row:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const t = document.getElementById("slab-readout").textContent || "";
+            return /partition/i.test(t) && /SNR/.test(t) && /mm slab/.test(t); },
+    { timeout: 20_000 });
+  await page.uncheck("#acq3d");
+
   // Contrast map (TR×TE): toggling on must render the landscape panel.
   await page.check("#cmap");
   await page.waitForSelector("#cmapwrap:not([hidden])", { timeout: 5_000 });

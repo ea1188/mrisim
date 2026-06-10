@@ -547,7 +547,7 @@ function buildControls(info) {
   wireLessons();
 
   setupSliderA11y();
-  ["tr", "te", "ti", "fa", "np", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap"].forEach((id) => {
+  ["tr", "te", "ti", "fa", "np", "slabsharp", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
       updateSliderAria(id);
@@ -592,7 +592,9 @@ function syncVisibility() {
   if (!is3d) $("acq3d").checked = false;
   const on3d = is3d && $("acq3d").checked;
   $("np-row").hidden = !on3d;
+  $("slabsharp-row").hidden = !on3d;
   $("kzpf-row").hidden = !on3d;
+  $("slab-readout").hidden = !on3d;
   // The demo pathologies are painted into brain white matter — only offer on Brain.
   const brain = curRegion() === "Brain";
   $("pathology-row").hidden = !brain;
@@ -640,6 +642,7 @@ function collectPayload() {
   if (ACQ3D_SEQ.has(s) && $("acq3d").checked) {
     params.acq3d = true;
     params.n_partitions = +$("np").value;
+    params.slab_sharpness = +$("slabsharp").value;
     params.kz_pf = $("kzpf").checked ? 0.75 : null;
   }
   const out = {
@@ -990,6 +993,13 @@ function setMetrics(res) {
   $("m-snrwm").textContent = m.snr_wm.toFixed(1);
   $("m-weight").textContent = weighting($("sequence").value, +$("tr").value, +$("te").value);
   if (!SEQ_SLOW_FIRST.has($("sequence").value)) $("hint").textContent = "";
+  // 3D slab readout: what the partition count buys (isotropic resolution, total
+  // slab coverage, and the √Nz SNR gain over a single 2D slice).
+  if (m.is_3d) {
+    $("slab-readout").textContent =
+      `Isotropic ${m.partition_mm.toFixed(1)} mm · ${m.n_partitions} contiguous partitions`
+      + ` · ${m.slab_mm.toFixed(0)} mm slab · √Nz SNR ≈ ${m.snr_3d_gain.toFixed(1)}× vs one 2D slice`;
+  }
 }
 
 function applyResult(res, reqSlice) {

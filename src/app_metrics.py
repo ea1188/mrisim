@@ -53,7 +53,13 @@ class MetricsMixin:
         resolution = metrics["resolution"]
 
         self.metrics_labels["resolution"].config(text=f"{resolution:.2f} mm")
-        self.metrics_labels["voxel_size"].config(text=f"{resolution:.2f}x{resolution:.2f}x{thickness}mm")
+        # In 3-D the through-plane size is the (isotropic) partition thickness, not
+        # the 2-D slice thickness — show that so the voxel reads as a real 3-D voxel.
+        if metrics.get("is_3d"):
+            _through = metrics.get("partition_mm", resolution)
+            self.metrics_labels["voxel_size"].config(text=f"{resolution:.2f}x{resolution:.2f}x{_through:.2f}mm")
+        else:
+            self.metrics_labels["voxel_size"].config(text=f"{resolution:.2f}x{resolution:.2f}x{thickness}mm")
         self.metrics_labels["matrix_display"].config(text=f"{matrix}x{matrix}")
         is_3d = bool(params.get("acq3d")) and params["sequence"] in _ACQ3D_SEQUENCES
         slice_txt = f"{orient.capitalize()} #{sl_idx}" + ("  ·  3D slab" if is_3d else "")
