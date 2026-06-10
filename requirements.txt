@@ -3,5 +3,4 @@ scipy>=1.10
 matplotlib>=3.7
 pyqt6>=6.5
 pydicom>=2.4
-gradio>=5.0
 nibabel>=5.0
