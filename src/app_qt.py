@@ -1419,6 +1419,12 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.trajectory.set(p.get("trajectory", "Cartesian"))
         if "radial_spokes" in p:
             self.radial_spokes.set(int(p["radial_spokes"]))
+        # 3-D slab acquisition: enable for presets that prescribe it (3D MPRAGE,
+        # CISS, etc.) and reset to off otherwise, so switching away from a 3-D
+        # preset clears it. The engine only honours 3-D for SE/GRE/IR/bSSFP.
+        self.acq3d.set(bool(p.get("acq3d", False)))
+        if "n_partitions" in p:
+            self.n_partitions.set(int(p["n_partitions"]))
         self.desc_label.config(text=p.get("description", ""))
         self.on_sequence_change()
         # on_sequence_change resets TR/TE/FA/etl for some sequences; re-apply the

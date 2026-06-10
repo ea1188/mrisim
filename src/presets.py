@@ -71,7 +71,37 @@ PRESETS = {
         "FOV": 240,
         "bandwidth": 200,
         "NEX": 1,
-        "description": "MPRAGE (MP-RAGE): standard 3D T1w at 3T. TI=900ms maximises WM/GM contrast. WM bright, GM intermediate, CSF dark. Gold standard for cortical morphometry."
+        "acq3d": True,
+        "n_partitions": 32,
+        "description": "MPRAGE (MP-RAGE): standard 3D T1w at 3T, acquired as a slab (acquire once, reformat any plane). TI=900ms maximises WM/GM contrast. WM bright, GM intermediate, CSF dark. Gold standard for cortical morphometry."
+    },
+    "Brain 3D FLAIR": {
+        "sequence": "Inversion Recovery",
+        "TR": 6000,
+        "TE": 120,
+        "TI": 1800,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 240,
+        "bandwidth": 200,
+        "NEX": 1,
+        "acq3d": True,
+        "n_partitions": 32,
+        "description": "3D FLAIR: isotropic CSF-nulled FLAIR acquired as one slab, reformatted to any plane. Better small-lesion conspicuity (MS, cortical/juxtacortical) than 2D FLAIR, with no slice gap. CSF dark, lesions bright."
+    },
+    "Brain 3D T2 (SPACE)": {
+        "sequence": "Spin Echo",
+        "TR": 3200,
+        "TE": 100,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 240,
+        "bandwidth": 200,
+        "NEX": 1,
+        "acq3d": True,
+        "n_partitions": 32,
+        "description": "3D T2 (SPACE / CUBE / VISTA family): a heavily T2-weighted volumetric acquisition reformatted to any plane. Thin contiguous partitions and isotropic voxels; CSF and fluid bright. (Clinically a variable-flip 3D TSE; modelled here as a 3D spin-echo slab.)"
     },
     "Brain SWI": {
         "sequence": "Gradient Echo",
@@ -154,6 +184,21 @@ PRESETS = {
         "diff_display": "ADC Map",
         "description": "ADC map. Quantitative diffusion. Restricted diffusion = low ADC (dark). CSF = high ADC (bright)."
     },
+    "DTI FA Map": {
+        "sequence": "Diffusion (DWI)",
+        "TR": 9000,
+        "TE": 90,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 128,
+        "FOV": 240,
+        "bandwidth": 250,
+        "NEX": 2,
+        "b_value": 1000,
+        "diff_direction": "Left-Right",
+        "diff_display": "FA Map",
+        "description": "Diffusion-tensor FA map. Fractional anisotropy is high (bright) in coherent white-matter tracts (corpus callosum, internal capsule) and low (dark) in isotropic CSF/grey matter — the basis of tractography."
+    },
     "TOF MRA Circle of Willis": {
         "sequence": "MR Angiography",
         "TR": 25,
@@ -227,6 +272,21 @@ PRESETS = {
         "bandwidth": 500,
         "NEX": 1,
         "description": "T1-weighted GRE (VIBE-like). Liver, spleen, kidneys well-delineated. Enhancing lesions bright post-contrast. Short breath-hold."
+    },
+    "Abdomen 3D GRE (VIBE)": {
+        "sequence": "Gradient Echo",
+        "TR": 4,
+        "TE": 2,
+        "TI": 150,
+        "flip_angle": 10,
+        "matrix_size": 256,
+        "FOV": 380,
+        "bandwidth": 500,
+        "NEX": 1,
+        "fatsat_enabled": True,
+        "acq3d": True,
+        "n_partitions": 32,
+        "description": "3D spoiled GRE (VIBE / LAVA / THRIVE): fat-suppressed volumetric T1w acquired in one breath-hold, reformatted to any plane. The workhorse for dynamic post-contrast liver/abdomen imaging — enable Gd to see arterial/portal enhancement."
     },
     "Abdomen T2 FSE": {
         "sequence": "FSE / TSE",
@@ -436,7 +496,9 @@ PRESETS = {
         "FOV": 150,
         "bandwidth": 250,
         "NEX": 1,
-        "description": "GRE T2* knee. Articular cartilage mapping. Sensitive to calcifications, haemosiderin, loose bodies. 3D acquisition for MPR."
+        "acq3d": True,
+        "n_partitions": 28,
+        "description": "GRE T2* knee, acquired as a 3D slab for multi-planar reformat (MPR). Articular cartilage mapping. Sensitive to calcifications, haemosiderin, loose bodies."
     },
 
     # ------------------------------------------------------------------ #
@@ -568,7 +630,9 @@ PRESETS = {
         "FOV": 240,
         "bandwidth": 250,
         "NEX": 1,
-        "description": "Heavily T2/T1-weighted bSSFP (CISS/FIESTA). Very bright CSF gives a cisternographic look — cranial nerves and the internal auditory canal stand out against bright fluid. Off-resonance banding may appear."
+        "acq3d": True,
+        "n_partitions": 40,
+        "description": "Heavily T2/T1-weighted bSSFP (CISS/FIESTA), acquired as a thin 3D slab. Very bright CSF gives a cisternographic look — cranial nerves and the internal auditory canal stand out against bright fluid. Off-resonance banding may appear."
     },
     "Torso Cine (bSSFP)": {
         "sequence": "Balanced SSFP",
@@ -674,7 +738,14 @@ PRESETS = {
     "Knee bSSFP Cartilage": {
         "sequence": "Balanced SSFP", "TR": 12, "TE": 6, "TI": 150, "flip_angle": 40,
         "matrix_size": 320, "FOV": 150, "bandwidth": 350, "NEX": 2,
-        "description": "Balanced SSFP (FISP-type) of the knee. T2/T1-weighted bright fluid against intermediate cartilage gives a high cartilage–fluid–bone contrast for the articular surfaces; off-resonance can band at long TR."
+        "acq3d": True, "n_partitions": 32,
+        "description": "3D balanced SSFP (DESS / FIESTA-C type) of the knee, acquired as an isotropic slab and reformatted to any plane. T2/T1-weighted bright fluid against intermediate cartilage gives high cartilage–fluid–bone contrast for the articular surfaces; off-resonance can band."
+    },
+    "Knee T2 Map (qMRI)": {
+        "sequence": "Quantitative (qMRI)", "TR": 1500, "TE": 15, "TI": 150, "flip_angle": 90,
+        "matrix_size": 256, "FOV": 150, "bandwidth": 200, "NEX": 1,
+        "qmri_display": "T2 Map (multi-echo)",
+        "description": "Quantitative T2 map of articular cartilage (multi-echo fit; pixel value = T2 in ms). Cartilage T2 rises with collagen-matrix breakdown and water content, so a focal T2 increase flags early degeneration before it is visible on morphological images."
     },
     "Spine T1 Post-Gd": {
         "sequence": "Spin Echo", "TR": 600, "TE": 12, "TI": 150, "flip_angle": 90,
@@ -698,12 +769,19 @@ PRESETS = {
         "fatsat_enabled": True,
         "description": "Diffusion-weighted whole-body imaging with background suppression. Fat-suppressed high-b diffusion leaves restricted tissue — nodes, cellular tumour — bright on a dark background; read alongside the ADC map to confirm true restriction."
     },
+    "Cardiac LGE": {
+        "sequence": "Inversion Recovery", "TR": 700, "TE": 3, "TI": 300, "flip_angle": 25,
+        "matrix_size": 256, "FOV": 360, "bandwidth": 250, "NEX": 1,
+        "contrast_enabled": True, "contrast_dose": 4,
+        "description": "Late gadolinium enhancement (LGE): an inversion-recovery T1w acquired ~10 min post-contrast with TI set to null normal myocardium (dark). Scar / fibrosis / infarct retains contrast and stays bright — the reference standard for myocardial viability."
+    },
 }
 
 _REGION_PREFIXES: list[tuple[str, str]] = [
     ("Abdomen", "Abdomen"), ("Spine", "Spine"), ("Pelvis", "Pelvis"),
     ("Knee", "Knee"), ("Torso", "Torso"), ("Brain", "Brain"), ("MRCP", "Abdomen"),
     ("DWI", "Brain"), ("ADC", "Brain"), ("TOF", "Brain"), ("fMRI", "Brain"),
+    ("DTI", "Brain"), ("Cardiac", "Torso"),
 ]
 
 
@@ -721,6 +799,10 @@ def get_preset_region(name: str) -> str | None:
 # is normally read in (e.g. spine sagittal, knee sagittal, torso coronal).
 _PRESET_PLANE: dict[str, str] = {
     "Brain MPRAGE": "sagittal",            # 3-D IR-GRE, acquired sagittal
+    "Brain 3D FLAIR": "sagittal",          # 3-D, reformats to any plane
+    "Brain 3D T2 (SPACE)": "sagittal",     # 3-D, reformats to any plane
+    "Knee T2 Map (qMRI)": "sagittal",
+    "Cardiac LGE": "coronal",
     "Spine T1 Sagittal": "sagittal",
     "Spine T2 Sagittal": "sagittal",
     "Spine STIR": "sagittal",
@@ -754,17 +836,18 @@ def get_preset_plane(name: str) -> str:
 _PRESET_ORDER: list[str] = [
     # Brain — structural
     "Brain T1 SE", "Brain T2 SE", "Brain PD", "Brain FLAIR", "Brain STIR",
-    "Brain MPRAGE", "Brain SWI", "Brain GRE T2*", "Brain GRE T1",
+    "Brain MPRAGE", "Brain 3D FLAIR", "Brain 3D T2 (SPACE)",
+    "Brain SWI", "Brain GRE T2*", "Brain GRE T1",
     "Brain T1 Post-Gd", "Brain CISS (bSSFP)", "Brain EPI T2*",
     # Brain — diffusion / function / angiography
-    "DWI Stroke", "DWI High-b", "ADC Map",
+    "DWI Stroke", "DWI High-b", "ADC Map", "DTI FA Map",
     "fMRI BOLD Standard", "fMRI High Resolution",
     "TOF MRA Circle of Willis", "TOF MRA Thin Slab",
     # Spine
     "Spine T1 Sagittal", "Spine T2 Sagittal", "Spine STIR", "Spine Axial T2",
     "Spine T1 Post-Gd", "Spine GRE T2* (MERGE)",
     # Abdomen
-    "Abdomen T1 GRE", "Abdomen T2 FSE", "Abdomen STIR",
+    "Abdomen T1 GRE", "Abdomen 3D GRE (VIBE)", "Abdomen T2 FSE", "Abdomen STIR",
     "Abdomen In-Phase", "Abdomen Opposed-Phase", "Abdomen DWI",
     "Abdomen T1 Post-Gd", "Abdomen T1 FS Post-Gd",
     "Abdomen bSSFP", "Abdomen Radial", "MRCP",
@@ -773,10 +856,10 @@ _PRESET_ORDER: list[str] = [
     "Pelvis T1 Post-Gd", "Pelvis MR Urography",
     # Knee
     "Knee PD FSE", "Knee T1 FSE", "Knee T2 Fat-Sat", "Knee PD Fat-Sat (CHESS)",
-    "Knee GRE T2*", "Knee bSSFP Cartilage",
+    "Knee GRE T2*", "Knee bSSFP Cartilage", "Knee T2 Map (qMRI)",
     # Torso
     "Torso T2 Coronal", "Torso T1 GRE", "Torso STIR Coronal", "Torso Cine (bSSFP)",
-    "Torso DWIBS",
+    "Torso DWIBS", "Cardiac LGE",
 ]
 
 

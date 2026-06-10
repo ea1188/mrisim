@@ -684,6 +684,7 @@ async function onPreset() {
   $("gd").checked = !!p.contrast_enabled;
   $("flow").checked = !!p.flow_enabled;
   $("acq3d").checked = !!p.acq3d;
+  if (p.n_partitions) set("np", p.n_partitions);
   syncVisibility();
   applyingPreset = false;
   $("preset").value = name;           // keep the chosen preset shown
