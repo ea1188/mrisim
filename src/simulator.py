@@ -514,7 +514,13 @@ class Simulator:
         eff_snr = float(np.clip(eff_snr, 1.0, 1e4))
         if tissue_ref > 0:
             sigma = rician.noise_sigma_from_snr(tissue_ref, eff_snr)
-            recon_block = rician.add_rician_noise(recon_block, sigma)
+            # Deterministic per-slab seed (see the 2-D path): stable across
+            # re-renders, reshuffles when the noise level changes.
+            _nseed = (start * 7919
+                      + {"axial": 0, "coronal": 17, "sagittal": 37}.get(orient, 0)
+                      + int(round(float(sigma) * 1e6))) & 0xFFFFFFFF
+            recon_block = rician.add_rician_noise(
+                recon_block, sigma, rng=np.random.default_rng(_nseed))
             if params.get("rician_bias_correction"):
                 recon_block = rician.rician_bias_correction(recon_block, sigma)
 
@@ -741,7 +747,15 @@ class Simulator:
                     amp = min(0.5, g_factor - 1.0)
                     prof = 1.0 + amp * (0.5 - np.clip(rr, 0.0, 1.0))
                     sigma_map = sigma * (prof / float(prof.mean()))
-                reconstructed = rician.add_rician_noise(reconstructed, sigma_map)
+                # Seed the Rician noise off the slice/orientation and the noise
+                # level itself, so re-rendering identical settings is stable (no
+                # shimmer when toggling overlays) while any noise-affecting change
+                # reshuffles to a fresh realization.
+                _nseed = (sl_idx * 7919
+                          + {"axial": 0, "coronal": 17, "sagittal": 37}.get(orient, 0)
+                          + int(round(float(sigma) * 1e6))) & 0xFFFFFFFF
+                reconstructed = rician.add_rician_noise(
+                    reconstructed, sigma_map, rng=np.random.default_rng(_nseed))
                 if params.get("rician_bias_correction"):
                     reconstructed = rician.rician_bias_correction(reconstructed, sigma)
             if params["zipper_enabled"]:
