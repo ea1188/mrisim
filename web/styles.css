@@ -115,17 +115,20 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .image-row { display: flex; gap: 8px; min-height: 0; min-width: 0; }
 .image-row .images { flex: 1; min-width: 0; }
 .slice-rail {
-  display: flex; align-items: center; justify-content: center;
-  width: 30px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  display: flex; align-items: stretch; justify-content: center;
+  width: 30px; padding: 6px 0; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 10px;
 }
 .slice-rail-input {
   /* Vertical range with the maximum (superior slice) at the top, so dragging up
      scrolls "up" through the stack. slider-vertical covers Safari/older Chrome;
-     writing-mode + direction covers current browsers. Use the native thumb (the
-     custom horizontal thumb above is reset below) for reliable vertical drawing. */
+     writing-mode + direction covers current browsers. The track length is set to
+     the image height in JS (sizeSliceRail) for a reliable, full-height rail;
+     height:100% is the pre-JS fallback. Native thumb (reset from the custom
+     horizontal thumb above) for reliable vertical drawing. */
   -webkit-appearance: slider-vertical; appearance: slider-vertical;
   writing-mode: vertical-lr; direction: rtl;
-  width: 22px; height: 96%; margin: 0; cursor: ns-resize; accent-color: var(--accent);
+  width: 22px; height: 100%; margin: 0; cursor: ns-resize; accent-color: var(--accent);
 }
 .slice-rail-input::-webkit-slider-runnable-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
 .slice-rail-input::-webkit-slider-thumb { -webkit-appearance: auto; margin: 0; width: auto; height: auto; border: none; background: initial; box-shadow: none; }

@@ -471,6 +471,16 @@ function reflectSlice() {
   rail.setAttribute("aria-valuetext", `slice ${sl.value} of ${sl.max}`);
 }
 
+// Make the vertical slice rail span the full image height, so a drag covers the
+// whole stack rather than jumping many slices per pixel. Percentage heights on a
+// vertical <input type=range> aren't reliable across browsers, so set it in px.
+function sizeSliceRail() {
+  const rail = $("slice-v"), images = document.querySelector(".image-row .images");
+  if (!rail || !images) return;
+  const h = images.clientHeight - 12;            // minus the rail's vertical padding
+  if (h > 40) rail.style.height = h + "px";
+}
+
 function wireKeyboard() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
@@ -985,6 +995,7 @@ function applyResult(res, reqSlice) {
   syncSlice(res, reqSlice);
   setMetrics(res);
   refreshMeasure();                   // keep a placed ruler/ROI aligned + live on the new image
+  requestAnimationFrame(sizeSliceRail);   // span the rail to the (possibly resized) image
 }
 
 // After a new image lands, redraw any placed measurement (geometry is FOV-stable)
@@ -1110,7 +1121,7 @@ function wireMeasure() {
       clearMeasure();
     }));
   $("measure-clear").addEventListener("click", clearMeasure);
-  window.addEventListener("resize", () => drawMeasure(measureShape));
+  window.addEventListener("resize", () => { drawMeasure(measureShape); sizeSliceRail(); });
 }
 
 // Build the signal-equation HTML for the hovered tissue at the current protocol.

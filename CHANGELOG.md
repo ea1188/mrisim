@@ -16,7 +16,9 @@ frozen.)
 - **Vertical slice rail beside the image.** A slider sits next to the image you can
   drag up/down to scroll through slices — handy on a tablet or phone where there's
   no scroll wheel. It stays in sync with the wheel, arrow keys, the controls-panel
-  slider and the scout, and announces the slice number to screen readers.
+  slider and the scout, and announces the slice number to screen readers. The rail
+  spans the full image height (sized in JS), so a small drag moves a few slices
+  rather than the whole stack.
 
 ## [1.10.0] — 2026-06-09
 
