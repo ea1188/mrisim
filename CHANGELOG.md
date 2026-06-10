@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-06-10
+
+Teaching depth: the 3D slab now explains what it buys, presets genuinely drive 3D
+acquisition, and five new guided lessons (plus six new clinical presets) round out
+the sequence-physics and advanced-contrast curriculum.
+
 ### Added
 - **5 new guided lessons (browser)** (16 → 21): the Ernst angle (flip for maximum
   signal), resolution vs SNR (the matrix trade-off), fat suppression (STIR vs
