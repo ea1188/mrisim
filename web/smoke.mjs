@@ -291,6 +291,14 @@ try {
   await page.waitForSelector("#lesson-picker", { state: "hidden", timeout: 5_000 });
   await page.click("#lessons-btn");
   await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  // The corner ✕ closes the picker too (exit without picking a lesson).
+  await page.click("#lesson-picker-x");
+  await page.waitForSelector("#lesson-picker", { state: "hidden", timeout: 5_000 });
+  await page.click("#lessons-btn");
+  await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  // The long lesson list scrolls inside the card (so the footer stays reachable).
+  const listScrolls = await page.$eval("#lesson-list", (el) => getComputedStyle(el).overflowY);
+  if (!/auto|scroll/.test(listScrolls)) fail("lesson list is not scrollable: " + listScrolls);
   // The beginner "Start here" track must be present and listed first.
   const sections = await page.$$eval("#lesson-list .lesson-section", (ps) => ps.map((p) => p.textContent));
   if (!sections.some((s) => /start here/i.test(s || ""))) fail("beginner 'Start here' lesson section missing");

@@ -415,6 +415,7 @@ function wireLessons() {
   });
   $("lessons-btn").addEventListener("click", () => openDialog("lesson-picker", "lesson-picker-close"));
   $("lesson-picker-close").addEventListener("click", () => closeDialog("lesson-picker"));
+  $("lesson-picker-x").addEventListener("click", () => closeDialog("lesson-picker"));
   $("lesson-exit").addEventListener("click", exitLesson);
   $("lesson-prev").addEventListener("click", () => { if (stepIdx > 0) { stepIdx--; applyStep(); } });
   $("lesson-next").addEventListener("click", () => {
