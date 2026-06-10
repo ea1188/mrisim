@@ -110,7 +110,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .radios button.on { background: #142231; color: var(--accent-hi); border-color: var(--accent); }
 
 /* Viewport */
-.viewport { display: grid; grid-template-rows: 1fr auto auto; gap: 10px; min-width: 0; }
+/* overflow-y:auto is a safety net: with FOV planning + contrast map + show-the-math
+   all open on a short screen the stacked panels can exceed the column height — they
+   now scroll instead of being clipped. No effect when everything already fits. */
+.viewport { display: grid; grid-template-rows: minmax(160px, 1fr) auto auto; gap: 10px; min-width: 0; overflow-y: auto; }
 /* Image + vertical slice rail share the top (1fr) row. */
 .image-row { display: flex; gap: 8px; min-height: 0; min-width: 0; }
 .image-row .images { flex: 1; min-width: 0; }

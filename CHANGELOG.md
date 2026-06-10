@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Fixed
+- **Viewport panels no longer get clipped.** With FOV planning + the contrast map +
+  show-the-math all open on a short screen the stacked panels could run past the
+  bottom with no way to see them; the viewport now scrolls (and keeps the image at
+  a usable minimum height).
 - **Rician `rician_mean` / `rician_variance` are now exact at all SNR.** `rician_mean`
   returned only the high-SNR √(ν²+σ²) approximation, which made `rician_variance`
   collapse to a constant σ² for every ν. Both now use the exact Laguerre closed
