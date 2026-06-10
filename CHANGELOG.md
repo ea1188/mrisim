@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **5 new guided lessons (browser)** (16 → 21): the Ernst angle (flip for maximum
+  signal), resolution vs SNR (the matrix trade-off), fat suppression (STIR vs
+  spectral CHESS), in- vs opposed-phase (Dixon, the India-ink sign), and bright-blood
+  angiography (TOF). The existing 3D-slab lesson gains steps on the √Nz SNR gain and
+  kz partial Fourier.
 - **6 new clinical presets** (53 → 59): Brain 3D FLAIR, Brain 3D T2 (SPACE),
   Abdomen 3D GRE (VIBE), DTI FA Map, Knee T2 Map (qMRI) and Cardiac LGE.
 - **3D slab readout + slab-profile control (browser).** The 3D-acquisition panel
