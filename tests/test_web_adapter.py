@@ -146,6 +146,28 @@ def test_3d_param_change_reacquires():
     assert id(wa._host().sim._recon3d) != block, "scan-affecting change must re-acquire"
 
 
+def test_3d_metrics_report_slab_geometry_and_snr_gain():
+    """A 3-D render must report the slab geometry the UI shows: partition count,
+    isotropic partition thickness, total slab coverage, and the √(Nz·NEX) SNR gain
+    over a single 2-D slice. A 2-D render must not be flagged 3-D."""
+    import numpy as np
+    wa.init()
+    nz = 24
+    r = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 95,
+                   "params": {"sequence": "Gradient Echo", "acq3d": True,
+                              "n_partitions": nz, "NEX": 1, "FOV": 240, "matrix_size": 256}})
+    m = r["metrics"]
+    assert m.get("is_3d")
+    assert m["n_partitions"] == nz
+    # Isotropic partitions: through-plane thickness == the in-plane resolution.
+    assert m["partition_mm"] == pytest.approx(m["resolution"], rel=1e-3)
+    assert m["slab_mm"] == pytest.approx(nz * m["partition_mm"], rel=1e-3)
+    assert m["snr_3d_gain"] == pytest.approx(np.sqrt(nz), rel=1e-3)   # √(Nz·NEX), NEX=1
+    r2 = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 95,
+                    "params": {"sequence": "Gradient Echo", "TR": 500, "TE": 12}})
+    assert not r2["metrics"].get("is_3d")
+
+
 # --------------------------------------------------------------------------- #
 #  Presets + JSON round-trip (the JS shell's contract)
 # --------------------------------------------------------------------------- #

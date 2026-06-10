@@ -539,10 +539,17 @@ class Simulator:
                            "Inversion Recovery": "IR", "Balanced SSFP": "GRE"}[params["sequence"]])
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         snr = self._measure_snr(image, phantom_slice)
+        # Slab geometry for the UI: isotropic 3-D partitions, so the through-plane
+        # (partition) resolution equals the in-plane voxel; the slab spans n_part
+        # contiguous partitions with no gap, and the √(Nz·NEX) factor is the SNR
+        # gain the slab buys over a single 2-D slice.
         metrics = {"scan_time": scan_time, "resolution": res_mm,
                    "snr_wm": snr["wm"], "snr_gm": snr["gm"], "noise_sigma": snr["sigma"],
                    "snr_eff": snr["wm"] / np.sqrt(max(scan_time / 60.0, 1e-6)),
-                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2, "g_factor": 1.0}
+                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2, "g_factor": 1.0,
+                   "is_3d": True, "n_partitions": int(n_part),
+                   "partition_mm": float(res_mm), "slab_mm": float(n_part * res_mm),
+                   "snr_3d_gain": float(snr_3d_gain(n_part, NEX))}
         self.last_kspace = None
         return image, metrics
 

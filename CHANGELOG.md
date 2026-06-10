@@ -12,6 +12,24 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **6 new clinical presets** (53 → 59): Brain 3D FLAIR, Brain 3D T2 (SPACE),
+  Abdomen 3D GRE (VIBE), DTI FA Map, Knee T2 Map (qMRI) and Cardiac LGE.
+- **3D slab readout + slab-profile control (browser).** The 3D-acquisition panel
+  now shows what the partition count buys — isotropic partition thickness, total
+  slab coverage and the √(Nz·NEX) SNR gain over a single 2D slice — and exposes the
+  slab-profile sharpness so you can see the slab-edge signal falloff. The engine
+  reports these as metrics (`is_3d`, `n_partitions`, `partition_mm`, `slab_mm`,
+  `snr_3d_gain`); the desktop voxel-size readout now uses the true partition
+  thickness in 3D.
+
+### Changed
+- **Presets now actually drive 3D acquisition.** Presets could carry a 3D flag but
+  neither app applied it, so the "3D" presets were 3D in name only. MPRAGE, CISS and
+  Knee GRE T2* are now genuinely acquired as 3D slabs (reformatting to any plane),
+  and the preset-apply path honours `acq3d` / `n_partitions` in both the desktop and
+  browser builds.
+
 ## [1.10.1] — 2026-06-10
 
 A correctness-and-polish patch from a pre-release review: the FOV-planning
