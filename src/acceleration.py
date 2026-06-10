@@ -47,10 +47,18 @@ def sense_reconstruction(
        ``(S†Ψ⁻¹S) x = S†Ψ⁻¹ b`` for the R aliased pixels — vectorised
        over all columns simultaneously.
 
+    Precondition
+    ------------
+    This model treats coil sensitivities as **real-valued (magnitude)**: the
+    forward step uses ``|S|`` and the unfolding uses ``S``, which agree only when
+    the maps are real and non-negative (as ``head_coil_array`` produces). Passing
+    genuinely complex sensitivities would make the forward and inverse models
+    diverge — take the magnitude first if you must.
+
     Parameters
     ----------
     image : (rows, cols) float array  ideal (noise-free) MR image
-    sensitivity_maps : (n_coils, rows, cols) real or complex array
+    sensitivity_maps : (n_coils, rows, cols) real, non-negative array
     acceleration : int  SENSE factor R; must divide rows evenly
     noise_sigma : float  per-coil Gaussian noise σ (0 = noise-free)
     noise_cov : (n_coils, n_coils) or None  coil noise covariance (identity if None)

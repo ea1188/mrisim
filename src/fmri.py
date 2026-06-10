@@ -127,17 +127,13 @@ def simulate_fmri_fast(
         T2star = T2star_base.get(label, 50)
         
         if is_active and label == 2:
-            # Vectorized: compute T2* per voxel based on activation
+            # T2* increases with BOLD (less deoxyHb), per active voxel; the spoiled
+            # GRE signal then comes from the shared engine helper (which carries the
+            # 0÷0 flip-angle guard) with the per-voxel T2*.
             act_values = activation[mask]
-            # T2* increases with BOLD (less deoxyHb)
             T2star_modified = T2star * (1 + act_values / 100.0 * 0.3)
-            
-            # Compute signal for each unique T2* (binned for speed)
-            alpha = np.radians(flip_angle)
-            E1 = np.exp(-TR / props["T1"])
-            base_signal = props["PD"] * np.sin(alpha) * (1 - E1) / (1 - np.cos(alpha) * E1)
-            signals = base_signal * np.exp(-TE / T2star_modified)
-            image[mask] = signals
+            image[mask] = gradient_echo_signal(props["T1"], T2star_modified, props["PD"],
+                                               TR, TE, flip_angle)
         else:
             sig = gradient_echo_signal(props["T1"], T2star, props["PD"], TR, TE, flip_angle)
             image[mask] = sig

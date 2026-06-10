@@ -1,7 +1,15 @@
 import numpy as np
 
+# Blood-label convention (foot-gun warning): the standalone *prototype* functions
+# in this module — create_vascular_phantom / simulate_tof_mra / simulate_phase_contrast
+# — paint and key off blood as label **5** (their own self-contained phantom). The
+# production engine path (flow.py BLOOD_LABEL=11, tof_intensity_volume below, and the
+# tissue_db scheme) uses label **11**. Don't mix a label-5 prototype phantom with the
+# label-11 engine functions, or blood will be invisible to one of them.
+
+
 def create_vascular_phantom(size: int = 256) -> np.ndarray:
-    """Create a brain phantom with blood vessels."""
+    """Create a brain phantom with blood vessels (prototype; blood = label 5)."""
     from phantom import create_brain_phantom
     
     # Start with base brain phantom
