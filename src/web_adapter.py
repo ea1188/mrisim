@@ -166,7 +166,15 @@ class WebHost(CurvesMixin):
         _vessels, self._activation = self._region_aux_cache[name]
         self._vessels = _vessels
         self._acq3d_key = None                 # new anatomy invalidates the slab
-        self.orientation.set(_REGION_PLANE.get(name, "axial"))   # canonical plane
+        plane = _REGION_PLANE.get(name, "axial")                 # canonical plane
+        self.orientation.set(plane)
+        # Sync the engine's orientation too: get_max_slice_idx() reads
+        # self.sim.orientation, so without this the mid-slice and the returned
+        # max_slice are computed along the *axial* axis even for a sagittal region
+        # (Spine/Knee). That opened the Spine on a near-lateral slice (111/128
+        # instead of the 64 midline) — a body-edge "cut in half" localizer — and
+        # gave the slice slider the wrong range.
+        self.sim.orientation = plane
         self.slice_idx.set(self.sim.get_max_slice_idx() // 2)
         return {"dims": self.dims(), "max_slice": self.sim.get_max_slice_idx()}
 

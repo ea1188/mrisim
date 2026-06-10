@@ -92,6 +92,22 @@ def test_every_web_region_renders(region):
     _assert_good_render(r, region)
 
 
+@pytest.mark.parametrize("region,plane", [("Spine", "sagittal"), ("Knee", "sagittal")])
+def test_region_opens_on_canonical_plane_midslice(region, plane):
+    """A sagittal-canonical region (Spine/Knee) must open centred on its canonical
+    plane: the returned max_slice spans that plane's axis (not the axial axis), and
+    the initial slice sits at its midpoint. Regression for the Spine opening on a
+    near-lateral, body-edge slice (a 'cut in half' localizer) because the mid slice
+    was computed before the engine's orientation was synced to the plane."""
+    d = wa.set_region(region)
+    axis_len = d["dims"][plane]
+    assert d["max_slice"] == axis_len - 1, (
+        f"{region} max_slice should span the {plane} axis ({axis_len}), got {d['max_slice'] + 1}")
+    h = wa._host()
+    assert h.orientation.get() == plane
+    assert h.slice_idx.get() == (axis_len - 1) // 2, "should open at the canonical-plane midslice"
+
+
 def test_metrics_are_plain_json_types():
     wa.init()
     m = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
