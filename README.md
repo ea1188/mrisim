@@ -71,7 +71,7 @@ The engine renders any labelled tissue volume under any sequence. Three sources 
 
 <p align="center"><i>Real whole-torso region (TotalSegmentator MRI, coronal): heart, lungs, liver, spleen, kidneys, spine and ribs rendered with real-MRI texture under a spin-echo sequence.</i></p>
 
-The four default regions above work out of the box (their caches are bundled). To load **other** subjects or rebuild the regions from scratch, make sure `nibabel` is installed (it ships in `requirements.txt`) and place the raw dataset under `data/`:
+The brain and all five body regions above (Abdomen, Spine, Pelvis, Torso and Knee) work out of the box — their caches are bundled in the repo. To load **other** subjects or rebuild the regions from scratch, make sure `nibabel` is installed (it ships in `requirements.txt`) and place the raw dataset under `data/`:
 
 ```
 data/TotalsegmentatorMRI_dataset_v200/
@@ -172,7 +172,7 @@ pip install -r requirements.txt
 python src/app_qt.py
 ```
 
-The BrainWeb brain **and the four default body regions** (Abdomen, Spine, Pelvis, Torso) are bundled in the repo, so the app opens on real anatomy with **no dataset download required**. Only loading *other* subjects or regions needs the raw dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
+The BrainWeb brain **and all five body regions** (Abdomen, Spine, Pelvis, Torso and Knee) are bundled in the repo, so the app opens on real anatomy with **no dataset download required**. Only loading *other* subjects or regions needs the raw dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
 
 ### Step-by-step (no terminal experience needed)
 
@@ -276,6 +276,8 @@ pytest                  # or: python -m pytest
 ```
 src/                  # all source modules (plain imports by bare name)
   app_qt.py           # PyQt6 interactive GUI
+  simulator.py        # core engine — Simulator.simulate(params) -> (image, metrics)
+  web_adapter.py      # Qt-free orchestration for the Pyodide browser build
   rendering.py        # Qt-free signal-rendering helpers (tested)
   signal_engine.py    # SE / GRE / IR signal equations, SNR, scan time
   simulate.py         # thin orchestration layer
