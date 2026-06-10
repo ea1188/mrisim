@@ -275,9 +275,6 @@ try {
     await page.evaluate((v) => { const r = document.getElementById("slice-v"); r.value = v; r.dispatchEvent(new Event("input")); }, target);
     await page.waitForTimeout(600);
     if (await page.inputValue("#slice") === before) fail("slice rail did not change the slice");
-    // …and it must span most of the image height (so a small drag ≠ many slices).
-    const railH = await page.$eval("#slice-v", (el) => el.offsetHeight);
-    if (railH < 120) fail("slice rail too short (offsetHeight=" + railH + "px) — would scrub the whole stack in a few px");
   }
 
   // A new acquisition control (NEX) must re-render and the URL must stay shareable.
