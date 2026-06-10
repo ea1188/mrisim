@@ -25,10 +25,10 @@ frozen.)
 
 ### Fixed
 - **FOV planning showed only the top half of the 3-plane localizer.** The scout
-  image used `max-width`/`max-height` in a fixed-height box, so its intrinsic size
-  could overflow and the box clipped it. It now uses `object-fit: contain` (which the
-  drag math already assumed), so the whole localizer fits inside its box — and
-  click/drag prescription is unchanged.
+  image sat in a fixed-height box and overflowed it, so the box clipped the
+  localizer to its top. The box now sizes to the localizer's natural height
+  (capped), so the whole thing is visible — and click/drag prescription is
+  unchanged.
 - **Spine and Knee open on their plane's midline, not a body-edge slice.** Loading
   a region whose canonical plane is sagittal jumped the engine to the middle of the
   *axial* axis instead — so the Spine opened on slice 111 of a 128-deep left-right

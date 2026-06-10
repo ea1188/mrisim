@@ -145,13 +145,16 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 }
 .scoutwrap {
   background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
-  display: grid; place-items: center; overflow: hidden; height: 150px;
+  display: grid; place-items: center; overflow: hidden;
+  /* Size to the localizer's natural height (capped) rather than a fixed box: a
+     percentage height on the image is unreliable inside this grid row and let the
+     image overflow a fixed box, clipping the localizer to its top half. */
+  height: auto; max-height: 60vh;
 }
-/* Fit the whole 3-plane localizer inside the box (letterboxed, never clipped).
-   object-fit:contain is what the scout-drag math in app.js (imgFraction) assumes;
-   max-width/max-height alone let the grid item's intrinsic min-size overflow the
-   fixed-height box, so only the top of the localizer showed. */
-#scoutImage { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Full-width, natural height: the element equals the displayed image (no
+   letterbox), so the scout-drag math in app.js (imgFraction) maps exactly, and
+   the whole localizer is visible rather than clipped to its top half. */
+#scoutImage { display: block; width: 100%; height: auto; }
 .images { display: flex; gap: 10px; min-height: 0; }
 .images .imgwrap { flex: 1; min-width: 0; }
 .imgwrap, .curvewrap {
@@ -331,7 +334,7 @@ kbd {
   .brand { font-size: 15px; }
   .ghlink { font-size: 13px; }
   .group h2 { margin-top: 2px; }
-  .scoutwrap { height: 120px; }
+  .scoutwrap { max-height: 46vh; }
   .viewport { min-height: 46vh; }
 }
 
