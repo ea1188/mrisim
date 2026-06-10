@@ -27,8 +27,10 @@
   <!-- First-run intro (shown once; dismissal remembered in localStorage). -->
   <div id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="intro-h">
     <div class="intro-card">
+      <button id="intro-x" class="dialog-x" type="button" aria-label="Close" title="Close">✕</button>
       <h2 id="intro-h">Welcome to MRISim</h2>
       <p class="intro-sub">The real MRI physics engine, running in your browser.</p>
+      <div class="intro-body">
       <ul>
         <li><b>New to MRI?</b> Open <b>📖 Lessons</b> and start the <b>“Start here”</b> track — three short reading-first walkthroughs. Or tick <b>Label the anatomy</b> to name the structures and <b>hover</b> any pixel to see which tissue it is and its T1/T2/PD.</li>
         <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel.</li>
@@ -42,13 +44,15 @@
         robust experience — real body atlases, NIfTI/DICOM, the complete planning workflow and
         faster rendering — grab the <a href="https://github.com/ea1188/mrisim/releases/latest"
         target="_blank" rel="noopener">desktop app</a>.</p>
+      </div>
       <button id="intro-ok" type="button">Got it</button>
     </div>
   </div>
 
   <!-- Lesson picker (populated from app.js) -->
   <div id="lesson-picker" hidden role="dialog" aria-modal="true" aria-labelledby="lp-h">
-    <div class="intro-card">
+    <div class="intro-card lesson-card">
+      <button id="lesson-picker-x" class="dialog-x" type="button" aria-label="Close lessons" title="Close">✕</button>
       <h2 id="lp-h">Guided lessons</h2>
       <p class="intro-sub">Short walkthroughs — each step sets up the scanner and explains what you see.</p>
       <div id="lesson-list"></div>

@@ -48,7 +48,11 @@ try {
   // Accessibility: the intro is a labelled modal dialog.
   if ((await page.getAttribute("#intro", "role")) !== "dialog") fail("intro is not role=dialog");
   if ((await page.getAttribute("#intro", "aria-modal")) !== "true") fail("intro not aria-modal");
-  await page.click("#intro-ok");
+  // The card caps its height and the body scrolls (title/footer/✕ stay pinned).
+  const introBody = await page.$eval("#intro .intro-body", (el) => getComputedStyle(el).overflowY);
+  if (!/auto|scroll/.test(introBody)) fail("intro body not scrollable: " + introBody);
+  // The corner ✕ closes the intro too.
+  await page.click("#intro-x");
   await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
 
   // The topbar shows the running engine version (e.g. "browser edition · v1.6.1").
@@ -305,6 +309,14 @@ try {
   await page.waitForSelector("#lesson-picker", { state: "hidden", timeout: 5_000 });
   await page.click("#lessons-btn");
   await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  // The corner ✕ closes the picker too (exit without picking a lesson).
+  await page.click("#lesson-picker-x");
+  await page.waitForSelector("#lesson-picker", { state: "hidden", timeout: 5_000 });
+  await page.click("#lessons-btn");
+  await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
+  // The long lesson list scrolls inside the card (so the footer stays reachable).
+  const listScrolls = await page.$eval("#lesson-list", (el) => getComputedStyle(el).overflowY);
+  if (!/auto|scroll/.test(listScrolls)) fail("lesson list is not scrollable: " + listScrolls);
   // The beginner "Start here" track must be present and listed first.
   const sections = await page.$$eval("#lesson-list .lesson-section", (ps) => ps.map((p) => p.textContent));
   if (!sections.some((s) => /start here/i.test(s || ""))) fail("beginner 'Start here' lesson section missing");

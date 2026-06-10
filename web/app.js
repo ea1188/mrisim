@@ -194,6 +194,7 @@ function showIntro() { openDialog("intro", "intro-ok"); }
 function hideIntro() { closeDialog("intro"); localStorage.setItem("mrisim_seen", "1"); }
 function maybeShowIntro() {
   $("intro-ok").addEventListener("click", hideIntro);
+  $("intro-x").addEventListener("click", hideIntro);
   $("help").addEventListener("click", showIntro);
   try { if (!localStorage.getItem("mrisim_seen")) showIntro(); } catch (e) { /* private mode */ }
 }
@@ -415,6 +416,7 @@ function wireLessons() {
   });
   $("lessons-btn").addEventListener("click", () => openDialog("lesson-picker", "lesson-picker-close"));
   $("lesson-picker-close").addEventListener("click", () => closeDialog("lesson-picker"));
+  $("lesson-picker-x").addEventListener("click", () => closeDialog("lesson-picker"));
   $("lesson-exit").addEventListener("click", exitLesson);
   $("lesson-prev").addEventListener("click", () => { if (stepIdx > 0) { stepIdx--; applyStep(); } });
   $("lesson-next").addEventListener("click", () => {
