@@ -273,9 +273,62 @@ def diffusion_section():
     return "\n".join(lines), _ok(oks)
 
 
+def pathology_section():
+    """Validate that each browser demo pathology's *discriminating* property
+    matches the radiology literature — the property a radiologist keys on to
+    recognise it. Uses the same engine tables the renderer reads (tissue_db for
+    T1/T2/T2*, phantom3d_extended for ADC, b0 for susceptibility, rendering for
+    gadolinium)."""
+    import tissue_db
+    import phantom3d_extended as pex
+    import b0
+    import rendering
+    props = tissue_db.properties("3T")
+    adc = pex.get_diffusion_properties_3d(None)
+    chi = b0.SUSCEPTIBILITY_PPM
+    gd = rendering.apply_gd({k: dict(v) for k, v in props.items()}, dose=1.0)
+
+    def t1_drop(lab):                          # fractional T1 shortening with Gd
+        return 1.0 - gd[lab]["T1"] / props[lab]["T1"]
+
+    wm_t2, wm_adc = props[3]["T2"], adc[3]["ADC"]
+    lines = ["## 7. Demo pathologies vs. literature", "",
+             "Each browser demo lesion's *discriminating* feature — the finding a "
+             "radiologist keys on — checked against published values.", "",
+             _row(["Lesion", "Discriminator", "Engine", "OK"]),
+             _row(["---"] * 4)]
+    oks = []
+
+    def check(name, disc, engine, ok):
+        oks.append(ok)
+        lines.append(_row([name, disc, engine, PASS if ok else FAIL]))
+
+    check("WM lesion (MS plaque)", "T2 ≫ white matter (prolonged)",
+          f"{props[23]['T2']:.0f} ms vs WM {wm_t2:.0f}", props[23]["T2"] >= 1.5 * wm_t2)
+    check("Acute infarct", "Restricted ADC (0.2–0.5, Schaefer 2000)",
+          f"{adc[24]['ADC']:.2f} ×10⁻³", adc[24]["ADC"] <= 0.5 and adc[24]["ADC"] < wm_adc)
+    check("Microhaemorrhage", "Short T2* + paramagnetic χ (Haacke 2009)",
+          f"T2*={props[25]['T2star']:.0f} ms, Δχ={abs(chi[25] - chi[3]):.2f} ppm",
+          props[25]["T2star"] <= 12 and abs(chi[25] - chi[3]) >= 0.4)
+    check("Enhancing tumour", "Gd shortens T1; facilitated ADC",
+          f"−{100 * t1_drop(26):.0f}% T1, ADC {adc[26]['ADC']:.2f}",
+          t1_drop(26) >= 0.3 and adc[26]["ADC"] > wm_adc)
+    check("Abscess core", "Restricted ADC, lower than tumour (Ebisu 1996)",
+          f"{adc[27]['ADC']:.2f} vs tumour {adc[26]['ADC']:.2f}",
+          adc[27]["ADC"] <= 0.6 and adc[27]["ADC"] < adc[26]["ADC"])
+    check("Abscess rim", "T2-hypointense capsule that enhances",
+          f"T2={props[28]['T2']:.0f} ms (< WM), −{100 * t1_drop(28):.0f}% T1",
+          props[28]["T2"] < wm_t2 and t1_drop(28) >= 0.2)
+
+    lines += ["", "References: Schaefer *Radiology* 2000 (acute stroke ADC); "
+              "Haacke *AJNR* 2009 (SWI / blood products); Ebisu *AJNR* 1996 and "
+              "Cartes-Zumelzu 2004 (pyogenic abscess restricted diffusion)."]
+    return "\n".join(lines), _ok(oks)
+
+
 def build_report():
     secs = [relaxation_section(), contrast_section(), landmarks_section(), scaling_section(),
-            qmri_section(), diffusion_section()]
+            qmri_section(), diffusion_section(), pathology_section()]
     all_ok = all(ok for _, ok in secs)
     header = [
         "# MRISim — validation benchmark report", "",

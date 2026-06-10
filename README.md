@@ -269,7 +269,7 @@ pytest                  # or: python -m pytest
 
 ## Validation
 
-[**`docs/VALIDATION.md`**](docs/VALIDATION.md) is a generated benchmark report that pins the engine's quantitative behaviour to the literature: measured 1.5 T / 3 T tissue relaxation vs published means (Wansapura 1999, Stanisz 2005, de Bazelaire 2004), the contrast/nulling each clinical weighting produces (T1w WM > GM > CSF, T2w CSF > GM > WM, FLAIR/STIR nulls), and analytic landmarks (Ernst angle, bSSFP banding null at 1/2TR, fat–water shift at 3.5 ppm·γ·B0). Every row carries a PASS/FAIL tolerance, and `tests/test_validation_report.py` fails if any check regresses — so the report can't drift from the physics. Regenerate with `python scripts/validation_report.py`.
+[**`docs/VALIDATION.md`**](docs/VALIDATION.md) is a generated benchmark report that pins the engine's quantitative behaviour to the literature: measured 1.5 T / 3 T tissue relaxation vs published means (Wansapura 1999, Stanisz 2005, de Bazelaire 2004), the contrast/nulling each clinical weighting produces (T1w WM > GM > CSF, T2w CSF > GM > WM, FLAIR/STIR nulls), analytic landmarks (Ernst angle, bSSFP banding null at 1/2TR, fat–water shift at 3.5 ppm·γ·B0), diffusion ADCs, qMRI round-trips, and the **demo pathologies' discriminating features** (acute-infarct restricted diffusion, microhaemorrhage T2\*/susceptibility, the abscess's DWI-bright core vs. a tumour's facilitated core — Schaefer 2000, Haacke 2009, Ebisu 1996). Every row carries a PASS/FAIL tolerance, and `tests/test_validation_report.py` fails if any check regresses — so the report can't drift from the physics. Regenerate with `python scripts/validation_report.py`.
 
 ## Project layout
 
