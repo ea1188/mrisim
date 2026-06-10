@@ -13,6 +13,12 @@ frozen.)
 ## [Unreleased]
 
 ### Fixed
+- **FOV planning: double-oblique now works.** Dragging the slice band only ever
+  changed one angle (tilt), because both cross panels were tagged the same way and
+  the front-end mapped them both to tilt. Each cross panel now carries its own
+  oblique degree of freedom, so dragging the band in one cross view angles the
+  plane one way (tilt) and the other view angles it the other way (rot) — you can
+  prescribe a genuinely double-angled slice. (The engine already supported it.)
 - **Dialogs always fit the screen.** With the full set of lessons (and on short
   viewports) the lesson picker and the welcome intro could run off the page and
   push their buttons out of reach. Both are now **height-capped cards whose body

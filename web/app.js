@@ -870,8 +870,12 @@ function wireScout() {
       const pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
       $("ipfov").value = pct; $("ipfov-val").value = pct;
     } else if (drag.mode === "oblique") {            // angle the plane off-axis
-      if (p.map === "row") planTilt = clampN(drag.tilt0 + (drag.l0.py - loc.py) * 90, -45, 45);
-      else planRot = clampN(drag.rot0 + (loc.px - drag.l0.px) * 90, -45, 45);
+      // Drag direction follows the band orientation (a horizontal band angles with
+      // a vertical drag); *which* angle it sets is the panel's own DOF (p.angle),
+      // so the two cross panels give independent tilt + rot — full double-oblique.
+      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90;
+      if (p.angle === "tilt") planTilt = clampN(drag.tilt0 + d, -45, 45);
+      else planRot = clampN(drag.rot0 + d, -45, 45);
     }
     schedule();
   };
@@ -944,7 +948,7 @@ async function render() {
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
       $("oblique-readout").textContent =
-        `Oblique ${planTilt.toFixed(0)}° / ${planRot.toFixed(0)}°  ·  drag band = angle, FOV box = resize/move, dbl-click = reset`;
+        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag either cross-panel's band to angle that plane; FOV box = resize/move; dbl-click = reset`;
     }
     if (!compareMode) stateToHash();   // keep the URL shareable/current
   } catch (err) {

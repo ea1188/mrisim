@@ -193,6 +193,24 @@ def test_scout_renders(orient):
     # exactly one panel is the acquired plane (no remap); the other two reposition
     assert sum(p["map"] == "none" for p in panels) == 1
     assert all(p["n"] > 0 for p in panels if p["map"] != "none")
+    # The two cross panels expose the two independent oblique DOF (tilt + rot), so
+    # both planes can be angled (double-oblique) — not just one.
+    cross_angles = sorted(p["angle"] for p in panels if p["role"] == "cross")
+    assert cross_angles == ["rot", "tilt"], f"{orient}: cross panels don't cover both DOF"
+
+
+def test_double_oblique_renders_distinctly():
+    """tilt, rot and tilt+rot must each produce a distinct image (both oblique
+    degrees of freedom are honoured, not just one)."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "fov_planning": True, "params": {"sequence": "Spin Echo", "TR": 2000, "TE": 15}}
+    ref = wa.render(base)["image"]
+    tilt = wa.render({**base, "tilt": 25, "rot": 0})["image"]
+    rot = wa.render({**base, "tilt": 0, "rot": 25})["image"]
+    both = wa.render({**base, "tilt": 25, "rot": 25})["image"]
+    assert tilt != ref and rot != ref, "a single oblique angle had no effect"
+    assert both != tilt and both != rot, "the two oblique angles aren't independent"
 
 
 def test_scout_acq_panel_has_fov_box():

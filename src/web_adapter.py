@@ -630,6 +630,16 @@ class WebHost(CurvesMixin):
     # remaining axis is the panel's through-plane normal.
     _PANEL_AXES = {"axial": (1, 2), "coronal": (0, 2), "sagittal": (0, 1)}
     _ACQ_AXIS = {"axial": 0, "coronal": 1, "sagittal": 2}
+    # Which oblique angle each cross panel controls, so the two cross panels give
+    # the two independent double-oblique degrees of freedom (tilt about col_vec,
+    # rot about row_vec). Determined from which angle actually re-angles that
+    # panel's slice band (see plane_from_angles / scout_band): dragging a panel's
+    # band tilts the plane as seen in that very panel.
+    _OBLIQUE_PANEL = {
+        "axial":    {"coronal": "rot", "sagittal": "tilt"},
+        "coronal":  {"axial": "rot", "sagittal": "tilt"},
+        "sagittal": {"axial": "rot", "coronal": "tilt"},
+    }
 
     def render_scout(self, payload: dict) -> str:
         """Render the 3-plane localizer with the prescription overlaid: the slice
@@ -737,10 +747,11 @@ class WebHost(CurvesMixin):
             box = [float(pos.x0), float(1.0 - pos.y1), float(pos.x1), float(1.0 - pos.y0)]
             entry: dict = {"name": name, "box": box}
             if acq_axis == ra:
-                entry.update(map="row", n=int(vol.shape[ra]), flip=False, role="cross")
+                entry.update(map="row", n=int(vol.shape[ra]), flip=False, role="cross",
+                             angle=self._OBLIQUE_PANEL[orient].get(name))
             elif acq_axis == ca:
                 entry.update(map="col", n=int(vol.shape[ca]), flip=(name == "sagittal"),
-                             role="cross")
+                             role="cross", angle=self._OBLIQUE_PANEL[orient].get(name))
             else:
                 fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
                 H, W = scouts[name].shape          # panel image is H rows × W cols
