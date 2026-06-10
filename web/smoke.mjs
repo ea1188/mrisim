@@ -249,7 +249,9 @@ try {
   await page.mouse.up();
   await page.waitForTimeout(900);
   const readout = await page.textContent("#oblique-readout");
-  if (/Oblique\s+0°\s*\/\s*0°/.test(readout || "")) fail("oblique drag did not angle the plane (" + readout + ")");
+  // The middle (coronal) cross panel controls rot, so after the drag the readout
+  // must no longer be all-zero (tilt 0° · rot 0°) — double-oblique is reachable.
+  if (/tilt\s*0°\s*·\s*rot\s*0°/.test(readout || "")) fail("oblique drag did not angle the plane (" + readout + ")");
 
   await page.uncheck("#fovplan");
 
