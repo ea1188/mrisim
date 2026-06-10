@@ -471,6 +471,16 @@ function reflectSlice() {
   rail.setAttribute("aria-valuetext", `slice ${sl.value} of ${sl.max}`);
 }
 
+// Size the (absolutely-positioned) slice rail to the image area so a drag covers
+// the whole stack. The rail is out of flow, so setting its height can't grow the
+// row or shift the image — unlike an in-flow height, which caused a feedback loop.
+function sizeSliceRail() {
+  const rail = $("slice-v"), images = document.querySelector(".image-row .images");
+  if (!rail || !images) return;
+  const h = images.clientHeight - 16;
+  if (h > 60) rail.style.height = h + "px";
+}
+
 function wireKeyboard() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
@@ -985,6 +995,7 @@ function applyResult(res, reqSlice) {
   syncSlice(res, reqSlice);
   setMetrics(res);
   refreshMeasure();                   // keep a placed ruler/ROI aligned + live on the new image
+  requestAnimationFrame(sizeSliceRail);   // match the rail to the image area (safe: absolute)
 }
 
 // After a new image lands, redraw any placed measurement (geometry is FOV-stable)
@@ -1110,7 +1121,7 @@ function wireMeasure() {
       clearMeasure();
     }));
   $("measure-clear").addEventListener("click", clearMeasure);
-  window.addEventListener("resize", () => drawMeasure(measureShape));
+  window.addEventListener("resize", () => { drawMeasure(measureShape); sizeSliceRail(); });
 }
 
 // Build the signal-equation HTML for the hovered tissue at the current protocol.

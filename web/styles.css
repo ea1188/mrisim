@@ -115,17 +115,25 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .image-row { display: flex; gap: 8px; min-height: 0; min-width: 0; }
 .image-row .images { flex: 1; min-width: 0; }
 .slice-rail {
-  display: flex; align-items: center; justify-content: center;
-  width: 30px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  /* The rail column stretches to the row (image) height via the flex line's
+     cross-size; the input is then absolutely positioned to fill it (top/bottom
+     give the vertical range a *definite* height, which a percentage / flex-stretch
+     does not on a range input). Absolute positioning keeps the input out of flow,
+     so it can never grow the row or overlap/intercept the image. */
+  position: relative; flex: none; width: 30px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
 }
 .slice-rail-input {
   /* Vertical range with the maximum (superior slice) at the top, so dragging up
-     scrolls "up" through the stack. slider-vertical covers Safari/older Chrome;
-     writing-mode + direction covers current browsers. Use the native thumb (the
-     custom horizontal thumb above is reset below) for reliable vertical drawing. */
+     scrolls "up" through the stack. writing-mode is the modern path; slider-vertical
+     is the Safari/older-Chrome fallback. Height is an explicit length (a 70vh CSS
+     fallback, refined to the image area in JS) — a vertical range ignores percentage
+     / flex-stretch heights. Absolute → out of flow, so it can't grow the row or
+     overlap the image. */
+  position: absolute; top: 8px; left: 0; right: 0; margin: 0 auto;
   -webkit-appearance: slider-vertical; appearance: slider-vertical;
   writing-mode: vertical-lr; direction: rtl;
-  width: 22px; height: 96%; margin: 0; cursor: ns-resize; accent-color: var(--accent);
+  width: 22px; height: 280px; cursor: ns-resize; accent-color: var(--accent);
 }
 .slice-rail-input::-webkit-slider-runnable-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
 .slice-rail-input::-webkit-slider-thumb { -webkit-appearance: auto; margin: 0; width: auto; height: auto; border: none; background: initial; box-shadow: none; }
