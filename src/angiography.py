@@ -132,9 +132,9 @@ def simulate_phase_contrast(
             # phase = pi * v / venc
             velocity = flow_velocity
             phase_shift = np.pi * velocity / venc
-            # Clip to avoid aliasing (velocity > venc causes wrap)
+            # Velocity above venc wraps the phase into (−π, π] (velocity aliasing).
             if abs(phase_shift) > np.pi:
-                phase_shift = phase_shift % (2 * np.pi) - np.pi  # velocity aliasing
+                phase_shift = (phase_shift + np.pi) % (2 * np.pi) - np.pi
             phase[mask] = phase_shift
     
     # Speed image (magnitude of velocity)

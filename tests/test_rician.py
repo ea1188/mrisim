@@ -57,10 +57,23 @@ class TestRicianPdf:
 # ---------------------------------------------------------------------------
 class TestRicianMean:
     def test_high_snr_approximation(self):
-        # E[M] ≈ sqrt(ν² + σ²)
+        # At high SNR the exact mean is very close to (but slightly above) the
+        # √(ν²+σ²) approximation.
         nu, sigma = 10., 1.
         m = rician_mean(nu, sigma)
-        assert m == pytest.approx(np.sqrt(nu**2 + sigma**2), rel=1e-6)
+        assert m == pytest.approx(np.sqrt(nu**2 + sigma**2), rel=1e-3)
+        assert m >= np.sqrt(nu**2 + sigma**2)            # exact ≥ approximation
+
+    def test_exact_mean_at_zero_nu(self):
+        # ν=0 ⇒ Rayleigh: E[M] = σ·√(π/2) ≈ 1.2533σ (the √(ν²+σ²)=σ approx is 25% low).
+        for sigma in (1.0, 2.0, 0.5):
+            assert rician_mean(0.0, sigma) == pytest.approx(sigma * np.sqrt(np.pi / 2), rel=1e-6)
+
+    @pytest.mark.parametrize("nu,sigma", [(0.0, 1.0), (0.5, 1.0), (1.0, 1.0), (2.0, 1.5)])
+    def test_exact_mean_matches_monte_carlo(self, nu, sigma):
+        rng = np.random.default_rng(0)
+        samples = np.hypot(nu + rng.normal(0, sigma, 2_000_000), rng.normal(0, sigma, 2_000_000))
+        assert rician_mean(nu, sigma) == pytest.approx(samples.mean(), abs=2e-3)
 
     def test_mean_ge_nu(self):
         # Rician mean is always ≥ nu (noise floor bias)
@@ -97,6 +110,22 @@ class TestRicianVariance:
         v1 = rician_variance(3., 0.5)
         v2 = rician_variance(3., 2.0)
         assert v2 > v1
+
+    def test_exact_variance_at_zero_nu(self):
+        # ν=0 (Rayleigh): Var = (2 − π/2)·σ² ≈ 0.4292σ² — NOT a constant σ².
+        for sigma in (1.0, 2.0):
+            assert rician_variance(0.0, sigma) == pytest.approx((2 - np.pi / 2) * sigma**2, rel=1e-6)
+
+    def test_variance_is_not_constant_in_nu(self):
+        # Regression guard for the old bug where Var collapsed to σ² for every ν.
+        v = rician_variance(np.array([0.0, 1.0, 3.0, 8.0]), 1.0)
+        assert v[0] < v[-1] and not np.allclose(v, v[0])
+
+    @pytest.mark.parametrize("nu,sigma", [(0.0, 1.0), (0.5, 1.0), (1.0, 1.0), (2.0, 1.5)])
+    def test_exact_variance_matches_monte_carlo(self, nu, sigma):
+        rng = np.random.default_rng(1)
+        samples = np.hypot(nu + rng.normal(0, sigma, 2_000_000), rng.normal(0, sigma, 2_000_000))
+        assert rician_variance(nu, sigma) == pytest.approx(samples.var(), abs=4e-3)
 
 
 # ---------------------------------------------------------------------------

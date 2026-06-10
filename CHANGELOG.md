@@ -12,6 +12,18 @@ frozen.)
 
 ## [Unreleased]
 
+### Fixed
+- **Rician `rician_mean` / `rician_variance` are now exact at all SNR.** `rician_mean`
+  returned only the high-SNR √(ν²+σ²) approximation, which made `rician_variance`
+  collapse to a constant σ² for every ν. Both now use the exact Laguerre closed
+  form (overflow-safe via scaled Bessel functions) — verified against Monte-Carlo
+  (e.g. ν=0 ⇒ mean 1.2533σ, var 0.4292σ²), with low-SNR regression tests added.
+- **PC-MRA velocity-aliasing wrap** was off by π; phases above venc now wrap
+  correctly into (−π, π] (`(φ+π) mod 2π − π`).
+- Removed a dead statement in the fMRI t-map (made the rest/active split explicit)
+  and corrected a gyromagnetic-ratio typo (42.576→42.577 MHz/T) so it matches the
+  rest of the engine.
+
 ### Added
 - **Vertical slice rail beside the image.** A slider sits next to the image you can
   drag up/down to scroll through slices — handy on a tablet or phone where there's

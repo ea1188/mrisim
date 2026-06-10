@@ -177,19 +177,19 @@ def compute_t_statistic_map(
     rest_image = simulate_fmri_fast(phantom, activation, TR, TE, flip_angle, is_active=False)
     active_image = simulate_fmri_fast(phantom, activation, TR, TE, flip_angle, is_active=True)
     
-    # Simulate time series with noise
+    # Simulate time series with noise — split the run into rest/active volumes.
     n_rest = num_volumes // 2
-    num_volumes // 2
-    
+    n_active = num_volumes - n_rest
+
     # Add temporal noise
     sigma = np.max(rest_image) * noise_level / 100
     
     rest_mean = rest_image
     active_mean = active_image
     
-    # T-statistic: (mean_active - mean_rest) / sqrt(var_rest/n + var_active/n)
-    # With assumed equal variance = sigma^2
-    pooled_se = sigma * np.sqrt(2.0 / n_rest)
+    # T-statistic: (mean_active - mean_rest) / sqrt(var_rest/n_rest + var_active/n_active)
+    # With assumed equal variance = sigma^2 (equal groups → sqrt(2/n)).
+    pooled_se = sigma * np.sqrt(1.0 / n_rest + 1.0 / n_active)
     
     with np.errstate(divide='ignore', invalid='ignore'):
         t_map = np.where(pooled_se > 0, (active_mean - rest_mean) / pooled_se, 0)

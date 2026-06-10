@@ -253,7 +253,7 @@ def calculate_chemical_shift_pixels(bandwidth_per_pixel: float, field_strength: 
     At 3T: frequency difference = 3.5e-6 * 128e6 = 448 Hz
     Shift in pixels = frequency_difference / bandwidth_per_pixel
     """
-    fat_water_shift_hz = 3.5e-6 * field_strength * 42.576e6  # Hz
+    fat_water_shift_hz = 3.5e-6 * field_strength * 42.577e6  # Hz (γ/2π, matches b0/dixon/mt)
     shift_pixels = fat_water_shift_hz / bandwidth_per_pixel
     return shift_pixels
 
