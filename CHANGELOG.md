@@ -12,6 +12,17 @@ frozen.)
 
 ## [Unreleased]
 
+### Removed
+- **Legacy Gradio prototype.** Removed the unused root `app.py` (Gradio web
+  front-end) and its `lessons.py` / `annotations.py` helpers and three test files,
+  and dropped the `gradio` dependency from `requirements.txt` — a smaller install
+  and less 0%-covered surface area. The maintained GUIs (`app_qt.py` desktop, the
+  Pyodide browser build) are unaffected.
+- **Divergent fMRI copy.** Removed `fmri.simulate_fmri_image` / `simulate_bold_signal`
+  (a duplicate of `simulate_fmri_fast` that used a different T2\* table and law and
+  wasn't on any render path) and their tests; the engine's fMRI uses
+  `phantom3d_extended.simulate_fmri_3d_slice`.
+
 ### Fixed
 - **FOV planning: double-oblique now works.** Dragging the slice band only ever
   changed one angle (tilt), because both cross panels were tagged the same way and

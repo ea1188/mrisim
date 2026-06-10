@@ -2,9 +2,7 @@ import numpy as np
 import pytest
 from fmri import (
     create_fmri_phantom,
-    simulate_bold_signal,
     simulate_fmri_fast,
-    simulate_fmri_image,
     compute_activation_map,
     compute_t_statistic_map,
     compute_temporal_snr,
@@ -38,23 +36,6 @@ class TestCreateFmriPhantom:
     def test_has_some_activation(self):
         _, activation = create_fmri_phantom(64)
         assert np.sum(activation > 0) > 0
-
-
-class TestSimulateBoldSignal:
-    def test_returns_float(self):
-        result = simulate_bold_signal(60.0, bold_change_percent=2.0)
-        assert isinstance(result, float)
-
-    def test_activation_increases_t2star(self):
-        # BOLD effect increases T2* in active state
-        T2star_rest = 60.0
-        T2star_active = simulate_bold_signal(T2star_rest, bold_change_percent=3.0)
-        assert T2star_active > T2star_rest
-
-    def test_zero_activation_unchanged(self):
-        T2star = 60.0
-        result = simulate_bold_signal(T2star, bold_change_percent=0.0)
-        assert result == pytest.approx(T2star)
 
 
 class TestSimulateFmriFast:
@@ -116,46 +97,6 @@ class TestComputeTStatisticMap:
             assert t_map[activated_gm].mean() > 0
 
 
-class TestSimulateFmriImage:
-    """Tests for simulate_fmri_image (the vectorised non-fast variant)."""
-
-    def test_output_shape(self, fmri_data):
-        phantom, activation = fmri_data
-        img = simulate_fmri_image(phantom, activation, TR=2000, TE=30)
-        assert img.shape == phantom.shape
-
-    def test_nonnegative(self, fmri_data):
-        phantom, activation = fmri_data
-        img = simulate_fmri_image(phantom, activation, TR=2000, TE=30)
-        assert np.all(img >= 0)
-
-    def test_background_zero(self, fmri_data):
-        phantom, activation = fmri_data
-        img = simulate_fmri_image(phantom, activation, TR=2000, TE=30)
-        assert np.all(img[phantom == 0] == 0.0)
-
-    def test_dtype_float64(self, fmri_data):
-        phantom, activation = fmri_data
-        img = simulate_fmri_image(phantom, activation)
-        assert img.dtype == np.float64
-
-    def test_rest_matches_fast(self, fmri_data):
-        """simulate_fmri_image rest state should match simulate_fmri_fast."""
-        phantom, activation = fmri_data
-        img_img = simulate_fmri_image(phantom, activation, TR=2000, TE=30, is_active=False)
-        img_fast = simulate_fmri_fast(phantom, activation, TR=2000, TE=30, is_active=False)
-        # Both functions use the same GRE formula for non-GM tissue
-        np.testing.assert_allclose(img_img[phantom != 2], img_fast[phantom != 2], rtol=1e-6)
-
-    def test_active_ne_rest_with_activation(self, fmri_data):
-        phantom, activation = fmri_data
-        rest = simulate_fmri_image(phantom, activation, TR=2000, TE=30, is_active=False)
-        active = simulate_fmri_image(phantom, activation, TR=2000, TE=30, is_active=True)
-        activated_gm = (phantom == 2) & (activation > 1.0)
-        if np.any(activated_gm):
-            assert not np.allclose(rest[activated_gm], active[activated_gm])
-
-
 class TestFmriPhysics:
     def test_longer_te_reduces_signal(self, fmri_data):
         """Longer TE always reduces GRE signal (T2* decay)."""
@@ -177,14 +118,6 @@ class TestFmriPhysics:
         pct = compute_activation_map(phantom, activation)
         assert np.all(pct[phantom == 0] == 0)
 
-    def test_bold_signal_array_input(self):
-        """simulate_bold_signal must work on ndarray inputs (used inside vectorised loop)."""
-        T2s = np.array([50.0, 60.0, 70.0])
-        acts = np.array([1.0, 2.0, 3.0])
-        result = simulate_bold_signal(T2s, acts)
-        assert result.shape == (3,)
-        assert np.all(result > T2s)
-
     def test_near_zero_denominator_returns_zero(self, fmri_data):
         """flip_angle=90 with very long TR makes denom~0 at some T1 values;
         simulate_fmri_fast must return 0.0 (not NaN/Inf) in that branch."""
@@ -200,20 +133,6 @@ class TestFmriPhysics:
         phantom, activation = fmri_data
         img = simulate_fmri_fast(phantom, activation, TR=2000, TE=30, flip_angle=0)
         assert np.allclose(img, 0.0)
-
-
-# ---------------------------------------------------------------------------
-# Branch coverage additions
-# ---------------------------------------------------------------------------
-class TestSimulateFmriImageZeroFlipAngle:
-    def test_zero_flip_angle_hits_denom_guard(self):
-        """flip_angle=0, TR=0 → denom=0 → image[mask]=0 guard fires (line 93)."""
-        ph = np.array([[2, 2], [0, 0]], dtype=int)
-        act = np.zeros_like(ph, dtype=float)
-        act[0, 0] = 0.5  # some activation in label-2 pixel
-        img = simulate_fmri_image(ph, act, TR=0.0, TE=30.0, flip_angle=0.0, is_active=True)
-        # The denom guard zeroes out label-2 pixels
-        assert np.all(img[ph == 2] == 0.0)
 
 
 class TestComputeTemporalSNR:
