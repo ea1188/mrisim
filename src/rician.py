@@ -5,7 +5,7 @@ This produces a noise floor bias and is especially significant at low SNR.
 """
 
 import numpy as np
-from scipy.special import i0e   # scaled modified Bessel function of order 0
+from scipy.special import i0e, i1e   # scaled modified Bessel functions (orders 0, 1)
 
 
 # ---------------------------------------------------------------------------
@@ -50,7 +50,15 @@ def rician_mean(nu: float | np.ndarray, sigma: float | np.ndarray) -> np.ndarray
     E[M] = σ · sqrt(π/2) · exp(−ν²/(4σ²)) · [(1 + ν²/(2σ²))·I₀(ν²/(4σ²))
                                                 + (ν²/(2σ²))·I₁(ν²/(4σ²))]
 
-    For ν >> σ (high SNR): E[M] ≈ sqrt(ν² + σ²) [good approximation].
+    Computed exactly via scaled Bessel functions (i0e/i1e), which makes the
+    Laguerre form overflow-safe: with z = ν²/(4σ²),
+
+        exp(−z)·Iₙ(z) = i_ne(z),  so
+        E[M] = σ·sqrt(π/2)·[(1+2z)·i0e(z) + 2z·i1e(z)].
+
+    The exact form matters at low SNR (it is ~25% above the √(ν²+σ²) high-SNR
+    approximation at ν=0, where E[M] = σ·sqrt(π/2) ≈ 1.2533σ). For ν=0 with σ=0
+    the magnitude is deterministic, E[M] = |ν|.
 
     Parameters
     ----------
@@ -62,8 +70,12 @@ def rician_mean(nu: float | np.ndarray, sigma: float | np.ndarray) -> np.ndarray
     """
     nu = np.asarray(nu, dtype=float)
     sigma = np.asarray(sigma, dtype=float)
-    # Use the simple high-SNR approximation (< 1% error for SNR > 2)
-    return np.sqrt(nu**2 + sigma**2)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = np.where(sigma > 0, nu**2 / (4.0 * sigma**2), 0.0)
+        laguerre = (1.0 + 2.0 * z) * i0e(z) + 2.0 * z * i1e(z)
+        mean = sigma * np.sqrt(np.pi / 2.0) * laguerre
+    # σ → 0 is the noise-free limit where the magnitude equals |ν| exactly.
+    return np.where(sigma > 0, mean, np.abs(nu))
 
 
 def rician_variance(nu: float | np.ndarray,

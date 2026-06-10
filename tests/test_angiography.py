@@ -102,6 +102,14 @@ class TestSimulatePhaseContrast:
                                               flow_velocity=100)
         assert np.all(np.abs(phase) <= np.pi + 1e-9)
 
+    def test_aliasing_wraps_to_correct_value(self, vascular_phantom):
+        """The aliased phase must be the true wrap into (−π, π], not π off it.
+        At v = 1.2·venc the unwrapped phase is 1.2π → wraps to −0.8π."""
+        _, phase, _ = simulate_phase_contrast(vascular_phantom, venc=80,
+                                              flow_velocity=96)
+        blood = phase[phase != 0]
+        assert blood.size and np.allclose(blood, -0.8 * np.pi, atol=1e-6)
+
     def test_aliased_speed_still_nonnegative(self, vascular_phantom):
         _, _, speed = simulate_phase_contrast(vascular_phantom, venc=40,
                                               flow_velocity=100)
