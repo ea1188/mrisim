@@ -24,6 +24,26 @@ frozen.)
   `phantom3d_extended.simulate_fmri_3d_slice`.
 
 ### Fixed
+- **FOV planning showed only the top half of the 3-plane localizer.** The scout
+  image used `max-width`/`max-height` in a fixed-height box, so its intrinsic size
+  could overflow and the box clipped it. It now uses `object-fit: contain` (which the
+  drag math already assumed), so the whole localizer fits inside its box — and
+  click/drag prescription is unchanged.
+- **Spine and Knee open on their plane's midline, not a body-edge slice.** Loading
+  a region whose canonical plane is sagittal jumped the engine to the middle of the
+  *axial* axis instead — so the Spine opened on slice 111 of a 128-deep left-right
+  axis, a near-lateral cut, and the slice slider got the wrong range. The engine's
+  orientation is now synced before the mid-slice is chosen, so these regions open
+  centred on their true midline. (The 3-plane localizer geometry itself was already
+  correct.)
+- **Rendering is now deterministic.** The Rician noise was the one stochastic step
+  left unseeded, so every re-render reshuffled the noise — the image shimmered when
+  you toggled an overlay or scrolled back to a slice, and an A/B comparison differed
+  partly by chance. It now seeds off the slice, orientation and noise level: identical
+  settings give an identical image, while any noise-affecting change still draws a
+  fresh realization. (This also surfaced that the susceptibility artifact is a no-op
+  on the brain — no internal air cavities — and is refocused by spin echo; its test
+  now exercises it on the abdomen with a gradient echo, where the dropout is real.)
 - **FOV planning: double-oblique now works.** Dragging the slice band only ever
   changed one angle (tilt), because both cross panels were tagged the same way and
   the front-end mapped them both to tilt. Each cross panel now carries its own
