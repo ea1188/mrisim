@@ -43,9 +43,9 @@ try {
   // Accessibility: the intro is a labelled modal dialog.
   if ((await page.getAttribute("#intro", "role")) !== "dialog") fail("intro is not role=dialog");
   if ((await page.getAttribute("#intro", "aria-modal")) !== "true") fail("intro not aria-modal");
-  // The card caps its height so a long dialog scrolls instead of overflowing.
-  const introCard = await page.$eval("#intro .intro-card", (el) => getComputedStyle(el).overflowY);
-  if (!/auto|scroll/.test(introCard)) fail("intro card not scrollable: " + introCard);
+  // The card caps its height and the body scrolls (title/footer/✕ stay pinned).
+  const introBody = await page.$eval("#intro .intro-body", (el) => getComputedStyle(el).overflowY);
+  if (!/auto|scroll/.test(introBody)) fail("intro body not scrollable: " + introBody);
   // The corner ✕ closes the intro too.
   await page.click("#intro-x");
   await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
