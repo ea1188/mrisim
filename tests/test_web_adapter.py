@@ -92,6 +92,22 @@ def test_every_web_region_renders(region):
     _assert_good_render(r, region)
 
 
+@pytest.mark.parametrize("region,plane", [("Spine", "sagittal"), ("Knee", "sagittal")])
+def test_region_opens_on_canonical_plane_midslice(region, plane):
+    """A sagittal-canonical region (Spine/Knee) must open centred on its canonical
+    plane: the returned max_slice spans that plane's axis (not the axial axis), and
+    the initial slice sits at its midpoint. Regression for the Spine opening on a
+    near-lateral, body-edge slice (a 'cut in half' localizer) because the mid slice
+    was computed before the engine's orientation was synced to the plane."""
+    d = wa.set_region(region)
+    axis_len = d["dims"][plane]
+    assert d["max_slice"] == axis_len - 1, (
+        f"{region} max_slice should span the {plane} axis ({axis_len}), got {d['max_slice'] + 1}")
+    h = wa._host()
+    assert h.orientation.get() == plane
+    assert h.slice_idx.get() == (axis_len - 1) // 2, "should open at the canonical-plane midslice"
+
+
 def test_metrics_are_plain_json_types():
     wa.init()
     m = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
@@ -379,17 +395,24 @@ def test_anatomy_labels_do_not_overlap():
                 f"labels overlap: {boxes[i][1]!r} & {boxes[j][1]!r}"
 
 
-@pytest.mark.parametrize("extra", [
-    {"motion_enabled": True, "motion_type": "periodic"},
-    {"chemical_shift_enabled": True, "bandwidth": 32},
-    {"susceptibility_enabled": True},
+# Each artifact is exercised where it is physically meaningful: motion and
+# chemical shift on the brain; susceptibility on the abdomen with a gradient echo
+# (spin echo refocuses static susceptibility, and the brain phantom carries no
+# internal air cavities, so neither would show the dropout — see the susceptibility
+# model in artifacts.py). Noise is deterministic, so a no-op artifact would now be
+# caught as an identical image rather than masked by random noise.
+@pytest.mark.parametrize("extra,region,slice_idx,sequence", [
+    ({"motion_enabled": True, "motion_type": "periodic"}, "Brain", 90, "Spin Echo"),
+    ({"chemical_shift_enabled": True, "bandwidth": 32}, "Brain", 90, "Spin Echo"),
+    ({"susceptibility_enabled": True, "susceptibility_strength": 5.0},
+     "Abdomen", 128, "Gradient Echo"),
 ])
-def test_artifacts_change_the_image(extra):
+def test_artifacts_change_the_image(extra, region, slice_idx, sequence):
     """Each teaching artifact the browser exposes (motion, chemical shift,
     susceptibility) must flow through to the engine and visibly alter the image."""
     wa.init()
-    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
-            "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15}}
+    base = {"region": region, "orientation": "axial", "slice_idx": slice_idx,
+            "params": {"sequence": sequence, "TR": 500, "TE": 15}}
     clean = wa.render(base)
     dirty = wa.render({**base, "params": {**base["params"], **extra}})
     _assert_good_render(dirty, str(extra))
