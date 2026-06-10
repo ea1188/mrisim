@@ -255,6 +255,17 @@ try {
   await page.keyboard.press("ArrowDown");
   await page.waitForTimeout(600);
   if (await page.inputValue("#slice") === kBefore) fail("keyboard did not change the slice");
+  // The keyboard change must also be reflected on the vertical slice rail.
+  if (await page.inputValue("#slice-v") !== await page.inputValue("#slice")) fail("slice rail out of sync with #slice");
+
+  // The vertical slice rail beside the image must drive the slice too.
+  {
+    const before = await page.inputValue("#slice");
+    const target = String(Math.max(0, +before - 12));
+    await page.evaluate((v) => { const r = document.getElementById("slice-v"); r.value = v; r.dispatchEvent(new Event("input")); }, target);
+    await page.waitForTimeout(600);
+    if (await page.inputValue("#slice") === before) fail("slice rail did not change the slice");
+  }
 
   // A new acquisition control (NEX) must re-render and the URL must stay shareable.
   const beforeNex = await page.getAttribute("#mainImage", "src");

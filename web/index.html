@@ -217,18 +217,26 @@
 
     <!-- Viewport -->
     <section class="viewport" aria-label="Image viewport">
-      <div class="images">
-        <div class="imgwrap" id="wrapA">
-          <span class="abtag" id="tagA" hidden>A</span>
-          <span class="ab-caption" id="capA" hidden></span>
-          <img id="mainImage" alt="reconstructed MR image" title="drag = window/level · double-click = reset · hover = inspect tissue" />
-          <svg id="measure-svg" aria-hidden="true"></svg>
-          <div class="probe" id="probe" hidden></div>
+      <div class="image-row">
+        <div class="images">
+          <div class="imgwrap" id="wrapA">
+            <span class="abtag" id="tagA" hidden>A</span>
+            <span class="ab-caption" id="capA" hidden></span>
+            <img id="mainImage" alt="reconstructed MR image" title="drag = window/level · double-click = reset · hover = inspect tissue" />
+            <svg id="measure-svg" aria-hidden="true"></svg>
+            <div class="probe" id="probe" hidden></div>
+          </div>
+          <div class="imgwrap" id="wrapB" hidden>
+            <span class="abtag">B</span>
+            <span class="ab-caption" id="capB" hidden></span>
+            <img id="mainImageB" alt="comparison image" />
+          </div>
         </div>
-        <div class="imgwrap" id="wrapB" hidden>
-          <span class="abtag">B</span>
-          <span class="ab-caption" id="capB" hidden></span>
-          <img id="mainImageB" alt="comparison image" />
+        <!-- Vertical slice rail beside the image: drag up/down to scroll slices
+             (handy on touch, where there's no scroll wheel). Mirrors #slice. -->
+        <div class="slice-rail" title="Drag to scroll through slices">
+          <input type="range" id="slice-v" class="slice-rail-input" orient="vertical"
+                 min="0" max="180" value="90" aria-label="Slice (scroll)" />
         </div>
       </div>
       <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>

@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Vertical slice rail beside the image.** A slider sits next to the image you can
+  drag up/down to scroll through slices — handy on a tablet or phone where there's
+  no scroll wheel. It stays in sync with the wheel, arrow keys, the controls-panel
+  slider and the scout, and announces the slice number to screen readers.
+
 ## [1.10.0] — 2026-06-09
 
 Clinical depth and accessibility: a ring-enhancing abscess, instant SWI/MRA, a
