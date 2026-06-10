@@ -460,7 +460,15 @@ function setSlice(v) {
   const sl = $("slice");
   v = Math.max(0, Math.min(+sl.max, v));
   if (v === +sl.value) return;
-  sl.value = v; $("slice-val").value = v; updateSliderAria("slice"); schedule();
+  sl.value = v; $("slice-val").value = v; updateSliderAria("slice"); reflectSlice(); schedule();
+}
+
+// Keep the vertical slice rail (#slice-v, next to the image) in step with #slice.
+function reflectSlice() {
+  const sl = $("slice"), rail = $("slice-v");
+  if (!rail) return;
+  rail.min = sl.min; rail.max = sl.max; rail.value = sl.value;
+  rail.setAttribute("aria-valuetext", `slice ${sl.value} of ${sl.max}`);
 }
 
 function wireKeyboard() {
@@ -518,6 +526,7 @@ function buildControls(info) {
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
   $("pathology").addEventListener("change", render);   // re-render with/without the demo pathology
+  $("slice-v").addEventListener("input", () => setSlice(+$("slice-v").value));  // rail beside the image
   wireWindowLevel();
   wireScout();
   wireProbe();
@@ -946,9 +955,11 @@ function syncSlice(res, reqSlice) {
   // Don't clobber a slice the user changed (keyboard/wheel/scout) while this
   // async render was in flight — only correct the slider when it still holds the
   // value this render was issued for (e.g. the server clamped it).
-  if (reqSlice !== undefined && +$("slice").value !== reqSlice) return;
+  if (reqSlice !== undefined && +$("slice").value !== reqSlice) { reflectSlice(); return; }
   if (+$("slice").value !== res.slice_idx) $("slice").value = res.slice_idx;
   $("slice-val").value = res.slice_idx;
+  updateSliderAria("slice");
+  reflectSlice();
 }
 
 function setMetrics(res) {

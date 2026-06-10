@@ -111,6 +111,30 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 
 /* Viewport */
 .viewport { display: grid; grid-template-rows: 1fr auto auto; gap: 10px; min-width: 0; }
+/* Image + vertical slice rail share the top (1fr) row. */
+.image-row { display: flex; gap: 8px; min-height: 0; min-width: 0; }
+.image-row .images { flex: 1; min-width: 0; }
+.slice-rail {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+}
+.slice-rail-input {
+  /* Vertical range with the maximum (superior slice) at the top, so dragging up
+     scrolls "up" through the stack. slider-vertical covers Safari/older Chrome;
+     writing-mode + direction covers current browsers. Use the native thumb (the
+     custom horizontal thumb above is reset below) for reliable vertical drawing. */
+  -webkit-appearance: slider-vertical; appearance: slider-vertical;
+  writing-mode: vertical-lr; direction: rtl;
+  width: 22px; height: 96%; margin: 0; cursor: ns-resize; accent-color: var(--accent);
+}
+.slice-rail-input::-webkit-slider-runnable-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
+.slice-rail-input::-webkit-slider-thumb { -webkit-appearance: auto; margin: 0; width: auto; height: auto; border: none; background: initial; box-shadow: none; }
+.slice-rail-input::-moz-range-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
+.slice-rail-input::-moz-range-thumb { width: 16px; height: 16px; }
+@media (pointer: coarse) {
+  .slice-rail { width: 42px; }
+  .slice-rail-input { width: 32px; }
+}
 .scoutwrap {
   background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
   display: grid; place-items: center; overflow: hidden; height: 150px;
