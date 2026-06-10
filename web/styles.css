@@ -126,11 +126,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .slice-rail-input {
   /* Vertical range with the maximum (superior slice) at the top, so dragging up
      scrolls "up" through the stack. writing-mode is the modern path; slider-vertical
-     is the Safari/older-Chrome fallback. */
-  position: absolute; top: 8px; bottom: 8px; left: 0; right: 0; margin: 0 auto;
+     is the Safari/older-Chrome fallback. Height is an explicit length (a 70vh CSS
+     fallback, refined to the image area in JS) — a vertical range ignores percentage
+     / flex-stretch heights. Absolute → out of flow, so it can't grow the row or
+     overlap the image. */
+  position: absolute; top: 8px; left: 0; right: 0; margin: 0 auto;
   -webkit-appearance: slider-vertical; appearance: slider-vertical;
   writing-mode: vertical-lr; direction: rtl;
-  width: 22px; cursor: ns-resize; accent-color: var(--accent);
+  width: 22px; height: 280px; cursor: ns-resize; accent-color: var(--accent);
 }
 .slice-rail-input::-webkit-slider-runnable-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
 .slice-rail-input::-webkit-slider-thumb { -webkit-appearance: auto; margin: 0; width: auto; height: auto; border: none; background: initial; box-shadow: none; }
