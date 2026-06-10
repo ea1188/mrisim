@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.10.1] — 2026-06-10
+
+A correctness-and-polish patch from a pre-release review: the FOV-planning
+localizer no longer clips, sagittal regions open on their true midline, rendering
+is reproducible, and the legacy Gradio prototype and a divergent fMRI copy are gone.
+
 ### Removed
 - **Legacy Gradio prototype.** Removed the unused root `app.py` (Gradio web
   front-end) and its `lessons.py` / `annotations.py` helpers and three test files,
