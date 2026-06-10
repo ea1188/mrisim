@@ -62,6 +62,24 @@ class TestPresets:
             if "fMRI" in name:
                 assert "fmri_volumes" in p, f"{name} missing fmri_volumes"
 
+    def test_3d_presets_use_a_slab_capable_sequence(self):
+        """A preset that requests a 3-D slab acquisition must use a sequence the
+        engine can actually acquire as a slab (SE / GRE / IR / bSSFP) — otherwise
+        the acq3d flag is silently ignored and the '3D' claim is false."""
+        slab_seqs = {"Spin Echo", "Gradient Echo", "Inversion Recovery", "Balanced SSFP"}
+        threed = [n for n, p in PRESETS.items() if p.get("acq3d")]
+        assert threed, "expected some genuinely-3D presets"
+        for name in threed:
+            assert PRESETS[name]["sequence"] in slab_seqs, (
+                f"{name} sets acq3d but its sequence can't be acquired as a 3-D slab")
+
+    def test_3d_named_presets_actually_enable_3d(self):
+        """Presets whose name/description sells a 3-D acquisition must set acq3d,
+        so they don't just claim 3-D in prose (regression: MPRAGE/CISS/SPACE)."""
+        for name in ("Brain MPRAGE", "Brain 3D FLAIR", "Brain 3D T2 (SPACE)",
+                     "Brain CISS (bSSFP)", "Abdomen 3D GRE (VIBE)"):
+            assert PRESETS[name].get("acq3d"), f"{name} should enable acq3d"
+
 
 class TestGetPreset:
     def test_returns_dict_for_known_preset(self):
