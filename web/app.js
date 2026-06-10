@@ -194,6 +194,7 @@ function showIntro() { openDialog("intro", "intro-ok"); }
 function hideIntro() { closeDialog("intro"); localStorage.setItem("mrisim_seen", "1"); }
 function maybeShowIntro() {
   $("intro-ok").addEventListener("click", hideIntro);
+  $("intro-x").addEventListener("click", hideIntro);
   $("help").addEventListener("click", showIntro);
   try { if (!localStorage.getItem("mrisim_seen")) showIntro(); } catch (e) { /* private mode */ }
 }

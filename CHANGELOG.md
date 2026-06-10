@@ -13,10 +13,13 @@ frozen.)
 ## [Unreleased]
 
 ### Fixed
-- **Lesson picker fits the screen.** With the full set of lessons the list ran off
-  the page and pushed the Close button out of reach. The list now **scrolls inside
-  a height-capped card**, and a **corner ✕** closes the picker so you can exit
-  without picking a lesson.
+- **Dialogs always fit the screen.** With the full set of lessons (and on short
+  viewports) the lesson picker and the welcome intro could run off the page and
+  push their buttons out of reach. Both are now **height-capped cards whose body
+  scrolls** while the title, footer and a new **corner ✕** stay pinned — so you can
+  always close them (the ✕ also lets you exit the lesson picker without picking
+  one). The floating active-lesson panel is likewise capped so a long step scrolls
+  rather than pushing its Back/Next buttons off-screen.
 - **Rician `rician_mean` / `rician_variance` are now exact at all SNR.** `rician_mean`
   returned only the high-SNR √(ν²+σ²) approximation, which made `rician_variance`
   collapse to a constant σ² for every ν. Both now use the exact Laguerre closed

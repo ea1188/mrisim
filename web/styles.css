@@ -217,9 +217,15 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   background: rgba(3, 5, 8, 0.72); padding: 16px;
 }
 .intro-card {
-  width: min(520px, 94vw); background: var(--panel); border: 1px solid var(--border-hi);
-  border-radius: 14px; padding: 22px 24px; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+  position: relative; width: min(520px, 94vw); background: var(--panel);
+  border: 1px solid var(--border-hi); border-radius: 14px; padding: 22px 24px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+  /* Never taller than the viewport — the body scrolls while the title, corner ✕
+     and footer button stay pinned (so long dialogs don't lose their controls). */
+  display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
 }
+.intro-body { flex: 1; min-height: 0; overflow-y: auto; }
+.intro-card h2 { padding-right: 30px; }   /* leave room for the corner ✕ */
 .intro-card h2 { margin: 0 0 2px; font-size: 22px; }
 .intro-sub { color: var(--text-dim); margin: 0 0 14px; }
 .intro-card ul { margin: 0 0 18px; padding-left: 18px; }
@@ -249,7 +255,7 @@ kbd {
 
 /* Lesson picker: a height-capped card whose list scrolls internally, with a
    header (title) and footer (Close) that stay put, plus a corner ✕. */
-.lesson-card { position: relative; display: flex; flex-direction: column; max-height: 88vh; }
+.lesson-card { position: relative; display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; }
 .lesson-card h2, .lesson-card .intro-sub { flex: none; }
 .lesson-card #lesson-picker-close { flex: none; align-self: flex-start; margin-top: 14px; }
 .dialog-x {
@@ -279,7 +285,12 @@ kbd {
   position: fixed; left: 16px; bottom: 16px; z-index: 40; width: min(360px, calc(100vw - 32px));
   background: var(--panel); border: 1px solid var(--accent); border-radius: 12px;
   box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5); padding: 13px 15px;
+  /* Cap to the viewport and scroll the step text, so a long step on a short
+     screen doesn't push the panel (or its Back/Next buttons) off-screen. */
+  display: flex; flex-direction: column; max-height: calc(100vh - 32px);
 }
+.lp-head, .lp-foot { flex: none; }
+#lesson-step { overflow-y: auto; }
 .lp-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; color: var(--accent-hi); font-size: 14px; }
 .lp-head button { background: none; border: none; color: var(--text-dim); font-size: 15px; cursor: pointer; }
 #lesson-step { color: #c4cad2; font-size: 13px; line-height: 1.5; margin: 9px 0 12px; }
