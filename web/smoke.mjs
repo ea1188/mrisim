@@ -17,8 +17,10 @@ const errors = [];
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 
+let _step = "start";
+function step(name) { _step = name; console.log("• " + name); }
 function fail(msg) {
-  console.error("SMOKE FAIL:", msg);
+  console.error("SMOKE FAIL [" + _step + "]:", msg);
   if (errors.length) console.error("page errors:\n" + errors.join("\n"));
   process.exit(1);
 }
@@ -27,8 +29,10 @@ try {
   await page.goto(url, { waitUntil: "domcontentloaded" });
 
   // The control panel unhides once Pyodide has booted and the first render lands.
+  step("boot (await #app)");
   await page.waitForSelector("#app:not([hidden])", { timeout: BOOT_TIMEOUT });
 
+  step("first image render");
   // The main image must carry a real PNG data URL.
   await page.waitForFunction(
     () => {
@@ -38,6 +42,7 @@ try {
     { timeout: 30_000 },
   );
 
+  step("intro");
   // First-run intro must appear, then dismiss it (it overlays the controls).
   await page.waitForSelector("#intro:not([hidden])", { timeout: 10_000 });
   // Accessibility: the intro is a labelled modal dialog.
@@ -69,12 +74,14 @@ try {
   const vt1 = await page.getAttribute("#tr", "aria-valuetext");
   if (vt1 === vt0) fail("TR aria-valuetext did not update on change: " + vt1);
 
+  step("sequence change");
   // Changing the sequence must re-render without throwing.
   await page.selectOption("#sequence", "Gradient Echo");
   await page.waitForTimeout(1500);
   const src2 = await page.getAttribute("#mainImage", "src");
   if (!src2 || !src2.startsWith("data:image/png")) fail("re-render after sequence change failed");
 
+  step("preset apply");
   // Applying a preset must repopulate controls and re-render.
   const presets = await page.$$eval("#preset option", (os) => os.map((o) => o.value).filter(Boolean));
   if (presets.length === 0) fail("no presets listed");
@@ -84,6 +91,7 @@ try {
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     before, { timeout: 30_000 });
 
+  step("A/B compare");
   // A/B compare: snapshot A, tweak B, expect two images + a delta line.
   await page.click("#setA");
   await page.waitForSelector("#wrapB:not([hidden])", { timeout: 10_000 });
@@ -104,6 +112,7 @@ try {
   const touchAction = await page.$eval("#mainImage", (el) => getComputedStyle(el).touchAction);
   if (touchAction !== "none") fail("mainImage touch-action should be none, got: " + touchAction);
 
+  step("window/level");
   // Window/level drag must change the image (single render path).
   const beforeWL = await page.getAttribute("#mainImage", "src");
   const box = await page.$eval("#mainImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
@@ -201,6 +210,7 @@ try {
     { timeout: 5_000 });
   await page.uncheck("#mathshow");
 
+  step("FOV scout");
   // FOV-planning scout: toggling on must render the 3-plane localizer.
   await page.check("#fovplan");
   await page.waitForSelector("#scoutwrap:not([hidden])", { timeout: 5_000 });
@@ -285,6 +295,7 @@ try {
   ]);
   if (!download.suggestedFilename().endsWith(".png")) fail("download is not a .png: " + download.suggestedFilename());
 
+  step("lessons");
   // Guided lessons: open the picker, start a lesson, advance a step.
   await page.click("#lessons-btn");
   await page.waitForSelector("#lesson-picker:not([hidden])", { timeout: 5_000 });
@@ -311,6 +322,7 @@ try {
   await page.click("#lesson-exit");
   await page.waitForSelector("#lesson-panel", { state: "hidden", timeout: 5_000 });
 
+  step("abdomen atlas");
   // Real body atlas: switching to Abdomen lazy-fetches its segmented atlas and
   // renders real anatomy.
   const beforeRegion = await page.getAttribute("#mainImage", "src");
