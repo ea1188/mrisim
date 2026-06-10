@@ -229,6 +229,15 @@ try {
   await page.waitForFunction(
     () => { const i = document.getElementById("scoutImage"); return i && i.naturalWidth > 0; },
     { timeout: 15_000 });
+  // The whole 3-plane localizer must be visible, not clipped to its top half:
+  // the image uses object-fit:contain (which the drag math assumes) and must not
+  // overflow its fixed-height box.
+  const fit = await page.$eval("#scoutImage", (el) => {
+    const r = el.getBoundingClientRect(), w = el.parentElement.getBoundingClientRect();
+    return { of: getComputedStyle(el).objectFit, overflow: r.bottom - w.bottom, clippedTop: w.top - r.top };
+  });
+  if (fit.of !== "contain") fail("scout image must use object-fit:contain (got " + fit.of + ")");
+  if (fit.overflow > 2 || fit.clippedTop > 2) fail("scout localizer is clipped by its box (overflow " + fit.overflow.toFixed(1) + "px)");
   const sliceBefore = await page.inputValue("#slice");
   const sb = await page.$eval("#scoutImage", (el) => { const r = el.getBoundingClientRect(); return { w: r.width, h: r.height }; });
   // Element-relative click so events target the scout image regardless of layout.
