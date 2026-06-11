@@ -36,5 +36,9 @@ jobs:
       - name: Run tests
         run: python -m pytest tests/ --tb=short -q
 
-      - name: Coverage report
-        run: python -m pytest tests/ --cov=src --cov-report=term-missing --tb=no -q
+      - name: Coverage report (with regression floor)
+        # Fails if total coverage drops below the floor — guards against new
+        # untested code. Current total ~87% (non-GUI engine ~94%, GUI ~74%); the
+        # floor sits a couple of points below so it catches regressions without
+        # being brittle to platform line-count noise.
+        run: python -m pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=85 --tb=no -q

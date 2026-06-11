@@ -265,7 +265,7 @@ From the repository root (`tests/conftest.py` puts `src/` on the path and forces
 pytest                  # or: python -m pytest
 ```
 
-2,000+ tests, all passing. Coverage is 97%+ across all non-GUI modules, and the PyQt GUI is now exercised by a headless smoke-test harness (~94%). CI also runs `ruff` (lint) and strict `mypy` (type-checking) on every push.
+2,000+ tests, all passing. Coverage is ~94% across the non-GUI engine modules and ~87% overall; the PyQt GUI is additionally exercised by a headless smoke-test harness. CI runs `ruff` (lint) and strict `mypy` (type-checking) on every push, and enforces a **coverage floor** so new untested code fails the build.
 
 ## Validation
 
