@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-06-10
+
+Browser parity with the desktop's teaching tools: advanced-sequence displays,
+k-space and pulse-sequence-diagram panels, parallel-imaging controls with g-factor
+and B0 field maps, and six new guided lessons — plus honest coverage numbers and a
+CI coverage floor.
+
 ### Changed
 - **Honest coverage numbers + a CI coverage floor.** The README claimed "97%+
   non-GUI / ~94% GUI"; the measured figures are ~94% non-GUI, ~74% GUI, ~87%
