@@ -13,6 +13,13 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Parallel imaging + physics-map views in the browser.** New parallel-imaging
+  controls (acceleration **R** + method), a **partial-volume** slider (desktop
+  parity), and two map panels that surface previously library-only physics: a
+  **g-factor map** (SENSE noise amplification, via `coil.g_factor_map`) and a **B0
+  off-resonance field map** (the susceptibility inhomogeneity that warps EPI). Two
+  new lessons use them: "Parallel imaging & the g-factor" and "B0 inhomogeneity &
+  EPI distortion".
 - **k-space and pulse-sequence-diagram panels in the browser.** Two new toggles
   show the raw **k-space** (log-magnitude of the acquired data the image is the
   Fourier transform of) and the **pulse-sequence diagram** for the current sequence

@@ -132,6 +132,28 @@ def test_kspace_and_psd_panels_render():
     assert r3["kspace"].startswith("data:image/png")
 
 
+def test_physics_map_panels_render():
+    """The B0 field-map and parallel-imaging g-factor-map panels render on demand.
+    The g-factor map needs acceleration R>1 (SENSE/GRAPPA); at R=1 it returns a
+    note PNG rather than a meaningless map."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90}
+    r = wa.render({**base, "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15,
+                                      "accel_factor": 3, "accel_method": "SENSE"},
+                   "show_b0map": True, "show_gfactor": True})
+    assert r["b0map"].startswith("data:image/png")
+    assert r["gfactor"].startswith("data:image/png")
+    # Off by default.
+    r0 = wa.render({**base, "params": {"sequence": "Spin Echo"}})
+    assert r0["b0map"] is None and r0["gfactor"] is None
+    # g-factor at R=1 still returns a (note) PNG, not an error.
+    r1 = wa.render({**base, "params": {"sequence": "Spin Echo", "accel_factor": 1},
+                    "show_gfactor": True})
+    assert r1["gfactor"].startswith("data:image/png")
+    # partial-volume passthrough renders.
+    assert wa.render({**base, "params": {"sequence": "Spin Echo", "pv_sigma": 25}})["image"].startswith("data:image/png")
+
+
 @pytest.mark.parametrize("region,plane", [("Spine", "sagittal"), ("Knee", "sagittal")])
 def test_region_opens_on_canonical_plane_midslice(region, plane):
     """A sagittal-canonical region (Spine/Knee) must open centred on its canonical

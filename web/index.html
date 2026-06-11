@@ -155,6 +155,8 @@
         <label class="check"><input type="checkbox" id="cmap" /> Contrast map (TR×TE)</label>
         <label class="check"><input type="checkbox" id="kspaceshow" /> Show k-space (the raw data)</label>
         <label class="check"><input type="checkbox" id="psdshow" /> Show pulse-sequence diagram</label>
+        <label class="check"><input type="checkbox" id="b0mapshow" /> Show B0 field map (off-resonance)</label>
+        <label class="check"><input type="checkbox" id="gfactorshow" /> Show g-factor map (parallel imaging)</label>
         <label class="check"><input type="checkbox" id="mathshow" /> Show the math (hover a pixel)</label>
       </div>
 
@@ -230,6 +232,17 @@
         <label class="check" id="kzpf-row" hidden><input type="checkbox" id="kzpf" /> kz partial Fourier</label>
         <p class="tiny" id="slab-readout" hidden></p>
       </div>
+
+      <div class="group">
+        <h2>Parallel imaging &amp; sampling</h2>
+        <label>Acceleration R <output id="accel-val">1</output>
+          <input type="range" id="accel" min="1" max="4" step="1" value="1" /></label>
+        <label id="accelmethod-row" hidden>Method
+          <select id="accelmethod"><option>SENSE</option><option>GRAPPA</option><option>CS</option></select></label>
+        <label>Partial volume (×0.1 vox) <output id="pv-val">10</output>
+          <input type="range" id="pv" min="0" max="30" step="1" value="10" /></label>
+        <p class="tiny">Higher R is faster but noisier (g-factor); partial volume blurs sub-voxel tissue boundaries.</p>
+      </div>
     </section>
 
     <!-- Viewport -->
@@ -260,6 +273,8 @@
       <div class="curvewrap"><img id="curveImage" alt="signal curve" /></div>
       <div class="curvewrap" id="cmapwrap" hidden><img id="cmapImage" alt="TR×TE contrast map" /></div>
       <div class="kspacewrap" id="kspacewrap" hidden><img id="kspaceImage" alt="k-space (log magnitude)" /></div>
+      <div class="kspacewrap" id="b0mapwrap" hidden><img id="b0mapImage" alt="B0 off-resonance field map" /></div>
+      <div class="kspacewrap" id="gfactorwrap" hidden><img id="gfactorImage" alt="parallel-imaging g-factor map" /></div>
       <div class="curvewrap" id="psdwrap" hidden><img id="psdImage" alt="pulse-sequence diagram" /></div>
       <div class="mathwrap" id="mathwrap" hidden><div class="mathbox" id="math">Hover a pixel to see its signal equation.</div></div>
     </section>
