@@ -114,7 +114,15 @@
           <select id="sequence"></select></label>
         <p class="tiny" id="seq-help" aria-live="polite"></p>
         <label>Field strength
-          <select id="field"><option>1.5T</option><option selected>3T</option></select></label>
+          <select id="field"><option>1.5T</option><option selected>3T</option><option>7T</option></select></label>
+        <label id="diffdisp-row" hidden>Diffusion display
+          <select id="diffdisp"><option>DWI</option><option>ADC Map</option><option>FA Map</option></select></label>
+        <label id="angiotype-row" hidden>Angiography
+          <select id="angiotype"><option>TOF</option><option>Phase Contrast</option></select></label>
+        <label id="qmridisp-row" hidden>Quantitative map
+          <select id="qmridisp"><option>T1 Map (VFA)</option><option>T2 Map (multi-echo)</option><option>T2* Map (multi-echo)</option><option>Synthetic SE</option></select></label>
+        <label id="fmridisp-row" hidden>fMRI display
+          <select id="fmridisp"><option>EPI Image</option><option>Activation Map</option><option>T-statistic Map</option></select></label>
         <label>Orientation
           <div class="radios" id="orientation" role="group" aria-label="Slice orientation">
             <button data-v="axial" class="on" aria-pressed="true">Axial</button>

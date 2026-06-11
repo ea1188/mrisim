@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Advanced-sequence displays in the browser.** The web build now exposes the
+  per-sequence display modes the desktop has: diffusion **DWI / ADC / FA**,
+  angiography **TOF / Phase-Contrast**, the **qMRI map** picker (T1 / T2 / T2* /
+  Synthetic SE) and the **fMRI** display — plus **7 T** as a field strength. Two new
+  lessons use them: "DWI vs ADC — is the restriction real?" and "qMRI — measuring
+  tissue, not a picture" (23 lessons total).
+
 ## [1.11.0] — 2026-06-10
 
 Teaching depth: the 3D slab now explains what it buys, presets genuinely drive 3D
