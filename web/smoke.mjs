@@ -278,6 +278,21 @@ try {
     { timeout: 20_000 });
   await page.uncheck("#acq3d");
 
+  step("sub-displays");
+  // Per-sequence display dropdowns: Diffusion exposes a DWI/ADC/FA picker, and
+  // switching it must re-render (the engine returns a different map). 7T must be a
+  // selectable field strength.
+  await page.selectOption("#sequence", "Diffusion (DWI)");
+  await page.waitForSelector("#diffdisp-row:not([hidden])", { timeout: 5_000 });
+  const dwiSrc = await page.getAttribute("#mainImage", "src");
+  await page.selectOption("#diffdisp", "ADC Map");
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev && s.length > 2000; },
+    dwiSrc, { timeout: 20_000 });
+  if (!(await page.$$eval("#field option", (os) => os.some((o) => o.value === "7T" || o.textContent === "7T"))))
+    fail("7T must be a selectable field strength");
+  await page.selectOption("#sequence", "Spin Echo");
+
   // Contrast map (TR×TE): toggling on must render the landscape panel.
   await page.check("#cmap");
   await page.waitForSelector("#cmapwrap:not([hidden])", { timeout: 5_000 });

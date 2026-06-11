@@ -137,6 +137,10 @@ async function applyState(st) {
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat",
    "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   if (st.motiontype) $("motiontype").value = st.motiontype;
+  if (st.diffdisp) $("diffdisp").value = st.diffdisp;
+  if (st.angiotype) $("angiotype").value = st.angiotype;
+  if (st.qmridisp) $("qmridisp").value = st.qmridisp;
+  if (st.fmridisp) $("fmridisp").value = st.fmridisp;
   // Pathology select (back-compat: the old boolean `lesion` maps to "lesion").
   if (st.pathology !== undefined) $("pathology").value = st.pathology;
   else if (st.lesion !== undefined) $("pathology").value = st.lesion ? "lesion" : "";
@@ -450,6 +454,28 @@ const LESSONS = [
         state: { slice: 100 } },
     ],
   },
+  {
+    title: "DWI vs ADC — is the restriction real?",
+    blurb: "The ADC map tells true restriction from T2 shine-through.",
+    steps: [
+      { text: "An <b>acute stroke</b> on <b>DWI</b> (high b-value): the infarct restricts water diffusion and lights up <b>bright</b> — the earliest sign of infarction.",
+        state: { region: "Brain", seq: "Diffusion (DWI)", orient: "axial", slice: 90, bval: 1000, pathology: "stroke", diffdisp: "DWI" } },
+      { text: "But bright on DWI isn't always real restriction — long-T2 tissue can be bright by <b>T2 shine-through</b>. Switch the <b>Diffusion display</b> to the <b>ADC map</b>.",
+        state: { diffdisp: "ADC Map" } },
+      { text: "On the <b>ADC map</b>, genuine restriction is <b>dark</b> (low ADC) — the stroke confirms. T2 shine-through would stay bright on ADC. Always read DWI <i>and</i> ADC together.",
+        state: { diffdisp: "ADC Map" } },
+    ],
+  },
+  {
+    title: "qMRI — measuring tissue, not a picture",
+    blurb: "Quantitative maps read the actual T1 / T2 in milliseconds.",
+    steps: [
+      { text: "Switch to <b>Quantitative (qMRI)</b> with the <b>T1 map</b>. Instead of a weighted picture, each pixel is the tissue's <b>actual T1 in ms</b> — hover to read it. CSF is long-T1 (bright), white matter short-T1 (dark).",
+        state: { region: "Brain", seq: "Quantitative (qMRI)", orient: "axial", slice: 90, qmridisp: "T1 Map (VFA)" } },
+      { text: "Now the <b>T2 map</b>: each pixel is the actual <b>T2 in ms</b>. These absolute numbers are reproducible across scanners — the basis of quantitative MRI (e.g. cartilage T2, myocardial T1 mapping) where a <i>value</i>, not just contrast, matters.",
+        state: { qmridisp: "T2 Map (multi-echo)" } },
+    ],
+  },
 ];
 
 let lessonIdx = -1, stepIdx = 0;
@@ -624,6 +650,7 @@ function buildControls(info) {
   ["motion", "chemshift", "suscept"].forEach((id) =>
     $(id).addEventListener("change", () => { syncVisibility(); schedule(); }));
   $("motiontype").addEventListener("change", schedule);
+  ["diffdisp", "angiotype", "qmridisp", "fmridisp"].forEach((id) => $(id).addEventListener("change", schedule));
   $("orientation").querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => {
       $("orientation").querySelectorAll("button").forEach((x) => x.classList.remove("on"));
@@ -648,6 +675,10 @@ function syncVisibility() {
   $("fa-row").hidden = !SEQ_FA.has(s);
   $("ti-row").hidden = !SEQ_TI.has(s);
   $("bval-row").hidden = s !== "Diffusion (DWI)";
+  $("diffdisp-row").hidden = s !== "Diffusion (DWI)";
+  $("angiotype-row").hidden = s !== "MR Angiography";
+  $("qmridisp-row").hidden = s !== "Quantitative (qMRI)";
+  $("fmridisp-row").hidden = s !== "fMRI (BOLD)";
   $("etl-row").hidden = s !== "FSE / TSE";
   const is3d = ACQ3D_SEQ.has(s);
   $("acq3d").disabled = !is3d;
@@ -699,8 +730,11 @@ function collectPayload() {
     chemical_shift_enabled: $("chemshift").checked,
     susceptibility_enabled: $("suscept").checked,
   };
-  if (s === "Diffusion (DWI)") params.b_value = +$("bval").value;
+  if (s === "Diffusion (DWI)") { params.b_value = +$("bval").value; params.diff_display = $("diffdisp").value; }
   if (s === "FSE / TSE") params.etl = +$("etl").value;
+  if (s === "MR Angiography") params.angio_type = $("angiotype").value;
+  if (s === "Quantitative (qMRI)") params.qmri_display = $("qmridisp").value;
+  if (s === "fMRI (BOLD)") params.fmri_display = $("fmridisp").value;
   if (ACQ3D_SEQ.has(s) && $("acq3d").checked) {
     params.acq3d = true;
     params.n_partitions = +$("np").value;
@@ -744,6 +778,10 @@ async function onPreset() {
   set("tr", p.TR); set("te", p.TE); set("ti", p.TI); set("fa", p.flip_angle);
   set("matrix", p.matrix_size); set("bw", p.bandwidth); set("nex", p.NEX);
   set("bval", p.b_value); set("etl", p.etl); set("thick", p.slice_thickness);
+  if (p.diff_display) $("diffdisp").value = p.diff_display;
+  if (p.angio_type) $("angiotype").value = p.angio_type;
+  if (p.qmri_display) $("qmridisp").value = p.qmri_display;
+  if (p.fmri_display) $("fmridisp").value = p.fmri_display;
   if (p.field_strength) $("field").value = p.field_strength;
   $("fatsat").checked = !!p.fatsat_enabled;
   $("gd").checked = !!p.contrast_enabled;

@@ -92,6 +92,25 @@ def test_every_web_region_renders(region):
     _assert_good_render(r, region)
 
 
+def test_subdisplay_modes_render_distinct_images():
+    """The per-sequence display modes the browser now exposes (DWI ADC/FA, MRA
+    TOF/PC, qMRI maps) must each render, and switching mode must change the image —
+    otherwise the new control is a no-op (deterministic noise makes this exact)."""
+    wa.init()
+    def img(**p):
+        return wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                          "params": p})["image"]
+    dwi = img(sequence="Diffusion (DWI)", diff_display="DWI", b_value=1000)
+    adc = img(sequence="Diffusion (DWI)", diff_display="ADC Map", b_value=1000)
+    fa = img(sequence="Diffusion (DWI)", diff_display="FA Map", b_value=1000)
+    assert dwi != adc != fa and dwi != fa, "DWI / ADC / FA must differ"
+    t1 = img(sequence="Quantitative (qMRI)", qmri_display="T1 Map (VFA)")
+    t2 = img(sequence="Quantitative (qMRI)", qmri_display="T2 Map (multi-echo)")
+    assert t1 != t2, "qMRI T1 and T2 maps must differ"
+    # 7T must be an accepted field strength that renders.
+    assert img(sequence="Spin Echo", field_strength="7T", TR=600, TE=12).startswith("data:image/png")
+
+
 @pytest.mark.parametrize("region,plane", [("Spine", "sagittal"), ("Knee", "sagittal")])
 def test_region_opens_on_canonical_plane_midslice(region, plane):
     """A sagittal-canonical region (Spine/Knee) must open centred on its canonical
