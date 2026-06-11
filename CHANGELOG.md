@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Changed
+- **Honest coverage numbers + a CI coverage floor.** The README claimed "97%+
+  non-GUI / ~94% GUI"; the measured figures are ~94% non-GUI, ~74% GUI, ~87%
+  overall — corrected in the README. CI now enforces `--cov-fail-under=85` so new
+  untested code fails the build.
+
 ### Added
 - **Parallel imaging + physics-map views in the browser.** New parallel-imaging
   controls (acceleration **R** + method), a **partial-volume** slider (desktop
