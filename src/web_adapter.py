@@ -118,6 +118,9 @@ class WebHost(CurvesMixin):
         # TR×TE contrast-landscape map (optional teaching panel).
         self.cmap_fig = Figure(figsize=(7.2, 3.0), facecolor=_C_PANEL)
         self.cmap_ax = self.cmap_fig.add_subplot(111)
+        self.kspace_fig = Figure(figsize=(3.4, 3.4), facecolor=_C_CANVAS)
+        self.kspace_ax = self.kspace_fig.add_subplot(111)
+        self.psd_fig = Figure(figsize=(7.2, 3.0), facecolor=_C_PANEL)
         self.load_region("Brain")
 
     # --- anatomy ------------------------------------------------------------ #
@@ -368,6 +371,8 @@ class WebHost(CurvesMixin):
             "orientation": orient,
             "probe": self._probe_data(orient, sl, params),
             "cmap": self._draw_contrast_map(params) if payload.get("contrast_map") else None,
+            "kspace": self._draw_kspace() if payload.get("show_kspace") else None,
+            "psd": self._draw_psd(params) if payload.get("show_psd") else None,
         }
 
     def _probe_data(self, orient: str, sl: int, params: dict) -> "dict | None":
@@ -632,6 +637,34 @@ class WebHost(CurvesMixin):
             ax.set_axis_off()
         self.cmap_fig.subplots_adjust(left=0.085, right=0.985, top=0.88, bottom=0.17)
         return _png_b64(self.cmap_fig)
+
+    def _draw_kspace(self) -> str:
+        """Log-magnitude of the acquired k-space (the raw data the image is the
+        Fourier transform of). Populated by the 2-D acquisition; the 3-D slab path
+        doesn't keep a single 2-D plane, so show a note there instead."""
+        from kspace import get_kspace_display
+        ax = self.kspace_ax
+        ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
+        ks = self.sim.last_kspace
+        if ks is None:
+            ax.text(0.5, 0.5, "k-space view is shown for 2-D acquisitions\n(turn off 3-D slab)",
+                    color="#6b7585", ha="center", va="center", transform=ax.transAxes, fontsize=9)
+        else:
+            ax.imshow(get_kspace_display(ks), cmap="hot", origin="lower", aspect="equal")
+            ax.set_title("k-space  (log |S|)", color="#9aa4b2", fontsize=8, pad=3)
+        self.kspace_fig.subplots_adjust(left=0.02, right=0.98, top=0.92, bottom=0.02)
+        return _png_b64(self.kspace_fig)
+
+    def _draw_psd(self, params: dict) -> str:
+        """Pulse-sequence diagram for the current sequence (RF / gradient / signal
+        events on a local timeline) — reuses the desktop's psd renderers."""
+        from psd import draw_psd
+        self.psd_fig.clear()
+        draw_psd(self.psd_fig, params["sequence"], params["TR"], params["TE"],
+                 params.get("TI", 150), params.get("flip_angle", 90),
+                 int(params.get("etl", 1)), params.get("echo_spacing", 10),
+                 params.get("b_value", 1000))
+        return _png_b64(self.psd_fig)
 
     # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
     # (row_axis, col_axis) of each scout panel in (Z,Y,X) volume terms; the
