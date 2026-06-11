@@ -121,6 +121,10 @@ class WebHost(CurvesMixin):
         self.kspace_fig = Figure(figsize=(3.4, 3.4), facecolor=_C_CANVAS)
         self.kspace_ax = self.kspace_fig.add_subplot(111)
         self.psd_fig = Figure(figsize=(7.2, 3.0), facecolor=_C_PANEL)
+        self.b0map_fig = Figure(figsize=(3.6, 3.6), facecolor=_C_CANVAS)
+        self.b0map_ax = self.b0map_fig.add_subplot(111)
+        self.gfactor_fig = Figure(figsize=(3.6, 3.6), facecolor=_C_CANVAS)
+        self.gfactor_ax = self.gfactor_fig.add_subplot(111)
         self.load_region("Brain")
 
     # --- anatomy ------------------------------------------------------------ #
@@ -373,6 +377,8 @@ class WebHost(CurvesMixin):
             "cmap": self._draw_contrast_map(params) if payload.get("contrast_map") else None,
             "kspace": self._draw_kspace() if payload.get("show_kspace") else None,
             "psd": self._draw_psd(params) if payload.get("show_psd") else None,
+            "b0map": self._draw_b0map(orient, sl, params) if payload.get("show_b0map") else None,
+            "gfactor": self._draw_gfactor(orient, sl, params) if payload.get("show_gfactor") else None,
         }
 
     def _probe_data(self, orient: str, sl: int, params: dict) -> "dict | None":
@@ -665,6 +671,48 @@ class WebHost(CurvesMixin):
                  int(params.get("etl", 1)), params.get("echo_spacing", 10),
                  params.get("b_value", 1000))
         return _png_b64(self.psd_fig)
+
+    def _draw_b0map(self, orient: str, sl: int, params: dict) -> str:
+        """B0 off-resonance field of the current slice (Hz) — the susceptibility-
+        driven inhomogeneity that warps EPI and shifts fat. Reuses the engine's
+        per-slice field used for EPI distortion."""
+        _B0 = {"1.5T": 1.5, "3T": 3.0, "7T": 7.0}.get(params.get("field_strength", "3T"), 3.0)
+        ax = self.b0map_ax
+        ax.clear(); ax.set_axis_off()
+        try:
+            field = np.asarray(self.sim._b0_field_slice(orient, sl, params, _B0))
+        except Exception:
+            ax.text(0.5, 0.5, "field map n/a", color="#6b7585", ha="center",
+                    va="center", transform=ax.transAxes); return _png_b64(self.b0map_fig)
+        lim = float(max(1.0, np.percentile(np.abs(field), 99)))
+        im = ax.imshow(field, cmap="RdBu_r", origin="lower", vmin=-lim, vmax=lim)
+        ax.set_title("B0 off-resonance (Hz)", color="#9aa4b2", fontsize=8, pad=3)
+        self.b0map_fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
+        self.b0map_fig.subplots_adjust(left=0.02, right=0.9, top=0.92, bottom=0.02)
+        return _png_b64(self.b0map_fig)
+
+    def _draw_gfactor(self, orient: str, sl: int, params: dict) -> str:
+        """SENSE g-factor map — local noise amplification from parallel-imaging
+        unfolding, which grows with the acceleration R. Reuses coil.g_factor_map."""
+        import coil
+        ax = self.gfactor_ax
+        ax.clear(); ax.set_axis_off()
+        R = int(params.get("accel_factor", 1))
+        if R <= 1 or params.get("accel_method") not in ("SENSE", "GRAPPA"):
+            ax.text(0.5, 0.5, "g-factor map shows parallel-imaging\nnoise — set acceleration R > 1 (SENSE)",
+                    color="#6b7585", ha="center", va="center", transform=ax.transAxes, fontsize=9)
+            return _png_b64(self.gfactor_fig)
+        lab = np.asarray(self.sim._b0_field_slice(orient, sl, params, 3.0))   # slice geometry
+        H, W = lab.shape
+        Ht = (H // R) * R
+        sens = coil.head_coil_array((Ht, W), n_coils=8)
+        g = coil.g_factor_map(sens, R)
+        im = ax.imshow(g, cmap="viridis", origin="lower", vmin=1.0,
+                       vmax=float(max(1.2, np.percentile(g, 99))))
+        ax.set_title(f"g-factor map (R={R})", color="#9aa4b2", fontsize=8, pad=3)
+        self.gfactor_fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
+        self.gfactor_fig.subplots_adjust(left=0.02, right=0.9, top=0.92, bottom=0.02)
+        return _png_b64(self.gfactor_fig)
 
     # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
     # (row_axis, col_axis) of each scout panel in (Z,Y,X) volume terms; the

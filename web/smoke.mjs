@@ -308,6 +308,26 @@ try {
   await page.uncheck("#kspaceshow");
   await page.uncheck("#psdshow");
 
+  step("physics maps");
+  // Parallel imaging: raising R reveals the method picker; the g-factor map then
+  // renders the noise-amplification map. The B0 field map renders independently.
+  await page.fill("#accel", "3");
+  await page.dispatchEvent("#accel", "input");
+  await page.waitForSelector("#accelmethod-row:not([hidden])", { timeout: 5_000 });
+  await page.check("#gfactorshow");
+  await page.waitForSelector("#gfactorwrap:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const s = document.getElementById("gfactorImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 20_000 });
+  await page.check("#b0mapshow");
+  await page.waitForFunction(
+    () => { const s = document.getElementById("b0mapImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 20_000 });
+  await page.uncheck("#gfactorshow");
+  await page.uncheck("#b0mapshow");
+  await page.fill("#accel", "1");
+  await page.dispatchEvent("#accel", "input");
+
   // Contrast map (TR×TE): toggling on must render the landscape panel.
   await page.check("#cmap");
   await page.waitForSelector("#cmapwrap:not([hidden])", { timeout: 5_000 });

@@ -133,10 +133,12 @@ async function applyState(st) {
   if (st.field) $("field").value = st.field;
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; updateSliderAria(key); } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
-   "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow", "mathshow", "labelanat",
+   "nslices", "sgap", "ipfov", "accel", "pv"].forEach(sv);
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
+   "b0mapshow", "gfactorshow", "mathshow", "labelanat",
    "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   if (st.motiontype) $("motiontype").value = st.motiontype;
+  if (st.accelmethod) $("accelmethod").value = st.accelmethod;
   if (st.diffdisp) $("diffdisp").value = st.diffdisp;
   if (st.angiotype) $("angiotype").value = st.angiotype;
   if (st.qmridisp) $("qmridisp").value = st.qmridisp;
@@ -150,6 +152,8 @@ async function applyState(st) {
   $("cmapwrap").hidden = !$("cmap").checked;
   $("kspacewrap").hidden = !$("kspaceshow").checked;
   $("psdwrap").hidden = !$("psdshow").checked;
+  $("b0mapwrap").hidden = !$("b0mapshow").checked;
+  $("gfactorwrap").hidden = !$("gfactorshow").checked;
   $("mathwrap").hidden = !$("mathshow").checked;
   syncVisibility();
   applyingPreset = false;
@@ -490,6 +494,28 @@ const LESSONS = [
         state: { matrix: 256, psdshow: true } },
     ],
   },
+  {
+    title: "Parallel imaging & the g-factor",
+    blurb: "Skip k-space lines to go faster — at an SNR cost that isn't uniform.",
+    steps: [
+      { text: "<b>Parallel imaging</b> skips phase-encode lines and unfolds the aliasing using the coil array. Set <b>Acceleration R = 2</b> and watch the <b>scan time</b> drop — but SNR falls by √R plus a spatially-varying penalty.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 600, te: 15, accel: 2, accelmethod: "SENSE" } },
+      { text: "Tick <b>Show g-factor map</b>. The <b>g-factor</b> is that extra, <i>local</i> noise amplification from the unfolding — worst toward the centre where the coil geometry is least able to separate aliased pixels. At R=2 it's mild.",
+        state: { gfactorshow: true } },
+      { text: "Push to <b>R = 4</b>: the g-factor map <b>blows up</b> in the centre — noise amplification grows sharply with R. That's why clinical SENSE rarely exceeds R≈2–3: past that the g-factor penalty outweighs the time saved.",
+        state: { accel: 4 } },
+    ],
+  },
+  {
+    title: "B0 inhomogeneity & EPI distortion",
+    blurb: "Off-resonance near air–tissue interfaces warps fast sequences.",
+    steps: [
+      { text: "Tick <b>Show B0 field map</b>. Even after shimming, susceptibility differences (air sinuses, bone) leave the field <b>off-resonance</b> — the map shows the local frequency error in Hz, largest near the skull base and sinuses.",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 60, tr: 600, te: 15, b0mapshow: true } },
+      { text: "Off-resonance shifts signal along the phase-encode direction in proportion to its size. On a slow spin echo it's negligible, but on <b>EPI</b> (the readout behind DWI/fMRI) the low effective bandwidth makes those same Hz warp and pile up the image — geometric distortion worst where the field map is most extreme.",
+        state: { seq: "Echo Planar (EPI)", te: 60 } },
+    ],
+  },
 ];
 
 let lessonIdx = -1, stepIdx = 0;
@@ -639,6 +665,10 @@ function buildControls(info) {
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("kspaceshow").addEventListener("change", () => { $("kspacewrap").hidden = !$("kspaceshow").checked; render(); });
   $("psdshow").addEventListener("change", () => { $("psdwrap").hidden = !$("psdshow").checked; render(); });
+  $("b0mapshow").addEventListener("change", () => { $("b0mapwrap").hidden = !$("b0mapshow").checked; render(); });
+  $("gfactorshow").addEventListener("change", () => { $("gfactorwrap").hidden = !$("gfactorshow").checked; render(); });
+  $("accelmethod").addEventListener("change", schedule);
+  $("accel").addEventListener("input", () => { $("accelmethod-row").hidden = +$("accel").value <= 1; });
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
   $("pathology").addEventListener("change", render);   // re-render with/without the demo pathology
@@ -651,7 +681,7 @@ function buildControls(info) {
   wireLessons();
 
   setupSliderA11y();
-  ["tr", "te", "ti", "fa", "np", "slabsharp", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap"].forEach((id) => {
+  ["tr", "te", "ti", "fa", "np", "slabsharp", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap", "accel", "pv"].forEach((id) => {
     $(id).addEventListener("input", () => {
       const out = $(id + "-val"); if (out) out.value = $(id).value;
       updateSliderAria(id);
@@ -696,6 +726,7 @@ function syncVisibility() {
   $("qmridisp-row").hidden = s !== "Quantitative (qMRI)";
   $("fmridisp-row").hidden = s !== "fMRI (BOLD)";
   $("etl-row").hidden = s !== "FSE / TSE";
+  $("accelmethod-row").hidden = +$("accel").value <= 1;
   const is3d = ACQ3D_SEQ.has(s);
   $("acq3d").disabled = !is3d;
   if (!is3d) $("acq3d").checked = false;
@@ -738,6 +769,8 @@ function collectPayload() {
     matrix_size: +$("matrix").value, bandwidth: +$("bw").value, NEX: +$("nex").value,
     slice_thickness: +$("thick").value,
     n_slices: +$("nslices").value, slice_gap: +$("sgap").value,
+    accel_factor: +$("accel").value, accel_method: $("accelmethod").value,
+    pv_sigma: +$("pv").value,
     fatsat_enabled: $("fatsat").checked,
     contrast_enabled: $("gd").checked, contrast_dose: $("gd").checked ? 5 : 0,
     flow_enabled: $("flow").checked,
@@ -764,6 +797,8 @@ function collectPayload() {
     contrast_map: $("cmap").checked,
     show_kspace: $("kspaceshow").checked,
     show_psd: $("psdshow").checked,
+    show_b0map: $("b0mapshow").checked,
+    show_gfactor: $("gfactorshow").checked,
     label_anatomy: $("labelanat").checked,
     pathology: $("pathology").value,
   };
@@ -1129,6 +1164,8 @@ function applyResult(res, reqSlice) {
   if (res.cmap) $("cmapImage").src = res.cmap;   // TR×TE contrast landscape
   if (res.kspace) $("kspaceImage").src = res.kspace;   // raw k-space (log magnitude)
   if (res.psd) $("psdImage").src = res.psd;            // pulse-sequence diagram
+  if (res.b0map) $("b0mapImage").src = res.b0map;      // B0 off-resonance field
+  if (res.gfactor) $("gfactorImage").src = res.gfactor; // parallel-imaging g-factor
   syncSlice(res, reqSlice);
   setMetrics(res);
   refreshMeasure();                   // keep a placed ruler/ROI aligned + live on the new image
