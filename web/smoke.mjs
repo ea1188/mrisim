@@ -293,6 +293,21 @@ try {
     fail("7T must be a selectable field strength");
   await page.selectOption("#sequence", "Spin Echo");
 
+  step("k-space + PSD");
+  // Toggling k-space / pulse-diagram reveals their panels and loads a PNG each.
+  await page.check("#kspaceshow");
+  await page.waitForSelector("#kspacewrap:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const s = document.getElementById("kspaceImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 20_000 });
+  await page.check("#psdshow");
+  await page.waitForSelector("#psdwrap:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const s = document.getElementById("psdImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 20_000 });
+  await page.uncheck("#kspaceshow");
+  await page.uncheck("#psdshow");
+
   // Contrast map (TR×TE): toggling on must render the landscape panel.
   await page.check("#cmap");
   await page.waitForSelector("#cmapwrap:not([hidden])", { timeout: 5_000 });

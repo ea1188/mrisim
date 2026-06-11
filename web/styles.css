@@ -182,7 +182,13 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 #measure-clear:hover { border-color: var(--accent); }
 #measure-readout b { color: var(--accent-hi); }
 #mainImageB { max-width: 100%; max-height: 100%; }
-#curveImage, #cmapImage { width: 100%; height: auto; display: block; }
+#curveImage, #cmapImage, #psdImage { width: 100%; height: auto; display: block; }
+/* k-space is square: centre it in a dark panel, capped so it doesn't dominate. */
+.kspacewrap {
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
+  display: grid; place-items: center; padding: 4px; overflow: hidden;
+}
+#kspaceImage { display: block; height: auto; max-width: 100%; max-height: 320px; }
 .mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
 .mathbox { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
 .mathbox .m-tissue { color: var(--text-dim); font-size: 11px; margin-bottom: 4px; }

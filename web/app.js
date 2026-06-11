@@ -134,7 +134,7 @@ async function applyState(st) {
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; updateSliderAria(key); } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov"].forEach(sv);
-  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "mathshow", "labelanat",
+  ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow", "mathshow", "labelanat",
    "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   if (st.motiontype) $("motiontype").value = st.motiontype;
   if (st.diffdisp) $("diffdisp").value = st.diffdisp;
@@ -148,6 +148,8 @@ async function applyState(st) {
   $("scoutwrap").hidden = !$("fovplan").checked;
   $("planctl").hidden = !$("fovplan").checked;
   $("cmapwrap").hidden = !$("cmap").checked;
+  $("kspacewrap").hidden = !$("kspaceshow").checked;
+  $("psdwrap").hidden = !$("psdshow").checked;
   $("mathwrap").hidden = !$("mathshow").checked;
   syncVisibility();
   applyingPreset = false;
@@ -476,6 +478,18 @@ const LESSONS = [
         state: { qmridisp: "T2 Map (multi-echo)" } },
     ],
   },
+  {
+    title: "Reading k-space",
+    blurb: "The raw data the image is the Fourier transform of.",
+    steps: [
+      { text: "Tick <b>Show k-space</b>. The image isn't acquired pixel-by-pixel — the scanner fills <b>k-space</b> (the spatial-frequency domain), and the image is its 2-D Fourier transform. The bright <b>centre</b> holds low frequencies (contrast and bulk signal).",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 600, te: 15, kspaceshow: true } },
+      { text: "The <b>edges</b> of k-space hold high spatial frequencies — fine detail and sharp edges. Drop the <b>matrix</b> to 96: you sample less of k-space's periphery, so the image blurs (and the readouts show higher SNR, shorter scan).",
+        state: { matrix: 96 } },
+      { text: "Back to a full matrix. Add a <b>pulse-sequence diagram</b> too (<b>Show pulse-sequence diagram</b>) to connect the timing — RF, gradients and the echo — to the data each TR writes into k-space.",
+        state: { matrix: 256, psdshow: true } },
+    ],
+  },
 ];
 
 let lessonIdx = -1, stepIdx = 0;
@@ -623,6 +637,8 @@ function buildControls(info) {
   });
   $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
+  $("kspaceshow").addEventListener("change", () => { $("kspacewrap").hidden = !$("kspaceshow").checked; render(); });
+  $("psdshow").addEventListener("change", () => { $("psdwrap").hidden = !$("psdshow").checked; render(); });
   $("mathshow").addEventListener("change", () => { $("mathwrap").hidden = !$("mathshow").checked; });
   $("labelanat").addEventListener("change", render);   // re-render with/without the anatomy labels
   $("pathology").addEventListener("change", render);   // re-render with/without the demo pathology
@@ -746,6 +762,8 @@ function collectPayload() {
     slice_idx: +$("slice").value, curve_mode: "TE decay",
     window_width: winW, window_level: winL, params,
     contrast_map: $("cmap").checked,
+    show_kspace: $("kspaceshow").checked,
+    show_psd: $("psdshow").checked,
     label_anatomy: $("labelanat").checked,
     pathology: $("pathology").value,
   };
@@ -1109,6 +1127,8 @@ function applyResult(res, reqSlice) {
   probe = res.probe || null;          // aligned label map for the hover tissue readout
   if (probe) probe.bytes = Uint8Array.from(atob(probe.labels), (c) => c.charCodeAt(0));
   if (res.cmap) $("cmapImage").src = res.cmap;   // TR×TE contrast landscape
+  if (res.kspace) $("kspaceImage").src = res.kspace;   // raw k-space (log magnitude)
+  if (res.psd) $("psdImage").src = res.psd;            // pulse-sequence diagram
   syncSlice(res, reqSlice);
   setMetrics(res);
   refreshMeasure();                   // keep a placed ruler/ROI aligned + live on the new image

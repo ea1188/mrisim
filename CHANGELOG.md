@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **k-space and pulse-sequence-diagram panels in the browser.** Two new toggles
+  show the raw **k-space** (log-magnitude of the acquired data the image is the
+  Fourier transform of) and the **pulse-sequence diagram** for the current sequence
+  (RF/gradient/echo timing) — both reusing the desktop's renderers. A new "Reading
+  k-space" lesson ties matrix size to k-space coverage and the image's sharpness.
 - **Advanced-sequence displays in the browser.** The web build now exposes the
   per-sequence display modes the desktop has: diffusion **DWI / ADC / FA**,
   angiography **TOF / Phase-Contrast**, the **qMRI map** picker (T1 / T2 / T2* /

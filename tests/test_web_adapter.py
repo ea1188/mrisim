@@ -111,6 +111,27 @@ def test_subdisplay_modes_render_distinct_images():
     assert img(sequence="Spin Echo", field_strength="7T", TR=600, TE=12).startswith("data:image/png")
 
 
+def test_kspace_and_psd_panels_render():
+    """The browser's k-space and pulse-sequence-diagram panels are produced on
+    demand (gated on payload flags). k-space is the 2-D acquisition's raw data;
+    in the 3-D slab path it still returns a PNG (a note that it's 2-D only)."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90}
+    r = wa.render({**base, "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15},
+                   "show_kspace": True, "show_psd": True})
+    assert r["kspace"].startswith("data:image/png")
+    assert r["psd"].startswith("data:image/png")
+    # Off by default (not requested).
+    r0 = wa.render({**base, "params": {"sequence": "Spin Echo"}})
+    assert r0["kspace"] is None and r0["psd"] is None
+    # PSD adapts per sequence; 3-D still returns a (note) k-space PNG.
+    for seq in ("Gradient Echo", "Inversion Recovery", "FSE / TSE", "Diffusion (DWI)"):
+        assert wa.render({**base, "params": {"sequence": seq}, "show_psd": True})["psd"].startswith("data:image/png")
+    r3 = wa.render({**base, "params": {"sequence": "Gradient Echo", "acq3d": True, "n_partitions": 24},
+                    "show_kspace": True})
+    assert r3["kspace"].startswith("data:image/png")
+
+
 @pytest.mark.parametrize("region,plane", [("Spine", "sagittal"), ("Knee", "sagittal")])
 def test_region_opens_on_canonical_plane_midslice(region, plane):
     """A sagittal-canonical region (Spine/Knee) must open centred on its canonical
