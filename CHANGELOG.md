@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **3D reconstruction view on the desktop.** The PyQt app gains the same
+  reconstruction the browser got: a "Reconstruction view" toggle that turns the
+  acquired 3-D slab into **MPR** (three orthogonal reformats with a crosshair),
+  **thick-slab MIP** (plane + thickness), **rotating MIP** (azimuth/elevation) and
+  **oblique MPR** (tilt/rotate) — driven by the shared, tested `reconstruction.py`.
+
 ## [1.13.0] — 2026-06-11
 
 A reconstruction workstation in the browser: turn an acquired 3D slab into MPR,
