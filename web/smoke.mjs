@@ -300,6 +300,17 @@ try {
     () => ["reconAxial", "reconCoronal", "reconSagittal"].every((id) => {
       const s = document.getElementById(id)?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; }),
     { timeout: 25_000 });
+  // Click-to-navigate: clicking a panel moves the crosshair sliders and re-renders.
+  const rz0 = await page.inputValue("#rz");
+  const axSrc0 = await page.getAttribute("#reconAxial", "src");
+  // page.click auto-scrolls the panel into view, then clicks at the given position
+  // (near the top of the coronal panel → changes the Z crosshair).
+  const ch = await page.$eval("#reconCoronal", (el) => ({ w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height }));
+  await page.click("#reconCoronal", { position: { x: ch.w * 0.5, y: ch.h * 0.2 } });
+  await page.waitForFunction((prev) => document.getElementById("rz").value !== prev, rz0, { timeout: 8_000 });
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("reconAxial").src; return s && s !== prev; },
+    axSrc0, { timeout: 25_000 });
   await page.selectOption("#reconmode", "mip");
   await page.waitForSelector("#recon-single:not([hidden])", { timeout: 5_000 });
   await page.waitForFunction(
