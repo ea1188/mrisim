@@ -717,14 +717,31 @@ class WebHost(CurvesMixin):
         return _png_b64(self.gfactor_fig)
 
     # --- 3-D reconstruction (MPR / MIP / oblique from the acquired slab) ----- #
+    @staticmethod
+    def _scale_bar_mm(width_px: int, mm_per_px: float) -> float:
+        """Largest tidy length (…1/2/5/10/20/50… mm) that is ≤ a quarter of the
+        image, so the scale bar stays a sensible size."""
+        import numpy as _np
+        target = width_px * mm_per_px * 0.25
+        if target < 1.0:
+            return 0.0
+        mag = 10.0 ** _np.floor(_np.log10(target))
+        best = mag
+        for step in (1.0, 2.0, 5.0, 10.0):
+            if step * mag <= target:
+                best = step * mag
+        return best
+
     def _recon_png(self, arr: np.ndarray, title: str = "",
                    crosshair: "tuple[float, float] | None" = None,
-                   fill: bool = False) -> str:
+                   fill: bool = False, mm_per_px: "float | None" = None) -> str:
         """Grayscale render of a 2-D reconstruction array (auto-windowed), with an
         optional crosshair in fractional (col, row) coords. ``fill=True`` renders
         the image **edge-to-edge** (axes fill the figure, no title, aspect free) so
         an element fraction maps directly to a data fraction — used for the MPR
-        panels so a click navigates the crosshair."""
+        panels so a click navigates the crosshair. ``mm_per_px`` (isotropic, used
+        only when not ``fill`` so the aspect is preserved) draws a calibrated scale
+        bar."""
         import numpy as _np
         ax = self.recon_ax
         ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
@@ -737,6 +754,16 @@ class WebHost(CurvesMixin):
             H, W = a.shape
             ax.axvline(crosshair[0] * W, color="#ffdd44", lw=0.6, alpha=0.6)
             ax.axhline(crosshair[1] * H, color="#ffdd44", lw=0.6, alpha=0.6)
+        if mm_per_px and not fill and mm_per_px > 0:
+            H, W = a.shape
+            bar_mm = self._scale_bar_mm(W, mm_per_px)
+            if bar_mm > 0:
+                bar_px = bar_mm / mm_per_px
+                x0, y0 = 0.04 * W, 0.05 * H
+                ax.plot([x0, x0 + bar_px], [y0, y0], color="#ffdd44", lw=2.0, solid_capstyle="butt")
+                lbl = f"{bar_mm / 10:.0f} cm" if bar_mm >= 10 else f"{bar_mm:.0f} mm"
+                ax.text(x0 + bar_px / 2, y0 + 0.02 * H, lbl, color="#ffdd44",
+                        fontsize=7, ha="center", va="bottom")
         if title and not fill:
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=3)
         if fill:
@@ -767,6 +794,9 @@ class WebHost(CurvesMixin):
         nz, ny, nx = block.shape
         ctr = payload.get("center") or [nz // 2, ny // 2, nx // 2]
         mode = payload.get("mode", "mpr")
+        # Isotropic mm per recon voxel (the block is the source grid over the region
+        # FOV) — drives the scale bar on the aspect-preserving projection views.
+        mm_per_px = _NATIVE_FOV.get(self.region.get(), 220.0) / max(1, nx)
         panels: dict = {}
         if mode == "mpr":
             tri = rc.mpr_triplanar(block, (int(ctr[0]), int(ctr[1]), int(ctr[2])))
@@ -787,16 +817,18 @@ class WebHost(CurvesMixin):
                  else int(ctr[rc.THROUGH_AXIS[plane]]))
             arr = rc.thick_slab_projection(block, plane, c, thick, proj)
             panels["main"] = self._recon_png(
-                arr, f"{proj.upper()} · {plane} · {thick}p slab")
+                arr, f"{proj.upper()} · {plane} · {thick}p slab", mm_per_px=mm_per_px)
         elif mode == "rmip":
             az = float(payload.get("azimuth", 0.0)); el = float(payload.get("elevation", 0.0))
             panels["main"] = self._recon_png(rc.rotating_mip(block, az, el),
-                                             f"Rotating MIP · az {az:.0f}° el {el:.0f}°")
+                                             f"Rotating MIP · az {az:.0f}° el {el:.0f}°",
+                                             mm_per_px=mm_per_px)
         elif mode == "oblique":
             tilt = float(payload.get("tilt", 0.0)); rot = float(payload.get("rot", 0.0))
             ob = rc.oblique_mpr(block, (ctr[0], ctr[1], ctr[2]), tilt, rot,
                                 payload.get("base", "axial"))
-            panels["main"] = self._recon_png(ob, f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°")
+            panels["main"] = self._recon_png(ob, f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°",
+                                             mm_per_px=mm_per_px)
         else:
             return {"ok": False, "error": f"unknown reconstruction mode: {mode}"}
         return {"ok": True, "mode": mode, "panels": panels,

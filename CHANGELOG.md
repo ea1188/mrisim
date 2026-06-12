@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Calibrated scale bar on the projection reconstructions (browser).** The MIP /
+  MinIP / AIP / oblique / rotating recon views now carry a tidy mm scale bar (sized
+  from the region's voxel size), so reformats have a spatial reference. (The
+  aspect-stretched MPR panels keep the crosshair instead.)
+
 ## [1.16.0] — 2026-06-12
 
 A reconstruction-workstation upgrade: MinIP/AIP projections, click-to-navigate MPR
