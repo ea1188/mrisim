@@ -528,6 +528,42 @@ const LESSONS = [
         state: {} },
     ],
   },
+  {
+    title: "MIP, MinIP & AIP — projecting a slab",
+    blurb: "Three ways to flatten a slab, and what each is good for.",
+    steps: [
+      { text: "Acquire a <b>3D slab</b> (gradient echo, plenty of partitions) and open the <b>Reconstruction view</b>, then choose <b>Thick-slab MIP</b>. A projection collapses a slab of partitions onto one image — three ways, set by the <b>Projection</b> picker.",
+        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true, np: 48 } },
+      { text: "<b>MIP</b> (maximum) keeps the <b>brightest</b> voxel along each ray — it pulls bright structures onto one image. That's the angiogram trick: bright flowing blood (TOF) stands out, and a thick MIP shows a whole vessel in a single picture.",
+        state: {} },
+      { text: "<b>MinIP</b> (minimum) keeps the <b>darkest</b> voxel — used where the finding is dark: veins and microbleeds on SWI, or air. <b>AIP</b> (average) is the slab <b>mean</b>, the CT-style look that smooths noise. Same slab, three readings — pick the one that makes your finding pop.",
+        state: {} },
+    ],
+  },
+  {
+    title: "TOF vs phase-contrast angiography",
+    blurb: "Two ways to make blood bright — inflow vs velocity.",
+    steps: [
+      { text: "<b>Time-of-flight (TOF)</b> MRA: stationary tissue is saturated by rapid RF and dark, while <b>fresh blood flowing in</b> is unsaturated and bright. No contrast, no velocity info — just inflow.",
+        state: { region: "Brain", seq: "MR Angiography", orient: "axial", slice: 90, angiotype: "TOF" } },
+      { text: "<b>Phase contrast (PC)</b> instead encodes <b>velocity</b> directly: moving spins pick up a phase proportional to their speed (set by the velocity-encoding, venc), so PC measures flow magnitude <i>and</i> direction — useful for quantifying flow, not just showing vessels.",
+        state: { angiotype: "Phase Contrast" } },
+      { text: "Rule of thumb: <b>TOF</b> for a quick, high-resolution roadmap of where the vessels are (combine slices into a MIP); <b>PC</b> when you need the <i>velocity</i> — shunts, stenoses, CSF flow — at the cost of a longer, venc-dependent scan.",
+        state: {} },
+    ],
+  },
+  {
+    title: "Choosing the protocol (capstone)",
+    blurb: "Put it together: question → sequence, plane and options.",
+    steps: [
+      { text: "Everything so far feeds one decision: <b>what answers the clinical question?</b> Work it as sequence → plane → options. Example — <b>?acute stroke</b>: diffusion restricts early, so <b>DWI</b> (with the ADC map) is the answer. Try it.",
+        state: { region: "Brain", seq: "Diffusion (DWI)", orient: "axial", slice: 90, bval: 1000, pathology: "stroke", diffdisp: "DWI" } },
+      { text: "<b>?MS lesion load</b>: small periventricular lesions hide in bright CSF, so null the CSF — <b>FLAIR</b>, read in the plane that shows the most lesions. Long TR, long TE, TI≈2550 ms at 3 T.",
+        state: { seq: "Inversion Recovery", tr: 9000, ti: 2548, te: 100, pathology: "lesion" } },
+      { text: "<b>?Vascular anatomy</b>: flowing blood, no contrast — <b>TOF MRA</b>, then a thick-slab <b>MIP</b> to show the whole tree. The pattern is always the same: name the contrast that makes the finding obvious, pick the plane that shows it, then add the options (fat-sat, Gd, 3D, projection) that sharpen it.",
+        state: { seq: "MR Angiography", angiotype: "TOF", pathology: "", flow: true } },
+    ],
+  },
 ];
 
 // --- Guided curriculum: an ordered beginner path through the lessons --------- //
@@ -549,11 +585,15 @@ const CURRICULUM = [
   { title: "6 · How the image is built",
     lessons: ["Reading k-space", "Multi-slice cross-talk & the gap", "Measuring the image — ruler, ROI & SNR"] },
   { title: "7 · 3D imaging & reconstruction",
-    lessons: ["3D slab acquisition & reformat", "Reconstructing the 3D slab (MPR & MIP)"] },
+    lessons: ["3D slab acquisition & reformat", "Reconstructing the 3D slab (MPR & MIP)",
+              "MIP, MinIP & AIP — projecting a slab"] },
   { title: "8 · Flow, function & artifacts",
-    lessons: ["Angiography — bright blood (TOF)", "qMRI — measuring tissue, not a picture",
+    lessons: ["Angiography — bright blood (TOF)", "TOF vs phase-contrast angiography",
+              "qMRI — measuring tissue, not a picture",
               "When images go wrong — artifacts", "B0 inhomogeneity & EPI distortion",
               "A tour of the real anatomy"] },
+  { title: "9 · Putting it together",
+    lessons: ["Choosing the protocol (capstone)"] },
 ];
 const LESSON_INDEX = new Map(LESSONS.map((L, i) => [L.title, i]));
 // Flat ordered path of lesson indices (skip any title that doesn't resolve).
