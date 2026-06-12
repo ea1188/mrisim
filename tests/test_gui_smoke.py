@@ -677,6 +677,17 @@ def test_3d_acquisition_renders(win):
     win.acq3d.set(False); win.recalculate()
 
 
+def test_enabling_3d_covers_the_whole_anatomy(win):
+    """Toggling the 3-D slab on defaults to covering the full slice-axis extent
+    (the engine clamps), so reformats are full rather than thin from the start."""
+    set_state(win, sequence="Gradient Echo")
+    win._set_orientation("axial")
+    win.acq3d.set(False); win.n_partitions.set(20)   # a thin starting point
+    win.acq3d.set(True)                               # the toggle should fill it
+    assert win.n_partitions.get() == min(256, win.get_max_slice_idx() + 1)
+    win.acq3d.set(False); win.recalculate()
+
+
 def test_reconstruction_view_modes_render(win):
     """The desktop reconstruction view reformats/projects the acquired slab: MPR
     rebuilds the figure to three panels, the projection/oblique modes to one."""
