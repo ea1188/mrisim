@@ -216,6 +216,14 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.kz_pf_enabled = Var(False)
         self._acq3d_key: tuple | None = None   # prescription cache for reformat
         self._acq3d_metrics: dict = {}
+        # 3-D reconstruction view (MPR / MIP / oblique from the acquired slab)
+        self.recon_enabled = Var(False)
+        self.recon_mode = Var("MPR (3 planes)")
+        self.recon_z = Var(50); self.recon_y = Var(50); self.recon_x = Var(50)
+        self.recon_mip_plane = Var("axial")
+        self.recon_mip_thick = Var(20)
+        self.recon_azimuth = Var(0); self.recon_elevation = Var(0)
+        self.recon_tilt = Var(0); self.recon_rot = Var(0)
         self.multi_slice = Var(False)
         self.show_psd = Var(False)
 
@@ -976,6 +984,21 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._checkbox(SPL, "3D acquisition (slab)", self.acq3d)
         self._slider(SPL, "3D Partitions", self.n_partitions, 4, 64)
         self._checkbox(SPL, "kz Partial Fourier", self.kz_pf_enabled)
+        # Reconstruction view: turn the acquired slab into MPR / MIP / oblique.
+        self._checkbox(SPL, "Reconstruction view (3D slab → MPR/MIP)", self.recon_enabled)
+        self._dropdown(SPL, "Recon mode", self.recon_mode,
+                       ["MPR (3 planes)", "Thick-slab MIP", "Rotating MIP", "Oblique MPR"],
+                       self.schedule_recalculate)
+        self._slider(SPL, "MPR crosshair ↕ (Z %)", self.recon_z, 0, 100)
+        self._slider(SPL, "MPR crosshair A–P (Y %)", self.recon_y, 0, 100)
+        self._slider(SPL, "MPR crosshair L–R (X %)", self.recon_x, 0, 100)
+        self._dropdown(SPL, "MIP plane", self.recon_mip_plane,
+                       ["axial", "coronal", "sagittal"], self.schedule_recalculate)
+        self._slider(SPL, "MIP slab thickness (part.)", self.recon_mip_thick, 1, 64)
+        self._slider(SPL, "Rotating MIP azimuth (°)", self.recon_azimuth, 0, 360)
+        self._slider(SPL, "Rotating MIP elevation (°)", self.recon_elevation, -60, 60)
+        self._slider(SPL, "Oblique MPR tilt (°)", self.recon_tilt, -45, 45)
+        self._slider(SPL, "Oblique MPR rotate (°)", self.recon_rot, -45, 45)
         self._slider(SPL, "Bandwidth (kHz)", self.bandwidth, 10, 500)
         self._slider(SPL, "NEX", self.NEX, 1, 8)
         self._slider(SPL, "Acceleration (R)", self.accel_factor, 1, 4)
@@ -1227,6 +1250,14 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                                 self.simulate_with_params(current_params)[1])
             return
 
+        # Reconstruction view takes over the main view with MPR / MIP / oblique
+        # reformats of the acquired 3-D slab.
+        if (self.recon_enabled.get() and current_params.get("acq3d")
+                and current_params["sequence"] in self._ACQ3D_SEQUENCES
+                and not self.compare_mode.get()):
+            self._display_reconstruction(current_params)
+            return
+
         if self.multi_slice.get() and not self.compare_mode.get():
             self._display_multi_slice(current_params)
             return
@@ -1297,6 +1328,70 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
         self.canvas.draw()
         self.update_metrics(current_params, metrics_b)
+
+    def _display_reconstruction(self, params: dict) -> None:
+        """Reconstruction view: reformat / project the acquired 3-D slab. MPR shows
+        the three orthogonal reformats at a crosshair; MIP / oblique show a single
+        projection or tilted reformat. Reuses the shared ``reconstruction`` module."""
+        import reconstruction as rc
+        _, metrics = self._acquire_or_reformat(params)   # ensure the slab is built
+        block = self.sim._recon3d
+        cmap = self.display_cmap.get()
+        self.fig.clear()
+        if block is None:
+            ax = self.fig.subplots(1, 1); ax.set_facecolor(C_CANVAS); ax.set_axis_off()
+            ax.text(0.5, 0.5, "Enable a 3-D slab acquisition to reconstruct",
+                    color=C_TEXT_DIM, ha="center", va="center", transform=ax.transAxes)
+            self.canvas.draw(); self.update_metrics(params, metrics); return
+
+        nz, ny, nx = block.shape
+        cz = int(round(self.recon_z.get() / 100 * (nz - 1)))
+        cy = int(round(self.recon_y.get() / 100 * (ny - 1)))
+        cx = int(round(self.recon_x.get() / 100 * (nx - 1)))
+
+        def _show(ax: Any, arr: np.ndarray, title: str,
+                  cross: "tuple[float, float] | None" = None) -> None:
+            a = np.asarray(arr, dtype=float)
+            fin = a[np.isfinite(a)]
+            hi = float(np.percentile(fin, 99)) if fin.size else 1.0
+            ax.set_facecolor(C_CANVAS)
+            ax.imshow(a, cmap=cmap, origin="lower", aspect="auto",
+                      vmin=0.0, vmax=hi if hi > 0 else 1.0)
+            if cross is not None:
+                H, W = a.shape
+                ax.axvline(cross[0] * W, color="#ffdd44", lw=0.6, alpha=0.6)
+                ax.axhline(cross[1] * H, color="#ffdd44", lw=0.6, alpha=0.6)
+            ax.set_title(title, color=C_TEXT_DIM, fontsize=9)
+            ax.set_axis_off()
+
+        mode = self.recon_mode.get()
+        if mode.startswith("MPR"):
+            axs = self.fig.subplots(1, 3)
+            self.fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.02, wspace=0.05)
+            tri = rc.mpr_triplanar(block, (cz, cy, cx))
+            cross = {"axial": (cx / nx, cy / ny), "coronal": (cx / nx, cz / nz),
+                     "sagittal": (cy / ny, cz / nz)}
+            for ax, name in zip(axs, ("axial", "coronal", "sagittal"), strict=True):
+                _show(ax, tri[name], name.capitalize(), cross[name])
+        else:
+            ax = self.fig.subplots(1, 1)
+            self.fig.subplots_adjust(left=0.02, right=0.98, top=0.93, bottom=0.02)
+            if mode == "Thick-slab MIP":
+                plane = self.recon_mip_plane.get()
+                c = (cz, cy, cx)[rc.THROUGH_AXIS[plane]]
+                arr = rc.thick_slab_mip(block, plane, c, int(self.recon_mip_thick.get()))
+                _show(ax, arr, f"Thick-slab MIP · {plane} · {int(self.recon_mip_thick.get())}p")
+            elif mode == "Rotating MIP":
+                az, el = self.recon_azimuth.get(), self.recon_elevation.get()
+                _show(ax, rc.rotating_mip(block, az, el),
+                      f"Rotating MIP · az {az:.0f}° el {el:.0f}°")
+            else:  # Oblique MPR
+                tilt, rot = self.recon_tilt.get(), self.recon_rot.get()
+                _show(ax, rc.oblique_mpr(block, (cz, cy, cx), tilt, rot),
+                      f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°")
+
+        self.canvas.draw()
+        self.update_metrics(params, metrics)
 
     def _display_multi_slice(self, params: dict) -> None:
         """Display 3x3 grid of adjacent slices."""

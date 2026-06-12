@@ -661,6 +661,22 @@ def test_3d_acquisition_renders(win):
     win.acq3d.set(False); win.recalculate()
 
 
+def test_reconstruction_view_modes_render(win):
+    """The desktop reconstruction view reformats/projects the acquired slab: MPR
+    rebuilds the figure to three panels, the projection/oblique modes to one."""
+    set_state(win, sequence="Gradient Echo")
+    win.acq3d.set(True); win.n_partitions.set(32)
+    win.recon_enabled.set(True)
+    for mode, n_axes in [("MPR (3 planes)", 3), ("Thick-slab MIP", 1),
+                         ("Rotating MIP", 1), ("Oblique MPR", 1)]:
+        win.recon_mode.set(mode); win.recalculate()
+        assert len(win.fig.axes) == n_axes, f"{mode}: expected {n_axes} panels"
+    # Leaving recon mode restores the normal 1x2 layout.
+    win.recon_enabled.set(False); win.recalculate()
+    assert len(win.fig.axes) == 2
+    win.acq3d.set(False); win.recalculate()
+
+
 def test_3d_reformat_reuses_block(win):
     set_state(win, sequence="Gradient Echo")
     win._set_orientation("axial"); win.slice_idx.set(90)
