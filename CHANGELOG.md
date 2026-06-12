@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Rotating-MIP cine (browser).** In the reconstruction view's rotating-MIP mode, a
+  **Spin cine** button pre-renders a full 360° stack of frames and animates them
+  client-side for a smooth spinning angiogram — like rotating a MIP on a workstation.
+  Any manual interaction stops it.
 - **Movable slab position + reconstruction PNG export.** The thick-slab projection
   gains a **Slab position** slider (slide the slab through the volume, not just
   resize it), on browser and desktop. The browser adds a **Download recon PNG** button

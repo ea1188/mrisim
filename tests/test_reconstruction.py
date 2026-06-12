@@ -112,3 +112,19 @@ def test_reconstruct_requires_3d_slab():
     r = wa.reconstruct({"region": "Brain", "orientation": "axial", "slice_idx": 90,
                         "mode": "mpr", "params": {"sequence": "Spin Echo"}})
     assert not r["ok"] and "3-D" in r["error"]
+
+
+def test_reconstruct_cine_returns_distinct_frames():
+    """The rotating-MIP cine pre-renders a stack of distinct frames (a full spin)
+    and needs a 3-D slab."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Gradient Echo", "TR": 500, "TE": 15,
+                       "acq3d": True, "n_partitions": 40}}
+    r = wa._host().reconstruct_cine({**base, "n_frames": 8, "elevation": 10})
+    assert r["ok"] and len(r["frames"]) == 8
+    assert all(f.startswith("data:image/png") for f in r["frames"])
+    assert len(set(r["frames"])) == 8, "cine frames should differ (the MIP rotates)"
+    r2 = wa._host().reconstruct_cine({"region": "Brain", "orientation": "axial",
+                                      "slice_idx": 90, "params": {"sequence": "Spin Echo"}})
+    assert not r2["ok"]

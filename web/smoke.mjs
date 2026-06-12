@@ -330,6 +330,17 @@ try {
     posSrc, { timeout: 25_000 });
   // The reconstruction download button is present and enabled.
   if (await page.isDisabled("#recon-download")) fail("recon download button should be enabled");
+  // Rotating-MIP cine: in rmip mode, Spin pre-renders frames and animates them.
+  await page.selectOption("#reconmode", "rmip");
+  await page.waitForSelector("#recon-spin:visible", { timeout: 5_000 });
+  const cineSrc0 = await page.getAttribute("#reconMain", "src");
+  await page.click("#recon-spin");
+  await page.waitForFunction(() => (document.getElementById("recon-spin").textContent || "").includes("Stop"), { timeout: 30_000 });
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("reconMain").src; return s && s !== prev; },
+    cineSrc0, { timeout: 10_000 });            // a frame is being shown
+  await page.click("#recon-spin");             // stop
+  await page.waitForFunction(() => (document.getElementById("recon-spin").textContent || "").includes("Spin"), { timeout: 5_000 });
   await page.uncheck("#reconshow");
   await page.uncheck("#acq3d");
 
