@@ -12,6 +12,11 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.15.0] — 2026-06-12
+
+A guided beginner curriculum threads the lessons into an ordered learning path, and
+window/level now works (on both panels) in A/B compare.
+
 ### Added
 - **Guided curriculum for beginners (browser).** A new "🎓 Curriculum" launcher
   threads the 26 lessons into an ordered, eight-module path — from *what an MRI
