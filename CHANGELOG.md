@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Three new lessons + a curriculum capstone module (browser)** (26 → 29 lessons):
+  "MIP, MinIP & AIP — projecting a slab", "TOF vs phase-contrast angiography", and a
+  "Choosing the protocol" capstone (clinical question → sequence, plane, options). The
+  curriculum gains a 9th module, **Putting it together**, ending on the capstone.
 - **Rotating-MIP cine (browser).** In the reconstruction view's rotating-MIP mode, a
   **Spin cine** button pre-renders a full 360° stack of frames and animates them
   client-side for a smooth spinning angiogram — like rotating a MIP on a workstation.
