@@ -13,13 +13,15 @@ frozen.)
 ## [Unreleased]
 
 ### Added
-- **Control search (browser).** A "Find a control…" box at the top of the panel
-  filters the controls as you type (e.g. "bandwidth", "flip"), showing only the
-  matching groups and opening them — so you can jump to a parameter without
-  scrolling or knowing which group it's in.
-- **Editable numeric values (browser).** Every parameter slider now has a paired
-  number field: type an exact value (TR = 2200, TE = 80…) or arrow-key it, and the
-  slider and image follow. Previously values were drag-only and read-only.
+- **Control search (browser and desktop).** A "Find a control…" box at the top of
+  the panel filters the controls as you type (e.g. "bandwidth", "flip"), showing
+  only the matching sections and opening them — so you can jump to a parameter
+  without scrolling or knowing which group it's in.
+- **Editable numeric values (browser and desktop).** Every parameter slider now has
+  a paired editable field: type an exact value (TR = 2200, TE = 80…) or arrow-key
+  it, and the slider and image follow. Previously values were drag-only and
+  read-only. (Desktop already had collapsible control sections and a grouped
+  Display section, so this completes the parity with the browser's panel work.)
 
 ### Changed
 - **Collapsible control groups (browser).** The control panel's sections now
