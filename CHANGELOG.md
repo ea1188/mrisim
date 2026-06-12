@@ -13,10 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
-- **Click-to-navigate the MPR (browser).** In the reconstruction view's MPR mode,
-  click any of the three reformat panels to move the crosshair there — the other two
-  planes update to match, like a real workstation (the crosshair sliders still work
-  too). Panels now render edge-to-edge so the click maps precisely.
+- **Click-to-navigate the MPR (browser and desktop).** In the reconstruction view's
+  MPR mode, click any of the three reformat panels to move the crosshair there — the
+  other two planes update to match, like a real workstation (the crosshair sliders
+  still work too). Browser panels render edge-to-edge so the click maps precisely;
+  the desktop maps the matplotlib data coordinate of the clicked panel.
 - **MinIP and AIP projections in the reconstruction view.** The thick-slab MIP now
   offers a **Projection** picker: **MIP** (brightest — vessels, fluid), **MinIP**
   (darkest — vessels on SWI, air) and **AIP** (average — the CT-style slab mean), on

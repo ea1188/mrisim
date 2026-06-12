@@ -692,6 +692,21 @@ def test_reconstruction_view_modes_render(win):
     for proj in ("MIP (brightest)", "MinIP (darkest)", "AIP (average)"):
         win.recon_mip_mode.set(proj); win.recalculate()
         assert len(win.fig.axes) == 1 and win.fig.axes[0].images, f"{proj} did not render"
+    # Click-to-navigate: a click on the coronal MPR panel moves the X and Z
+    # crosshair (not Y), like the browser. (Synthesise the matplotlib press event.)
+    win.recon_mode.set("MPR (3 planes)"); win.recalculate()
+    nz, ny, nx = win._recon_block_shape
+    y_before = win.recon_y.get()
+
+    class _Ev:
+        inaxes = win._recon_mpr_axes["coronal"]
+        xdata = nx * 0.8
+        ydata = nz * 0.9
+    win._on_recon_press(_Ev())
+    # click at 0.8 across / 0.9 up → X ≈ 80%, Z ≈ 90% (the n/(n-1) scaling lands ~93)
+    assert win.recon_x.get() == 80, f"coronal click X = {win.recon_x.get()}"
+    assert 85 <= win.recon_z.get() <= 96, f"coronal click Z = {win.recon_z.get()}"
+    assert win.recon_y.get() == y_before, "coronal click must not move Y"
     # Leaving recon mode restores the normal 1x2 layout.
     win.recon_enabled.set(False); win.recalculate()
     assert len(win.fig.axes) == 2
