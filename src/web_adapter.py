@@ -718,24 +718,32 @@ class WebHost(CurvesMixin):
 
     # --- 3-D reconstruction (MPR / MIP / oblique from the acquired slab) ----- #
     def _recon_png(self, arr: np.ndarray, title: str = "",
-                   crosshair: "tuple[float, float] | None" = None) -> str:
+                   crosshair: "tuple[float, float] | None" = None,
+                   fill: bool = False) -> str:
         """Grayscale render of a 2-D reconstruction array (auto-windowed), with an
-        optional crosshair in fractional (col, row) coords for the MPR panels."""
+        optional crosshair in fractional (col, row) coords. ``fill=True`` renders
+        the image **edge-to-edge** (axes fill the figure, no title, aspect free) so
+        an element fraction maps directly to a data fraction — used for the MPR
+        panels so a click navigates the crosshair."""
         import numpy as _np
         ax = self.recon_ax
         ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
         a = _np.asarray(arr, dtype=float)
         finite = a[_np.isfinite(a)]
         hi = float(_np.percentile(finite, 99)) if finite.size else 1.0
-        ax.imshow(a, cmap="gray", origin="lower", aspect="equal",
+        ax.imshow(a, cmap="gray", origin="lower", aspect=("auto" if fill else "equal"),
                   vmin=0.0, vmax=hi if hi > 0 else 1.0)
         if crosshair is not None:
             H, W = a.shape
             ax.axvline(crosshair[0] * W, color="#ffdd44", lw=0.6, alpha=0.6)
             ax.axhline(crosshair[1] * H, color="#ffdd44", lw=0.6, alpha=0.6)
-        if title:
+        if title and not fill:
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=3)
-        self.recon_fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.01)
+        if fill:
+            ax.set_xlim(-0.5, a.shape[1] - 0.5); ax.set_ylim(-0.5, a.shape[0] - 0.5)
+            self.recon_fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        else:
+            self.recon_fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.01)
         return _png_b64(self.recon_fig)
 
     def reconstruct(self, payload: dict) -> dict:
@@ -766,7 +774,7 @@ class WebHost(CurvesMixin):
                      "coronal": (ctr[2] / nx, ctr[0] / nz),
                      "sagittal": (ctr[1] / ny, ctr[0] / nz)}
             for name, img in tri.items():
-                panels[name] = self._recon_png(img, name.capitalize(), cross[name])
+                panels[name] = self._recon_png(img, name.capitalize(), cross[name], fill=True)
         elif mode == "mip":
             plane = payload.get("mip_plane", "axial")
             thick = int(payload.get("mip_thickness", 20))

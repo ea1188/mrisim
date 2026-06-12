@@ -1282,6 +1282,24 @@ function wireRecon() {
     $(id).addEventListener("input", () => { const o = $(id + "-val"); if (o) o.value = $(id).value; runRecon(); }));
   $("mipplane").addEventListener("change", runRecon);
   $("mipmode").addEventListener("change", runRecon);
+  // Click any MPR panel to move the crosshair (and the other two planes). The
+  // panels render edge-to-edge, so the element fraction is the data fraction;
+  // origin is bottom-left, and the sagittal panel is L–R flipped (see _recon_png).
+  const setPct = (id, v) => { $(id).value = Math.round(Math.max(0, Math.min(100, v))); const o = $(id + "-val"); if (o) o.value = $(id).value; };
+  const panelClick = (panel) => (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const fx = (e.clientX - r.left) / r.width;
+    const fyt = (e.clientY - r.top) / r.height;       // from top
+    if (fx < 0 || fx > 1 || fyt < 0 || fyt > 1) return;
+    if (panel === "axial") { setPct("rx", fx * 100); setPct("ry", (1 - fyt) * 100); }
+    else if (panel === "coronal") { setPct("rx", fx * 100); setPct("rz", (1 - fyt) * 100); }
+    else { setPct("ry", (1 - fx) * 100); setPct("rz", (1 - fyt) * 100); }   // sagittal (flipped)
+    runRecon();
+  };
+  $("reconAxial").addEventListener("click", panelClick("axial"));
+  $("reconCoronal").addEventListener("click", panelClick("coronal"));
+  $("reconSagittal").addEventListener("click", panelClick("sagittal"));
   syncReconMode();
 }
 
