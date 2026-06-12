@@ -60,10 +60,28 @@
     </div>
   </div>
 
+  <!-- Guided curriculum (beginner path, populated from app.js) -->
+  <div id="curriculum" hidden role="dialog" aria-modal="true" aria-labelledby="cur-h">
+    <div class="intro-card lesson-card">
+      <button id="curriculum-x" class="dialog-x" type="button" aria-label="Close curriculum" title="Close">✕</button>
+      <h2 id="cur-h">Learn MRI from scratch</h2>
+      <p class="intro-sub">A guided path for total beginners — work through the modules in order, each building on the last. Your progress is saved on this device.</p>
+      <div class="cur-progress" aria-hidden="true"><div class="cur-bar" id="cur-bar"></div></div>
+      <p class="tiny" id="cur-progress-text"></p>
+      <div id="curriculum-list"></div>
+      <div class="cur-actions">
+        <button id="curriculum-start" type="button">Start</button>
+        <button id="curriculum-reset" type="button" class="cur-reset" title="Clear saved progress">Reset progress</button>
+        <button id="curriculum-close" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Active-lesson panel (floats over the viewport) -->
   <aside id="lesson-panel" hidden role="region" aria-labelledby="lesson-title">
     <div class="lp-head"><span id="lesson-title"></span>
       <button id="lesson-exit" type="button" title="Exit lesson" aria-label="Exit lesson">✕</button></div>
+    <p id="lesson-cur" class="lesson-cur" hidden></p>
     <p id="lesson-step" aria-live="polite"></p>
     <div class="lp-foot">
       <span id="lesson-progress"></span>
@@ -82,6 +100,7 @@
       <span class="chip"><i>SNR (WM)</i><b id="m-snrwm">—</b></span>
       <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
     </div>
+    <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">🎓 Curriculum</button>
     <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">📖 Lessons</button>
     <button id="help" class="ghlink" type="button" title="Show the intro">?</button>
     <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>

@@ -530,6 +530,50 @@ const LESSONS = [
   },
 ];
 
+// --- Guided curriculum: an ordered beginner path through the lessons --------- //
+// Each module groups existing lessons into a sequence that builds from "what is
+// an MRI image?" up to advanced contrast, reconstruction and artifacts.
+const CURRICULUM = [
+  { title: "1 · What an MRI image is",
+    lessons: ["Start here — what is an MRI image?", "Start here — dark or bright? T1 vs T2"] },
+  { title: "2 · Where contrast comes from",
+    lessons: ["Start here — why so many sequences?", "T1, T2 & PD contrast", "Where contrast comes from"] },
+  { title: "3 · Making a tissue disappear",
+    lessons: ["Nulling a tissue: FLAIR & STIR", "Fat suppression — STIR vs spectral", "In- vs opposed-phase (Dixon)"] },
+  { title: "4 · Reading pathology",
+    lessons: ["Start here — spot the lesion (why it matters)", "Pathology → the right sequence",
+              "Abscess vs. tumour — the DWI test", "DWI vs ADC — is the restriction real?"] },
+  { title: "5 · Image quality & speed",
+    lessons: ["SNR vs. scan time", "Resolution vs SNR — the matrix trade-off",
+              "The Ernst angle — flip for max signal", "Parallel imaging & the g-factor"] },
+  { title: "6 · How the image is built",
+    lessons: ["Reading k-space", "Multi-slice cross-talk & the gap", "Measuring the image — ruler, ROI & SNR"] },
+  { title: "7 · 3D imaging & reconstruction",
+    lessons: ["3D slab acquisition & reformat", "Reconstructing the 3D slab (MPR & MIP)"] },
+  { title: "8 · Flow, function & artifacts",
+    lessons: ["Angiography — bright blood (TOF)", "qMRI — measuring tissue, not a picture",
+              "When images go wrong — artifacts", "B0 inhomogeneity & EPI distortion",
+              "A tour of the real anatomy"] },
+];
+const LESSON_INDEX = new Map(LESSONS.map((L, i) => [L.title, i]));
+// Flat ordered path of lesson indices (skip any title that doesn't resolve).
+const CURRICULUM_PATH = CURRICULUM.flatMap((m) => m.lessons.map((t) => LESSON_INDEX.get(t)).filter((i) => i !== undefined));
+let curriculumPos = -1;     // position in CURRICULUM_PATH while following the path; -1 = free lesson
+
+function curriculumDone() {
+  try { return new Set(JSON.parse(localStorage.getItem("mrisim_curriculum") || "[]")); }
+  catch (e) { return new Set(); }
+}
+function curriculumMarkDone(title) {
+  try { const s = curriculumDone(); s.add(title); localStorage.setItem("mrisim_curriculum", JSON.stringify([...s])); }
+  catch (e) { /* private mode: progress just won't persist */ }
+}
+function curriculumModuleOf(pos) {       // which module a path position belongs to
+  let n = 0;
+  for (let m = 0; m < CURRICULUM.length; m++) { n += CURRICULUM[m].lessons.length; if (pos < n) return m; }
+  return CURRICULUM.length - 1;
+}
+
 let lessonIdx = -1, stepIdx = 0;
 
 function wireLessons() {
@@ -551,7 +595,7 @@ function wireLessons() {
     const b = document.createElement("button");
     b.className = "lesson-item" + (L.beginner ? " beginner" : "");
     b.innerHTML = `<b>${L.title}</b><span>${L.blurb}</span>`;
-    b.addEventListener("click", () => { $("lesson-picker").hidden = true; startLesson(i); });
+    b.addEventListener("click", () => { $("lesson-picker").hidden = true; curriculumPos = -1; startLesson(i); });
     list.appendChild(b);
   });
   $("lessons-btn").addEventListener("click", () => openDialog("lesson-picker", "lesson-picker-close"));
@@ -560,8 +604,24 @@ function wireLessons() {
   $("lesson-exit").addEventListener("click", exitLesson);
   $("lesson-prev").addEventListener("click", () => { if (stepIdx > 0) { stepIdx--; applyStep(); } });
   $("lesson-next").addEventListener("click", () => {
-    if (stepIdx < LESSONS[lessonIdx].steps.length - 1) { stepIdx++; applyStep(); } else exitLesson();
+    if (stepIdx < LESSONS[lessonIdx].steps.length - 1) { stepIdx++; applyStep(); } else finishLesson();
   });
+  wireCurriculum();
+}
+
+// Finishing a lesson: in the curriculum, mark it done and advance to the next
+// lesson in the path (or close when the path is complete); otherwise just exit.
+function finishLesson() {
+  if (curriculumPos >= 0 && lessonIdx >= 0) {
+    curriculumMarkDone(LESSONS[lessonIdx].title);
+    curriculumPos++;
+    if (curriculumPos < CURRICULUM_PATH.length) { startLesson(CURRICULUM_PATH[curriculumPos]); return; }
+    curriculumPos = -1;        // whole curriculum complete
+    exitLesson();
+    openCurriculum();          // show the (now fully ticked) overview
+    return;
+  }
+  exitLesson();
 }
 
 function startLesson(i) {
@@ -572,8 +632,67 @@ function startLesson(i) {
   applyStep();
 }
 function exitLesson() {
-  lessonIdx = -1; $("lesson-panel").hidden = true;
+  lessonIdx = -1; curriculumPos = -1; $("lesson-panel").hidden = true;
   if (compareMode) setCompare(false);   // a lesson may have ended in a comparison
+}
+
+function startCurriculumAt(pos) {
+  curriculumPos = pos;
+  closeDialog("curriculum");
+  startLesson(CURRICULUM_PATH[pos]);
+}
+
+// Build the curriculum overview: a progress bar, the modules with their lessons
+// (ticked when done), and a Start/Continue button that resumes the first lesson
+// you haven't finished.
+function openCurriculum() {
+  const done = curriculumDone();
+  const list = $("curriculum-list");
+  list.innerHTML = "";
+  let pos = 0, firstUndone = -1, completed = 0;
+  CURRICULUM.forEach((mod) => {
+    const modEl = document.createElement("div"); modEl.className = "cur-module";
+    const head = document.createElement("div"); head.className = "cur-module-h";
+    let modDone = 0;
+    mod.lessons.forEach((t) => { if (done.has(t)) modDone++; });
+    head.innerHTML = `<span>${mod.title}</span><span class="cur-count">${modDone}/${mod.lessons.length}</span>`;
+    modEl.appendChild(head);
+    mod.lessons.forEach((title) => {
+      const idx = LESSON_INDEX.get(title);
+      if (idx === undefined) return;
+      const thisPos = pos++;                 // path position for this lesson
+      const isDone = done.has(title);
+      if (isDone) completed++;
+      if (!isDone && firstUndone < 0) firstUndone = thisPos;
+      const b = document.createElement("button");
+      b.className = "cur-lesson" + (isDone ? " done" : "");
+      b.innerHTML = `<span class="tick">${isDone ? "✓" : ""}</span><span>${title}</span>`;
+      b.addEventListener("click", () => startCurriculumAt(thisPos));
+      modEl.appendChild(b);
+    });
+    list.appendChild(modEl);
+  });
+  const total = CURRICULUM_PATH.length;
+  $("cur-bar").style.width = `${Math.round(100 * completed / total)}%`;
+  $("cur-progress-text").textContent =
+    completed === 0 ? `${total} lessons across ${CURRICULUM.length} modules — start from the top.`
+    : completed >= total ? `All ${total} lessons complete — revisit any module any time.`
+    : `${completed} of ${total} lessons done — pick up where you left off.`;
+  const resume = firstUndone < 0 ? 0 : firstUndone;
+  const startBtn = $("curriculum-start");
+  startBtn.textContent = completed === 0 ? "Start" : (completed >= total ? "Review from start" : "Continue");
+  startBtn.onclick = () => startCurriculumAt(resume);
+  openDialog("curriculum", "curriculum-start");
+}
+
+function wireCurriculum() {
+  $("curriculum-btn").addEventListener("click", openCurriculum);
+  $("curriculum-close").addEventListener("click", () => closeDialog("curriculum"));
+  $("curriculum-x").addEventListener("click", () => closeDialog("curriculum"));
+  $("curriculum-reset").addEventListener("click", () => {
+    try { localStorage.removeItem("mrisim_curriculum"); } catch (e) { /* ignore */ }
+    openCurriculum();          // re-render with cleared ticks
+  });
 }
 
 async function applyStep() {
@@ -582,7 +701,17 @@ async function applyStep() {
   $("lesson-step").innerHTML = s.text;
   $("lesson-progress").textContent = `Step ${stepIdx + 1} / ${L.steps.length}`;
   $("lesson-prev").disabled = stepIdx === 0;
-  $("lesson-next").textContent = stepIdx === L.steps.length - 1 ? "Finish" : "Next ›";
+  // In the curriculum, show where you are and offer "Next lesson" rather than "Finish".
+  const inCur = curriculumPos >= 0;
+  const cur = $("lesson-cur");
+  cur.hidden = !inCur;
+  if (inCur) {
+    const m = curriculumModuleOf(curriculumPos);
+    cur.textContent = `Curriculum · ${CURRICULUM[m].title}  —  lesson ${curriculumPos + 1} of ${CURRICULUM_PATH.length}`;
+  }
+  const last = stepIdx === L.steps.length - 1;
+  $("lesson-next").textContent = !last ? "Next ›"
+    : (inCur && curriculumPos < CURRICULUM_PATH.length - 1 ? "Next lesson ›" : "Finish");
   await applyState(s.state);
   // A step may stage a side-by-side comparison: `state` becomes panel A and
   // `compareWith` (a second state) becomes panel B, in compare mode.

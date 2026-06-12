@@ -13,6 +13,12 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Guided curriculum for beginners (browser).** A new "🎓 Curriculum" launcher
+  threads the 26 lessons into an ordered, eight-module path — from *what an MRI
+  image is* through contrast, pathology, image quality, k-space, 3D/reconstruction
+  to flow/function/artifacts. It tracks progress on the device (saved locally), shows
+  a progress bar and per-module ticks, and **Continue** resumes the first unfinished
+  lesson; finishing one lesson advances straight to the next in the path.
 - **Window/level works in A/B compare — and re-windows both panels.** Previously the
   window/level drag was disabled while comparing two protocols. Now dragging on
   either image adjusts the shared window/level and re-windows **both** A and B
