@@ -12,6 +12,16 @@ frozen.)
 
 ## [Unreleased]
 
+### Changed
+- **3D acquisition and reconstruction are now one panel (browser).** The separate
+  "3D acquisition" and "3D reconstruction" groups are merged into a single **3D
+  acquisition & reconstruction** section, so you set up the slab and reformat it in
+  one place.
+- **A 3D slab now covers the whole anatomy from the first click (browser).** Enabling
+  the slab spans the full slice axis by default (was a thin 32-partition slab), so the
+  reconstruction's coronal/sagittal reformats are full immediately instead of thin
+  strips. The "Slab depth" slider still thins it down, and its range tracks the volume.
+
 ## [1.16.1] — 2026-06-12
 
 Reconstruction-view polish: the MPR/projection panels no longer stretch, and the

@@ -874,7 +874,15 @@ function buildControls(info) {
   $("download").addEventListener("click", downloadPNG);
   [reg, seq, $("field")].forEach((el) => el.addEventListener("change", onSequenceOrRegion));
   ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((id) =>
-    $(id).addEventListener("change", () => { if (id === "acq3d") syncVisibility(); schedule(); }));
+    $(id).addEventListener("change", () => {
+      if (id === "acq3d") {
+        // Cover the whole anatomy from the first click: a freshly-enabled slab
+        // spans the full slice axis (the user can thin it down afterwards).
+        if ($("acq3d").checked) { syncSlabMax(); $("np").value = $("np").max; const o = $("np-val"); if (o) o.value = $("np").value; }
+        syncVisibility();
+      }
+      schedule();
+    }));
   ["motion", "chemshift", "suscept"].forEach((id) =>
     $(id).addEventListener("change", () => { syncVisibility(); schedule(); }));
   $("motiontype").addEventListener("change", schedule);
@@ -898,6 +906,17 @@ async function onSequenceOrRegion(e) {
   schedule();
 }
 
+// Keep the slab-depth slider's range tied to the current slice-axis extent, so
+// "max" means the whole anatomy (the engine clamps anyway). Caps at the slider's
+// hard max so very large volumes stay bounded.
+function syncSlabMax() {
+  const full = Math.min(400, (+$("slice").max || 0) + 1);
+  if (full < 4) return;
+  $("np").max = full;
+  if (+$("np").value > full) $("np").value = full;
+  const o = $("np-val"); if (o) o.value = $("np").value;
+}
+
 function syncVisibility() {
   const s = $("sequence").value;
   $("fa-row").hidden = !SEQ_FA.has(s);
@@ -913,6 +932,7 @@ function syncVisibility() {
   $("acq3d").disabled = !is3d;
   if (!is3d) $("acq3d").checked = false;
   const on3d = is3d && $("acq3d").checked;
+  syncSlabMax();
   $("np-row").hidden = !on3d;
   $("slabsharp-row").hidden = !on3d;
   $("kzpf-row").hidden = !on3d;

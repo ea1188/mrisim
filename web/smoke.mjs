@@ -285,6 +285,12 @@ try {
   await page.check("#acq3d");
   await page.waitForSelector("#np-row:not([hidden])", { timeout: 5_000 });
   await page.waitForSelector("#slabsharp-row:not([hidden])", { timeout: 5_000 });
+  // Enabling 3D covers the whole anatomy from the first click: the slab depth
+  // jumps to (near) the full slice-axis extent, not a thin default.
+  if (+(await page.inputValue("#np")) < 64)
+    fail("3D slab should default to full coverage, got " + (await page.inputValue("#np")) + " partitions");
+  // The reconstruction toggle now lives in the same group (no separate section).
+  if (!(await page.$("#reconshow"))) fail("reconstruction toggle missing from the 3D group");
   await page.waitForFunction(
     () => { const t = document.getElementById("slab-readout").textContent || "";
             return /partition/i.test(t) && /SNR/.test(t) && /mm slab/.test(t); },
