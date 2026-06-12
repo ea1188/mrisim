@@ -125,6 +125,8 @@ class WebHost(CurvesMixin):
         self.b0map_ax = self.b0map_fig.add_subplot(111)
         self.gfactor_fig = Figure(figsize=(3.6, 3.6), facecolor=_C_CANVAS)
         self.gfactor_ax = self.gfactor_fig.add_subplot(111)
+        self.recon_fig = Figure(figsize=(4.0, 4.0), facecolor=_C_CANVAS)
+        self.recon_ax = self.recon_fig.add_subplot(111)
         self.load_region("Brain")
 
     # --- anatomy ------------------------------------------------------------ #
@@ -714,6 +716,77 @@ class WebHost(CurvesMixin):
         self.gfactor_fig.subplots_adjust(left=0.02, right=0.9, top=0.92, bottom=0.02)
         return _png_b64(self.gfactor_fig)
 
+    # --- 3-D reconstruction (MPR / MIP / oblique from the acquired slab) ----- #
+    def _recon_png(self, arr: np.ndarray, title: str = "",
+                   crosshair: "tuple[float, float] | None" = None) -> str:
+        """Grayscale render of a 2-D reconstruction array (auto-windowed), with an
+        optional crosshair in fractional (col, row) coords for the MPR panels."""
+        import numpy as _np
+        ax = self.recon_ax
+        ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
+        a = _np.asarray(arr, dtype=float)
+        finite = a[_np.isfinite(a)]
+        hi = float(_np.percentile(finite, 99)) if finite.size else 1.0
+        ax.imshow(a, cmap="gray", origin="lower", aspect="equal",
+                  vmin=0.0, vmax=hi if hi > 0 else 1.0)
+        if crosshair is not None:
+            H, W = a.shape
+            ax.axvline(crosshair[0] * W, color="#ffdd44", lw=0.6, alpha=0.6)
+            ax.axhline(crosshair[1] * H, color="#ffdd44", lw=0.6, alpha=0.6)
+        if title:
+            ax.set_title(title, color="#9aa4b2", fontsize=8, pad=3)
+        self.recon_fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.01)
+        return _png_b64(self.recon_fig)
+
+    def reconstruct(self, payload: dict) -> dict:
+        """Build a reconstruction from the acquired 3-D slab. payload = {region,
+        params (with acq3d), mode: 'mpr'|'mip'|'oblique', center:[cz,cy,cx],
+        mip_plane, mip_thickness, azimuth, elevation, tilt, rot}. Returns
+        {ok, mode, panels:{name->dataURL}, dims}. Re-acquires the slab if needed
+        so it works as a standalone call."""
+        import reconstruction as rc
+        params = default_params(**payload.get("params", {}))
+        if not (params.get("acq3d") and params["sequence"] in _ACQ3D_SEQUENCES):
+            return {"ok": False, "error": "Reconstruction needs a 3-D slab acquisition "
+                    "(enable 3-D on a SE/GRE/IR/bSSFP sequence)."}
+        # Acquire (or reuse) the slab via the normal render path, then operate on
+        # the stored recon block.
+        self.render({**payload, "show_kspace": False, "show_psd": False,
+                     "show_b0map": False, "show_gfactor": False, "contrast_map": False})
+        block = self.sim._recon3d
+        if block is None:
+            return {"ok": False, "error": "no 3-D recon block available"}
+        nz, ny, nx = block.shape
+        ctr = payload.get("center") or [nz // 2, ny // 2, nx // 2]
+        mode = payload.get("mode", "mpr")
+        panels: dict = {}
+        if mode == "mpr":
+            tri = rc.mpr_triplanar(block, (int(ctr[0]), int(ctr[1]), int(ctr[2])))
+            cross = {"axial": (ctr[2] / nx, ctr[1] / ny),
+                     "coronal": (ctr[2] / nx, ctr[0] / nz),
+                     "sagittal": (ctr[1] / ny, ctr[0] / nz)}
+            for name, img in tri.items():
+                panels[name] = self._recon_png(img, name.capitalize(), cross[name])
+        elif mode == "mip":
+            plane = payload.get("mip_plane", "axial")
+            thick = int(payload.get("mip_thickness", 20))
+            c = int(ctr[rc.THROUGH_AXIS[plane]])
+            mip = rc.thick_slab_mip(block, plane, c, thick)
+            panels["main"] = self._recon_png(mip, f"MIP · {plane} · {thick}p slab")
+        elif mode == "rmip":
+            az = float(payload.get("azimuth", 0.0)); el = float(payload.get("elevation", 0.0))
+            panels["main"] = self._recon_png(rc.rotating_mip(block, az, el),
+                                             f"Rotating MIP · az {az:.0f}° el {el:.0f}°")
+        elif mode == "oblique":
+            tilt = float(payload.get("tilt", 0.0)); rot = float(payload.get("rot", 0.0))
+            ob = rc.oblique_mpr(block, (ctr[0], ctr[1], ctr[2]), tilt, rot,
+                                payload.get("base", "axial"))
+            panels["main"] = self._recon_png(ob, f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°")
+        else:
+            return {"ok": False, "error": f"unknown reconstruction mode: {mode}"}
+        return {"ok": True, "mode": mode, "panels": panels,
+                "dims": {"nz": nz, "ny": ny, "nx": nx}}
+
     # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
     # (row_axis, col_axis) of each scout panel in (Z,Y,X) volume terms; the
     # remaining axis is the panel's through-plane normal.
@@ -906,6 +979,14 @@ def render_scout_json(payload_json: str) -> str:
     h = _host()
     png = h.render_scout(json.loads(payload_json))
     return json.dumps({"scout": png, "panels": h._scout_panels})
+
+
+def reconstruct(payload: dict) -> dict:
+    return _host().reconstruct(payload)
+
+
+def reconstruct_json(payload_json: str) -> str:
+    return json.dumps(_host().reconstruct(json.loads(payload_json)))
 
 
 def apply_preset(name: str) -> dict:
