@@ -242,29 +242,14 @@
       </div>
 
       <div class="group">
-        <h2>3D acquisition</h2>
-        <label class="check"><input type="checkbox" id="acq3d" /> 3D slab (acquire once, reformat any plane)</label>
-        <label id="np-row" hidden>Partitions <output id="np-val">32</output>
-          <input type="range" id="np" min="4" max="64" step="1" value="32" /></label>
+        <h2>3D acquisition &amp; reconstruction</h2>
+        <label class="check"><input type="checkbox" id="acq3d" /> 3D slab (acquire the whole volume once, reformat any plane)</label>
+        <label id="np-row" hidden>Slab depth (partitions) <output id="np-val">—</output>
+          <input type="range" id="np" min="4" max="400" step="1" value="400" /></label>
         <label id="slabsharp-row" hidden>Slab-profile sharpness <output id="slabsharp-val">0.85</output>
           <input type="range" id="slabsharp" min="0.4" max="1.5" step="0.05" value="0.85" /></label>
         <label class="check" id="kzpf-row" hidden><input type="checkbox" id="kzpf" /> kz partial Fourier</label>
         <p class="tiny" id="slab-readout" hidden></p>
-      </div>
-
-      <div class="group">
-        <h2>Parallel imaging &amp; sampling</h2>
-        <label>Acceleration R <output id="accel-val">1</output>
-          <input type="range" id="accel" min="1" max="4" step="1" value="1" /></label>
-        <label id="accelmethod-row" hidden>Method
-          <select id="accelmethod"><option>SENSE</option><option>GRAPPA</option><option>CS</option></select></label>
-        <label>Partial volume (×0.1 vox) <output id="pv-val">10</output>
-          <input type="range" id="pv" min="0" max="30" step="1" value="10" /></label>
-        <p class="tiny">Higher R is faster but noisier (g-factor); partial volume blurs sub-voxel tissue boundaries.</p>
-      </div>
-
-      <div class="group">
-        <h2>3D reconstruction</h2>
         <label class="check"><input type="checkbox" id="reconshow" disabled /> Reconstruction view <span class="tiny" id="recon-need">(enable a 3D slab first)</span></label>
         <div id="reconctl" hidden>
           <label>Mode
@@ -288,7 +273,7 @@
               </select></label>
             <label>Projection plane
               <select id="mipplane"><option>axial</option><option>coronal</option><option>sagittal</option></select></label>
-            <label>Slab thickness (partitions) <output id="mipthick-val">20</output><input type="range" id="mipthick" min="1" max="64" value="20" /></label>
+            <label>Slab thickness (partitions) <output id="mipthick-val">20</output><input type="range" id="mipthick" min="1" max="400" value="20" /></label>
             <label>Slab position (%) <output id="mipcenter-val">50</output><input type="range" id="mipcenter" min="0" max="100" value="50" /></label>
           </div>
           <div id="recon-rmip" class="recon-modectl" hidden>
@@ -302,6 +287,17 @@
           </div>
           <button id="recon-download" type="button" title="Download the reconstruction as PNG">Download recon PNG</button>
         </div>
+      </div>
+
+      <div class="group">
+        <h2>Parallel imaging &amp; sampling</h2>
+        <label>Acceleration R <output id="accel-val">1</output>
+          <input type="range" id="accel" min="1" max="4" step="1" value="1" /></label>
+        <label id="accelmethod-row" hidden>Method
+          <select id="accelmethod"><option>SENSE</option><option>GRAPPA</option><option>CS</option></select></label>
+        <label>Partial volume (×0.1 vox) <output id="pv-val">10</output>
+          <input type="range" id="pv" min="0" max="30" step="1" value="10" /></label>
+        <p class="tiny">Higher R is faster but noisier (g-factor); partial volume blurs sub-voxel tissue boundaries.</p>
       </div>
     </section>
 
