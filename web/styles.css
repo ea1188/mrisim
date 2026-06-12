@@ -241,10 +241,27 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .busy #mainImage { opacity: .55; transition: opacity .1s; }
 
 /* Intro / onboarding modal */
-#intro, #lesson-picker {
+#intro, #lesson-picker, #curriculum {
   position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
   background: rgba(3, 5, 8, 0.72); padding: 16px;
 }
+/* Curriculum: progress bar, module cards, completion ticks. */
+.cur-progress { height: 7px; background: var(--raised); border-radius: 4px; overflow: hidden; margin: 4px 0 6px; }
+.cur-bar { height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+#curriculum-list { flex: 1; min-height: 0; overflow-y: auto; margin: 6px 0 12px; }
+.cur-module { border-top: 1px solid var(--border); padding: 9px 0 4px; }
+.cur-module:first-child { border-top: none; }
+.cur-module-h { display: flex; justify-content: space-between; align-items: baseline; color: var(--accent-hi); font-weight: 800; font-size: 13px; margin-bottom: 4px; }
+.cur-module-h .cur-count { color: var(--text-faint); font-weight: 600; font-size: 11px; }
+.cur-lesson { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: none; color: #c4cad2; font-size: 12px; padding: 5px 6px; border-radius: 6px; cursor: pointer; }
+.cur-lesson:hover { background: var(--raised); color: var(--text); }
+.cur-lesson .tick { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border-hi); display: grid; place-items: center; font-size: 10px; color: var(--canvas); }
+.cur-lesson.done .tick { background: var(--accent); border-color: var(--accent); }
+.cur-lesson.done { color: var(--text-faint); }
+.cur-actions { display: flex; gap: 8px; align-items: center; }
+.cur-actions #curriculum-start { background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px; padding: 8px 16px; font-weight: 800; cursor: pointer; }
+.cur-actions .cur-reset { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-faint); border-radius: 7px; padding: 7px 11px; cursor: pointer; font-size: 11px; }
+.lesson-cur { color: var(--accent-hi); font-size: 11px; font-weight: 700; margin: 0 0 6px; }
 .intro-card {
   position: relative; width: min(520px, 94vw); background: var(--panel);
   border: 1px solid var(--border-hi); border-radius: 14px; padding: 22px 24px;

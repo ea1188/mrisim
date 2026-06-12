@@ -439,6 +439,33 @@ try {
   await page.click("#lesson-exit");
   await page.waitForSelector("#lesson-panel", { state: "hidden", timeout: 5_000 });
 
+  step("curriculum");
+  // Guided curriculum: the launcher lists modules with a progress bar; Continue
+  // starts a lesson in curriculum mode (a path indicator shows), and finishing a
+  // lesson advances to the next one in the path.
+  await page.evaluate(() => { try { localStorage.removeItem("mrisim_curriculum"); } catch (e) {} });
+  await page.click("#curriculum-btn");
+  await page.waitForSelector("#curriculum:not([hidden])", { timeout: 5_000 });
+  if ((await page.getAttribute("#curriculum", "role")) !== "dialog") fail("curriculum not role=dialog");
+  const modules = await page.$$eval("#curriculum-list .cur-module", (els) => els.length);
+  if (modules < 4) fail("curriculum should list its modules, got " + modules);
+  await page.click("#curriculum-start");
+  await page.waitForSelector("#lesson-panel:not([hidden])", { timeout: 5_000 });
+  await page.waitForSelector("#lesson-cur:not([hidden])", { timeout: 5_000 });
+  const curText = await page.textContent("#lesson-cur");
+  if (!/curriculum/i.test(curText || "")) fail("curriculum path indicator missing: " + curText);
+  // Finish the first lesson; the curriculum must advance to a different lesson.
+  const title0 = await page.textContent("#lesson-title");
+  let advanced = false;
+  for (let i = 0; i < 8 && !advanced; i++) {
+    await page.click("#lesson-next");
+    await page.waitForTimeout(500);
+    advanced = (await page.textContent("#lesson-title")) !== title0;
+  }
+  if (!advanced) fail("curriculum did not advance to the next lesson on finish");
+  await page.click("#lesson-exit");
+  await page.waitForSelector("#lesson-panel", { state: "hidden", timeout: 5_000 });
+
   step("abdomen atlas");
   // Real body atlas: switching to Abdomen lazy-fetches its segmented atlas and
   // renders real anatomy.
