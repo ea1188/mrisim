@@ -43,6 +43,8 @@ class InteractionMixin(_Base):
     _mra_start_x: Any
     _mra_start_y: Any
     apply_window_level: Any
+    compare_mode: Any
+    _apply_window_level_compare: Any
     recalculate: Any
     get_max_slice_idx: Any
     get_current_params: Any
@@ -97,7 +99,9 @@ class InteractionMixin(_Base):
         if not self.wl_dragging:
             self._update_readout(event)
             return
-        if self.current_image is None:
+        in_compare = bool(self.compare_mode.get())
+        # In compare there's no single current_image, but both panels still window.
+        if self.current_image is None and not in_compare:
             return
         if event.x is None or event.y is None:  # type: ignore[attr-defined]
             return
@@ -108,7 +112,10 @@ class InteractionMixin(_Base):
         self.window_level = np.clip(self.window_level, 0.0, 1.0)
         self.wl_start_x = event.x  # type: ignore[attr-defined]
         self.wl_start_y = event.y  # type: ignore[attr-defined]
-        self.apply_window_level()
+        if in_compare:
+            self._apply_window_level_compare()   # re-window both A and B together
+        else:
+            self.apply_window_level()
 
     def _on_release(self, event: object) -> None:
         self.wl_dragging = False

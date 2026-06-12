@@ -108,6 +108,19 @@ try {
   if (!delta || !/SNR/.test(delta)) fail("compare delta did not populate: " + delta);
   // Each compare panel is captioned with what it shows (sequence at minimum).
   if (!((await page.textContent("#capB")) || "").trim()) fail("compare caption B is empty");
+  // Window/level works in compare and re-windows BOTH sides: dragging on A must
+  // change both A and B images (shared window/level for a fair comparison).
+  const a0 = await page.getAttribute("#mainImage", "src");
+  const b0 = await page.getAttribute("#mainImageB", "src");
+  const boxAB = await page.$eval("#mainImage", (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await page.mouse.move(boxAB.x, boxAB.y);
+  await page.mouse.down();
+  await page.mouse.move(boxAB.x + 80, boxAB.y + 40, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForFunction(
+    (p) => { const a = document.getElementById("mainImage").src, b = document.getElementById("mainImageB").src;
+             return a && b && a !== p.a && b !== p.b; },
+    { a: a0, b: b0 }, { timeout: 20_000 });
   await page.click("#exitAB");
   await page.waitForSelector("#wrapB", { state: "hidden", timeout: 5_000 });
 

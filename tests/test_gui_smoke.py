@@ -217,6 +217,22 @@ def test_compare_mode(win):
     win.clear_compare()
 
 
+def test_compare_window_level_windows_both_panels(win):
+    """Window/level in compare mode re-windows BOTH A and B (shared W/L for a fair
+    comparison) — the colour limits on each panel change together."""
+    set_state(win, sequence="Spin Echo")
+    win.window_width = 1.0; win.window_level = 0.5
+    win.set_protocol_a()
+    win.sequence_type.set("Gradient Echo"); win.on_sequence_change(); win.recalculate()
+    clim_a0 = win.axes[0].images[0].get_clim()
+    clim_b0 = win.axes[1].images[0].get_clim()
+    win.window_width = 0.5; win.window_level = 0.3
+    win._apply_window_level_compare()
+    assert win.axes[0].images[0].get_clim() != clim_a0, "A panel did not re-window"
+    assert win.axes[1].images[0].get_clim() != clim_b0, "B panel did not re-window"
+    win.clear_compare()
+
+
 # --------------------------------------------------------------------------- #
 #  Layer E — PSD reflects the selected sequence (GUI passes the right one)
 # --------------------------------------------------------------------------- #
