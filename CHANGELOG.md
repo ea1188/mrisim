@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.16.0] — 2026-06-12
+
+A reconstruction-workstation upgrade: MinIP/AIP projections, click-to-navigate MPR
+(both apps), a movable slab with PNG export, and a rotating-MIP cine — plus three new
+lessons and a curriculum capstone.
+
 ### Added
 - **Three new lessons + a curriculum capstone module (browser)** (26 → 29 lessons):
   "MIP, MinIP & AIP — projecting a slab", "TOF vs phase-contrast angiography", and a
