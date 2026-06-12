@@ -601,6 +601,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
         # Window/level interaction via matplotlib's backend-agnostic events
         self.canvas.mpl_connect("button_press_event", self._on_press)
+        self.canvas.mpl_connect("button_press_event", self._on_recon_press)
+        self._recon_mpr_axes: dict = {}
+        self._recon_block_shape: tuple = (1, 1, 1)
         self.canvas.mpl_connect("motion_notify_event", self._on_motion)
         self.canvas.mpl_connect("button_release_event", self._on_release)
         # Workstation interactions: wheel = scroll slices, keys = navigate/toggle
@@ -1393,6 +1396,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             ax.set_title(title, color=C_TEXT_DIM, fontsize=9)
             ax.set_axis_off()
 
+        # No single current_image in recon view — keep window/level inert here.
+        self.current_image = None
         mode = self.recon_mode.get()
         if mode.startswith("MPR"):
             axs = self.fig.subplots(1, 3)
@@ -1400,9 +1405,14 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             tri = rc.mpr_triplanar(block, (cz, cy, cx))
             cross = {"axial": (cx / nx, cy / ny), "coronal": (cx / nx, cz / nz),
                      "sagittal": (cy / ny, cz / nz)}
-            for ax, name in zip(axs, ("axial", "coronal", "sagittal"), strict=True):
+            names = ("axial", "coronal", "sagittal")
+            for ax, name in zip(axs, names, strict=True):
                 _show(ax, tri[name], name.capitalize(), cross[name])
+            # Remember the panel axes + block dims so a click navigates the crosshair.
+            self._recon_mpr_axes = dict(zip(names, axs, strict=True))
+            self._recon_block_shape = (nz, ny, nx)
         else:
+            self._recon_mpr_axes = {}
             ax = self.fig.subplots(1, 1)
             self.fig.subplots_adjust(left=0.02, right=0.98, top=0.93, bottom=0.02)
             if mode == "Thick-slab MIP":
@@ -1423,6 +1433,32 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
         self.canvas.draw()
         self.update_metrics(params, metrics)
+
+    def _on_recon_press(self, event: object) -> None:
+        """Click an MPR panel in the reconstruction view to move the crosshair (the
+        other two planes follow). Uses matplotlib data coords; the sagittal panel is
+        L–R flipped (see _display_reconstruction)."""
+        axes = self._recon_mpr_axes
+        if not (axes and self.recon_enabled.get() and self.recon_mode.get().startswith("MPR")):
+            return
+        ev_ax = getattr(event, "inaxes", None)
+        xd = getattr(event, "xdata", None); yd = getattr(event, "ydata", None)
+        if ev_ax is None or xd is None or yd is None:
+            return
+        nz, ny, nx = self._recon_block_shape
+
+        def pct(v: float, n: int) -> int:
+            return int(np.clip(round(v / max(1, n - 1) * 100.0), 0, 100))
+
+        if ev_ax is axes.get("axial"):
+            self.recon_x.set(pct(xd, nx)); self.recon_y.set(pct(yd, ny))
+        elif ev_ax is axes.get("coronal"):
+            self.recon_x.set(pct(xd, nx)); self.recon_z.set(pct(yd, nz))
+        elif ev_ax is axes.get("sagittal"):
+            self.recon_y.set(pct((ny - 1) - xd, ny)); self.recon_z.set(pct(yd, nz))
+        else:
+            return
+        self.recalculate()
 
     def _display_multi_slice(self, params: dict) -> None:
         """Display 3x3 grid of adjacent slices."""
