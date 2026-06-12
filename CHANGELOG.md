@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.18.0] — 2026-06-12
+
+The control panel becomes easier to navigate and to set precisely, on both the
+browser and the desktop: type or arrow-key an exact value into any slider, jump
+straight to a parameter with a "Find a control" search, and work in a shorter,
+collapsible panel with the visualization toggles grouped together.
+
 ### Added
 - **Control search (browser and desktop).** A "Find a control…" box at the top of
   the panel filters the controls as you type (e.g. "bandwidth", "flip"), showing
