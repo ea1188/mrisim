@@ -802,6 +802,26 @@ class WebHost(CurvesMixin):
         return {"ok": True, "mode": mode, "panels": panels,
                 "dims": {"nz": nz, "ny": ny, "nx": nx}}
 
+    def reconstruct_cine(self, payload: dict) -> dict:
+        """Pre-render a full 360° rotating-MIP cine (a stack of frames the front-end
+        cycles for a smooth spin). payload like reconstruct() plus n_frames and
+        elevation. Returns {ok, frames:[dataURL, ...]}."""
+        import reconstruction as rc
+        params = default_params(**payload.get("params", {}))
+        if not (params.get("acq3d") and params["sequence"] in _ACQ3D_SEQUENCES):
+            return {"ok": False, "error": "Cine needs a 3-D slab acquisition."}
+        self.render({**payload, "show_kspace": False, "show_psd": False,
+                     "show_b0map": False, "show_gfactor": False, "contrast_map": False})
+        block = self.sim._recon3d
+        if block is None:
+            return {"ok": False, "error": "no 3-D recon block available"}
+        n = int(np.clip(int(payload.get("n_frames", 12)), 4, 36))
+        el = float(payload.get("elevation", 0.0))
+        frames = [self._recon_png(rc.rotating_mip(block, i * 360.0 / n, el),
+                                  f"Rotating MIP · {i * 360 // n}°")
+                  for i in range(n)]
+        return {"ok": True, "frames": frames}
+
     # --- FOV-planning scout (3-plane localizer, render-only) ---------------- #
     # (row_axis, col_axis) of each scout panel in (Z,Y,X) volume terms; the
     # remaining axis is the panel's through-plane normal.
@@ -1002,6 +1022,10 @@ def reconstruct(payload: dict) -> dict:
 
 def reconstruct_json(payload_json: str) -> str:
     return json.dumps(_host().reconstruct(json.loads(payload_json)))
+
+
+def reconstruct_cine_json(payload_json: str) -> str:
+    return json.dumps(_host().reconstruct_cine(json.loads(payload_json)))
 
 
 def apply_preset(name: str) -> dict:

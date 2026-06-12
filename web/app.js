@@ -1287,17 +1287,42 @@ function downloadRecon() {
   }
 }
 
+// Rotating-MIP cine: pre-render a 360° stack of frames once, then cycle them
+// client-side for a smooth spin (no per-frame server round-trip).
+const reconCine = { timer: null, frames: [], i: 0 };
+function stopCine() {
+  if (reconCine.timer) { clearInterval(reconCine.timer); reconCine.timer = null; }
+  $("recon-spin").textContent = "▶ Spin cine";
+}
+async function toggleCine() {
+  if (reconCine.timer) { stopCine(); return; }
+  const p = collectPayload();
+  p.n_frames = 12; p.elevation = +$("rel").value;
+  $("recon-spin").textContent = "Building cine…";
+  const r = await call("reconstructCine", p);
+  if (!r || !r.ok || !(r.frames || []).length) { stopCine(); return; }
+  reconCine.frames = r.frames; reconCine.i = 0;
+  $("recon-single").hidden = false; $("recon-tri").hidden = true;
+  $("recon-spin").textContent = "■ Stop";
+  reconCine.timer = setInterval(() => {
+    $("reconMain").src = reconCine.frames[reconCine.i % reconCine.frames.length];
+    reconCine.i++;
+  }, 120);
+}
+
 function wireRecon() {
   $("recon-download").addEventListener("click", downloadRecon);
+  $("recon-spin").addEventListener("click", toggleCine);
   $("reconshow").addEventListener("change", () => {
     const on = reconActive();
+    stopCine();
     $("reconctl").hidden = !on;
     $("reconwrap").hidden = !on;
     if (on) runRecon();
   });
-  $("reconmode").addEventListener("change", () => { syncReconMode(); runRecon(); });
+  $("reconmode").addEventListener("change", () => { stopCine(); syncReconMode(); runRecon(); });
   ["rz", "ry", "rx", "mipthick", "mipcenter", "raz", "rel", "rtilt", "rrot"].forEach((id) =>
-    $(id).addEventListener("input", () => { const o = $(id + "-val"); if (o) o.value = $(id).value; runRecon(); }));
+    $(id).addEventListener("input", () => { stopCine(); const o = $(id + "-val"); if (o) o.value = $(id).value; runRecon(); }));
   $("mipplane").addEventListener("change", runRecon);
   $("mipmode").addEventListener("change", runRecon);
   // Click any MPR panel to move the crosshair (and the other two planes). The
