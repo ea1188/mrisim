@@ -222,6 +222,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.recon_z = Var(50); self.recon_y = Var(50); self.recon_x = Var(50)
         self.recon_mip_plane = Var("axial")
         self.recon_mip_thick = Var(20)
+        self.recon_mip_center = Var(50)
         self.recon_mip_mode = Var("MIP (brightest)")
         self.recon_azimuth = Var(0); self.recon_elevation = Var(0)
         self.recon_tilt = Var(0); self.recon_rot = Var(0)
@@ -1023,6 +1024,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._dropdown(SPL, "MIP plane", self.recon_mip_plane,
                        ["axial", "coronal", "sagittal"], self.schedule_recalculate)
         self._slider(SPL, "MIP slab thickness (part.)", self.recon_mip_thick, 1, 64)
+        self._slider(SPL, "MIP slab position (%)", self.recon_mip_center, 0, 100)
         self._slider(SPL, "Rotating MIP azimuth (°)", self.recon_azimuth, 0, 360)
         self._slider(SPL, "Rotating MIP elevation (°)", self.recon_elevation, -60, 60)
         self._slider(SPL, "Oblique MPR tilt (°)", self.recon_tilt, -45, 45)
@@ -1417,7 +1419,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             self.fig.subplots_adjust(left=0.02, right=0.98, top=0.93, bottom=0.02)
             if mode == "Thick-slab MIP":
                 plane = self.recon_mip_plane.get()
-                c = (cz, cy, cx)[rc.THROUGH_AXIS[plane]]
+                axn = block.shape[rc.THROUGH_AXIS[plane]]
+                c = int(round(self.recon_mip_center.get() / 100 * (axn - 1)))
                 proj = {"MIP (brightest)": "mip", "MinIP (darkest)": "minip",
                         "AIP (average)": "aip"}.get(self.recon_mip_mode.get(), "mip")
                 arr = rc.thick_slab_projection(block, plane, c, int(self.recon_mip_thick.get()), proj)
