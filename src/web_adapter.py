@@ -734,28 +734,29 @@ class WebHost(CurvesMixin):
 
     def _recon_png(self, arr: np.ndarray, title: str = "",
                    crosshair: "tuple[float, float] | None" = None,
-                   fill: bool = False, mm_per_px: "float | None" = None) -> str:
-        """Grayscale render of a 2-D reconstruction array (auto-windowed), with an
-        optional crosshair in fractional (col, row) coords. ``fill=True`` renders
-        the image **edge-to-edge** (axes fill the figure, no title, aspect free) so
-        an element fraction maps directly to a data fraction — used for the MPR
-        panels so a click navigates the crosshair. ``mm_per_px`` (isotropic, used
-        only when not ``fill`` so the aspect is preserved) draws a calibrated scale
-        bar."""
+                   mm_per_px: "float | None" = None) -> str:
+        """Grayscale render of a 2-D reconstruction array (auto-windowed). The figure
+        is sized to the array's aspect ratio and the image fills it edge-to-edge, so
+        the panel keeps its **true proportions** (no stretch, no letterbox) while an
+        element fraction still maps directly to a data fraction for click-to-navigate.
+        Optional crosshair (fractional col,row), a calibrated scale bar (``mm_per_px``)
+        and a small corner label are drawn in data/axes coordinates."""
         import numpy as _np
+        a = _np.asarray(arr, dtype=float)
+        H, W = a.shape
+        base = 4.0
+        self.recon_fig.set_size_inches((base, base * H / W) if W >= H else (base * W / H, base))
         ax = self.recon_ax
         ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
-        a = _np.asarray(arr, dtype=float)
         finite = a[_np.isfinite(a)]
         hi = float(_np.percentile(finite, 99)) if finite.size else 1.0
-        ax.imshow(a, cmap="gray", origin="lower", aspect=("auto" if fill else "equal"),
+        ax.imshow(a, cmap="gray", origin="lower", aspect="auto",
                   vmin=0.0, vmax=hi if hi > 0 else 1.0)
+        ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)
         if crosshair is not None:
-            H, W = a.shape
             ax.axvline(crosshair[0] * W, color="#ffdd44", lw=0.6, alpha=0.6)
             ax.axhline(crosshair[1] * H, color="#ffdd44", lw=0.6, alpha=0.6)
-        if mm_per_px and not fill and mm_per_px > 0:
-            H, W = a.shape
+        if mm_per_px and mm_per_px > 0:
             bar_mm = self._scale_bar_mm(W, mm_per_px)
             if bar_mm > 0:
                 bar_px = bar_mm / mm_per_px
@@ -764,13 +765,10 @@ class WebHost(CurvesMixin):
                 lbl = f"{bar_mm / 10:.0f} cm" if bar_mm >= 10 else f"{bar_mm:.0f} mm"
                 ax.text(x0 + bar_px / 2, y0 + 0.02 * H, lbl, color="#ffdd44",
                         fontsize=7, ha="center", va="bottom")
-        if title and not fill:
-            ax.set_title(title, color="#9aa4b2", fontsize=8, pad=3)
-        if fill:
-            ax.set_xlim(-0.5, a.shape[1] - 0.5); ax.set_ylim(-0.5, a.shape[0] - 0.5)
-            self.recon_fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-        else:
-            self.recon_fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.01)
+        if title:
+            ax.text(0.015, 0.985, title, transform=ax.transAxes, color="#9aa4b2",
+                    fontsize=7, ha="left", va="top")
+        self.recon_fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
         return _png_b64(self.recon_fig)
 
     def reconstruct(self, payload: dict) -> dict:
@@ -804,7 +802,7 @@ class WebHost(CurvesMixin):
                      "coronal": (ctr[2] / nx, ctr[0] / nz),
                      "sagittal": (ctr[1] / ny, ctr[0] / nz)}
             for name, img in tri.items():
-                panels[name] = self._recon_png(img, name.capitalize(), cross[name], fill=True)
+                panels[name] = self._recon_png(img, name.capitalize(), cross[name])
         elif mode == "mip":
             plane = payload.get("mip_plane", "axial")
             thick = int(payload.get("mip_thickness", 20))

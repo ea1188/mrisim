@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Fixed
+- **Reconstruction panels no longer stretch.** The MPR reformats (and the desktop
+  recon panels) were stretched to fill their box — a thin slab's coronal/sagittal
+  reformats came out badly distorted. Panels now keep their **true proportions** (a
+  thin slab reformats to a thin strip; use more partitions for taller reformats),
+  while click-to-navigate still maps correctly.
+
 ### Added
 - **Calibrated scale bar on the projection reconstructions (browser).** The MIP /
   MinIP / AIP / oblique / rotating recon views now carry a tidy mm scale bar (sized

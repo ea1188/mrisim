@@ -1389,7 +1389,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             fin = a[np.isfinite(a)]
             hi = float(np.percentile(fin, 99)) if fin.size else 1.0
             ax.set_facecolor(C_CANVAS)
-            ax.imshow(a, cmap=cmap, origin="lower", aspect="auto",
+            # aspect="equal" keeps the reformat's true proportions (a thin slab
+            # reformats to a thin strip) instead of stretching it to fill the panel;
+            # click-navigation uses data coords, so it is unaffected.
+            ax.imshow(a, cmap=cmap, origin="lower", aspect="equal",
                       vmin=0.0, vmax=hi if hi > 0 else 1.0)
             if cross is not None:
                 H, W = a.shape
