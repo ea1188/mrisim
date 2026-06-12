@@ -137,6 +137,11 @@ async function applyState(st) {
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
    "b0mapshow", "gfactorshow", "mathshow", "labelanat",
    "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+  // A lesson/link that enables the 3-D slab without asking for a specific depth
+  // gets full anatomy coverage (same as ticking 3D by hand), so reformats are full.
+  if (st.acq3d && st.np === undefined) {
+    syncSlabMax(); $("np").value = $("np").max; const o = $("np-val"); if (o) o.value = $("np").value;
+  }
   if (st.motiontype) $("motiontype").value = st.motiontype;
   if (st.accelmethod) $("accelmethod").value = st.accelmethod;
   if (st.diffdisp) $("diffdisp").value = st.diffdisp;
@@ -521,7 +526,7 @@ const LESSONS = [
     blurb: "One acquisition, reformatted and projected any way you like.",
     steps: [
       { text: "First acquire a volume: <b>3D slab</b> on a gradient echo with plenty of partitions. Now tick <b>Reconstruction view</b> (under the 3D controls) — it lights up once a slab exists.",
-        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true, np: 48 } },
+        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true } },
       { text: "In <b>MPR</b> mode you get the three orthogonal reformats from the <i>one</i> acquisition at once. Drag the <b>crosshair</b> sliders (Z / A–P / L–R) to move through the volume in every plane simultaneously — exactly how a workstation navigates a 3D dataset.",
         state: {} },
       { text: "Switch the recon <b>Mode</b> to <b>Thick-slab MIP</b>: it keeps the brightest voxel along each ray through an adjustable slab — raise the thickness to pull bright structures (like vessels) onto a single image. <b>Rotating MIP</b> spins that projection to any angle, and <b>Oblique MPR</b> tilts the reformat plane off the orthogonals.",
@@ -533,7 +538,7 @@ const LESSONS = [
     blurb: "Three ways to flatten a slab, and what each is good for.",
     steps: [
       { text: "Acquire a <b>3D slab</b> (gradient echo, plenty of partitions) and open the <b>Reconstruction view</b>, then choose <b>Thick-slab MIP</b>. A projection collapses a slab of partitions onto one image — three ways, set by the <b>Projection</b> picker.",
-        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true, np: 48 } },
+        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true } },
       { text: "<b>MIP</b> (maximum) keeps the <b>brightest</b> voxel along each ray — it pulls bright structures onto one image. That's the angiogram trick: bright flowing blood (TOF) stands out, and a thick MIP shows a whole vessel in a single picture.",
         state: {} },
       { text: "<b>MinIP</b> (minimum) keeps the <b>darkest</b> voxel — used where the finding is dark: veins and microbleeds on SWI, or air. <b>AIP</b> (average) is the slab <b>mean</b>, the CT-style look that smooths noise. Same slab, three readings — pick the one that makes your finding pop.",

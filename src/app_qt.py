@@ -213,6 +213,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # 3-D (slab) acquisition
         self.acq3d = Var(False)
         self.n_partitions = Var(32)
+        # Enabling the 3-D slab covers the whole anatomy from the first click (the
+        # engine clamps to the through-axis extent); the slider still thins it.
+        self.acq3d.trace_add("write", self._on_acq3d_toggle)
         self.kz_pf_enabled = Var(False)
         self._acq3d_key: tuple | None = None   # prescription cache for reformat
         self._acq3d_metrics: dict = {}
@@ -1008,7 +1011,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(SPL, "Phase FOV (%)", self.fov_fraction, 50, 100)
         self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
         self._checkbox(SPL, "3D acquisition (slab)", self.acq3d)
-        self._slider(SPL, "3D Partitions", self.n_partitions, 4, 64)
+        self._slider(SPL, "3D slab depth (partitions)", self.n_partitions, 4, 256)
         self._checkbox(SPL, "kz Partial Fourier", self.kz_pf_enabled)
         # Reconstruction view: turn the acquired slab into MPR / MIP / oblique.
         self._checkbox(SPL, "Reconstruction view (3D slab → MPR/MIP)", self.recon_enabled)
@@ -1383,8 +1386,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         cy = int(round(self.recon_y.get() / 100 * (ny - 1)))
         cx = int(round(self.recon_x.get() / 100 * (nx - 1)))
 
+        mm_per_px = self.sim.native_fov / max(1, nx)   # isotropic recon voxel
+
         def _show(ax: Any, arr: np.ndarray, title: str,
-                  cross: "tuple[float, float] | None" = None) -> None:
+                  cross: "tuple[float, float] | None" = None, bar: bool = False) -> None:
             a = np.asarray(arr, dtype=float)
             fin = a[np.isfinite(a)]
             hi = float(np.percentile(fin, 99)) if fin.size else 1.0
@@ -1398,6 +1403,17 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 H, W = a.shape
                 ax.axvline(cross[0] * W, color="#ffdd44", lw=0.6, alpha=0.6)
                 ax.axhline(cross[1] * H, color="#ffdd44", lw=0.6, alpha=0.6)
+            if bar and mm_per_px > 0:
+                from web_adapter import WebHost
+                H, W = a.shape
+                bar_mm = WebHost._scale_bar_mm(W, mm_per_px)
+                if bar_mm > 0:
+                    bar_px = bar_mm / mm_per_px
+                    x0, y0 = 0.04 * W, 0.05 * H
+                    ax.plot([x0, x0 + bar_px], [y0, y0], color="#ffdd44", lw=2.0, solid_capstyle="butt")
+                    lbl = f"{bar_mm / 10:.0f} cm" if bar_mm >= 10 else f"{bar_mm:.0f} mm"
+                    ax.text(x0 + bar_px / 2, y0 + 0.02 * H, lbl, color="#ffdd44",
+                            fontsize=7, ha="center", va="bottom")
             ax.set_title(title, color=C_TEXT_DIM, fontsize=9)
             ax.set_axis_off()
 
@@ -1427,18 +1443,24 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 proj = {"MIP (brightest)": "mip", "MinIP (darkest)": "minip",
                         "AIP (average)": "aip"}.get(self.recon_mip_mode.get(), "mip")
                 arr = rc.thick_slab_projection(block, plane, c, int(self.recon_mip_thick.get()), proj)
-                _show(ax, arr, f"{proj.upper()} · {plane} · {int(self.recon_mip_thick.get())}p slab")
+                _show(ax, arr, f"{proj.upper()} · {plane} · {int(self.recon_mip_thick.get())}p slab", bar=True)
             elif mode == "Rotating MIP":
                 az, el = self.recon_azimuth.get(), self.recon_elevation.get()
                 _show(ax, rc.rotating_mip(block, az, el),
-                      f"Rotating MIP · az {az:.0f}° el {el:.0f}°")
+                      f"Rotating MIP · az {az:.0f}° el {el:.0f}°", bar=True)
             else:  # Oblique MPR
                 tilt, rot = self.recon_tilt.get(), self.recon_rot.get()
                 _show(ax, rc.oblique_mpr(block, (cz, cy, cx), tilt, rot),
-                      f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°")
+                      f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°", bar=True)
 
         self.canvas.draw()
         self.update_metrics(params, metrics)
+
+    def _on_acq3d_toggle(self, *_: object) -> None:
+        """When the 3-D slab is enabled, default to covering the whole anatomy (the
+        engine clamps the partition count to the through-axis extent)."""
+        if self.acq3d.get():
+            self.n_partitions.set(int(min(256, self.get_max_slice_idx() + 1)))
 
     def _on_recon_press(self, event: object) -> None:
         """Click an MPR panel in the reconstruction view to move the crosshair (the
