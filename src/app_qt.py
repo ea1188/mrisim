@@ -222,6 +222,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.recon_z = Var(50); self.recon_y = Var(50); self.recon_x = Var(50)
         self.recon_mip_plane = Var("axial")
         self.recon_mip_thick = Var(20)
+        self.recon_mip_mode = Var("MIP (brightest)")
         self.recon_azimuth = Var(0); self.recon_elevation = Var(0)
         self.recon_tilt = Var(0); self.recon_rot = Var(0)
         self.multi_slice = Var(False)
@@ -1013,6 +1014,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(SPL, "MPR crosshair ↕ (Z %)", self.recon_z, 0, 100)
         self._slider(SPL, "MPR crosshair A–P (Y %)", self.recon_y, 0, 100)
         self._slider(SPL, "MPR crosshair L–R (X %)", self.recon_x, 0, 100)
+        self._dropdown(SPL, "Projection", self.recon_mip_mode,
+                       ["MIP (brightest)", "MinIP (darkest)", "AIP (average)"],
+                       self.schedule_recalculate)
         self._dropdown(SPL, "MIP plane", self.recon_mip_plane,
                        ["axial", "coronal", "sagittal"], self.schedule_recalculate)
         self._slider(SPL, "MIP slab thickness (part.)", self.recon_mip_thick, 1, 64)
@@ -1404,8 +1408,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             if mode == "Thick-slab MIP":
                 plane = self.recon_mip_plane.get()
                 c = (cz, cy, cx)[rc.THROUGH_AXIS[plane]]
-                arr = rc.thick_slab_mip(block, plane, c, int(self.recon_mip_thick.get()))
-                _show(ax, arr, f"Thick-slab MIP · {plane} · {int(self.recon_mip_thick.get())}p")
+                proj = {"MIP (brightest)": "mip", "MinIP (darkest)": "minip",
+                        "AIP (average)": "aip"}.get(self.recon_mip_mode.get(), "mip")
+                arr = rc.thick_slab_projection(block, plane, c, int(self.recon_mip_thick.get()), proj)
+                _show(ax, arr, f"{proj.upper()} · {plane} · {int(self.recon_mip_thick.get())}p slab")
             elif mode == "Rotating MIP":
                 az, el = self.recon_azimuth.get(), self.recon_elevation.get()
                 _show(ax, rc.rotating_mip(block, az, el),

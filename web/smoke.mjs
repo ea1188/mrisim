@@ -305,6 +305,12 @@ try {
   await page.waitForFunction(
     () => { const s = document.getElementById("reconMain")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
     { timeout: 25_000 });
+  // Switching the projection (MIP → MinIP) must re-render the slab projection.
+  const mipSrc = await page.getAttribute("#reconMain", "src");
+  await page.selectOption("#mipmode", "minip");
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("reconMain").src; return s && s !== prev && s.length > 2000; },
+    mipSrc, { timeout: 25_000 });
   await page.uncheck("#reconshow");
   await page.uncheck("#acq3d");
 

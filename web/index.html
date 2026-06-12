@@ -280,6 +280,12 @@
             <label>Crosshair L–R (X) <output id="rx-val">50</output><input type="range" id="rx" min="0" max="100" value="50" /></label>
           </div>
           <div id="recon-mip" class="recon-modectl" hidden>
+            <label>Projection
+              <select id="mipmode">
+                <option value="mip">MIP — brightest (vessels, fluid)</option>
+                <option value="minip">MinIP — darkest (vessels on SWI, air)</option>
+                <option value="aip">AIP — average (CT-style)</option>
+              </select></label>
             <label>Projection plane
               <select id="mipplane"><option>axial</option><option>coronal</option><option>sagittal</option></select></label>
             <label>Slab thickness (partitions) <output id="mipthick-val">20</output><input type="range" id="mipthick" min="1" max="64" value="20" /></label>
