@@ -847,7 +847,7 @@ function buildControls(info) {
     $("planctl").hidden = !on;
     render();   // re-render so the main image picks up / drops the FOV crop
   });
-  $("ipfov").addEventListener("input", () => { $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
+  $("ipfov").addEventListener("input", () => { if (document.activeElement !== $("ipfov-val")) $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("kspaceshow").addEventListener("change", () => { $("kspacewrap").hidden = !$("kspaceshow").checked; render(); });
   $("psdshow").addEventListener("change", () => { $("psdwrap").hidden = !$("psdshow").checked; render(); });
@@ -868,13 +868,17 @@ function buildControls(info) {
   wireLessons();
 
   setupSliderA11y();
+  setupCollapsibles();
+  setupSearch();
   ["tr", "te", "ti", "fa", "np", "slabsharp", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap", "accel", "pv"].forEach((id) => {
     $(id).addEventListener("input", () => {
-      const out = $(id + "-val"); if (out) out.value = $(id).value;
+      // Don't clobber the number field while the user is typing into it.
+      const out = $(id + "-val"); if (out && document.activeElement !== out) out.value = $(id).value;
       updateSliderAria(id);
       schedule();
     });
   });
+  wireNumbers();
   $("copylink").addEventListener("click", copyLink);
   $("download").addEventListener("click", downloadPNG);
   [reg, seq, $("field")].forEach((el) => el.addEventListener("change", onSequenceOrRegion));
@@ -1106,6 +1110,97 @@ function setupSliderA11y() {
     el.setAttribute("aria-label", SLIDER_A11Y[id][0]);
     updateSliderAria(id);
   }
+}
+
+// Editable numeric values: each parameter slider has a paired <input type="number">
+// (id + "-val"). Typing or arrow-keying it drives the slider and re-renders, reusing
+// the slider's own input handlers (which skip writing back while the field is focused).
+function wireNumbers() {
+  document.querySelectorAll("input.numval").forEach((num) => {
+    const sl = $(num.id.replace(/-val$/, ""));
+    if (!sl || sl.type !== "range") return;
+    // Live: feed each keystroke through to the slider (the slider clamps to min/max)
+    // and fire its input handlers so the image updates as you type.
+    num.addEventListener("input", () => {
+      if (num.value === "") return;             // mid-edit empty field — wait
+      sl.value = num.value;                     // range element clamps to its own bounds
+      sl.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    // On commit (blur / Enter): snap the field to the slider's clamped, stepped value.
+    num.addEventListener("change", () => { num.value = sl.value; updateSliderAria(sl.id); });
+    num.addEventListener("keydown", (e) => { if (e.key === "Enter") num.blur(); });
+  });
+}
+
+// Collapsible control groups (<details data-sec>): remember each section's open/closed
+// state per-device so the panel opens the way the user left it.
+const SECTION_LS = "mrisim_sections";
+function loadSectionState() {
+  try { return JSON.parse(localStorage.getItem(SECTION_LS) || "{}"); } catch (e) { return {}; }
+}
+function setupCollapsibles() {
+  const saved = loadSectionState();
+  document.querySelectorAll("details.group[data-sec]").forEach((d) => {
+    const key = d.dataset.sec;
+    if (key in saved) d.open = !!saved[key];   // restore; else keep the HTML default
+    d.addEventListener("toggle", () => {
+      if (document.body.classList.contains("filtering")) return;  // don't persist filter-forced state
+      const s = loadSectionState(); s[key] = d.open;
+      try { localStorage.setItem(SECTION_LS, JSON.stringify(s)); } catch (e) { /* private mode */ }
+    });
+  });
+}
+// Re-apply the user's saved (or default) open state — used when a filter clears.
+function restoreSectionState() {
+  const saved = loadSectionState();
+  document.querySelectorAll("details.group[data-sec]").forEach((d) => {
+    const key = d.dataset.sec;
+    d.open = key in saved ? !!saved[key] : d.hasAttribute("data-open-default");
+  });
+}
+
+// Control search/filter: type to show only matching labels (and the groups holding
+// them, force-opened); empty restores the normal collapsed layout.
+function setupSearch() {
+  const box = $("ctrl-find"), clear = $("ctrl-find-x"), empty = $("ctrl-find-empty");
+  if (!box) return;
+  // Record each section's HTML default open state so we can restore it after filtering.
+  document.querySelectorAll("details.group[data-sec]").forEach((d) => {
+    if (d.open) d.setAttribute("data-open-default", "");
+  });
+  const run = () => {
+    const term = box.value.trim().toLowerCase();
+    clear.hidden = term === "";
+    if (!term) {
+      document.querySelectorAll("details.group[data-sec]").forEach((d) => {
+        d.hidden = false;
+        d.querySelectorAll(":scope > label, :scope > .btnrow, :scope > p, :scope > div").forEach((r) => { r.style.display = ""; });
+      });
+      restoreSectionState();                       // fires toggles — still guarded by .filtering
+      document.body.classList.remove("filtering"); // …so they aren't persisted
+      empty.hidden = true;
+      return;
+    }
+    document.body.classList.add("filtering");
+    let anyHit = false;
+    document.querySelectorAll("details.group[data-sec]").forEach((d) => {
+      const heading = (d.querySelector("summary")?.textContent || "").toLowerCase();
+      const headingHit = heading.includes(term);
+      let groupHit = headingHit;
+      // Show/hide each direct control row by its text.
+      d.querySelectorAll(":scope > label, :scope > .btnrow, :scope > p, :scope > div").forEach((r) => {
+        const hit = headingHit || r.textContent.toLowerCase().includes(term);
+        r.style.display = hit ? "" : "none";
+        if (hit) groupHit = true;
+      });
+      d.hidden = !groupHit;
+      if (groupHit) { d.open = true; anyHit = true; }
+    });
+    empty.hidden = anyHit;
+  };
+  box.addEventListener("input", run);
+  clear.addEventListener("click", () => { box.value = ""; run(); box.focus(); });
+  box.addEventListener("keydown", (e) => { if (e.key === "Escape" && box.value) { box.value = ""; run(); } });
 }
 
 // A short human label for a compare panel: pathology · sequence (· +Gd).

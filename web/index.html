@@ -33,7 +33,7 @@
       <div class="intro-body">
       <ul>
         <li><b>New to MRI?</b> Open <b>📖 Lessons</b> and start the <b>“Start here”</b> track — three short reading-first walkthroughs. Or tick <b>Label the anatomy</b> to name the structures and <b>hover</b> any pixel to see which tissue it is and its T1/T2/PD.</li>
-        <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel.</li>
+        <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel. Each value is editable — <b>type an exact number</b> (or arrow-key it) instead of dragging. Section headers <b>collapse</b>, and the <b>🔍 Find a control</b> box at the top jumps you to any parameter.</li>
         <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets); <b>hover</b> the image to read the tissue and its T1/T2/PD under the cursor. <i>On a touchscreen: drag with one finger to window/level, and use the <b>Slice</b> slider to scroll slices.</i></li>
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
         <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
@@ -109,8 +109,15 @@
   <main id="app" hidden>
     <!-- Controls -->
     <section class="panel" id="controls" aria-label="Scan controls">
-      <div class="group">
-        <h2>Protocol</h2>
+      <div class="ctrl-search">
+        <input type="search" id="ctrl-find" placeholder="🔍  Find a control…"
+               aria-label="Filter controls" autocomplete="off" spellcheck="false" />
+        <button id="ctrl-find-x" type="button" title="Clear" aria-label="Clear search" hidden>✕</button>
+      </div>
+      <p class="tiny ctrl-find-empty" id="ctrl-find-empty" hidden>No control matches that.</p>
+
+      <details class="group" data-sec="protocol" open>
+        <summary><h2>Protocol</h2></summary>
         <label>Preset
           <select id="preset"><option value="">— custom —</option></select></label>
         <div class="btnrow">
@@ -123,10 +130,10 @@
           <button id="copylink" type="button" title="Copy a shareable link to this exact setup">Copy link</button>
           <button id="download" type="button" title="Download the current image as PNG">Download PNG</button>
         </div>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Anatomy &amp; Sequence</h2>
+      <details class="group" data-sec="anatomy" open>
+        <summary><h2>Anatomy &amp; Sequence</h2></summary>
         <label>Region
           <select id="region"></select></label>
         <label>Sequence
@@ -163,43 +170,48 @@
           </select></label>
         <label class="check"><input type="checkbox" id="fovplan" /> FOV planning (3-plane localizer)</label>
         <div id="planctl" hidden>
-          <label>In-plane FOV (%) <output id="ipfov-val">100</output>
+          <label>In-plane FOV (%) <input type="number" id="ipfov-val" class="numval" min="30" max="100" step="5" value="100" />
             <input type="range" id="ipfov" min="30" max="100" step="5" value="100" /></label>
-          <label># Slices <output id="nslices-val">1</output>
+          <label># Slices <input type="number" id="nslices-val" class="numval" min="1" max="32" step="1" value="1" />
             <input type="range" id="nslices" min="1" max="32" step="1" value="1" /></label>
-          <label>Slice gap (mm) <output id="sgap-val">0</output>
+          <label>Slice gap (mm) <input type="number" id="sgap-val" class="numval" min="0" max="10" step="1" value="0" />
             <input type="range" id="sgap" min="0" max="10" step="1" value="0" /></label>
           <p class="tiny" id="oblique-readout">Oblique tilt 0° · rot 0°  —  drag either cross-panel's band to angle that plane (double-oblique); the FOV box to resize</p>
         </div>
+      </details>
+
+      <details class="group" data-sec="visualizations">
+        <summary><h2>Visualizations</h2></summary>
+        <p class="tiny">Optional overlays &amp; side panels — each adds a view to help explain what's happening.</p>
         <label class="check"><input type="checkbox" id="cmap" /> Contrast map (TR×TE)</label>
         <label class="check"><input type="checkbox" id="kspaceshow" /> Show k-space (the raw data)</label>
         <label class="check"><input type="checkbox" id="psdshow" /> Show pulse-sequence diagram</label>
         <label class="check"><input type="checkbox" id="b0mapshow" /> Show B0 field map (off-resonance)</label>
         <label class="check"><input type="checkbox" id="gfactorshow" /> Show g-factor map (parallel imaging)</label>
         <label class="check"><input type="checkbox" id="mathshow" /> Show the math (hover a pixel)</label>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Timing</h2>
-        <label title="Repetition time — delay between excitations. Long TR lets tissues recover and reduces T1 weighting.">TR (ms) <output id="tr-val">500</output>
+      <details class="group" data-sec="timing" open>
+        <summary><h2>Timing</h2></summary>
+        <label title="Repetition time — delay between excitations. Long TR lets tissues recover and reduces T1 weighting.">TR (ms) <input type="number" id="tr-val" class="numval" min="20" max="6000" step="10" value="500" />
           <input type="range" id="tr" min="20" max="6000" step="10" value="500" /></label>
-        <label title="Echo time — delay before reading the signal. Long TE adds T2 weighting (long-T2 tissue like fluid stays bright).">TE (ms) <output id="te-val">15</output>
+        <label title="Echo time — delay before reading the signal. Long TE adds T2 weighting (long-T2 tissue like fluid stays bright).">TE (ms) <input type="number" id="te-val" class="numval" min="2" max="300" step="1" value="15" />
           <input type="range" id="te" min="2" max="300" step="1" value="15" /></label>
-        <label id="ti-row" hidden title="Inversion time — delay after the 180° inversion. Pick it to null a tissue: FLAIR nulls CSF, STIR nulls fat.">TI (ms) <output id="ti-val">800</output>
+        <label id="ti-row" hidden title="Inversion time — delay after the 180° inversion. Pick it to null a tissue: FLAIR nulls CSF, STIR nulls fat.">TI (ms) <input type="number" id="ti-val" class="numval" min="50" max="3000" step="10" value="800" />
           <input type="range" id="ti" min="50" max="3000" step="10" value="800" /></label>
-        <label id="fa-row" title="Flip angle — how far the magnetisation is tipped. Smaller angles speed up gradient-echo (the Ernst angle maximises signal).">Flip angle (°) <output id="fa-val">90</output>
+        <label id="fa-row" title="Flip angle — how far the magnetisation is tipped. Smaller angles speed up gradient-echo (the Ernst angle maximises signal).">Flip angle (°) <input type="number" id="fa-val" class="numval" min="1" max="180" step="1" value="90" />
           <input type="range" id="fa" min="1" max="180" step="1" value="90" /></label>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Contrast &amp; effects</h2>
+      <details class="group" data-sec="contrast" open>
+        <summary><h2>Contrast &amp; effects</h2></summary>
         <label class="check"><input type="checkbox" id="fatsat" /> Fat saturation</label>
         <label class="check"><input type="checkbox" id="gd" /> Gadolinium</label>
         <label class="check"><input type="checkbox" id="flow" /> Flow enhancement</label>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Artifacts (teaching)</h2>
+      <details class="group" data-sec="artifacts">
+        <summary><h2>Artifacts (teaching)</h2></summary>
         <p class="tiny">Switch on a common artifact to learn what it looks like and which setting fixes it.</p>
         <label class="check" title="Patient motion replicates the image as ghosts along the phase-encode direction. Averaging or motion-correction reduces it."><input type="checkbox" id="motion" /> Motion (ghosting)</label>
         <label id="motiontype-row" hidden>Motion type
@@ -211,26 +223,26 @@
         <label class="check" title="Fat and water resonate at slightly different frequencies, so fat shifts along the readout direction — worse at low bandwidth and high field. Raise the bandwidth to reduce it."><input type="checkbox" id="chemshift" /> Chemical shift (fat/water)</label>
         <label class="check" title="Field distortion near air/bone interfaces causes signal dropout and warping — worst on gradient-echo and long TE."><input type="checkbox" id="suscept" /> Susceptibility (dropout)</label>
         <p class="tiny" id="artifact-help"></p>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Acquisition</h2>
-        <label title="Matrix — number of pixels across. Higher = finer detail, but lower SNR and a longer scan.">Matrix <output id="matrix-val">256</output>
+      <details class="group" data-sec="acquisition">
+        <summary><h2>Acquisition</h2></summary>
+        <label title="Matrix — number of pixels across. Higher = finer detail, but lower SNR and a longer scan.">Matrix <input type="number" id="matrix-val" class="numval" min="96" max="320" step="32" value="256" />
           <input type="range" id="matrix" min="96" max="320" step="32" value="256" /></label>
-        <label title="Receiver bandwidth — wider is faster and cuts chemical-shift, but lowers SNR (∝ 1/√BW).">Bandwidth (kHz) <output id="bw-val">125</output>
+        <label title="Receiver bandwidth — wider is faster and cuts chemical-shift, but lowers SNR (∝ 1/√BW).">Bandwidth (kHz) <input type="number" id="bw-val" class="numval" min="16" max="500" step="2" value="125" />
           <input type="range" id="bw" min="16" max="500" step="2" value="125" /></label>
-        <label title="Averages (NEX) — repeat the acquisition to raise SNR by √NEX, at a proportional time cost.">NEX (averages) <output id="nex-val">1</output>
+        <label title="Averages (NEX) — repeat the acquisition to raise SNR by √NEX, at a proportional time cost.">NEX (averages) <input type="number" id="nex-val" class="numval" min="1" max="8" step="1" value="1" />
           <input type="range" id="nex" min="1" max="8" step="1" value="1" /></label>
-        <label title="Slice thickness — thicker slices have more signal (SNR) but blur small detail through the slice.">Slice thickness (mm) <output id="thick-val">5</output>
+        <label title="Slice thickness — thicker slices have more signal (SNR) but blur small detail through the slice.">Slice thickness (mm) <input type="number" id="thick-val" class="numval" min="1" max="10" step="1" value="5" />
           <input type="range" id="thick" min="1" max="10" step="1" value="5" /></label>
-        <label id="bval-row" hidden title="b-value — diffusion-weighting strength. Higher b suppresses freely-moving water and highlights restricted diffusion.">b-value (s/mm²) <output id="bval-val">1000</output>
+        <label id="bval-row" hidden title="b-value — diffusion-weighting strength. Higher b suppresses freely-moving water and highlights restricted diffusion.">b-value (s/mm²) <input type="number" id="bval-val" class="numval" min="0" max="3000" step="50" value="1000" />
           <input type="range" id="bval" min="0" max="3000" step="50" value="1000" /></label>
-        <label id="etl-row" hidden title="Echo train length — echoes per excitation in FSE. Longer trains scan faster but add blur and shift the effective TE.">Echo train (ETL) <output id="etl-val">16</output>
+        <label id="etl-row" hidden title="Echo train length — echoes per excitation in FSE. Longer trains scan faster but add blur and shift the effective TE.">Echo train (ETL) <input type="number" id="etl-val" class="numval" min="2" max="32" step="1" value="16" />
           <input type="range" id="etl" min="2" max="32" step="1" value="16" /></label>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Measure</h2>
+      <details class="group" data-sec="measure">
+        <summary><h2>Measure</h2></summary>
         <p class="tiny">Measure on the image: a ruler reads distance in mm; an ROI reads mean signal, noise (SD) and SNR.</p>
         <div class="radios" id="measuremode" role="group" aria-label="Measurement tool">
           <button data-m="off" class="on" aria-pressed="true">Off</button>
@@ -239,14 +251,14 @@
         </div>
         <p class="tiny" id="measure-readout" role="status" aria-live="polite">Pick Ruler or ROI, then drag on the image.</p>
         <button id="measure-clear" type="button">Clear</button>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>3D acquisition &amp; reconstruction</h2>
+      <details class="group" data-sec="recon3d">
+        <summary><h2>3D acquisition &amp; reconstruction</h2></summary>
         <label class="check"><input type="checkbox" id="acq3d" /> 3D slab (acquire the whole volume once, reformat any plane)</label>
-        <label id="np-row" hidden>Slab depth (partitions) <output id="np-val">—</output>
+        <label id="np-row" hidden>Slab depth (partitions) <input type="number" id="np-val" class="numval" min="4" max="400" step="1" />
           <input type="range" id="np" min="4" max="400" step="1" value="400" /></label>
-        <label id="slabsharp-row" hidden>Slab-profile sharpness <output id="slabsharp-val">0.85</output>
+        <label id="slabsharp-row" hidden>Slab-profile sharpness <input type="number" id="slabsharp-val" class="numval" min="0.4" max="1.5" step="0.05" value="0.85" />
           <input type="range" id="slabsharp" min="0.4" max="1.5" step="0.05" value="0.85" /></label>
         <label class="check" id="kzpf-row" hidden><input type="checkbox" id="kzpf" /> kz partial Fourier</label>
         <p class="tiny" id="slab-readout" hidden></p>
@@ -287,18 +299,18 @@
           </div>
           <button id="recon-download" type="button" title="Download the reconstruction as PNG">Download recon PNG</button>
         </div>
-      </div>
+      </details>
 
-      <div class="group">
-        <h2>Parallel imaging &amp; sampling</h2>
-        <label>Acceleration R <output id="accel-val">1</output>
+      <details class="group" data-sec="parallel">
+        <summary><h2>Parallel imaging &amp; sampling</h2></summary>
+        <label>Acceleration R <input type="number" id="accel-val" class="numval" min="1" max="4" step="1" value="1" />
           <input type="range" id="accel" min="1" max="4" step="1" value="1" /></label>
         <label id="accelmethod-row" hidden>Method
           <select id="accelmethod"><option>SENSE</option><option>GRAPPA</option><option>CS</option></select></label>
-        <label>Partial volume (×0.1 vox) <output id="pv-val">10</output>
+        <label>Partial volume (×0.1 vox) <input type="number" id="pv-val" class="numval" min="0" max="30" step="1" value="10" />
           <input type="range" id="pv" min="0" max="30" step="1" value="10" /></label>
         <p class="tiny">Higher R is faster but noisier (g-factor); partial volume blurs sub-voxel tissue boundaries.</p>
-      </div>
+      </details>
     </section>
 
     <!-- Viewport -->

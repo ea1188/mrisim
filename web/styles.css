@@ -55,11 +55,47 @@ body {
 #app { display: grid; grid-template-columns: 270px 1fr 230px; gap: 10px; padding: 10px; height: calc(100% - 52px); }
 .panel { background: var(--panel); border-radius: 10px; padding: 12px; overflow-y: auto; }
 .group { border-top: 1px solid #1b222a; padding: 8px 0; }
-.group:first-child { border-top: none; padding-top: 0; }
-.group h2 { font-size: 11px; letter-spacing: .4px; color: var(--accent-hi); text-transform: uppercase; margin: 4px 0 10px; }
+.group h2 { font-size: 11px; letter-spacing: .4px; color: var(--accent-hi); text-transform: uppercase; margin: 0; }
+
+/* Collapsible control groups: the <summary> is the clickable header with a chevron. */
+details.group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; padding: 2px 0 8px; }
+details.group > summary::-webkit-details-marker { display: none; }
+details.group > summary h2 { flex: 1; }
+details.group > summary::after {
+  content: "▸"; color: var(--text-dim); font-size: 10px; margin-left: 6px; transition: transform .15s ease;
+}
+details.group[open] > summary::after { transform: rotate(90deg); }
+details.group > summary:hover h2 { color: var(--text); }
+details.group > summary:hover::after { color: var(--accent-hi); }
+details.group[data-sec="protocol"] { border-top: none; padding-top: 0; }
+
+/* Control search/filter — a sticky finder at the top of the panel. */
+.ctrl-search { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 0 0 8px; }
+#ctrl-find {
+  width: 100%; box-sizing: border-box; padding: 7px 26px 7px 10px;
+  background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 12px;
+}
+#ctrl-find:focus { border-color: var(--accent); outline: none; }
+#ctrl-find-x {
+  position: absolute; right: 6px; top: 5px; width: 22px; height: 26px; line-height: 24px;
+  background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px;
+}
+#ctrl-find-x:hover { color: var(--text); }
+.ctrl-find-empty { color: var(--text-dim); margin: 2px 0 8px; }
+@media (max-width: 920px) { .ctrl-search { position: static; } }
+
 label { display: block; color: var(--text-dim); font-size: 11px; margin: 11px 0 0; }
 label.check { display: flex; align-items: center; gap: 8px; color: #c4cad2; font-size: 12px; cursor: pointer; }
 output { float: right; color: var(--text); font-weight: 700; }
+
+/* Editable numeric value paired with a slider — type or arrow-key an exact value. */
+.numval {
+  float: right; width: 58px; margin: 0; padding: 1px 5px; text-align: right;
+  background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 5px;
+  font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; -moz-appearance: textfield;
+}
+.numval:focus { border-color: var(--accent); outline: none; }
+.numval::-webkit-outer-spin-button, .numval::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 select, input[type=range] { width: 100%; margin-top: 5px; }
 select {
   background: var(--raised); color: var(--text); border: 1px solid var(--border);
@@ -97,6 +133,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   input[type=range]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -12px; }
   input[type=range]::-moz-range-thumb { width: 28px; height: 28px; }
   input[type=checkbox] { width: 22px; height: 22px; }
+  .numval { min-height: 32px; width: 66px; }
   .radios button, .btnrow button, select, #measure-clear, .lp-btns button { min-height: 42px; }
   label.check { padding: 4px 0; }
   .lesson-item { padding: 14px 13px; }

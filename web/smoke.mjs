@@ -55,6 +55,42 @@ try {
   await page.click("#intro-x");
   await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
 
+  step("UI: collapsible groups, numeric entry, search");
+  // Advanced groups start collapsed (shorter scroll); core groups stay open.
+  if (await page.evaluate(() => document.querySelector('details[data-sec="acquisition"]').open))
+    fail("Acquisition group should start collapsed");
+  if (!(await page.evaluate(() => document.querySelector('details[data-sec="protocol"]').open)))
+    fail("Protocol group should start open");
+  // Clicking a section header expands it.
+  await page.click('details[data-sec="acquisition"] > summary');
+  if (!(await page.evaluate(() => document.querySelector('details[data-sec="acquisition"]').open)))
+    fail("clicking the Acquisition header did not expand it");
+
+  // Editable numeric value: typing an exact TR into its number field drives the
+  // slider and re-renders the image. (Timing is open by default.)
+  const numBefore = await page.getAttribute("#mainImage", "src");
+  await page.fill("#tr-val", "2200");
+  await page.waitForFunction(() => document.getElementById("tr").value === "2200", { timeout: 5_000 });
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
+    numBefore, { timeout: 15_000 });
+
+  // Control search: filtering by "bandwidth" reveals (and opens) the Acquisition
+  // group and hides unrelated groups; clearing restores them.
+  await page.fill("#ctrl-find", "bandwidth");
+  await page.waitForFunction(() => {
+    const acq = document.querySelector('details[data-sec="acquisition"]');
+    const tim = document.querySelector('details[data-sec="timing"]');
+    return acq && !acq.hidden && acq.open && tim && tim.hidden;
+  }, { timeout: 5_000 });
+  await page.fill("#ctrl-find", "");
+  await page.waitForFunction(
+    () => !document.querySelector('details[data-sec="timing"]').hidden, { timeout: 5_000 });
+
+  // Expand every group so all controls are actionable in the functional tests below
+  // (the collapse/search UX itself is covered above).
+  await page.evaluate(() => document.querySelectorAll("details.group").forEach((d) => { d.open = true; }));
+
   // The topbar shows the running engine version (e.g. "browser edition · v1.6.1").
   const tag = await page.textContent(".tag");
   if (!/v\d+\.\d+/.test(tag || "")) fail("version not shown in topbar: " + tag);

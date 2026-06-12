@@ -12,6 +12,26 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Control search (browser).** A "Find a control…" box at the top of the panel
+  filters the controls as you type (e.g. "bandwidth", "flip"), showing only the
+  matching groups and opening them — so you can jump to a parameter without
+  scrolling or knowing which group it's in.
+- **Editable numeric values (browser).** Every parameter slider now has a paired
+  number field: type an exact value (TR = 2200, TE = 80…) or arrow-key it, and the
+  slider and image follow. Previously values were drag-only and read-only.
+
+### Changed
+- **Collapsible control groups (browser).** The control panel's sections now
+  collapse and expand from their headers, with the core groups (Protocol, Anatomy &
+  Sequence, Timing, Contrast) open and the advanced ones (Acquisition, Artifacts,
+  Visualizations, Measure, 3D, Parallel imaging) collapsed by default — a much
+  shorter scroll. Each section remembers its open/closed state per device.
+- **Visualizations grouped (browser).** The six overlay/side-panel toggles
+  (contrast map, k-space, pulse-sequence diagram, B0 map, g-factor map, show-math)
+  moved out of the overloaded "Anatomy & Sequence" group into their own
+  **Visualizations** section.
+
 ## [1.17.0] — 2026-06-12
 
 The 3D reconstruction view becomes a proper mini-workstation: one panel for
