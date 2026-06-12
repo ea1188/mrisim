@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.17.0] — 2026-06-12
+
+The 3D reconstruction view becomes a proper mini-workstation: one panel for
+acquisition + reconstruction, a slab that covers the whole anatomy from the first
+click, MinIP/AIP projections, click-to-navigate MPR, a movable slab with PNG export,
+a rotating-MIP cine, true-proportion panels with calibrated scale bars — on both the
+browser and desktop — plus reconstruction/protocol lessons and a curriculum capstone.
+
 ### Changed
 - **3D acquisition and reconstruction are now one panel (browser).** The separate
   "3D acquisition" and "3D reconstruction" groups are merged into a single **3D
