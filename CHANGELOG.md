@@ -12,6 +12,11 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.16.1] — 2026-06-12
+
+Reconstruction-view polish: the MPR/projection panels no longer stretch, and the
+projection views gain a calibrated scale bar.
+
 ### Fixed
 - **Reconstruction panels no longer stretch.** The MPR reformats (and the desktop
   recon panels) were stretched to fill their box — a thin slab's coronal/sagittal
