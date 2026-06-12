@@ -12,6 +12,11 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.13.0] — 2026-06-11
+
+A reconstruction workstation in the browser: turn an acquired 3D slab into MPR,
+thick-slab MIP, rotating MIP and oblique reformats — all from the one acquisition.
+
 ### Added
 - **3D reconstruction view (browser).** Once a 3D slab is acquired, a Reconstruction
   panel turns it into **MPR** (three orthogonal reformats with a linked crosshair),
