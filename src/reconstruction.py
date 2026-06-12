@@ -37,11 +37,22 @@ def mpr_triplanar(block: np.ndarray,
     }
 
 
-def thick_slab_mip(block: np.ndarray, plane: str, center: int,
-                   thickness: int) -> np.ndarray:
-    """Maximum-intensity projection over ``thickness`` partitions centred on
-    ``center`` along ``plane``'s through-axis — the brightest voxel along each
-    ray. ``thickness`` is clamped to the block; a thickness of 1 is a plain slice.
+# Projection reducers over the slab axis: brightest (MIP — vessels/bright fluid),
+# darkest (MinIP — vessels on SWI, air, dark structures), or average (AIP — the
+# CT-style mean through the slab).
+_PROJECTIONS = {
+    "mip": lambda a, ax: a.max(axis=ax),
+    "minip": lambda a, ax: a.min(axis=ax),
+    "aip": lambda a, ax: a.mean(axis=ax),
+}
+
+
+def thick_slab_projection(block: np.ndarray, plane: str, center: int,
+                          thickness: int, mode: str = "mip") -> np.ndarray:
+    """Project ``thickness`` partitions centred on ``center`` along ``plane``'s
+    through-axis. ``mode`` selects the reducer: ``mip`` (max), ``minip`` (min) or
+    ``aip`` (mean). ``thickness`` is clamped to the block; thickness 1 is a plain
+    slice (all three modes coincide there).
     """
     ax = THROUGH_AXIS[plane]
     n = block.shape[ax]
@@ -49,10 +60,17 @@ def thick_slab_mip(block: np.ndarray, plane: str, center: int,
     half = max(1, int(thickness)) // 2
     lo, hi = max(0, c - half), min(n, c + half + 1)
     sub = block[tuple(slice(lo, hi) if a == ax else slice(None) for a in range(3))]
-    proj = sub.max(axis=ax)
+    proj = _PROJECTIONS.get(mode, _PROJECTIONS["mip"])(sub, ax)
     if plane == "sagittal":           # match get_slice's sagittal flip
         proj = np.fliplr(proj)
     return np.ascontiguousarray(proj)
+
+
+def thick_slab_mip(block: np.ndarray, plane: str, center: int,
+                   thickness: int) -> np.ndarray:
+    """Maximum-intensity projection (back-compat wrapper for
+    ``thick_slab_projection(..., mode="mip")``)."""
+    return thick_slab_projection(block, plane, center, thickness, "mip")
 
 
 def rotating_mip(block: np.ndarray, azimuth_deg: float = 0.0,

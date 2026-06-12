@@ -770,9 +770,16 @@ class WebHost(CurvesMixin):
         elif mode == "mip":
             plane = payload.get("mip_plane", "axial")
             thick = int(payload.get("mip_thickness", 20))
-            c = int(ctr[rc.THROUGH_AXIS[plane]])
-            mip = rc.thick_slab_mip(block, plane, c, thick)
-            panels["main"] = self._recon_png(mip, f"MIP · {plane} · {thick}p slab")
+            proj = str(payload.get("mip_mode", "mip")).lower()
+            # Slab centre defaults to the crosshair, but a movable position can be
+            # sent explicitly (fraction 0..1 along the projection axis).
+            axn = block.shape[rc.THROUGH_AXIS[plane]]
+            c = (int(round(float(payload["mip_center_frac"]) * (axn - 1)))
+                 if payload.get("mip_center_frac") is not None
+                 else int(ctr[rc.THROUGH_AXIS[plane]]))
+            arr = rc.thick_slab_projection(block, plane, c, thick, proj)
+            panels["main"] = self._recon_png(
+                arr, f"{proj.upper()} · {plane} · {thick}p slab")
         elif mode == "rmip":
             az = float(payload.get("azimuth", 0.0)); el = float(payload.get("elevation", 0.0))
             panels["main"] = self._recon_png(rc.rotating_mip(block, az, el),

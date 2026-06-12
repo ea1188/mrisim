@@ -51,6 +51,20 @@ class TestMIP:
         thick = rc.thick_slab_mip(block, "axial", 10, 20).sum()
         assert thick >= thin
 
+    def test_projection_modes_ordered(self, block):
+        """MinIP <= AIP <= MIP at every pixel (min <= mean <= max along the ray)."""
+        mip = rc.thick_slab_projection(block, "coronal", 10, 16, "mip")
+        minip = rc.thick_slab_projection(block, "coronal", 10, 16, "minip")
+        aip = rc.thick_slab_projection(block, "coronal", 10, 16, "aip")
+        assert minip.shape == aip.shape == mip.shape
+        assert np.all(minip <= aip + 1e-9) and np.all(aip <= mip + 1e-9)
+        # An unknown mode falls back to MIP (never errors).
+        assert np.array_equal(rc.thick_slab_projection(block, "coronal", 10, 16, "bogus"), mip)
+
+    def test_thick_slab_mip_wrapper_matches_mip_mode(self, block):
+        assert np.array_equal(rc.thick_slab_mip(block, "axial", 10, 12),
+                              rc.thick_slab_projection(block, "axial", 10, 12, "mip"))
+
 
 class TestRotatingAndOblique:
     def test_rotating_mip_shape(self, block):
@@ -73,6 +87,9 @@ class TestRotatingAndOblique:
 @pytest.mark.parametrize("mode,extra", [
     ("mpr", {}),
     ("mip", {"mip_plane": "coronal", "mip_thickness": 16}),
+    ("mip", {"mip_plane": "coronal", "mip_thickness": 16, "mip_mode": "minip"}),
+    ("mip", {"mip_plane": "coronal", "mip_thickness": 16, "mip_mode": "aip"}),
+    ("mip", {"mip_plane": "axial", "mip_thickness": 10, "mip_center_frac": 0.25}),
     ("rmip", {"azimuth": 30, "elevation": 10}),
     ("oblique", {"tilt": 20, "rot": 15}),
 ])

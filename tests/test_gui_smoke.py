@@ -687,6 +687,11 @@ def test_reconstruction_view_modes_render(win):
                          ("Rotating MIP", 1), ("Oblique MPR", 1)]:
         win.recon_mode.set(mode); win.recalculate()
         assert len(win.fig.axes) == n_axes, f"{mode}: expected {n_axes} panels"
+    # The thick-slab projection offers MIP / MinIP / AIP — each must render.
+    win.recon_mode.set("Thick-slab MIP")
+    for proj in ("MIP (brightest)", "MinIP (darkest)", "AIP (average)"):
+        win.recon_mip_mode.set(proj); win.recalculate()
+        assert len(win.fig.axes) == 1 and win.fig.axes[0].images, f"{proj} did not render"
     # Leaving recon mode restores the normal 1x2 layout.
     win.recon_enabled.set(False); win.recalculate()
     assert len(win.fig.axes) == 2

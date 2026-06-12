@@ -1245,7 +1245,7 @@ async function runRecon() {
   p.mode = mode;
   const c = reconCenterVoxel();
   if (c) p.center = c;
-  if (mode === "mip") { p.mip_plane = $("mipplane").value; p.mip_thickness = +$("mipthick").value; }
+  if (mode === "mip") { p.mip_plane = $("mipplane").value; p.mip_thickness = +$("mipthick").value; p.mip_mode = $("mipmode").value; }
   else if (mode === "rmip") { p.azimuth = +$("raz").value; p.elevation = +$("rel").value; }
   else if (mode === "oblique") { p.tilt = +$("rtilt").value; p.rot = +$("rrot").value; p.base = "axial"; }
   document.body.classList.add("busy");
@@ -1281,6 +1281,7 @@ function wireRecon() {
   ["rz", "ry", "rx", "mipthick", "raz", "rel", "rtilt", "rrot"].forEach((id) =>
     $(id).addEventListener("input", () => { const o = $(id + "-val"); if (o) o.value = $(id).value; runRecon(); }));
   $("mipplane").addEventListener("change", runRecon);
+  $("mipmode").addEventListener("change", runRecon);
   syncReconMode();
 }
 

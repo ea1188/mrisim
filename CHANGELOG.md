@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **MinIP and AIP projections in the reconstruction view.** The thick-slab MIP now
+  offers a **Projection** picker: **MIP** (brightest — vessels, fluid), **MinIP**
+  (darkest — vessels on SWI, air) and **AIP** (average — the CT-style slab mean), on
+  both browser and desktop. The engine reducer is shared and tested
+  (`reconstruction.thick_slab_projection`), and the endpoint also accepts a movable
+  slab position (`mip_center_frac`).
+
 ## [1.15.0] — 2026-06-12
 
 A guided beginner curriculum threads the lessons into an ordered learning path, and
