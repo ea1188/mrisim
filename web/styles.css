@@ -189,6 +189,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   display: grid; place-items: center; padding: 4px; overflow: hidden;
 }
 #kspaceImage, #b0mapImage, #gfactorImage { display: block; height: auto; max-width: 100%; max-height: 320px; }
+/* 3-D reconstruction panels: triplanar MPR grid + a single MIP/oblique view. */
+.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 6px; }
+.recon-tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.recon-tri img { width: 100%; height: auto; display: block; background: var(--canvas); border-radius: 4px; }
+.recon-single { display: grid; place-items: center; }
+.recon-single img { display: block; height: auto; max-width: 100%; max-height: 56vh; }
+.recon-modectl { margin-top: 2px; }
+@media (max-width: 560px) { .recon-tri { grid-template-columns: 1fr; } }
 .mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
 .mathbox { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
 .mathbox .m-tissue { color: var(--text-dim); font-size: 11px; margin-bottom: 4px; }
