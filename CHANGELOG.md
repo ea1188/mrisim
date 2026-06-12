@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Window/level works in A/B compare — and re-windows both panels.** Previously the
+  window/level drag was disabled while comparing two protocols. Now dragging on
+  either image adjusts the shared window/level and re-windows **both** A and B
+  together, so the contrast comparison stays fair (browser and desktop).
+
 ## [1.14.0] — 2026-06-11
 
 The 3D reconstruction view comes to the desktop, so the downloadable app gains the

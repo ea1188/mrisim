@@ -317,6 +317,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # Comparison
         self.compare_mode = Var(False)
         self.compare_params: dict | None = None
+        self._compare_images: "tuple[np.ndarray, np.ndarray] | None" = None
 
         # FOV slider widget reference (set in build_controls; guarded until then)
         self._fov_slider: Any = None
@@ -657,6 +658,26 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             region=self.region.get(),
             letters=self._orientation_letters(orient),
             recon_geom=getattr(self.sim, "_recon3d_geom", None))
+
+    def _wl_bounds(self, img: np.ndarray) -> "tuple[float, float]":
+        """(vmin, vmax) for an image at the current window/level, scaled to its own
+        max so the same window applies fairly to either compare panel."""
+        max_val = float(np.max(img)) if np.max(img) > 0 else 1.0
+        center = self.window_level * max_val
+        width = self.window_width * max_val
+        return center - width / 2, center + width / 2
+
+    def _apply_window_level_compare(self) -> None:
+        """Fast re-window of both compare panels (set the colour limits, no
+        re-simulation) as the user drags window/level."""
+        imgs = getattr(self, "_compare_images", None)
+        if not imgs:
+            return
+        for ax, im in zip(self.axes, imgs, strict=False):
+            if not ax.images:
+                continue
+            ax.images[0].set_clim(*self._wl_bounds(im))
+        self.canvas.draw()
 
     def apply_window_level(self) -> None:
         if self.current_image is None:
@@ -1272,9 +1293,13 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         _asp = self._get_voxel_aspect(self.orientation.get())
         if self.compare_mode.get() and self.compare_params:
             image_a, metrics_a = self.simulate_with_params(self.compare_params)
-            self.axes[0].imshow(image_a, cmap=cmap, origin="lower", aspect=_asp)
+            # Both panels share the live window/level (drag either to re-window both),
+            # so the contrast comparison is fair.
+            self._compare_images = (image_a, image_b)
+            va0, va1 = self._wl_bounds(image_a); vb0, vb1 = self._wl_bounds(image_b)
+            self.axes[0].imshow(image_a, cmap=cmap, origin="lower", aspect=_asp, vmin=va0, vmax=va1)
             self.axes[0].set_title(f"A · {self.compare_params['sequence']}  TR {self.compare_params['TR']:.0f}", color=C_ACCENT_HI, fontsize=10, fontweight="bold"); self._frame_image_axes(self.axes[0])
-            self.axes[1].imshow(image_b, cmap=cmap, origin="lower", aspect=_asp)
+            self.axes[1].imshow(image_b, cmap=cmap, origin="lower", aspect=_asp, vmin=vb0, vmax=vb1)
             self.axes[1].set_title(f"B · {current_params['sequence']}  TR {current_params['TR']:.0f}", color=C_ACCENT_HI, fontsize=10, fontweight="bold"); self._frame_image_axes(self.axes[1])
             self.update_compare_metrics(metrics_a, metrics_b)
             self.current_image = None

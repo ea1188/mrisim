@@ -949,29 +949,35 @@ function wlFilter(w0, l0) {
 }
 
 function wireWindowLevel() {
-  const img = $("mainImage");
+  const imgA = $("mainImage"), imgB = $("mainImageB");
   let dragging = false, lx = 0, ly = 0, w0 = 1, l0 = 0.5;
-  img.addEventListener("pointerdown", (e) => {
-    if (compareMode || measureMode !== "off") return;   // measuring owns the drag
+  const startWL = (e) => {
+    if (measureMode !== "off") return;   // measuring owns the drag (disabled in compare)
     dragging = true; lx = e.clientX; ly = e.clientY;
     w0 = winW; l0 = winL;              // baseline the current image was rendered at
     e.preventDefault();
-  });
+  };
+  imgA.addEventListener("pointerdown", startWL);
+  imgB.addEventListener("pointerdown", startWL);   // grab either side in compare
   window.addEventListener("pointermove", (e) => {
     if (!dragging) return;
     winW = Math.min(3, Math.max(0.05, winW + (e.clientX - lx) * 0.004));
     winL = Math.min(1, Math.max(0, winL - (e.clientY - ly) * 0.003));
     lx = e.clientX; ly = e.clientY;
-    img.style.filter = wlFilter(w0, l0);   // instant preview, no server call
+    const f = wlFilter(w0, l0);            // instant preview, no server call
+    imgA.style.filter = f;
+    if (compareMode) imgB.style.filter = f;   // window both sides together
   });
   const endWL = () => {
     if (!dragging) return;
     dragging = false;
-    schedule();                            // one accurate render at the final W/L
+    schedule();                            // one accurate render at the final W/L (both sides)
   };
   window.addEventListener("pointerup", endWL);
   window.addEventListener("pointercancel", endWL);
-  img.addEventListener("dblclick", () => { winW = 1.0; winL = 0.5; schedule(); });
+  const reset = () => { winW = 1.0; winL = 0.5; schedule(); };
+  imgA.addEventListener("dblclick", reset);
+  imgB.addEventListener("dblclick", reset);
 }
 
 // --- Interactive scout: click/drag a localizer panel to move the slice ------- //
@@ -1160,11 +1166,15 @@ async function render() {
     if (compareMode) {
       const reqSlice = +$("slice").value;   // guard against stale slice clobber
       const B = collectPayload();
-      const A = protocolA || B;
+      // Both sides share the live window/level so the contrast comparison is fair
+      // and dragging either image re-windows both.
+      const A = protocolA ? { ...protocolA, window_width: winW, window_level: winL } : B;
       const resA = await call("render", A);
       const resB = await call("render", B);
       $("mainImage").src = resA.image;
       $("mainImageB").src = resB.image;
+      $("mainImage").style.filter = "";        // drop the live drag-preview filter
+      $("mainImageB").style.filter = "";
       $("curveImage").src = resB.curve;
       setMetrics(resB);
       syncSlice(resB, reqSlice);
