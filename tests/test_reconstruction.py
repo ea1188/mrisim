@@ -114,6 +114,20 @@ def test_reconstruct_requires_3d_slab():
     assert not r["ok"] and "3-D" in r["error"]
 
 
+def test_scale_bar_is_a_tidy_quarter_width():
+    """The projection scale bar is a tidy 1/2/5×10ⁿ mm length no longer than a
+    quarter of the image."""
+    from web_adapter import WebHost
+    for width, mm_per_px in [(181, 220 / 181), (208, 380 / 208), (60, 150 / 60)]:
+        bar = WebHost._scale_bar_mm(width, mm_per_px)
+        assert 0 < bar <= width * mm_per_px * 0.25 + 1e-6
+        # tidy: bar / 10ⁿ is one of 1, 2, 5
+        import math
+        mant = bar / 10 ** math.floor(math.log10(bar))
+        assert round(mant, 6) in (1.0, 2.0, 5.0)
+    assert WebHost._scale_bar_mm(10, 0.0) == 0.0   # degenerate → no bar
+
+
 def test_reconstruct_cine_returns_distinct_frames():
     """The rotating-MIP cine pre-renders a stack of distinct frames (a full spin)
     and needs a 3-D slab."""
