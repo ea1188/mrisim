@@ -289,6 +289,7 @@
             <label>Projection plane
               <select id="mipplane"><option>axial</option><option>coronal</option><option>sagittal</option></select></label>
             <label>Slab thickness (partitions) <output id="mipthick-val">20</output><input type="range" id="mipthick" min="1" max="64" value="20" /></label>
+            <label>Slab position (%) <output id="mipcenter-val">50</output><input type="range" id="mipcenter" min="0" max="100" value="50" /></label>
           </div>
           <div id="recon-rmip" class="recon-modectl" hidden>
             <label>Azimuth (°) <output id="raz-val">0</output><input type="range" id="raz" min="0" max="360" step="5" value="0" /></label>
@@ -298,6 +299,7 @@
             <label>Tilt (°) <output id="rtilt-val">0</output><input type="range" id="rtilt" min="-45" max="45" value="0" /></label>
             <label>Rotate (°) <output id="rrot-val">0</output><input type="range" id="rrot" min="-45" max="45" value="0" /></label>
           </div>
+          <button id="recon-download" type="button" title="Download the reconstruction as PNG">Download recon PNG</button>
         </div>
       </div>
     </section>

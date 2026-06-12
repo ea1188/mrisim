@@ -1245,7 +1245,7 @@ async function runRecon() {
   p.mode = mode;
   const c = reconCenterVoxel();
   if (c) p.center = c;
-  if (mode === "mip") { p.mip_plane = $("mipplane").value; p.mip_thickness = +$("mipthick").value; p.mip_mode = $("mipmode").value; }
+  if (mode === "mip") { p.mip_plane = $("mipplane").value; p.mip_thickness = +$("mipthick").value; p.mip_mode = $("mipmode").value; p.mip_center_frac = +$("mipcenter").value / 100; }
   else if (mode === "rmip") { p.azimuth = +$("raz").value; p.elevation = +$("rel").value; }
   else if (mode === "oblique") { p.tilt = +$("rtilt").value; p.rot = +$("rrot").value; p.base = "axial"; }
   document.body.classList.add("busy");
@@ -1270,7 +1270,25 @@ async function runRecon() {
   } finally { document.body.classList.remove("busy"); }
 }
 
+// Download the current reconstruction as PNG — the single panel for MIP/oblique/
+// rotating modes, or the three MPR reformats as separate files.
+function downloadRecon() {
+  const dl = (src, name) => {
+    if (!src || !src.startsWith("data:image")) return;
+    const a = document.createElement("a"); a.href = src; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  if ($("reconmode").value === "mpr") {
+    for (const p of ["Axial", "Coronal", "Sagittal"]) dl($("recon" + p).src, `mrisim_recon_mpr_${p.toLowerCase()}.png`);
+  } else {
+    const m = $("reconmode").value;
+    const tag = m === "mip" ? `${$("mipmode").value}_${$("mipplane").value}` : m;
+    dl($("reconMain").src, `mrisim_recon_${tag}.png`);
+  }
+}
+
 function wireRecon() {
+  $("recon-download").addEventListener("click", downloadRecon);
   $("reconshow").addEventListener("change", () => {
     const on = reconActive();
     $("reconctl").hidden = !on;
@@ -1278,7 +1296,7 @@ function wireRecon() {
     if (on) runRecon();
   });
   $("reconmode").addEventListener("change", () => { syncReconMode(); runRecon(); });
-  ["rz", "ry", "rx", "mipthick", "raz", "rel", "rtilt", "rrot"].forEach((id) =>
+  ["rz", "ry", "rx", "mipthick", "mipcenter", "raz", "rel", "rtilt", "rrot"].forEach((id) =>
     $(id).addEventListener("input", () => { const o = $(id + "-val"); if (o) o.value = $(id).value; runRecon(); }));
   $("mipplane").addEventListener("change", runRecon);
   $("mipmode").addEventListener("change", runRecon);

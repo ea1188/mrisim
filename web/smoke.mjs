@@ -322,6 +322,14 @@ try {
   await page.waitForFunction(
     (prev) => { const s = document.getElementById("reconMain").src; return s && s !== prev && s.length > 2000; },
     mipSrc, { timeout: 25_000 });
+  // Moving the slab position must re-render the projection.
+  const posSrc = await page.getAttribute("#reconMain", "src");
+  await page.evaluate(() => { const s = document.getElementById("mipcenter"); s.value = 15; s.dispatchEvent(new Event("input")); });
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("reconMain").src; return s && s !== prev && s.length > 2000; },
+    posSrc, { timeout: 25_000 });
+  // The reconstruction download button is present and enabled.
+  if (await page.isDisabled("#recon-download")) fail("recon download button should be enabled");
   await page.uncheck("#reconshow");
   await page.uncheck("#acq3d");
 

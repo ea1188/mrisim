@@ -692,6 +692,12 @@ def test_reconstruction_view_modes_render(win):
     for proj in ("MIP (brightest)", "MinIP (darkest)", "AIP (average)"):
         win.recon_mip_mode.set(proj); win.recalculate()
         assert len(win.fig.axes) == 1 and win.fig.axes[0].images, f"{proj} did not render"
+    # Moving the slab position changes the projection.
+    win.recon_mip_mode.set("MIP (brightest)"); win.recon_mip_thick.set(8)
+    win.recon_mip_center.set(20); win.recalculate()
+    a = win.fig.axes[0].images[0].get_array().copy()
+    win.recon_mip_center.set(80); win.recalculate()
+    assert not np.array_equal(a, win.fig.axes[0].images[0].get_array()), "slab position had no effect"
     # Click-to-navigate: a click on the coronal MPR panel moves the X and Z
     # crosshair (not Y), like the browser. (Synthesise the matplotlib press event.)
     win.recon_mode.set("MPR (3 planes)"); win.recalculate()

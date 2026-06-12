@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Movable slab position + reconstruction PNG export.** The thick-slab projection
+  gains a **Slab position** slider (slide the slab through the volume, not just
+  resize it), on browser and desktop. The browser adds a **Download recon PNG** button
+  (the single projection, or the three MPR reformats).
 - **Click-to-navigate the MPR (browser and desktop).** In the reconstruction view's
   MPR mode, click any of the three reformat panels to move the crosshair there — the
   other two planes update to match, like a real workstation (the crosshair sliders
