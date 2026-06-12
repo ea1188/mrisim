@@ -444,6 +444,9 @@ try {
   // starts a lesson in curriculum mode (a path indicator shows), and finishing a
   // lesson advances to the next one in the path.
   await page.evaluate(() => { try { localStorage.removeItem("mrisim_curriculum"); } catch (e) {} });
+  // The launcher button is an interactive pill like Lessons (pointer cursor).
+  if ((await page.$eval("#curriculum-btn", (el) => getComputedStyle(el).cursor)) !== "pointer")
+    fail("curriculum button should have a pointer cursor like the lessons button");
   await page.click("#curriculum-btn");
   await page.waitForSelector("#curriculum:not([hidden])", { timeout: 5_000 });
   if ((await page.getAttribute("#curriculum", "role")) !== "dialog") fail("curriculum not role=dialog");

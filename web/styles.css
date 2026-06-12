@@ -296,7 +296,7 @@ kbd {
   width: 26px; height: 26px; border-radius: 50%; font-weight: 800; cursor: pointer; padding: 0;
 }
 #help:hover { color: var(--accent-hi); border-color: var(--accent); }
-#lessons-btn { background: var(--raised); border: 1px solid var(--border); border-radius: 16px; padding: 4px 12px; cursor: pointer; }
+#lessons-btn, #curriculum-btn { background: var(--raised); border: 1px solid var(--border); border-radius: 16px; padding: 4px 12px; cursor: pointer; }
 #lessons-btn:hover { color: var(--accent-hi); border-color: var(--accent); }
 
 /* Lesson picker: a height-capped card whose list scrolls internally, with a
