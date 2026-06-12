@@ -773,3 +773,34 @@ def test_3d_overlay_badge_and_reformat_tag(win):
     win.acq3d.set(False); win._set_orientation("axial"); win.recalculate()
     assert "3D SLAB" not in _overlay_text(win)               # gone in 2-D mode
     assert "3D slab" not in win.metrics_labels["slice_info"].text()
+
+
+def test_control_search_and_editable_values(win):
+    """Desktop UI parity with the browser: slider values are editable spinboxes
+    (type/arrow-key an exact number) and the control search filters sections."""
+    from app_qt import CollapsibleSection
+    from PyQt6.QtWidgets import QSpinBox
+
+    sections = win.controls_host.findChildren(CollapsibleSection)
+    by_title = {s.title: s for s in sections}
+    assert "Timing" in by_title and "Spatial / Acquisition" in by_title
+
+    # Editable numeric value: setting the TR spinbox (as typing/arrow-keys would)
+    # drives the TR Var; and a Var change syncs back into the spinbox.
+    timing = by_title["Timing"]
+    tr_spin = timing.findChildren(QSpinBox)[0]   # first Timing row is "TR (ms)"
+    orig_tr = win.TR.get()
+    tr_spin.setValue(1234)
+    assert int(win.TR.get()) == 1234, "editing the spinbox did not update TR"
+    win.TR.set(2000.0)
+    assert tr_spin.value() == 2000, "Var change did not sync into the spinbox"
+    win.TR.set(orig_tr)
+
+    # Control search: filtering by "bandwidth" shows the section that contains it
+    # and hides one that doesn't; clearing restores both.
+    win._ctrl_search.setText("bandwidth")
+    assert not by_title["Spatial / Acquisition"].isHidden(), "Bandwidth's section was hidden"
+    assert by_title["Timing"].isHidden(), "non-matching section stayed visible"
+    win._ctrl_search.setText("")
+    assert not by_title["Spatial / Acquisition"].isHidden()
+    assert not by_title["Timing"].isHidden(), "clearing the search did not restore sections"

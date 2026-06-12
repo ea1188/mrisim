@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QSlider,
     QComboBox, QCheckBox, QRadioButton, QButtonGroup, QFrame, QScrollArea,
     QVBoxLayout, QHBoxLayout, QGridLayout, QSplitter,
+    QSpinBox, QAbstractSpinBox, QLineEdit,
 )
 
 import matplotlib
@@ -146,6 +147,17 @@ class CollapsibleSection(QWidget):
         self._refresh_label()
         self._body.setVisible(checked)
 
+    def set_expanded(self, expanded: bool) -> None:
+        """Programmatically expand/collapse (used by the control search filter)."""
+        if expanded == (not self._collapsed):
+            return
+        self._btn.setChecked(expanded)
+        self._on_toggle(expanded)
+
+    @property
+    def title(self) -> str:
+        return self._title
+
     @property
     def inner(self) -> QVBoxLayout:
         return self._inner
@@ -231,6 +243,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.recon_tilt = Var(0); self.recon_rot = Var(0)
         self.multi_slice = Var(False)
         self.show_psd = Var(False)
+
+        # Control-search (Find a control) filter state.
+        self._ctrl_filtering: bool = False
+        self._ctrl_saved_expanded: dict[Any, bool] = {}
 
         # FOV / slice-group prescription (graphic planning on the scout)
         self.fov_planning = Var(False)
@@ -734,15 +750,29 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         v.setContentsMargins(4, 5, 4, 3)
         v.setSpacing(3)
 
+        is_float = isinstance(var.get(), float)
+
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         name_lbl = QLabel(label)
         name_lbl.setStyleSheet("color:#9aa4b2; font-size:11px;")
-        val_lbl = QLabel(_fmt(var.get()))
-        val_lbl.setStyleSheet("color:white; font-size:12px; font-weight:bold;")
+        # Editable value: type an exact number or arrow-key it (no spin buttons —
+        # the slider gives the coarse drag; this gives precise entry). The slider is
+        # integer-resolution, so the spinbox matches that and clamps to [mn, mx].
+        spin = QSpinBox()
+        spin.setRange(int(mn), int(mx))
+        spin.setValue(int(round(var.get())))
+        spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        spin.setKeyboardTracking(False)   # commit on Enter / focus-out, not each keystroke
+        spin.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        spin.setFixedWidth(70)
+        spin.setStyleSheet(
+            "QSpinBox { color:white; font-size:12px; font-weight:bold; "
+            f"background:{C_RAISED}; border:1px solid {C_BORDER}; border-radius:4px; padding:1px 5px; }}"
+            f"QSpinBox:focus {{ border-color:{C_ACCENT}; }}")
         row.addWidget(name_lbl)
         row.addStretch(1)
-        row.addWidget(val_lbl)
+        row.addWidget(spin)
         v.addLayout(row)
 
         s = QSlider(Qt.Orientation.Horizontal)
@@ -751,27 +781,85 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         s.setValue(int(round(var.get())))
         v.addWidget(s)
 
-        is_float = isinstance(var.get(), float)
+        # Slider and spinbox both drive the same Var; a reentrancy guard stops the
+        # sync (Var write trace) from echoing back into another valueChanged.
+        guard = {"on": False}
 
-        def on_change(value: int) -> None:
+        def commit(value: int) -> None:
+            if guard["on"]:
+                return
             var.set(float(value) if is_float else int(value))
-            val_lbl.setText(_fmt(var.get()))
             self.schedule_recalculate()
 
-        s.valueChanged.connect(on_change)
+        s.valueChanged.connect(commit)
+        spin.valueChanged.connect(commit)
 
         def sync() -> None:
             iv = int(round(var.get()))
+            guard["on"] = True
             if s.value() != iv:
-                s.blockSignals(True)
                 s.setValue(iv)
-                s.blockSignals(False)
-            val_lbl.setText(_fmt(var.get()))
+            if spin.value() != iv:
+                spin.setValue(iv)
+            guard["on"] = False
 
         var.trace_add("write", sync)
         parent_layout.addWidget(container)
         container._qslider = s  # type: ignore[attr-defined]
         return container
+
+    # ------------------------------------------------------------------ #
+    #  Control search / filter
+    # ------------------------------------------------------------------ #
+    def _section_rows(self, sec: "CollapsibleSection") -> list:
+        """The individual control-row widgets inside a collapsible section."""
+        lay = sec.inner
+        rows = []
+        for i in range(lay.count()):
+            item = lay.itemAt(i)
+            w = item.widget() if item is not None else None
+            if w is not None:
+                rows.append(w)
+        return rows
+
+    @staticmethod
+    def _row_text(w: Any) -> str:
+        """Lower-cased searchable text for a control row (its labels + checkbox text)."""
+        parts: list[str] = []
+        if isinstance(w, QCheckBox):
+            parts.append(w.text())
+        for lbl in w.findChildren(QLabel):
+            parts.append(lbl.text())
+        for cb in w.findChildren(QCheckBox):
+            parts.append(cb.text())
+        return " ".join(parts).lower()
+
+    def _filter_controls(self, text: str) -> None:
+        term = text.strip().lower()
+        sections = self.controls_host.findChildren(CollapsibleSection)
+        if not term:
+            if self._ctrl_filtering:
+                for sec in sections:
+                    sec.setVisible(True)
+                    for r in self._section_rows(sec):
+                        r.setVisible(True)
+                    sec.set_expanded(self._ctrl_saved_expanded.get(sec, True))
+                self._ctrl_filtering = False
+            return
+        if not self._ctrl_filtering:
+            # Entering filter mode — remember each section's expanded state to restore.
+            self._ctrl_saved_expanded = {sec: not sec._collapsed for sec in sections}
+            self._ctrl_filtering = True
+        for sec in sections:
+            title_hit = term in sec.title.lower()
+            any_hit = False
+            for r in self._section_rows(sec):
+                hit = title_hit or term in self._row_text(r)
+                r.setVisible(hit)
+                any_hit = any_hit or hit
+            sec.setVisible(any_hit)
+            if any_hit:
+                sec.set_expanded(True)
 
     def _dropdown(self, parent_layout: Any, label: str, var: Var, options: Any, on_select: Any, inline: bool = False) -> Any:
         container = QWidget()
@@ -869,6 +957,18 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         hdr.setStyleSheet("font-size:11px; font-weight:bold; color:#6b7585; "
                           "letter-spacing:1px; padding:4px 6px 4px 6px;")
         L.addWidget(hdr)
+
+        # Find a control: type to show only matching controls (and the sections
+        # holding them, expanded); clearing restores the normal layout.
+        self._ctrl_search = QLineEdit()
+        self._ctrl_search.setPlaceholderText("🔍  Find a control…")
+        self._ctrl_search.setClearButtonEnabled(True)
+        self._ctrl_search.setStyleSheet(
+            "QLineEdit { color:%s; font-size:12px; background:%s; border:1px solid %s; "
+            "border-radius:6px; padding:5px 8px; margin:2px 6px 4px 6px; }"
+            "QLineEdit:focus { border-color:%s; }" % (C_TEXT, C_RAISED, C_BORDER, C_ACCENT))
+        self._ctrl_search.textChanged.connect(self._filter_controls)
+        L.addWidget(self._ctrl_search)
 
         # \u2500\u2500 Sequence & Protocol \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         seq_sec = CollapsibleSection("Sequence & Protocol")
