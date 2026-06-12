@@ -12,6 +12,11 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.14.0] — 2026-06-11
+
+The 3D reconstruction view comes to the desktop, so the downloadable app gains the
+same MPR / MIP / oblique reformats the browser shipped in v1.13.0.
+
 ### Added
 - **3D reconstruction view on the desktop.** The PyQt app gains the same
   reconstruction the browser got: a "Reconstruction view" toggle that turns the
