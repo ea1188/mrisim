@@ -243,6 +243,38 @@
           <input type="range" id="pv" min="0" max="30" step="1" value="10" /></label>
         <p class="tiny">Higher R is faster but noisier (g-factor); partial volume blurs sub-voxel tissue boundaries.</p>
       </div>
+
+      <div class="group">
+        <h2>3D reconstruction</h2>
+        <label class="check"><input type="checkbox" id="reconshow" disabled /> Reconstruction view <span class="tiny" id="recon-need">(enable a 3D slab first)</span></label>
+        <div id="reconctl" hidden>
+          <label>Mode
+            <select id="reconmode">
+              <option value="mpr">MPR — three planes</option>
+              <option value="mip">Thick-slab MIP</option>
+              <option value="rmip">Rotating MIP</option>
+              <option value="oblique">Oblique MPR</option>
+            </select></label>
+          <div id="recon-mpr" class="recon-modectl">
+            <label>Crosshair ↕ (Z) <output id="rz-val">50</output><input type="range" id="rz" min="0" max="100" value="50" /></label>
+            <label>Crosshair A–P (Y) <output id="ry-val">50</output><input type="range" id="ry" min="0" max="100" value="50" /></label>
+            <label>Crosshair L–R (X) <output id="rx-val">50</output><input type="range" id="rx" min="0" max="100" value="50" /></label>
+          </div>
+          <div id="recon-mip" class="recon-modectl" hidden>
+            <label>Projection plane
+              <select id="mipplane"><option>axial</option><option>coronal</option><option>sagittal</option></select></label>
+            <label>Slab thickness (partitions) <output id="mipthick-val">20</output><input type="range" id="mipthick" min="1" max="64" value="20" /></label>
+          </div>
+          <div id="recon-rmip" class="recon-modectl" hidden>
+            <label>Azimuth (°) <output id="raz-val">0</output><input type="range" id="raz" min="0" max="360" step="5" value="0" /></label>
+            <label>Elevation (°) <output id="rel-val">0</output><input type="range" id="rel" min="-60" max="60" step="5" value="0" /></label>
+          </div>
+          <div id="recon-oblique" class="recon-modectl" hidden>
+            <label>Tilt (°) <output id="rtilt-val">0</output><input type="range" id="rtilt" min="-45" max="45" value="0" /></label>
+            <label>Rotate (°) <output id="rrot-val">0</output><input type="range" id="rrot" min="-45" max="45" value="0" /></label>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Viewport -->
@@ -276,6 +308,15 @@
       <div class="kspacewrap" id="b0mapwrap" hidden><img id="b0mapImage" alt="B0 off-resonance field map" /></div>
       <div class="kspacewrap" id="gfactorwrap" hidden><img id="gfactorImage" alt="parallel-imaging g-factor map" /></div>
       <div class="curvewrap" id="psdwrap" hidden><img id="psdImage" alt="pulse-sequence diagram" /></div>
+      <div class="reconwrap" id="reconwrap" hidden>
+        <div class="recon-tri" id="recon-tri">
+          <img id="reconAxial" alt="MPR axial reformat" />
+          <img id="reconCoronal" alt="MPR coronal reformat" />
+          <img id="reconSagittal" alt="MPR sagittal reformat" />
+        </div>
+        <div class="recon-single" id="recon-single" hidden><img id="reconMain" alt="reconstruction" /></div>
+        <p class="tiny" id="recon-msg" hidden></p>
+      </div>
       <div class="mathwrap" id="mathwrap" hidden><div class="mathbox" id="math">Hover a pixel to see its signal equation.</div></div>
     </section>
 

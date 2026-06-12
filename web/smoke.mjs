@@ -276,6 +276,23 @@ try {
     () => { const t = document.getElementById("slab-readout").textContent || "";
             return /partition/i.test(t) && /SNR/.test(t) && /mm slab/.test(t); },
     { timeout: 20_000 });
+
+  step("reconstruction");
+  // With a slab acquired, the Reconstruction toggle enables; MPR shows three
+  // reformat panels, and switching to MIP shows the single projection panel.
+  if (await page.isDisabled("#reconshow")) fail("reconshow should enable once a 3D slab is on");
+  await page.check("#reconshow");
+  await page.waitForSelector("#reconwrap:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => ["reconAxial", "reconCoronal", "reconSagittal"].every((id) => {
+      const s = document.getElementById(id)?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; }),
+    { timeout: 25_000 });
+  await page.selectOption("#reconmode", "mip");
+  await page.waitForSelector("#recon-single:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(
+    () => { const s = document.getElementById("reconMain")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
+    { timeout: 25_000 });
+  await page.uncheck("#reconshow");
   await page.uncheck("#acq3d");
 
   step("sub-displays");

@@ -516,6 +516,18 @@ const LESSONS = [
         state: { seq: "Echo Planar (EPI)", te: 60 } },
     ],
   },
+  {
+    title: "Reconstructing the 3D slab (MPR & MIP)",
+    blurb: "One acquisition, reformatted and projected any way you like.",
+    steps: [
+      { text: "First acquire a volume: <b>3D slab</b> on a gradient echo with plenty of partitions. Now tick <b>Reconstruction view</b> (under the 3D controls) — it lights up once a slab exists.",
+        state: { region: "Brain", seq: "Gradient Echo", orient: "axial", slice: 90, acq3d: true, np: 48 } },
+      { text: "In <b>MPR</b> mode you get the three orthogonal reformats from the <i>one</i> acquisition at once. Drag the <b>crosshair</b> sliders (Z / A–P / L–R) to move through the volume in every plane simultaneously — exactly how a workstation navigates a 3D dataset.",
+        state: {} },
+      { text: "Switch the recon <b>Mode</b> to <b>Thick-slab MIP</b>: it keeps the brightest voxel along each ray through an adjustable slab — raise the thickness to pull bright structures (like vessels) onto a single image. <b>Rotating MIP</b> spins that projection to any angle, and <b>Oblique MPR</b> tilts the reformat plane off the orthogonals.",
+        state: {} },
+    ],
+  },
 ];
 
 let lessonIdx = -1, stepIdx = 0;
@@ -675,6 +687,7 @@ function buildControls(info) {
   $("slice-v").addEventListener("input", () => setSlice(+$("slice-v").value));  // rail beside the image
   wireWindowLevel();
   wireScout();
+  wireRecon();
   wireProbe();
   wireMeasure();
   wireKeyboard();
@@ -735,6 +748,12 @@ function syncVisibility() {
   $("slabsharp-row").hidden = !on3d;
   $("kzpf-row").hidden = !on3d;
   $("slab-readout").hidden = !on3d;
+  // Reconstruction needs an acquired 3-D slab; gate the toggle on it.
+  $("reconshow").disabled = !on3d;
+  $("recon-need").hidden = on3d;
+  if (!on3d && $("reconshow").checked) {
+    $("reconshow").checked = false; $("reconctl").hidden = true; $("reconwrap").hidden = true;
+  }
   // The demo pathologies are painted into brain white matter — only offer on Brain.
   const brain = curRegion() === "Brain";
   $("pathology-row").hidden = !brain;
@@ -1066,6 +1085,70 @@ function schedule() {
   timer = setTimeout(render, 90);    // debounce; the worker keeps the UI free
 }
 
+// --- 3-D reconstruction (MPR / MIP / oblique from the acquired slab) -------- //
+let reconDims = null;                  // last block dims, for fraction→voxel centre
+const reconActive = () => $("reconshow").checked && $("acq3d").checked;
+
+function reconCenterVoxel() {
+  if (!reconDims) return null;
+  const f = (id, n) => Math.round((+$(id).value / 100) * (n - 1));
+  return [f("rz", reconDims.nz), f("ry", reconDims.ny), f("rx", reconDims.nx)];
+}
+
+function syncReconMode() {
+  const m = $("reconmode").value;
+  $("recon-mpr").hidden = m !== "mpr";
+  $("recon-mip").hidden = m !== "mip";
+  $("recon-rmip").hidden = m !== "rmip";
+  $("recon-oblique").hidden = m !== "oblique";
+}
+
+async function runRecon() {
+  if (!reconActive()) return;
+  const p = collectPayload();
+  const mode = $("reconmode").value;
+  p.mode = mode;
+  const c = reconCenterVoxel();
+  if (c) p.center = c;
+  if (mode === "mip") { p.mip_plane = $("mipplane").value; p.mip_thickness = +$("mipthick").value; }
+  else if (mode === "rmip") { p.azimuth = +$("raz").value; p.elevation = +$("rel").value; }
+  else if (mode === "oblique") { p.tilt = +$("rtilt").value; p.rot = +$("rrot").value; p.base = "axial"; }
+  document.body.classList.add("busy");
+  try {
+    const r = await call("reconstruct", p);
+    if (!r || !r.ok) {
+      $("recon-msg").hidden = false;
+      $("recon-msg").textContent = (r && r.error) || "reconstruction failed";
+      return;
+    }
+    $("recon-msg").hidden = true;
+    reconDims = r.dims;
+    if (mode === "mpr") {
+      $("recon-tri").hidden = false; $("recon-single").hidden = true;
+      $("reconAxial").src = r.panels.axial;
+      $("reconCoronal").src = r.panels.coronal;
+      $("reconSagittal").src = r.panels.sagittal;
+    } else {
+      $("recon-tri").hidden = true; $("recon-single").hidden = false;
+      $("reconMain").src = r.panels.main;
+    }
+  } finally { document.body.classList.remove("busy"); }
+}
+
+function wireRecon() {
+  $("reconshow").addEventListener("change", () => {
+    const on = reconActive();
+    $("reconctl").hidden = !on;
+    $("reconwrap").hidden = !on;
+    if (on) runRecon();
+  });
+  $("reconmode").addEventListener("change", () => { syncReconMode(); runRecon(); });
+  ["rz", "ry", "rx", "mipthick", "raz", "rel", "rtilt", "rrot"].forEach((id) =>
+    $(id).addEventListener("input", () => { const o = $(id + "-val"); if (o) o.value = $(id).value; runRecon(); }));
+  $("mipplane").addEventListener("change", runRecon);
+  syncReconMode();
+}
+
 async function render() {
   if (running) { pending2 = true; return; }      // coalesce overlapping renders
   running = true;
@@ -1107,6 +1190,7 @@ async function render() {
       $("oblique-readout").textContent =
         `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag either cross-panel's band to angle that plane; FOV box = resize/move; dbl-click = reset`;
     }
+    if (reconActive()) await runRecon();   // keep the reconstruction live with the slab
     if (!compareMode) stateToHash();   // keep the URL shareable/current
   } catch (err) {
     $("hint").textContent = "Render error: " + err.message;

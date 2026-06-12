@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **3D reconstruction view (browser).** Once a 3D slab is acquired, a Reconstruction
+  panel turns it into **MPR** (three orthogonal reformats with a linked crosshair),
+  **thick-slab MIP** (adjustable thickness + plane), **rotating MIP** (any angle) and
+  **oblique MPR** (arbitrary tilt/rotate) — all from the one acquisition. Backed by a
+  new tested `reconstruction.py` engine module + a `reconstruct()` endpoint. A new
+  "Reconstructing the 3D slab" lesson walks through it.
+
 ## [1.12.0] — 2026-06-10
 
 Browser parity with the desktop's teaching tools: advanced-sequence displays,
