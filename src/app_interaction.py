@@ -49,9 +49,111 @@ class InteractionMixin(_Base):
     get_max_slice_idx: Any
     get_current_params: Any
     _get_current_phantom_slice: Any
+    measure_mode: Any
+    measure_readout: Any
+    sim: Any
+    canvas: Any
+    _measure_drag: Any
+    _measure_artist: Any
+    _recon_measure_targets: Any
+
+    # --- On-image measurement (ruler / ROI) -------------------------------- #
+    def _measure_targets(self) -> dict:
+        """{matplotlib axis: (image array, mm/px)} the measure tools can act on.
+        The main image here; reconstruction panels add themselves in recon mode."""
+        targets = {}
+        if self.current_image is not None and getattr(self.current_image, "ndim", 0) == 2:
+            h, w = self.current_image.shape
+            mm = float(getattr(self.sim, "native_fov", 240.0)) / max(1, max(h, w))
+            targets[self.axes[0]] = (self.current_image, mm)
+        targets.update(getattr(self, "_recon_measure_targets", {}) or {})
+        return targets
+
+    def _clear_measure_artist(self) -> None:
+        art = getattr(self, "_measure_artist", None)
+        if art is not None:
+            try:
+                art.remove()
+            except Exception:
+                pass
+            self._measure_artist = None
+
+    def _on_measure_mode_change(self) -> None:
+        self._measure_drag = None
+        self._clear_measure_artist()
+        self.measure_readout.config(
+            text="Ruler/ROI: drag on the image." if self.measure_mode.get() == "Off"
+            else f"{self.measure_mode.get()}: drag on the image.")
+        if self.canvas is not None:
+            self.canvas.draw_idle()
+
+    def _measure_press(self, event: object) -> bool:
+        """Begin a measurement if a tool is active and the press is on a target axis.
+        Returns True if it consumed the press (so window/level is skipped)."""
+        mode = self.measure_mode.get()
+        if mode == "Off" or getattr(event, "button", None) != 1:
+            return False
+        target = self._measure_targets().get(getattr(event, "inaxes", None))
+        if target is None or event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
+            return False
+        from matplotlib.lines import Line2D
+        from matplotlib.patches import Ellipse
+        self._clear_measure_artist()
+        ax = event.inaxes  # type: ignore[attr-defined]
+        c0, r0 = float(event.xdata), float(event.ydata)  # type: ignore[attr-defined]
+        if mode == "Ruler":
+            art: Any = Line2D([c0, c0], [r0, r0], color="#ffdd44", lw=1.4,
+                              marker="o", markersize=3, markerfacecolor="#ffdd44")
+            ax.add_line(art)
+        else:
+            art = Ellipse((c0, r0), 0.1, 0.1, fill=False, edgecolor="#ffdd44", lw=1.4)
+            ax.add_patch(art)
+        self._measure_artist = art
+        self._measure_drag = {"ax": ax, "img": target[0], "mm": target[1],
+                              "kind": mode.lower(), "p0": (c0, r0), "art": art}
+        return True
+
+    def _measure_motion(self, event: object) -> bool:
+        d = getattr(self, "_measure_drag", None)
+        if not d:
+            return False
+        if event.inaxes is not d["ax"] or event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
+            return True
+        c0, r0 = d["p0"]
+        c1, r1 = float(event.xdata), float(event.ydata)  # type: ignore[attr-defined]
+        if d["kind"] == "ruler":
+            d["art"].set_data([c0, c1], [r0, r1])
+        else:
+            d["art"].set_center(((c0 + c1) / 2.0, (r0 + r1) / 2.0))
+            d["art"].set_width(max(abs(c1 - c0), 0.1))
+            d["art"].set_height(max(abs(r1 - r0), 0.1))
+        if self.canvas is not None:
+            self.canvas.draw_idle()
+        return True
+
+    def _measure_release(self, event: object) -> bool:
+        d = getattr(self, "_measure_drag", None)
+        if not d:
+            return False
+        import rendering
+        c1 = float(event.xdata) if event.xdata is not None else d["p0"][0]  # type: ignore[attr-defined]
+        r1 = float(event.ydata) if event.ydata is not None else d["p0"][1]  # type: ignore[attr-defined]
+        res = rendering.measure_stats(d["img"], d["mm"], d["kind"], [d["p0"], (c1, r1)])
+        if res.get("ok") and res["kind"] == "ruler":
+            self.measure_readout.config(text=f"Distance {res['mm']:.1f} mm")
+        elif res.get("ok"):
+            self.measure_readout.config(
+                text=f"ROI {res['n']} px · mean {res['mean']:.3f} · "
+                     f"SD {res['sd']:.3f} · SNR {res['snr']:.1f}")
+        else:
+            self.measure_readout.config(text="—")
+        self._measure_drag = None
+        return True
 
     # --- Window/level (matplotlib event handlers) ---
     def _on_press(self, event: object) -> None:
+        if self._measure_press(event):
+            return
         # Double-click left = reset
         if event.button == 1 and getattr(event, "dblclick", False):  # type: ignore[attr-defined]
             self.window_width = 1.0
@@ -83,6 +185,8 @@ class InteractionMixin(_Base):
             self.wl_start_y = event.y  # type: ignore[attr-defined]
 
     def _on_motion(self, event: object) -> None:
+        if self._measure_motion(event):
+            return
         # MRA rotate: horizontal drag = azimuth, vertical drag = elevation.
         if getattr(self, "_mra_dragging", False):
             if event.x is None or event.y is None:  # type: ignore[attr-defined]
@@ -118,6 +222,9 @@ class InteractionMixin(_Base):
             self.apply_window_level()
 
     def _on_release(self, event: object) -> None:
+        if self._measure_release(event):
+            self.wl_dragging = False
+            return
         self.wl_dragging = False
         if getattr(self, "_mra_dragging", False):
             self._mra_dragging = False
