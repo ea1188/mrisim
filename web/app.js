@@ -738,6 +738,30 @@ const LESSONS = [
     ],
   },
   {
+    title: "Slice thickness & partial volume",
+    blurb: "Thick = bright but blurry, thin = sharp but noisy.",
+    steps: [
+      { text: "<b>Slice thickness</b> sets how thick a slab of tissue each pixel represents. Start <b>thin</b> (2 mm): small structures stay sharp and distinct — but each pixel collects signal from less tissue, so it's <b>noisier</b> (lower SNR). <i>(Slice thickness is in the Acquisition section.)</i>",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 600, te: 12, thick: 2, pv: 5, labelanat: false } },
+      { text: "Now go <b>thick</b> (10 mm). The image gets visibly <b>brighter / cleaner</b> — SNR rises because each pixel averages more tissue. The cost: small structures <b>blur</b>, their signal smeared together with neighbours. That averaging across a thick slab is <b>partial-volume effect</b>.",
+        state: { thick: 10 } },
+      { text: "The <b>Partial volume</b> control exaggerates that sub-voxel mixing so you can see it directly — boundaries soften as it rises. The trade is always the same: <b>thin</b> for small lesions and fine anatomy (accept the noise), <b>thick</b> for a quick survey or low-SNR sequences. There's no free lunch — only the right pick for the question.",
+        state: { thick: 8, pv: 24 } },
+    ],
+  },
+  {
+    title: "Bandwidth — the hidden three-way trade",
+    blurb: "Receiver bandwidth balances SNR, chemical shift and speed.",
+    steps: [
+      { text: "<b>Receiver bandwidth</b> is how fast the scanner samples each echo — a setting people forget, but it trades off three things at once: <b>SNR</b>, <b>chemical-shift artifact</b>, and <b>readout speed</b>. I've turned on <b>chemical shift</b> so you can watch it. This is a middle bandwidth (125 kHz).",
+        state: { region: "Abdomen", seq: "Spin Echo", orient: "axial", slice: 40, tr: 600, te: 12, bw: 125, chemshift: true, fatsat: false, labelanat: false } },
+      { text: "<b>Lower</b> the bandwidth (≈32 kHz). SNR <b>rises</b> (it scales as 1/√BW — narrow bandwidth hears less noise) — but the <b>fat/water chemical-shift</b> misregistration gets <b>worse</b>: fat shifts further along the readout direction, smearing organ edges. Low BW buys signal but pays in chemical shift (and a longer echo).",
+        state: { bw: 32 } },
+      { text: "<b>Raise</b> it (≈400 kHz). Chemical shift shrinks to almost nothing and the readout is <b>fast</b> (shorter echo train → less blur and less EPI distortion) — at the cost of SNR. So: <b>high BW</b> for EPI / diffusion and around metal; <b>low BW</b> when you need every drop of signal and fat shift doesn't matter. Bandwidth is the quiet knob that ties SNR, artifact and speed together.",
+        state: { bw: 400 } },
+    ],
+  },
+  {
     title: "Choosing the protocol (capstone)",
     blurb: "Put it together: question → sequence, plane and options.",
     steps: [
