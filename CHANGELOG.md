@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Five more guided lessons (browser).** New walkthroughs on **gadolinium
+  contrast** (why post-contrast is T1), **receive coils** (surface vs array
+  shading, tying in the coil feature), **balanced SSFP** (bright fluid + banding),
+  **SWI** (veins, iron, blooming microbleeds), and **fMRI BOLD** (activation /
+  t-statistic maps). The lesson engine now also applies the receive-coil setting.
+
 ## [1.22.0] — 2026-06-13
 
 Small polish: a desktop **hide-curve** toggle (giving the image the full width when

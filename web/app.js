@@ -164,6 +164,7 @@ async function applyState(st) {
   if (st.qmridisp) $("qmridisp").value = st.qmridisp;
   if (st.fmridisp) $("fmridisp").value = st.fmridisp;
   if (st.curvemode) $("curvemode").value = st.curvemode;
+  if (st.receivecoil) $("receivecoil").value = st.receivecoil;
   // Pathology select (back-compat: the old boolean `lesion` maps to "lesion").
   if (st.pathology !== undefined) $("pathology").value = st.pathology;
   else if (st.lesion !== undefined) $("pathology").value = st.lesion ? "lesion" : "";
@@ -588,6 +589,66 @@ const LESSONS = [
         state: { angiotype: "Phase Contrast" } },
       { text: "Rule of thumb: <b>TOF</b> for a quick, high-resolution roadmap of where the vessels are (combine slices into a MIP); <b>PC</b> when you need the <i>velocity</i> — shunts, stenoses, CSF flow — at the cost of a longer, venc-dependent scan.",
         state: {} },
+    ],
+  },
+  {
+    title: "With contrast — what gadolinium does",
+    blurb: "Why 'post-contrast' scans light up disease — and are always T1.",
+    steps: [
+      { text: "This is a <b>T1</b> scan with an <b>enhancing tumour</b> painted in. <b>Without</b> contrast it can be subtle — note how it barely stands out from normal brain. (T1: short TR, short TE.)",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, pathology: "tumor", gd: false, labelanat: false } },
+      { text: "Now I've given <b>gadolinium</b> (tick <b>Gadolinium</b>). The tumour <b>lights up bright</b>. Gd is a <b>T1-shortening</b> agent — it pools where the blood–brain barrier is broken or tissue is vascular, and short T1 reads <b>bright on T1</b>.",
+        state: { gd: true } },
+      { text: "That's the whole idea of 'with contrast': it makes <b>leaky / vascular</b> tissue bright. It only shows on <b>T1-weighted</b> scans, which is why post-contrast series are T1. Toggle <b>Gadolinium</b> on and off to watch the enhancement come and go.",
+        state: { gd: true } },
+    ],
+  },
+  {
+    title: "Receive coils — why the picture isn't evenly bright",
+    blurb: "The antenna matters: surface coils, arrays and shading.",
+    steps: [
+      { text: "Normally the image looks <b>evenly bright</b> — the scanner corrects for the receive coil. This is the ideal ('Uniform') coil. <i>(Receive coil is in the Acquisition section.)</i>",
+        state: { region: "Brain", seq: "Spin Echo", orient: "axial", slice: 90, tr: 500, te: 12, receivecoil: "uniform", labelanat: false } },
+      { text: "Switch the coil to <b>Surface coil</b>. One edge is <b>very bright</b>, the far side <b>fades to dark</b> — a small loop only 'hears' tissue right next to it. Great local SNR, terrible coverage. This is why spine/joint surface coils sit against the body part.",
+        state: { receivecoil: "surface" } },
+      { text: "Now a <b>Head array (8-ch)</b>: it covers the whole head, but its <i>raw</i> sensitivity still varies (brighter near the elements). That residual shading is exactly what the scanner's <b>intensity correction</b> flattens to give the clean image you started with.",
+        state: { receivecoil: "head8" } },
+    ],
+  },
+  {
+    title: "Balanced SSFP — bright fluid, fast",
+    blurb: "The speed sequence: T2/T1 contrast and its banding artifact.",
+    steps: [
+      { text: "<b>Balanced SSFP</b> (TrueFISP / FIESTA / bSSFP) is very fast and gives <b>bright fluid</b> — its contrast follows <b>T2/T1</b>, so fluid and vessels glow regardless of TE. Used for cardiac cine, fetal and MRCP-type imaging where speed matters.",
+        state: { region: "Brain", seq: "Balanced SSFP", orient: "axial", slice: 90, tr: 5, te: 2, fa: 50, labelanat: false } },
+      { text: "Because the signal is refocused every TR, it's <b>SNR-efficient</b> and tolerates short TRs — that's where the speed comes from. The trade-off is on the next step.",
+        state: {} },
+      { text: "bSSFP's weakness is <b>off-resonance banding</b> — dark stripes where the field is uneven (near air/metal, at high field). The bands sit at Δf = ±1/2·TR, so keeping <b>TR short</b> pushes them out of the anatomy. It's the price of all that speed and signal.",
+        state: {} },
+    ],
+  },
+  {
+    title: "SWI — veins, iron & old blood",
+    blurb: "Long-TE gradient echo that 'blooms' anything magnetic.",
+    steps: [
+      { text: "<b>Susceptibility-weighted imaging</b> is a <b>long-TE gradient echo</b> tuned to anything that distorts the local magnetic field — <b>deoxygenated venous blood, iron, calcium, old haemorrhage</b>. Veins appear dark.",
+        state: { region: "Brain", seq: "Susceptibility (SWI)", orient: "axial", slice: 90, te: 40, pathology: "", labelanat: false } },
+      { text: "Add a <b>microhaemorrhage</b> (Pathology → microhaemorrhage). On SWI it <b>'blooms'</b> into a dark spot <i>much larger</i> than the actual bleed — the field disturbance spreads beyond the iron itself. That sensitivity is the whole point.",
+        state: { pathology: "hemorrhage" } },
+      { text: "SWI combines the GRE <b>magnitude</b> with a <b>phase</b> mask, and a minimum-intensity projection turns the veins into a venogram. It's the go-to for trauma (diffuse axonal injury), cavernomas, and counting microbleeds.",
+        state: { pathology: "hemorrhage" } },
+    ],
+  },
+  {
+    title: "fMRI — watching the brain light up",
+    blurb: "BOLD: function as a statistical map, not one picture.",
+    steps: [
+      { text: "<b>fMRI</b> uses fast <b>T2*-weighted EPI</b> to watch <b>blood oxygenation</b> change as the brain works (the <b>BOLD</b> effect). This is the raw EPI image — low-res and a bit distorted, but acquired many times per second.",
+        state: { region: "Brain", seq: "fMRI (BOLD)", orient: "axial", slice: 90, fmridisp: "EPI Image", labelanat: false } },
+      { text: "Switch the display to the <b>Activation Map</b>. Colour marks where signal <b>rose during a task</b> — a tiny (~1–3%) change, teased out of a long time series and overlaid on the anatomy.",
+        state: { fmridisp: "Activation Map" } },
+      { text: "The <b>T-statistic map</b> is the honest version: it shows how <b>confident</b> we are that each voxel truly responded, not merely that it changed. The lesson: fMRI is <b>statistics on a time series</b>, not a single snapshot — which is why it needs a task design and careful thresholding.",
+        state: { fmridisp: "T-statistic Map" } },
     ],
   },
   {
