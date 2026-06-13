@@ -22,6 +22,20 @@ export default [
     },
   },
 
+  // Service worker: offline cache, runs in the ServiceWorker global scope.
+  {
+    files: ["web/sw.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: { ...globals.serviceworker },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
+    },
+  },
+
   // Pyodide worker: runs in a Web Worker, pulls in pyodide.js via importScripts.
   {
     files: ["web/worker.js"],

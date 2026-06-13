@@ -580,8 +580,22 @@ try {
     (prev) => { const s = document.getElementById("mainImage").src; return s && s.startsWith("data:image/png") && s !== prev; },
     beforeRegion, { timeout: 45_000 });        // includes the one-time atlas fetch
 
+  step("service worker (offline)");
+  // The network-first service worker must register, take control, and serve a
+  // cached shell asset when the network drops (offline-after-first-load). We test
+  // the fallback path on a small shell file (not a full Pyodide reboot).
+  await page.waitForFunction(
+    () => navigator.serviceWorker && navigator.serviceWorker.controller, { timeout: 20_000 });
+  await page.evaluate(() => fetch("styles.css").then((r) => r.text()));   // warm the cache
+  await page.context().setOffline(true);
+  const offlineOk = await page.evaluate(async () => {
+    try { const r = await fetch("styles.css"); return r.ok; } catch (e) { return false; }
+  });
+  await page.context().setOffline(false);
+  if (!offlineOk) fail("service worker did not serve a cached shell asset offline");
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, lessons, and real body atlas all work.");
+  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, lessons, real body atlas, and offline service worker all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {

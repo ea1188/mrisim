@@ -13,6 +13,13 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Offline support + CDN resilience (browser).** A conservative service worker
+  caches the app so it works **offline after the first load** and survives CDN
+  hiccups. It is deliberately *network-first* for the app shell — online visitors
+  always get the latest code, the cache is only an offline fallback — and
+  *cache-first* only for immutable, versioned assets (the pinned Pyodide runtime +
+  wheels, and the build-id-busted engine/anatomy), so it can never serve stale app
+  code. Includes a kill-switch path and an offline smoke test.
 - **Versioned share-links (browser).** Shareable links now carry a schema version
   (`v=`) with a `migrateState()` hook, so a link made with an older build is
   brought up to date rather than silently misapplied, and a link from a newer
