@@ -495,6 +495,20 @@ def test_desktop_measure_tools(win):
     win.measure_mode.set("Off"); win._on_measure_mode_change(); win.recalculate()
 
 
+def test_hide_signal_curve_adapts_layout(win):
+    """Hiding the signal curve drops the second panel (image spans full width);
+    showing it / k-space / compare restore the 1×2 layout."""
+    set_state(win, sequence="Spin Echo")
+    win.show_signal_curve.set(True); win.show_kspace.set(False); win.recalculate()
+    assert len(win.fig.axes) == 2
+    win.show_signal_curve.set(False); win.recalculate()
+    assert len(win.fig.axes) == 1                # image only, full width
+    win.show_kspace.set(True); win.recalculate()
+    assert len(win.fig.axes) == 2                # k-space brings the panel back
+    win.show_kspace.set(False); win.show_signal_curve.set(True); win.recalculate()
+    assert len(win.fig.axes) == 2                # curve restored
+
+
 # --------------------------------------------------------------------------- #
 #  Keyboard navigation / toggles (_on_key)
 # --------------------------------------------------------------------------- #

@@ -308,6 +308,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.display_cmap = Var("gray")
         self.receive_coil = Var("Uniform (ideal)")
         self.measure_mode = Var("Off")       # Off | Ruler | ROI (on-image measurement)
+        self.show_signal_curve = Var(True)   # show the signal curve beside the image
         self.show_tissue_overlay = Var(False)
         self.rician_bias_correct = Var(False)
         self.pv_sigma = Var(10)          # partial-volume PSF width, ×0.1 vox
@@ -634,13 +635,24 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
     def _ensure_1x2_layout(self) -> None:
         """Restore the normal 1x2 subplot layout if the figure has a different configuration."""
-        if len(self.fig.axes) != 2:
-            self.fig.clear()
+        self._ensure_layout(2)
+
+    def _ensure_layout(self, ncols: int) -> None:
+        """Image-only (1x1) or image+second-panel (1x2) layout, rebuilt only when the
+        column count changes. self.axes is always indexable as axes[0] (and axes[1]
+        when ncols == 2)."""
+        if len(self.fig.axes) == ncols:
+            return
+        self.fig.clear()
+        if ncols == 1:
+            self.axes = [self.fig.subplots(1, 1)]
+            self.fig.subplots_adjust(left=0.04, right=0.97, top=0.965, bottom=0.075)
+        else:
             self.axes = self.fig.subplots(1, 2)
             self.fig.subplots_adjust(left=0.035, right=0.975, top=0.965,
                                      bottom=0.075, wspace=0.20)
-            for ax in self.axes:
-                ax.set_facecolor(C_CANVAS)
+        for ax in self.axes:
+            ax.set_facecolor(C_CANVAS)
 
 
     # RGBA colours for each tissue label (R, G, B, A) — used by the overlay.
@@ -1180,6 +1192,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                        ["gray", "bone", "hot", "plasma", "viridis", "magma"],
                        self.schedule_recalculate, inline=True)
         self._checkbox(DL, "Tissue label overlay", self.show_tissue_overlay)
+        self._checkbox(DL, "Show signal curve", self.show_signal_curve)
         self._dropdown(DL, "Measure tool", self.measure_mode, ["Off", "Ruler", "ROI"],
                        self._on_measure_mode_change, inline=True)
         self.measure_readout = DLabel("Ruler/ROI: drag on the image.",
@@ -1441,12 +1454,16 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             self._display_multi_slice(current_params)
             return
 
-        # Restore 1x2 layout if coming back from multi-slice 3x3 grid
-        self._ensure_1x2_layout()
+        # The second panel holds the A/B comparison, k-space, or the signal curve.
+        # When none of those are shown, drop it and give the image the full width.
+        want_second = (self.compare_mode.get() or self.show_kspace.get()
+                       or self.show_signal_curve.get())
+        self._ensure_layout(2 if want_second else 1)
 
         image_b, metrics_b = self._acquire_or_reformat(current_params)
         image_b = self._apply_coil_shading(image_b)   # receive-coil display shading
-        self.axes[0].clear(); self.axes[1].clear()
+        for ax in self.axes:
+            ax.clear()
 
         cmap = self.display_cmap.get()
         _asp = self._get_voxel_aspect(self.orientation.get())
@@ -1494,6 +1511,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                     origin="lower", aspect="auto")
             self._frame_image_axes(self.axes[0])
             self._annotate_image(self.axes[0], current_params, orient, sl_idx, width, center)
+            # The second panel (when present): k-space takes priority, else the
+            # signal curve. With both off it was dropped above (image spans full).
             if self.show_kspace.get():
                 ks = self._last_kspace if self._last_kspace is not None else None
                 if ks is None:
@@ -1501,7 +1520,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                     ks = image_to_kspace(image_b)
                 self.axes[1].imshow(get_kspace_display(ks), cmap="hot", origin="lower")
                 self.axes[1].set_title("k-Space (acquired)", color=C_TEXT_DIM, fontsize=10); self.axes[1].set_axis_off()
-            else:
+            elif self.show_signal_curve.get():
                 self._plot_curves(current_params)
             self.compare_metrics_label.config(text="")
 

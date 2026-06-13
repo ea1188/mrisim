@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Hide the signal curve on the desktop.** A "Show signal curve" toggle (Display
+  section). With it off — and no k-space panel or A/B comparison — the second panel
+  is dropped and the image spans the full width; toggling it (or k-space / compare)
+  back restores the side-by-side layout.
 - **Curve state in share-links (browser).** A shareable link now preserves the
   signal-curve type (TE decay / TR recovery / … / Flip angle) and whether the curve
   is shown, so a link reproduces the exact view.
