@@ -30,10 +30,11 @@ frozen.)
   engine already supported these modes; the browser just hadn't exposed them.)
 
 ### Changed
-- **3D reconstruction opens as a 2×2 grid (browser).** MPR now shows the three
-  reformats (axial / coronal / sagittal) **plus a 3-D MIP overview** of the whole
-  slab in the 4th quadrant — the PACS-style quad layout — instead of a single
-  three-wide strip, so each panel is larger and the volume has a 3-D reference.
+- **3D reconstruction opens as a 2×2 grid (browser and desktop).** MPR now shows
+  the three reformats (axial / coronal / sagittal) **plus a 3-D MIP overview** of
+  the whole slab in the 4th quadrant — the PACS-style quad layout — instead of a
+  three-wide strip, so each panel is larger and the volume has a 3-D reference. The
+  reconstruction PNG export (browser) now includes the overview panel too.
 
 ### Internal
 - **Rendering-invariant regression tests.** New `tests/test_visual_regression.py`

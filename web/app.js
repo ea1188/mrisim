@@ -1474,7 +1474,8 @@ function downloadRecon() {
     document.body.appendChild(a); a.click(); a.remove();
   };
   if ($("reconmode").value === "mpr") {
-    for (const p of ["Axial", "Coronal", "Sagittal"]) dl($("recon" + p).src, `mrisim_recon_mpr_${p.toLowerCase()}.png`);
+    // All four shown panels: the three reformats + the 3D MIP overview.
+    for (const p of ["Axial", "Coronal", "Sagittal", "Overview"]) dl($("recon" + p).src, `mrisim_recon_mpr_${p.toLowerCase()}.png`);
   } else {
     const m = $("reconmode").value;
     const tag = m === "mip" ? `${$("mipmode").value}_${$("mipplane").value}` : m;

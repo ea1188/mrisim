@@ -88,13 +88,6 @@ class DLabel(QLabel):
             self.setStyleSheet(self._base + f"color:{fg};")
 
 
-def _fmt(val: object) -> str:
-    """Match the Tkinter slider label formatting."""
-    if isinstance(val, float):
-        return f"{val:.0f}"
-    return str(val)
-
-
 # Visual theme (palette tokens, stylesheet, solid-bg helper) lives in app_theme
 # so the window and the UI mixins share a single source of truth.
 from app_theme import (  # noqa: E402
@@ -1521,16 +1514,20 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.current_image = None
         mode = self.recon_mode.get()
         if mode.startswith("MPR"):
-            axs = self.fig.subplots(1, 3)
-            self.fig.subplots_adjust(left=0.01, right=0.99, top=0.93, bottom=0.02, wspace=0.05)
+            # 2×2 quad (PACS-style): the three orthogonal reformats + a 3-D MIP
+            # overview of the whole slab in the 4th cell.
+            axs = self.fig.subplots(2, 2).ravel()
+            self.fig.subplots_adjust(left=0.01, right=0.99, top=0.95, bottom=0.02,
+                                     wspace=0.05, hspace=0.12)
             tri = rc.mpr_triplanar(block, (cz, cy, cx))
             cross = {"axial": (cx / nx, cy / ny), "coronal": (cx / nx, cz / nz),
                      "sagittal": (cy / ny, cz / nz)}
             names = ("axial", "coronal", "sagittal")
-            for ax, name in zip(axs, names, strict=True):
+            for ax, name in zip(axs[:3], names, strict=True):
                 _show(ax, tri[name], name.capitalize(), cross[name])
-            # Remember the panel axes + block dims so a click navigates the crosshair.
-            self._recon_mpr_axes = dict(zip(names, axs, strict=True))
+            _show(axs[3], rc.rotating_mip(block, 35.0, 20.0), "3D MIP")   # reference, not a cross panel
+            # Remember the cross-panel axes + block dims so a click navigates the crosshair.
+            self._recon_mpr_axes = dict(zip(names, axs[:3], strict=True))
             self._recon_block_shape = (nz, ny, nx)
         else:
             self._recon_mpr_axes = {}
