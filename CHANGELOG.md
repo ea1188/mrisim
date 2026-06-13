@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Multiple-sclerosis demo pathology (browser).** A new Pathology option that
+  scatters several periventricular white-matter plaques (FLAIR-bright), for the
+  classic "count the lesions" MS reading — it reuses the existing lesion tissue, so
+  no engine change.
 - **Two more guided lessons (browser).** **"Slice thickness & partial volume"**
   (thick = bright but blurry vs thin = sharp but noisy) and **"Bandwidth — the
   hidden three-way trade"** (SNR vs chemical-shift vs readout speed) — filling two

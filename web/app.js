@@ -1319,7 +1319,7 @@ function setCompare(on) {
   render();
 }
 
-const PATHOLOGY_LABEL = { lesion: "WM lesion", stroke: "Stroke",
+const PATHOLOGY_LABEL = { lesion: "WM lesion", ms: "MS plaques", stroke: "Stroke",
   hemorrhage: "Microhaemorrhage", tumor: "Tumour", abscess: "Abscess" };
 
 // Accessible name + spoken unit for each slider, so a screen reader announces

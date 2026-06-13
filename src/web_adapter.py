@@ -231,10 +231,12 @@ class WebHost(CurvesMixin):
     # b0 / rendering, keyed by these labels.
     # Single-label pathologies map kind → label. The abscess is special: a pus
     # core (27, restricted diffusion) inside an enhancing capsule/rim (28).
+    # "ms" reuses the white-matter-lesion label (23, FLAIR-bright) but paints
+    # several small periventricular plaques instead of one — no new tissue needed.
     _PATHOLOGY = {"lesion": 23, "stroke": 24, "hemorrhage": 25, "tumor": 26,
-                  "abscess": 27}
+                  "abscess": 27, "ms": 23}
     _PATHOLOGY_R = {"lesion": 0.035, "stroke": 0.045, "hemorrhage": 0.032,
-                    "tumor": 0.05, "abscess": 0.068}
+                    "tumor": 0.05, "abscess": 0.068, "ms": 0.022}
 
     def _pathology_volume(self, kind: str) -> np.ndarray:
         """Return the brain volume with a demo lesion of `kind` painted into the
@@ -266,6 +268,12 @@ class WebHost(CurvesMixin):
                 r_in = max(2, r - 5)                     # ~5-voxel rim survives PV blur
                 vol[(dist2 <= r * r) & para] = 28        # rim (capsule)
                 vol[(dist2 <= r_in * r_in) & para] = 27  # core (pus)
+            elif kind == "ms":
+                # Several small periventricular plaques (label 23) scattered through
+                # one hemisphere's deep white matter — the classic MS lesion load.
+                for dy, dx in [(0, 0), (-2, -14), (-13, 4), (11, 9), (-7, -8), (14, -4)]:
+                    d2 = (zz - z) ** 2 + (yy - (cy + dy)) ** 2 + (xx - (cx + dx)) ** 2
+                    vol[(d2 <= r * r) & wm] = 23
             else:
                 vol[(dist2 <= r * r) & wm] = self._PATHOLOGY[kind]
         self._lesion_vol[kind] = vol

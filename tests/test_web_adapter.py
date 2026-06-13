@@ -697,3 +697,16 @@ def test_coil_shading_matches_physics():
     assert surf[n - 5:].mean() > 5.0 * surf[:5].mean()
     # Shading is normalised + clipped — bounded, no blow-up.
     assert head.min() >= 0.0 and head.max() <= 1.26
+
+
+def test_ms_pathology_paints_multiple_plaques():
+    """The MS demo pathology scatters several white-matter-lesion plaques (label 23),
+    unlike the single-lesion case — without needing any new tissue label."""
+    from scipy import ndimage
+    h = wa.WebHost()
+    h.load_region("Brain")
+    z = h._pathology_volume("lesion").shape[0] // 2
+    single = ndimage.label(h._pathology_volume("lesion")[z] == 23)[1]
+    multi = ndimage.label(h._pathology_volume("ms")[z] == 23)[1]
+    assert single == 1, f"single lesion should be one plaque, got {single}"
+    assert multi >= 3, f"MS should paint several plaques, got {multi}"
