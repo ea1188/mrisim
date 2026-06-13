@@ -365,6 +365,7 @@ class WebHost(CurvesMixin):
         wl = float(payload.get("window_level", 0.5))
 
         image, metrics = self._acquire_or_reformat(params)
+        image = self._apply_coil_shading(image, payload.get("receive_coil"))
         self.current_image = image
         return {
             "image": self._draw_image(image, params, orient, sl, ww, wl,
@@ -595,6 +596,37 @@ class WebHost(CurvesMixin):
             if "FA" in d:
                 return self._MAP_CMAP["FA"]
         return None
+
+    def _coil_envelope(self, shape: "tuple[int, int]", coil: str) -> "np.ndarray | None":
+        """Spatial receive-sensitivity envelope (rows, cols), normalised so bright
+        regions ≈ 1, or None for the ideal uniform coil. Uses the tested coil.py
+        models so the shading is physics-derived, not a painted gradient."""
+        import coil as coil_mod
+        rows, cols = shape
+        if coil == "surface":          # a single loop at the bottom edge — strong falloff
+            env = coil_mod.biot_savart_sensitivity(
+                shape, coil_center=(rows - 1.0, (cols - 1) / 2.0),
+                coil_radius_mm=max(cols, rows) * 0.18)
+        elif coil == "quad":           # 2-channel quadrature
+            env = coil_mod.combine_sos(coil_mod.head_coil_array(shape, n_coils=2))
+        elif coil == "head8":          # 8-channel head array (peripheral brightening)
+            env = coil_mod.combine_sos(coil_mod.head_coil_array(shape, n_coils=8))
+        else:
+            return None
+        p95 = float(np.percentile(env, 95))
+        if p95 > 1e-9:
+            env = env / p95
+        return np.clip(env, 0.0, 1.25).astype(np.float64)
+
+    def _apply_coil_shading(self, image: np.ndarray, coil: "str | None") -> np.ndarray:
+        """Modulate the image by a receive coil's spatial sensitivity (a display
+        effect: shows how surface/array coils shade the picture). Uniform → no-op."""
+        if not coil or coil == "uniform" or getattr(image, "ndim", 0) != 2:
+            return image
+        env = self._coil_envelope(image.shape, coil)
+        if env is None:
+            return image
+        return (np.asarray(image, dtype=np.float64) * env).astype(image.dtype)
 
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
                     sl_idx: int, ww: float = 1.0, wl: float = 0.5,

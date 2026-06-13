@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Receive-coil shading (browser).** A "Receive coil" picker — ideal (uniform),
+  8-channel head array, 2-channel quadrature, or a single surface coil — modulates
+  the image by the coil's spatial sensitivity (from the tested `coil.py` models): a
+  surface coil shows the characteristic strong one-sided falloff, arrays cover the
+  whole FOV but still vary, illustrating why scanners apply intensity correction.
+
 ### Changed
 - **Quantitative maps use perceptual, colorblind-safe colormaps + a colorbar
   (browser).** T1 / T2 / T2\* (qMRI) and ADC / FA (diffusion) maps now render with a
