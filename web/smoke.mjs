@@ -489,7 +489,15 @@ try {
   await page.waitForFunction(
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     beforeNex, { timeout: 15_000 });
-  if (!(await page.evaluate(() => location.hash.length > 1))) fail("URL hash was not updated for sharing");
+  const shareHash = await page.evaluate(() => location.hash);
+  if (shareHash.length <= 1) fail("URL hash was not updated for sharing");
+  // Share-links carry a schema version (v=) so old links can be migrated, not misapplied.
+  if (!/(?:^#|[#&])v=\d+/.test(shareHash)) fail("share-link missing schema version (v=): " + shareHash);
+  // A legacy link with no v= must still apply (back-compat), and a future v must not throw.
+  for (const legacy of ["#region=Brain&seq=Spin%20Echo&tr=1800", "#v=999&region=Brain&tr=2600"]) {
+    await page.evaluate((h) => { location.hash = h; return window.applyHashState(); }, legacy);
+    await page.waitForTimeout(300);
+  }
 
   // Download must produce a .png.
   const [download] = await Promise.all([
