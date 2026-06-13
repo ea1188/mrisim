@@ -657,8 +657,20 @@ try {
   await page.context().setOffline(false);
   if (!offlineOk) fail("service worker did not serve a cached shell asset offline");
 
+  step("worker-crash resilience");
+  // MUST be last: simulate the engine worker crashing. The UI must surface an error
+  // and fail subsequent calls instead of hanging silently. (Permanently kills the
+  // worker for this page, hence last; the console breadcrumb is a warn, not error.)
+  await page.evaluate(() => window.worker.dispatchEvent(new ErrorEvent("error", { message: "simulated crash" })));
+  await page.waitForFunction(
+    () => /Engine error/.test(document.getElementById("hint").textContent || ""), { timeout: 5_000 });
+  const callRejected = await page.evaluate(async () => {
+    try { await window.call("render", {}); return false; } catch (e) { return true; }
+  });
+  if (!callRejected) fail("call() did not reject after the worker crashed — UI would hang");
+
   if (errors.length) fail("console/page errors during smoke");
-  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, lessons, real body atlas, and offline service worker all work.");
+  console.log("SMOKE OK — render, metrics, intro, sequence/preset, compare, window-level, scout, keyboard, controls, share-URL, download, lessons, real body atlas, offline service worker, and worker-crash resilience all work.");
   await browser.close();
   process.exit(0);
 } catch (e) {

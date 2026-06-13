@@ -19,6 +19,12 @@ frozen.)
   fundamental gaps in the lesson set.
 
 ### Fixed
+- **Engine-crash resilience (browser).** If the Pyodide worker ever crashes (e.g.
+  out of memory) it fires an `error` event rather than returning a result; without
+  a handler, in-flight requests hung forever and the UI froze silently. Now a
+  `worker.onerror` handler fails the pending calls, clears the busy state, and shows
+  "Engine error — please reload," and later calls reject immediately instead of
+  hanging.
 - **Review polish (browser).** The welcome no longer hard-codes "three" Start-here
   lessons (there are four); the **receive coil** is now part of shareable links
   (parity with the curve state); and the feature tour skips a step whose target is
