@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.24.0] — 2026-06-13
+
+Robustness and content. The browser no longer freezes if the Pyodide engine
+crashes (it surfaces an error and tells you to reload), and there's new teaching
+content: a **multiple-sclerosis** demo pathology and two more lessons (slice
+thickness / partial volume, and receiver bandwidth). Plus review polish and wider
+rendering-invariant test coverage under the hood.
+
 ### Added
 - **Multiple-sclerosis demo pathology (browser).** A new Pathology option that
   scatters several periventricular white-matter plaques (FLAIR-bright), for the
