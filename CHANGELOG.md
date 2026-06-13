@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Fixed
+- **Review polish (browser).** The welcome no longer hard-codes "three" Start-here
+  lessons (there are four); the **receive coil** is now part of shareable links
+  (parity with the curve state); and the feature tour skips a step whose target is
+  hidden (e.g. the curve panel when the curve is off) instead of showing an empty
+  spotlight.
+
 ## [1.23.0] — 2026-06-13
 
 Onboarding: new visitors get a **guided feature tour** — a spotlight walkthrough
