@@ -238,13 +238,96 @@ function closeDialog(id) {
   $(id).hidden = true;
   if (lastDialogFocus && typeof lastDialogFocus.focus === "function") lastDialogFocus.focus();
 }
-function showIntro() { openDialog("intro", "intro-ok"); }
+function showIntro() { openDialog("intro", "intro-tour"); }
 function hideIntro() { closeDialog("intro"); localStorage.setItem("mrisim_seen", "1"); }
 function maybeShowIntro() {
   $("intro-ok").addEventListener("click", hideIntro);
   $("intro-x").addEventListener("click", hideIntro);
+  $("intro-tour").addEventListener("click", () => { hideIntro(); startTour(); });
   $("help").addEventListener("click", showIntro);
+  $("tour-next").addEventListener("click", nextTour);
+  $("tour-prev").addEventListener("click", prevTour);
+  $("tour-skip").addEventListener("click", endTour);
   try { if (!localStorage.getItem("mrisim_seen")) showIntro(); } catch (e) { /* private mode */ }
+}
+
+// --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
+const TOUR = [
+  { el: "#sequence", title: "Pick a sequence",
+    text: "Choose the pulse sequence — Spin Echo, FLAIR, diffusion, angiography… The plain-language note just below says what each one is for." },
+  { el: "#tr", title: "Set the timing",
+    text: "Sweep <b>TR / TE / flip</b> to change the contrast — drag the slider, or type an exact value in the box (or arrow-key it)." },
+  { el: "#mainImage", title: "The image",
+    text: "The reconstructed slice. <b>Scroll</b> (or ↑/↓) to change slice, <b>drag</b> to window/level, and <b>hover</b> any pixel to read its tissue and T1 / T2 / PD." },
+  { el: "#curvewrap", title: "The signal curve",
+    text: "Shows how signal depends on your settings. Switch what it plots — or hide it — in the <b>Visualizations</b> section." },
+  { el: "#preset", title: "Clinical presets",
+    text: "Apply a real-world protocol in one click — every setting is filled in for you." },
+  { el: "#compare", title: "Compare A / B",
+    text: "Snapshot the current setup as <b>A</b>, change something, then <b>Compare</b> to see the two side by side." },
+  { el: "#acq3d", title: "3D & reconstruction",
+    text: "Acquire a whole <b>3D slab</b> once and reformat any plane. Reconstruction opens a PACS-style 2×2 view (three planes + a 3D MIP)." },
+  { el: "#measuremode", title: "Measure",
+    text: "<b>Ruler</b> and <b>ROI</b> tools — drag on the image (or a reformat) to read a distance in mm, or an ROI's mean / SD / SNR." },
+  { el: "#ctrl-find", title: "Find anything",
+    text: "Lost a control? Type here to jump straight to it — the panel filters as you type." },
+  { el: "#lessons-btn", title: "Learn from scratch",
+    text: "New to MRI? Open <b>📖 Lessons</b> for short guided walkthroughs, or <b>🎓 Curriculum</b> for a beginner path. You can re-open this tour anytime from <b>?</b>." },
+];
+let tourIdx = 0;
+
+function startTour() {
+  tourIdx = 0;
+  $("tour").hidden = false;
+  showTourStep();
+  window.addEventListener("resize", repositionTour);
+  window.addEventListener("keydown", tourKey);
+}
+function endTour() {
+  $("tour").hidden = true;
+  window.removeEventListener("resize", repositionTour);
+  window.removeEventListener("keydown", tourKey);
+  try { localStorage.setItem("mrisim_tour", "1"); } catch (e) { /* private mode */ }
+}
+function tourKey(e) {
+  if (e.key === "Escape") endTour();
+  else if (e.key === "ArrowRight") nextTour();
+  else if (e.key === "ArrowLeft") prevTour();
+}
+function nextTour() { if (tourIdx >= TOUR.length - 1) { endTour(); return; } tourIdx++; showTourStep(); }
+function prevTour() { if (tourIdx > 0) { tourIdx--; showTourStep(); } }
+
+function showTourStep() {
+  const step = TOUR[tourIdx];
+  const el = document.querySelector(step.el);
+  if (!el) { nextTour(); return; }                 // skip a control that isn't present
+  const sec = el.closest("details.group");
+  if (sec && !sec.open) sec.open = true;            // open a collapsed section
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  $("tour-title").textContent = step.title;
+  $("tour-text").innerHTML = step.text;
+  $("tour-progress").textContent = `${tourIdx + 1} / ${TOUR.length}`;
+  $("tour-prev").disabled = tourIdx === 0;
+  $("tour-next").textContent = tourIdx === TOUR.length - 1 ? "Done" : "Next ›";
+  setTimeout(repositionTour, 220);                 // after the scroll/layout settles
+}
+function repositionTour() {
+  if ($("tour").hidden) return;
+  const el = document.querySelector(TOUR[tourIdx].el);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const pad = 6, spot = $("tour-spot");
+  spot.style.left = (r.left - pad) + "px"; spot.style.top = (r.top - pad) + "px";
+  spot.style.width = (r.width + 2 * pad) + "px"; spot.style.height = (r.height + 2 * pad) + "px";
+  // Place the tooltip beside the target, clamped to the viewport.
+  const pop = $("tour-pop");
+  pop.style.visibility = "hidden"; pop.style.left = "0px"; pop.style.top = "0px";
+  const pw = pop.offsetWidth, ph = pop.offsetHeight, m = 12;
+  let left = r.right + m;
+  if (left + pw > window.innerWidth - 8) left = r.left - pw - m;     // flip to the left
+  if (left < 8) left = Math.min(Math.max(8, r.left), window.innerWidth - pw - 8);
+  let top = Math.max(8, Math.min(r.top + r.height / 2 - ph / 2, window.innerHeight - ph - 8));
+  pop.style.left = left + "px"; pop.style.top = top + "px"; pop.style.visibility = "visible";
 }
 
 // --- Guided lessons --------------------------------------------------------- //
