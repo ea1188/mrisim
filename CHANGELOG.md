@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Hide the signal curve on the desktop.** A "Show signal curve" toggle (Display
+  section). With it off — and no k-space panel or A/B comparison — the second panel
+  is dropped and the image spans the full width; toggling it (or k-space / compare)
+  back restores the side-by-side layout.
+
 ## [1.21.0] — 2026-06-13
 
 Desktop catches up to the browser. The desktop app gains the three features the
