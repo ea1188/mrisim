@@ -690,11 +690,12 @@ def test_enabling_3d_covers_the_whole_anatomy(win):
 
 def test_reconstruction_view_modes_render(win):
     """The desktop reconstruction view reformats/projects the acquired slab: MPR
-    rebuilds the figure to three panels, the projection/oblique modes to one."""
+    rebuilds the figure to a 2×2 quad (three reformats + a 3-D MIP overview), the
+    projection/oblique modes to one panel."""
     set_state(win, sequence="Gradient Echo")
     win.acq3d.set(True); win.n_partitions.set(32)
     win.recon_enabled.set(True)
-    for mode, n_axes in [("MPR (3 planes)", 3), ("Thick-slab MIP", 1),
+    for mode, n_axes in [("MPR (3 planes)", 4), ("Thick-slab MIP", 1),
                          ("Rotating MIP", 1), ("Oblique MPR", 1)]:
         win.recon_mode.set(mode); win.recalculate()
         assert len(win.fig.axes) == n_axes, f"{mode}: expected {n_axes} panels"
