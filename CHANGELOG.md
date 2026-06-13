@@ -12,6 +12,16 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.19.0] — 2026-06-13
+
+A round of viewing improvements and durability work. In the browser you can now
+hide or switch the signal curve (T2 decay, T1 recovery, inversion or a histogram),
+and 3D reconstruction opens as a PACS-style 2×2 quad — three reformats plus a 3-D
+MIP overview — on both the browser and the desktop. Under the hood: shareable
+links are versioned, the browser works offline after first load (a conservative,
+network-first service worker), and CI gained ESLint and rendering-invariant
+regression tests.
+
 ### Added
 - **Offline support + CDN resilience (browser).** A conservative service worker
   caches the app so it works **offline after the first load** and survives CDN
