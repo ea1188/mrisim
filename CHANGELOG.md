@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.22.0] — 2026-06-13
+
+Small polish: a desktop **hide-curve** toggle (giving the image the full width when
+the curve, k-space and A/B comparison are all off), and **shareable links that
+preserve the signal-curve type and visibility** in the browser.
+
 ### Added
 - **Hide the signal curve on the desktop.** A "Show signal curve" toggle (Display
   section). With it off — and no k-space panel or A/B comparison — the second panel
