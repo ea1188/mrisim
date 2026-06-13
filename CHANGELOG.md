@@ -12,6 +12,15 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.20.0] — 2026-06-13
+
+More ways to read the physics, and a clearer, more honest picture. New in the
+browser: an **Ernst-angle flip-angle curve**, **measure (ruler/ROI) on the 3D
+reconstruction** reformats, **receive-coil shading** (surface vs array), and
+**perceptually-uniform, colorblind-safe colormaps with calibrated colorbars** on
+the quantitative T1/T2/T2\*/ADC/FA maps. The README also gains a proper Browser-
+edition section covering the guided lessons, curriculum and offline support.
+
 ### Added
 - **Measure on the reconstruction (browser).** The ruler and ROI tools now work on
   the 2×2 MPR reformats (and the single MIP/oblique panels), not just the main
