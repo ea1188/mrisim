@@ -466,6 +466,16 @@ try {
     await page.selectOption("#curvemode", "TE decay");
   }
 
+  // Receive coil: a surface coil shades the image (re-render), then back to ideal.
+  {
+    const m0 = await page.getAttribute("#mainImage", "src");
+    await page.selectOption("#receivecoil", "surface");
+    await page.waitForFunction(
+      (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev && s.length > 2000; },
+      m0, { timeout: 20_000 });
+    await page.selectOption("#receivecoil", "uniform");
+  }
+
   // Keyboard slice navigation (blur any focused control first — the handler
   // intentionally ignores keys while an input/select is focused).
   await page.evaluate(() => document.activeElement && document.activeElement.blur());

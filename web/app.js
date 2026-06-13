@@ -930,6 +930,7 @@ function buildControls(info) {
     $(id).addEventListener("change", () => { syncVisibility(); schedule(); }));
   $("motiontype").addEventListener("change", schedule);
   ["diffdisp", "angiotype", "qmridisp", "fmridisp"].forEach((id) => $(id).addEventListener("change", schedule));
+  $("receivecoil").addEventListener("change", render);   // re-render with the coil's shading
   $("orientation").querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => {
       $("orientation").querySelectorAll("button").forEach((x) => x.classList.remove("on"));
@@ -1044,6 +1045,7 @@ function collectPayload() {
   const out = {
     region: curRegion(), orientation: curOrient(),
     slice_idx: +$("slice").value, curve_mode: $("curvemode").value,
+    receive_coil: $("receivecoil").value,
     window_width: winW, window_level: winL, params,
     contrast_map: $("cmap").checked,
     show_kspace: $("kspaceshow").checked,

@@ -677,3 +677,23 @@ def test_render_json_roundtrip():
                           "slice_idx": 90, "params": {"sequence": "Spin Echo"}})
     out = json.loads(wa.render_json(payload))
     _assert_good_render(out, "render_json")
+
+
+def test_coil_shading_matches_physics():
+    """Receive-coil shading: the ideal coil is a no-op, each real coil shades the
+    image differently, and a surface coil shows strong one-sided falloff."""
+    h = wa.WebHost()
+    img = np.ones((64, 48), dtype=float)
+    assert np.array_equal(h._apply_coil_shading(img, "uniform"), img)
+    assert np.array_equal(h._apply_coil_shading(img, None), img)
+    surf = h._apply_coil_shading(img, "surface")
+    head = h._apply_coil_shading(img, "head8")
+    # Each real coil shades the image, and the two profiles differ.
+    assert not np.array_equal(surf, img), "surface coil should shade the image"
+    assert not np.array_equal(head, img), "head array should shade the image"
+    assert not np.array_equal(surf, head)
+    # The surface coil sits at the bottom edge → bottom (near) ≫ top (far).
+    n = surf.shape[0]
+    assert surf[n - 5:].mean() > 5.0 * surf[:5].mean()
+    # Shading is normalised + clipped — bounded, no blow-up.
+    assert head.min() >= 0.0 and head.max() <= 1.26

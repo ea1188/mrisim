@@ -236,6 +236,13 @@
 
       <details class="group" data-sec="acquisition">
         <summary><h2>Acquisition</h2></summary>
+        <label title="Receive coil — the coil's spatial sensitivity shades the image. A surface coil gives high signal right next to it but drops off fast; multi-channel arrays cover the whole FOV but their raw sensitivity still varies (bright near the elements), which is why scanners apply intensity correction.">Receive coil
+          <select id="receivecoil">
+            <option value="uniform">Uniform (ideal)</option>
+            <option value="head8">Head array (8-ch)</option>
+            <option value="quad">Quadrature (2-ch)</option>
+            <option value="surface">Surface coil</option>
+          </select></label>
         <label title="Matrix — number of pixels across. Higher = finer detail, but lower SNR and a longer scan.">Matrix <input type="number" id="matrix-val" class="numval" min="96" max="320" step="32" value="256" />
           <input type="range" id="matrix" min="96" max="320" step="32" value="256" /></label>
         <label title="Receiver bandwidth — wider is faster and cuts chemical-shift, but lowers SNR (∝ 1/√BW).">Bandwidth (kHz) <input type="number" id="bw-val" class="numval" min="16" max="500" step="2" value="125" />
