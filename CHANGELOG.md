@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Guided feature tour (browser).** A first-run welcome now offers a **"Take the
+  feature tour"** — a spotlight walkthrough that points at the real controls
+  (sequence, timing, the image, the curve, presets, compare, 3D reconstruction,
+  measure, find-a-control, lessons) with Back / Next / Skip. Re-launchable anytime
+  from the **?** button, which is now the help/welcome/tour hub.
 - **Five more guided lessons (browser).** New walkthroughs on **gadolinium
   contrast** (why post-contrast is T1), **receive coils** (surface vs array
   shading, tying in the coil feature), **balanced SSFP** (bright fluid + banding),

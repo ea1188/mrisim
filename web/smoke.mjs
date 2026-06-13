@@ -87,6 +87,24 @@ try {
   await page.waitForFunction(
     () => !document.querySelector('details[data-sec="timing"]').hidden, { timeout: 5_000 });
 
+  step("feature tour");
+  // The ? button opens the welcome; "Take the feature tour" starts the spotlight
+  // tour over the real controls; Next advances, Skip ends it.
+  await page.click("#help");
+  await page.waitForSelector("#intro:not([hidden])", { timeout: 5_000 });
+  await page.click("#intro-tour");
+  await page.waitForSelector("#tour:not([hidden])", { timeout: 5_000 });
+  await page.waitForFunction(() => {
+    const s = document.getElementById("tour-spot");
+    return s && s.offsetWidth > 0 && (document.getElementById("tour-title").textContent || "").length > 0;
+  }, { timeout: 5_000 });
+  const tourP0 = await page.textContent("#tour-progress");
+  await page.click("#tour-next");
+  await page.waitForFunction(
+    (prev) => document.getElementById("tour-progress").textContent !== prev, tourP0, { timeout: 5_000 });
+  await page.click("#tour-skip");
+  await page.waitForSelector("#tour", { state: "hidden", timeout: 5_000 });
+
   // Expand every group so all controls are actionable in the functional tests below
   // (the collapse/search UX itself is covered above).
   await page.evaluate(() => document.querySelectorAll("details.group").forEach((d) => { d.open = true; }));
