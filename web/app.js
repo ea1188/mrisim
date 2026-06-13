@@ -125,6 +125,7 @@ const HASH_KEYS = {
   flow: () => ($("flow").checked ? 1 : 0), acq3d: () => ($("acq3d").checked ? 1 : 0),
   np: () => $("np").value, kzpf: () => ($("kzpf").checked ? 1 : 0),
   curvemode: () => $("curvemode").value, curveshow: () => ($("curveshow").checked ? 1 : 0),
+  receivecoil: () => $("receivecoil").value,
 };
 
 function stateToHash() {
@@ -304,6 +305,8 @@ function showTourStep() {
   if (!el) { nextTour(); return; }                 // skip a control that isn't present
   const sec = el.closest("details.group");
   if (sec && !sec.open) sec.open = true;            // open a collapsed section
+  // Skip a target with no layout box (e.g. the curve panel when the curve is hidden).
+  if (!el.offsetParent && el.getClientRects().length === 0) { nextTour(); return; }
   el.scrollIntoView({ block: "center", behavior: "smooth" });
   $("tour-title").textContent = step.title;
   $("tour-text").innerHTML = step.text;
