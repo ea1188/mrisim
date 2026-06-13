@@ -36,6 +36,12 @@ frozen.)
   three-wide strip, so each panel is larger and the volume has a 3-D reference.
 
 ### Internal
+- **Rendering-invariant regression tests.** New `tests/test_visual_regression.py`
+  decodes the engine's PNG output and asserts the visual failure modes that
+  array-level tests miss and have regressed before — blank/collapsed panels and
+  **stretched (wrong aspect-ratio) reformats** (each MPR panel's PNG aspect must
+  match its data aspect). Uses invariants rather than pixel baselines (the loose
+  matplotlib pin would make pixel baselines flaky across CI matplotlib bumps).
 - **ESLint for the browser build.** Added an ESLint flat config and a fast,
   path-filtered CI job that statically checks `web/app.js`, `web/worker.js` and
   `web/smoke.mjs` on every PR — catching undefined variables, typos, duplicate
