@@ -183,6 +183,14 @@
       <details class="group" data-sec="visualizations">
         <summary><h2>Visualizations</h2></summary>
         <p class="tiny">Optional overlays &amp; side panels — each adds a view to help explain what's happening.</p>
+        <label class="check"><input type="checkbox" id="curveshow" checked /> Signal curve</label>
+        <label id="curvemode-row">Curve type
+          <select id="curvemode">
+            <option value="TE decay">TE decay (T2 contrast)</option>
+            <option value="TR recovery">TR recovery (T1 contrast)</option>
+            <option value="TI sweep">TI sweep (inversion)</option>
+            <option value="Histogram">Signal histogram</option>
+          </select></label>
         <label class="check"><input type="checkbox" id="cmap" /> Contrast map (TR×TE)</label>
         <label class="check"><input type="checkbox" id="kspaceshow" /> Show k-space (the raw data)</label>
         <label class="check"><input type="checkbox" id="psdshow" /> Show pulse-sequence diagram</label>
@@ -338,7 +346,7 @@
         </div>
       </div>
       <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>
-      <div class="curvewrap"><img id="curveImage" alt="signal curve" /></div>
+      <div class="curvewrap" id="curvewrap"><img id="curveImage" alt="signal curve" /></div>
       <div class="curvewrap" id="cmapwrap" hidden><img id="cmapImage" alt="TR×TE contrast map" /></div>
       <div class="kspacewrap" id="kspacewrap" hidden><img id="kspaceImage" alt="k-space (log magnitude)" /></div>
       <div class="kspacewrap" id="b0mapwrap" hidden><img id="b0mapImage" alt="B0 off-resonance field map" /></div>
@@ -349,6 +357,7 @@
           <img id="reconAxial" alt="MPR axial reformat" />
           <img id="reconCoronal" alt="MPR coronal reformat" />
           <img id="reconSagittal" alt="MPR sagittal reformat" />
+          <img id="reconOverview" alt="3D MIP overview of the slab" />
         </div>
         <div class="recon-single" id="recon-single" hidden><img id="reconMain" alt="reconstruction" /></div>
         <p class="tiny" id="recon-msg" hidden></p>

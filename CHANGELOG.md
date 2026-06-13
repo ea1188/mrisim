@@ -12,6 +12,18 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Signal-curve controls (browser).** A toggle to hide/show the signal-curve
+  panel, and a "Curve type" picker to switch what it plots — **TE decay** (T2),
+  **TR recovery** (T1), **TI sweep** (inversion) or a **signal histogram**. (The
+  engine already supported these modes; the browser just hadn't exposed them.)
+
+### Changed
+- **3D reconstruction opens as a 2×2 grid (browser).** MPR now shows the three
+  reformats (axial / coronal / sagittal) **plus a 3-D MIP overview** of the whole
+  slab in the 4th quadrant — the PACS-style quad layout — instead of a single
+  three-wide strip, so each panel is larger and the volume has a 3-D reference.
+
 ### Internal
 - **ESLint for the browser build.** Added an ESLint flat config and a fast,
   path-filtered CI job that statically checks `web/app.js`, `web/worker.js` and

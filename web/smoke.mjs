@@ -338,8 +338,9 @@ try {
   if (await page.isDisabled("#reconshow")) fail("reconshow should enable once a 3D slab is on");
   await page.check("#reconshow");
   await page.waitForSelector("#reconwrap:not([hidden])", { timeout: 5_000 });
+  // MPR opens as a 2×2 grid: the three reformats + a 3D MIP overview (4th panel).
   await page.waitForFunction(
-    () => ["reconAxial", "reconCoronal", "reconSagittal"].every((id) => {
+    () => ["reconAxial", "reconCoronal", "reconSagittal", "reconOverview"].every((id) => {
       const s = document.getElementById(id)?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; }),
     { timeout: 25_000 });
   // Click-to-navigate: clicking a panel moves the crosshair sliders and re-renders.
@@ -443,6 +444,21 @@ try {
     () => { const s = document.getElementById("cmapImage")?.src || ""; return s.startsWith("data:image/png") && s.length > 2000; },
     { timeout: 20_000 });
   await page.uncheck("#cmap");
+
+  // Signal curve: switching the curve type re-renders the curve, and the toggle
+  // hides/shows its panel.
+  {
+    const c0 = await page.getAttribute("#curveImage", "src");
+    await page.selectOption("#curvemode", "TR recovery");
+    await page.waitForFunction(
+      (prev) => { const s = document.getElementById("curveImage").src; return s && s !== prev && s.length > 2000; },
+      c0, { timeout: 20_000 });
+    await page.uncheck("#curveshow");
+    await page.waitForSelector("#curvewrap", { state: "hidden", timeout: 5_000 });
+    await page.check("#curveshow");
+    await page.waitForSelector("#curvewrap:not([hidden])", { timeout: 5_000 });
+    await page.selectOption("#curvemode", "TE decay");
+  }
 
   // Keyboard slice navigation (blur any focused control first — the handler
   // intentionally ignores keys while an input/select is focused).

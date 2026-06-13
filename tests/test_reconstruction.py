@@ -104,7 +104,8 @@ def test_reconstruct_endpoint_renders(mode, extra):
     for png in r["panels"].values():
         assert png.startswith("data:image/png")
     if mode == "mpr":
-        assert set(r["panels"]) == {"axial", "coronal", "sagittal"}
+        # MPR opens as a 2×2: the three reformats + a 3-D MIP overview.
+        assert set(r["panels"]) == {"axial", "coronal", "sagittal", "overview"}
 
 
 def test_reconstruct_requires_3d_slab():
