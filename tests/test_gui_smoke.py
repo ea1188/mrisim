@@ -431,6 +431,20 @@ def test_flip_curve_peaks_at_ernst_angle(win):
     assert abs(peak_fa - ernst) <= 2.0, f"GRE peak {peak_fa}° vs Ernst {ernst:.1f}°"
 
 
+def test_receive_coil_shading(win):
+    """Desktop receive-coil shading (parity with the browser): a surface coil
+    shades the image with strong one-sided falloff; uniform is a no-op."""
+    set_state(win, sequence="Spin Echo")
+    win.receive_coil.set("Uniform (ideal)"); win.recalculate()
+    u = win.axes[0].images[0].get_array().copy()
+    win.receive_coil.set("Surface coil"); win.recalculate()
+    s = win.axes[0].images[0].get_array()
+    assert not np.allclose(u, s), "surface coil should shade the image"
+    n = s.shape[0]                                  # coil at the bottom edge → bottom ≫ top
+    assert s[n - 10:].mean() > 5.0 * s[:10].mean()
+    win.receive_coil.set("Uniform (ideal)"); win.recalculate()   # restore
+
+
 # --------------------------------------------------------------------------- #
 #  Keyboard navigation / toggles (_on_key)
 # --------------------------------------------------------------------------- #

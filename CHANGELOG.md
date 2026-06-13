@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Receive-coil shading on the desktop (parity with the browser).** A "Receive
+  coil" picker (Spatial / Acquisition) — ideal, 8-channel head array, 2-channel
+  quadrature or surface coil — shades the image by the coil's spatial sensitivity.
+  The envelope is now a shared `coil.receive_coil_envelope` used by both apps.
+
 ## [1.20.0] — 2026-06-13
 
 More ways to read the physics, and a clearer, more honest picture. New in the

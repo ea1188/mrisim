@@ -306,6 +306,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
         # Display options
         self.display_cmap = Var("gray")
+        self.receive_coil = Var("Uniform (ideal)")
         self.show_tissue_overlay = Var(False)
         self.rician_bias_correct = Var(False)
         self.pv_sigma = Var(10)          # partial-volume PSF width, ×0.1 vox
@@ -1126,6 +1127,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(SPL, "Oblique MPR tilt (°)", self.recon_tilt, -45, 45)
         self._slider(SPL, "Oblique MPR rotate (°)", self.recon_rot, -45, 45)
         self._slider(SPL, "Bandwidth (kHz)", self.bandwidth, 10, 500)
+        self._dropdown(SPL, "Receive coil", self.receive_coil,
+                       ["Uniform (ideal)", "Head array (8-ch)", "Quadrature (2-ch)", "Surface coil"],
+                       self.schedule_recalculate, inline=True)
         self._slider(SPL, "NEX", self.NEX, 1, 8)
         self._slider(SPL, "Acceleration (R)", self.accel_factor, 1, 4)
         self._dropdown(SPL, "Accel Method", self.accel_method, ["SENSE", "GRAPPA", "CS"], self.schedule_recalculate, inline=True)
@@ -1365,6 +1369,21 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         return img, m
 
     # --- Display ---
+    _COIL_CODE = {"Uniform (ideal)": "uniform", "Head array (8-ch)": "head8",
+                  "Quadrature (2-ch)": "quad", "Surface coil": "surface"}
+
+    def _apply_coil_shading(self, image: np.ndarray) -> np.ndarray:
+        """Modulate the image by the selected receive coil's spatial sensitivity
+        (the shared coil.py envelope). Uniform → no-op."""
+        import coil
+        code = self._COIL_CODE.get(self.receive_coil.get(), "uniform")
+        if code == "uniform" or getattr(image, "ndim", 0) != 2:
+            return image
+        env = coil.receive_coil_envelope(image.shape, code)
+        if env is None:
+            return image
+        return (np.asarray(image, dtype=float) * env).astype(image.dtype)
+
     def recalculate(self, *args: object) -> None:
         current_params = self.get_current_params()
 
@@ -1392,12 +1411,14 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._ensure_1x2_layout()
 
         image_b, metrics_b = self._acquire_or_reformat(current_params)
+        image_b = self._apply_coil_shading(image_b)   # receive-coil display shading
         self.axes[0].clear(); self.axes[1].clear()
 
         cmap = self.display_cmap.get()
         _asp = self._get_voxel_aspect(self.orientation.get())
         if self.compare_mode.get() and self.compare_params:
             image_a, metrics_a = self.simulate_with_params(self.compare_params)
+            image_a = self._apply_coil_shading(image_a)
             # Both panels share the live window/level (drag either to re-window both),
             # so the contrast comparison is fair.
             self._compare_images = (image_a, image_b)
