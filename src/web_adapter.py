@@ -803,6 +803,10 @@ class WebHost(CurvesMixin):
                      "sagittal": (ctr[1] / ny, ctr[0] / nz)}
             for name, img in tri.items():
                 panels[name] = self._recon_png(img, name.capitalize(), cross[name])
+            # 4th quadrant: a 3-D MIP overview of the whole slab (PACS-style) — an
+            # oblique projection so it reads as a volume next to the three cuts.
+            panels["overview"] = self._recon_png(
+                rc.rotating_mip(block, 35.0, 20.0), "3D MIP", mm_per_px=mm_per_px)
         elif mode == "mip":
             plane = payload.get("mip_plane", "axial")
             thick = int(payload.get("mip_thickness", 20))

@@ -848,6 +848,10 @@ function buildControls(info) {
     render();   // re-render so the main image picks up / drops the FOV crop
   });
   $("ipfov").addEventListener("input", () => { if (document.activeElement !== $("ipfov-val")) $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
+  // Signal curve: hide/show the panel, and switch what the curve plots (the engine
+  // already supports several modes; re-render to redraw it).
+  $("curveshow").addEventListener("change", () => { $("curvewrap").hidden = !$("curveshow").checked; });
+  $("curvemode").addEventListener("change", render);
   $("cmap").addEventListener("change", () => { $("cmapwrap").hidden = !$("cmap").checked; render(); });
   $("kspaceshow").addEventListener("change", () => { $("kspacewrap").hidden = !$("kspaceshow").checked; render(); });
   $("psdshow").addEventListener("change", () => { $("psdwrap").hidden = !$("psdshow").checked; render(); });
@@ -1009,7 +1013,7 @@ function collectPayload() {
   }
   const out = {
     region: curRegion(), orientation: curOrient(),
-    slice_idx: +$("slice").value, curve_mode: "TE decay",
+    slice_idx: +$("slice").value, curve_mode: $("curvemode").value,
     window_width: winW, window_level: winL, params,
     contrast_map: $("cmap").checked,
     show_kspace: $("kspaceshow").checked,
@@ -1423,6 +1427,7 @@ async function runRecon() {
       $("reconAxial").src = r.panels.axial;
       $("reconCoronal").src = r.panels.coronal;
       $("reconSagittal").src = r.panels.sagittal;
+      if (r.panels.overview) $("reconOverview").src = r.panels.overview;
     } else {
       $("recon-tri").hidden = true; $("recon-single").hidden = false;
       $("reconMain").src = r.panels.main;
