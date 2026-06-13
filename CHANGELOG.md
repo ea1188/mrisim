@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Two more guided lessons (browser).** **"Slice thickness & partial volume"**
+  (thick = bright but blurry vs thin = sharp but noisy) and **"Bandwidth — the
+  hidden three-way trade"** (SNR vs chemical-shift vs readout speed) — filling two
+  fundamental gaps in the lesson set.
+
 ### Fixed
 - **Review polish (browser).** The welcome no longer hard-codes "three" Start-here
   lessons (there are four); the **receive coil** is now part of shareable links
