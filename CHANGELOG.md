@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Versioned share-links (browser).** Shareable links now carry a schema version
+  (`v=`) with a `migrateState()` hook, so a link made with an older build is
+  brought up to date rather than silently misapplied, and a link from a newer
+  build still applies what it can instead of breaking.
 - **Signal-curve controls (browser).** A toggle to hide/show the signal-curve
   panel, and a "Curve type" picker to switch what it plots — **TE decay** (T2),
   **TR recovery** (T1), **TI sweep** (inversion) or a **signal histogram**. (The

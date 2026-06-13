@@ -101,7 +101,12 @@ async function onReady(info) {
 }
 
 // --- Shareable URL state + export ------------------------------------------- //
+// Schema version for shareable links. Bump when a key's *meaning* changes (units,
+// encoding) so migrateState() can fix up old links instead of misapplying them.
+// Adding/removing keys doesn't need a bump — missing keys are simply ignored.
+const STATE_SCHEMA = 1;
 const HASH_KEYS = {
+  v: () => STATE_SCHEMA,
   region: () => curRegion(), seq: () => $("sequence").value, orient: () => curOrient(),
   slice: () => $("slice").value, field: () => $("field").value,
   tr: () => $("tr").value, te: () => $("te").value, ti: () => $("ti").value, fa: () => $("fa").value,
@@ -164,12 +169,28 @@ async function applyState(st) {
   applyingPreset = false;
 }
 
+// Bring an older share-link's state up to the current schema. No-op today (v1);
+// add per-version fix-ups here as the schema evolves so old links keep working.
+function migrateState(st, fromV) {
+  // Example for the future:
+  //   if (fromV < 2) { /* rename/convert keys */ }
+  return st;
+}
+
 async function applyHashState() {
   const h = location.hash.slice(1);
   if (!h) return false;
   const p = new URLSearchParams(h);
-  const st = {};
+  let st = {};
   for (const [k, v] of p) st[k] = ["fatsat", "gd", "flow", "acq3d", "kzpf"].includes(k) ? v === "1" : v;
+  // Schema handling: pre-versioned links have no `v` (treat as v0). Newer-than-known
+  // links still apply best-effort (forward-compatible: unknown keys are ignored).
+  const linkV = st.v === undefined ? 0 : parseInt(st.v, 10) || 0;
+  delete st.v;
+  if (linkV < STATE_SCHEMA) st = migrateState(st, linkV);
+  else if (linkV > STATE_SCHEMA) {
+    console.warn(`Share-link schema v${linkV} is newer than this build (v${STATE_SCHEMA}); applying what it can.`);
+  }
   await applyState(st);
   return true;
 }
