@@ -1384,7 +1384,31 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             return image
         return (np.asarray(image, dtype=float) * env).astype(image.dtype)
 
+    def _add_map_colorbar(self, ax: Any, cmap: str, unit: str,
+                          vlo: float, vhi: float) -> None:
+        """Overlaid inset colorbar for a quantitative map (doesn't resize the image
+        axes, so window/level and the layout are unaffected)."""
+        cax = ax.inset_axes((0.905, 0.07, 0.03, 0.42))
+        cax.imshow(np.linspace(1.0, 0.0, 256).reshape(-1, 1), cmap=cmap,
+                   aspect="auto", extent=(0.0, 1.0, vlo, vhi), vmin=0.0, vmax=1.0)
+        cax.set_xticks([])
+        cax.set_yticks([vlo, (vlo + vhi) / 2.0, vhi])
+        cax.yaxis.set_ticks_position("right")
+        cax.tick_params(axis="y", colors="#e6e9ee", labelsize=6, length=2, pad=1)
+        for _s in cax.spines.values():
+            _s.set_edgecolor("#3a424d")
+        cax.set_title(unit, color="#e6e9ee", fontsize=6, pad=2)
+        self._map_cbar = cax
+
     def recalculate(self, *args: object) -> None:
+        # Drop a previous map colorbar inset (axes/figure get cleared below).
+        prev_cbar = getattr(self, "_map_cbar", None)
+        if prev_cbar is not None:
+            try:
+                prev_cbar.remove()
+            except Exception:
+                pass
+            self._map_cbar = None
         current_params = self.get_current_params()
 
         # FOV planning takes over the main view with the prescribed slice group
@@ -1440,9 +1464,19 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 self.current_title = f"{current_params['sequence']} | TR={current_params['TR']:.0f} TE={current_params['TE']:.0f} | {orient.capitalize()} #{sl_idx}"
             max_val = np.max(image_b) if np.max(image_b) > 0 else 1
             center = self.window_level * max_val; width = self.window_width * max_val
-            self.axes[0].imshow(image_b, cmap=cmap, origin="lower",
-                                vmin=center - width / 2, vmax=center + width / 2,
-                                aspect=_asp)
+            vlo, vhi = center - width / 2, center + width / 2
+            # Quantitative maps get a perceptual, colorblind-safe colormap + a
+            # calibrated colorbar; the user's colormap pick still applies to
+            # weighted images (and overrides if they picked a non-default one).
+            import rendering
+            mapspec = rendering.quantitative_map_spec(
+                current_params["sequence"], current_params.get("qmri_display", ""),
+                current_params.get("diff_display", ""))
+            img_cmap = mapspec[0] if (mapspec and cmap == "gray") else cmap
+            self.axes[0].imshow(image_b, cmap=img_cmap, origin="lower",
+                                vmin=vlo, vmax=vhi, aspect=_asp)
+            if mapspec is not None and not self.show_tissue_overlay.get():
+                self._add_map_colorbar(self.axes[0], img_cmap, mapspec[1], vlo, vhi)
             if self.show_tissue_overlay.get():
                 ph_slice = self._get_current_phantom_slice(orient, sl_idx, current_params)
                 self.axes[0].imshow(
