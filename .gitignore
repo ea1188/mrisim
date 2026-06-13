@@ -65,3 +65,6 @@ web/data/
 web/logo.png
 web/data/regions/
 web/build_id.js
+
+# Node tooling (ESLint for the web build)
+node_modules/
