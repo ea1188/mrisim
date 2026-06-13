@@ -230,6 +230,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 6px; }
 /* align-items:start so a thin reformat keeps its true (aspect-derived) height
    instead of being stretched to the tallest panel's row height. */
+.reconwrap { position: relative; }
+/* Measure overlay positioned over the active recon panel during a drag. */
+#recon-measure-svg { position: absolute; pointer-events: none; left: 0; top: 0; width: 0; height: 0; overflow: visible; }
+.reconwrap.measuring .recon-tri img:not(#reconOverview) { cursor: crosshair; }
 .recon-tri { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
 .recon-tri img { width: 100%; height: auto; display: block; background: var(--canvas); border-radius: 4px; cursor: crosshair; }
 /* The 3D MIP overview is a reference, not a cross panel — no click-to-navigate. */

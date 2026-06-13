@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Measure on the reconstruction (browser).** The ruler and ROI tools now work on
+  the 2×2 MPR reformats (and the single MIP/oblique panels), not just the main
+  image — drag on any panel to read a distance in mm or an ROI's mean / SD / SNR /
+  area, computed on that reformat's real pixels. Selecting a measure tool switches
+  the panels from click-to-navigate to measuring.
 - **Receive-coil shading (browser).** A "Receive coil" picker — ideal (uniform),
   8-channel head array, 2-channel quadrature, or a single surface coil — modulates
   the image by the coil's spatial sensitivity (from the tested `coil.py` models): a

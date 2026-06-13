@@ -115,6 +115,27 @@ def test_reconstruct_requires_3d_slab():
     assert not r["ok"] and "3-D" in r["error"]
 
 
+def test_measure_on_reconstruction_panels():
+    """Ruler / ROI can measure on the reconstruction reformats (not just the main
+    image): the panel arrays are stored and addressed by name."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+            "params": {"sequence": "Gradient Echo", "TR": 500, "TE": 15,
+                       "acq3d": True, "n_partitions": 40}}
+    assert wa.reconstruct({**base, "mode": "mpr"})["ok"]
+    # Ruler across the axial reformat → a positive real-world distance.
+    ru = wa.measure({"kind": "ruler", "panel": "axial",
+                     "points": [[0.25, 0.5], [0.75, 0.5]]})
+    assert ru["ok"] and ru["kind"] == "ruler" and ru["mm"] > 0
+    # ROI on the coronal reformat → mean / SD / SNR over real pixels.
+    roi = wa.measure({"kind": "roi", "panel": "coronal",
+                      "points": [[0.4, 0.4], [0.6, 0.6]]})
+    assert roi["ok"] and roi["n"] > 0 and roi["snr"] >= 0.0
+    # An unknown panel name safely falls back to the main image.
+    assert "ok" in wa.measure({"kind": "ruler", "panel": "nope",
+                               "points": [[0.3, 0.5], [0.7, 0.5]]})
+
+
 def test_scale_bar_is_a_tidy_quarter_width():
     """The projection scale bar is a tidy 1/2/5×10ⁿ mm length no longer than a
     quarter of the image."""
