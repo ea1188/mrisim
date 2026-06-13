@@ -497,3 +497,35 @@ def estimate_sensitivity(
         est[i] = gaussian_filter(ratio, sigma=smooth_sigma)
 
     return np.maximum(est, 0.0)
+
+
+# ---------------------------------------------------------------------------
+# Display: receive-coil shading envelope (shared by the browser and desktop apps)
+# ---------------------------------------------------------------------------
+
+def receive_coil_envelope(
+    shape: tuple[int, int],
+    coil: str,
+) -> "np.ndarray | None":
+    """Normalised spatial receive-sensitivity envelope for shading an image.
+
+    Returns a (rows, cols) array with bright regions ≈ 1 (clipped), or ``None`` for
+    the ideal uniform coil. ``coil`` is one of ``"surface"`` (a single loop at the
+    bottom edge — strong falloff), ``"quad"`` (2-channel), ``"head8"`` (8-channel
+    array), or anything else / ``"uniform"`` → ``None``.
+    """
+    rows, cols = shape
+    if coil == "surface":
+        env = biot_savart_sensitivity(
+            shape, coil_center=(rows - 1.0, (cols - 1) / 2.0),
+            coil_radius_mm=max(cols, rows) * 0.18)
+    elif coil == "quad":
+        env = combine_sos(head_coil_array(shape, n_coils=2))
+    elif coil == "head8":
+        env = combine_sos(head_coil_array(shape, n_coils=8))
+    else:
+        return None
+    p95 = float(np.percentile(env, 95))
+    if p95 > 1e-9:
+        env = env / p95
+    return np.clip(env, 0.0, 1.25).astype(np.float64)
