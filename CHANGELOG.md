@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.23.0] — 2026-06-13
+
+Onboarding: new visitors get a **guided feature tour** — a spotlight walkthrough
+of the real controls, offered on the welcome screen and re-launchable from the
+**?** help hub — plus **five more guided lessons** (gadolinium, receive coils,
+balanced SSFP, SWI and fMRI).
+
 ### Added
 - **Guided feature tour (browser).** A first-run welcome now offers a **"Take the
   feature tour"** — a spotlight walkthrough that points at the real controls
