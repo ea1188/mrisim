@@ -44,7 +44,7 @@ The PyQt6 app drives the physics engine in real time:
 - **Acquisition** — matrix/resolution, FOV (magnify + wraparound when small, surround when large), bandwidth, NEX, partial Fourier, k-space apodisation, parallel imaging (SENSE / GRAPPA / compressed sensing) with g·√R noise, non-Cartesian radial sampling with streaks, and imperfect slice profile + multi-slice cross-talk
 - **True 3D (slab) acquisition** — for SE / GRE / IR / bSSFP, excite a slab and phase-encode the slice (kz) direction too, reconstructing a contiguous partition stack with real through-plane resolution, kz partial Fourier, slab-profile edge falloff and the √Nz SNR gain. The slab is acquired **once** and **reformats to any plane** as you change orientation/slice (the viewport flags the acquired plane vs. a reformat); re-acquisition happens only when the prescription changes
 - **Artifacts** — motion ghosting (discrete respiratory ghosts), sub-pixel chemical shift, susceptibility dropout, gradient-nonlinearity geometric distortion, zipper
-- **Analysis & display** — signal/contrast curves, image histogram, live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, **3D reconstruction (MPR / thick-slab MIP / rotating MIP / oblique reformat from the acquired slab)**, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics. The viewport carries DICOM-style corner annotations and anatomical orientation labels (radiological convention) on a dark "scanner-console" display. Scroll the wheel (or arrow keys) to page through contiguous slices a slice-thickness at a time, PACS-style.
+- **Analysis & display** — a switchable signal curve (T2 decay / T1 recovery / TI sweep / contrast map / histogram), live k-space, pulse-sequence diagrams, tissue-label overlays, multi-slice grids, graphic FOV/slice planning, **3D reconstruction as a 2×2 quad (axial/coronal/sagittal reformats + a 3-D MIP overview from the acquired slab; also thick-slab MIP/MinIP/AIP, rotating MIP and oblique reformat)**, clinical protocol presets, and SNR / CNR / SAR / scan-time metrics. The viewport carries DICOM-style corner annotations and anatomical orientation labels (radiological convention) on a dark "scanner-console" display. Scroll the wheel (or arrow keys) to page through contiguous slices a slice-thickness at a time, PACS-style. The control panel collapses into sections with a *find-a-control* search and editable numeric value fields.
 
 <p align="center">
   <img src="docs/demo_3d.gif" width="840" alt="3D slab acquisition with any-plane reformat: enabling 3D acquisition adds a 3D SLAB badge, and rotating the view to coronal/sagittal reformats the once-acquired slab live (flagged REFORMAT) instead of re-scanning" />
@@ -53,6 +53,24 @@ The PyQt6 app drives the physics engine in real time:
 <p align="center"><i>True 3D (slab) acquisition: the slab is acquired once (<code>3D SLAB</code> badge), then rotating to coronal/sagittal <b>reformats</b> the same recon block live — no re-scan — with the viewport flagging the reformat and the acquired plane.</i></p>
 
 > `src/app.py` is an earlier matplotlib/Tkinter prototype, retained only for reference and missing most of the above. Use `app_qt.py`.
+
+## Browser edition — learn MRI with nothing to install
+
+**[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)** runs the *real* Python engine entirely in your browser via [Pyodide](https://pyodide.org/) — no install, shareable by link, and it **works offline after the first load**. It's the same physics code as the desktop, with a teaching layer built on top.
+
+**Same simulator, in the browser** — pick a sequence and sweep TR / TE / flip / TI, switch anatomy (brain + the real body atlases, fetched on demand) and orientation, toggle 3D slab acquisition, apply clinical presets, and **compare A/B** side by side. The 3-plane localizer is interactive (drag the FOV box, drag a slice band to angle the plane, click a cross panel to move the slice), and **3D reconstruction opens as a PACS-style 2×2 quad** — axial / coronal / sagittal reformats plus a 3-D MIP overview of the slab.
+
+**A teaching layer for newcomers**
+
+- **Guided lessons** — short, reading-first walkthroughs that set up the scanner and explain what you're seeing, from a beginner *"Start here"* track through the deeper physics.
+- **"Learn MRI from scratch" curriculum** — a structured beginner path of modules that build on each other, with your progress saved on the device.
+- **Label the anatomy + tissue inspector** — name the structures, and hover any pixel to read which tissue it is and its T1 / T2 / PD.
+- **Show the math** — hover a pixel to see the active sequence's signal equation with that tissue's parameters and your TR / TE plugged in, and the resulting pixel value.
+- **Contrast map (TR×TE)** — the whole contrast landscape for a tissue pair, with your current protocol marked, so you can see *where* contrast comes from rather than reading one curve.
+
+**Built to be quick to drive** — collapsible control sections with a **"Find a control" search**, **editable numeric values** (type an exact TR / TE or arrow-key it, don't just drag), a **signal curve you can hide or switch** (T2 decay / T1 recovery / inversion / histogram), DICOM-style annotations and PACS-style slice scrolling, and **shareable links** (copy a versioned link to the exact setup). The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain), cached afterwards; body atlases are fetched only when selected.
+
+> The browser edition is a convenience subset for learning and sharing. **For the fullest, most robust experience — loading arbitrary NIfTI, DICOM export, the complete planning workflow and faster rendering — the [desktop app](https://github.com/ea1188/mrisim/releases/latest) is the reference.**
 
 ## Anatomy and phantoms
 
@@ -110,10 +128,10 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 - **Parallel imaging** — full Cartesian SENSE unfolding (physics-correct g-factor), approximate GRAPPA, variable-density compressed sensing
 
 ### Field and hardware effects
-- **B0 field maps** *(library-only)* — dipole convolution from susceptibility labels, polynomial shim residuals, Gaussian localised distortions
-- **Coil sensitivity** *(library-only)* — head-array simulation, sum-of-squares combination, g-factor maps
+- **B0 field maps** — dipole convolution from susceptibility labels, polynomial shim residuals, Gaussian localised distortions; shown as an off-resonance field-map overlay in the browser
+- **Coil sensitivity** — head-array simulation, sum-of-squares combination, and parallel-imaging g-factor maps (the g-factor map is shown in the browser; explicit receive-coil selection is *library-only*)
 - **Rician noise** — correct magnitude-image noise model, SNR estimation, bias correction
-- **Partial volume effects** *(library-only)* — sub-voxel tissue mixing
+- **Partial volume effects** — sub-voxel tissue mixing, exposed as a control in both apps
 
 ### Geometry and output
 - **Oblique slices** — double-oblique prescription, multi-slice slabs, anisotropic voxel spacing
@@ -126,7 +144,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ### Run in your browser (nothing to install)
 
-The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)**. The real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/) — pick a sequence, sweep TR/TE/flip, switch anatomy and orientation, toggle 3D slab acquisition, apply presets, compare A/B, and plan on the 3-plane localizer, all rendered by the same code as the desktop app. The localizer is interactive: the slice shows as a band of its true thickness (the whole slab in 3-D), and you can drag the FOV box to resize/recentre it, drag the slice band to angle the plane (oblique), and click a cross panel to move the slice. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards. **The body regions use the same real segmented anatomy as the desktop** — the Abdomen/Spine/Pelvis/Torso *and Knee* atlases are fetched on demand (~10–20 MB each, when you select them). Loading external NIfTI and DICOM export remain desktop-only.
+The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)** — see [Browser edition](#browser-edition--learn-mri-with-nothing-to-install) above for the guided lessons, curriculum and full feature tour. The real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/) — pick a sequence, sweep TR/TE/flip, switch anatomy and orientation, toggle 3D slab acquisition, apply presets, compare A/B, and plan on the 3-plane localizer, all rendered by the same code as the desktop app. The localizer is interactive: the slice shows as a band of its true thickness (the whole slab in 3-D), and you can drag the FOV box to resize/recentre it, drag the slice band to angle the plane (oblique), and click a cross panel to move the slice. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards. **The body regions use the same real segmented anatomy as the desktop** — the Abdomen/Spine/Pelvis/Torso *and Knee* atlases are fetched on demand (~10–20 MB each, when you select them). Loading external NIfTI and DICOM export remain desktop-only.
 
 > **For the fullest, most robust experience, use the downloadable desktop app.** The browser edition is newer and a convenience subset — it covers the core interactive simulator (now including interactive FOV planning with oblique), but the desktop build is more complete and battle-tested (multi-slice/gap prescription, NIfTI/DICOM import-export, the full FOV-planning workflow, faster rendering). If something feels limited or slow in the browser, the [desktop download](https://github.com/ea1188/mrisim/releases/latest) is the reference experience.
 
