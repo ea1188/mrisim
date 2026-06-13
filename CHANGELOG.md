@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Interactive measure tools on the desktop (ruler + ROI).** The desktop app gains
+  on-image measurement to match the browser — pick **Ruler** or **ROI** (Display
+  section) and drag on the image to read a distance in mm or an ROI's mean / SD /
+  SNR / area. It works on the main image **and on each 2×2 reconstruction panel**.
+  The ruler/ROI statistics are now a shared `rendering.measure_stats` used by both
+  apps.
+
 ### Changed
 - **Quantitative maps use perceptual, colorblind-safe colormaps + a colorbar on the
   desktop too (parity with the browser).** T1 / T2 / T2\* (qMRI) and ADC / FA

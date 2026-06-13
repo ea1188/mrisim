@@ -432,31 +432,6 @@ class WebHost(CurvesMixin):
         row = yl0 + ax_fy * (yl1 - yl0)                    # origin lower → ax_fy=0 at row≈0
         return col, row
 
-    @staticmethod
-    def _measure_stats(img: np.ndarray, mm_per_px: float, kind: str,
-                       pts: "list[tuple[float, float]]") -> dict:
-        """Ruler distance / elliptical-ROI statistics on a (col,row)-pixel image."""
-        H, W = img.shape
-        if kind == "ruler" and len(pts) >= 2:
-            (c0, r0), (c1, r1) = pts[0], pts[1]
-            dist_px = float(np.hypot(c1 - c0, r1 - r0))
-            return {"ok": True, "kind": "ruler", "mm": dist_px * mm_per_px, "px": dist_px}
-        if kind == "roi" and len(pts) >= 2:
-            (c0, r0), (c1, r1) = pts[0], pts[1]
-            cc, rc = (c0 + c1) / 2.0, (r0 + r1) / 2.0       # ellipse centre + radii
-            ra, rb = max(abs(c1 - c0) / 2.0, 0.5), max(abs(r1 - r0) / 2.0, 0.5)
-            yy, xx = np.ogrid[:H, :W]
-            mask = ((xx - cc) / ra) ** 2 + ((yy - rc) / rb) ** 2 <= 1.0
-            vals = img[mask]
-            n = int(vals.size)
-            if n == 0:
-                return {"ok": False}
-            mean, sd = float(vals.mean()), float(vals.std())
-            return {"ok": True, "kind": "roi", "mean": mean, "sd": sd, "n": n,
-                    "area_mm2": n * mm_per_px * mm_per_px,
-                    "snr": (mean / sd) if sd > 1e-9 else 0.0}
-        return {"ok": False}
-
     def measure(self, payload: dict) -> dict:
         """Geometry/intensity readout for the ruler and ROI tools, on the main image
         or — when ``panel`` names a reconstruction panel — on that reformat.
@@ -480,7 +455,8 @@ class WebHost(CurvesMixin):
             H, W = img.shape
             mm_per_px = float(_NATIVE_FOV.get(self.region.get(), 240.0)) / max(H, W)
             pts = [self._frac_to_pixel(fx, fy) for fx, fy in frac]
-        return self._measure_stats(img, mm_per_px, str(payload.get("kind") or ""), pts)
+        import rendering
+        return rendering.measure_stats(img, mm_per_px, str(payload.get("kind") or ""), pts)
 
     # Short, beginner-friendly names for the anatomy-label overlay.
     _ANATOMY_NAMES = {1: "CSF", 2: "Gray matter", 3: "White matter", 4: "Fat",

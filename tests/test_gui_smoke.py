@@ -457,6 +457,44 @@ def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
     assert getattr(win, "_map_cbar", None) is None, "weighted image colorbar not cleared"
 
 
+def test_desktop_measure_tools(win):
+    """Interactive ruler / ROI on the main image and on a reconstruction panel
+    (synthesised matplotlib press/move/release events)."""
+    from types import SimpleNamespace as NS
+
+    def ev(ax, x, y):
+        return NS(button=1, inaxes=ax, xdata=x, ydata=y, dblclick=False,
+                  guiEvent=None, x=0, y=0, step=0)
+
+    # Main image: ruler reports mm, ROI reports SNR.
+    set_state(win, sequence="Spin Echo")
+    h, w = win.current_image.shape
+    ax = win.axes[0]
+    win.measure_mode.set("Ruler"); win._on_measure_mode_change()
+    win._on_press(ev(ax, w * 0.3, h * 0.5)); win._on_motion(ev(ax, w * 0.7, h * 0.5))
+    win._on_release(ev(ax, w * 0.7, h * 0.5))
+    assert "mm" in win.measure_readout.text()
+    win.measure_mode.set("ROI"); win._on_measure_mode_change()
+    win._on_press(ev(ax, w * 0.45, h * 0.45)); win._on_motion(ev(ax, w * 0.6, h * 0.6))
+    win._on_release(ev(ax, w * 0.6, h * 0.6))
+    assert "SNR" in win.measure_readout.text()
+
+    # Reconstruction: each 2×2 panel is measurable.
+    set_state(win, sequence="Gradient Echo")
+    win.acq3d.set(True); win.n_partitions.set(40); win.recon_enabled.set(True)
+    win.recon_mode.set("MPR (3 planes)"); win.recalculate()
+    assert len(win._recon_measure_targets) == 4
+    pax = next(iter(win._recon_measure_targets))
+    parr, _ = win._recon_measure_targets[pax]
+    ph, pw = parr.shape
+    win.measure_mode.set("Ruler"); win._on_measure_mode_change()
+    win._on_press(ev(pax, pw * 0.3, ph * 0.5)); win._on_motion(ev(pax, pw * 0.7, ph * 0.5))
+    win._on_release(ev(pax, pw * 0.7, ph * 0.5))
+    assert "mm" in win.measure_readout.text()
+    win.recon_enabled.set(False); win.acq3d.set(False)
+    win.measure_mode.set("Off"); win._on_measure_mode_change(); win.recalculate()
+
+
 # --------------------------------------------------------------------------- #
 #  Keyboard navigation / toggles (_on_key)
 # --------------------------------------------------------------------------- #

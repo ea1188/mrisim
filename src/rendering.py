@@ -37,6 +37,33 @@ _MAP_CMAP: dict[str, tuple[str, str]] = {
 }
 
 
+def measure_stats(img: np.ndarray, mm_per_px: float, kind: str,
+                  pts: "list[tuple[float, float]]") -> dict:
+    """Ruler distance / elliptical-ROI statistics on a (col,row)-pixel image.
+    Shared by the browser and desktop measure tools. ``kind`` is "ruler"|"roi";
+    ``pts`` are two (col, row) pixel points."""
+    H, W = img.shape
+    if kind == "ruler" and len(pts) >= 2:
+        (c0, r0), (c1, r1) = pts[0], pts[1]
+        dist_px = float(np.hypot(c1 - c0, r1 - r0))
+        return {"ok": True, "kind": "ruler", "mm": dist_px * mm_per_px, "px": dist_px}
+    if kind == "roi" and len(pts) >= 2:
+        (c0, r0), (c1, r1) = pts[0], pts[1]
+        cc, rc = (c0 + c1) / 2.0, (r0 + r1) / 2.0          # ellipse centre + radii
+        ra, rb = max(abs(c1 - c0) / 2.0, 0.5), max(abs(r1 - r0) / 2.0, 0.5)
+        yy, xx = np.ogrid[:H, :W]
+        mask = ((xx - cc) / ra) ** 2 + ((yy - rc) / rb) ** 2 <= 1.0
+        vals = img[mask]
+        n = int(vals.size)
+        if n == 0:
+            return {"ok": False}
+        mean, sd = float(vals.mean()), float(vals.std())
+        return {"ok": True, "kind": "roi", "mean": mean, "sd": sd, "n": n,
+                "area_mm2": n * mm_per_px * mm_per_px,
+                "snr": (mean / sd) if sd > 1e-9 else 0.0}
+    return {"ok": False}
+
+
 def quantitative_map_spec(sequence: str, qmri_display: str = "",
                           diff_display: str = "") -> "tuple[str, str] | None":
     """(colormap, unit-label) when the current display is a quantitative parameter

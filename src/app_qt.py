@@ -307,6 +307,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # Display options
         self.display_cmap = Var("gray")
         self.receive_coil = Var("Uniform (ideal)")
+        self.measure_mode = Var("Off")       # Off | Ruler | ROI (on-image measurement)
         self.show_tissue_overlay = Var(False)
         self.rician_bias_correct = Var(False)
         self.pv_sigma = Var(10)          # partial-volume PSF width, ×0.1 vox
@@ -1179,6 +1180,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                        ["gray", "bone", "hot", "plasma", "viridis", "magma"],
                        self.schedule_recalculate, inline=True)
         self._checkbox(DL, "Tissue label overlay", self.show_tissue_overlay)
+        self._dropdown(DL, "Measure tool", self.measure_mode, ["Off", "Ruler", "ROI"],
+                       self._on_measure_mode_change, inline=True)
+        self.measure_readout = DLabel("Ruler/ROI: drag on the image.",
+                                      base_style="color:#586273; font-size:9px;")
+        DL.addWidget(self.measure_readout)
         self._checkbox(DL, "Show k-space", self.show_kspace)
         self._checkbox(DL, "Show Pulse Sequence Diagram", self.show_psd)
         hint = QLabel("Wheel/\u2191\u2193: slice \u2022 drag: W/L \u2022 dbl-click/R: reset")
@@ -1401,6 +1407,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._map_cbar = cax
 
     def recalculate(self, *args: object) -> None:
+        # Stale recon panel axes are gone once the figure rebuilds; the recon view
+        # repopulates these. The active measurement drag also ends on any re-render.
+        self._recon_measure_targets = {}
+        self._measure_drag = None
         # Drop a previous map colorbar inset (axes/figure get cleared below).
         prev_cbar = getattr(self, "_map_cbar", None)
         if prev_cbar is not None:
@@ -1580,7 +1590,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             names = ("axial", "coronal", "sagittal")
             for ax, name in zip(axs[:3], names, strict=True):
                 _show(ax, tri[name], name.capitalize(), cross[name])
-            _show(axs[3], rc.rotating_mip(block, 35.0, 20.0), "3D MIP")   # reference, not a cross panel
+                self._recon_measure_targets[ax] = (np.asarray(tri[name], dtype=float), mm_per_px)
+            ov = rc.rotating_mip(block, 35.0, 20.0)
+            _show(axs[3], ov, "3D MIP")   # reference, not a cross panel
+            self._recon_measure_targets[axs[3]] = (np.asarray(ov, dtype=float), mm_per_px)
             # Remember the cross-panel axes + block dims so a click navigates the crosshair.
             self._recon_mpr_axes = dict(zip(names, axs[:3], strict=True))
             self._recon_block_shape = (nz, ny, nx)
@@ -1598,12 +1611,13 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 _show(ax, arr, f"{proj.upper()} · {plane} · {int(self.recon_mip_thick.get())}p slab", bar=True)
             elif mode == "Rotating MIP":
                 az, el = self.recon_azimuth.get(), self.recon_elevation.get()
-                _show(ax, rc.rotating_mip(block, az, el),
-                      f"Rotating MIP · az {az:.0f}° el {el:.0f}°", bar=True)
+                arr = rc.rotating_mip(block, az, el)
+                _show(ax, arr, f"Rotating MIP · az {az:.0f}° el {el:.0f}°", bar=True)
             else:  # Oblique MPR
                 tilt, rot = self.recon_tilt.get(), self.recon_rot.get()
-                _show(ax, rc.oblique_mpr(block, (cz, cy, cx), tilt, rot),
-                      f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°", bar=True)
+                arr = rc.oblique_mpr(block, (cz, cy, cx), tilt, rot)
+                _show(ax, arr, f"Oblique MPR · tilt {tilt:.0f}° rot {rot:.0f}°", bar=True)
+            self._recon_measure_targets[ax] = (np.asarray(arr, dtype=float), mm_per_px)
 
         self.canvas.draw()
         self.update_metrics(params, metrics)
