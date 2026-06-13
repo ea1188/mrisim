@@ -62,15 +62,38 @@ const REGION_PLANE = { Spine: "sagittal", Knee: "sagittal" };
 // --- Worker plumbing -------------------------------------------------------- //
 const worker = new Worker("worker.js");
 let reqId = 0;
+let workerDead = false;              // set if the engine worker crashes (vs. a per-call error)
 const pending = new Map();           // id -> {resolve, reject}
 
 function call(type, payload) {
+  if (workerDead) return Promise.reject(new Error("the engine has stopped — please reload the page"));
   return new Promise((resolve, reject) => {
     const id = ++reqId;
     pending.set(id, { resolve, reject });
     worker.postMessage({ id, type, payload });
   });
 }
+
+// If the worker itself crashes (e.g. out of memory) it fires an `error` event
+// rather than posting a result — without this, in-flight calls would hang forever
+// and the UI would silently freeze. Fail them loudly and tell the user to reload.
+function onWorkerCrash(ev) {
+  if (workerDead) return;
+  workerDead = true;
+  const msg = (ev && ev.message) || "the engine worker stopped unexpectedly";
+  for (const [, p] of pending) p.reject(new Error(msg));
+  pending.clear();
+  document.body.classList.remove("busy");
+  const hint = document.getElementById("hint");
+  if (hint) hint.textContent = "Engine error — please reload the page to continue.";
+  const splashStatus = document.getElementById("splash-status");
+  if (splashStatus && !document.getElementById("splash").hidden) {
+    splashStatus.textContent = "The engine failed to start — please reload.";
+  }
+  console.warn("worker crashed:", msg);
+}
+worker.onerror = onWorkerCrash;
+worker.onmessageerror = onWorkerCrash;
 
 // Region switch can lazy-fetch a real atlas (~20 MB the first time); show a note.
 async function loadRegion(name) {
