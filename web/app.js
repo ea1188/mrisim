@@ -898,6 +898,7 @@ function buildControls(info) {
   wireRecon();
   wireProbe();
   wireMeasure();
+  wireReconMeasure();
   wireKeyboard();
   wireLessons();
 
@@ -1436,6 +1437,7 @@ function syncReconMode() {
 
 async function runRecon() {
   if (!reconActive()) return;
+  clearReconMeasure();   // panels are being rebuilt — drop any stale measure overlay
   const p = collectPayload();
   const mode = $("reconmode").value;
   p.mode = mode;
@@ -1528,6 +1530,7 @@ function wireRecon() {
   // origin is bottom-left, and the sagittal panel is L–R flipped (see _recon_png).
   const setPct = (id, v) => { $(id).value = Math.round(Math.max(0, Math.min(100, v))); const o = $(id + "-val"); if (o) o.value = $(id).value; };
   const panelClick = (panel) => (e) => {
+    if (measureMode !== "off") return;   // a measure tool is active → measure, don't navigate
     const r = e.currentTarget.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const fx = (e.clientX - r.left) / r.width;
@@ -1725,7 +1728,7 @@ function drawMeasure(shape) {
 }
 
 function clearMeasure() {
-  measureShape = null; measureDrag = null; drawMeasure(null);
+  measureShape = null; measureDrag = null; drawMeasure(null); clearReconMeasure();
   $("measure-readout").textContent = measureMode === "off"
     ? "Pick Ruler or ROI, then drag on the image."
     : (measureMode === "ruler" ? "Drag a line across the image." : "Drag to place an ROI.");
@@ -1775,10 +1778,81 @@ function wireMeasure() {
       });
       measureMode = btn.dataset.m;
       $("wrapA").classList.toggle("measuring", measureMode !== "off");
+      $("reconwrap").classList.toggle("measuring", measureMode !== "off");
       clearMeasure();
     }));
   $("measure-clear").addEventListener("click", clearMeasure);
-  window.addEventListener("resize", () => { drawMeasure(measureShape); sizeSliceRail(); });
+  window.addEventListener("resize", () => { drawMeasure(measureShape); clearReconMeasure(); sizeSliceRail(); });
+}
+
+// --- Measure on the reconstruction panels (ruler / ROI on each reformat) ----- //
+let reconMeasureDrag = null;   // { panel, img, p0:{fx,fy}, p1:{fx,fy} }
+
+function drawReconMeasure(shape) {
+  const svg = $("recon-measure-svg");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  if (!shape || !shape.img || !shape.p0 || !shape.p1) return;
+  const wrap = $("reconwrap").getBoundingClientRect();
+  const pr = shape.img.getBoundingClientRect();
+  svg.style.left = (pr.left - wrap.left) + "px";
+  svg.style.top = (pr.top - wrap.top) + "px";
+  svg.style.width = pr.width + "px";
+  svg.style.height = pr.height + "px";
+  svg.setAttribute("viewBox", `0 0 ${pr.width} ${pr.height}`);
+  const NS = "http://www.w3.org/2000/svg";
+  const a = { x: shape.p0.fx * pr.width, y: shape.p0.fy * pr.height };
+  const b = { x: shape.p1.fx * pr.width, y: shape.p1.fy * pr.height };
+  if (shape.kind === "ruler") {
+    const ln = document.createElementNS(NS, "line");
+    ln.setAttribute("x1", a.x); ln.setAttribute("y1", a.y);
+    ln.setAttribute("x2", b.x); ln.setAttribute("y2", b.y);
+    ln.setAttribute("class", "m-line"); svg.appendChild(ln);
+    for (const p of [a, b]) {
+      const d = document.createElementNS(NS, "circle");
+      d.setAttribute("cx", p.x); d.setAttribute("cy", p.y); d.setAttribute("r", 2.6);
+      d.setAttribute("class", "m-end"); svg.appendChild(d);
+    }
+  } else {
+    const el = document.createElementNS(NS, "ellipse");
+    el.setAttribute("cx", (a.x + b.x) / 2); el.setAttribute("cy", (a.y + b.y) / 2);
+    el.setAttribute("rx", Math.abs(b.x - a.x) / 2); el.setAttribute("ry", Math.abs(b.y - a.y) / 2);
+    el.setAttribute("class", "m-roi"); svg.appendChild(el);
+  }
+}
+
+function clearReconMeasure() {
+  reconMeasureDrag = null;
+  const svg = $("recon-measure-svg");
+  if (svg) while (svg.firstChild) svg.removeChild(svg.firstChild);
+}
+
+function wireReconMeasure() {
+  const PANELS = { reconAxial: "axial", reconCoronal: "coronal", reconSagittal: "sagittal",
+                   reconOverview: "overview", reconMain: "main" };
+  for (const id of Object.keys(PANELS)) {
+    const el = $(id); if (!el) continue;
+    el.addEventListener("pointerdown", (e) => {
+      if (measureMode === "off") return;
+      const f = imgFraction(el, e.clientX, e.clientY); if (!f) return;
+      reconMeasureDrag = { panel: PANELS[id], img: el, p0: f, p1: f };
+      e.preventDefault(); e.stopPropagation();
+      drawReconMeasure({ kind: measureMode, ...reconMeasureDrag });
+    });
+  }
+  window.addEventListener("pointermove", (e) => {
+    if (!reconMeasureDrag) return;
+    reconMeasureDrag.p1 = imgFraction(reconMeasureDrag.img, e.clientX, e.clientY) || reconMeasureDrag.p1;
+    drawReconMeasure({ kind: measureMode, ...reconMeasureDrag });
+  });
+  window.addEventListener("pointerup", async () => {
+    if (!reconMeasureDrag) return;
+    const d = reconMeasureDrag;
+    try {
+      const res = await call("measure", { kind: measureMode, panel: d.panel,
+        points: [[d.p0.fx, d.p0.fy], [d.p1.fx, d.p1.fy]] });
+      showMeasureResult(res);
+    } catch (_e) { /* a stale render can race; ignore */ }
+  });
 }
 
 // Build the signal-equation HTML for the hovered tissue at the current protocol.

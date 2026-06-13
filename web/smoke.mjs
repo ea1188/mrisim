@@ -354,6 +354,31 @@ try {
   await page.waitForFunction(
     (prev) => { const s = document.getElementById("reconAxial").src; return s && s !== prev; },
     axSrc0, { timeout: 25_000 });
+
+  // Measure on a reconstruction panel: a ruler drag across the axial reformat
+  // reports mm; an ROI drag reports SNR. (Measure mode disables click-nav.)
+  await page.click('#measuremode button[data-m="ruler"]');
+  {
+    const r = await page.$eval("#reconAxial", (el) => {
+      const b = el.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; });
+    await page.mouse.move(r.x + r.w * 0.30, r.y + r.h * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(r.x + r.w * 0.70, r.y + r.h * 0.5, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(
+      () => /mm/.test(document.getElementById("measure-readout").textContent || ""),
+      { timeout: 10_000 });
+    await page.click('#measuremode button[data-m="roi"]');
+    await page.mouse.move(r.x + r.w * 0.45, r.y + r.h * 0.45);
+    await page.mouse.down();
+    await page.mouse.move(r.x + r.w * 0.60, r.y + r.h * 0.60, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForFunction(
+      () => /SNR/.test(document.getElementById("measure-readout").textContent || ""),
+      { timeout: 10_000 });
+    await page.click('#measuremode button[data-m="off"]');
+  }
+
   await page.selectOption("#reconmode", "mip");
   await page.waitForSelector("#recon-single:not([hidden])", { timeout: 5_000 });
   await page.waitForFunction(
