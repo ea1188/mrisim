@@ -6,6 +6,15 @@
 const $ = (id) => document.getElementById(id);
 let booted = false;
 
+// Offline support + CDN resilience: register the (network-first) service worker
+// after load so it never competes with the first paint. Best-effort — the app
+// works fine without it, and the SW never serves stale shell code to online users.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW registration failed:", e));
+  });
+}
+
 let compareMode = false;
 let protocolA = null;       // snapshot payload for the "A" side of a comparison
 let applyingPreset = false; // suppress the custom-reset while a preset populates
