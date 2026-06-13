@@ -12,6 +12,12 @@ frozen.)
 
 ## [Unreleased]
 
+### Internal
+- **ESLint for the browser build.** Added an ESLint flat config and a fast,
+  path-filtered CI job that statically checks `web/app.js`, `web/worker.js` and
+  `web/smoke.mjs` on every PR — catching undefined variables, typos, duplicate
+  keys and unreachable code that the headless-browser smoke test can't see.
+
 ## [1.18.0] — 2026-06-12
 
 The control panel becomes easier to navigate and to set precisely, on both the

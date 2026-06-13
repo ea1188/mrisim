@@ -1,0 +1,20 @@
+{
+  "name": "mrisim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tooling for the MRISim browser build (web/): ESLint static analysis.",
+  "type": "commonjs",
+  "scripts": {
+    "lint": "eslint web/app.js web/worker.js web/smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ea1188/mrisim.git"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "globals": "^17.6.0"
+  }
+}
