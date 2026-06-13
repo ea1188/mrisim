@@ -45,7 +45,28 @@
         faster rendering — grab the <a href="https://github.com/ea1188/mrisim/releases/latest"
         target="_blank" rel="noopener">desktop app</a>.</p>
       </div>
-      <button id="intro-ok" type="button">Got it</button>
+      <div class="intro-actions">
+        <button id="intro-tour" type="button" class="intro-primary">▶ Take the feature tour</button>
+        <button id="intro-ok" type="button">Explore on my own</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guided feature tour: a spotlight + tooltip that points at the real controls.
+       Non-modal (the page stays clickable); driven by the tooltip buttons. -->
+  <div id="tour" hidden>
+    <div id="tour-spot"></div>
+    <div id="tour-pop" role="dialog" aria-modal="false" aria-labelledby="tour-title">
+      <h3 id="tour-title"></h3>
+      <p id="tour-text"></p>
+      <div class="tour-foot">
+        <span id="tour-progress"></span>
+        <span class="tour-btns">
+          <button id="tour-skip" type="button">Skip</button>
+          <button id="tour-prev" type="button">‹ Back</button>
+          <button id="tour-next" type="button">Next ›</button>
+        </span>
+      </div>
     </div>
   </div>
 
@@ -102,7 +123,7 @@
     </div>
     <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">🎓 Curriculum</button>
     <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">📖 Lessons</button>
-    <button id="help" class="ghlink" type="button" title="Show the intro">?</button>
+    <button id="help" class="ghlink" type="button" title="Help, welcome &amp; feature tour">?</button>
     <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 

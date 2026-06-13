@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Guided feature tour (browser).** A first-run welcome now offers a **"Take the
+  feature tour"** — a spotlight walkthrough that points at the real controls
+  (sequence, timing, the image, the curve, presets, compare, 3D reconstruction,
+  measure, find-a-control, lessons) with Back / Next / Skip. Re-launchable anytime
+  from the **?** button, which is now the help/welcome/tour hub.
+
 ## [1.22.0] — 2026-06-13
 
 Small polish: a desktop **hide-curve** toggle (giving the image the full width when

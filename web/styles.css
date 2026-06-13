@@ -331,11 +331,42 @@ kbd {
   background: var(--raised); border: 1px solid var(--border-hi); border-bottom-width: 2px;
   border-radius: 5px; padding: 0 6px; font-size: 11px; font-family: inherit; color: var(--text);
 }
-#intro-ok {
+.intro-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
+#intro-tour {
   background: linear-gradient(135deg, var(--accent), var(--accent-dk, #2f6fd6)); color: #fff;
   border: none; border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer;
 }
-#intro-ok:hover { filter: brightness(1.08); }
+#intro-tour:hover { filter: brightness(1.08); }
+#intro-ok {
+  background: var(--raised); color: var(--text); border: 1px solid var(--border-hi);
+  border-radius: 8px; padding: 9px 16px; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+#intro-ok:hover { border-color: var(--accent); }
+
+/* Guided feature tour — spotlight coachmarks over the real controls. */
+#tour { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+#tour-spot {
+  position: absolute; border-radius: 8px; border: 2px solid var(--accent-hi);
+  box-shadow: 0 0 0 9999px rgba(2, 6, 12, 0.62);
+  transition: left .2s, top .2s, width .2s, height .2s; pointer-events: none;
+}
+#tour-pop {
+  position: absolute; max-width: 330px; pointer-events: auto;
+  background: var(--panel); border: 1px solid var(--border-hi); border-radius: 10px;
+  padding: 13px 15px; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+}
+#tour-pop h3 { margin: 0 0 6px; font-size: 13px; color: var(--accent-hi); }
+#tour-pop p { margin: 0 0 11px; font-size: 12.5px; color: var(--text); line-height: 1.5; }
+.tour-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#tour-progress { font-size: 11px; color: var(--text-dim); }
+.tour-btns { display: flex; gap: 6px; }
+.tour-btns button {
+  background: var(--raised); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 11px; font-size: 12px; cursor: pointer;
+}
+.tour-btns button:hover { border-color: var(--border-hi); }
+#tour-prev:disabled { opacity: .4; cursor: default; }
+#tour-next { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
 #help {
   background: var(--raised); border: 1px solid var(--border); color: var(--text-dim);
   width: 26px; height: 26px; border-radius: 50%; font-weight: 800; cursor: pointer; padding: 0;
