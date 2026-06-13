@@ -102,6 +102,22 @@ def test_weighted_images_stay_grayscale(host: WebHost, seq, dispkey, disp) -> No
     assert _central_colorfulness(r["image"]) < 0.02, f"{seq}/{disp} should be grayscale"
 
 
+@pytest.mark.parametrize("flag,key,params", [
+    ("show_kspace", "kspace", {"sequence": "Spin Echo"}),
+    ("show_psd", "psd", {"sequence": "Gradient Echo"}),
+    ("show_b0map", "b0map", {"sequence": "Echo Planar (EPI)"}),
+    ("show_gfactor", "gfactor", {"sequence": "Spin Echo", "accel_factor": 3}),
+])
+def test_side_panels_render_with_structure(host: WebHost, flag, key, params) -> None:
+    """The optional side panels — k-space, pulse-sequence diagram, B0 field map and
+    g-factor map — each render real structure rather than a blank panel."""
+    r = host.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                     "params": params, flag: True})
+    assert r[key] is not None, f"{key} panel was not produced"
+    arr = _decode(r[key])
+    assert arr.std() > 5.0, f"{key} panel looks blank (std={arr.std():.1f})"
+
+
 def test_mpr_panels_are_not_stretched(host: WebHost) -> None:
     """Each MPR reformat's PNG aspect ratio must match its data aspect — this is
     the direct guard against the 'stretched-out reformat' regression."""
