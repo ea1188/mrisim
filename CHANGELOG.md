@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Changed
+- **Quantitative maps use perceptual, colorblind-safe colormaps + a colorbar on the
+  desktop too (parity with the browser).** T1 / T2 / T2\* (qMRI) and ADC / FA
+  (diffusion) maps render with a perceptually-uniform colormap (viridis / magma /
+  cividis) and a calibrated colorbar (the user's colormap pick still applies to
+  weighted images, and overrides the default on maps). The map/colormap mapping is
+  now a shared `rendering.quantitative_map_spec` used by both apps.
+
 ### Added
 - **Receive-coil shading on the desktop (parity with the browser).** A "Receive
   coil" picker (Spatial / Acquisition) — ideal, 8-channel head array, 2-channel

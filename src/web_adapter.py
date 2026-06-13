@@ -581,34 +581,13 @@ class WebHost(CurvesMixin):
     # colormap + a calibrated colorbar (rather than grayscale with no scale) — a
     # well-established scientific-visualization practice (rainbow/grayscale maps
     # mislead and fail for colour-vision deficiency). Weighted images stay gray.
-    _MAP_CMAP = {
-        "T1":  ("viridis", "T1 (ms)"),
-        "T2*": ("magma",   "T2* (ms)"),
-        "T2":  ("magma",   "T2 (ms)"),
-        "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
-        "FA":  ("cividis", "FA"),
-    }
-
     def _map_spec(self, params: dict) -> "tuple[str, str] | None":
         """(colormap, unit-label) when the current display is a quantitative map,
-        else None (grayscale weighted image)."""
-        seq = params.get("sequence")
-        if seq == "Quantitative (qMRI)":
-            d = params.get("qmri_display", "")
-            if "T1" in d:
-                return self._MAP_CMAP["T1"]
-            if "T2*" in d:
-                return self._MAP_CMAP["T2*"]
-            if "T2" in d:
-                return self._MAP_CMAP["T2"]
-            return None                                  # Synthetic SE — weighted
-        if seq == "Diffusion (DWI)":
-            d = params.get("diff_display", "")
-            if "ADC" in d:
-                return self._MAP_CMAP["ADC"]
-            if "FA" in d:
-                return self._MAP_CMAP["FA"]
-        return None
+        else None (grayscale weighted image). Shared with the desktop via rendering."""
+        import rendering
+        return rendering.quantitative_map_spec(
+            params.get("sequence", ""), params.get("qmri_display", ""),
+            params.get("diff_display", ""))
 
     def _apply_coil_shading(self, image: np.ndarray, coil: "str | None") -> np.ndarray:
         """Modulate the image by a receive coil's spatial sensitivity (a display

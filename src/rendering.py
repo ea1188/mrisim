@@ -26,6 +26,39 @@ import epi
 import pv
 
 
+# Quantitative parameter maps get a perceptually-uniform, colorblind-safe colormap
+# + units (shared by the browser and desktop apps), rather than grayscale.
+_MAP_CMAP: dict[str, tuple[str, str]] = {
+    "T1":  ("viridis", "T1 (ms)"),
+    "T2*": ("magma",   "T2* (ms)"),
+    "T2":  ("magma",   "T2 (ms)"),
+    "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
+    "FA":  ("cividis", "FA"),
+}
+
+
+def quantitative_map_spec(sequence: str, qmri_display: str = "",
+                          diff_display: str = "") -> "tuple[str, str] | None":
+    """(colormap, unit-label) when the current display is a quantitative parameter
+    map (qMRI T1/T2/T2*, diffusion ADC/FA), else None for a weighted image."""
+    if sequence == "Quantitative (qMRI)":
+        d = qmri_display or ""
+        if "T1" in d:
+            return _MAP_CMAP["T1"]
+        if "T2*" in d:
+            return _MAP_CMAP["T2*"]
+        if "T2" in d:
+            return _MAP_CMAP["T2"]
+        return None                                  # Synthetic SE — weighted
+    if sequence == "Diffusion (DWI)":
+        d = diff_display or ""
+        if "ADC" in d:
+            return _MAP_CMAP["ADC"]
+        if "FA" in d:
+            return _MAP_CMAP["FA"]
+    return None
+
+
 # Gadolinium relaxivity constants (3T, Gd-DTPA)
 GD_R1_MS: float = 4.5e-3        # (mmol/kg)^-1 · ms^-1
 # Per-label fractional Gd concentration relative to administered dose, i.e. how

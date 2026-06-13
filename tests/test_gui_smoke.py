@@ -445,6 +445,18 @@ def test_receive_coil_shading(win):
     win.receive_coil.set("Uniform (ideal)"); win.recalculate()   # restore
 
 
+def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
+    """Desktop parity: quantitative maps render with a perceptual colormap + a
+    colorbar inset; weighted images stay grayscale with no colorbar."""
+    set_state(win, sequence="Quantitative (qMRI)")
+    win.qmri_display.set("T1 Map (VFA)"); win.recalculate()
+    assert win.axes[0].images[0].get_cmap().name in ("viridis", "magma", "cividis")
+    assert getattr(win, "_map_cbar", None) is not None, "map should have a colorbar"
+    set_state(win, sequence="Spin Echo"); win.recalculate()
+    assert win.axes[0].images[0].get_cmap().name == "gray"
+    assert getattr(win, "_map_cbar", None) is None, "weighted image colorbar not cleared"
+
+
 # --------------------------------------------------------------------------- #
 #  Keyboard navigation / toggles (_on_key)
 # --------------------------------------------------------------------------- #
