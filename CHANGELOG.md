@@ -12,6 +12,15 @@ frozen.)
 
 ## [Unreleased]
 
+### Changed
+- **Quantitative maps use perceptual, colorblind-safe colormaps + a colorbar
+  (browser).** T1 / T2 / T2\* (qMRI) and ADC / FA (diffusion) maps now render with a
+  perceptually-uniform, colour-vision-deficiency-safe colormap (viridis / magma /
+  cividis) and a calibrated colorbar in real units (ms, ×10⁻³ mm²/s), instead of an
+  uncalibrated grayscale. Grayscale/rainbow maps are a well-documented source of
+  misreading; weighted images stay grayscale. The colorbar is overlaid so the image
+  still fills its frame (probe / measure / window-level mapping is unchanged).
+
 ### Added
 - **Ernst-angle (flip-angle) signal curve (browser and desktop).** A new "Flip
   angle" signal-curve mode sweeps the flip angle and plots signal vs flip for
