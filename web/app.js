@@ -124,6 +124,7 @@ const HASH_KEYS = {
   fatsat: () => ($("fatsat").checked ? 1 : 0), gd: () => ($("gd").checked ? 1 : 0),
   flow: () => ($("flow").checked ? 1 : 0), acq3d: () => ($("acq3d").checked ? 1 : 0),
   np: () => $("np").value, kzpf: () => ($("kzpf").checked ? 1 : 0),
+  curvemode: () => $("curvemode").value, curveshow: () => ($("curveshow").checked ? 1 : 0),
 };
 
 function stateToHash() {
@@ -149,7 +150,7 @@ async function applyState(st) {
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
    "nslices", "sgap", "ipfov", "accel", "pv"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
-   "b0mapshow", "gfactorshow", "mathshow", "labelanat",
+   "b0mapshow", "gfactorshow", "mathshow", "labelanat", "curveshow",
    "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // A lesson/link that enables the 3-D slab without asking for a specific depth
   // gets full anatomy coverage (same as ticking 3D by hand), so reformats are full.
@@ -162,6 +163,7 @@ async function applyState(st) {
   if (st.angiotype) $("angiotype").value = st.angiotype;
   if (st.qmridisp) $("qmridisp").value = st.qmridisp;
   if (st.fmridisp) $("fmridisp").value = st.fmridisp;
+  if (st.curvemode) $("curvemode").value = st.curvemode;
   // Pathology select (back-compat: the old boolean `lesion` maps to "lesion").
   if (st.pathology !== undefined) $("pathology").value = st.pathology;
   else if (st.lesion !== undefined) $("pathology").value = st.lesion ? "lesion" : "";
@@ -174,6 +176,7 @@ async function applyState(st) {
   $("b0mapwrap").hidden = !$("b0mapshow").checked;
   $("gfactorwrap").hidden = !$("gfactorshow").checked;
   $("mathwrap").hidden = !$("mathshow").checked;
+  $("curvewrap").hidden = !$("curveshow").checked;
   syncVisibility();
   applyingPreset = false;
 }
@@ -191,7 +194,7 @@ async function applyHashState() {
   if (!h) return false;
   const p = new URLSearchParams(h);
   let st = {};
-  for (const [k, v] of p) st[k] = ["fatsat", "gd", "flow", "acq3d", "kzpf"].includes(k) ? v === "1" : v;
+  for (const [k, v] of p) st[k] = ["fatsat", "gd", "flow", "acq3d", "kzpf", "curveshow"].includes(k) ? v === "1" : v;
   // Schema handling: pre-versioned links have no `v` (treat as v0). Newer-than-known
   // links still apply best-effort (forward-compatible: unknown keys are ignored).
   const linkV = st.v === undefined ? 0 : parseInt(st.v, 10) || 0;

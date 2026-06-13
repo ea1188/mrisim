@@ -12,6 +12,11 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Curve state in share-links (browser).** A shareable link now preserves the
+  signal-curve type (TE decay / TR recovery / … / Flip angle) and whether the curve
+  is shown, so a link reproduces the exact view.
+
 ## [1.21.0] — 2026-06-13
 
 Desktop catches up to the browser. The desktop app gains the three features the

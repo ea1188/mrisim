@@ -534,6 +534,9 @@ try {
   if (shareHash.length <= 1) fail("URL hash was not updated for sharing");
   // Share-links carry a schema version (v=) so old links can be migrated, not misapplied.
   if (!/(?:^#|[#&])v=\d+/.test(shareHash)) fail("share-link missing schema version (v=): " + shareHash);
+  // Curve state (type + visibility) is part of the shareable link.
+  if (!/[#&]curvemode=/.test(shareHash)) fail("share-link missing curve mode: " + shareHash);
+  if (!/[#&]curveshow=/.test(shareHash)) fail("share-link missing curve visibility: " + shareHash);
   // A legacy link with no v= must still apply (back-compat), and a future v must not throw.
   for (const legacy of ["#region=Brain&seq=Spin%20Echo&tr=1800", "#v=999&region=Brain&tr=2600"]) {
     await page.evaluate((h) => { location.hash = h; return window.applyHashState(); }, legacy);
