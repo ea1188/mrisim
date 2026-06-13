@@ -563,10 +563,51 @@ class WebHost(CurvesMixin):
             ax.text(cx, ny, text, color="#ffe08a", fontsize=8.5, ha="center", va="center",
                     weight="bold", family="sans-serif", path_effects=stroke, zorder=7)
 
+    # Quantitative parameter maps get a perceptually-uniform, colorblind-safe
+    # colormap + a calibrated colorbar (rather than grayscale with no scale) — a
+    # well-established scientific-visualization practice (rainbow/grayscale maps
+    # mislead and fail for colour-vision deficiency). Weighted images stay gray.
+    _MAP_CMAP = {
+        "T1":  ("viridis", "T1 (ms)"),
+        "T2*": ("magma",   "T2* (ms)"),
+        "T2":  ("magma",   "T2 (ms)"),
+        "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
+        "FA":  ("cividis", "FA"),
+    }
+
+    def _map_spec(self, params: dict) -> "tuple[str, str] | None":
+        """(colormap, unit-label) when the current display is a quantitative map,
+        else None (grayscale weighted image)."""
+        seq = params.get("sequence")
+        if seq == "Quantitative (qMRI)":
+            d = params.get("qmri_display", "")
+            if "T1" in d:
+                return self._MAP_CMAP["T1"]
+            if "T2*" in d:
+                return self._MAP_CMAP["T2*"]
+            if "T2" in d:
+                return self._MAP_CMAP["T2"]
+            return None                                  # Synthetic SE — weighted
+        if seq == "Diffusion (DWI)":
+            d = params.get("diff_display", "")
+            if "ADC" in d:
+                return self._MAP_CMAP["ADC"]
+            if "FA" in d:
+                return self._MAP_CMAP["FA"]
+        return None
+
     def _draw_image(self, img: np.ndarray, params: dict, orient: str,
                     sl_idx: int, ww: float = 1.0, wl: float = 0.5,
                     label_anatomy: bool = False) -> str:
         ax = self.img_ax
+        # Drop a previous map colorbar inset (ax.clear() doesn't remove child axes).
+        prev_cax = getattr(self, "_map_cax", None)
+        if prev_cax is not None:
+            try:
+                prev_cax.remove()
+            except Exception:
+                pass
+            self._map_cax = None
         ax.clear()
         mx = float(np.max(img)) if float(np.max(img)) > 0 else 1.0
         # Auto-window to the image's robust intensity range (1st–99th percentile of
@@ -580,8 +621,24 @@ class WebHost(CurvesMixin):
         else:
             base, rng = 0.0, mx
         center, width = base + wl * rng, max(0.01, ww) * rng
-        ax.imshow(img, cmap="gray", origin="lower", aspect=1.0,
-                  vmin=center - width / 2, vmax=center + width / 2)
+        vlo, vhi = center - width / 2, center + width / 2
+        mapspec = self._map_spec(params)
+        ax.imshow(img, cmap=(mapspec[0] if mapspec else "gray"), origin="lower",
+                  aspect=1.0, vmin=vlo, vmax=vhi)
+        if mapspec is not None:
+            # Overlaid (inset) colorbar — keeps the image full-frame so the probe /
+            # measure / window-level coordinate mapping is unaffected.
+            cax = ax.inset_axes((0.905, 0.07, 0.03, 0.42))
+            cax.imshow(np.linspace(1.0, 0.0, 256).reshape(-1, 1), cmap=mapspec[0],
+                       aspect="auto", extent=(0.0, 1.0, vlo, vhi), vmin=0.0, vmax=1.0)
+            cax.set_xticks([])
+            cax.set_yticks([vlo, (vlo + vhi) / 2.0, vhi])
+            cax.yaxis.set_ticks_position("right")
+            cax.tick_params(axis="y", colors="#e6e9ee", labelsize=6, length=2, pad=1)
+            for _s in cax.spines.values():
+                _s.set_edgecolor("#3a424d")
+            cax.set_title(mapspec[1], color="#e6e9ee", fontsize=6, pad=2)
+            self._map_cax = cax
         render_overlay.frame_image_axes(ax)
         letters = render_overlay.orientation_letters(
             orient, sequence=params["sequence"], region=self.region.get())

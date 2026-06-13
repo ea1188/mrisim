@@ -34,6 +34,17 @@ def _decode(data_url: str) -> np.ndarray:
     return (arr * 255.0).astype(np.uint8)
 
 
+def _central_colorfulness(data_url: str) -> float:
+    """Mean RGB channel-spread over the central 40% of a PNG data URL — ~0 for a
+    grayscale image, clearly positive for a colormapped one. The central crop
+    avoids the coloured DICOM corner annotations and the colorbar inset."""
+    raw = base64.b64decode(data_url.split(",", 1)[1])
+    a = mpimg.imread(io.BytesIO(raw), format="png")[..., :3]
+    h, w = a.shape[:2]
+    c = a[int(h * 0.30):int(h * 0.70), int(w * 0.30):int(w * 0.70)]
+    return float(np.mean(c.max(axis=2) - c.min(axis=2)))
+
+
 @pytest.fixture(scope="module")
 def host() -> WebHost:
     h = WebHost()
@@ -62,6 +73,33 @@ def test_signal_curve_renders(host: WebHost) -> None:
                      "curve_mode": "TE decay",
                      "params": {"sequence": "Spin Echo", "TR": 500, "TE": 15}})
     _assert_not_blank(_decode(r["curve"]), "signal curve", floor=3.0)
+
+
+@pytest.mark.parametrize("seq,dispkey,disp", [
+    ("Quantitative (qMRI)", "qmri_display", "T1 Map (VFA)"),
+    ("Quantitative (qMRI)", "qmri_display", "T2 Map (multi-echo)"),
+    ("Diffusion (DWI)", "diff_display", "ADC Map"),
+    ("Diffusion (DWI)", "diff_display", "FA Map"),
+])
+def test_quantitative_maps_use_a_perceptual_colormap(host: WebHost, seq, dispkey, disp) -> None:
+    """Quantitative parameter maps render colormapped (perceptual, colorblind-safe)
+    rather than grayscale — the anatomy in the centre carries real colour."""
+    r = host.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                     "params": {"sequence": seq, dispkey: disp}})
+    assert _central_colorfulness(r["image"]) > 0.08, f"{disp} did not colormap"
+
+
+@pytest.mark.parametrize("seq,dispkey,disp", [
+    ("Spin Echo", None, None),
+    ("Quantitative (qMRI)", "qmri_display", "Synthetic SE"),   # a weighted image, not a map
+])
+def test_weighted_images_stay_grayscale(host: WebHost, seq, dispkey, disp) -> None:
+    """Plain weighted images keep grayscale — the colormap is reserved for maps."""
+    params = {"sequence": seq}
+    if dispkey:
+        params[dispkey] = disp
+    r = host.render({"region": "Brain", "orientation": "axial", "slice_idx": 90, "params": params})
+    assert _central_colorfulness(r["image"]) < 0.02, f"{seq}/{disp} should be grayscale"
 
 
 def test_mpr_panels_are_not_stretched(host: WebHost) -> None:
