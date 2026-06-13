@@ -409,7 +409,7 @@ def test_bssfp_curve_is_brighter_for_fluid(win):
 #  All signal-curve modes render for representative sequences
 # --------------------------------------------------------------------------- #
 @pytest.mark.parametrize("mode", ["TE decay", "TR recovery", "TI sweep",
-                                  "Contrast Map", "Histogram"])
+                                  "Flip angle", "Contrast Map", "Histogram"])
 @pytest.mark.parametrize("seq", ["Spin Echo", "Gradient Echo", "Inversion Recovery"])
 def test_curve_modes_render(win, mode, seq):
     set_state(win, sequence=seq)
@@ -417,6 +417,18 @@ def test_curve_modes_render(win, mode, seq):
     win.recalculate()                       # exercises the mode's _plot_curves branch
     assert len(win.axes[1].get_children()) > 0
     win.plot_curve_mode.set("TE decay")
+
+
+def test_flip_curve_peaks_at_ernst_angle(win):
+    """Physics check behind the 'Flip angle' curve: the spoiled gradient-echo
+    signal vs flip angle peaks at the Ernst angle, cos(α) = exp(-TR/T1)."""
+    props = {"T1": 1000.0, "T2": 80.0, "T2star": 60.0, "PD": 1.0}
+    tr = 50.0
+    fa = np.arange(1.0, 91.0)
+    sig = np.asarray(win._curve_signal("Gradient Echo", props, tr, 5.0, 0.0, fa), dtype=float)
+    peak_fa = float(fa[int(np.argmax(sig))])
+    ernst = float(np.degrees(np.arccos(np.exp(-tr / props["T1"]))))
+    assert abs(peak_fa - ernst) <= 2.0, f"GRE peak {peak_fa}° vs Ernst {ernst:.1f}°"
 
 
 # --------------------------------------------------------------------------- #
