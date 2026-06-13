@@ -980,7 +980,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.desc_label.setWordWrap(True)
         SL.addWidget(self.desc_label)
         self._dropdown(SL, "Signal Curve", self.plot_curve_mode,
-                       ["TE decay", "TR recovery", "TI sweep", "Contrast Map", "Histogram"],
+                       ["TE decay", "TR recovery", "TI sweep", "Flip angle", "Contrast Map", "Histogram"],
                        self.schedule_recalculate, inline=True)
 
         # FOV planning (scout) \u2014 toggle plus its slice-group / oblique controls.

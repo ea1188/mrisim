@@ -22,7 +22,7 @@ class CurvesMixin:
     current_image: Any
 
     @staticmethod
-    def _curve_signal(seq: str, props: dict, TR: Any, TE: Any, TI: float, FA: float) -> Any:
+    def _curve_signal(seq: str, props: dict, TR: Any, TE: Any, TI: Any, FA: Any) -> Any:
         """Per-tissue signal from the *same* tested library equations the image
         uses, so the plotted curve provably tracks the picture. TR/TE may be
         scalars or numpy arrays (the swept axis). GRE/EPI use the measured T2*
@@ -139,6 +139,38 @@ class CurvesMixin:
             ax.set_xlabel('TI (ms)', color='white')
             ax.set_ylabel('Signal (a.u.)', color='white')
             ax.set_title('IR Signal vs TI  (— magnitude · - - signed)', color='white', fontsize=10)
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
+
+        elif mode == "Flip angle":
+            # Signal vs flip angle — the Ernst-angle teaching curve. Most meaningful
+            # for spoiled gradient-echo (SE is flip-independent → a flat line, which
+            # is itself instructive). cos(α_Ernst) = exp(-TR/T1).
+            fa_sweep = np.arange(1.0, 91.0)
+            _tissue_rows = [("White Matter", '#ff6b6b', "white_matter"),
+                            ("Gray Matter",  '#69db7c', "gray_matter"),
+                            ("CSF",          '#74c0fc', "csf")]
+            for tlabel, color, key in _tissue_rows:
+                props = TISSUES_B0[key]
+                # Broadcast to the swept axis: flip-independent sequences (SE/IR)
+                # return a scalar → a flat line, which itself shows they don't vary
+                # with flip (only gradient-echo has an Ernst peak).
+                sig = np.broadcast_to(
+                    np.asarray(self._curve_signal(seq, props, TR, TE, TI, fa_sweep), dtype=float),
+                    fa_sweep.shape)
+                ax.plot(fa_sweep, sig, color=color, linewidth=2, label=tlabel)
+                e1 = float(np.exp(-TR / props["T1"]))
+                a_ernst = float(np.degrees(np.arccos(np.clip(e1, -1.0, 1.0))))
+                if 1.0 < a_ernst < 90.0:
+                    ax.axvline(x=a_ernst, color=color, linestyle=':', alpha=0.6, linewidth=1)
+                    ax.text(a_ernst, 0.93, f"{a_ernst:.0f}°", transform=ax.get_xaxis_transform(),
+                            color=color, fontsize=7, ha='center', va='top')
+            ax.axvline(x=FA, color='yellow', linestyle='--', alpha=0.8, label=f'flip={FA:.0f}°')
+            ax.set_xlabel('Flip angle (°)', color='white')
+            ax.set_ylabel('Signal (a.u.)', color='white')
+            _gre_like = ("Gradient Echo", "Balanced SSFP", "Echo Planar (EPI)", "Susceptibility (SWI)")
+            _t = 'Signal vs Flip Angle  (· = Ernst angle)' if seq in _gre_like \
+                else 'Signal vs Flip Angle  (Ernst applies to gradient-echo)'
+            ax.set_title(_t, color='white', fontsize=10)
             ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
 
         elif mode == "Contrast Map":

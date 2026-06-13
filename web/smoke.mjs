@@ -453,6 +453,12 @@ try {
     await page.waitForFunction(
       (prev) => { const s = document.getElementById("curveImage").src; return s && s !== prev && s.length > 2000; },
       c0, { timeout: 20_000 });
+    // The Ernst-angle (flip) curve renders too.
+    const c1 = await page.getAttribute("#curveImage", "src");
+    await page.selectOption("#curvemode", "Flip angle");
+    await page.waitForFunction(
+      (prev) => { const s = document.getElementById("curveImage").src; return s && s !== prev && s.length > 2000; },
+      c1, { timeout: 20_000 });
     await page.uncheck("#curveshow");
     await page.waitForSelector("#curvewrap", { state: "hidden", timeout: 5_000 });
     await page.check("#curveshow");

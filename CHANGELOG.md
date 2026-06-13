@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Ernst-angle (flip-angle) signal curve (browser and desktop).** A new "Flip
+  angle" signal-curve mode sweeps the flip angle and plots signal vs flip for
+  white matter / gray matter / CSF, marking each tissue's **Ernst angle**
+  (cos α = e^−TR/T1) and your current flip. Gradient-echo shows the classic peak;
+  flip-independent sequences (spin-echo, IR) render a flat line — itself the point.
+
 ## [1.19.0] — 2026-06-13
 
 A round of viewing improvements and durability work. In the browser you can now
