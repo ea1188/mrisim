@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+## [1.21.0] — 2026-06-13
+
+Desktop catches up to the browser. The desktop app gains the three features the
+browser got in v1.20.0: **interactive ruler/ROI measurement** (on the main image
+and the 2×2 reconstruction), **receive-coil shading**, and **perceptual,
+colorblind-safe colormaps + calibrated colorbars** on the quantitative maps. The
+colormap, coil-envelope and measurement code is now shared between both apps.
+
 ### Added
 - **Interactive measure tools on the desktop (ruler + ROI).** The desktop app gains
   on-image measurement to match the browser — pick **Ruler** or **ROI** (Display
