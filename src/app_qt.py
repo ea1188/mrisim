@@ -393,7 +393,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.angio_elevation = Var(0)
         self.venc = Var(80.0)
         self.flow_velocity = Var(60.0)
-        self.angio_display = Var("Magnitude")
+        self.angio_display = Var("Speed")   # PC display: Speed (flow) | Magnitude
 
         # fMRI
         self.fmri_display = Var("EPI Image")
@@ -1223,9 +1223,20 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
 
         self.angio_frame = QWidget()
         angio_l = QVBoxLayout(self.angio_frame); angio_l.setContentsMargins(0, 0, 0, 0); angio_l.setSpacing(1)
+        self._dropdown(angio_l, "MRA Type", self.angio_type,
+                       ["TOF", "Phase Contrast"], self._on_angio_type_change, inline=True)
+        # Phase-contrast-only controls: velocity encoding + which PC map to project.
+        self._pc_frame = QWidget()
+        pc_l = QVBoxLayout(self._pc_frame); pc_l.setContentsMargins(0, 0, 0, 0); pc_l.setSpacing(1)
+        self._slider(pc_l, "VENC (cm/s)", self.venc, 10, 200)
+        self._dropdown(pc_l, "PC Display", self.angio_display,
+                       ["Speed", "Magnitude"], self.schedule_recalculate, inline=True)
+        self._pc_frame.setVisible(self.angio_type.get() == "Phase Contrast")
+        angio_l.addWidget(self._pc_frame)
         self._slider(angio_l, "MIP Azimuth (°)", self.angio_azimuth, 0, 360)
         self._slider(angio_l, "MIP Elevation (°)", self.angio_elevation, -60, 60)
-        angio_hint = QLabel("Rotating Time-of-Flight MIP — click-drag on the image to spin the angiogram (or use the Azimuth/Elevation sliders).")
+        angio_hint = QLabel("Rotating MIP — click-drag on the image to spin the angiogram (or use the Azimuth/Elevation sliders). "
+                            "TOF shows inflow; Phase Contrast encodes velocity (set VENC — a low VENC aliases fast flow).")
         angio_hint.setWordWrap(True); angio_hint.setStyleSheet("color:#6b7585; font-size:9px; padding-left:4px;")
         angio_l.addWidget(angio_hint)
         TL.addWidget(self.angio_frame)
@@ -1481,6 +1492,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 "diff_direction": self.diff_direction.get(), "diff_display": self.diff_display.get(),
                 "angio_type": self.angio_type.get(), "angio_mip_slab": self.angio_mip_slab.get(),
                 "angio_azimuth": self.angio_azimuth.get(), "angio_elevation": self.angio_elevation.get(),
+                "venc": self.venc.get(), "angio_display": self.angio_display.get(),
                 "angio_fast": getattr(self, "_mra_rotating", False),
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
@@ -2002,6 +2014,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.flip_angle.set(float(p.get("flip_angle", 90)))
         if "etl" in p: self.etl.set(int(p["etl"]))
         if "echo_spacing" in p: self.echo_spacing.set(float(p["echo_spacing"]))
+        self.recalculate()
+
+    def _on_angio_type_change(self) -> None:
+        """Show the PC-only controls (VENC + display) when Phase Contrast is picked."""
+        self._pc_frame.setVisible(self.angio_type.get() == "Phase Contrast")
         self.recalculate()
 
     def schedule_recalculate(self, *args: object) -> None:
