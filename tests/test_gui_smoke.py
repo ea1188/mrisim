@@ -495,6 +495,25 @@ def test_desktop_measure_tools(win):
     win.measure_mode.set("Off"); win._on_measure_mode_change(); win.recalculate()
 
 
+def test_feature_tour(win):
+    """The guided feature tour highlights a sequence of real controls and ends
+    cleanly (start → advance → back → finish)."""
+    win._start_tour()
+    t = win._tour
+    assert len(t._steps) >= 6, "tour should have several steps"
+    # isVisibleTo (not isVisible) — the test window is never actually shown.
+    assert t._card.isVisibleTo(win), "tour tooltip card not shown"
+    assert t._band.isVisibleTo(win), "tour highlight not shown"
+    first = t._title.text()
+    t.next()
+    assert t._title.text() != first, "tour did not advance"
+    t.prev()
+    assert t._title.text() == first, "tour did not go back"
+    for _ in range(len(t._steps)):
+        t.next()                                # advance off the end → ends
+    assert not t._card.isVisibleTo(win), "tour did not close at the end"
+
+
 def test_hide_signal_curve_adapts_layout(win):
     """Hiding the signal curve drops the second panel (image spans full width);
     showing it / k-space / compare restore the 1×2 layout."""

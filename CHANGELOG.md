@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Guided feature tour on the desktop (parity with the browser).** The desktop app
+  had no onboarding; it now has a **❔ Tour** button (and a first-run offer) that
+  walks through the main controls — sequence, timing, the image, presets, A/B
+  compare, 3D & reconstruction, measure, find-a-control — highlighting each with a
+  rubber-band + tooltip (Back / Next / Skip), expanding collapsed sections and
+  scrolling them into view as it goes.
+
 ## [1.24.0] — 2026-06-13
 
 Robustness and content. The browser no longer freezes if the Pyodide engine
