@@ -101,6 +101,7 @@ from app_regions import RegionMixin  # noqa: E402
 from app_interaction import InteractionMixin  # noqa: E402
 from app_metrics import MetricsMixin  # noqa: E402
 from app_export import ExportMixin  # noqa: E402
+from app_lessons import LessonMixin  # noqa: E402
 
 
 class CollapsibleSection(QWidget):
@@ -255,7 +256,7 @@ class TourOverlay:
 
 
 class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
-                   CurvesMixin, MetricsMixin, ExportMixin, QMainWindow):
+                   CurvesMixin, MetricsMixin, ExportMixin, LessonMixin, QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         from version import __version__
@@ -542,6 +543,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         content_row.addWidget(self.center_panel, stretch=1)
         content_row.addWidget(self.right_dock)
         outer.addWidget(content, stretch=1)
+
+        # Guided-lesson runner strip (hidden until a lesson starts).
+        outer.addWidget(self._build_lesson_panel())
 
         # Bottom series/thumbnail strip
         outer.addWidget(self.build_series_strip())
@@ -1108,6 +1112,13 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                                f"QPushButton:hover {{ color:{C_ACCENT_HI}; border-color:{C_ACCENT}; }}")
         tour_btn.clicked.connect(self._start_tour)
         hdrow.addWidget(tour_btn)
+        lessons_btn = QPushButton("📚 Lessons")
+        lessons_btn.setToolTip("Open a guided, step-by-step lesson")
+        lessons_btn.setStyleSheet(f"QPushButton {{ background:{C_RAISED}; color:{C_TEXT_DIM}; "
+                                  f"border:1px solid {C_BORDER}; border-radius:6px; padding:3px 9px; font-size:11px; }}"
+                                  f"QPushButton:hover {{ color:{C_ACCENT_HI}; border-color:{C_ACCENT}; }}")
+        lessons_btn.clicked.connect(self._open_lesson_picker)
+        hdrow.addWidget(lessons_btn)
         _hwrap = QWidget(); _hwrap.setLayout(hdrow); L.addWidget(_hwrap)
 
         # Find a control: type to show only matching controls (and the sections

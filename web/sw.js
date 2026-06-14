@@ -24,9 +24,9 @@
  */
 "use strict";
 
-const CACHE = "mrisim-v1";                  // bump when this file's caching logic changes
+const CACHE = "mrisim-v2";                  // bump when this file's caching logic changes
 const SHELL = [
-  "./", "index.html", "app.js", "styles.css", "worker.js", "logo.png",
+  "./", "index.html", "app.js", "styles.css", "worker.js", "logo.png", "lessons.json",
 ];
 
 self.addEventListener("install", (event) => {
