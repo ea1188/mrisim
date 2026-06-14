@@ -485,6 +485,69 @@ def test_desktop_pathology_only_affects_brain(win):
     win.pathology.set("None"); win.on_pathology_change()
 
 
+def test_lesson_state_keys_map_to_real_vars(win):
+    """Drift guard: every Var attribute the lesson translator names must exist."""
+    import lessons
+    for _, attr, _ in lessons.NUMERIC_KEYS:
+        assert hasattr(win, attr), f"missing numeric Var {attr}"
+    for _, attr in lessons.BOOL_KEYS:
+        assert hasattr(win, attr), f"missing bool Var {attr}"
+    for _, attr in lessons.ENUM_KEYS:
+        assert hasattr(win, attr), f"missing enum Var {attr}"
+
+
+def test_desktop_lesson_runner_drives_controls(win):
+    """Starting a guided lesson shows the panel and drives the actual controls;
+    Next advances the step (and re-renders); Finish hides the panel."""
+    titles = [L["title"] for L in win._lessons]
+    assert titles, "no desktop lessons loaded"
+    i = next(i for i, t in enumerate(titles) if "T1 vs T2" in t)
+    win._start_lesson(i)
+    assert win._lesson_panel.isVisibleTo(win), "lesson panel should be visible"
+    # Step 1 is T1-weighted: short TR / short TE.
+    assert abs(win.TR.get() - 500) < 1 and abs(win.TE.get() - 12) < 1
+    img1 = win.current_image.copy()
+    win._lesson_next()                                  # → step 2: T2-weighted
+    assert abs(win.TR.get() - 4000) < 1 and abs(win.TE.get() - 100) < 1
+    assert not np.allclose(img1, win.current_image), "T1→T2 should change the image"
+    win._lesson_prev()                                  # back to step 1
+    assert abs(win.TR.get() - 500) < 1
+    # Jump to the last step and Finish → panel hides.
+    win._lesson_step = len(win._lessons[i]["steps"]) - 1
+    win._lesson_next()
+    assert not win._lesson_panel.isVisibleTo(win), "Finish should hide the panel"
+
+
+def test_desktop_lesson_applies_pathology(win):
+    """A lesson step that prescribes a demo pathology paints it on the desktop."""
+    titles = [L["title"] for L in win._lessons]
+    i = next((i for i, t in enumerate(titles) if "spot the lesion" in t.lower()), None)
+    if i is None:
+        import pytest
+        pytest.skip("pathology lesson not in the supported set")
+    win._start_lesson(i)
+    assert win.pathology.get() != "None", "lesson should select a pathology"
+    assert 23 in np.unique(win.phantom_3d), "lesion label should be painted"
+    win._exit_lesson()
+
+
+def test_desktop_lesson_compare_step_enters_compare_mode(win):
+    """The DWI-test lesson stages an A/B comparison via compareWith."""
+    titles = [L["title"] for L in win._lessons]
+    i = next((i for i, t in enumerate(titles) if "DWI test" in t), None)
+    if i is None:
+        import pytest
+        pytest.skip("compare lesson not in the supported set")
+    win._start_lesson(i)
+    cw_step = next(s for s, st in enumerate(win._lessons[i]["steps"]) if st.get("compareWith"))
+    win._lesson_step = cw_step
+    win._lesson_apply_step()
+    assert win.compare_mode.get(), "compareWith step should enable compare mode"
+    assert win.compare_params is not None
+    win._exit_lesson()
+    assert not win.compare_mode.get(), "exiting should clear compare mode"
+
+
 def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
     """Desktop parity: quantitative maps render with a perceptual colormap + a
     colorbar inset; weighted images stay grayscale with no colorbar."""

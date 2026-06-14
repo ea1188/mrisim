@@ -85,6 +85,14 @@ def build() -> None:
         shutil.copy2(src_logo, os.path.join(WEB, "logo.png"))
         print("copied logo.png")
 
+    # 3b. Copy the guided-lesson data (single source shared with the desktop app).
+    src_lessons = os.path.join(ROOT, "data", "lessons.json")
+    if os.path.exists(src_lessons):
+        shutil.copy2(src_lessons, os.path.join(WEB, "lessons.json"))
+        print("copied lessons.json")
+    else:
+        print(f"WARNING: {src_lessons} not found — guided lessons will be empty in-browser.")
+
     # 4. Bundle the real body-region atlases (lazy-fetched per region in-browser).
     _bundle_regions()
 

@@ -27,10 +27,23 @@ frozen.)
   painting logic is now shared with the browser via `rendering.paint_brain_pathology`
   (single source of truth; labels 23–28 render through the field-synced tissue
   table). Brain-only; cached per kind; a no-op for body regions.
+- **Guided lessons on the desktop (parity with the browser).** A new **📚 Lessons**
+  button opens a step-by-step lesson runner: a docked strip under the viewport
+  shows each step's explanation and drives the actual controls for you (Back /
+  Next / Exit), including A/B comparisons and demo pathologies. The lesson content
+  is now authored once in `data/lessons.json` — the **single source** the browser
+  fetches at runtime and the desktop reads directly — so the two stay in sync. 31
+  of the 36 lessons are offered on the desktop; the few that rely on browser-only
+  panels (colormap/contrast map, g-factor map, B0 map, phase-contrast angiography)
+  are filtered out automatically.
 
 ### Changed
 - Refactored the browser's `_pathology_volume` to delegate to the shared
   `rendering.paint_brain_pathology`, removing the duplicated painting code.
+- The browser now fetches its guided-lesson data from `lessons.json` (copied into
+  `web/` by `build_web.py`) instead of inlining it in `app.js`, so the desktop and
+  browser share one lesson source. The offline service-worker precache (bumped to
+  `mrisim-v2`) includes it.
 
 ## [1.24.0] — 2026-06-13
 
