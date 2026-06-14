@@ -1232,6 +1232,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._dropdown(pc_l, "PC Display", self.angio_display,
                        ["Speed", "Magnitude"], self.schedule_recalculate, inline=True)
         self._pc_frame.setVisible(self.angio_type.get() == "Phase Contrast")
+        # Keep the PC-only controls in step with angio_type however it changes —
+        # the dropdown, a shared link, or a guided lesson setting the Var directly.
+        self.angio_type.trace_add("write", self._sync_pc_frame)
         angio_l.addWidget(self._pc_frame)
         self._slider(angio_l, "MIP Azimuth (°)", self.angio_azimuth, 0, 360)
         self._slider(angio_l, "MIP Elevation (°)", self.angio_elevation, -60, 60)
@@ -1637,6 +1640,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             self._map_cbar = None
         current_params = self.get_current_params()
 
+        # Optional teaching maps (contrast / B0 / g-factor) on their own canvases.
+        # Drawn here so they stay in sync in every mode below (the FOV-planning,
+        # reconstruction and multi-slice paths return early before the main draw).
+        self._draw_teaching_maps(current_params)
+
         # FOV planning takes over the main view with the prescribed slice group
         if self.fov_planning.get() and not self.compare_mode.get():
             self._display_prescription(current_params)
@@ -1742,9 +1750,6 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             self.psd_canvas.draw()
         else:
             self.psd_canvas.setVisible(False)
-
-        # Optional teaching maps (contrast / B0 / g-factor) on their own canvases.
-        self._draw_teaching_maps(current_params)
 
         self.canvas.draw()
         self.update_metrics(current_params, metrics_b)
@@ -2016,9 +2021,13 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         if "echo_spacing" in p: self.echo_spacing.set(float(p["echo_spacing"]))
         self.recalculate()
 
-    def _on_angio_type_change(self) -> None:
-        """Show the PC-only controls (VENC + display) when Phase Contrast is picked."""
+    def _sync_pc_frame(self) -> None:
+        """Show the PC-only controls (VENC + display) only for Phase Contrast."""
         self._pc_frame.setVisible(self.angio_type.get() == "Phase Contrast")
+
+    def _on_angio_type_change(self) -> None:
+        """MRA Type dropdown changed — re-render (visibility is handled by the
+        angio_type write-trace, so this also covers lesson/share-link changes)."""
         self.recalculate()
 
     def schedule_recalculate(self, *args: object) -> None:

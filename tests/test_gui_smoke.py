@@ -583,6 +583,18 @@ def test_desktop_gfactor_map_panel(win):
     assert not win.gfactor_canvas.isVisibleTo(win)
 
 
+def test_teaching_map_stays_live_in_multislice_mode(win):
+    """A teaching-map panel must redraw (not go stale) in modes that return early
+    from recalculate — e.g. the multi-slice grid."""
+    set_state(win, sequence="Spin Echo")
+    win.show_b0map.set(True); win.recalculate()
+    assert win.b0map_canvas.isVisibleTo(win) and len(win.b0map_ax.images) == 1
+    win.multi_slice.set(True); win.recalculate()      # early-return path
+    assert win.b0map_canvas.isVisibleTo(win), "map should still be shown in multi-slice"
+    assert len(win.b0map_ax.images) == 1, "map should have been redrawn, not stale-cleared"
+    win.multi_slice.set(False); win.show_b0map.set(False); win.recalculate()   # restore
+
+
 def test_teaching_map_lessons_now_supported_on_desktop(win):
     """The contrast/B0/g-factor panels unlock their browser lessons on desktop."""
     titles = {L["title"] for L in win._lessons}
