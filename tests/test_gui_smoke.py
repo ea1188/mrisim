@@ -445,6 +445,46 @@ def test_receive_coil_shading(win):
     win.receive_coil.set("Uniform (ideal)"); win.recalculate()   # restore
 
 
+def test_desktop_pathology_paints_and_renders(win):
+    """Desktop demo pathology (parity with the browser): selecting a lesion paints
+    label 23 into brain WM, changes the rendered image, and is undone by None."""
+    set_state(win, sequence="FSE / TSE", region="Brain")
+    win.pathology.set("None"); win.on_pathology_change()
+    clean = win.current_image.copy()
+    assert 23 not in np.unique(win.phantom_3d)
+
+    win.pathology.set("Lesion (focal)"); win.on_pathology_change()
+    assert 23 in np.unique(win.phantom_3d), "lesion label 23 should be painted"
+    lesion = win.current_image
+    assert not np.allclose(clean, lesion), "the lesion should change the image"
+
+    win.pathology.set("None"); win.on_pathology_change()  # restore
+    assert 23 not in np.unique(win.phantom_3d)
+    assert np.allclose(clean, win.current_image)
+
+
+def test_desktop_ms_paints_multiple_plaques(win):
+    """MS demo scatters several label-23 plaques through one hemisphere's WM."""
+    set_state(win, sequence="FSE / TSE", region="Brain")
+    win.pathology.set("MS plaques"); win.on_pathology_change()
+    z = win.phantom_3d.shape[0] // 2
+    from scipy import ndimage
+    _, n = ndimage.label(win.phantom_3d[z] == 23)
+    assert n >= 2, f"MS should paint multiple plaques, found {n}"
+    win.pathology.set("None"); win.on_pathology_change()  # restore
+
+
+def test_desktop_pathology_only_affects_brain(win):
+    """A demo pathology selected on a body region is a no-op (no label 23)."""
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.pathology.set("Tumor (mass)"); win.on_pathology_change()
+    win.region.set("Knee"); win.on_region_change()
+    assert 23 not in np.unique(win.phantom_3d)
+    win.region.set("Brain"); win.on_region_change()      # restore + re-applies tumor
+    assert 26 in np.unique(win.phantom_3d), "tumor should re-apply on return to Brain"
+    win.pathology.set("None"); win.on_pathology_change()
+
+
 def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
     """Desktop parity: quantitative maps render with a perceptual colormap + a
     colorbar inset; weighted images stay grayscale with no colorbar."""

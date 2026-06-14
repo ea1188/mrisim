@@ -31,6 +31,12 @@ class RegionMixin(_Base):
     orientation: Any
     slice_idx: Any
     FOV: Any
+    pathology: Any
+    phantom_3d: Any
+    texture_3d: Any
+    _brain_volume: Any
+    _lesion_vol_cache: Any
+    _PATHOLOGY_KIND: Any
     _region_cache: Any
     _region_sequences: Any
     _region_texture_cache: Any
@@ -41,6 +47,7 @@ class RegionMixin(_Base):
     _fov_slider: Any
     get_max_slice_idx: Any
     on_sequence_change: Any
+    recalculate: Any
     _set_orientation: Any
     _set_status_default: Any
     _refresh_slice_range: Any
@@ -64,6 +71,8 @@ class RegionMixin(_Base):
         vol = self._load_brain(n)
         self._region_cache["Brain"] = vol
         self._brain_volume = vol
+        self._lesion_vol_cache.clear()   # painted brains are subject-specific
+
         # fMRI activation is placed in this brain's cortex (cheap to rebuild);
         # the synthetic TOF vessel tree is reused (it is not subject-specific).
         self.activation_3d = add_activation_3d(vol)
@@ -90,6 +99,7 @@ class RegionMixin(_Base):
             self._region_texture_cache[name] = tex
         self.phantom_3d = self._region_cache[name]
         self.texture_3d = self._region_texture_cache.get(name)
+        self._apply_brain_pathology()   # overlay a demo lesion if Brain + pathology
 
         # Restrict the Sequence list to what this region supports (loaded real
         # volumes register their own list in _region_sequences).
@@ -127,6 +137,29 @@ class RegionMixin(_Base):
 
         self._set_status_default()
         self.on_sequence_change()
+
+    def _apply_brain_pathology(self) -> None:
+        """If Brain is active and a demo pathology is selected, swap phantom_3d for a
+        brain volume with the lesion painted in (labels 23–28, which render via the
+        field-synced tissue table). Cached per kind; a no-op for body regions."""
+        if self.region.get() != "Brain":
+            return
+        kind = self._PATHOLOGY_KIND.get(self.pathology.get(), "")
+        base = self._region_cache["Brain"]
+        if not kind:
+            self.phantom_3d = base
+            return
+        vol = self._lesion_vol_cache.get(kind)
+        if vol is None:
+            import rendering
+            vol = rendering.paint_brain_pathology(base, kind)
+            self._lesion_vol_cache[kind] = vol
+        self.phantom_3d = vol
+
+    def on_pathology_change(self) -> None:
+        """Repaint the brain with the chosen demo lesion and re-render."""
+        self._apply_brain_pathology()
+        self.recalculate()
 
     def load_nifti_region(self) -> None:
         """Load a single segmented NIfTI label mask via a file dialog."""

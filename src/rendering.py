@@ -64,6 +64,49 @@ def measure_stats(img: np.ndarray, mm_per_px: float, kind: str,
     return {"ok": False}
 
 
+# Demo-pathology labels painted into the brain (shared by the browser and desktop).
+# Most kinds are a single white-matter sphere; the abscess is a pus core (27) inside
+# an enhancing rim (28); "ms" scatters several lesion-label (23) plaques.
+PATHOLOGY_LABEL: dict[str, int] = {"lesion": 23, "stroke": 24, "hemorrhage": 25,
+                                   "tumor": 26, "abscess": 27, "ms": 23}
+PATHOLOGY_RADIUS: dict[str, float] = {"lesion": 0.035, "stroke": 0.045, "hemorrhage": 0.032,
+                                      "tumor": 0.05, "abscess": 0.068, "ms": 0.022}
+
+
+def paint_brain_pathology(brain_vol: np.ndarray, kind: str) -> np.ndarray:
+    """Return a copy of the brain label volume with a demo ``kind`` lesion painted
+    into the white matter near the default axial slice (so it's visible). Unknown
+    kinds return the volume unchanged."""
+    if kind not in PATHOLOGY_LABEL:
+        return brain_vol
+    vol = brain_vol.copy()
+    wm = vol == 3                                       # white matter
+    z = vol.shape[0] // 2                               # the default axial slice
+    ys, xs = np.where(wm[z])
+    if not len(ys):
+        return vol
+    # Seed in periventricular WM of one hemisphere (lateral + anterior, off midline).
+    y0, y1 = ys.min(), ys.max()
+    cy = int(y0 + 0.40 * (y1 - y0))
+    row = xs[ys == cy] if (ys == cy).any() else xs
+    cx = int(np.percentile(row, 72))
+    r = max(3, int(round(min(vol.shape[1], vol.shape[2]) * PATHOLOGY_RADIUS[kind])))
+    zz, yy, xx = np.ogrid[:vol.shape[0], :vol.shape[1], :vol.shape[2]]
+    dist2 = (zz - z) ** 2 + (yy - cy) ** 2 + (xx - cx) ** 2
+    if kind == "abscess":
+        para = (vol == 3) | (vol == 2)                 # displaces WM or cortex
+        r_in = max(2, r - 5)
+        vol[(dist2 <= r * r) & para] = 28              # enhancing rim (capsule)
+        vol[(dist2 <= r_in * r_in) & para] = 27        # pus core
+    elif kind == "ms":
+        for dy, dx in [(0, 0), (-2, -14), (-13, 4), (11, 9), (-7, -8), (14, -4)]:
+            d2 = (zz - z) ** 2 + (yy - (cy + dy)) ** 2 + (xx - (cx + dx)) ** 2
+            vol[(d2 <= r * r) & wm] = 23
+    else:
+        vol[(dist2 <= r * r) & wm] = PATHOLOGY_LABEL[kind]
+    return vol
+
+
 def quantitative_map_spec(sequence: str, qmri_display: str = "",
                           diff_display: str = "") -> "tuple[str, str] | None":
     """(colormap, unit-label) when the current display is a quantitative parameter

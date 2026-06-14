@@ -288,6 +288,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         body_phantoms.merge_into_engine()
         self._brain_volume = self.phantom_3d
         self._region_cache = {"Brain": self.phantom_3d}
+        self._lesion_vol_cache: dict[str, np.ndarray] = {}  # demo-pathology brains, per kind
         self._region_sequences: dict[str, list[str]] = {}
         # Real-MRI texture field per region (None = use synthetic texture, e.g. Brain)
         self.texture_3d: np.ndarray | None = None
@@ -405,6 +406,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # Display options
         self.display_cmap = Var("gray")
         self.receive_coil = Var("Uniform (ideal)")
+        self.pathology = Var("None")         # demo brain pathology (None | a lesion kind)
         self.measure_mode = Var("Off")       # Off | Ruler | ROI (on-image measurement)
         self.show_signal_curve = Var(True)   # show the signal curve beside the image
         self.show_tissue_overlay = Var(False)
@@ -1230,6 +1232,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._dropdown(NL, "Brain Subject", self.brain_subject,
                        ["04", "05", "06", "18", "20", "38"],
                        self.on_subject_change, inline=True)
+        self._pathology_dd = self._dropdown(NL, "Pathology (demo)", self.pathology,
+                       list(self._PATHOLOGY_KIND.keys()),
+                       self.on_pathology_change, inline=True)
         rl_row = QHBoxLayout(); rl_row.setContentsMargins(0, 0, 0, 2)
         self._button(rl_row, "Browse Masks\u2026", self.browse_masks, color="accent")
         self._button(rl_row, "Load File\u2026", self.load_nifti_region)
@@ -1533,6 +1538,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
     # --- Display ---
     _COIL_CODE = {"Uniform (ideal)": "uniform", "Head array (8-ch)": "head8",
                   "Quadrature (2-ch)": "quad", "Surface coil": "surface"}
+
+    # Demo-pathology dropdown labels → rendering.paint_brain_pathology kinds.
+    _PATHOLOGY_KIND = {"None": "", "MS plaques": "ms", "Lesion (focal)": "lesion",
+                       "Stroke (infarct)": "stroke", "Hemorrhage": "hemorrhage",
+                       "Tumor (mass)": "tumor", "Abscess (rim + core)": "abscess"}
 
     def _apply_coil_shading(self, image: np.ndarray) -> np.ndarray:
         """Modulate the image by the selected receive coil's spatial sensitivity

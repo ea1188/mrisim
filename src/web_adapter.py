@@ -239,43 +239,13 @@ class WebHost(CurvesMixin):
                     "tumor": 0.05, "abscess": 0.068, "ms": 0.022}
 
     def _pathology_volume(self, kind: str) -> np.ndarray:
-        """Return the brain volume with a demo lesion of `kind` painted into the
-        brain near the default axial slice so it's visible. Cached per kind. Most
-        kinds are a single sphere intersected with white matter; the abscess is a
-        pus core (27) inside an enhancing rim shell (28)."""
+        """The brain volume with a demo `kind` lesion painted in (cached per kind).
+        The painting is shared with the desktop via rendering.paint_brain_pathology."""
         cached = self._lesion_vol.get(kind) if isinstance(self._lesion_vol, dict) else None
         if cached is not None:
             return cached
-        base = self._region_cache["Brain"]
-        vol = base.copy()
-        wm = vol == 3                                   # white matter
-        z = vol.shape[0] // 2                           # the default axial slice
-        # Pick a guaranteed-WM seed on that slice, biased lateral+anterior so the
-        # lesion lands in one hemisphere's periventricular WM (not the midline).
-        ys, xs = np.where(wm[z])
-        if len(ys):
-            y0, y1 = ys.min(), ys.max()
-            cy = int(y0 + 0.40 * (y1 - y0))             # anterior-ish
-            row = xs[ys == cy] if (ys == cy).any() else xs
-            cx = int(np.percentile(row, 72))            # lateral, off midline
-            r = max(3, int(round(min(vol.shape[1], vol.shape[2]) * self._PATHOLOGY_R[kind])))
-            zz, yy, xx = np.ogrid[:vol.shape[0], :vol.shape[1], :vol.shape[2]]
-            dist2 = (zz - z) ** 2 + (yy - cy) ** 2 + (xx - cx) ** 2
-            if kind == "abscess":
-                # A mass that displaces parenchyma (WM or cortex): outer shell is
-                # the enhancing rim, inner ball is the pus core.
-                para = (vol == 3) | (vol == 2)
-                r_in = max(2, r - 5)                     # ~5-voxel rim survives PV blur
-                vol[(dist2 <= r * r) & para] = 28        # rim (capsule)
-                vol[(dist2 <= r_in * r_in) & para] = 27  # core (pus)
-            elif kind == "ms":
-                # Several small periventricular plaques (label 23) scattered through
-                # one hemisphere's deep white matter — the classic MS lesion load.
-                for dy, dx in [(0, 0), (-2, -14), (-13, 4), (11, 9), (-7, -8), (14, -4)]:
-                    d2 = (zz - z) ** 2 + (yy - (cy + dy)) ** 2 + (xx - (cx + dx)) ** 2
-                    vol[(d2 <= r * r) & wm] = 23
-            else:
-                vol[(dist2 <= r * r) & wm] = self._PATHOLOGY[kind]
+        import rendering
+        vol = rendering.paint_brain_pathology(self._region_cache["Brain"], kind)
         self._lesion_vol[kind] = vol
         return vol
 
