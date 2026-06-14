@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Clearer oblique-angle gizmo + angle snapping (desktop).** The FOV-planning
+  localizer now draws a rotation **pivot**, an **arc** sweeping to the current oblique
+  angle, and a live **tilt° / rot°** readout, so the centre and amount of angulation
+  are obvious. Dragging an angle handle now **magnets onto common angles** (0 / ±15 /
+  ±30 / ±45) so it's easy to land on a clean value.
 - **Place the saturation band on the localizer (desktop) + angled bands (both
   editions).** The sat band is now drawn on the FOV-planning localizer as a tinted
   strip you can **drag to move** and **grab an end handle to angle** — with matching
