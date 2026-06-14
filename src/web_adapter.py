@@ -280,6 +280,7 @@ class WebHost(CurvesMixin):
         s.inplane_fov_pct = float(np.clip(payload.get("inplane_fov_pct", 100.0), 20.0, 100.0))
         s.inplane_off = float(payload.get("inplane_off", 0.0))
         s.no_phase_wrap = bool(payload.get("no_phase_wrap", False))
+        s.pe_swap = bool(payload.get("pe_swap", False))
         s.satband_enabled = bool(payload.get("satband_enabled", False))
         s.satband_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0))
         s.satband_width = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0))

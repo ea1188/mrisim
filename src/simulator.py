@@ -161,6 +161,7 @@ class Simulator:
         self.inplane_fov_pct: float = 100.0
         self.inplane_off: float = 0.0
         self.no_phase_wrap: bool = False     # phase oversampling — suppress fold-over
+        self.pe_swap: bool = False           # swap phase-encode direction (wrap flips)
         self.satband_enabled: bool = False   # saturation band over the image
         self.satband_pos: float = 50.0       # band centre, % of through-image extent
         self.satband_width: float = 15.0     # band width, % of through-image extent
@@ -252,7 +253,7 @@ class Simulator:
             ph = sg.fov_transform(ph, fov_ratio)
         if self.fov_planning and self.inplane_fov_pct < 100:
             ph = sg.fov_crop(orient, ph, self.inplane_fov_pct / 100.0, self.inplane_off,
-                             wrap=not self.no_phase_wrap)
+                             wrap=not self.no_phase_wrap, phase_swap=self.pe_swap)
         # Saturation band — null a strip of the main anatomy (not companion volumes).
         return self._apply_sat_band(ph) if volume is None else ph
 
@@ -311,7 +312,7 @@ class Simulator:
             sl = sg.fov_transform(sl, fov_ratio)
         if self.fov_planning and self.inplane_fov_pct < 100:
             sl = sg.fov_crop(orient, sl, self.inplane_fov_pct / 100.0, self.inplane_off,
-                             wrap=not self.no_phase_wrap)
+                             wrap=not self.no_phase_wrap, phase_swap=self.pe_swap)
         return sl
 
     # --- SNR measurement ----------------------------------------------------
