@@ -400,8 +400,54 @@ class ScoutMixin:
             self._scout_drag = dict(mode="move", x=px, y=py,
                                     secondary=True, overlay=meta)
 
+    def _scout_hover(self, event: object) -> None:
+        """Change the cursor over the localizer so it's obvious what each region
+        does: move the box, resize the FOV / coverage edges, or grab an edge to
+        angle (oblique). Arrow elsewhere."""
+        from PyQt6.QtCore import Qt
+        import math as _math
+        canvas = self.scout_canvas
+        if (not self.fov_planning.get() or event.inaxes is None       # type: ignore[attr-defined]
+                or event.xdata is None or event.ydata is None):       # type: ignore[attr-defined]
+            canvas.unsetCursor(); return
+        px, py = event.xdata, event.ydata                              # type: ignore[attr-defined]
+
+        # 1) Near an angle-handle endpoint → rotate affordance.
+        for (lx0, ly0, lx1, ly1, h_plane, _av, _cx, _cy) in self._scout_angle_handles:
+            pidx = self._scout_plane_names.index(h_plane)
+            if event.inaxes is not self.scout_axes[pidx]:              # type: ignore[attr-defined]
+                continue
+            ldx, ldy = lx1 - lx0, ly1 - ly0
+            seg = ldx * ldx + ldy * ldy
+            t = 0.5 if seg < 1e-6 else max(0.0, min(1.0, ((px - lx0) * ldx + (py - ly0) * ldy) / seg))
+            dist = _math.hypot(px - (lx0 + t * ldx), py - (ly0 + t * ldy))
+            if dist < 7.0 and (t < 0.25 or t > 0.75):
+                canvas.setCursor(Qt.CursorShape.PointingHandCursor); return
+
+        # 2) Over the primary box → move / resize cursor by region.
+        plane = None
+        for i, ax in enumerate(self.scout_axes):
+            if event.inaxes is ax:                                     # type: ignore[attr-defined]
+                plane = self._scout_plane_names[i]; break
+        ov = self._scout_overlays.get(plane) if plane else None
+        if ov and ov["role"] == "primary" and self._scout_box_info is not None:
+            mode = self._scout_hit_test(event)
+            through_v = self._scout_box_info["through"] == "v"
+            cur = {
+                "move": Qt.CursorShape.SizeAllCursor,
+                "resize_cov": Qt.CursorShape.SizeVerCursor if through_v else Qt.CursorShape.SizeHorCursor,
+                "resize_fov": Qt.CursorShape.SizeHorCursor if through_v else Qt.CursorShape.SizeVerCursor,
+            }.get(mode or "", Qt.CursorShape.ArrowCursor)
+            canvas.setCursor(cur); return
+        if ov and ov["role"] == "secondary":
+            canvas.setCursor(Qt.CursorShape.SizeVerCursor); return
+        canvas.unsetCursor()
+
     def _scout_motion(self, event: object) -> None:
-        if self._scout_drag is None or event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
+        if self._scout_drag is None:
+            self._scout_hover(event)            # cursor feedback while not dragging
+            return
+        if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return
         import scan_geometry as sg
         import math

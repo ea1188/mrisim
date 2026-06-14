@@ -209,6 +209,31 @@ def test_fov_planning_scout(win):
     win.fov_planning.set(False)
 
 
+def test_scout_hover_cursor_feedback(win):
+    """Hovering the localizer shows what each region does: move over the box,
+    resize over an edge — so the affordances are discoverable."""
+    from types import SimpleNamespace as NS
+    from PyQt6.QtCore import Qt
+    set_state(win, sequence="Spin Echo")
+    win.fov_planning.set(True)
+    win.n_slices.set(8); win.inplane_fov_pct.set(70)   # a box with a thick interior
+    win.recalculate()
+    info = win._scout_box_info
+    assert info is not None, "non-oblique box should be registered"
+    ax = win._scout_primary_ax
+    win._scout_drag = None
+    cx = info["x0"] + info["w"] / 2; cy = info["y0"] + info["h"] / 2
+    win._scout_motion(NS(inaxes=ax, xdata=cx, ydata=cy))          # deep interior → move
+    assert win.scout_canvas.cursor().shape() == Qt.CursorShape.SizeAllCursor
+    # The in-plane FOV edge mid-point (not a through/angle edge) → a resize cursor.
+    fov_edge = (info["x0"], cy) if info["through"] == "v" else (cx, info["y0"])
+    win._scout_motion(NS(inaxes=ax, xdata=fov_edge[0], ydata=fov_edge[1]))
+    assert win.scout_canvas.cursor().shape() in (
+        Qt.CursorShape.SizeHorCursor, Qt.CursorShape.SizeVerCursor)
+    win.fov_planning.set(False); win.n_slices.set(1); win.inplane_fov_pct.set(100)
+    win.recalculate()
+
+
 def test_plan_readout_summarizes_and_warns(win):
     """The planning readout reports coverage / FOV and warns about gaps and
     phase-FOV wraparound."""

@@ -1195,8 +1195,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         _reset_btn.clicked.connect(self._reset_oblique)
         _reset_row.addWidget(_reset_btn)
         _reset_wrap = QWidget(); _reset_wrap.setLayout(_reset_row); plan_l.addWidget(_reset_wrap)
-        hint2 = QLabel("Scout: drag box = move \u2022 edges = FOV / coverage \u2022 Tilt/Rot = oblique")
-        hint2.setStyleSheet("color:#586273; font-size:9px;")
+        hint2 = QLabel("On the localizer the cursor shows what you can do: \u271b drag the box "
+                       "to move \u2022 \u21d4/\u21d5 drag an edge to resize FOV / coverage \u2022 \u270b grab an "
+                       "edge to angle (oblique). Or use the Tilt / Rotation sliders above.")
+        hint2.setWordWrap(True)
+        hint2.setStyleSheet("color:#7c8696; font-size:9px;")
         plan_l.addWidget(hint2)
         # Live prescription summary: coverage, FOV (mm), gaps + warnings.
         self.plan_readout = DLabel("", base_style="color:#9aa4b2; font-size:9px; padding:2px 4px;")
