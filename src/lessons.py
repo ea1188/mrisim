@@ -53,6 +53,8 @@ BOOL_KEYS: "list[tuple[str, str]]" = [
     ("fatsat", "fatsat_enabled"), ("gd", "contrast_enabled"), ("flow", "flow_enabled"),
     ("motion", "motion_enabled"), ("chemshift", "chemical_shift_enabled"),
     ("suscept", "susceptibility_enabled"),
+    ("cmap", "show_contrast_map"), ("b0mapshow", "show_b0map"),
+    ("gfactorshow", "show_gfactor"),
 ]
 # Dropdowns whose values are identical on both platforms: (browser key, Var attr).
 ENUM_KEYS: "list[tuple[str, str]]" = [
@@ -71,7 +73,9 @@ PATHOLOGY_LABEL = {"": "None", "lesion": "Lesion (focal)", "ms": "MS plaques",
 _STRUCTURAL = {"region", "seq", "orient", "field", "receivecoil", "pathology"}
 # Browser-only display panels with no desktop equivalent — ignored when toggled OFF,
 # but a lesson that turns one ON (its teaching focus) is treated as unsupported.
-IGNORE_WHEN_FALSE = {"cmap", "mathshow", "b0mapshow", "gfactorshow"}
+# (The contrast map, B0 map and g-factor map now have desktop panels and live in
+# BOOL_KEYS; only the equation/"math" panel remains browser-only.)
+IGNORE_WHEN_FALSE = {"mathshow"}
 
 SUPPORTED_KEYS = (_STRUCTURAL
                   | {k for k, _, _ in NUMERIC_KEYS}

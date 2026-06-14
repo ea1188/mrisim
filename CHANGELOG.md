@@ -13,6 +13,17 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Teaching map panels on the desktop (parity with the browser).** Three optional
+  side panels in the Display section that visualise *why* the image looks the way
+  it does: a **contrast map** (the |S_a − S_b| landscape across the whole TR×TE
+  plane for a representative tissue pair, with the current protocol marked), a
+  **B0 field map** (the off-resonance field in Hz that warps EPI and shifts fat),
+  and a **g-factor map** (local SENSE noise amplification, shown once the
+  acceleration R > 1). The data reuses the shared engine (`_curve_signal`,
+  `Simulator._b0_field_slice`, `coil.g_factor_map`). This unlocks three more
+  guided lessons on the desktop ("Where contrast comes from", "Parallel imaging &
+  the g-factor", "B0 inhomogeneity & EPI distortion") — now **34 of 36** lessons
+  run on the desktop.
 - **Guided feature tour on the desktop (parity with the browser).** The desktop app
   had no onboarding; it now has a **❔ Tour** button (and a first-run offer) that
   walks through the main controls — sequence, timing, the image, presets, A/B
