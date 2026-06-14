@@ -353,6 +353,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.inplane_fov_pct = Var(100)   # in-plane FOV as integer % (10–100)
         self.inplane_off = Var(0.0)
         self.no_phase_wrap = Var(False)   # phase oversampling — suppress wraparound
+        self.satband_enabled = Var(False) # saturation band over the image
+        self.satband_pos = Var(50)        # band centre, % of image height
+        self.satband_width = Var(15)      # band width, % of image height
         self.slice_tilt = Var(0.0)        # tilt angle in degrees (-45…+45)
         self.slice_rot  = Var(0.0)        # rotation angle in degrees (-45…+45)
 
@@ -1187,6 +1190,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
         self._slider(plan_l, "In-plane FOV (%)", self.inplane_fov_pct, 10, 100)
         self._checkbox(plan_l, "Phase oversample (no wrap)", self.no_phase_wrap)
+        self._checkbox(plan_l, "Saturation band", self.satband_enabled)
+        self._slider(plan_l, "Sat band position (%)", self.satband_pos, 0, 100)
+        self._slider(plan_l, "Sat band width (%)", self.satband_width, 0, 60)
         self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
         self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
         _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
@@ -1567,6 +1573,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         s.inplane_fov_pct = self.inplane_fov_pct.get()
         s.inplane_off = self.inplane_off.get()
         s.no_phase_wrap = self.no_phase_wrap.get()
+        s.satband_enabled = self.satband_enabled.get()
+        s.satband_pos = float(self.satband_pos.get())
+        s.satband_width = float(self.satband_width.get())
 
     def _simulate_single_slice(self, params: dict, orient: str, sl_idx: int) -> np.ndarray:
         self._sync_sim()
@@ -1975,6 +1984,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             if k < n:
                 img = self._simulate_single_slice(params, orient, idxs[k])
                 ax.imshow(img, cmap=self.display_cmap.get(), origin="lower", aspect=_asp)
+                if self.satband_enabled.get():     # mark the nulled saturation band
+                    h = img.shape[0]
+                    c = self.satband_pos.get() / 100.0 * h
+                    half = self.satband_width.get() / 100.0 * h / 2.0
+                    ax.axhspan(c - half, c + half, color="#e6b35a", alpha=0.22, lw=0)
                 ax.set_title(f"#{idxs[k]}", color="white", fontsize=8)
         self.fig.suptitle(f"{params['sequence']}  |  {n} slice{'s' if n != 1 else ''}  "
                           f"|  FOV {self.inplane_fov_pct.get()}%",

@@ -161,6 +161,9 @@ class Simulator:
         self.inplane_fov_pct: float = 100.0
         self.inplane_off: float = 0.0
         self.no_phase_wrap: bool = False     # phase oversampling — suppress fold-over
+        self.satband_enabled: bool = False   # saturation band over the image
+        self.satband_pos: float = 50.0       # band centre, % of through-image extent
+        self.satband_width: float = 15.0     # band width, % of through-image extent
 
         # Caches / outputs
         self._b0_cache: tuple | None = None
@@ -237,8 +240,9 @@ class Simulator:
             center = self._compute_slab_center(orient, sl_idx)
             center[cfg["through_axis"]] = float(sl_idx)
             max_dim = max(vol.shape)
-            return oblique_plane(vol, row_vec, col_vec, center,
-                                 shape=(max_dim, max_dim), order=0)
+            ph = oblique_plane(vol, row_vec, col_vec, center,
+                               shape=(max_dim, max_dim), order=0)
+            return self._apply_sat_band(ph) if volume is None else ph
 
         ph = get_slice(vol, orient, sl_idx)
         # Field of view: magnify + wraparound when smaller than the object,
@@ -249,7 +253,15 @@ class Simulator:
         if self.fov_planning and self.inplane_fov_pct < 100:
             ph = sg.fov_crop(orient, ph, self.inplane_fov_pct / 100.0, self.inplane_off,
                              wrap=not self.no_phase_wrap)
-        return ph
+        # Saturation band — null a strip of the main anatomy (not companion volumes).
+        return self._apply_sat_band(ph) if volume is None else ph
+
+    def _apply_sat_band(self, slice2d: np.ndarray) -> np.ndarray:
+        """Null a saturation band over the slice if one is prescribed (planning)."""
+        if not (self.fov_planning and self.satband_enabled):
+            return slice2d
+        return sg.apply_sat_band(slice2d, self.satband_pos / 100.0,
+                                 self.satband_width / 100.0)
 
     # --- B0 field -----------------------------------------------------------
     def _b0_volume(self, field_strength_T: float) -> np.ndarray:

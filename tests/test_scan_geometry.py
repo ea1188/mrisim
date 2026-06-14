@@ -349,6 +349,28 @@ class TestFovCrop:
                               fov_crop("axial", sl, 0.6, 0, wrap=False))
 
 
+class TestSatBand:
+    def test_nulls_the_band_only(self):
+        from scan_geometry import apply_sat_band
+        a = np.ones((40, 30)) * 5.0
+        out = apply_sat_band(a, 0.5, 0.2)        # centre 50%, width 20% → 8 rows
+        nulled = np.where(out.sum(axis=1) == 0)[0]
+        assert len(nulled) == 8
+        assert np.allclose(out[0], a[0]) and np.allclose(out[-1], a[-1])
+
+    def test_zero_width_is_noop(self):
+        from scan_geometry import apply_sat_band
+        a = np.arange(40 * 30, dtype=float).reshape(40, 30)
+        assert np.array_equal(apply_sat_band(a, 0.5, 0.0), a)
+
+    def test_position_moves_the_band(self):
+        from scan_geometry import apply_sat_band
+        a = np.ones((40, 30))
+        top = np.where(apply_sat_band(a, 0.2, 0.2).sum(axis=1) == 0)[0].mean()
+        bot = np.where(apply_sat_band(a, 0.8, 0.2).sum(axis=1) == 0)[0].mean()
+        assert top < bot
+
+
 class TestPrescribedIndicesExtra:
     """Additional coverage for prescribed_indices: gaps, orientations, edge cases."""
 
