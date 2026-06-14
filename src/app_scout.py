@@ -171,6 +171,10 @@ class ScoutMixin:
                     x0, y0, w, h = ov_info["x0"], ov_info["y0"], ov_info["w"], ov_info["h"]
                     ax.add_patch(Rectangle((x0, y0), w, h,
                                            fill=False, edgecolor=color, linewidth=1.8))
+                    # Corner handles so the box reads as resizable.
+                    ax.plot([x0, x0 + w, x0, x0 + w], [y0, y0, y0 + h, y0 + h], "s",
+                            color=color, markersize=4, markeredgecolor="#2a323c",
+                            markeredgewidth=0.5)
                     for L in ov_info["lines"]:
                         if ov_info["line_axis"] == "y":
                             ax.plot([x0, x0 + w], [L, L], color=color, linewidth=0.6, alpha=0.6)

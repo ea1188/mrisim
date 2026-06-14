@@ -1110,6 +1110,14 @@ function bandLocal(p) {                // panel-local position of the slice band
   return col / (p.n - 1);                                  // x
 }
 
+// Map a localizer drag mode to a CSS cursor, so hovering shows what's grabbable.
+function cursorFor(mode) {
+  return {
+    satmove: "move", satangle: "grab", recenter: "move",
+    resize: "nwse-resize", oblique: "grab", slice: "ns-resize",
+  }[mode] || "crosshair";
+}
+
 // Hit-test the saturation band on the acquired panel: 'satangle' near an end
 // handle, 'satmove' inside the band body, else null. loc is panel-local (0..1).
 function satbandHit(p, loc) {
@@ -1199,6 +1207,11 @@ function wireScout() {
     if (!drag) return;
     const f = imgFraction(img, e.clientX, e.clientY);
     if (f) apply(f);
+  });
+  img.addEventListener("pointermove", (e) => {       // hover: show what's grabbable
+    if (drag) return;
+    const f = imgFraction(img, e.clientX, e.clientY);
+    img.style.cursor = cursorFor(f ? (start(f) || {}).mode : null);
   });
   window.addEventListener("pointerup", () => { drag = null; });
   window.addEventListener("pointercancel", () => { drag = null; });

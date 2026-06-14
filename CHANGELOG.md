@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Visible localizer handles + cursor feedback (both editions).** The browser
+  localizer now changes the **cursor on hover** to show what each region does (move
+  the box / sat band, resize a corner, grab to angle), and both editions draw
+  **corner handles** on the FOV box so it reads as resizable. Makes the on-image
+  controls discoverable at a glance.
 - **Browser localizer angling: on-image readout + angle snapping.** The browser
   localizer now draws a pivot and the **angle this panel controls** (`±N°`) next to
   each tilted oblique band, so the obliquity reads on the image itself. Dragging a
