@@ -321,6 +321,7 @@ def fov_crop(
     inplane_fov_frac: float,
     inplane_off: float,
     wrap: bool = False,
+    phase_swap: bool = False,
 ) -> np.ndarray:
     """
     Restrict a 2D acquired slice to the prescribed FOV: a centred square window of
@@ -328,11 +329,13 @@ def fov_crop(
     in-plane axis.
 
     With ``wrap=False`` (default) both shown axes are simply cropped. With
-    ``wrap=True`` the **phase-encode axis** (``inplane_axis`` — the one the offset
-    control moves) instead *aliases*: anatomy beyond the FOV folds over onto the
-    opposite side, the way a too-small phase FOV wraps in a real scan, while the
-    readout (``depth_axis``) is cropped cleanly (it is oversampled, so it doesn't
-    alias). Returns a 2D array the same size as the plain crop (never empty).
+    ``wrap=True`` the **phase-encode axis** instead *aliases*: anatomy beyond the
+    FOV folds over onto the opposite side, the way a too-small phase FOV wraps in a
+    real scan, while the readout axis is cropped cleanly (it is oversampled, so it
+    doesn't alias). The phase axis is ``inplane_axis`` by default; ``phase_swap``
+    swaps phase and readout, so the wraparound flips to the other in-plane direction
+    (as it does when you swap the phase-encode direction on a scanner). Returns a 2D
+    array the same size as the plain crop (never empty).
     """
     cfg = SCOUT[acq]
     H, W = slice2d.shape
@@ -356,11 +359,16 @@ def fov_crop(
     lo_dp, hi_dp = window(dims[dp_arr], inplane_fov_frac, 0.0)
 
     if wrap:
-        # Crop the readout axis cleanly, then alias the phase axis (fold-over).
+        # Phase axis aliases (fold-over); readout axis is cropped cleanly. PE swap
+        # exchanges which in-plane axis plays each role, flipping the wrap direction.
+        phase_arr, plo, phi = (ip_arr, lo_ip, hi_ip)
+        freq_arr, flo, fhi = (dp_arr, lo_dp, hi_dp)
+        if phase_swap:
+            phase_arr, plo, phi, freq_arr, flo, fhi = (dp_arr, lo_dp, hi_dp, ip_arr, lo_ip, hi_ip)
         freq_win = [slice(None), slice(None)]
-        freq_win[dp_arr] = slice(lo_dp, hi_dp)
+        freq_win[freq_arr] = slice(flo, fhi)
         sub = slice2d[tuple(freq_win)]
-        folded = _fold_axis(sub, ip_arr, lo_ip, hi_ip)
+        folded = _fold_axis(sub, phase_arr, plo, phi)
         return folded if folded.size else slice2d
 
     win = [slice(None), slice(None)]

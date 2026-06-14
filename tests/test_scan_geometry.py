@@ -348,6 +348,14 @@ class TestFovCrop:
         assert np.array_equal(fov_crop("axial", sl, 0.6, 0),
                               fov_crop("axial", sl, 0.6, 0, wrap=False))
 
+    def test_pe_swap_flips_wrap_direction(self):
+        # An asymmetric object so the two fold axes differ.
+        sl = np.add.outer(np.arange(64), np.arange(64) * 2).astype(float)
+        a = fov_crop("axial", sl, 0.5, 0, wrap=True, phase_swap=False)
+        b = fov_crop("axial", sl, 0.5, 0, wrap=True, phase_swap=True)
+        assert a.shape == b.shape
+        assert not np.allclose(a, b), "swapping the PE axis should flip the wraparound"
+
 
 class TestSatBand:
     def test_nulls_the_band_only(self):

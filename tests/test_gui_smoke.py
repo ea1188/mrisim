@@ -209,6 +209,32 @@ def test_fov_planning_scout(win):
     win.fov_planning.set(False)
 
 
+def test_pe_swap_flips_wraparound(win):
+    """Swapping the phase-encode direction changes which way the FOV wraps."""
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.n_slices.set(1); win.fov_planning.set(True)
+    win.inplane_fov_pct.set(60); win.no_phase_wrap.set(False)
+    win.pe_swap.set(False); win.recalculate(); a = win.current_image.copy()
+    win.pe_swap.set(True); win.recalculate(); b = win.current_image
+    assert not np.allclose(a, b), "PE swap should flip the wrap direction"
+    win.pe_swap.set(False); win.inplane_fov_pct.set(100)
+    win.fov_planning.set(False); win.recalculate()
+
+
+def test_prescription_preset_applies_geometry(win):
+    """A prescription preset sets plane + slice group + in-plane FOV in one click."""
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.fov_planning.set(True)
+    win.prescription_preset.set("Whole-brain axial"); win.on_prescription_preset()
+    assert win.orientation.get() == "axial"
+    assert win.n_slices.get() == 20
+    assert win.slice_thickness.get() == 5
+    assert win.slice_gap.get() == 1
+    assert win.inplane_fov_pct.get() == 100
+    win.prescription_preset.set("(Custom)")
+    win.fov_planning.set(False); win.n_slices.set(1); win.recalculate()
+
+
 def test_saturation_band_nulls_a_strip(win):
     """A saturation band placed during planning darkens a strip of the image."""
     set_state(win, sequence="Spin Echo", region="Brain")

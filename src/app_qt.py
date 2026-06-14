@@ -353,9 +353,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.inplane_fov_pct = Var(100)   # in-plane FOV as integer % (10–100)
         self.inplane_off = Var(0.0)
         self.no_phase_wrap = Var(False)   # phase oversampling — suppress wraparound
+        self.pe_swap = Var(False)         # swap phase-encode direction (flips wrap)
         self.satband_enabled = Var(False) # saturation band over the image
         self.satband_pos = Var(50)        # band centre, % of image height
         self.satband_width = Var(15)      # band width, % of image height
+        self.prescription_preset = Var("(Custom)")   # quick geometry presets
         self.slice_tilt = Var(0.0)        # tilt angle in degrees (-45…+45)
         self.slice_rot  = Var(0.0)        # rotation angle in degrees (-45…+45)
 
@@ -1186,10 +1188,14 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.fov_planning.trace_add("write", self.on_fov_planning_toggle)
         self.plan_frame = QWidget()
         plan_l = QVBoxLayout(self.plan_frame); plan_l.setContentsMargins(0, 0, 0, 0); plan_l.setSpacing(1)
+        self._dropdown(plan_l, "Prescription", self.prescription_preset,
+                       list(self._PRESCRIPTION_PRESETS.keys()),
+                       self.on_prescription_preset, inline=True)
         self._slider(plan_l, "# Slices", self.n_slices, 1, 32)
         self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
         self._slider(plan_l, "In-plane FOV (%)", self.inplane_fov_pct, 10, 100)
         self._checkbox(plan_l, "Phase oversample (no wrap)", self.no_phase_wrap)
+        self._checkbox(plan_l, "Swap phase-encode direction", self.pe_swap)
         self._checkbox(plan_l, "Saturation band", self.satband_enabled)
         self._slider(plan_l, "Sat band position (%)", self.satband_pos, 0, 100)
         self._slider(plan_l, "Sat band width (%)", self.satband_width, 0, 60)
@@ -1573,6 +1579,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         s.inplane_fov_pct = self.inplane_fov_pct.get()
         s.inplane_off = self.inplane_off.get()
         s.no_phase_wrap = self.no_phase_wrap.get()
+        s.pe_swap = self.pe_swap.get()
         s.satband_enabled = self.satband_enabled.get()
         s.satband_pos = float(self.satband_pos.get())
         s.satband_width = float(self.satband_width.get())
@@ -1617,6 +1624,15 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
     _PATHOLOGY_KIND = {"None": "", "MS plaques": "ms", "Lesion (focal)": "lesion",
                        "Stroke (infarct)": "stroke", "Hemorrhage": "hemorrhage",
                        "Tumor (mass)": "tumor", "Abscess (rim + core)": "abscess"}
+
+    # Quick FOV-planning geometry presets → orientation + slice group + in-plane FOV.
+    _PRESCRIPTION_PRESETS: "dict[str, dict[str, Any] | None]" = {
+        "(Custom)": None,
+        "Whole-brain axial": dict(orient="axial", n=20, thickness=5, gap=1, fov=100),
+        "Hi-res axial": dict(orient="axial", n=30, thickness=3, gap=0, fov=85),
+        "Sagittal survey": dict(orient="sagittal", n=15, thickness=4, gap=1, fov=100),
+        "Coronal thin": dict(orient="coronal", n=24, thickness=3, gap=0, fov=90),
+    }
 
     def _apply_coil_shading(self, image: np.ndarray) -> np.ndarray:
         """Modulate the image by the selected receive coil's spatial sensitivity
@@ -2080,6 +2096,19 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
     def _sync_pc_frame(self) -> None:
         """Show the PC-only controls (VENC + display) only for Phase Contrast."""
         self._pc_frame.setVisible(self.angio_type.get() == "Phase Contrast")
+
+    def on_prescription_preset(self) -> None:
+        """Apply a quick geometry preset (plane + slice group + in-plane FOV)."""
+        p = self._PRESCRIPTION_PRESETS.get(self.prescription_preset.get())
+        if not p:
+            return
+        if p["orient"] != self.orientation.get():
+            self._set_orientation(p["orient"])
+        self.n_slices.set(int(p["n"]))
+        self.slice_thickness.set(float(p["thickness"]))
+        self.slice_gap.set(float(p["gap"]))
+        self.inplane_fov_pct.set(int(p["fov"]))
+        self.recalculate()
 
     def _on_angio_type_change(self) -> None:
         """MRA Type dropdown changed — re-render (visibility is handled by the

@@ -176,7 +176,7 @@ async function applyState(st) {
    "nslices", "sgap", "ipfov", "satpos", "satwidth", "accel", "pv"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
    "b0mapshow", "gfactorshow", "mathshow", "labelanat", "curveshow",
-   "motion", "chemshift", "suscept", "nowrap", "satband"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+   "motion", "chemshift", "suscept", "nowrap", "peswap", "satband"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // A lesson/link that enables the 3-D slab without asking for a specific depth
   // gets full anatomy coverage (same as ticking 3D by hand), so reformats are full.
   if (st.acq3d && st.np === undefined) {
@@ -636,6 +636,7 @@ function buildControls(info) {
   });
   $("ipfov").addEventListener("input", () => { if (document.activeElement !== $("ipfov-val")) $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
   $("nowrap").addEventListener("change", render);   // toggle phase wraparound on the main image
+  $("peswap").addEventListener("change", render);   // swap the phase-encode (wrap) direction
   $("satband").addEventListener("change", render);  // toggle the saturation band
   ["satpos", "satwidth"].forEach((id) =>
     $(id).addEventListener("input", () => { if (document.activeElement !== $(id + "-val")) $(id + "-val").value = $(id).value; updateSliderAria(id); schedule(); }));
@@ -822,6 +823,7 @@ function collectPayload() {
     out.inplane_fov_pct = +$("ipfov").value;
     out.inplane_off = planOff;
     out.no_phase_wrap = $("nowrap").checked;
+    out.pe_swap = $("peswap").checked;
     out.satband_enabled = $("satband").checked;
     out.satband_pos = +$("satpos").value;
     out.satband_width = +$("satwidth").value;

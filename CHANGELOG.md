@@ -13,6 +13,13 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Phase-encode direction swap + prescription presets in FOV planning.** A **Swap
+  phase-encode direction** toggle (shared engine, both editions) flips which in-plane
+  axis is the phase-encode direction, so the FOV wraparound folds the *other* way —
+  the way swapping PE on a scanner moves the wrap (and motion ghosts). And on the
+  desktop a **Prescription** dropdown applies common geometry setups in one click
+  (whole-brain axial, hi-res axial, sagittal survey, coronal thin) — plane + slice
+  group + in-plane FOV.
 - **Saturation bands in FOV planning — both editions.** A new **Saturation band**
   toggle (with position and width controls) nulls a strip of the acquired image —
   saturated spins give no signal — the way a real sat band suppresses signal from a
