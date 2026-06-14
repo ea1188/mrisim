@@ -13,6 +13,12 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Saturation bands in FOV planning — both editions.** A new **Saturation band**
+  toggle (with position and width controls) nulls a strip of the acquired image —
+  saturated spins give no signal — the way a real sat band suppresses signal from a
+  region (inflowing vessels, motion). Shared engine (`scan_geometry.apply_sat_band`)
+  so the desktop and browser both get it; the desktop also tints the band on the
+  prescribed montage so it's clearly deliberate.
 - **Discoverable localizer handles (desktop).** It wasn't obvious the FOV-planning
   localizer was interactive. Now the cursor changes as you hover to show what each
   region does — **✛ move** over the box interior, **⇔ / ⇕ resize** over the FOV /

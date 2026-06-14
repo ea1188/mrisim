@@ -173,10 +173,10 @@ async function applyState(st) {
   if (st.field) $("field").value = st.field;
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; updateSliderAria(key); } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
-   "nslices", "sgap", "ipfov", "accel", "pv"].forEach(sv);
+   "nslices", "sgap", "ipfov", "satpos", "satwidth", "accel", "pv"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
    "b0mapshow", "gfactorshow", "mathshow", "labelanat", "curveshow",
-   "motion", "chemshift", "suscept", "nowrap"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+   "motion", "chemshift", "suscept", "nowrap", "satband"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // A lesson/link that enables the 3-D slab without asking for a specific depth
   // gets full anatomy coverage (same as ticking 3D by hand), so reformats are full.
   if (st.acq3d && st.np === undefined) {
@@ -636,6 +636,9 @@ function buildControls(info) {
   });
   $("ipfov").addEventListener("input", () => { if (document.activeElement !== $("ipfov-val")) $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
   $("nowrap").addEventListener("change", render);   // toggle phase wraparound on the main image
+  $("satband").addEventListener("change", render);  // toggle the saturation band
+  ["satpos", "satwidth"].forEach((id) =>
+    $(id).addEventListener("input", () => { if (document.activeElement !== $(id + "-val")) $(id + "-val").value = $(id).value; updateSliderAria(id); schedule(); }));
   // Signal curve: hide/show the panel, and switch what the curve plots (the engine
   // already supports several modes; re-render to redraw it).
   $("curveshow").addEventListener("change", () => { $("curvewrap").hidden = !$("curveshow").checked; });
@@ -819,6 +822,9 @@ function collectPayload() {
     out.inplane_fov_pct = +$("ipfov").value;
     out.inplane_off = planOff;
     out.no_phase_wrap = $("nowrap").checked;
+    out.satband_enabled = $("satband").checked;
+    out.satband_pos = +$("satpos").value;
+    out.satband_width = +$("satwidth").value;
     out.tilt = planTilt; out.rot = planRot;
   }
   return out;

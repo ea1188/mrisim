@@ -277,6 +277,27 @@ def _arr_axis(acq: str, vol_axis: int) -> tuple[int, bool]:
     return m[vol_axis]
 
 
+def apply_sat_band(slice2d: np.ndarray, pos_frac: float, width_frac: float,
+                   fill: float = 0.0) -> np.ndarray:
+    """Saturation band: null a horizontal strip of the acquired slice (saturated
+    spins give no signal). ``pos_frac`` is the band centre (0=top … 1=bottom) and
+    ``width_frac`` its fraction of the through-image extent. Returns a copy with the
+    strip set to ``fill`` (0 = air / no signal for a label slice). A no-op for a
+    zero-width band."""
+    h = slice2d.shape[0]
+    half = width_frac * h / 2.0
+    if half < 0.5:
+        return slice2d
+    c = pos_frac * h
+    lo = max(0, int(round(c - half)))
+    hi = min(h, int(round(c + half)))
+    if hi <= lo:
+        return slice2d
+    out = slice2d.copy()
+    out[lo:hi, :] = fill
+    return out
+
+
 def _fold_axis(arr: np.ndarray, axis: int, lo: int, hi: int) -> np.ndarray:
     """Phase-encode wraparound (aliasing) along ``axis``: anatomy outside the
     [lo, hi) FOV window folds back in periodically (period = window length), the

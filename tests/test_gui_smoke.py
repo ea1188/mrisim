@@ -209,6 +209,23 @@ def test_fov_planning_scout(win):
     win.fov_planning.set(False)
 
 
+def test_saturation_band_nulls_a_strip(win):
+    """A saturation band placed during planning darkens a strip of the image."""
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.n_slices.set(1); win.fov_planning.set(True)
+    win.satband_enabled.set(False); win.recalculate()
+    no_band = win.current_image.copy()
+    win.satband_enabled.set(True); win.satband_pos.set(50); win.satband_width.set(24)
+    win.recalculate()
+    band = win.current_image
+    assert band.shape == no_band.shape
+    assert not np.allclose(band, no_band), "the sat band should change the image"
+    h = band.shape[0]; lo = int(0.42 * h); hi = int(0.58 * h)
+    assert band[lo:hi].mean() < 0.5 * no_band[lo:hi].mean(), "band region should be much darker"
+    win.satband_enabled.set(False); win.n_slices.set(1)
+    win.fov_planning.set(False); win.recalculate()
+
+
 def test_scout_hover_cursor_feedback(win):
     """Hovering the localizer shows what each region does: move over the box,
     resize over an edge — so the affordances are discoverable."""
