@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.25.1] — 2026-06-14
+
+### Fixed
+- **Desktop teaching-map panels went stale in some modes.** The contrast / B0 /
+  g-factor panels are drawn at the end of `recalculate`, but the FOV-planning,
+  reconstruction (MPR/MIP) and multi-slice paths return early before reaching it —
+  so a panel toggled on would linger with stale content (or not appear) in those
+  modes. The maps now redraw in every render path.
+- **Phase-contrast controls didn't follow a lesson-set MRA type.** The VENC / PC
+  Display controls now track `angio_type` via a write-trace, so a guided lesson or
+  share link that selects Phase Contrast reveals them too (not just the dropdown).
+
 ## [1.25.0] — 2026-06-14
 
 ### Added
