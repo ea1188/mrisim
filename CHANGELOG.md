@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **FOV phase wraparound (aliasing) in planning — both editions.** Reducing the
+  in-plane FOV used to simply *crop* the image; now a phase-FOV smaller than the
+  anatomy **folds over** to the opposite side — the real wraparound artifact, and
+  the single most important FOV-planning lesson. The readout direction is cropped
+  cleanly (it's oversampled and doesn't alias), so only the phase axis wraps. A new
+  **Phase oversample (no wrap)** toggle suppresses it (clean crop). Implemented in
+  the shared engine (`scan_geometry.fov_crop(..., wrap=True)`), so the desktop and
+  browser both get it.
+
 ## [1.25.2] — 2026-06-14
 
 ### Fixed

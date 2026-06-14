@@ -325,6 +325,29 @@ class TestFovCrop:
         cropped = fov_crop("axial", sl, 0.01, 0)
         assert cropped.size > 0
 
+    def test_wrap_same_size_as_crop_but_folds_anatomy(self):
+        # A ramp object filling the FOV; a half FOV should fold the out-of-window
+        # anatomy back in (aliasing), so wrap conserves more signal than a plain crop.
+        sl = np.zeros((64, 64))
+        sl[:, :] = np.arange(64)[None, :] + 1.0     # signal everywhere
+        crop = fov_crop("axial", sl, 0.5, 0, wrap=False)
+        wrap = fov_crop("axial", sl, 0.5, 0, wrap=True)
+        assert wrap.shape == crop.shape, "wrap keeps the displayed FOV size"
+        assert not np.allclose(wrap, crop), "wrap should fold, not crop"
+        assert wrap.sum() > crop.sum(), "aliasing folds out-of-FOV signal back in"
+
+    def test_wrap_full_fov_is_identity_like_crop(self):
+        sl = np.arange(64 * 64, dtype=float).reshape(64, 64)
+        assert np.allclose(fov_crop("axial", sl, 1.0, 0, wrap=True),
+                           fov_crop("axial", sl, 1.0, 0, wrap=False)), \
+            "at 100% FOV there is nothing to alias"
+
+    def test_wrap_default_off_preserves_crop_behaviour(self, small_vol):
+        from phantom3d import get_slice
+        sl = get_slice(small_vol, "axial", 15)
+        assert np.array_equal(fov_crop("axial", sl, 0.6, 0),
+                              fov_crop("axial", sl, 0.6, 0, wrap=False))
+
 
 class TestPrescribedIndicesExtra:
     """Additional coverage for prescribed_indices: gaps, orientations, edge cases."""

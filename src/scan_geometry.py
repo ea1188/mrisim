@@ -277,16 +277,41 @@ def _arr_axis(acq: str, vol_axis: int) -> tuple[int, bool]:
     return m[vol_axis]
 
 
+def _fold_axis(arr: np.ndarray, axis: int, lo: int, hi: int) -> np.ndarray:
+    """Phase-encode wraparound (aliasing) along ``axis``: anatomy outside the
+    [lo, hi) FOV window folds back in periodically (period = window length), the
+    out-of-FOV signal adding onto the opposite side — exactly the fold-over a
+    too-small phase FOV produces. Returns an array of window length along ``axis``."""
+    length = hi - lo
+    n = arr.shape[axis]
+    bins = (np.arange(n) - lo) % length            # where each line aliases to
+    out_shape = list(arr.shape)
+    out_shape[axis] = length
+    out = np.zeros(out_shape, dtype=float)
+    src = np.moveaxis(arr, axis, 0)
+    dst = np.moveaxis(out, axis, 0)
+    np.add.at(dst, bins, src)                       # sum aliased lines into bins
+    return np.moveaxis(dst, 0, axis)
+
+
 def fov_crop(
     acq: str,
     slice2d: np.ndarray,
     inplane_fov_frac: float,
     inplane_off: float,
+    wrap: bool = False,
 ) -> np.ndarray:
     """
-    Crop a 2D acquired slice to the prescribed FOV: a centred square window of
+    Restrict a 2D acquired slice to the prescribed FOV: a centred square window of
     side inplane_fov_frac * dimension, shifted by inplane_off along the shown
-    in-plane axis. Returns the cropped 2D array (never empty).
+    in-plane axis.
+
+    With ``wrap=False`` (default) both shown axes are simply cropped. With
+    ``wrap=True`` the **phase-encode axis** (``inplane_axis`` — the one the offset
+    control moves) instead *aliases*: anatomy beyond the FOV folds over onto the
+    opposite side, the way a too-small phase FOV wraps in a real scan, while the
+    readout (``depth_axis``) is cropped cleanly (it is oversampled, so it doesn't
+    alias). Returns a 2D array the same size as the plain crop (never empty).
     """
     cfg = SCOUT[acq]
     H, W = slice2d.shape
@@ -308,6 +333,14 @@ def fov_crop(
     off_ip = -inplane_off if ip_flip else inplane_off
     lo_ip, hi_ip = window(dims[ip_arr], inplane_fov_frac, off_ip)
     lo_dp, hi_dp = window(dims[dp_arr], inplane_fov_frac, 0.0)
+
+    if wrap:
+        # Crop the readout axis cleanly, then alias the phase axis (fold-over).
+        freq_win = [slice(None), slice(None)]
+        freq_win[dp_arr] = slice(lo_dp, hi_dp)
+        sub = slice2d[tuple(freq_win)]
+        folded = _fold_axis(sub, ip_arr, lo_ip, hi_ip)
+        return folded if folded.size else slice2d
 
     win = [slice(None), slice(None)]
     win[ip_arr] = slice(lo_ip, hi_ip)

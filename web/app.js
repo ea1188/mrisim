@@ -176,7 +176,7 @@ async function applyState(st) {
    "nslices", "sgap", "ipfov", "accel", "pv"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
    "b0mapshow", "gfactorshow", "mathshow", "labelanat", "curveshow",
-   "motion", "chemshift", "suscept"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+   "motion", "chemshift", "suscept", "nowrap"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // A lesson/link that enables the 3-D slab without asking for a specific depth
   // gets full anatomy coverage (same as ticking 3D by hand), so reformats are full.
   if (st.acq3d && st.np === undefined) {
@@ -635,6 +635,7 @@ function buildControls(info) {
     render();   // re-render so the main image picks up / drops the FOV crop
   });
   $("ipfov").addEventListener("input", () => { if (document.activeElement !== $("ipfov-val")) $("ipfov-val").value = $("ipfov").value; updateSliderAria("ipfov"); schedule(); });
+  $("nowrap").addEventListener("change", render);   // toggle phase wraparound on the main image
   // Signal curve: hide/show the panel, and switch what the curve plots (the engine
   // already supports several modes; re-render to redraw it).
   $("curveshow").addEventListener("change", () => { $("curvewrap").hidden = !$("curveshow").checked; });
@@ -817,6 +818,7 @@ function collectPayload() {
     out.fov_planning = true;
     out.inplane_fov_pct = +$("ipfov").value;
     out.inplane_off = planOff;
+    out.no_phase_wrap = $("nowrap").checked;
     out.tilt = planTilt; out.rot = planRot;
   }
   return out;
