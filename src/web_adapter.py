@@ -905,7 +905,8 @@ class WebHost(CurvesMixin):
         """Render the 3-plane localizer with the prescription overlaid: the slice
         drawn as a band of its true thickness (the whole slab when 3-D), the FOV
         box on the acquired plane, and crosshairs through the prescribed centre."""
-        from matplotlib.patches import Rectangle
+        import math
+        from matplotlib.patches import Polygon, Rectangle
         from oblique import three_scouts
         from phantom3d import simulate_slice
         import scan_geometry as sg
@@ -930,6 +931,10 @@ class WebHost(CurvesMixin):
         ip_off = float(payload.get("inplane_off", 0.0))
         tilt = float(payload.get("tilt", 0.0))
         rot = float(payload.get("rot", 0.0))
+        sat_on = bool(payload.get("satband_enabled", False))
+        sat_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0)) / 100.0
+        sat_wf = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0)) / 100.0
+        sat_ang = math.radians(float(np.clip(payload.get("satband_angle", 0.0), -90.0, 90.0)))
         ctr = [nz // 2, ny // 2, nx // 2]
         ctr[acq_axis] = sl
         ctr[ip_axis] = int(np.clip(vol.shape[ip_axis] / 2.0 + ip_off, 0, vol.shape[ip_axis] - 1))
@@ -977,6 +982,22 @@ class WebHost(CurvesMixin):
                 fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
                 ax.add_patch(Rectangle((fb["x0"], fb["y0"]), fb["w"], fb["h"],
                              fill=False, edgecolor=amber, linewidth=1.8, linestyle=(0, (4, 2))))
+                if sat_on:                               # draggable saturation band
+                    cx, cy = fb["x0"] + fb["w"] / 2.0, fb["y0"] + sat_pos * fb["h"]
+                    ht = max(1.5, sat_wf * fb["h"] / 2.0)
+                    ln = fb["w"] / 2.0 + 0.08 * fb["w"]
+                    dx_, dy_ = math.cos(sat_ang), math.sin(sat_ang)
+                    nx_, ny_ = -math.sin(sat_ang), math.cos(sat_ang)
+                    corners = [(cx + sx * ln * dx_ + sy * ht * nx_,
+                                cy + sx * ln * dy_ + sy * ht * ny_)
+                               for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+                    ax.add_patch(Polygon(corners, closed=True, facecolor="#e6b35a",
+                                         alpha=0.30, edgecolor="#e6b35a", linewidth=1.0))
+                    ax.plot([cx - ln * dx_, cx + ln * dx_], [cy - ln * dy_, cy + ln * dy_],
+                            "s", color="#ff7733", markersize=5, markeredgecolor="white",
+                            markeredgewidth=0.6)
+                    ax.text(cx, cy, "SAT", color="#3a2a10", fontsize=6.5, ha="center",
+                            va="center", fontweight="bold")
                 for spn in ax.spines.values():
                     spn.set_visible(True); spn.set_color("#2a323c"); spn.set_linewidth(1.2)
                 ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
@@ -1024,6 +1045,20 @@ class WebHost(CurvesMixin):
                              ip_dir=ip_dir, ip_sign=ip_sign,
                              fov_box=[fb["x0"] / W, 1.0 - (fb["y0"] + fb["h"]) / H,
                                       fb["w"] / W, fb["h"] / H])
+                if sat_on:                    # panel-local geometry of the sat band
+                    cxd = fb["x0"] + fb["w"] / 2.0
+                    cyd = fb["y0"] + sat_pos * fb["h"]
+                    lnd = fb["w"] / 2.0 + 0.08 * fb["w"]
+                    dxe, dye = math.cos(sat_ang), math.sin(sat_ang)
+                    entry["satband"] = {
+                        "c": [cxd / W, 1.0 - cyd / H],
+                        "e1": [(cxd - lnd * dxe) / W, 1.0 - (cyd - lnd * dye) / H],
+                        "e2": [(cxd + lnd * dxe) / W, 1.0 - (cyd + lnd * dye) / H],
+                        "half_t": max(1.5, sat_wf * fb["h"] / 2.0) / H,
+                        "lo": 1.0 - fb["y0"] / H,
+                        "hi": 1.0 - (fb["y0"] + fb["h"]) / H,
+                        "wh": [int(W), int(H)],
+                    }
             panels.append(entry)
         self._scout_panels = panels
         return _png_b64(self.scout_fig)

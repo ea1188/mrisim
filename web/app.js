@@ -1105,9 +1105,24 @@ function bandLocal(p) {                // panel-local position of the slice band
   return col / (p.n - 1);                                  // x
 }
 
+// Hit-test the saturation band on the acquired panel: 'satangle' near an end
+// handle, 'satmove' inside the band body, else null. loc is panel-local (0..1).
+function satbandHit(p, loc) {
+  const sb = p.satband;
+  if (!sb) return null;
+  const dist = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]);
+  if (dist(sb.e1) < 0.05 || dist(sb.e2) < 0.05) return "satangle";
+  let dx = sb.e2[0] - sb.c[0], dy = sb.e2[1] - sb.c[1];
+  const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+  const vx = loc.px - sb.c[0], vy = loc.py - sb.c[1];
+  const along = vx * dx + vy * dy, perp = Math.abs(-vx * dy + vy * dx);
+  return (perp <= sb.half_t + 0.02 && Math.abs(along) <= len) ? "satmove" : null;
+}
+
 // Interactive localizer: drag the FOV box to resize, the box interior (or click
 // elsewhere on the acquired panel) to recenter the in-plane FOV, the slice band
-// on a cross panel to angle the plane (oblique), or elsewhere to move the slice.
+// on a cross panel to angle the plane (oblique), the saturation band to move /
+// angle it, or elsewhere to move the slice.
 function wireScout() {
   const img = $("scoutImage");
   img.style.cursor = "crosshair";
@@ -1117,6 +1132,8 @@ function wireScout() {
     const p = panelAt(f); if (!p) return null;
     const loc = panelLocal(p, f);
     if (p.role === "acq") {
+      const sm = satbandHit(p, loc);          // the band sits inside the FOV box → first
+      if (sm) return { mode: sm, p };
       const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
       const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1),
                             Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
@@ -1145,6 +1162,18 @@ function wireScout() {
       const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
       const pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
       $("ipfov").value = pct; $("ipfov-val").value = pct;
+    } else if (drag.mode === "satmove") {            // slide the saturation band
+      const sb = drag.p.satband;
+      let pos = (loc.py - sb.lo) / (sb.hi - sb.lo) * 100;
+      pos = clampN(Math.round(pos / 5) * 5, 0, 100);
+      $("satpos").value = pos; $("satpos-val").value = pos;
+    } else if (drag.mode === "satangle") {           // angle the saturation band
+      const sb = drag.p.satband, W = sb.wh[0], H = sb.wh[1];
+      // Undo the panel's display aspect to recover the true (data-space) angle.
+      let ang = Math.atan2(-(loc.py - sb.c[1]) * H, (loc.px - sb.c[0]) * W) * 180 / Math.PI;
+      if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;
+      ang = clampN(Math.round(ang / 5) * 5, -90, 90);
+      $("satangle").value = ang; $("satangle-val").value = ang;
     } else if (drag.mode === "oblique") {            // angle the plane off-axis
       // Drag direction follows the band orientation (a horizontal band angles with
       // a vertical drag); *which* angle it sets is the panel's own DOF (p.angle),
@@ -1354,11 +1383,13 @@ async function render() {
         region: p.region, orientation: p.orientation, slice_idx: p.slice_idx,
         params: p.params, inplane_fov_pct: p.inplane_fov_pct ?? 100,
         inplane_off: planOff, tilt: planTilt, rot: planRot,
+        satband_enabled: p.satband_enabled, satband_pos: p.satband_pos,
+        satband_width: p.satband_width, satband_angle: p.satband_angle,
       });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
       $("oblique-readout").textContent =
-        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag either cross-panel's band to angle that plane; FOV box = resize/move; dbl-click = reset`;
+        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag a cross-panel band to angle the plane; FOV box = resize/move; sat band = drag to move, end handle to angle; dbl-click = reset`;
     }
     if (reconActive()) await runRecon();   // keep the reconstruction live with the slab
     if (!compareMode) stateToHash();   // keep the URL shareable/current
