@@ -1014,6 +1014,16 @@ class WebHost(CurvesMixin):
                         continue
                     ax.plot([fc(seg[0]), fc(seg[2])], [seg[1], seg[3]], color=amber,
                             lw=1.5 if j == mid else 0.8, alpha=0.95 if j == mid else 0.6)
+                # On-image angle gizmo: pivot at the centre + the angle this panel
+                # controls, so the obliquity reads on the localizer itself.
+                dof = self._OBLIQUE_PANEL[orient].get(name)
+                ang_val = tilt if dof == "tilt" else (rot if dof == "rot" else 0.0)
+                if dof and abs(ang_val) > 0.5 and segs and segs[mid] is not None:
+                    ax.plot([fc(ctr[ca])], [ctr[ra]], "o", color="#7fb8ff", markersize=4,
+                            markeredgecolor="white", markeredgewidth=0.5)
+                    s = segs[mid]
+                    ax.text(fc(s[2]), s[3], f"  {ang_val:+.0f}°", color="#7fb8ff",
+                            fontsize=7, va="center", ha="left", fontweight="bold")
             ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)   # band can't expand the view
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)

@@ -13,6 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Browser localizer angling: on-image readout + angle snapping.** The browser
+  localizer now draws a pivot and the **angle this panel controls** (`±N°`) next to
+  each tilted oblique band, so the obliquity reads on the image itself. Dragging a
+  band to angle the plane now **magnets onto common angles** (0 / ±15 / ±30 / ±45) —
+  parity with the desktop gizmo + snap.
 - **Drag the saturation band on the browser localizer.** The browser previously
   only had sliders for the sat band; now it's drawn on the acquired-plane panel as a
   tinted strip you can **drag to move** and **grab an end handle to angle** — parity

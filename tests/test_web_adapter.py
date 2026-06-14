@@ -349,6 +349,17 @@ def test_scout_acq_panel_has_satband_geometry():
     assert "satband" not in acq2
 
 
+def test_oblique_scout_renders_with_angle_gizmo():
+    """The localizer renders cleanly with a double-oblique prescription (the
+    on-image angle gizmo / labels draw without error)."""
+    wa.init()
+    out = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+         "tilt": 30, "rot": -15,
+         "params": {"sequence": "Spin Echo", "slice_thickness": 5}})))
+    assert len(out["panels"]) == 3 and out["scout"]
+
+
 def test_fov_planning_crop_changes_main_image():
     """Turning on FOV planning with a reduced in-plane FOV crops the main image."""
     wa.init()

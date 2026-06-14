@@ -1087,6 +1087,11 @@ function imgFraction(img, cx, cy) {
 }
 
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+// Magnet a dragged oblique angle onto a common value (0 / ±15 / ±30 / ±45).
+const snapAngle = (v) => {
+  for (const t of [0, 15, 30, 45, -15, -30, -45]) if (Math.abs(v - t) <= 2.5) return t;
+  return v;
+};
 function panelAt(f) {
   for (const p of scoutPanels) {
     const [l, t, r, b] = p.box;
@@ -1179,8 +1184,8 @@ function wireScout() {
       // a vertical drag); *which* angle it sets is the panel's own DOF (p.angle),
       // so the two cross panels give independent tilt + rot — full double-oblique.
       const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90;
-      if (p.angle === "tilt") planTilt = clampN(drag.tilt0 + d, -45, 45);
-      else planRot = clampN(drag.rot0 + d, -45, 45);
+      if (p.angle === "tilt") planTilt = snapAngle(clampN(drag.tilt0 + d, -45, 45));
+      else planRot = snapAngle(clampN(drag.rot0 + d, -45, 45));
     }
     schedule();
   };
