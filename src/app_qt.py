@@ -352,6 +352,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.slice_gap = Var(0.0)
         self.inplane_fov_pct = Var(100)   # in-plane FOV as integer % (10–100)
         self.inplane_off = Var(0.0)
+        self.no_phase_wrap = Var(False)   # phase oversampling — suppress wraparound
         self.slice_tilt = Var(0.0)        # tilt angle in degrees (-45…+45)
         self.slice_rot  = Var(0.0)        # rotation angle in degrees (-45…+45)
 
@@ -1185,6 +1186,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(plan_l, "# Slices", self.n_slices, 1, 32)
         self._slider(plan_l, "Slice Gap (vox)", self.slice_gap, 0, 20)
         self._slider(plan_l, "In-plane FOV (%)", self.inplane_fov_pct, 10, 100)
+        self._checkbox(plan_l, "Phase oversample (no wrap)", self.no_phase_wrap)
         self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
         self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
         _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
@@ -1557,6 +1559,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         s.rot = self.slice_rot.get()
         s.inplane_fov_pct = self.inplane_fov_pct.get()
         s.inplane_off = self.inplane_off.get()
+        s.no_phase_wrap = self.no_phase_wrap.get()
 
     def _simulate_single_slice(self, params: dict, orient: str, sl_idx: int) -> np.ndarray:
         self._sync_sim()

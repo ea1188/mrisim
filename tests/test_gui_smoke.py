@@ -206,6 +206,26 @@ def test_fov_planning_scout(win):
     win.fov_planning.set(True)              # trace → on_fov_planning_toggle recalcs
     n_imgs = sum(len(ax.images) for ax in win.scout_axes)
     assert n_imgs > 0, "3-plane localizer did not draw"
+    win.fov_planning.set(False)
+
+
+def test_fov_reduced_phase_fov_wraps_unless_oversampled(win):
+    """A too-small in-plane FOV folds anatomy over (wraparound); the phase-
+    oversample toggle suppresses it back to a clean crop."""
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.n_slices.set(1)                     # single prescribed slice → current_image set
+    win.fov_planning.set(True)
+    win.inplane_fov_pct.set(60)
+    win.no_phase_wrap.set(False); win.recalculate()
+    wrapped = win.current_image.copy()
+    win.no_phase_wrap.set(True); win.recalculate()
+    clean = win.current_image
+    assert wrapped.shape == clean.shape, "display FOV size is the same either way"
+    assert not np.allclose(wrapped, clean), "wraparound should change the image"
+    # Folded anatomy adds signal back in, so the wrapped image is brighter overall.
+    assert float(np.sum(wrapped)) > float(np.sum(clean))
+    win.no_phase_wrap.set(False); win.inplane_fov_pct.set(100); win.fov_planning.set(False)
+    win.recalculate()
 
 
 def test_compare_mode(win):

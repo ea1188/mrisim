@@ -160,6 +160,7 @@ class Simulator:
         self.rot: float = 0.0
         self.inplane_fov_pct: float = 100.0
         self.inplane_off: float = 0.0
+        self.no_phase_wrap: bool = False     # phase oversampling — suppress fold-over
 
         # Caches / outputs
         self._b0_cache: tuple | None = None
@@ -246,7 +247,8 @@ class Simulator:
         if abs(fov_ratio - 1.0) > 0.01:
             ph = sg.fov_transform(ph, fov_ratio)
         if self.fov_planning and self.inplane_fov_pct < 100:
-            ph = sg.fov_crop(orient, ph, self.inplane_fov_pct / 100.0, self.inplane_off)
+            ph = sg.fov_crop(orient, ph, self.inplane_fov_pct / 100.0, self.inplane_off,
+                             wrap=not self.no_phase_wrap)
         return ph
 
     # --- B0 field -----------------------------------------------------------
@@ -296,7 +298,8 @@ class Simulator:
         if abs(fov_ratio - 1.0) > 0.01:
             sl = sg.fov_transform(sl, fov_ratio)
         if self.fov_planning and self.inplane_fov_pct < 100:
-            sl = sg.fov_crop(orient, sl, self.inplane_fov_pct / 100.0, self.inplane_off)
+            sl = sg.fov_crop(orient, sl, self.inplane_fov_pct / 100.0, self.inplane_off,
+                             wrap=not self.no_phase_wrap)
         return sl
 
     # --- SNR measurement ----------------------------------------------------

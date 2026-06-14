@@ -279,6 +279,7 @@ class WebHost(CurvesMixin):
         s.fov_planning = True
         s.inplane_fov_pct = float(np.clip(payload.get("inplane_fov_pct", 100.0), 20.0, 100.0))
         s.inplane_off = float(payload.get("inplane_off", 0.0))
+        s.no_phase_wrap = bool(payload.get("no_phase_wrap", False))
         s.tilt = float(np.clip(payload.get("tilt", 0.0), -45.0, 45.0))
         s.rot = float(np.clip(payload.get("rot", 0.0), -45.0, 45.0))
 
