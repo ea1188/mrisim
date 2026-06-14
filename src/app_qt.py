@@ -23,13 +23,13 @@ os.environ.setdefault("QT_API", "PyQt6")
 
 import numpy as np
 
-from PyQt6.QtCore import Qt, QTimer, QSize
+from PyQt6.QtCore import Qt, QTimer, QSize, QPoint, QRect, QSettings
 from PyQt6.QtGui import QImage, QPixmap, QIcon
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QSlider,
     QComboBox, QCheckBox, QRadioButton, QButtonGroup, QFrame, QScrollArea,
     QVBoxLayout, QHBoxLayout, QGridLayout, QSplitter,
-    QSpinBox, QAbstractSpinBox, QLineEdit,
+    QSpinBox, QAbstractSpinBox, QLineEdit, QRubberBand,
 )
 
 import matplotlib
@@ -154,6 +154,104 @@ class CollapsibleSection(QWidget):
     @property
     def inner(self) -> QVBoxLayout:
         return self._inner
+
+
+class TourOverlay:
+    """A lightweight feature tour: highlights one control at a time with a rubber-
+    band rectangle and a floating tooltip (Back / Next / Skip). Steps are
+    (widget, title, text) tuples; steps whose widget is None are skipped."""
+
+    def __init__(self, host: Any) -> None:
+        self._host = host
+        self._steps: list = []
+        self._idx = 0
+        self._band = QRubberBand(QRubberBand.Shape.Rectangle, host)
+        self._card = QFrame(host)
+        self._card.setObjectName("tour-card")
+        self._card.setStyleSheet(
+            f"#tour-card {{ background:{C_PANEL}; border:1px solid {C_BORDER_HI}; border-radius:10px; }}")
+        self._card.hide()
+        v = QVBoxLayout(self._card); v.setContentsMargins(14, 12, 14, 12); v.setSpacing(8)
+        self._title = QLabel(); self._title.setWordWrap(True)
+        self._title.setStyleSheet(f"color:{C_ACCENT_HI}; font-size:13px; font-weight:bold;")
+        self._text = QLabel(); self._text.setWordWrap(True)
+        self._text.setStyleSheet(f"color:{C_TEXT}; font-size:12px;")
+        self._text.setMinimumWidth(270); self._text.setMaximumWidth(300)
+        v.addWidget(self._title); v.addWidget(self._text)
+        foot = QHBoxLayout()
+        self._progress = QLabel(); self._progress.setStyleSheet(f"color:{C_TEXT_DIM}; font-size:11px;")
+        foot.addWidget(self._progress); foot.addStretch(1)
+        self._skip = QPushButton("Skip"); self._prev = QPushButton("‹ Back"); self._next = QPushButton("Next ›")
+        for b in (self._skip, self._prev, self._next):
+            b.setStyleSheet(f"QPushButton {{ background:{C_RAISED}; color:{C_TEXT}; border:1px solid {C_BORDER}; "
+                            "border-radius:6px; padding:5px 11px; font-size:12px; }")
+            foot.addWidget(b)
+        self._next.setStyleSheet(f"QPushButton {{ background:{C_ACCENT}; color:{C_ACCENT_INK}; border:none; "
+                                 "border-radius:6px; padding:5px 12px; font-size:12px; font-weight:bold; }")
+        v.addLayout(foot)
+        self._skip.clicked.connect(self.end)
+        self._prev.clicked.connect(self.prev)
+        self._next.clicked.connect(self.next)
+
+    @property
+    def active(self) -> bool:
+        return self._card.isVisible()
+
+    def start(self, steps: list) -> None:
+        self._steps = [s for s in steps if s[0] is not None]
+        if not self._steps:
+            return
+        self._idx = 0
+        self._show_step()
+
+    def _show_step(self) -> None:
+        widget, title, text = self._steps[self._idx]
+        p = widget                                   # expand any collapsed section
+        while p is not None:
+            if isinstance(p, CollapsibleSection):
+                p.set_expanded(True)
+            p = p.parentWidget()
+        try:
+            self._host.left_scroll.ensureWidgetVisible(widget, 60, 60)
+        except Exception:
+            pass
+        self._title.setText(title); self._text.setText(text)
+        self._progress.setText(f"{self._idx + 1} / {len(self._steps)}")
+        self._prev.setEnabled(self._idx > 0)
+        self._next.setText("Done" if self._idx == len(self._steps) - 1 else "Next ›")
+        QTimer.singleShot(0, self._position)         # after layout/scroll settles
+        self._position()
+
+    def _position(self) -> None:
+        if not self._steps:
+            return
+        widget = self._steps[self._idx][0]
+        tl = widget.mapTo(self._host, QPoint(0, 0))
+        rect = QRect(tl, widget.size())
+        self._band.setGeometry(rect)
+        self._band.show(); self._band.raise_()
+        self._card.adjustSize()
+        cw, ch = self._card.width(), self._card.height()
+        hw, hh = self._host.width(), self._host.height()
+        x = rect.right() + 14
+        if x + cw > hw - 8:
+            x = rect.left() - cw - 14
+        x = max(8, min(x, hw - cw - 8))
+        y = max(8, min(rect.center().y() - ch // 2, hh - ch - 8))
+        self._card.move(x, y)
+        self._card.show(); self._card.raise_()
+
+    def next(self) -> None:
+        if self._idx >= len(self._steps) - 1:
+            self.end(); return
+        self._idx += 1; self._show_step()
+
+    def prev(self) -> None:
+        if self._idx > 0:
+            self._idx -= 1; self._show_step()
+
+    def end(self) -> None:
+        self._band.hide(); self._card.hide()
 
 
 class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
@@ -868,6 +966,42 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             if any_hit:
                 sec.set_expanded(True)
 
+    # ------------------------------------------------------------------ #
+    #  Guided feature tour
+    # ------------------------------------------------------------------ #
+    def _start_tour(self) -> None:
+        if getattr(self, "_tour", None) is None:
+            self._tour = TourOverlay(self)
+        steps = [
+            (self._seq_dropdown, "Pick a sequence",
+             "Choose the pulse sequence here — the description below it says what each one is for."),
+            (self.tr_slider, "Set the timing",
+             "Sweep TR / TE / flip to change the contrast. Type an exact value in the box, or drag."),
+            (self.canvas, "The image",
+             "Scroll (or ↑/↓) to change slice, drag to window/level (double-click resets), and hover to read the tissue."),
+            (self._preset_dd, "Clinical presets",
+             "Apply a real-world protocol in one click — every setting is filled in for you."),
+            (self._setA_btn, "Compare A / B",
+             "Snapshot the current setup as A, change something, then Compare A↔B to see them side by side."),
+            (self._acq3d_cb, "3D & reconstruction",
+             "Acquire a 3D slab once and reformat any plane; the reconstruction view shows a 2×2 quad (MPR + a 3D MIP)."),
+            (self._measure_dd, "Measure",
+             "Pick Ruler or ROI, then drag on the image (or a reformat) to read a distance in mm or an ROI's mean / SD / SNR."),
+            (self._ctrl_search, "Find a control",
+             "Lost a setting? Type here to jump straight to it — the panel filters as you type. Re-open this tour with ❔ Tour."),
+        ]
+        self._tour.start(steps)
+
+    def _maybe_offer_tour(self) -> None:
+        """Auto-start the tour on the first launch (remembered via QSettings)."""
+        try:
+            s = QSettings("mrisim", "mrisim")
+            if not s.value("tour_seen", False, type=bool):
+                s.setValue("tour_seen", True)
+                self._start_tour()
+        except Exception:
+            pass
+
     def _dropdown(self, parent_layout: Any, label: str, var: Var, options: Any, on_select: Any, inline: bool = False) -> Any:
         container = QWidget()
         lay: Any
@@ -960,10 +1094,19 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         L = self.controls_layout
 
         # \u2500\u2500 App header \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        hdrow = QHBoxLayout(); hdrow.setContentsMargins(0, 0, 0, 0)
         hdr = QLabel("ACQUISITION")
         hdr.setStyleSheet("font-size:11px; font-weight:bold; color:#6b7585; "
                           "letter-spacing:1px; padding:4px 6px 4px 6px;")
-        L.addWidget(hdr)
+        hdrow.addWidget(hdr); hdrow.addStretch(1)
+        tour_btn = QPushButton("❔ Tour")
+        tour_btn.setToolTip("Take a guided tour of the main features")
+        tour_btn.setStyleSheet(f"QPushButton {{ background:{C_RAISED}; color:{C_TEXT_DIM}; "
+                               f"border:1px solid {C_BORDER}; border-radius:6px; padding:3px 9px; font-size:11px; }}"
+                               f"QPushButton:hover {{ color:{C_ACCENT_HI}; border-color:{C_ACCENT}; }}")
+        tour_btn.clicked.connect(self._start_tour)
+        hdrow.addWidget(tour_btn)
+        _hwrap = QWidget(); _hwrap.setLayout(hdrow); L.addWidget(_hwrap)
 
         # Find a control: type to show only matching controls (and the sections
         # holding them, expanded); clearing restores the normal layout.
@@ -981,7 +1124,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         seq_sec = CollapsibleSection("Sequence & Protocol")
         L.addWidget(seq_sec)
         SL = seq_sec.inner
-        self._dropdown(SL, "Preset", self.preset_name, ["(Custom)"] + get_preset_names(), self.on_preset_change)
+        self._preset_dd = self._dropdown(SL, "Preset", self.preset_name, ["(Custom)"] + get_preset_names(), self.on_preset_change)
         self._dropdown(SL, "Field Strength", self.field_strength,
                        list(_B0_MAP.keys()), self.schedule_recalculate, inline=True)
         self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
@@ -1117,7 +1260,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._fov_slider = self._slider(SPL, "FOV (mm)", self.FOV, 100, 500)._qslider
         self._slider(SPL, "Phase FOV (%)", self.fov_fraction, 50, 100)
         self._slider(SPL, "Slice Thickness (mm)", self.slice_thickness, 1, 15)
-        self._checkbox(SPL, "3D acquisition (slab)", self.acq3d)
+        self._acq3d_cb = self._checkbox(SPL, "3D acquisition (slab)", self.acq3d)
         self._slider(SPL, "3D slab depth (partitions)", self.n_partitions, 4, 256)
         self._checkbox(SPL, "kz Partial Fourier", self.kz_pf_enabled)
         # Reconstruction view: turn the acquired slab into MPR / MIP / oblique.
@@ -1193,7 +1336,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                        self.schedule_recalculate, inline=True)
         self._checkbox(DL, "Tissue label overlay", self.show_tissue_overlay)
         self._checkbox(DL, "Show signal curve", self.show_signal_curve)
-        self._dropdown(DL, "Measure tool", self.measure_mode, ["Off", "Ruler", "ROI"],
+        self._measure_dd = self._dropdown(DL, "Measure tool", self.measure_mode, ["Off", "Ruler", "ROI"],
                        self._on_measure_mode_change, inline=True)
         self.measure_readout = DLabel("Ruler/ROI: drag on the image.",
                                       base_style="color:#586273; font-size:9px;")
@@ -1209,7 +1352,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         L.addWidget(cmp_sec)
         CL = cmp_sec.inner
         crow = QHBoxLayout(); crow.setContentsMargins(0, 0, 0, 0)
-        self._button(crow, "Set as A", self.set_protocol_a, color="accent")
+        self._setA_btn = self._button(crow, "Set as A", self.set_protocol_a, color="accent")
         self._button(crow, "Compare A\u2194B", self.toggle_compare)
         self._button(crow, "Clear", self.clear_compare)
         cwrap = QWidget(); cwrap.setLayout(crow); CL.addWidget(cwrap)
@@ -1886,6 +2029,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # give Measurements ~300px and the parameter cards the rest.
         h = max(self.right_split.height(), 600)
         self.right_split.setSizes([h - 300, 300])
+        # Offer the guided tour on the first launch (once the window is laid out).
+        QTimer.singleShot(700, self._maybe_offer_tour)
 
 
 if __name__ == "__main__":
