@@ -252,6 +252,21 @@ def test_saturation_band_nulls_a_strip(win):
     win.fov_planning.set(False); win.recalculate()
 
 
+def test_angle_snap_and_gizmo(win):
+    """Oblique angles magnet onto common values, and the gizmo (pivot + arc +
+    degree readout) draws on the primary panel when oblique."""
+    from matplotlib.patches import Arc
+    assert win._snap_angle(14.0) == 15.0          # within the magnet zone → snaps
+    assert win._snap_angle(22.0) == 22.0          # outside → unchanged
+    assert win._snap_angle(-0.8) == 0.0
+    assert win._snap_angle(44.0) == 45.0
+    set_state(win, sequence="Spin Echo")
+    win.fov_planning.set(True); win.slice_tilt.set(30.0); win.recalculate()
+    assert any(isinstance(p, Arc) for p in win._scout_primary_ax.patches), \
+        "angle gizmo arc should be drawn when oblique"
+    win.slice_tilt.set(0.0); win.fov_planning.set(False); win.recalculate()
+
+
 def test_satband_drag_on_scout_moves_and_angles(win):
     """The saturation band can be dragged on the localizer: drag the body to move
     it (position) and an end handle to angle it."""

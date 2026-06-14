@@ -32,6 +32,7 @@ class ScoutMixin:
     satband_angle: Any
     _scout_satband_info: Any
     _scout_primary_plane: Any
+    _scout_gizmo_center: Any
     phantom_3d: Any
     plan_frame: Any
     scout_canvas: Any
@@ -120,6 +121,7 @@ class ScoutMixin:
         self._scout_primary_ax = self.scout_axes[roles["primary"]]
         self._scout_primary_plane = self._scout_plane_names[roles["primary"]]
         self.scout_ax = self._scout_primary_ax
+        self._scout_gizmo_center = center
 
         # ── Draw each panel ──────────────────────────────────────────────────
         self._scout_angle_handles = []   # rebuilt every redraw
@@ -249,7 +251,31 @@ class ScoutMixin:
                              color=color, fontsize=8, pad=2)
 
         self._draw_satband_on_scout()
+        self._draw_angle_gizmo()
         self.scout_canvas.draw()
+
+    def _draw_angle_gizmo(self) -> None:
+        """Aesthetic angle gizmo on the primary panel: a centre pivot, a live degree
+        readout, and an arc sweeping to the current oblique angle — so the rotation
+        centre and amount are clear at a glance."""
+        from matplotlib.patches import Arc
+        ax = self._scout_primary_ax
+        center = getattr(self, "_scout_gizmo_center", None)
+        if ax is None or center is None:
+            return
+        tilt, rot = self.slice_tilt.get(), self.slice_rot.get()
+        cx, cy = self._display_center(self._scout_primary_plane, center)
+        ax.plot([cx], [cy], "o", color="#7fb8ff", markersize=5,
+                markeredgecolor="white", markeredgewidth=0.6, zorder=6)
+        if abs(tilt) > 0.5 or abs(rot) > 0.5:
+            prim = tilt if self._ANGLE_MAP[self.orientation.get()]["primary"] == "tilt" else rot
+            r = 16.0
+            ax.add_patch(Arc((cx, cy), 2 * r, 2 * r, angle=0.0,
+                             theta1=min(0.0, prim), theta2=max(0.0, prim),
+                             color="#7fb8ff", lw=1.1, zorder=6))
+            ax.plot([cx, cx + r], [cy, cy], color="#7fb8ff", lw=0.6, alpha=0.5, zorder=6)
+            ax.text(cx + r + 3, cy, f"{tilt:+.0f}° / {rot:+.0f}°", color="#7fb8ff",
+                    fontsize=7, va="center", ha="left", zorder=6)
 
     def _draw_satband_on_scout(self) -> None:
         """Draw the saturation band on the primary localizer panel as a draggable
@@ -379,6 +405,17 @@ class ScoutMixin:
         "coronal":  ("h", -1),
         "sagittal": ("h", +1),
     }
+
+    # Common oblique angles the drag magnets onto (degrees), within _SNAP_TOL.
+    _SNAP_TARGETS = (0.0, 15.0, 30.0, 45.0, -15.0, -30.0, -45.0)
+    _SNAP_TOL = 2.5
+
+    def _snap_angle(self, val: float) -> float:
+        """Magnet the dragged angle onto a nearby common value (0/±15/±30/±45)."""
+        for t in self._SNAP_TARGETS:
+            if abs(val - t) <= self._SNAP_TOL:
+                return t
+        return val
 
     def _satband_hit(self, event: object) -> "str | None":
         """'satangle' near an end handle, 'satmove' inside the band body, else None."""
@@ -565,10 +602,10 @@ class ScoutMixin:
             elif d_angle < -90:
                 d_angle += 180
             if d["angle_var"] == "tilt":
-                new_val = float(np.clip(self.slice_tilt.get() + d_angle, -45, 45))
+                new_val = self._snap_angle(float(np.clip(self.slice_tilt.get() + d_angle, -45, 45)))
                 self.slice_tilt.set(new_val)
             else:
-                new_val = float(np.clip(self.slice_rot.get() + d_angle, -45, 45))
+                new_val = self._snap_angle(float(np.clip(self.slice_rot.get() + d_angle, -45, 45)))
                 self.slice_rot.set(new_val)
             self._draw_scout(self.get_current_params())
             self.schedule_recalculate()
