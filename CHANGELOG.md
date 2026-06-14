@@ -10,7 +10,7 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
-## [Unreleased]
+## [1.25.0] — 2026-06-14
 
 ### Added
 - **Phase-contrast MR angiography (new physics, both editions).** The MRA sequence
@@ -33,8 +33,7 @@ frozen.)
   acceleration R > 1). The data reuses the shared engine (`_curve_signal`,
   `Simulator._b0_field_slice`, `coil.g_factor_map`). This unlocks three more
   guided lessons on the desktop ("Where contrast comes from", "Parallel imaging &
-  the g-factor", "B0 inhomogeneity & EPI distortion") — now **34 of 36** lessons
-  run on the desktop.
+  the g-factor", "B0 inhomogeneity & EPI distortion").
 - **Guided feature tour on the desktop (parity with the browser).** The desktop app
   had no onboarding; it now has a **❔ Tour** button (and a first-run offer) that
   walks through the main controls — sequence, timing, the image, presets, A/B
@@ -54,10 +53,10 @@ frozen.)
   shows each step's explanation and drives the actual controls for you (Back /
   Next / Exit), including A/B comparisons and demo pathologies. The lesson content
   is now authored once in `data/lessons.json` — the **single source** the browser
-  fetches at runtime and the desktop reads directly — so the two stay in sync. 31
-  of the 36 lessons are offered on the desktop; the few that rely on browser-only
-  panels (colormap/contrast map, g-factor map, B0 map, phase-contrast angiography)
-  are filtered out automatically.
+  fetches at runtime and the desktop reads directly — so the two stay in sync.
+  Lessons that rely on a panel the desktop lacks are filtered out automatically;
+  with the teaching-map panels and phase-contrast angiography above, **all 36
+  lessons** run on the desktop in this release.
 
 ### Changed
 - Refactored the browser's `_pathology_volume` to delegate to the shared
