@@ -591,6 +591,32 @@ def test_teaching_map_lessons_now_supported_on_desktop(win):
     assert "B0 inhomogeneity & EPI distortion" in titles
 
 
+def test_desktop_phase_contrast_angio(win):
+    """Switching MRA Type to Phase Contrast renders a velocity-encoded angiogram
+    (distinct from TOF), shows the PC-only controls, and responds to VENC."""
+    set_state(win, sequence="MR Angiography")
+    win.angio_type.set("TOF"); win._on_angio_type_change()
+    tof = win.current_image.copy()
+    assert not win._pc_frame.isVisibleTo(win), "PC controls hidden for TOF"
+
+    win.angio_type.set("Phase Contrast"); win._on_angio_type_change()
+    assert win._pc_frame.isVisibleTo(win), "PC controls shown for Phase Contrast"
+    pc = win.current_image
+    assert not np.allclose(tof, pc), "PC should render differently from TOF"
+
+    win.venc.set(80.0); win.recalculate(); pc_hi = win.current_image.copy()
+    win.venc.set(40.0); win.recalculate(); pc_lo = win.current_image
+    assert not np.allclose(pc_hi, pc_lo), "VENC should change the PC angiogram"
+    win.angio_type.set("TOF"); win._on_angio_type_change()   # restore
+
+
+def test_phase_contrast_lessons_now_supported(win):
+    """The PC engine path unlocks the last two browser lessons on the desktop."""
+    titles = {L["title"] for L in win._lessons}
+    assert "TOF vs phase-contrast angiography" in titles
+    assert "Choosing the protocol (capstone)" in titles
+
+
 def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
     """Desktop parity: quantitative maps render with a perceptual colormap + a
     colorbar inset; weighted images stay grayscale with no colorbar."""

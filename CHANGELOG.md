@@ -13,6 +13,17 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Phase-contrast MR angiography (new physics, both editions).** The MRA sequence
+  previously only ever rendered a Time-of-Flight MIP — `angio_type` was ignored, so
+  selecting "Phase Contrast" still showed TOF on both the desktop and the browser.
+  The shared engine now has a real PC path (`angiography.pc_intensity_volume` →
+  `Simulator._pc_volume`): velocity is encoded as phase (φ = π·v/venc) and projected
+  as a velocity-weighted angiogram, so a **VENC** below the true flow visibly aliases
+  fast vessels (the core PC teaching point). The desktop gains an **MRA Type**
+  selector (TOF / Phase Contrast) with **VENC** and **PC Display** (Speed / Magnitude)
+  controls; the browser benefits automatically (sensible defaults). This unlocks the
+  last two guided lessons on the desktop — "TOF vs phase-contrast angiography" and
+  "Choosing the protocol (capstone)" — so **all 36 lessons** now run on the desktop.
 - **Teaching map panels on the desktop (parity with the browser).** Three optional
   side panels in the Display section that visualise *why* the image looks the way
   it does: a **contrast map** (the |S_a − S_b| landscape across the whole TR×TE

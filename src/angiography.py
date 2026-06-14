@@ -186,6 +186,48 @@ def tof_intensity_volume(vessel_vol: np.ndarray, TR: float = 25.0, TE: float = 4
     return out
 
 
+def pc_intensity_volume(vessel_vol: np.ndarray, venc: float = 80.0,
+                        flow_velocity: float = 60.0, display: str = "Speed") -> np.ndarray:
+    """3D phase-contrast intensity volume from a labelled vessel phantom.
+
+    PC-MRA encodes velocity as a phase shift φ = π·v/venc; spins faster than the
+    velocity-encoding ``venc`` wrap into (−π, π] (velocity aliasing). Blood
+    (label 11) carries ``flow_velocity`` (cm/s); stationary tissue has none.
+
+    The returned float volume — MIP'd the same way as the TOF volume — depends on
+    ``display``:
+
+    * ``"Speed"`` / ``"Phase"`` (flow displays): vessels bright ∝ the apparent
+      speed |φ|/π (so a venc below the true velocity *dims/wraps* fast flow — the
+      key venc teaching point); stationary tissue is dark, so the vessel tree
+      pops. This is the PC angiogram.
+    * ``"Magnitude"``: a gradient-echo anatomical magnitude (vessels are *not*
+      flow-weighted), so you can see why magnitude alone isn't an angiogram.
+    """
+    from signal_engine import gradient_echo_signal
+    import tissue_db
+    tp = tissue_db.properties("3T")
+    tr, te, fa = 30.0, 5.0, 30.0
+    phi = np.pi * float(flow_velocity) / max(float(venc), 1e-6)
+    phi = (phi + np.pi) % (2 * np.pi) - np.pi          # wrap to (−π, π]
+    flow_brightness = abs(phi) / np.pi                 # ∈ [0, 1]; peaks at v = venc
+    out = np.zeros(vessel_vol.shape, dtype=float)
+    for lab, p in tp.items():
+        mask = vessel_vol == lab
+        if not mask.any():
+            continue
+        if lab == 0:                                   # background air
+            continue
+        t2s = p.get("T2star", p["T2"] * 0.6)
+        if display == "Magnitude":
+            sig = gradient_echo_signal(p["T1"], t2s, p["PD"], tr, te, fa)
+            out[mask] = sig if lab == 11 else sig * 0.5
+        elif lab == 11:                                # blood — flow-weighted
+            out[mask] = flow_brightness
+        # stationary tissue stays 0 on the flow displays
+    return out
+
+
 def prep_realtof_volume(volume: np.ndarray, threshold: float = 0.5,
                         gamma: float = 2.0) -> np.ndarray:
     """Background-suppress a real TOF MRA volume so a MIP shows the vessels.

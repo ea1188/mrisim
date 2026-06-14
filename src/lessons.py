@@ -60,7 +60,7 @@ BOOL_KEYS: "list[tuple[str, str]]" = [
 ENUM_KEYS: "list[tuple[str, str]]" = [
     ("accelmethod", "accel_method"), ("diffdisp", "diff_display"),
     ("qmridisp", "qmri_display"), ("fmridisp", "fmri_display"),
-    ("motiontype", "motion_type"),
+    ("motiontype", "motion_type"), ("angiotype", "angio_type"),
 ]
 # Dropdowns whose values differ (browser code → desktop label).
 COIL_LABEL = {"uniform": "Uniform (ideal)", "head8": "Head array (8-ch)",

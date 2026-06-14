@@ -116,7 +116,7 @@ def default_params(**overrides: object) -> dict:
         etl=16, echo_spacing=10.0,
         b_value=1000.0, diff_direction="Left-Right", diff_display="DWI",
         angio_type="TOF", angio_mip_slab=20, angio_azimuth=0, angio_elevation=0,
-        angio_fast=False,
+        angio_fast=False, venc=80.0, angio_display="Speed",
         fmri_display="EPI Image", fmri_volumes=100, fmri_threshold=3.0,
         qmri_display="T1 Map (VFA)",
         field_strength="3T", contrast_enabled=False, contrast_dose=1,
@@ -165,6 +165,7 @@ class Simulator:
         self._b0_cache: tuple | None = None
         self._swi_vein_cache: tuple | None = None
         self._tof_cache: tuple | None = None
+        self._pc_cache: tuple | None = None
         self.last_kspace: np.ndarray | None = None
         # 3-D acquisition: the reconstructed slab (raw Z,Y,X sub-block) + geometry,
         # reused by reslice_3d so orientation changes reformat rather than re-scan.
@@ -186,6 +187,19 @@ class Simulator:
         if self._tof_cache is None or self._tof_cache[0] != key:
             self._tof_cache = (key, angiography.tof_intensity_volume(vol, TR, TE, FA))
         return self._tof_cache[1]
+
+    def _pc_volume(self, venc: float, display: str) -> np.ndarray:
+        """3D phase-contrast intensity volume for the rotating MIP, cached.
+
+        Velocity is encoded as phase (φ = π·v/venc); the flow displays make the
+        vessel tree bright in proportion to apparent speed, so a low venc visibly
+        aliases fast flow — the teaching point that separates PC from TOF."""
+        vol = self.vessels
+        assert vol is not None
+        key = (vol.shape, int(vol.sum()), round(float(venc), 1), display)
+        if self._pc_cache is None or self._pc_cache[0] != key:
+            self._pc_cache = (key, angiography.pc_intensity_volume(vol, venc=venc, display=display))
+        return self._pc_cache[1]
 
     # --- geometry -----------------------------------------------------------
     def get_max_slice_idx(self) -> int:
@@ -395,14 +409,19 @@ class Simulator:
             elif params["diff_display"] == "FA Map":
                 return simulate_fa_map_3d(phantom_slice)
         elif seq == "MR Angiography":
-            # Maneuverable rotating MIP of the 3D TOF volume (azimuth/elevation),
+            # Maneuverable rotating MIP of the 3D angio volume (azimuth/elevation),
             # the way an angiogram is reviewed — not a fixed slice. During an
             # interactive click-drag rotate, project a 2x-downsampled volume so the
             # MIP stays responsive (~8x faster); full resolution renders on release.
-            tof = self._tof_volume(TR, TE, FA)
+            # TOF projects inflow brightness; Phase Contrast projects velocity.
+            if params.get("angio_type") == "Phase Contrast":
+                vol = self._pc_volume(params.get("venc", 80.0),
+                                      params.get("angio_display", "Speed"))
+            else:
+                vol = self._tof_volume(TR, TE, FA)
             if params.get("angio_fast"):
-                tof = np.ascontiguousarray(tof[::2, ::2, ::2])
-            return angiography.rotating_mip(tof,
+                vol = np.ascontiguousarray(vol[::2, ::2, ::2])
+            return angiography.rotating_mip(vol,
                                             params.get("angio_azimuth", 0),
                                             params.get("angio_elevation", 0))
         elif seq == "fMRI (BOLD)":

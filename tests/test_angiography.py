@@ -236,3 +236,32 @@ class TestRotatingMIP:
         assert 0.0 <= out.min() and out.max() <= 1.0
         assert out[4, 4, 4] > 0      # vessel kept
         assert out[0, 0, 0] == 0     # background suppressed
+
+
+class TestPCIntensityVolume:
+    def _vessel_vol(self):
+        v = np.zeros((24, 30, 30), dtype=int)
+        v[:, 8:22, 8:22] = 2          # stationary grey matter
+        v[:, 12:18, 14] = 11          # a vertical "vessel" carrying flow
+        return v
+
+    def test_flow_display_lights_vessels_not_tissue(self):
+        from angiography import pc_intensity_volume
+        out = pc_intensity_volume(self._vessel_vol(), venc=80, display="Speed")
+        v = self._vessel_vol()
+        assert out[v == 11].min() > 0, "vessels should be bright on the flow map"
+        assert np.all(out[v == 2] == 0), "stationary tissue is dark on the flow map"
+
+    def test_low_venc_aliases_fast_flow(self):
+        """A venc below the true velocity wraps the phase, so apparent speed drops."""
+        from angiography import pc_intensity_volume
+        v = self._vessel_vol()
+        hi = pc_intensity_volume(v, venc=80, flow_velocity=60, display="Speed")[v == 11].mean()
+        lo = pc_intensity_volume(v, venc=40, flow_velocity=60, display="Speed")[v == 11].mean()
+        assert lo < hi, "aliasing at low venc should dim the vessel"
+
+    def test_magnitude_display_shows_anatomy(self):
+        from angiography import pc_intensity_volume
+        v = self._vessel_vol()
+        mag = pc_intensity_volume(v, display="Magnitude")
+        assert mag[v == 2].min() > 0, "magnitude display keeps stationary anatomy"
