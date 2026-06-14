@@ -265,3 +265,13 @@ class TestPCIntensityVolume:
         v = self._vessel_vol()
         mag = pc_intensity_volume(v, display="Magnitude")
         assert mag[v == 2].min() > 0, "magnitude display keeps stationary anatomy"
+
+    def test_flow_velocity_brightens_then_aliases(self):
+        """Below venc, faster flow = brighter (more phase); above venc it wraps
+        (aliases) and reads dimmer again."""
+        from angiography import pc_intensity_volume
+        v = self._vessel_vol()
+        def b(flow):
+            return pc_intensity_volume(v, venc=80, flow_velocity=flow, display="Speed")[v == 11].mean()
+        assert b(40) < b(70), "more flow (still < venc) should brighten the vessel"
+        assert b(140) < b(70), "flow above venc should alias and dim the vessel"

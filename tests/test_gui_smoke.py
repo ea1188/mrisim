@@ -619,7 +619,15 @@ def test_desktop_phase_contrast_angio(win):
     win.venc.set(80.0); win.recalculate(); pc_hi = win.current_image.copy()
     win.venc.set(40.0); win.recalculate(); pc_lo = win.current_image
     assert not np.allclose(pc_hi, pc_lo), "VENC should change the PC angiogram"
-    win.angio_type.set("TOF"); win._on_angio_type_change()   # restore
+
+    # The PC blood-velocity control is distinct from the flow-artifact Var and
+    # drives the angiogram too (regression: they used to collide as flow_velocity).
+    assert win.pc_flow_velocity is not win.flow_velocity
+    win.venc.set(80.0); win.pc_flow_velocity.set(60.0); win.recalculate()
+    base = win.current_image.copy()
+    win.pc_flow_velocity.set(120.0); win.recalculate()      # above venc → aliases
+    assert not np.allclose(base, win.current_image), "PC flow velocity should change the angiogram"
+    win.pc_flow_velocity.set(60.0); win.angio_type.set("TOF"); win._on_angio_type_change()   # restore
 
 
 def test_phase_contrast_lessons_now_supported(win):
