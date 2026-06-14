@@ -116,7 +116,7 @@ def default_params(**overrides: object) -> dict:
         etl=16, echo_spacing=10.0,
         b_value=1000.0, diff_direction="Left-Right", diff_display="DWI",
         angio_type="TOF", angio_mip_slab=20, angio_azimuth=0, angio_elevation=0,
-        angio_fast=False, venc=80.0, angio_display="Speed",
+        angio_fast=False, venc=80.0, angio_display="Speed", pc_flow_velocity=60.0,
         fmri_display="EPI Image", fmri_volumes=100, fmri_threshold=3.0,
         qmri_display="T1 Map (VFA)",
         field_strength="3T", contrast_enabled=False, contrast_dose=1,
@@ -188,17 +188,19 @@ class Simulator:
             self._tof_cache = (key, angiography.tof_intensity_volume(vol, TR, TE, FA))
         return self._tof_cache[1]
 
-    def _pc_volume(self, venc: float, display: str) -> np.ndarray:
+    def _pc_volume(self, venc: float, flow_velocity: float, display: str) -> np.ndarray:
         """3D phase-contrast intensity volume for the rotating MIP, cached.
 
         Velocity is encoded as phase (φ = π·v/venc); the flow displays make the
-        vessel tree bright in proportion to apparent speed, so a low venc visibly
-        aliases fast flow — the teaching point that separates PC from TOF."""
+        vessel tree bright in proportion to apparent speed, so a flow faster than
+        the venc visibly aliases — the teaching point that separates PC from TOF."""
         vol = self.vessels
         assert vol is not None
-        key = (vol.shape, int(vol.sum()), round(float(venc), 1), display)
+        key = (vol.shape, int(vol.sum()), round(float(venc), 1),
+               round(float(flow_velocity), 1), display)
         if self._pc_cache is None or self._pc_cache[0] != key:
-            self._pc_cache = (key, angiography.pc_intensity_volume(vol, venc=venc, display=display))
+            self._pc_cache = (key, angiography.pc_intensity_volume(
+                vol, venc=venc, flow_velocity=flow_velocity, display=display))
         return self._pc_cache[1]
 
     # --- geometry -----------------------------------------------------------
@@ -416,6 +418,7 @@ class Simulator:
             # TOF projects inflow brightness; Phase Contrast projects velocity.
             if params.get("angio_type") == "Phase Contrast":
                 vol = self._pc_volume(params.get("venc", 80.0),
+                                      params.get("pc_flow_velocity", 60.0),
                                       params.get("angio_display", "Speed"))
             else:
                 vol = self._tof_volume(TR, TE, FA)

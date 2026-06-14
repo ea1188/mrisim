@@ -392,7 +392,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.angio_azimuth = Var(0)      # rotating-MIP view angle (deg)
         self.angio_elevation = Var(0)
         self.venc = Var(80.0)
-        self.flow_velocity = Var(60.0)
+        self.pc_flow_velocity = Var(60.0)   # phase-contrast blood velocity (cm/s)
         self.angio_display = Var("Speed")   # PC display: Speed (flow) | Magnitude
 
         # fMRI
@@ -434,7 +434,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.mt_power = Var(50)      # integer 0–100 → 0.0–1.0
         self.b1_inhom_enabled = Var(False)
         self.flow_enabled = Var(True)
-        self.flow_velocity = Var(70)   # integer 0–100 → 0.0–1.0 (blood velocity)
+        self.flow_velocity = Var(70)   # flow-artifact velocity, integer 0–100 → 0.0–1.0
         self.fatsat_enabled = Var(False)
 
         # Comparison
@@ -1229,6 +1229,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._pc_frame = QWidget()
         pc_l = QVBoxLayout(self._pc_frame); pc_l.setContentsMargins(0, 0, 0, 0); pc_l.setSpacing(1)
         self._slider(pc_l, "VENC (cm/s)", self.venc, 10, 200)
+        self._slider(pc_l, "Flow velocity (cm/s)", self.pc_flow_velocity, 10, 150)
         self._dropdown(pc_l, "PC Display", self.angio_display,
                        ["Speed", "Magnitude"], self.schedule_recalculate, inline=True)
         self._pc_frame.setVisible(self.angio_type.get() == "Phase Contrast")
@@ -1496,6 +1497,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 "angio_type": self.angio_type.get(), "angio_mip_slab": self.angio_mip_slab.get(),
                 "angio_azimuth": self.angio_azimuth.get(), "angio_elevation": self.angio_elevation.get(),
                 "venc": self.venc.get(), "angio_display": self.angio_display.get(),
+                "pc_flow_velocity": self.pc_flow_velocity.get(),
                 "angio_fast": getattr(self, "_mra_rotating", False),
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
