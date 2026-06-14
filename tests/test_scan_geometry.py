@@ -378,6 +378,16 @@ class TestSatBand:
         bot = np.where(apply_sat_band(a, 0.8, 0.2).sum(axis=1) == 0)[0].mean()
         assert top < bot
 
+    def test_angle_tilts_the_band(self):
+        from scan_geometry import apply_sat_band
+        a = np.ones((50, 50))
+        flat = apply_sat_band(a, 0.5, 0.2, 0.0)
+        tilt = apply_sat_band(a, 0.5, 0.2, 45.0)
+        assert (flat.sum(axis=1) == 0).any(), "horizontal band nulls whole rows"
+        assert not np.allclose(flat, tilt), "angle should tilt the band"
+        # A tilted band crosses rows, so no whole row is fully nulled, yet pixels are.
+        assert not (tilt.sum(axis=1) == 0).any() and (tilt == 0).any()
+
 
 class TestPrescribedIndicesExtra:
     """Additional coverage for prescribed_indices: gaps, orientations, edge cases."""

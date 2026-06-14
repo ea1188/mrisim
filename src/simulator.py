@@ -165,6 +165,7 @@ class Simulator:
         self.satband_enabled: bool = False   # saturation band over the image
         self.satband_pos: float = 50.0       # band centre, % of through-image extent
         self.satband_width: float = 15.0     # band width, % of through-image extent
+        self.satband_angle: float = 0.0      # band tilt, degrees (0 = horizontal)
 
         # Caches / outputs
         self._b0_cache: tuple | None = None
@@ -262,7 +263,7 @@ class Simulator:
         if not (self.fov_planning and self.satband_enabled):
             return slice2d
         return sg.apply_sat_band(slice2d, self.satband_pos / 100.0,
-                                 self.satband_width / 100.0)
+                                 self.satband_width / 100.0, self.satband_angle)
 
     # --- B0 field -----------------------------------------------------------
     def _b0_volume(self, field_strength_T: float) -> np.ndarray:
