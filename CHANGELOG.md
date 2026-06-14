@@ -19,6 +19,18 @@ frozen.)
   compare, 3D & reconstruction, measure, find-a-control — highlighting each with a
   rubber-band + tooltip (Back / Next / Skip), expanding collapsed sections and
   scrolling them into view as it goes.
+- **Demo brain pathologies on the desktop (parity with the browser).** A new
+  **Pathology (demo)** picker in 3D Navigation paints a teaching lesion into brain
+  white matter — MS plaques, a focal lesion, an acute infarct, a microhaemorrhage,
+  an enhancing tumour, or an abscess (enhancing rim + pus core) — so contrast
+  behaviour (e.g. FLAIR/T2 conspicuity, rim enhancement) can be demonstrated. The
+  painting logic is now shared with the browser via `rendering.paint_brain_pathology`
+  (single source of truth; labels 23–28 render through the field-synced tissue
+  table). Brain-only; cached per kind; a no-op for body regions.
+
+### Changed
+- Refactored the browser's `_pathology_volume` to delegate to the shared
+  `rendering.paint_brain_pathology`, removing the duplicated painting code.
 
 ## [1.24.0] — 2026-06-13
 
