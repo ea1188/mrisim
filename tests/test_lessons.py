@@ -19,12 +19,14 @@ def test_desktop_supported_filters_browser_only_panels():
     # A lesson that only sets supported keys is runnable on the desktop.
     ok = {"steps": [{"text": "x", "state": {"seq": "Spin Echo", "tr": 500, "te": 12}}]}
     assert lessons.desktop_supported(ok)
-    # A browser-only panel toggled OFF is ignored (still supported)…
-    off = {"steps": [{"text": "x", "state": {"tr": 500, "cmap": False}}]}
+    # A browser-only panel (mathshow) toggled OFF is ignored (still supported)…
+    off = {"steps": [{"text": "x", "state": {"tr": 500, "mathshow": False}}]}
     assert lessons.desktop_supported(off)
     # …but turning that panel ON makes it the lesson's focus → unsupported.
-    on = {"steps": [{"text": "x", "state": {"tr": 500, "cmap": True}}]}
+    on = {"steps": [{"text": "x", "state": {"tr": 500, "mathshow": True}}]}
     assert not lessons.desktop_supported(on)
+    # The contrast map (cmap) now has a desktop panel, so it is supported either way.
+    assert lessons.desktop_supported({"steps": [{"text": "x", "state": {"cmap": True}}]})
 
 
 def test_desktop_lessons_is_nonempty_subset():

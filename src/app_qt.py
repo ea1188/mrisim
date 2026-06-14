@@ -102,6 +102,7 @@ from app_interaction import InteractionMixin  # noqa: E402
 from app_metrics import MetricsMixin  # noqa: E402
 from app_export import ExportMixin  # noqa: E402
 from app_lessons import LessonMixin  # noqa: E402
+from app_maps import MapsMixin  # noqa: E402
 
 
 class CollapsibleSection(QWidget):
@@ -256,7 +257,8 @@ class TourOverlay:
 
 
 class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
-                   CurvesMixin, MetricsMixin, ExportMixin, LessonMixin, QMainWindow):
+                   CurvesMixin, MetricsMixin, ExportMixin, LessonMixin,
+                   MapsMixin, QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         from version import __version__
@@ -314,6 +316,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.bandwidth = Var(125.0)
         self.snr_level = Var(35.0)
         self.show_kspace = Var(False)
+        self.show_contrast_map = Var(False)   # TR×TE contrast landscape panel
+        self.show_b0map = Var(False)          # B0 off-resonance field panel
+        self.show_gfactor = Var(False)        # SENSE g-factor map panel
         self.slice_thickness = Var(5.0)
         # 3-D (slab) acquisition
         self.acq3d = Var(False)
@@ -718,6 +723,25 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.psd_canvas = FigureCanvas(self.psd_fig)
         self.psd_canvas.setVisible(False)
         self.center_layout.addWidget(self.psd_canvas, stretch=2)
+
+        # Teaching-map figures (each conditionally shown): contrast / B0 / g-factor.
+        self.contrast_fig = Figure(figsize=(3.4, 3.4), facecolor=C_CANVAS)
+        self.contrast_ax = self.contrast_fig.add_subplot(111)
+        self.contrast_canvas = FigureCanvas(self.contrast_fig)
+        self.contrast_canvas.setVisible(False)
+        self.center_layout.addWidget(self.contrast_canvas, stretch=2)
+        self.b0map_fig = Figure(figsize=(3.4, 3.4), facecolor=C_CANVAS)
+        self.b0map_ax = self.b0map_fig.add_subplot(111)
+        self.b0map_canvas = FigureCanvas(self.b0map_fig)
+        self.b0map_canvas.setVisible(False)
+        self._b0map_cbar = None
+        self.center_layout.addWidget(self.b0map_canvas, stretch=2)
+        self.gfactor_fig = Figure(figsize=(3.4, 3.4), facecolor=C_CANVAS)
+        self.gfactor_ax = self.gfactor_fig.add_subplot(111)
+        self.gfactor_canvas = FigureCanvas(self.gfactor_fig)
+        self.gfactor_canvas.setVisible(False)
+        self._gfactor_cbar = None
+        self.center_layout.addWidget(self.gfactor_canvas, stretch=2)
 
         # Window/level interaction via matplotlib's backend-agnostic events
         self.canvas.mpl_connect("button_press_event", self._on_press)
@@ -1359,6 +1383,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         DL.addWidget(self.measure_readout)
         self._checkbox(DL, "Show k-space", self.show_kspace)
         self._checkbox(DL, "Show Pulse Sequence Diagram", self.show_psd)
+        self._checkbox(DL, "Show contrast map (TR×TE)", self.show_contrast_map)
+        self._checkbox(DL, "Show B0 field map", self.show_b0map)
+        self._checkbox(DL, "Show g-factor map (parallel imaging)", self.show_gfactor)
         hint = QLabel("Wheel/\u2191\u2193: slice \u2022 drag: W/L \u2022 dbl-click/R: reset")
         hint.setStyleSheet("color:#586273; font-size:9px;")
         DL.addWidget(hint)
@@ -1703,6 +1730,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             self.psd_canvas.draw()
         else:
             self.psd_canvas.setVisible(False)
+
+        # Optional teaching maps (contrast / B0 / g-factor) on their own canvases.
+        self._draw_teaching_maps(current_params)
 
         self.canvas.draw()
         self.update_metrics(current_params, metrics_b)

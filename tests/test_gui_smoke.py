@@ -548,6 +548,49 @@ def test_desktop_lesson_compare_step_enters_compare_mode(win):
     assert not win.compare_mode.get(), "exiting should clear compare mode"
 
 
+def test_desktop_contrast_map_panel(win):
+    """The TR×TE contrast map panel renders a CNR image and hides when off."""
+    set_state(win, sequence="Spin Echo")
+    win.show_contrast_map.set(True); win.recalculate()
+    assert win.contrast_canvas.isVisibleTo(win), "contrast panel should be visible"
+    assert len(win.contrast_ax.images) == 1, "contrast CNR image should be drawn"
+    win.show_contrast_map.set(False); win.recalculate()
+    assert not win.contrast_canvas.isVisibleTo(win)
+
+
+def test_desktop_b0_field_map_panel(win):
+    """The B0 field-map panel renders an off-resonance image (Hz)."""
+    set_state(win, sequence="Spin Echo")
+    win.show_b0map.set(True); win.recalculate()
+    assert win.b0map_canvas.isVisibleTo(win)
+    assert len(win.b0map_ax.images) == 1, "B0 field image should be drawn"
+    win.show_b0map.set(False); win.recalculate()
+    assert not win.b0map_canvas.isVisibleTo(win)
+
+
+def test_desktop_gfactor_map_panel(win):
+    """g-factor map shows a hint at R=1 and a real map (g≥1) once R>1."""
+    set_state(win, sequence="Spin Echo")
+    win.accel_method.set("SENSE"); win.accel_factor.set(1)
+    win.show_gfactor.set(True); win.recalculate()
+    assert win.gfactor_canvas.isVisibleTo(win)
+    assert len(win.gfactor_ax.images) == 0, "no g-map at R=1 (just the hint)"
+    win.accel_factor.set(2); win.recalculate()
+    assert len(win.gfactor_ax.images) == 1, "g-factor map should be drawn at R=2"
+    g = np.asarray(win.gfactor_ax.images[0].get_array())
+    assert float(np.min(g)) >= 1.0 - 1e-6, "g-factor is always ≥ 1"
+    win.show_gfactor.set(False); win.accel_factor.set(1); win.recalculate()
+    assert not win.gfactor_canvas.isVisibleTo(win)
+
+
+def test_teaching_map_lessons_now_supported_on_desktop(win):
+    """The contrast/B0/g-factor panels unlock their browser lessons on desktop."""
+    titles = {L["title"] for L in win._lessons}
+    assert "Where contrast comes from" in titles
+    assert "Parallel imaging & the g-factor" in titles
+    assert "B0 inhomogeneity & EPI distortion" in titles
+
+
 def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
     """Desktop parity: quantitative maps render with a perceptual colormap + a
     colorbar inset; weighted images stay grayscale with no colorbar."""
