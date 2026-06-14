@@ -10,6 +10,17 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.25.2] — 2026-06-14
+
+### Fixed
+- **Duplicate `flow_velocity` control.** The desktop declared `flow_velocity` twice
+  — a phase-contrast blood velocity (cm/s) that was silently shadowed by the
+  flow-artifact velocity (0–100%) — leaving the PC velocity dead. The PC one is now
+  a distinct `pc_flow_velocity` with its own **Flow velocity (cm/s)** slider in the
+  phase-contrast controls, wired through to the engine. A nice side effect: PC
+  velocity aliasing can now be shown by raising the flow above the VENC, not only
+  by lowering the VENC.
+
 ## [1.25.1] — 2026-06-14
 
 ### Fixed
