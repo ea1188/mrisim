@@ -13,6 +13,12 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Discoverable localizer handles (desktop).** It wasn't obvious the FOV-planning
+  localizer was interactive. Now the cursor changes as you hover to show what each
+  region does — **✛ move** over the box interior, **⇔ / ⇕ resize** over the FOV /
+  coverage edges, and a **✋ grab-to-angle** pointer over the through-edges for
+  oblique — with a clearer one-line legend under the controls. The drags themselves
+  are unchanged; they're just findable now.
 - **Prescription readout + warnings in FOV planning (desktop).** The planning
   controls now show a live summary of the prescription — number of slices,
   thickness, gap, through-plane coverage, and the in-plane FOV in both % and mm —
