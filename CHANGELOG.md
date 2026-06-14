@@ -10,6 +10,16 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **Place the saturation band on the localizer (desktop) + angled bands (both
+  editions).** The sat band is now drawn on the FOV-planning localizer as a tinted
+  strip you can **drag to move** and **grab an end handle to angle** — with matching
+  hover cursors. The engine's `apply_sat_band` gained an `angle`, so a tilted band
+  nulls a diagonal strip (the desktop also exposes a **Sat band angle** slider, and
+  the browser gets the angle control). Angle 0 stays the fast axis-aligned path.
+
 ## [1.26.0] — 2026-06-14
 
 ### Added

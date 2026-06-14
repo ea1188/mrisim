@@ -284,6 +284,7 @@ class WebHost(CurvesMixin):
         s.satband_enabled = bool(payload.get("satband_enabled", False))
         s.satband_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0))
         s.satband_width = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0))
+        s.satband_angle = float(np.clip(payload.get("satband_angle", 0.0), -90.0, 90.0))
         s.tilt = float(np.clip(payload.get("tilt", 0.0), -45.0, 45.0))
         s.rot = float(np.clip(payload.get("rot", 0.0), -45.0, 45.0))
 

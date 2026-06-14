@@ -252,6 +252,38 @@ def test_saturation_band_nulls_a_strip(win):
     win.fov_planning.set(False); win.recalculate()
 
 
+def test_satband_drag_on_scout_moves_and_angles(win):
+    """The saturation band can be dragged on the localizer: drag the body to move
+    it (position) and an end handle to angle it."""
+    from types import SimpleNamespace as NS
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.n_slices.set(8); win.fov_planning.set(True)
+    win.satband_enabled.set(True); win.satband_pos.set(50); win.satband_angle.set(0)
+    win.recalculate()
+    sb = win._scout_satband_info
+    assert sb is not None, "sat band should be drawn on the localizer"
+    ax = win._scout_primary_ax
+
+    # Drag the body downward → position increases.
+    win._scout_drag = None
+    win._scout_press(NS(inaxes=ax, xdata=sb["cx"], ydata=sb["cy"], button=1))
+    assert win._scout_drag and win._scout_drag["mode"] == "satmove"
+    win._scout_motion(NS(inaxes=ax, xdata=sb["cx"], ydata=sb["cy"] + 0.2 * sb["h"]))
+    assert win.satband_pos.get() > 50, "dragging down should raise the position"
+    win._scout_release(NS(inaxes=ax, xdata=sb["cx"], ydata=sb["cy"]))
+
+    # Drag an end handle off-axis → a non-zero angle.
+    sb = win._scout_satband_info
+    win._scout_drag = None
+    win._scout_press(NS(inaxes=ax, xdata=sb["e2"][0], ydata=sb["e2"][1], button=1))
+    assert win._scout_drag and win._scout_drag["mode"] == "satangle"
+    win._scout_motion(NS(inaxes=ax, xdata=sb["e2"][0], ydata=sb["e2"][1] + 12))
+    assert win.satband_angle.get() != 0, "dragging the handle should angle the band"
+    win._scout_release(NS(inaxes=ax, xdata=sb["e2"][0], ydata=sb["e2"][1]))
+    win.satband_enabled.set(False); win.n_slices.set(1)
+    win.fov_planning.set(False); win.recalculate()
+
+
 def test_scout_hover_cursor_feedback(win):
     """Hovering the localizer shows what each region does: move over the box,
     resize over an edge — so the affordances are discoverable."""

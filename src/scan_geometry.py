@@ -278,23 +278,32 @@ def _arr_axis(acq: str, vol_axis: int) -> tuple[int, bool]:
 
 
 def apply_sat_band(slice2d: np.ndarray, pos_frac: float, width_frac: float,
-                   fill: float = 0.0) -> np.ndarray:
-    """Saturation band: null a horizontal strip of the acquired slice (saturated
-    spins give no signal). ``pos_frac`` is the band centre (0=top … 1=bottom) and
-    ``width_frac`` its fraction of the through-image extent. Returns a copy with the
-    strip set to ``fill`` (0 = air / no signal for a label slice). A no-op for a
-    zero-width band."""
-    h = slice2d.shape[0]
+                   angle_deg: float = 0.0, fill: float = 0.0) -> np.ndarray:
+    """Saturation band: null a strip of the acquired slice (saturated spins give no
+    signal). ``pos_frac`` is the band centre (0=top … 1=bottom) and ``width_frac``
+    its fraction of the through-image extent. ``angle_deg`` tilts the band about the
+    image centre (0 = horizontal). Returns a copy with the strip set to ``fill``
+    (0 = air / no signal for a label slice). A no-op for a zero-width band."""
+    h, w = slice2d.shape
     half = width_frac * h / 2.0
     if half < 0.5:
         return slice2d
-    c = pos_frac * h
-    lo = max(0, int(round(c - half)))
-    hi = min(h, int(round(c + half)))
-    if hi <= lo:
-        return slice2d
     out = slice2d.copy()
-    out[lo:hi, :] = fill
+    if abs(angle_deg) < 0.5:                      # fast path: axis-aligned strip
+        c = pos_frac * h
+        lo = max(0, int(round(c - half)))
+        hi = min(h, int(round(c + half)))
+        if hi <= lo:
+            return slice2d
+        out[lo:hi, :] = fill
+        return out
+    # Tilted band: null where the perpendicular distance to the centre line (a line
+    # through y = pos_frac·H, tilted by angle_deg about the image x-centre) is ≤ half.
+    th = np.radians(angle_deg)
+    cy, cx = pos_frac * h, w / 2.0
+    yy, xx = np.mgrid[0:h, 0:w].astype(float)
+    dist = (yy - cy) * np.cos(th) - (xx - cx) * np.sin(th)
+    out[np.abs(dist) <= half] = fill
     return out
 
 

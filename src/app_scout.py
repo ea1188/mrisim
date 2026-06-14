@@ -26,6 +26,12 @@ class ScoutMixin:
     inplane_fov_pct: Any
     inplane_off: Any
     fov_planning: Any
+    satband_enabled: Any
+    satband_pos: Any
+    satband_width: Any
+    satband_angle: Any
+    _scout_satband_info: Any
+    _scout_primary_plane: Any
     phantom_3d: Any
     plan_frame: Any
     scout_canvas: Any
@@ -112,6 +118,7 @@ class ScoutMixin:
                     self._scout_overlays[plane] = {"role": "acqplane",  "info": ip_box}
 
         self._scout_primary_ax = self.scout_axes[roles["primary"]]
+        self._scout_primary_plane = self._scout_plane_names[roles["primary"]]
         self.scout_ax = self._scout_primary_ax
 
         # ── Draw each panel ──────────────────────────────────────────────────
@@ -241,7 +248,43 @@ class ScoutMixin:
                 ax.set_title(f"{plane.capitalize()}  [{lbl}]",
                              color=color, fontsize=8, pad=2)
 
+        self._draw_satband_on_scout()
         self.scout_canvas.draw()
+
+    def _draw_satband_on_scout(self) -> None:
+        """Draw the saturation band on the primary localizer panel as a draggable
+        tinted strip — move it (drag the body) or angle it (drag an end handle).
+        Stored geometry (`_scout_satband_info`) is what the press/hover hit-tests."""
+        import math
+        from matplotlib.patches import Polygon
+        self._scout_satband_info = None
+        info = self._scout_box_info
+        if not self.satband_enabled.get() or info is None:
+            return
+        ax = self._scout_primary_ax
+        x0, y0, w, h = info["x0"], info["y0"], info["w"], info["h"]
+        pos = self.satband_pos.get() / 100.0
+        wf = self.satband_width.get() / 100.0
+        ang = math.radians(self.satband_angle.get())
+        cx, cy = x0 + w / 2.0, y0 + pos * h
+        half_t = max(1.5, wf * h / 2.0)
+        ln = w / 2.0 + 0.08 * w
+        d = (math.cos(ang), math.sin(ang))         # along the band
+        n = (-math.sin(ang), math.cos(ang))        # band normal (thickness)
+        corners = [(cx + sx * ln * d[0] + sy * half_t * n[0],
+                    cy + sx * ln * d[1] + sy * half_t * n[1])
+                   for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        ax.add_patch(Polygon(corners, closed=True, facecolor="#e6b35a", alpha=0.26,
+                             edgecolor="#e6b35a", linewidth=1.1))
+        e1 = (cx - ln * d[0], cy - ln * d[1])
+        e2 = (cx + ln * d[0], cy + ln * d[1])
+        ax.plot([e1[0], e2[0]], [e1[1], e2[1]], color="#e6b35a", lw=0.8, alpha=0.7)
+        ax.plot([e1[0], e2[0]], [e1[1], e2[1]], "s", color="#ff7733", markersize=6,
+                markeredgecolor="white", markeredgewidth=0.7)
+        ax.text(cx, cy, "SAT", color="#3a2a10", fontsize=7, ha="center", va="center",
+                fontweight="bold")
+        self._scout_satband_info = dict(cx=cx, cy=cy, d=d, n=n, ln=ln, half_t=half_t,
+                                        e1=e1, e2=e2, y0=y0, h=h)
 
     # Which angle variable is controlled by dragging each panel role in oblique mode.
     # Derived from: rot_deg makes angled lines on primary panels; tilt_deg on secondary.
@@ -337,12 +380,37 @@ class ScoutMixin:
         "sagittal": ("h", +1),
     }
 
+    def _satband_hit(self, event: object) -> "str | None":
+        """'satangle' near an end handle, 'satmove' inside the band body, else None."""
+        import math
+        sb = self._scout_satband_info
+        if sb is None or event.inaxes is not self._scout_primary_ax:  # type: ignore[attr-defined]
+            return None
+        if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
+            return None
+        px, py = event.xdata, event.ydata  # type: ignore[attr-defined]
+        for ex, ey in (sb["e1"], sb["e2"]):
+            if math.hypot(px - ex, py - ey) < 7.0:
+                return "satangle"
+        dx, dy = px - sb["cx"], py - sb["cy"]
+        along = dx * sb["d"][0] + dy * sb["d"][1]
+        perp = dx * sb["n"][0] + dy * sb["n"][1]
+        if abs(perp) <= sb["half_t"] + 3.0 and abs(along) <= sb["ln"]:
+            return "satmove"
+        return None
+
     def _scout_press(self, event: object) -> None:
         if not self.fov_planning.get() or event.inaxes is None:  # type: ignore[attr-defined]
             return
         if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return
         px, py = event.xdata, event.ydata  # type: ignore[attr-defined]
+
+        # ── Saturation band takes priority (it sits inside the FOV box) ────
+        sat = self._satband_hit(event)
+        if sat is not None:
+            self._scout_drag = dict(mode=sat, x=px, y=py)
+            return
 
         # ── Edge-line hit test ─────────────────────────────────────────────
         # Outer 25% of each edge line  →  angle drag  (◆ endpoints)
@@ -412,6 +480,13 @@ class ScoutMixin:
             canvas.unsetCursor(); return
         px, py = event.xdata, event.ydata                              # type: ignore[attr-defined]
 
+        # 0) Saturation band (priority — it sits inside the FOV box).
+        sat = self._satband_hit(event)
+        if sat == "satangle":
+            canvas.setCursor(Qt.CursorShape.PointingHandCursor); return
+        if sat == "satmove":
+            canvas.setCursor(Qt.CursorShape.SizeAllCursor); return
+
         # 1) Near an angle-handle endpoint → rotate affordance.
         for (lx0, ly0, lx1, ly1, h_plane, _av, _cx, _cy) in self._scout_angle_handles:
             pidx = self._scout_plane_names.index(h_plane)
@@ -456,6 +531,23 @@ class ScoutMixin:
         dx = ex - d["x"]; dy = ey - d["y"]
         d["x"], d["y"] = ex, ey
         orient = self.orientation.get()
+
+        if d.get("mode") in ("satmove", "satangle"):
+            sb = self._scout_satband_info
+            if sb is not None:
+                if d["mode"] == "satmove":     # drag the body → move the band (position)
+                    new_pos = (ey - sb["y0"]) / sb["h"] * 100.0
+                    self.satband_pos.set(int(round(float(np.clip(new_pos, 0, 100)))))
+                else:                          # drag an end handle → angle the band
+                    ang = math.degrees(math.atan2(ey - sb["cy"], ex - sb["cx"]))
+                    if ang > 90:
+                        ang -= 180
+                    elif ang < -90:
+                        ang += 180
+                    self.satband_angle.set(int(round(float(np.clip(ang, -90, 90)))))
+                self._draw_scout(self.get_current_params())
+                self.schedule_recalculate()
+            return
 
         if d.get("mode") == "angle":
             # Angle drag: compute angular change from handle movement around slab centre
