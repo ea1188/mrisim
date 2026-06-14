@@ -982,6 +982,11 @@ class WebHost(CurvesMixin):
                 fb = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
                 ax.add_patch(Rectangle((fb["x0"], fb["y0"]), fb["w"], fb["h"],
                              fill=False, edgecolor=amber, linewidth=1.8, linestyle=(0, (4, 2))))
+                # Corner handles so the box reads as resizable (drag a corner).
+                ax.plot([fb["x0"], fb["x0"] + fb["w"], fb["x0"], fb["x0"] + fb["w"]],
+                        [fb["y0"], fb["y0"], fb["y0"] + fb["h"], fb["y0"] + fb["h"]],
+                        "s", color=amber, markersize=4, markeredgecolor="#2a323c",
+                        markeredgewidth=0.5)
                 if sat_on:                               # draggable saturation band
                     cx, cy = fb["x0"] + fb["w"] / 2.0, fb["y0"] + sat_pos * fb["h"]
                     ht = max(1.5, sat_wf * fb["h"] / 2.0)
