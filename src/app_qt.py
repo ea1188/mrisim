@@ -1198,6 +1198,10 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         hint2 = QLabel("Scout: drag box = move \u2022 edges = FOV / coverage \u2022 Tilt/Rot = oblique")
         hint2.setStyleSheet("color:#586273; font-size:9px;")
         plan_l.addWidget(hint2)
+        # Live prescription summary: coverage, FOV (mm), gaps + warnings.
+        self.plan_readout = DLabel("", base_style="color:#9aa4b2; font-size:9px; padding:2px 4px;")
+        self.plan_readout.setWordWrap(True)
+        plan_l.addWidget(self.plan_readout)
         SL.addWidget(self.plan_frame)
         self.plan_frame.setVisible(False)
 
@@ -1919,9 +1923,39 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
     # ------------------------------------------------------------------ #
     #  FOV planning: prescribed-group display + interactive scout
     # ------------------------------------------------------------------ #
+    def _update_plan_readout(self, params: dict) -> None:
+        """Summarise the current prescription (coverage, FOV in mm, gaps) with
+        warnings when the slab runs off the volume or leaves through-plane gaps."""
+        import scan_geometry as sg
+        orient = self.orientation.get()
+        shape = self.phantom_3d.shape
+        n = int(self.n_slices.get())
+        th = float(self.slice_thickness.get())
+        gap = float(self.slice_gap.get())
+        through_len = shape[sg.SCOUT[orient]["through_axis"]]
+        idxs = sg.prescribed_indices(orient, shape, self.slice_idx.get(), n, th, gap)
+        span = (max(idxs) - min(idxs) + 1) if idxs else 0
+        fov_pct = float(self.inplane_fov_pct.get())
+        fov_mm = self._get_native_fov() * fov_pct / 100.0
+        line = (f"{n} slice{'s' if n != 1 else ''} · {th:.0f} mm thick · gap {gap:.0f} vox   |   "
+                f"covers {span}/{through_len} planes · in-plane FOV {fov_pct:.0f}% (≈{fov_mm:.0f} mm)")
+        warns = []
+        half = (n - 1) / 2.0 * (th + gap)
+        if self.slice_idx.get() - half < 0 or self.slice_idx.get() + half > through_len - 1:
+            warns.append("slab runs past the volume edge")
+        if gap > 0:
+            warns.append(f"{gap:.0f}-vox gaps may miss small lesions")
+        if fov_pct < 100 and not self.no_phase_wrap.get():
+            warns.append("phase FOV < anatomy → wraparound")
+        if warns:
+            self.plan_readout.config(text=line + "\n⚠ " + "  ·  ".join(warns), fg="#e6b35a")
+        else:
+            self.plan_readout.config(text=line, fg="#9aa4b2")
+
     def _display_prescription(self, params: dict) -> None:
         """Show the prescribed slice group (montage) acquired with the boxed FOV."""
         import scan_geometry as sg
+        self._update_plan_readout(params)
         self.fig.clear()
         orient = self.orientation.get()
         idxs = sg.prescribed_indices(orient, self.phantom_3d.shape,

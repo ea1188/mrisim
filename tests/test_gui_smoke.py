@@ -209,6 +209,24 @@ def test_fov_planning_scout(win):
     win.fov_planning.set(False)
 
 
+def test_plan_readout_summarizes_and_warns(win):
+    """The planning readout reports coverage / FOV and warns about gaps and
+    phase-FOV wraparound."""
+    set_state(win, sequence="Spin Echo", region="Brain")
+    win.fov_planning.set(True)
+    win.n_slices.set(5); win.slice_gap.set(4)
+    win.inplane_fov_pct.set(70); win.no_phase_wrap.set(False)
+    win.recalculate()
+    txt = win.plan_readout.text()
+    assert "covers" in txt and "FOV" in txt, f"readout missing summary: {txt!r}"
+    assert "⚠" in txt, "expected a warning for gaps + wraparound"
+    assert "gap" in txt.lower() and "wraparound" in txt.lower()
+    # Clean prescription → no warning line.
+    win.slice_gap.set(0); win.inplane_fov_pct.set(100); win.n_slices.set(1); win.recalculate()
+    assert "⚠" not in win.plan_readout.text()
+    win.fov_planning.set(False); win.recalculate()
+
+
 def test_fov_reduced_phase_fov_wraps_unless_oversampled(win):
     """A too-small in-plane FOV folds anatomy over (wraparound); the phase-
     oversample toggle suppresses it back to a clean crop."""

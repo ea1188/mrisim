@@ -13,6 +13,12 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Prescription readout + warnings in FOV planning (desktop).** The planning
+  controls now show a live summary of the prescription — number of slices,
+  thickness, gap, through-plane coverage, and the in-plane FOV in both % and mm —
+  with amber warnings when the slab runs past the volume edge, leaves through-plane
+  gaps (may miss small lesions), or prescribes a phase FOV smaller than the anatomy
+  (wraparound). Makes the consequences of a prescription legible at a glance.
 - **FOV phase wraparound (aliasing) in planning — both editions.** Reducing the
   in-plane FOV used to simply *crop* the image; now a phase-FOV smaller than the
   anatomy **folds over** to the opposite side — the real wraparound artifact, and
