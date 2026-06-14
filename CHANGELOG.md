@@ -13,6 +13,12 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Drag the saturation band on the browser localizer.** The browser previously
+  only had sliders for the sat band; now it's drawn on the acquired-plane panel as a
+  tinted strip you can **drag to move** and **grab an end handle to angle** — parity
+  with the desktop. `web_adapter.render_scout` draws the band and ships its panel-
+  local geometry to the front-end; `app.js` hit-tests and drags it (the angle math
+  undoes the panel's display aspect so it tracks the cursor).
 - **Clearer oblique-angle gizmo + angle snapping (desktop).** The FOV-planning
   localizer now draws a rotation **pivot**, an **arc** sweeping to the current oblique
   angle, and a live **tilt° / rot°** readout, so the centre and amount of angulation

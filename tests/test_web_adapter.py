@@ -328,6 +328,27 @@ def test_scout_acq_panel_has_fov_box():
     assert 0.4 < fb[2] < 0.8 and 0.4 < fb[3] < 0.8
 
 
+def test_scout_acq_panel_has_satband_geometry():
+    """With a saturation band on, the acquired-plane panel reports its draggable
+    band geometry (centre, end handles, position range) — and nothing when off."""
+    wa.init()
+    out = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+         "inplane_fov_pct": 80, "satband_enabled": True, "satband_pos": 50,
+         "satband_width": 20, "satband_angle": 0,
+         "params": {"sequence": "Spin Echo", "slice_thickness": 5}})))
+    acq = [p for p in out["panels"] if p.get("role") == "acq"][0]
+    sb = acq["satband"]
+    for k in ("c", "e1", "e2", "half_t", "lo", "hi", "wh"):
+        assert k in sb, f"satband geometry missing {k}"
+    assert len(sb["c"]) == 2 and len(sb["wh"]) == 2
+    out2 = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+         "satband_enabled": False, "params": {"sequence": "Spin Echo"}})))
+    acq2 = [p for p in out2["panels"] if p.get("role") == "acq"][0]
+    assert "satband" not in acq2
+
+
 def test_fov_planning_crop_changes_main_image():
     """Turning on FOV planning with a reduced in-plane FOV crops the main image."""
     wa.init()
