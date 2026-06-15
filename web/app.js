@@ -1191,7 +1191,8 @@ function wireScout() {
       // Drag direction follows the band orientation (a horizontal band angles with
       // a vertical drag); *which* angle it sets is the panel's own DOF (p.angle),
       // so the two cross panels give independent tilt + rot — full double-oblique.
-      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90;
+      // Sign chosen so the plane angles the same way you drag (not the opposite).
+      const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
       if (p.angle === "tilt") planTilt = snapAngle(clampN(drag.tilt0 + d, -45, 45));
       else planRot = snapAngle(clampN(drag.rot0 + d, -45, 45));
     }
