@@ -165,7 +165,8 @@ class Simulator:
         self.satband_enabled: bool = False   # saturation band over the image
         self.satband_pos: float = 50.0       # band centre, % of through-image extent
         self.satband_width: float = 15.0     # band width, % of through-image extent
-        self.satband_angle: float = 0.0      # band tilt, degrees (0 = horizontal)
+        self.satband_angle: float = 0.0      # in-plane tilt (acq panel), degrees
+        self.satband_angle2: float = 0.0     # cross-plane tilt (oblique slab), degrees
 
         # Caches / outputs
         self._b0_cache: tuple | None = None
@@ -242,11 +243,18 @@ class Simulator:
             center = self._compute_slab_center(orient, sl_idx)
             center[cfg["through_axis"]] = float(sl_idx)
             max_dim = max(vol.shape)
-            ph = oblique_plane(vol, row_vec, col_vec, center,
-                               shape=(max_dim, max_dim), order=0)
-            return self._apply_sat_band(ph) if volume is None else ph
+            # (Sat band + oblique acquisition is a rare combo; the slab assumes the
+            # orthogonal get_slice geometry, so it isn't applied on the oblique path.)
+            return oblique_plane(vol, row_vec, col_vec, center,
+                                 shape=(max_dim, max_dim), order=0)
 
         ph = get_slice(vol, orient, sl_idx)
+        # Saturation band: a 3-D slab nulled on the raw slice (only the main
+        # anatomy), so its out-of-plane tilt shifts the band across slices the way
+        # a real sat band does. Applied before FOV transform/crop so the band is
+        # fixed in the patient and the FOV simply views part of it.
+        if volume is None:
+            ph = self._apply_sat_band(orient, sl_idx, vol.shape, ph)
         # Field of view: magnify + wraparound when smaller than the object,
         # shrink + empty surround when larger (sg.fov_transform).
         fov_ratio = float(params.get("FOV", 240.0)) / self.native_fov
@@ -255,15 +263,21 @@ class Simulator:
         if self.fov_planning and self.inplane_fov_pct < 100:
             ph = sg.fov_crop(orient, ph, self.inplane_fov_pct / 100.0, self.inplane_off,
                              wrap=not self.no_phase_wrap, phase_swap=self.pe_swap)
-        # Saturation band — null a strip of the main anatomy (not companion volumes).
-        return self._apply_sat_band(ph) if volume is None else ph
+        return ph
 
-    def _apply_sat_band(self, slice2d: np.ndarray) -> np.ndarray:
-        """Null a saturation band over the slice if one is prescribed (planning)."""
+    def _apply_sat_band(self, orient: str, sl_idx: int,
+                        vol_shape: tuple, slice2d: np.ndarray) -> np.ndarray:
+        """Null the prescribed saturation slab on the raw slice (planning only)."""
         if not (self.fov_planning and self.satband_enabled):
             return slice2d
-        return sg.apply_sat_band(slice2d, self.satband_pos / 100.0,
-                                 self.satband_width / 100.0, self.satband_angle)
+        from oblique import sat_band_normal
+        normal = sat_band_normal(orient, self.satband_angle, self.satband_angle2)
+        through, rowax, _colax = sg._SLICE_AXES[orient]
+        center = np.array([vol_shape[0] / 2.0, vol_shape[1] / 2.0, vol_shape[2] / 2.0])
+        center[through] = float(sl_idx)
+        center[rowax] = self.satband_pos / 100.0 * vol_shape[rowax]
+        half_w = max(0.5, self.satband_width / 100.0 * vol_shape[rowax] / 2.0)
+        return sg.apply_sat_slab(slice2d, orient, sl_idx, vol_shape, center, normal, half_w)
 
     # --- B0 field -----------------------------------------------------------
     def _b0_volume(self, field_strength_T: float) -> np.ndarray:

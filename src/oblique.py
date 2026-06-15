@@ -98,6 +98,27 @@ def plane_from_angles(
             c / np.linalg.norm(c))
 
 
+def sat_band_normal(base: str = "axial", angle_acq_deg: float = 0.0,
+                    angle_cross_deg: float = 0.0) -> np.ndarray:
+    """Unit normal (Z, Y, X) of a saturation-band slab for acquisition ``base``.
+
+    A sat band's default normal is the **in-plane row axis** — the axis it nulls,
+    so the default band is a strip across the acquired image. ``angle_acq`` rotates
+    that normal about the slice-normal (through axis): the in-plane tilt seen on the
+    acquired-plane localizer. ``angle_cross`` rotates it about the in-plane column
+    axis: the out-of-plane tilt seen on the cross plane — the extra degree of
+    freedom that makes the band a true oblique slab (like positioning one on a
+    scanner). Both zero → the normal is the row axis (today's axis-aligned band).
+    """
+    n0, r0, c0 = [v.copy() for v in _BASE_FRAMES[base]]
+    n = r0.copy()
+    if angle_acq_deg:
+        n = _rot_matrix(n0, np.radians(angle_acq_deg)) @ n
+    if angle_cross_deg:
+        n = _rot_matrix(c0, np.radians(angle_cross_deg)) @ n
+    return n / np.linalg.norm(n)
+
+
 # ---------------------------------------------------------------------------
 # Direct plane sampler
 # ---------------------------------------------------------------------------
