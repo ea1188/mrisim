@@ -1118,11 +1118,16 @@ function cursorFor(mode) {
   }[mode] || "crosshair";
 }
 
-// Hit-test the saturation band on the acquired panel: 'satangle' near an end
-// handle, 'satmove' inside the band body, else null. loc is panel-local (0..1).
+// Hit-test the saturation band: on the acquired panel 'satangle' near an end
+// handle / 'satmove' inside the body; on a cross panel 'satmove' on its strip.
+// loc is panel-local (0..1).
 function satbandHit(p, loc) {
   const sb = p.satband;
   if (!sb) return null;
+  if (sb.cross_axis) {                 // cross panel: slide the strip to reposition
+    const pos = sb.cross_axis === "x" ? loc.px : loc.py;
+    return Math.abs(pos - sb.c) <= sb.half + 0.03 ? "satmove" : null;
+  }
   const dist = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]);
   if (dist(sb.e1) < 0.05 || dist(sb.e2) < 0.05) return "satangle";
   let dx = sb.e2[0] - sb.c[0], dy = sb.e2[1] - sb.c[1];
@@ -1144,9 +1149,9 @@ function wireScout() {
   const start = (f) => {
     const p = panelAt(f); if (!p) return null;
     const loc = panelLocal(p, f);
+    const sm = satbandHit(p, loc);            // sat band is grabbable on any panel it's on
+    if (sm) return { mode: sm, p };
     if (p.role === "acq") {
-      const sm = satbandHit(p, loc);          // the band sits inside the FOV box → first
-      if (sm) return { mode: sm, p };
       const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
       const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1),
                             Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
@@ -1177,7 +1182,8 @@ function wireScout() {
       $("ipfov").value = pct; $("ipfov-val").value = pct;
     } else if (drag.mode === "satmove") {            // slide the saturation band
       const sb = drag.p.satband;
-      let pos = (loc.py - sb.lo) / (sb.hi - sb.lo) * 100;
+      const v = sb.cross_axis ? (sb.cross_axis === "x" ? loc.px : loc.py) : loc.py;
+      let pos = (v - sb.lo) / (sb.hi - sb.lo) * 100;
       pos = clampN(Math.round(pos / 5) * 5, 0, 100);
       $("satpos").value = pos; $("satpos-val").value = pos;
     } else if (drag.mode === "satangle") {           // angle the saturation band

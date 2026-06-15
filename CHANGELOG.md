@@ -12,6 +12,11 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Move the saturation band from the cross plane too (browser).** The cross-panel
+  band (the one drawn on whichever localizer view contains the band's axis) is now
+  draggable to reposition it, not just the acquired-plane strip.
+
 ### Fixed
 - **Browser localizer: oblique angle now follows the drag direction** (it angled the
   opposite way before).
