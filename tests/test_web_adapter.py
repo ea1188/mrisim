@@ -367,6 +367,20 @@ def test_scout_cross_panel_satband_is_draggable():
         assert k in sb, f"cross-panel satband missing {k}"
 
 
+def test_satband_cross_angle_makes_an_oblique_slab():
+    """The sat band's cross-plane angle is a true 3-D slab: it changes the
+    saturated main image (an oblique cut is wider) and the localizer still renders."""
+    wa.init()
+    base = {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+            "fov_planning": True, "satband_enabled": True, "satband_pos": 50,
+            "satband_width": 20, "satband_angle": 0, "params": {"sequence": "Spin Echo"}}
+    flat = wa.render({**base, "satband_angle2": 0})["image"]
+    tilt = wa.render({**base, "satband_angle2": 40})["image"]
+    assert flat != tilt, "cross-plane angle should change the saturated slab"
+    out = json.loads(wa.render_scout_json(json.dumps({**base, "satband_angle2": 40})))
+    assert len(out["panels"]) == 3 and out["scout"]
+
+
 def test_oblique_scout_renders_with_angle_gizmo():
     """The localizer renders cleanly with a double-oblique prescription (the
     on-image angle gizmo / labels draw without error)."""

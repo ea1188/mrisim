@@ -173,7 +173,7 @@ async function applyState(st) {
   if (st.field) $("field").value = st.field;
   const sv = (key) => { if (st[key] !== undefined && st[key] !== null) { $(key).value = st[key]; const o = $(key + "-val"); if (o) o.value = $(key).value; updateSliderAria(key); } };
   ["slice", "tr", "te", "ti", "fa", "matrix", "bw", "nex", "thick", "bval", "etl", "np",
-   "nslices", "sgap", "ipfov", "satpos", "satwidth", "satangle", "accel", "pv"].forEach(sv);
+   "nslices", "sgap", "ipfov", "satpos", "satwidth", "satangle", "satangle2", "accel", "pv"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
    "b0mapshow", "gfactorshow", "mathshow", "labelanat", "curveshow",
    "motion", "chemshift", "suscept", "nowrap", "peswap", "satband"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
@@ -638,7 +638,7 @@ function buildControls(info) {
   $("nowrap").addEventListener("change", render);   // toggle phase wraparound on the main image
   $("peswap").addEventListener("change", render);   // swap the phase-encode (wrap) direction
   $("satband").addEventListener("change", render);  // toggle the saturation band
-  ["satpos", "satwidth", "satangle"].forEach((id) =>
+  ["satpos", "satwidth", "satangle", "satangle2"].forEach((id) =>
     $(id).addEventListener("input", () => { if (document.activeElement !== $(id + "-val")) $(id + "-val").value = $(id).value; updateSliderAria(id); schedule(); }));
   // Signal curve: hide/show the panel, and switch what the curve plots (the engine
   // already supports several modes; re-render to redraw it).
@@ -828,6 +828,7 @@ function collectPayload() {
     out.satband_pos = +$("satpos").value;
     out.satband_width = +$("satwidth").value;
     out.satband_angle = +$("satangle").value;
+    out.satband_angle2 = +$("satangle2").value;
     out.tilt = planTilt; out.rot = planRot;
   }
   return out;
@@ -1409,7 +1410,7 @@ async function render() {
         params: p.params, inplane_fov_pct: p.inplane_fov_pct ?? 100,
         inplane_off: planOff, tilt: planTilt, rot: planRot,
         satband_enabled: p.satband_enabled, satband_pos: p.satband_pos,
-        satband_width: p.satband_width, satband_angle: p.satband_angle,
+        satband_width: p.satband_width, satband_angle: p.satband_angle, satband_angle2: p.satband_angle2,
       });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];

@@ -13,6 +13,15 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Oblique-slab saturation band — angle it out of plane (both editions, browser
+  control).** The sat band is now a true 3-D slab, like positioning one on a
+  scanner: a new **cross-angle** rotates it out of the acquisition plane, so it
+  tilts on the cross-plane localizer and saturates as a slab (an oblique cut reads
+  wider on the slice and the band shifts across slices). The shared engine builds
+  the slab normal from the two angles (`oblique.sat_band_normal`) and nulls it
+  (`scan_geometry.apply_sat_slab`); the browser localizer draws it via the same
+  `scout_band` projection the slice uses, and a **Sat band cross-angle** control
+  sets it. Backward-compatible at cross-angle 0 (today's in-plane strip).
 - **Move the saturation band from the cross plane too (browser).** The cross-panel
   band (the one drawn on whichever localizer view contains the band's axis) is now
   draggable to reposition it, not just the acquired-plane strip.

@@ -307,6 +307,38 @@ def apply_sat_band(slice2d: np.ndarray, pos_frac: float, width_frac: float,
     return out
 
 
+# Volume axes for each acquisition's get_slice output (matches phantom3d.get_slice):
+# (through axis = slice index, row axis, col axis). Sagittal cols are flipped Y.
+_SLICE_AXES = {"axial": (0, 1, 2), "coronal": (1, 0, 2), "sagittal": (2, 0, 1)}
+
+
+def apply_sat_slab(slice2d: np.ndarray, acq: str, sl_idx: int,
+                   vol_shape: tuple[int, int, int], center: np.ndarray,
+                   normal: np.ndarray, half_w: float, fill: float = 0.0) -> np.ndarray:
+    """Null a 3-D saturation slab on the (non-oblique) acquired slice.
+
+    ``center`` and ``normal`` are (Z, Y, X) in voxel space; ``slice2d`` is the
+    ``get_slice(vol, acq, sl_idx)`` output. Each pixel's signed perpendicular
+    distance to the slab's centre plane is ``normal · (pixel_voxel − center)``;
+    pixels within ``half_w`` of it are nulled. Because the slab is 3-D, an
+    out-of-acquisition-plane tilt shifts the band across slices — exactly how a
+    tilted sat band behaves on a scanner."""
+    h, w = slice2d.shape
+    rr = np.arange(h, dtype=float)[:, None]
+    cc = np.arange(w, dtype=float)[None, :]
+    nz, ny, nx = float(normal[0]), float(normal[1]), float(normal[2])
+    cz, cy, cx = float(center[0]), float(center[1]), float(center[2])
+    if acq == "axial":           # r=Y, c=X, through=Z
+        dist = nz * (sl_idx - cz) + ny * (rr - cy) + nx * (cc - cx)
+    elif acq == "coronal":       # r=Z, c=X, through=Y
+        dist = nz * (rr - cz) + ny * (sl_idx - cy) + nx * (cc - cx)
+    else:                        # sagittal: r=Z, c=flipped-Y, through=X
+        dist = nz * (rr - cz) + ny * ((vol_shape[1] - 1 - cc) - cy) + nx * (sl_idx - cx)
+    out = slice2d.copy()
+    out[np.abs(dist) <= half_w] = fill
+    return out
+
+
 def _fold_axis(arr: np.ndarray, axis: int, lo: int, hi: int) -> np.ndarray:
     """Phase-encode wraparound (aliasing) along ``axis``: anatomy outside the
     [lo, hi) FOV window folds back in periodically (period = window length), the

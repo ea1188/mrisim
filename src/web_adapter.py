@@ -285,6 +285,7 @@ class WebHost(CurvesMixin):
         s.satband_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0))
         s.satband_width = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0))
         s.satband_angle = float(np.clip(payload.get("satband_angle", 0.0), -90.0, 90.0))
+        s.satband_angle2 = float(np.clip(payload.get("satband_angle2", 0.0), -90.0, 90.0))
         s.tilt = float(np.clip(payload.get("tilt", 0.0), -45.0, 45.0))
         s.rot = float(np.clip(payload.get("rot", 0.0), -45.0, 45.0))
 
@@ -972,6 +973,23 @@ class WebHost(CurvesMixin):
                           n_slices=n_eff, thickness_mm=thick_mm, gap_mm=gap_mm,
                           voxel_size=(voxel_mm, voxel_mm, voxel_mm))
 
+        # Saturation band as a true oblique slab — its normal from the two angles,
+        # projected onto every scout the same way the slice band is, so the
+        # cross-plane tilt shows on the cross panel(s).
+        sat_band_proj = None
+        if sat_on:
+            from oblique import sat_band_normal
+            sat_angle2 = float(np.clip(payload.get("satband_angle2", 0.0), -90.0, 90.0))
+            sat_n = sat_band_normal(orient, math.degrees(sat_ang), sat_angle2)
+            through, rowax, colax = sg._SLICE_AXES[orient]
+            sat_c = [nz / 2.0, ny / 2.0, nx / 2.0]
+            sat_c[through] = float(sl)
+            sat_c[rowax] = sat_pos * vol.shape[rowax]
+            sat_thick_mm = max(1.0, sat_wf * vol.shape[rowax] * voxel_mm)
+            sat_band_proj = scout_band(vol.shape, sat_n, tuple(sat_c), n_slices=1,
+                                       thickness_mm=sat_thick_mm, gap_mm=0.0,
+                                       voxel_size=(voxel_mm, voxel_mm, voxel_mm))
+
         for ax, name in zip(self.scout_axes, names, strict=True):
             ax.clear(); ax.set_axis_off(); ax.set_facecolor(_C_CANVAS)
             bg = scouts[name]
@@ -1037,15 +1055,19 @@ class WebHost(CurvesMixin):
                     s = segs[mid]
                     ax.text(fc(s[2]), s[3], f"  {ang_val:+.0f}°", color="#7fb8ff",
                             fontsize=7, va="center", ha="left", fontweight="bold")
-                # The sat band's slab also shows here when this panel contains its
-                # axis — a shaded strip at the band's position (perpendicular to it).
-                if sat_on and sat_axis in (ra, ca):
-                    if sat_axis == ra:
-                        ax.axhspan(sat_center - sat_half, sat_center + sat_half,
-                                   color="#e6b35a", alpha=0.22, lw=0)
-                    else:
-                        a, b = fc(sat_center - sat_half), fc(sat_center + sat_half)
-                        ax.axvspan(min(a, b), max(a, b), color="#e6b35a", alpha=0.22, lw=0)
+                # The sat band slab projected onto this cross panel — tilted by its
+                # cross-plane angle (None where the slab doesn't cross this view).
+                if sat_on and sat_band_proj is not None:
+                    sov = sat_band_proj[name]
+                    se0, se1 = sov["edges"]
+                    if se0 and se1:
+                        ax.fill([fc(se0[0]), fc(se0[2]), fc(se1[2]), fc(se1[0])],
+                                [se0[1], se0[3], se1[3], se1[1]],
+                                color="#e6b35a", alpha=0.22, lw=0)
+                    for sseg in sov["slices"]:
+                        if sseg is not None:
+                            ax.plot([fc(sseg[0]), fc(sseg[2])], [sseg[1], sseg[3]],
+                                    color="#e6b35a", lw=1.4, alpha=0.9)
             ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)   # band can't expand the view
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
