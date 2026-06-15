@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Fixed
+- **Browser localizer: oblique angle now follows the drag direction** (it angled the
+  opposite way before).
+- **Saturation band now shows on the cross plane that contains its axis**, not only
+  the acquired-plane panel — so you can see where the band sits in the other
+  localizer views during FOV planning.
+
 ## [1.27.0] — 2026-06-14
 
 ### Added

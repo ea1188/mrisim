@@ -935,6 +935,14 @@ class WebHost(CurvesMixin):
         sat_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0)) / 100.0
         sat_wf = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0)) / 100.0
         sat_ang = math.radians(float(np.clip(payload.get("satband_angle", 0.0), -90.0, 90.0)))
+        # The sat band nulls the acquired image's row axis → it lives along this
+        # volume axis, so it also shows on whichever cross panel contains that axis.
+        sat_axis = self._PANEL_AXES[orient][0]
+        sat_center = sat_half = 0.0
+        if sat_on:
+            _fba = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
+            sat_center = _fba["y0"] + sat_pos * _fba["h"]
+            sat_half = max(0.5, sat_wf * _fba["h"] / 2.0)
         ctr = [nz // 2, ny // 2, nx // 2]
         ctr[acq_axis] = sl
         ctr[ip_axis] = int(np.clip(vol.shape[ip_axis] / 2.0 + ip_off, 0, vol.shape[ip_axis] - 1))
@@ -1029,6 +1037,15 @@ class WebHost(CurvesMixin):
                     s = segs[mid]
                     ax.text(fc(s[2]), s[3], f"  {ang_val:+.0f}°", color="#7fb8ff",
                             fontsize=7, va="center", ha="left", fontweight="bold")
+                # The sat band's slab also shows here when this panel contains its
+                # axis — a shaded strip at the band's position (perpendicular to it).
+                if sat_on and sat_axis in (ra, ca):
+                    if sat_axis == ra:
+                        ax.axhspan(sat_center - sat_half, sat_center + sat_half,
+                                   color="#e6b35a", alpha=0.22, lw=0)
+                    else:
+                        a, b = fc(sat_center - sat_half), fc(sat_center + sat_half)
+                        ax.axvspan(min(a, b), max(a, b), color="#e6b35a", alpha=0.22, lw=0)
             ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)   # band can't expand the view
             ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
         self.scout_fig.subplots_adjust(left=0.01, right=0.99, top=0.9, bottom=0.02, wspace=0.04)
