@@ -1091,6 +1091,22 @@ class WebHost(CurvesMixin):
                         "hi": 1.0 - (fb["y0"] + fb["h"]) / H,
                         "wh": [int(W), int(H)],
                     }
+            # Cross panel that contains the band's axis: a draggable (move) strip.
+            if sat_on and entry.get("role") == "cross" and sat_axis in (ra, ca):
+                Hc, Wc = scouts[name].shape
+                if sat_axis == ra:                       # horizontal band → drag in y
+                    entry["satband"] = {
+                        "cross_axis": "y", "half": sat_half / Hc,
+                        "lo": 1.0 - _fba["y0"] / Hc,
+                        "hi": 1.0 - (_fba["y0"] + _fba["h"]) / Hc,
+                        "c": 1.0 - sat_center / Hc}
+                else:                                    # vertical band → drag in x
+                    fcc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
+                    entry["satband"] = {
+                        "cross_axis": "x", "half": sat_half / Wc,
+                        "lo": fcc(_fba["y0"]) / Wc,
+                        "hi": fcc(_fba["y0"] + _fba["h"]) / Wc,
+                        "c": fcc(sat_center) / Wc}
             panels.append(entry)
         self._scout_panels = panels
         return _png_b64(self.scout_fig)

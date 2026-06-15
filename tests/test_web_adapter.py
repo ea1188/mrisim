@@ -349,6 +349,24 @@ def test_scout_acq_panel_has_satband_geometry():
     assert "satband" not in acq2
 
 
+def test_scout_cross_panel_satband_is_draggable():
+    """The cross panel that contains the band's axis reports a draggable strip
+    (so the band can be moved from that view too)."""
+    wa.init()
+    out = json.loads(wa.render_scout_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+         "inplane_fov_pct": 80, "satband_enabled": True, "satband_pos": 40,
+         "satband_width": 20, "satband_angle": 0,
+         "params": {"sequence": "Spin Echo", "slice_thickness": 5}})))
+    cross = [p for p in out["panels"]
+             if p.get("role") == "cross" and p.get("satband")]
+    assert len(cross) == 1, "exactly one cross panel should carry the band"
+    sb = cross[0]["satband"]
+    assert sb["cross_axis"] in ("x", "y")
+    for k in ("lo", "hi", "c", "half"):
+        assert k in sb, f"cross-panel satband missing {k}"
+
+
 def test_oblique_scout_renders_with_angle_gizmo():
     """The localizer renders cleanly with a double-oblique prescription (the
     on-image angle gizmo / labels draw without error)."""
