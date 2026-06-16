@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Fixed
+- **Sat band no longer moves when you scroll slices** (both editions). The slab's
+  through-axis centre was tied to the viewed slice, so scrolling dragged the band on
+  the localizer; it's now fixed at the volume centre — a true fixed slab the imaging
+  slice samples, independent of which slice you scroll to.
+
 ## [1.28.0] — 2026-06-15
 
 ### Added

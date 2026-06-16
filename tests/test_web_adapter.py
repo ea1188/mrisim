@@ -370,6 +370,21 @@ def test_scout_cross_panel_satband_is_draggable():
         assert k in sb and len(sb[k]) == 2, f"cross-panel satband missing angle handle {k}"
 
 
+def test_satband_is_fixed_when_scrolling_slices():
+    """The sat band is a fixed slab: scrolling the imaging slice must not drag it on
+    the localizer (its drawn endpoints stay put even for a tilted band)."""
+    wa.init()
+    def ends(slice_idx):
+        out = json.loads(wa.render_scout_json(json.dumps(
+            {"region": "Brain", "orientation": "axial", "slice_idx": slice_idx,
+             "satband_enabled": True, "satband_pos": 50, "satband_width": 20,
+             "satband_angle": 0, "satband_angle2": 30,
+             "params": {"sequence": "Spin Echo", "slice_thickness": 5}})))
+        sb = [p for p in out["panels"] if p.get("role") == "cross" and p.get("satband")][0]["satband"]
+        return sb["e1"], sb["e2"]
+    assert ends(70) == ends(95), "scrolling slices should not move the sat band slab"
+
+
 def test_satband_cross_angle_makes_an_oblique_slab():
     """The sat band's cross-plane angle is a true 3-D slab: it changes the
     saturated main image (an oblique cut is wider) and the localizer still renders."""

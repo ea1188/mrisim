@@ -981,9 +981,10 @@ class WebHost(CurvesMixin):
             from oblique import sat_band_normal
             sat_angle2 = float(np.clip(payload.get("satband_angle2", 0.0), -90.0, 90.0))
             sat_n = sat_band_normal(orient, math.degrees(sat_ang), sat_angle2)
-            through, rowax, colax = sg._SLICE_AXES[orient]
+            _through, rowax, colax = sg._SLICE_AXES[orient]
+            # Through-axis centre fixed at the volume centre (not the viewed slice)
+            # so scrolling slices doesn't drag the band — it's a fixed slab.
             sat_c = [nz / 2.0, ny / 2.0, nx / 2.0]
-            sat_c[through] = float(sl)
             sat_c[rowax] = sat_pos * vol.shape[rowax]
             sat_thick_mm = max(1.0, sat_wf * vol.shape[rowax] * voxel_mm)
             sat_band_proj = scout_band(vol.shape, sat_n, tuple(sat_c), n_slices=1,
