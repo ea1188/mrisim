@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Fixed
+- **3D presets now cover the whole anatomy** (both editions). A 3-D preset (MPRAGE,
+  3D FLAIR, SPACE, CISS, …) hardcoded a 32-partition slab, so the reconstruction
+  reformats came out as thin slivers (and looked blown-up/wrong, especially on the
+  desktop). Applying a 3-D preset now acquires the full isotropic volume — the way
+  the 3-D toggle already did — so the MPR / MIP reformats are full-brain.
+
 ## [1.28.1] — 2026-06-16
 
 ### Fixed

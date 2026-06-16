@@ -2086,7 +2086,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # CISS, etc.) and reset to off otherwise, so switching away from a 3-D
         # preset clears it. The engine only honours 3-D for SE/GRE/IR/bSSFP.
         self.acq3d.set(bool(p.get("acq3d", False)))
-        if "n_partitions" in p:
+        if p.get("acq3d"):
+            # A 3-D acquisition covers the whole anatomy (an isotropic volume), so
+            # the reconstruction reformats are full — not a thin 32-partition slab.
+            self.n_partitions.set(int(min(256, self.get_max_slice_idx() + 1)))
+        elif "n_partitions" in p:
             self.n_partitions.set(int(p["n_partitions"]))
         self.desc_label.config(text=p.get("description", ""))
         self.on_sequence_change()
