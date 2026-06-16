@@ -339,9 +339,10 @@ def test_scout_acq_panel_has_satband_geometry():
          "params": {"sequence": "Spin Echo", "slice_thickness": 5}})))
     acq = [p for p in out["panels"] if p.get("role") == "acq"][0]
     sb = acq["satband"]
-    for k in ("c", "e1", "e2", "half_t", "lo", "hi", "wh"):
+    for k in ("c", "e1", "e2", "half_t", "p0", "p1", "wh"):
         assert k in sb, f"satband geometry missing {k}"
     assert len(sb["c"]) == 2 and len(sb["wh"]) == 2
+    assert sb["amode"] == "angle"   # the acquired panel sets the in-plane angle
     out2 = json.loads(wa.render_scout_json(json.dumps(
         {"region": "Brain", "orientation": "axial", "slice_idx": 80,
          "satband_enabled": False, "params": {"sequence": "Spin Echo"}})))
@@ -362,12 +363,11 @@ def test_scout_cross_panel_satband_is_draggable():
              if p.get("role") == "cross" and p.get("satband")]
     assert len(cross) == 1, "exactly one cross panel should carry the band"
     sb = cross[0]["satband"]
-    assert sb["cross_axis"] in ("x", "y")
-    for k in ("lo", "hi", "c", "half"):
-        assert k in sb, f"cross-panel satband missing {k}"
-    # Centre-line endpoints so the band can be grabbed to angle it on this view.
-    for k in ("e1", "e2", "cc"):
-        assert k in sb and len(sb[k]) == 2, f"cross-panel satband missing angle handle {k}"
+    assert sb["amode"] == "angle2"   # the cross panel sets the cross-plane angle
+    assert "half_t" in sb
+    # Travel line (move) + centre-line endpoints (grab to angle on this view).
+    for k in ("p0", "p1", "c", "e1", "e2", "cc"):
+        assert k in sb and len(sb[k]) == 2, f"cross-panel satband missing {k}"
 
 
 def test_satband_is_fixed_when_scrolling_slices():
@@ -383,6 +383,30 @@ def test_satband_is_fixed_when_scrolling_slices():
         sb = [p for p in out["panels"] if p.get("role") == "cross" and p.get("satband")][0]["satband"]
         return sb["e1"], sb["e2"]
     assert ends(70) == ends(95), "scrolling slices should not move the sat band slab"
+
+
+def test_satband_position_is_along_the_normal():
+    """Positioning the band moves it *along its own normal*, so an in-plane-angled
+    band repositions across the plane (e.g. A-P over the aorta on a sagittal scout),
+    not only along the old fixed row axis. Verified on the engine: an angled band's
+    nulled region shifts as position changes, and along the in-plane (col) axis."""
+    import numpy as np
+    import scan_geometry as sg
+    from oblique import sat_band_normal
+    shape = (60, 80, 70)               # Z, Y, X
+    o = "sagittal"
+    through, rowax, colax = sg._SLICE_AXES[o]
+    n = sat_band_normal(o, 90.0, 0.0)  # in-plane 90° → normal points along the col axis
+    sl = np.ones((shape[rowax], shape[colax]))
+    cols = []
+    for pos in (0.3, 0.7):
+        c = sg.sat_band_center(shape, n, pos)
+        hw = sg.sat_band_half_width(shape, n, 0.15)
+        out = sg.apply_sat_slab(sl.copy(), o, shape[through] // 2, shape, c, n, hw)
+        nulled = np.where(out.min(axis=0) < 0.5)[0]   # which columns are nulled
+        assert nulled.size, "the angled band should still null a strip"
+        cols.append(float(nulled.mean()))
+    assert abs(cols[0] - cols[1]) > 5, "position must move an angled band along its normal"
 
 
 def test_satband_cross_angle_makes_an_oblique_slab():

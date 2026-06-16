@@ -272,13 +272,14 @@ class Simulator:
             return slice2d
         from oblique import sat_band_normal
         normal = sat_band_normal(orient, self.satband_angle, self.satband_angle2)
-        _through, rowax, _colax = sg._SLICE_AXES[orient]
-        # The slab's through-axis centre stays fixed at the volume centre (not the
-        # current slice), so scrolling the imaging slice doesn't drag the sat band —
-        # it's a fixed slab in the patient, sampled by whichever slice you view.
-        center = np.array([vol_shape[0] / 2.0, vol_shape[1] / 2.0, vol_shape[2] / 2.0])
-        center[rowax] = self.satband_pos / 100.0 * vol_shape[rowax]
-        half_w = max(0.5, self.satband_width / 100.0 * vol_shape[rowax] / 2.0)
+        # Position the slab *along its own normal* (not a fixed axis), so the band
+        # slides perpendicular to itself whatever its orientation — e.g. angle it
+        # 90° on a sagittal scout and the position then moves it A-P over the aorta.
+        # At angle 0 the normal is the row axis, so this matches the old behaviour.
+        # The centre is otherwise the volume centre, so scrolling the imaging slice
+        # doesn't drag the band — it's a fixed slab the viewed slice samples.
+        center = sg.sat_band_center(vol_shape, normal, self.satband_pos / 100.0)
+        half_w = sg.sat_band_half_width(vol_shape, normal, self.satband_width / 100.0)
         return sg.apply_sat_slab(slice2d, orient, sl_idx, vol_shape, center, normal, half_w)
 
     # --- B0 field -----------------------------------------------------------

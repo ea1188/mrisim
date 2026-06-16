@@ -1124,20 +1124,16 @@ function cursorFor(mode) {
   }[mode] || "crosshair";
 }
 
-// Hit-test the saturation band: on the acquired panel 'satangle' near an end
-// handle / 'satmove' inside the body; on a cross panel 'satmove' on its strip.
-// loc is panel-local (0..1).
+// Hit-test the saturation band on whichever panel it's drawn: near an end handle →
+// angle it ('satangle' in-plane on the acquired panel, 'satangle2' cross-plane on the
+// cross panel — sb.amode says which); inside the slab body → 'satmove'. loc is
+// panel-local (0..1). All geometry is the projected slab, so it tracks any orientation.
 function satbandHit(p, loc) {
   const sb = p.satband;
-  if (!sb) return null;
-  if (sb.cross_axis) {                 // cross panel: grab an end to angle, body to move
-    if (sb.e1 && (Math.hypot(loc.px - sb.e1[0], loc.py - sb.e1[1]) < 0.06 ||
-                  Math.hypot(loc.px - sb.e2[0], loc.py - sb.e2[1]) < 0.06)) return "satangle2";
-    const pos = sb.cross_axis === "x" ? loc.px : loc.py;
-    return Math.abs(pos - sb.c) <= sb.half + 0.03 ? "satmove" : null;
-  }
+  if (!sb || !sb.e1) return null;
   const dist = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]);
-  if (dist(sb.e1) < 0.05 || dist(sb.e2) < 0.05) return "satangle";
+  if (dist(sb.e1) < 0.06 || dist(sb.e2) < 0.06)
+    return sb.amode === "angle2" ? "satangle2" : "satangle";
   let dx = sb.e2[0] - sb.c[0], dy = sb.e2[1] - sb.c[1];
   const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
   const vx = loc.px - sb.c[0], vy = loc.py - sb.c[1];
@@ -1193,11 +1189,11 @@ function wireScout() {
       const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
       const pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
       $("ipfov").value = pct; $("ipfov-val").value = pct;
-    } else if (drag.mode === "satmove") {            // slide the saturation band
-      const sb = drag.p.satband;
-      const v = sb.cross_axis ? (sb.cross_axis === "x" ? loc.px : loc.py) : loc.py;
-      let pos = (v - sb.lo) / (sb.hi - sb.lo) * 100;
-      pos = clampN(Math.round(pos / 5) * 5, 0, 100);
+    } else if (drag.mode === "satmove") {            // slide the band along its normal
+      const sb = drag.p.satband, a = sb.p0, b = sb.p1;   // p0→p1 = the travel line
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const t = ((loc.px - a[0]) * dx + (loc.py - a[1]) * dy) / ((dx * dx + dy * dy) || 1);
+      const pos = clampN(Math.round(t * 100 / 5) * 5, 0, 100);
       $("satpos").value = pos; $("satpos-val").value = pos;
     } else if (drag.mode === "satangle2") {          // swing the cross-panel band end
       const cc = drag.p.satband.cc;

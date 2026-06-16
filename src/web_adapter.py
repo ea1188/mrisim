@@ -936,14 +936,9 @@ class WebHost(CurvesMixin):
         sat_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0)) / 100.0
         sat_wf = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0)) / 100.0
         sat_ang = math.radians(float(np.clip(payload.get("satband_angle", 0.0), -90.0, 90.0)))
-        # The sat band nulls the acquired image's row axis → it lives along this
-        # volume axis, so it also shows on whichever cross panel contains that axis.
+        # The unangled sat band lives along the acquired image's row axis, so it also
+        # shows on whichever cross panel contains that axis (kept for cross-panel drag).
         sat_axis = self._PANEL_AXES[orient][0]
-        sat_center = sat_half = 0.0
-        if sat_on:
-            _fba = sg.inplane_box(orient, vol.shape, fov_frac, ip_off)
-            sat_center = _fba["y0"] + sat_pos * _fba["h"]
-            sat_half = max(0.5, sat_wf * _fba["h"] / 2.0)
         ctr = [nz // 2, ny // 2, nx // 2]
         ctr[acq_axis] = sl
         ctr[ip_axis] = int(np.clip(vol.shape[ip_axis] / 2.0 + ip_off, 0, vol.shape[ip_axis] - 1))
@@ -982,11 +977,19 @@ class WebHost(CurvesMixin):
             sat_angle2 = float(np.clip(payload.get("satband_angle2", 0.0), -90.0, 90.0))
             sat_n = sat_band_normal(orient, math.degrees(sat_ang), sat_angle2)
             _through, rowax, colax = sg._SLICE_AXES[orient]
-            # Through-axis centre fixed at the volume centre (not the viewed slice)
-            # so scrolling slices doesn't drag the band — it's a fixed slab.
-            sat_c = [nz / 2.0, ny / 2.0, nx / 2.0]
-            sat_c[rowax] = sat_pos * vol.shape[rowax]
-            sat_thick_mm = max(1.0, sat_wf * vol.shape[rowax] * voxel_mm)
+            # Position the slab *along its own normal* (not a fixed axis), so moving
+            # it slides perpendicular to itself whatever its orientation — angle it
+            # 90° and the position moves it across the plane (e.g. A-P over the aorta
+            # on a sagittal scout). At angle 0 the normal is the row axis, so this is
+            # the old behaviour. Through-centre stays at the volume centre, so
+            # scrolling slices doesn't drag the band — it's a fixed slab.
+            sat_c = sg.sat_band_center(vol.shape, sat_n, sat_pos)
+            # Centres at the two extremes of travel — the line a move-drag slides
+            # along (projected per panel below), so dragging maps to position-along-normal.
+            sat_c0 = sg.sat_band_center(vol.shape, sat_n, 0.0)
+            sat_c1 = sg.sat_band_center(vol.shape, sat_n, 1.0)
+            sat_thick_mm = max(1.0, sg.sat_band_half_width(
+                vol.shape, sat_n, sat_wf) * 2.0 * voxel_mm)
             sat_band_proj = scout_band(vol.shape, sat_n, tuple(sat_c), n_slices=1,
                                        thickness_mm=sat_thick_mm, gap_mm=0.0,
                                        voxel_size=(voxel_mm, voxel_mm, voxel_mm))
@@ -1014,22 +1017,25 @@ class WebHost(CurvesMixin):
                         [fb["y0"], fb["y0"], fb["y0"] + fb["h"], fb["y0"] + fb["h"]],
                         "s", color=amber, markersize=4, markeredgecolor="#2a323c",
                         markeredgewidth=0.5)
-                if sat_on:                               # draggable saturation band
-                    cx, cy = fb["x0"] + fb["w"] / 2.0, fb["y0"] + sat_pos * fb["h"]
-                    ht = max(1.5, sat_wf * fb["h"] / 2.0)
-                    ln = fb["w"] / 2.0 + 0.08 * fb["w"]
-                    dx_, dy_ = math.cos(sat_ang), math.sin(sat_ang)
-                    nx_, ny_ = -math.sin(sat_ang), math.cos(sat_ang)
-                    corners = [(cx + sx * ln * dx_ + sy * ht * nx_,
-                                cy + sx * ln * dy_ + sy * ht * ny_)
-                               for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
-                    ax.add_patch(Polygon(corners, closed=True, facecolor="#e6b35a",
-                                         alpha=0.30, edgecolor="#e6b35a", linewidth=1.0))
-                    ax.plot([cx - ln * dx_, cx + ln * dx_], [cy - ln * dy_, cy + ln * dy_],
-                            "s", color="#ff7733", markersize=5, markeredgecolor="white",
-                            markeredgewidth=0.6)
-                    ax.text(cx, cy, "SAT", color="#3a2a10", fontsize=6.5, ha="center",
-                            va="center", fontweight="bold")
+                if sat_on and sat_band_proj is not None:  # draggable saturation slab
+                    sov = sat_band_proj[name]              # band projected on the plane
+                    se0, se1 = sov["edges"]
+                    if se0 and se1:                        # tinted slab footprint
+                        ax.add_patch(Polygon(
+                            [(fc(se0[0]), se0[1]), (fc(se0[2]), se0[3]),
+                             (fc(se1[2]), se1[3]), (fc(se1[0]), se1[1])],
+                            closed=True, facecolor="#e6b35a", alpha=0.30,
+                            edgecolor="#e6b35a", linewidth=1.0))
+                    sseg = (sov["slices"] or [None])[0]
+                    if sseg is not None:                   # centre-line + end handles
+                        ax.plot([fc(sseg[0]), fc(sseg[2])], [sseg[1], sseg[3]],
+                                color="#e6b35a", lw=1.0, alpha=0.7)
+                        ax.plot([fc(sseg[0]), fc(sseg[2])], [sseg[1], sseg[3]], "s",
+                                color="#ff7733", markersize=5, markeredgecolor="white",
+                                markeredgewidth=0.6)
+                        ax.text((fc(sseg[0]) + fc(sseg[2])) / 2.0,
+                                (sseg[1] + sseg[3]) / 2.0, "SAT", color="#3a2a10",
+                                fontsize=6.5, ha="center", va="center", fontweight="bold")
                 for spn in ax.spines.values():
                     spn.set_visible(True); spn.set_color("#2a323c"); spn.set_linewidth(1.2)
                 ax.set_axis_on(); ax.set_xticks([]); ax.set_yticks([])
@@ -1077,6 +1083,35 @@ class WebHost(CurvesMixin):
         # plus the FOV-box rect (image fraction) on the acquired-plane panel so it
         # can be dragged. box = [left, top, right, bottom] in figure fraction.
         panels = []
+
+        def _satgeom(pname: str, pra: int, pca: int, Wp: int, Hp: int, amode: str) -> dict:
+            """Panel-local sat-band drag geometry, all derived from the projected slab
+            so the handles track the engine's position-along-normal exactly. ``p0``/``p1``
+            are the band centre at the two ends of travel — the line a move-drag slides
+            along; ``e1``/``e2`` the projected centre-line ends (grab to angle). ``amode``
+            = which angle the end-handles set ('angle' in-plane, 'angle2' cross-plane)."""
+            fcx = (lambda v: ny - 1 - v) if pname == "sagittal" else (lambda v: v)
+            pf = lambda cv: [float(fcx(cv[pca]) / Wp), float(1.0 - cv[pra] / Hp)]
+            g: dict = {"p0": pf(sat_c0), "p1": pf(sat_c1),
+                       "wh": [int(Wp), int(Hp)], "amode": amode}
+            sov = (sat_band_proj or {}).get(pname, {})
+            seg = (sov.get("slices") or [None])[0]
+            if seg is not None:
+                e1 = [float(fcx(seg[0]) / Wp), float(1.0 - seg[1] / Hp)]
+                e2 = [float(fcx(seg[2]) / Wp), float(1.0 - seg[3] / Hp)]
+                g["e1"], g["e2"] = e1, e2
+                g["c"] = [(e1[0] + e2[0]) / 2.0, (e1[1] + e2[1]) / 2.0]
+                if amode == "angle2":
+                    g["cc"] = g["c"]
+            ed = sov.get("edges") or (None, None)
+            if ed[0] and ed[1]:
+                m0 = (fcx((ed[0][0] + ed[0][2]) / 2) / Wp, 1.0 - (ed[0][1] + ed[0][3]) / 2 / Hp)
+                m1 = (fcx((ed[1][0] + ed[1][2]) / 2) / Wp, 1.0 - (ed[1][1] + ed[1][3]) / 2 / Hp)
+                g["half_t"] = math.hypot(m1[0] - m0[0], m1[1] - m0[1]) / 2.0 + 0.012
+            else:
+                g["half_t"] = 0.04
+            return g
+
         for ax, name in zip(self.scout_axes, names, strict=True):
             ra, ca = self._PANEL_AXES[name]
             pos = ax.get_position()
@@ -1100,45 +1135,17 @@ class WebHost(CurvesMixin):
                              ip_dir=ip_dir, ip_sign=ip_sign,
                              fov_box=[fb["x0"] / W, 1.0 - (fb["y0"] + fb["h"]) / H,
                                       fb["w"] / W, fb["h"] / H])
-                if sat_on:                    # panel-local geometry of the sat band
-                    cxd = fb["x0"] + fb["w"] / 2.0
-                    cyd = fb["y0"] + sat_pos * fb["h"]
-                    lnd = fb["w"] / 2.0 + 0.08 * fb["w"]
-                    dxe, dye = math.cos(sat_ang), math.sin(sat_ang)
-                    entry["satband"] = {
-                        "c": [cxd / W, 1.0 - cyd / H],
-                        "e1": [(cxd - lnd * dxe) / W, 1.0 - (cyd - lnd * dye) / H],
-                        "e2": [(cxd + lnd * dxe) / W, 1.0 - (cyd + lnd * dye) / H],
-                        "half_t": max(1.5, sat_wf * fb["h"] / 2.0) / H,
-                        "lo": 1.0 - fb["y0"] / H,
-                        "hi": 1.0 - (fb["y0"] + fb["h"]) / H,
-                        "wh": [int(W), int(H)],
-                    }
-            # Cross panel that contains the band's axis: a draggable strip (move),
-            # plus the band's centre-line endpoints so it can be grabbed to angle.
+                if sat_on:                    # in-plane move + angle on the acquired panel
+                    entry["satband"] = _satgeom(name, ra, ca, W, H, "angle")
+            # Cross panel that shows the slab edge-on: move it + grab an end to set the
+            # cross-plane angle. Only when the slab actually cuts this panel as a line
+            # and the travel line isn't degenerate (band not parallel to the panel).
             if sat_on and entry.get("role") == "cross" and sat_axis in (ra, ca):
                 Hc, Wc = scouts[name].shape
-                fcc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
-                if sat_axis == ra:                       # horizontal band → drag in y
-                    entry["satband"] = {
-                        "cross_axis": "y", "half": sat_half / Hc,
-                        "lo": 1.0 - _fba["y0"] / Hc,
-                        "hi": 1.0 - (_fba["y0"] + _fba["h"]) / Hc,
-                        "c": 1.0 - sat_center / Hc}
-                else:                                    # vertical band → drag in x
-                    entry["satband"] = {
-                        "cross_axis": "x", "half": sat_half / Wc,
-                        "lo": fcc(_fba["y0"]) / Wc,
-                        "hi": fcc(_fba["y0"] + _fba["h"]) / Wc,
-                        "c": fcc(sat_center) / Wc}
-                segs = (sat_band_proj or {}).get(name, {}).get("slices") or []
-                seg0 = segs[0] if segs else None
-                if seg0 is not None:                     # endpoints → grab to angle
-                    e1 = [fcc(seg0[0]) / Wc, 1.0 - seg0[1] / Hc]
-                    e2 = [fcc(seg0[2]) / Wc, 1.0 - seg0[3] / Hc]
-                    entry["satband"]["e1"] = e1
-                    entry["satband"]["e2"] = e2
-                    entry["satband"]["cc"] = [(e1[0] + e2[0]) / 2.0, (e1[1] + e2[1]) / 2.0]
+                g = _satgeom(name, ra, ca, Wc, Hc, "angle2")
+                if "e1" in g and math.hypot(g["p1"][0] - g["p0"][0],
+                                            g["p1"][1] - g["p0"][1]) > 0.02:
+                    entry["satband"] = g
             panels.append(entry)
         self._scout_panels = panels
         return _png_b64(self.scout_fig)
