@@ -299,6 +299,28 @@ def test_satband_drag_on_scout_moves_and_angles(win):
     win.fov_planning.set(False); win.recalculate()
 
 
+def test_satband_cross_angle_parity(win):
+    """Desktop parity with the browser: the sat band cross-angle makes a true 3-D
+    oblique slab — setting it changes the saturated region (an oblique cut nulls
+    more), and the localizer still renders."""
+    import numpy as np
+    set_state(win, sequence="Spin Echo", region="Brain", orientation="axial")
+    win.fov_planning.set(True)
+    win.satband_enabled.set(True)
+    win.satband_pos.set(50); win.satband_width.set(20); win.satband_angle.set(0)
+    win.satband_angle2.set(0); win.recalculate()
+    flat = win.sim._apply_sat_band(
+        "axial", win.slice_idx.get(), win.phantom_3d.shape, np.ones((181, 217)))
+    win.satband_angle2.set(45); win.recalculate()
+    obl = win.sim._apply_sat_band(
+        "axial", win.slice_idx.get(), win.phantom_3d.shape, np.ones((181, 217)))
+    assert int((flat < 0.5).sum()) != int((obl < 0.5).sum()), \
+        "the cross-angle should change the saturated slab"
+    assert win._scout_satband_info is not None, "localizer still draws the band"
+    win.satband_enabled.set(False); win.satband_angle2.set(0)
+    win.fov_planning.set(False); win.recalculate()
+
+
 def test_scout_hover_cursor_feedback(win):
     """Hovering the localizer shows what each region does: move over the box,
     resize over an edge — so the affordances are discoverable."""
