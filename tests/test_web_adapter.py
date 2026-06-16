@@ -401,12 +401,30 @@ def test_satband_position_is_along_the_normal():
     cols = []
     for pos in (0.3, 0.7):
         c = sg.sat_band_center(shape, n, pos)
-        hw = sg.sat_band_half_width(shape, n, 0.15)
+        hw = sg.sat_band_half_width(shape[rowax], 0.15)
         out = sg.apply_sat_slab(sl.copy(), o, shape[through] // 2, shape, c, n, hw)
         nulled = np.where(out.min(axis=0) < 0.5)[0]   # which columns are nulled
         assert nulled.size, "the angled band should still null a strip"
         cols.append(float(nulled.mean()))
     assert abs(cols[0] - cols[1]) > 5, "position must move an angled band along its normal"
+
+
+def test_satband_thickness_is_angle_independent():
+    """A real sat band keeps its thickness as you rotate it: the half-width is a fixed
+    reference extent (the row axis), not the angle-dependent along-normal extent."""
+    import scan_geometry as sg
+    from oblique import sat_band_normal
+    shape = (181, 217, 181)
+    o = "axial"
+    rowax = sg._SLICE_AXES[o][1]
+    widths = {
+        ang: sg.sat_band_half_width(shape[rowax], 0.15)   # ref does not depend on angle
+        for ang in (0, 45, 90)
+    }
+    assert len(set(widths.values())) == 1, "thickness must not change with band angle"
+    # and it matches the historical row-axis reference (backward-compatible at angle 0)
+    n0 = sat_band_normal(o, 0.0, 0.0)
+    assert n0[rowax] != 0, "at angle 0 the normal is the row axis"
 
 
 def test_satband_cross_angle_makes_an_oblique_slab():

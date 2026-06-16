@@ -327,9 +327,12 @@ def sat_band_center(vol_shape: tuple, normal: np.ndarray, pos_frac: float) -> np
     return c + (pos_frac - 0.5) * ext * np.asarray(normal, dtype=float)
 
 
-def sat_band_half_width(vol_shape: tuple, normal: np.ndarray, width_frac: float) -> float:
-    """Half the slab thickness in voxels: ``width_frac`` of the extent along the normal."""
-    return max(0.5, width_frac * sat_band_extent(vol_shape, normal) / 2.0)
+def sat_band_half_width(ref_extent: float, width_frac: float) -> float:
+    """Half the slab thickness in voxels: ``width_frac`` of a fixed reference extent
+    (the acquired plane's row-axis length). Independent of the band's angle — a real
+    sat band keeps its thickness as you rotate it, so only its *position* scales with
+    the along-normal extent (`sat_band_center`), not its thickness."""
+    return max(0.5, width_frac * ref_extent / 2.0)
 
 
 def apply_sat_slab(slice2d: np.ndarray, acq: str, sl_idx: int,

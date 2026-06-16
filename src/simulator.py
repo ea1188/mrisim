@@ -279,7 +279,8 @@ class Simulator:
         # The centre is otherwise the volume centre, so scrolling the imaging slice
         # doesn't drag the band — it's a fixed slab the viewed slice samples.
         center = sg.sat_band_center(vol_shape, normal, self.satband_pos / 100.0)
-        half_w = sg.sat_band_half_width(vol_shape, normal, self.satband_width / 100.0)
+        rowax = sg._SLICE_AXES[orient][1]   # fixed reference: thickness independent of angle
+        half_w = sg.sat_band_half_width(vol_shape[rowax], self.satband_width / 100.0)
         return sg.apply_sat_slab(slice2d, orient, sl_idx, vol_shape, center, normal, half_w)
 
     # --- B0 field -----------------------------------------------------------
