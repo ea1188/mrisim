@@ -1199,7 +1199,8 @@ function wireScout() {
       const a1 = Math.atan2(loc.py - cc[1], loc.px - cc[0]);
       let dd = (a1 - drag.prevA) * 180 / Math.PI;
       if (dd > 180) dd -= 360; else if (dd < -180) dd += 360;
-      drag.curAngle = clampN(drag.curAngle + dd, -90, 90);
+      // Negate so the band turns the way you pull (not the opposite).
+      drag.curAngle = clampN(drag.curAngle - dd, -90, 90);
       drag.prevA = a1;
       const v = Math.round(drag.curAngle / 5) * 5;
       $("satangle2").value = v; $("satangle2-val").value = v;
