@@ -1114,7 +1114,7 @@ function bandLocal(p) {                // panel-local position of the slice band
 // Map a localizer drag mode to a CSS cursor, so hovering shows what's grabbable.
 function cursorFor(mode) {
   return {
-    satmove: "move", satangle: "grab", recenter: "move",
+    satmove: "move", satangle: "grab", satangle2: "grab", recenter: "move",
     resize: "nwse-resize", oblique: "grab", slice: "ns-resize",
   }[mode] || "crosshair";
 }
@@ -1125,7 +1125,9 @@ function cursorFor(mode) {
 function satbandHit(p, loc) {
   const sb = p.satband;
   if (!sb) return null;
-  if (sb.cross_axis) {                 // cross panel: slide the strip to reposition
+  if (sb.cross_axis) {                 // cross panel: grab an end to angle, body to move
+    if (sb.e1 && (Math.hypot(loc.px - sb.e1[0], loc.py - sb.e1[1]) < 0.06 ||
+                  Math.hypot(loc.px - sb.e2[0], loc.py - sb.e2[1]) < 0.06)) return "satangle2";
     const pos = sb.cross_axis === "x" ? loc.px : loc.py;
     return Math.abs(pos - sb.c) <= sb.half + 0.03 ? "satmove" : null;
   }
@@ -1151,6 +1153,11 @@ function wireScout() {
     const p = panelAt(f); if (!p) return null;
     const loc = panelLocal(p, f);
     const sm = satbandHit(p, loc);            // sat band is grabbable on any panel it's on
+    if (sm === "satangle2") {                 // grab a cross-panel end → swing to angle
+      const cc = p.satband.cc;
+      return { mode: sm, p, prevA: Math.atan2(loc.py - cc[1], loc.px - cc[0]),
+               curAngle: +$("satangle2").value };
+    }
     if (sm) return { mode: sm, p };
     if (p.role === "acq") {
       const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
@@ -1187,6 +1194,15 @@ function wireScout() {
       let pos = (v - sb.lo) / (sb.hi - sb.lo) * 100;
       pos = clampN(Math.round(pos / 5) * 5, 0, 100);
       $("satpos").value = pos; $("satpos-val").value = pos;
+    } else if (drag.mode === "satangle2") {          // swing the cross-panel band end
+      const cc = drag.p.satband.cc;
+      const a1 = Math.atan2(loc.py - cc[1], loc.px - cc[0]);
+      let dd = (a1 - drag.prevA) * 180 / Math.PI;
+      if (dd > 180) dd -= 360; else if (dd < -180) dd += 360;
+      drag.curAngle = clampN(drag.curAngle + dd, -90, 90);
+      drag.prevA = a1;
+      const v = Math.round(drag.curAngle / 5) * 5;
+      $("satangle2").value = v; $("satangle2-val").value = v;
     } else if (drag.mode === "satangle") {           // angle the saturation band
       const sb = drag.p.satband, W = sb.wh[0], H = sb.wh[1];
       // Undo the panel's display aspect to recover the true (data-space) angle.
@@ -1415,7 +1431,7 @@ async function render() {
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
       $("oblique-readout").textContent =
-        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag a cross-panel band to angle the plane; FOV box = resize/move; sat band = drag to move, end handle to angle; dbl-click = reset`;
+        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag a cross-panel band to angle the plane; FOV box = resize/move; sat band = drag to move, grab an end to angle (on any plane it shows); dbl-click = reset`;
     }
     if (reconActive()) await runRecon();   // keep the reconstruction live with the slab
     if (!compareMode) stateToHash();   // keep the URL shareable/current

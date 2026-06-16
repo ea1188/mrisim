@@ -365,6 +365,9 @@ def test_scout_cross_panel_satband_is_draggable():
     assert sb["cross_axis"] in ("x", "y")
     for k in ("lo", "hi", "c", "half"):
         assert k in sb, f"cross-panel satband missing {k}"
+    # Centre-line endpoints so the band can be grabbed to angle it on this view.
+    for k in ("e1", "e2", "cc"):
+        assert k in sb and len(sb[k]) == 2, f"cross-panel satband missing angle handle {k}"
 
 
 def test_satband_cross_angle_makes_an_oblique_slab():
