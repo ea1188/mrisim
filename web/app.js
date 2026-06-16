@@ -863,7 +863,12 @@ async function onPreset() {
   $("gd").checked = !!p.contrast_enabled;
   $("flow").checked = !!p.flow_enabled;
   $("acq3d").checked = !!p.acq3d;
-  if (p.n_partitions) set("np", p.n_partitions);
+  if (p.acq3d) {                         // a 3-D acquisition covers the whole anatomy
+    syncSlabMax();                       // (isotropic volume → full reformats, not a
+    set("np", $("np").max);              //  thin 32-partition slab)
+  } else if (p.n_partitions) {
+    set("np", p.n_partitions);
+  }
   syncVisibility();
   applyingPreset = false;
   $("preset").value = name;           // keep the chosen preset shown
