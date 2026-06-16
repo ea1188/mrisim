@@ -296,11 +296,20 @@ class ScoutMixin:
         pos = self.satband_pos.get() / 100.0
         wf = self.satband_width.get() / 100.0
         ang = math.radians(self.satband_angle.get())
-        cx, cy = x0 + w / 2.0, y0 + pos * h
-        half_t = max(1.5, wf * h / 2.0)
-        ln = w / 2.0 + 0.08 * w
         d = (math.cos(ang), math.sin(ang))         # along the band
         n = (-math.sin(ang), math.cos(ang))        # band normal (thickness)
+        # Position the band *along its own normal* (not a fixed vertical), so an angled
+        # band slides perpendicular to itself — matching the engine's position-along-
+        # normal saturation. Travel spans the box extent along the normal; at angle 0
+        # (n = vertical) this reproduces the old cy = y0 + pos·h.
+        bcx, bcy = x0 + w / 2.0, y0 + h / 2.0
+        travel = abs(n[0]) * w + abs(n[1]) * h
+        p0 = (bcx - 0.5 * travel * n[0], bcy - 0.5 * travel * n[1])   # pos 0 / 100 → the
+        p1 = (bcx + 0.5 * travel * n[0], bcy + 0.5 * travel * n[1])   # move-drag travel line
+        cx = bcx + (pos - 0.5) * travel * n[0]
+        cy = bcy + (pos - 0.5) * travel * n[1]
+        half_t = max(1.5, wf * travel / 2.0)
+        ln = w / 2.0 + 0.08 * w
         corners = [(cx + sx * ln * d[0] + sy * half_t * n[0],
                     cy + sx * ln * d[1] + sy * half_t * n[1])
                    for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
@@ -314,7 +323,7 @@ class ScoutMixin:
         ax.text(cx, cy, "SAT", color="#3a2a10", fontsize=7, ha="center", va="center",
                 fontweight="bold")
         self._scout_satband_info = dict(cx=cx, cy=cy, d=d, n=n, ln=ln, half_t=half_t,
-                                        e1=e1, e2=e2, y0=y0, h=h)
+                                        e1=e1, e2=e2, y0=y0, h=h, p0=p0, p1=p1)
 
     # Which angle variable is controlled by dragging each panel role in oblique mode.
     # Derived from: rot_deg makes angled lines on primary panels; tilt_deg on secondary.
@@ -576,9 +585,11 @@ class ScoutMixin:
         if d.get("mode") in ("satmove", "satangle"):
             sb = self._scout_satband_info
             if sb is not None:
-                if d["mode"] == "satmove":     # drag the body → move the band (position)
-                    new_pos = (ey - sb["y0"]) / sb["h"] * 100.0
-                    self.satband_pos.set(int(round(float(np.clip(new_pos, 0, 100)))))
+                if d["mode"] == "satmove":     # drag the body → move along the normal
+                    p0, p1 = sb["p0"], sb["p1"]
+                    vx, vy = p1[0] - p0[0], p1[1] - p0[1]
+                    t = ((ex - p0[0]) * vx + (ey - p0[1]) * vy) / ((vx * vx + vy * vy) or 1.0)
+                    self.satband_pos.set(int(round(float(np.clip(t * 100.0, 0, 100)))))
                 else:                          # drag an end handle → angle the band
                     ang = math.degrees(math.atan2(ey - sb["cy"], ex - sb["cx"]))
                     if ang > 90:

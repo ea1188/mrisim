@@ -13,6 +13,15 @@ frozen.)
 ## [Unreleased]
 
 ### Fixed
+- **Saturation band now positions along its own normal** (both editions). Moving the
+  band used to slide it along a single fixed axis (the acquired image's row axis), so
+  on, say, a sagittal spine scout you could only shift it head–foot — there was no way
+  to put it anterior over the aorta. The band now slides **perpendicular to itself**
+  whatever its orientation, so angling it (e.g. 90° in-plane) and dragging repositions
+  it across the plane — the natural way you place a sat band on a scanner. The shared
+  engine (`scan_geometry.sat_band_center`) drives both the saturation and the localizer
+  drawing/drag, so they stay in lock-step. Backward-compatible at angle 0 (today's
+  axis-aligned strip).
 - **3D presets now cover the whole anatomy** (both editions). A 3-D preset (MPRAGE,
   3D FLAIR, SPACE, CISS, …) hardcoded a 32-partition slab, so the reconstruction
   reformats came out as thin slivers (and looked blown-up/wrong, especially on the

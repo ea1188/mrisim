@@ -312,6 +312,26 @@ def apply_sat_band(slice2d: np.ndarray, pos_frac: float, width_frac: float,
 _SLICE_AXES = {"axial": (0, 1, 2), "coronal": (1, 0, 2), "sagittal": (2, 0, 1)}
 
 
+def sat_band_extent(vol_shape: tuple, normal: np.ndarray) -> float:
+    """The volume's extent (voxels) projected onto the slab normal."""
+    return float(sum(abs(float(normal[i])) * vol_shape[i] for i in range(3)))
+
+
+def sat_band_center(vol_shape: tuple, normal: np.ndarray, pos_frac: float) -> np.ndarray:
+    """Slab centre (Z, Y, X): the volume centre offset **along the normal** by
+    (pos_frac − 0.5) of the volume's extent in that direction. So moving the
+    position slides the slab perpendicular to itself whatever its orientation —
+    unlike moving along a fixed axis, which only works for an unrotated band."""
+    c = np.array([vol_shape[0] / 2.0, vol_shape[1] / 2.0, vol_shape[2] / 2.0])
+    ext = sat_band_extent(vol_shape, normal)
+    return c + (pos_frac - 0.5) * ext * np.asarray(normal, dtype=float)
+
+
+def sat_band_half_width(vol_shape: tuple, normal: np.ndarray, width_frac: float) -> float:
+    """Half the slab thickness in voxels: ``width_frac`` of the extent along the normal."""
+    return max(0.5, width_frac * sat_band_extent(vol_shape, normal) / 2.0)
+
+
 def apply_sat_slab(slice2d: np.ndarray, acq: str, sl_idx: int,
                    vol_shape: tuple[int, int, int], center: np.ndarray,
                    normal: np.ndarray, half_w: float, fill: float = 0.0) -> np.ndarray:
