@@ -30,6 +30,10 @@ frozen.)
   engine (`scan_geometry.sat_band_center`) drives both the saturation and the localizer
   drawing/drag, so they stay in lock-step. Backward-compatible at angle 0 (today's
   axis-aligned strip).
+- **Saturation band thickness no longer changes when you angle it** (both editions).
+  A real sat band keeps its thickness as you rotate it; the slab half-width is now tied
+  to a fixed reference (the acquired plane's row axis) rather than the angle-dependent
+  along-normal extent, so only the band's *position* tracks the normal, not its width.
 - **3D presets now cover the whole anatomy** (both editions). A 3-D preset (MPRAGE,
   3D FLAIR, SPACE, CISS, …) hardcoded a 32-partition slab, so the reconstruction
   reformats came out as thin slivers (and looked blown-up/wrong, especially on the

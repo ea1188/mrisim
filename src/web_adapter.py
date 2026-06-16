@@ -989,7 +989,7 @@ class WebHost(CurvesMixin):
             sat_c0 = sg.sat_band_center(vol.shape, sat_n, 0.0)
             sat_c1 = sg.sat_band_center(vol.shape, sat_n, 1.0)
             sat_thick_mm = max(1.0, sg.sat_band_half_width(
-                vol.shape, sat_n, sat_wf) * 2.0 * voxel_mm)
+                vol.shape[rowax], sat_wf) * 2.0 * voxel_mm)
             sat_band_proj = scout_band(vol.shape, sat_n, tuple(sat_c), n_slices=1,
                                        thickness_mm=sat_thick_mm, gap_mm=0.0,
                                        voxel_size=(voxel_mm, voxel_mm, voxel_mm))
