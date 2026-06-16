@@ -1113,9 +1113,11 @@ class WebHost(CurvesMixin):
                         "hi": 1.0 - (fb["y0"] + fb["h"]) / H,
                         "wh": [int(W), int(H)],
                     }
-            # Cross panel that contains the band's axis: a draggable (move) strip.
+            # Cross panel that contains the band's axis: a draggable strip (move),
+            # plus the band's centre-line endpoints so it can be grabbed to angle.
             if sat_on and entry.get("role") == "cross" and sat_axis in (ra, ca):
                 Hc, Wc = scouts[name].shape
+                fcc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
                 if sat_axis == ra:                       # horizontal band → drag in y
                     entry["satband"] = {
                         "cross_axis": "y", "half": sat_half / Hc,
@@ -1123,12 +1125,19 @@ class WebHost(CurvesMixin):
                         "hi": 1.0 - (_fba["y0"] + _fba["h"]) / Hc,
                         "c": 1.0 - sat_center / Hc}
                 else:                                    # vertical band → drag in x
-                    fcc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
                     entry["satband"] = {
                         "cross_axis": "x", "half": sat_half / Wc,
                         "lo": fcc(_fba["y0"]) / Wc,
                         "hi": fcc(_fba["y0"] + _fba["h"]) / Wc,
                         "c": fcc(sat_center) / Wc}
+                segs = (sat_band_proj or {}).get(name, {}).get("slices") or []
+                seg0 = segs[0] if segs else None
+                if seg0 is not None:                     # endpoints → grab to angle
+                    e1 = [fcc(seg0[0]) / Wc, 1.0 - seg0[1] / Hc]
+                    e2 = [fcc(seg0[2]) / Wc, 1.0 - seg0[3] / Hc]
+                    entry["satband"]["e1"] = e1
+                    entry["satband"]["e2"] = e2
+                    entry["satband"]["cc"] = [(e1[0] + e2[0]) / 2.0, (e1[1] + e2[1]) / 2.0]
             panels.append(entry)
         self._scout_panels = panels
         return _png_b64(self.scout_fig)

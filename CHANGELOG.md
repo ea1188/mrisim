@@ -13,6 +13,10 @@ frozen.)
 ## [Unreleased]
 
 ### Added
+- **Drag to angle the saturation band on the cross plane (browser).** The
+  oblique-slab band can now be **grabbed by an end handle on the cross-plane
+  localizer and swung to angle it** (sets the cross-angle), in addition to the
+  slider — so you place and orient the slab right on the images, like a scanner.
 - **Oblique-slab saturation band — angle it out of plane (both editions, browser
   control).** The sat band is now a true 3-D slab, like positioning one on a
   scanner: a new **cross-angle** rotates it out of the acquisition plane, so it
