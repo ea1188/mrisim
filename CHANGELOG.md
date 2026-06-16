@@ -12,6 +12,14 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Saturation band cross-angle on the desktop** (browser parity). The desktop sat
+  band gained a **Sat band cross-angle** control, matching the browser, so it's a true
+  3-D oblique slab on both editions: the cross-angle rotates the band out of the
+  acquired plane and the shared engine nulls it as a slab (an oblique cut reads wider).
+  Closes the desktop-vs-browser gap for sat-band obliquity. (The localizer's cross-angle
+  *visualisation* and grab-to-angle on the cross panel remain to be ported.)
+
 ### Fixed
 - **Saturation band now positions along its own normal** (both editions). Moving the
   band used to slide it along a single fixed axis (the acquired image's row axis), so

@@ -358,6 +358,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.satband_pos = Var(50)        # band centre, % of image height
         self.satband_width = Var(15)      # band width, % of image height
         self.satband_angle = Var(0)       # band tilt, degrees (0 = horizontal)
+        self.satband_angle2 = Var(0)      # band cross-plane angle (out-of-plane slab tilt)
         self.prescription_preset = Var("(Custom)")   # quick geometry presets
         self.slice_tilt = Var(0.0)        # tilt angle in degrees (-45…+45)
         self.slice_rot  = Var(0.0)        # rotation angle in degrees (-45…+45)
@@ -1203,6 +1204,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(plan_l, "Sat band position (%)", self.satband_pos, 0, 100)
         self._slider(plan_l, "Sat band width (%)", self.satband_width, 0, 60)
         self._slider(plan_l, "Sat band angle (°)", self.satband_angle, -90, 90)
+        self._slider(plan_l, "Sat band cross-angle (°)", self.satband_angle2, -90, 90)
         self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
         self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
         _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
@@ -1588,6 +1590,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         s.satband_pos = float(self.satband_pos.get())
         s.satband_width = float(self.satband_width.get())
         s.satband_angle = float(self.satband_angle.get())
+        s.satband_angle2 = float(self.satband_angle2.get())
 
     def _simulate_single_slice(self, params: dict, orient: str, sl_idx: int) -> np.ndarray:
         self._sync_sim()
