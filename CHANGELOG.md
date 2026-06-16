@@ -13,6 +13,9 @@ frozen.)
 ## [Unreleased]
 
 ### Fixed
+- **Sat band angle now follows the drag direction** (browser). Grabbing the band's
+  end on the cross plane and swinging it rotated the band the opposite way; it now
+  turns the way you pull.
 - **Sat band no longer moves when you scroll slices** (both editions). The slab's
   through-axis centre was tied to the viewed slice, so scrolling dragged the band on
   the localizer; it's now fixed at the volume centre — a true fixed slab the imaging
