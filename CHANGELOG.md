@@ -10,7 +10,7 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
-## [Unreleased]
+## [1.29.0] — 2026-06-16
 
 ### Added
 - **Saturation band cross-angle on the desktop** (browser parity). The desktop sat
