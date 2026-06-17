@@ -20,6 +20,9 @@ frozen.)
   projection the browser uses — so an angled band visibly tilts on the panel it cuts.
   The drag handles (move along the normal, grab an end to angle in-plane) moved to the
   acquired-plane panel, matching the browser. Completes the desktop sat-band parity.
+- **Saturation band width now reads out in mm** (both editions). The width was a bare
+  percentage; the planning readout (desktop) and the control (browser) now also show the
+  band's physical thickness — e.g. `20% (≈53 mm)` — so the slider has a tangible meaning.
 
 ### Fixed
 - **Desktop sat-band marker now tracks the band at any angle.** The amber tint on the

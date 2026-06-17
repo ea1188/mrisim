@@ -834,3 +834,18 @@ def test_ms_pathology_paints_multiple_plaques():
     multi = ndimage.label(h._pathology_volume("ms")[z] == 23)[1]
     assert single == 1, f"single lesion should be one plaque, got {single}"
     assert multi >= 3, f"MS should paint several plaques, got {multi}"
+
+
+def test_scout_reports_satband_thickness_mm():
+    """The scout response carries the sat band thickness in mm (for the width readout)
+    — present and scaling with width when on, None when off."""
+    wa.init()
+    def mm(width, on=True):
+        out = json.loads(wa.render_scout_json(json.dumps(
+            {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+             "satband_enabled": on, "satband_pos": 50, "satband_width": width,
+             "params": {"sequence": "Spin Echo"}})))
+        return out["satband_mm"]
+    assert mm(0, on=False) is None
+    thin, wide = mm(10), mm(40)
+    assert thin and wide and wide > thin * 2.5, "thickness mm should scale with width %"

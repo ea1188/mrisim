@@ -339,6 +339,20 @@ def test_satband_cross_angle_parity(win):
     win.fov_planning.set(False); win.recalculate()
 
 
+def test_satband_width_mm_readout(win):
+    """The prescription readout shows the sat band thickness in mm (not just %), so the
+    width slider has a physical meaning — only when the band is on."""
+    set_state(win, sequence="Spin Echo", region="Brain", orientation="axial")
+    win.fov_planning.set(True)
+    win.satband_enabled.set(False); win._update_plan_readout(win.get_current_params())
+    assert "sat band" not in win.plan_readout.text()
+    win.satband_enabled.set(True); win.satband_width.set(20)
+    win._update_plan_readout(win.get_current_params())
+    assert "sat band 20% (≈" in win.plan_readout.text() and "mm)" in win.plan_readout.text()
+    win.satband_enabled.set(False)
+    win.fov_planning.set(False); win.recalculate()
+
+
 def test_satband_oblique_warning(win):
     """Tilting the slice silently drops the sat band (the slab assumes orthogonal
     geometry); the prescription readout must warn instead of failing silently."""
