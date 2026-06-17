@@ -37,6 +37,7 @@
         <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets); <b>hover</b> the image to read the tissue and its T1/T2/PD under the cursor. <i>On a touchscreen: drag with one finger to window/level, and use the <b>Slice</b> slider to scroll slices.</i></li>
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
         <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
+        <li><b>🩻 Protocol planning</b> — the <b>scanner-console workflow</b> (top-bar button): pick an exam, then <b>prescribe each sequence on the scout images</b> and acquire it, one after another, like a real console. Reports scan time + SNR, and you can drag/window-level/re-run the acquired series.</li>
         <li><b>Contrast map</b> — toggle the TR×TE map to see the whole contrast landscape for a tissue pair (bright = high contrast), with your current protocol marked — so you can see <i>where</i> contrast comes from, not just one curve.</li>
         <li><b>Show the math</b> — toggle it on, then hover a pixel to see the active sequence's signal equation with that tissue's T1/T2/PD and your TR/TE plugged in, and the resulting signal — the number that becomes the pixel.</li>
       </ul>
@@ -124,7 +125,7 @@
     <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">🎓 Curriculum</button>
     <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">📖 Lessons</button>
     <button id="help" class="ghlink" type="button" title="Help, welcome &amp; feature tour">?</button>
-    <a class="ghlink" href="protocol.html" title="Scanner-console protocol planning">🩻 Protocol planning</a>
+    <a id="protocol-link" class="ghlink protocol-cta" href="protocol.html" title="Plan a whole exam like a scanner — pick a protocol, prescribe each sequence on the scouts, acquire">🩻 Protocol planning</a>
     <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 

@@ -50,6 +50,12 @@ body {
 .chip b { color: var(--accent-hi); font-size: 13px; }
 .ghlink { color: var(--text-dim); text-decoration: none; font-size: 12px; }
 .ghlink:hover { color: var(--accent-hi); }
+/* Protocol-planning call-to-action — a flagship workflow, so it stands out. */
+.protocol-cta {
+  color: var(--accent-ink); background: linear-gradient(90deg, var(--accent), var(--accent-hi));
+  padding: 4px 10px; border-radius: 6px; font-weight: 600;
+}
+.protocol-cta:hover { color: var(--accent-ink); filter: brightness(1.08); }
 
 /* Layout */
 #app { display: grid; grid-template-columns: 270px 1fr 230px; gap: 10px; padding: 10px; height: calc(100% - 52px); }
