@@ -17,9 +17,11 @@ frozen.)
   workspace (linked from the toolbar, `protocol.html`) where you pick an exam, a
   **protocol queue** of prebuilt sequences loads, and you **open a sequence, plan its
   angles / FOV on the three scout viewports, edit its parameters, and Apply to acquire**
-  — the image then appears in a viewport. Reuses the existing Pyodide engine (the new
-  `protocols.py` queues + `web_adapter.render_scout_panels` per-panel scouts). First cut
-  is the core acquisition loop; drag-between-viewports and append/re-run follow.
+  — the image then appears in a viewport. Acquired series can be **dragged between the
+  viewports** (double-click a series to bring its scout back), and any acquired sequence
+  can be **appended to the queue to re-run with edited parameters** (＋). Reuses the
+  existing Pyodide engine (the new `protocols.py` queues + `web_adapter.render_scout_panels`
+  per-panel scouts).
 
 ## [1.30.0] — 2026-06-17
 
