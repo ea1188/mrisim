@@ -137,6 +137,20 @@ try {
   await page.waitForFunction(
     () => document.querySelector("#pp-nsl-label").textContent === "Partitions", { timeout: 12_000 });
   console.log("sequence params (TI) + 3-D partitions ✓");
+
+  // the acquisition honours the prescription: acquiring at tilt 0 vs 30 must differ
+  const acquireTilt = async (deg) => {
+    await page.click("#pp-list li:nth-child(2)");                    // re-open T1 (resets scouts)
+    await page.waitForFunction(() => !document.querySelector("#pp-controls").hidden, { timeout: 12_000 });
+    await page.fill("#pp-tilt", String(deg)); await page.dispatchEvent("#pp-tilt", "input");
+    await page.waitForTimeout(700);
+    await page.click("#pp-apply");
+    await page.waitForFunction(() => /Acquired/.test(document.querySelector("#pp-readout").textContent), { timeout: 30_000 });
+    return page.getAttribute("#vp-axial img", "src");
+  };
+  const a0 = await acquireTilt(0), a30 = await acquireTilt(30);
+  if (a0 === a30) fail("the acquired image ignored the prescribed tilt");
+  console.log("acquisition honours the prescription (tilt) ✓");
 } catch (e) {
   fail(e.message);
 }

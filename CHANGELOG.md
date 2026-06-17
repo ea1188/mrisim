@@ -17,6 +17,14 @@ frozen.)
   call-to-action, it's a step in the feature tour, and it's called out in the welcome
   dialog — so the scanner-console workflow is discoverable, not buried.
 
+### Fixed
+- **Protocol Planning: the acquired image now honours the prescription.** Slice angle
+  (tilt/rot) and the in-plane FOV box you set on the scouts were drawn on the localizer
+  but ignored at acquisition — the acquire/scout payloads were missing the `fov_planning`
+  flag the engine gates oblique sampling + FOV crop on, so Apply produced a straight,
+  full-FOV image. Both payloads now set it, so the acquired image comes out with the
+  planned orientation and field of view.
+
 ## [1.31.0] — 2026-06-17
 
 ### Added
