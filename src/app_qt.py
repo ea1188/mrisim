@@ -1983,6 +1983,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             warns.append(f"{gap:.0f}-vox gaps may miss small lesions")
         if fov_pct < 100 and not self.no_phase_wrap.get():
             warns.append("phase FOV < anatomy → wraparound")
+        if (self.satband_enabled.get()
+                and (abs(self.slice_tilt.get()) > 0.5 or abs(self.slice_rot.get()) > 0.5)):
+            warns.append("sat band not applied on oblique acquisitions")
         if warns:
             self.plan_readout.config(text=line + "\n⚠ " + "  ·  ".join(warns), fg="#e6b35a")
         else:
@@ -2008,11 +2011,12 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             if k < n:
                 img = self._simulate_single_slice(params, orient, idxs[k])
                 ax.imshow(img, cmap=self.display_cmap.get(), origin="lower", aspect=_asp)
-                if self.satband_enabled.get():     # mark the nulled saturation band
-                    h = img.shape[0]
-                    c = self.satband_pos.get() / 100.0 * h
-                    half = self.satband_width.get() / 100.0 * h / 2.0
-                    ax.axhspan(c - half, c + half, color="#e6b35a", alpha=0.22, lw=0)
+                if self.satband_enabled.get():     # tint the actual nulled footprint
+                    fp = self.sim.sat_band_footprint(orient, idxs[k], params)
+                    if fp is not None and fp.any():
+                        ov = np.zeros((*fp.shape, 4))
+                        ov[fp] = (0.902, 0.702, 0.353, 0.30)   # #e6b35a
+                        ax.imshow(ov, origin="lower", aspect=_asp)
                 ax.set_title(f"#{idxs[k]}", color="white", fontsize=8)
         self.fig.suptitle(f"{params['sequence']}  |  {n} slice{'s' if n != 1 else ''}  "
                           f"|  FOV {self.inplane_fov_pct.get()}%",

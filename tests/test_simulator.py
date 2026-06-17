@@ -301,3 +301,47 @@ def test_reference_protocol_snr_preserved(sim):
     measured SNR ~ the requested snr_level (calibration unchanged)."""
     _, m = sim.simulate(base_params(sequence="Spin Echo", TR=500, TE=15, snr_level=40))
     assert 25 < m["snr_wm"] < 60          # within a reasonable band of the slider
+
+
+def _runs(cols):
+    """Contiguous runs in a sorted 1-D index array → list of (start, end)."""
+    runs = []
+    if len(cols):
+        s = p = cols[0]
+        for x in cols[1:]:
+            if x == p + 1:
+                p = x
+            else:
+                runs.append((int(s), int(p))); s = p = x
+        runs.append((int(s), int(p)))
+    return runs
+
+
+def test_sat_band_footprint_matches_the_null_at_any_angle(sim):
+    """The display overlay derives from `sat_band_footprint`: it must mark exactly
+    the band the engine nulls — a single strip aligned with the actual zeros — even
+    when the band is angled (the old horizontal-strip overlay was misaligned)."""
+    sim.fov_planning = True
+    sim.satband_enabled = True
+    sim.satband_pos = 40.0
+    sim.satband_width = 18.0
+    sim.satband_angle = 90.0          # vertical strip → moves A-P, not the row axis
+    sim.satband_angle2 = 0.0
+    orient, sl = "sagittal", sim.volume.shape[2] // 2
+    params = base_params(FOV=220.0)   # = native, so no FOV-transform borders
+    fp = sim.sat_band_footprint(orient, sl, params)
+    img = sim._get_phantom_slice(orient, sl, params)
+    assert fp is not None and fp.shape == img.shape
+    # exactly one vertical strip, and the image is genuinely nulled there
+    cols = np.where(fp.sum(axis=0) > fp.shape[0] * 0.5)[0]
+    assert len(_runs(cols)) == 1, "the footprint must be a single contiguous band"
+    assert float(img[fp].max()) < 1e-6, "every footprint pixel must be nulled in the image"
+
+
+def test_sat_band_footprint_none_when_off_or_oblique(sim):
+    sim.fov_planning = True
+    sim.satband_enabled = False
+    assert sim.sat_band_footprint("axial", 20, base_params()) is None
+    sim.satband_enabled = True
+    sim.tilt = 30.0                   # oblique: band isn't applied, so no overlay
+    assert sim.sat_band_footprint("axial", 20, base_params()) is None

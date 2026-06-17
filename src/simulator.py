@@ -283,6 +283,35 @@ class Simulator:
         half_w = sg.sat_band_half_width(vol_shape[rowax], self.satband_width / 100.0)
         return sg.apply_sat_slab(slice2d, orient, sl_idx, vol_shape, center, normal, half_w)
 
+    def sat_band_footprint(self, orient: str, sl_idx: int,
+                           params: dict) -> "np.ndarray | None":
+        """Boolean mask (True where the sat band nulls signal) for the *displayed*
+        slice — the band run through the same FOV transform/crop pipeline as the image
+        (`_get_phantom_slice`), so an overlay drawn from it aligns exactly, at any
+        angle. Returns None when there's nothing to draw (band off, or the oblique
+        path where the slab isn't applied)."""
+        if not (self.fov_planning and self.satband_enabled):
+            return None
+        if abs(self.tilt) > 0.5 or abs(self.rot) > 0.5:   # not applied on the oblique path
+            return None
+        vol = self.volume
+        assert vol is not None
+        base = np.ones_like(get_slice(vol, orient, sl_idx))
+        banded = self._apply_sat_band(orient, sl_idx, vol.shape, base.copy())
+
+        def _fov(a: np.ndarray) -> np.ndarray:
+            fov_ratio = float(params.get("FOV", 240.0)) / self.native_fov
+            if abs(fov_ratio - 1.0) > 0.01:
+                a = sg.fov_transform(a, fov_ratio)
+            if self.fov_planning and self.inplane_fov_pct < 100:
+                a = sg.fov_crop(orient, a, self.inplane_fov_pct / 100.0, self.inplane_off,
+                                wrap=not self.no_phase_wrap, phase_swap=self.pe_swap)
+            return a
+
+        # Difference the pipeline with vs without the band, so only the band's null
+        # counts — empty borders that the FOV transform adds (zeros either way) cancel.
+        return (_fov(base) > 0.5) & (_fov(banded) < 0.5)
+
     # --- B0 field -----------------------------------------------------------
     def _b0_volume(self, field_strength_T: float) -> np.ndarray:
         """3D susceptibility B0 field (Hz) for the active volume, cached."""
