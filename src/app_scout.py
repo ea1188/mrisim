@@ -30,7 +30,9 @@ class ScoutMixin:
     satband_pos: Any
     satband_width: Any
     satband_angle: Any
+    satband_angle2: Any
     _scout_satband_info: Any
+    _scout_satband_ax: Any
     _scout_primary_plane: Any
     _scout_gizmo_center: Any
     phantom_3d: Any
@@ -282,48 +284,72 @@ class ScoutMixin:
                     fontsize=7, va="center", ha="left", zorder=6)
 
     def _draw_satband_on_scout(self) -> None:
-        """Draw the saturation band on the primary localizer panel as a draggable
-        tinted strip — move it (drag the body) or angle it (drag an end handle).
-        Stored geometry (`_scout_satband_info`) is what the press/hover hit-tests."""
+        """Draw the saturation band as the projected 3-D slab on every localizer panel
+        — so the cross-plane angle is visible where it tilts (parity with the browser)
+        — with the interactive handles on the acquired-plane panel: drag the body to
+        move it (along its normal), an end handle to angle it in-plane. Stored geometry
+        (`_scout_satband_info` + `_scout_satband_ax`) is what the press/hover hit-tests."""
         import math
         from matplotlib.patches import Polygon
+        import scan_geometry as sg
+        from oblique import sat_band_normal, scout_band
         self._scout_satband_info = None
-        info = self._scout_box_info
-        if not self.satband_enabled.get() or info is None:
+        self._scout_satband_ax = None
+        if not self.satband_enabled.get():
             return
-        ax = self._scout_primary_ax
-        x0, y0, w, h = info["x0"], info["y0"], info["w"], info["h"]
-        pos = self.satband_pos.get() / 100.0
-        wf = self.satband_width.get() / 100.0
-        ang = math.radians(self.satband_angle.get())
-        d = (math.cos(ang), math.sin(ang))         # along the band
-        n = (-math.sin(ang), math.cos(ang))        # band normal (thickness)
-        # Position the band *along its own normal* (not a fixed vertical), so an angled
-        # band slides perpendicular to itself — matching the engine's position-along-
-        # normal saturation. Travel spans the box extent along the normal; at angle 0
-        # (n = vertical) this reproduces the old cy = y0 + pos·h.
-        bcx, bcy = x0 + w / 2.0, y0 + h / 2.0
-        travel = abs(n[0]) * w + abs(n[1]) * h
-        p0 = (bcx - 0.5 * travel * n[0], bcy - 0.5 * travel * n[1])   # pos 0 / 100 → the
-        p1 = (bcx + 0.5 * travel * n[0], bcy + 0.5 * travel * n[1])   # move-drag travel line
-        cx = bcx + (pos - 0.5) * travel * n[0]
-        cy = bcy + (pos - 0.5) * travel * n[1]
-        half_t = max(1.5, wf * travel / 2.0)
-        ln = w / 2.0 + 0.08 * w
-        corners = [(cx + sx * ln * d[0] + sy * half_t * n[0],
-                    cy + sx * ln * d[1] + sy * half_t * n[1])
-                   for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
-        ax.add_patch(Polygon(corners, closed=True, facecolor="#e6b35a", alpha=0.26,
-                             edgecolor="#e6b35a", linewidth=1.1))
-        e1 = (cx - ln * d[0], cy - ln * d[1])
-        e2 = (cx + ln * d[0], cy + ln * d[1])
-        ax.plot([e1[0], e2[0]], [e1[1], e2[1]], color="#e6b35a", lw=0.8, alpha=0.7)
-        ax.plot([e1[0], e2[0]], [e1[1], e2[1]], "s", color="#ff7733", markersize=6,
-                markeredgecolor="white", markeredgewidth=0.7)
-        ax.text(cx, cy, "SAT", color="#3a2a10", fontsize=7, ha="center", va="center",
-                fontweight="bold")
-        self._scout_satband_info = dict(cx=cx, cy=cy, d=d, n=n, ln=ln, half_t=half_t,
-                                        e1=e1, e2=e2, y0=y0, h=h, p0=p0, p1=p1)
+        # The slab isn't applied on the oblique path, so don't draw a band that won't
+        # saturate (the prescription readout warns instead).
+        if abs(self.slice_tilt.get()) > 0.5 or abs(self.slice_rot.get()) > 0.5:
+            return
+        orient = self.orientation.get()
+        vol = self.phantom_3d
+        ny = vol.shape[1]
+        normal = sat_band_normal(orient, self.satband_angle.get(), self.satband_angle2.get())
+        rowax = sg._SLICE_AXES[orient][1]
+        center = sg.sat_band_center(vol.shape, normal, self.satband_pos.get() / 100.0)
+        thick = sg.sat_band_half_width(vol.shape[rowax], self.satband_width.get() / 100.0) * 2.0
+        proj = scout_band(vol.shape, normal, tuple(center), n_slices=1,
+                          thickness_mm=thick, gap_mm=0.0, voxel_size=(1.0, 1.0, 1.0))
+        c0 = sg.sat_band_center(vol.shape, normal, 0.0)
+        c1 = sg.sat_band_center(vol.shape, normal, 1.0)
+
+        for ax, plane in zip(self.scout_axes, self._scout_plane_names, strict=True):
+            sov = proj[plane]
+            fc = (lambda x: ny - 1 - x) if plane == "sagittal" else (lambda x: x)
+            e0, e1e = sov["edges"]
+            if e0 and e1e:                          # tinted slab footprint
+                ax.add_patch(Polygon(
+                    [(fc(e0[0]), e0[1]), (fc(e0[2]), e0[3]),
+                     (fc(e1e[2]), e1e[3]), (fc(e1e[0]), e1e[1])],
+                    closed=True, facecolor="#e6b35a", alpha=0.22,
+                    edgecolor="#e6b35a", linewidth=1.0))
+            seg = (sov["slices"] or [None])[0]
+            if seg is None:
+                continue
+            ax.plot([fc(seg[0]), fc(seg[2])], [seg[1], seg[3]],
+                    color="#e6b35a", lw=0.9, alpha=0.7)
+            if plane != orient:                     # cross panels are read-only
+                continue
+            # --- acquired-plane panel: the interactive band ---
+            e1 = (fc(seg[0]), seg[1]); e2 = (fc(seg[2]), seg[3])
+            cx, cy = (e1[0] + e2[0]) / 2.0, (e1[1] + e2[1]) / 2.0
+            vx, vy = e2[0] - cx, e2[1] - cy
+            ln = math.hypot(vx, vy) or 1.0
+            d = (vx / ln, vy / ln); n = (-d[1], d[0])
+            if e0 and e1e:                          # half thickness from the edge offset
+                m0 = ((fc(e0[0]) + fc(e0[2])) / 2.0, (e0[1] + e0[3]) / 2.0)
+                half_t = max(1.5, math.hypot(m0[0] - cx, m0[1] - cy))
+            else:
+                half_t = max(1.5, self.satband_width.get() / 100.0 * vol.shape[rowax] / 2.0)
+            ax.plot([e1[0], e2[0]], [e1[1], e2[1]], "s", color="#ff7733", markersize=6,
+                    markeredgecolor="white", markeredgewidth=0.7)
+            ax.text(cx, cy, "SAT", color="#3a2a10", fontsize=7, ha="center",
+                    va="center", fontweight="bold")
+            p0 = self._display_center(plane, c0)    # the move-drag travel line (pos 0→100)
+            p1 = self._display_center(plane, c1)
+            self._scout_satband_ax = ax
+            self._scout_satband_info = dict(cx=cx, cy=cy, d=d, n=n, ln=ln, half_t=half_t,
+                                            e1=e1, e2=e2, p0=p0, p1=p1)
 
     # Which angle variable is controlled by dragging each panel role in oblique mode.
     # Derived from: rot_deg makes angled lines on primary panels; tilt_deg on secondary.
@@ -434,7 +460,7 @@ class ScoutMixin:
         """'satangle' near an end handle, 'satmove' inside the band body, else None."""
         import math
         sb = self._scout_satband_info
-        if sb is None or event.inaxes is not self._scout_primary_ax:  # type: ignore[attr-defined]
+        if sb is None or event.inaxes is not self._scout_satband_ax:  # type: ignore[attr-defined]
             return None
         if event.xdata is None or event.ydata is None:  # type: ignore[attr-defined]
             return None
