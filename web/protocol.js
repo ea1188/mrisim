@@ -153,6 +153,7 @@ async function openItem(it) {
   $("pp-controls").hidden = false; $("pp-actions").hidden = false;
   paramsToPanel(it);
   await renderScouts();
+  updatePlanReadout();
 }
 
 // ---- parameter panel ------------------------------------------------------ //
@@ -209,7 +210,7 @@ async function renderScouts() {
   });
   PLANES.forEach(renderSlot);
 }
-function scheduleScouts() { clearTimeout(refreshTimer); refreshTimer = setTimeout(renderScouts, 90); }
+function scheduleScouts() { updatePlanReadout(); clearTimeout(refreshTimer); refreshTimer = setTimeout(renderScouts, 90); }
 
 function renderSlot(plane) {
   const st = slotState[plane];
@@ -217,8 +218,9 @@ function renderSlot(plane) {
     const sc = scoutCache[plane]; if (!sc) return;
     vpGeom[plane] = sc.geom;
     drawTile(plane, sc.png, sc.label, true, false);          // plannable, not draggable
-  } else {
-    drawTile(plane, st.png, st.label + "  ⠿", false, true);  // series: view-only, draggable
+  } else {                                                   // series: view-only, draggable
+    const tag = (st.maxSlice ? `${st.label}  ·  ${st.slice}/${st.maxSlice}` : st.label) + "  ⠿";
+    drawTile(plane, st.png, tag, false, true);
   }
 }
 function drawTile(plane, dataURL, tag, plannable, draggable) {
@@ -261,26 +263,46 @@ function bandLocal(p, slice) {
   if (p.map === "row") return 1 - s / (p.n - 1);
   return (p.flip ? (p.n - 1 - s) : s) / (p.n - 1);
 }
+// Which CSS cursor signals each grabbable region (so it's obvious where to grab).
+const cursorFor = (m) => ({
+  recenter: "move", resize: "nwse-resize", oblique: "grab",
+  slice: "ns-resize", slices: "row-resize",
+}[m] || "crosshair");
+
+// What does the pointer do at this spot on a scout panel? (shared by hover + drag)
+function modeAt(p, loc) {
+  if (!p || !active) return null;
+  if (p.role === "acq") {                          // acquired plane: the FOV box
+    const fb = p.fov_box; if (!fb) return "slice";
+    const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+    const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1), Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
+    return edge > 0.72 ? "resize" : "recenter";
+  }
+  if (p.slab && p.slab.half > 0.05) {              // near the slab rim → add / remove slices
+    const perp = p.map === "row" ? loc.py : loc.px;
+    if (Math.abs(Math.abs(perp - p.slab.c) - p.slab.half) < 0.035) return "slices";
+  }
+  const bp = bandLocal(p, active.plan.slice);      // near the band line → angle (if this panel tilts)
+  const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.08 : Math.abs(loc.px - bp) < 0.08;
+  if (near && p.angle) return "oblique";
+  return "slice";
+}
+
 function wireViewport(plane) {
   const box = $("vp-" + plane);
   let drag = null;
   const startDrag = (loc) => {
     const p = vpGeom[plane]; if (!p || !active) return null;
-    if (p.role === "acq") {
-      const fb = p.fov_box; if (!fb) return { mode: "slice", p };
-      const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
-      const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1), Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
-      return { mode: edge > 0.72 ? "resize" : "recenter", p };
-    }
-    const bp = bandLocal(p, active.plan.slice);
-    const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.10 : Math.abs(loc.px - bp) < 0.10;
-    if (near && p.angle) return { mode: "oblique", p, l0: loc, tilt0: active.plan.tilt, rot0: active.plan.rot };
-    return { mode: "slice", p };
+    const mode = modeAt(p, loc);
+    const d = { mode, p };
+    if (mode === "oblique") { d.l0 = loc; d.tilt0 = active.plan.tilt; d.rot0 = active.plan.rot; }
+    if (mode === "slices") { d.half0 = p.slab.half; d.n0 = (+$("pp-nsl").value) || 1; }
+    return d;
   };
   const applyDrag = (loc) => {
     if (!drag || !active) return;
     const p = drag.p, pl = active.plan;
-    if (drag.mode === "slice") {
+    if (drag.mode === "slice") {                   // angles the *same way you drag* (engine parity)
       const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
       pl.slice = clampN(Math.round(s), 0, p.n - 1);
     } else if (drag.mode === "recenter") {
@@ -291,11 +313,16 @@ function wireViewport(plane) {
       const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
       pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
       $("pp-fov").value = pl.fov_pct;
+    } else if (drag.mode === "slices") {           // drag the slab rim → number of slices
+      const perp = p.map === "row" ? loc.py : loc.px;
+      const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
+      active.params.n_slices = n; $("pp-nsl").value = n;
     } else if (drag.mode === "oblique") {
       const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
       if (p.angle === "tilt") { pl.tilt = snapAngle(clampN(drag.tilt0 + d, -45, 45)); $("pp-tilt").value = pl.tilt; }
       else { pl.rot = snapAngle(clampN(drag.rot0 + d, -45, 45)); $("pp-rot").value = pl.rot; }
     }
+    updatePlanReadout();
     scheduleScouts();
   };
   box.addEventListener("pointerdown", (e) => {
@@ -311,6 +338,22 @@ function wireViewport(plane) {
   });
   window.addEventListener("pointerup", () => { drag = null; });
   window.addEventListener("pointercancel", () => { drag = null; });
+
+  // Hover feedback: the cursor shows what each region does before you grab it.
+  box.addEventListener("pointermove", (e) => {
+    if (drag) return;
+    const img = box.querySelector("img");
+    if (!img || !box._plannable) { box.style.cursor = ""; return; }
+    const f = imgFraction(img, e.clientX, e.clientY);
+    box.style.cursor = f ? cursorFor(modeAt(vpGeom[plane], f)) : "";
+  });
+
+  // Scroll through the slices of an acquired series.
+  box.addEventListener("wheel", (e) => {
+    if (slotState[plane].kind !== "series" || !slotState[plane].payload) return;
+    e.preventDefault();
+    scrollSeries(plane, e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
 
   // Drag an acquired series between viewports; the source reverts to its scout.
   box.addEventListener("dragstart", (e) => {
@@ -343,15 +386,44 @@ async function applyAndAcquire() {
     active.image = r.image;
     active.status = "acquired";
     // the acquired series fills the acquired-plane viewport (drag it to any box;
-    // double-click to bring the scout back)
-    slotState[pl.orientation] = { kind: "series", itemId: active.id,
-                                  png: r.image, label: `${active.label} (acquired)` };
+    // double-click to bring the scout back; scroll to page through its slices)
+    slotState[pl.orientation] = {
+      kind: "series", itemId: active.id, png: r.image,
+      label: `${active.label} (acquired)`, payload,
+      slice: r.slice_idx, maxSlice: r.max_slice,
+    };
     renderSlot(pl.orientation);
-    $("pp-readout").textContent = "Acquired ✓ — drag it to any viewport, or open the next sequence.";
+    $("pp-readout").textContent =
+      `Acquired ✓ — scroll to page through ${(r.max_slice ?? 0) + 1} slices, drag to any viewport, or open the next sequence.`;
     renderQueue();
   } catch (err) {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
   } finally {
     $("pp-apply").disabled = false;
   }
+}
+
+// Page through an acquired series' slices (debounced re-render at the new slice).
+let scrollTimer = null;
+function scrollSeries(plane, step) {
+  const st = slotState[plane];
+  const max = st.maxSlice || 0;
+  st.slice = clampN((st.slice ?? Math.round(max / 2)) + step, 0, max);
+  $("vp-" + plane).querySelector(".vp-tag").textContent = `${st.label}  ·  ${st.slice}/${max}`;
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(async () => {
+    try {
+      const r = await call("render", { ...st.payload, slice_idx: st.slice });
+      if (slotState[plane] === st) { st.png = r.image; renderSlot(plane); }
+    } catch (e) { /* keep the last frame on error */ }
+  }, 60);
+}
+
+// Live prescription summary while planning.
+function updatePlanReadout() {
+  if (!active || isLocalizer(active)) { $("pp-readout").textContent = ""; return; }
+  const pl = active.plan, p = active.params;
+  const sl = pl.slice == null ? "mid" : pl.slice;
+  $("pp-readout").textContent =
+    `slice ${sl} · ${p.n_slices ?? 1}×${p.slice_thickness ?? 5} mm · tilt ${pl.tilt}° · rot ${pl.rot}° · FOV ${pl.fov_pct}%`;
 }

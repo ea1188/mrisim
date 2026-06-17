@@ -1157,6 +1157,19 @@ class WebHost(CurvesMixin):
                                       fb["w"] / W, fb["h"] / H])
                 if sat_on:                    # in-plane move + angle on the acquired panel
                     entry["satband"] = _satgeom(name, ra, ca, W, H, "angle")
+            # Slice-group extent on a cross panel: drag its edge to add/remove slices.
+            if entry.get("role") == "cross" and not acq3d:
+                ed = (band.get(name) or {}).get("edges") or (None, None)
+                if ed[0] and ed[1]:
+                    Hc, Wc = scouts[name].shape
+                    if entry["map"] == "row":
+                        f0 = 1.0 - (ed[0][1] + ed[0][3]) / 2.0 / Hc
+                        f1 = 1.0 - (ed[1][1] + ed[1][3]) / 2.0 / Hc
+                    else:
+                        fcc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
+                        f0 = fcc((ed[0][0] + ed[0][2]) / 2.0) / Wc
+                        f1 = fcc((ed[1][0] + ed[1][2]) / 2.0) / Wc
+                    entry["slab"] = {"c": (f0 + f1) / 2.0, "half": abs(f1 - f0) / 2.0}
             # Cross panel that shows the slab edge-on: move it + grab an end to set the
             # cross-plane angle. Only when the slab actually cuts this panel as a line
             # and the travel line isn't degenerate (band not parallel to the panel).

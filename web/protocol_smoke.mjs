@@ -50,6 +50,14 @@ try {
   if (done < 1) fail("queue item not marked acquired");
   console.log("acquired ✓  (axial tag:", JSON.stringify(tag) + ", done:", done + ")");
 
+  // scroll the acquired series → its slice counter (n/max) appears in the tag
+  await page.evaluate(() => document.querySelector("#vp-axial").dispatchEvent(
+    new WheelEvent("wheel", { deltaY: -1, bubbles: true, cancelable: true })));
+  await page.waitForFunction(
+    () => /\d+\s*\/\s*\d+/.test(document.querySelector("#vp-axial .vp-tag").textContent),
+    { timeout: 8_000 });
+  console.log("scroll acquired slices ✓");
+
   // drag the acquired series from the axial viewport to the coronal viewport; the
   // coronal box shows it and the axial box reverts to its scout. (Native HTML5 drag
   // can't be driven by Playwright's mouse, so dispatch the DnD events with a shared
