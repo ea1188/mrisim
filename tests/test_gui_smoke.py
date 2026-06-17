@@ -277,14 +277,15 @@ def test_satband_drag_on_scout_moves_and_angles(win):
     win.recalculate()
     sb = win._scout_satband_info
     assert sb is not None, "sat band should be drawn on the localizer"
-    ax = win._scout_primary_ax
+    ax = win._scout_satband_ax        # the interactive band sits on the acquired plane
 
-    # Drag the body downward → position increases.
+    # Drag the body along its normal → position changes.
     win._scout_drag = None
     win._scout_press(NS(inaxes=ax, xdata=sb["cx"], ydata=sb["cy"], button=1))
     assert win._scout_drag and win._scout_drag["mode"] == "satmove"
-    win._scout_motion(NS(inaxes=ax, xdata=sb["cx"], ydata=sb["cy"] + 0.2 * sb["h"]))
-    assert win.satband_pos.get() > 50, "dragging down should raise the position"
+    n = sb["n"]
+    win._scout_motion(NS(inaxes=ax, xdata=sb["cx"] + 25 * n[0], ydata=sb["cy"] + 25 * n[1]))
+    assert win.satband_pos.get() != 50, "dragging the body should move the position"
     win._scout_release(NS(inaxes=ax, xdata=sb["cx"], ydata=sb["cy"]))
 
     # Drag an end handle off-axis → a non-zero angle.
@@ -296,6 +297,23 @@ def test_satband_drag_on_scout_moves_and_angles(win):
     assert win.satband_angle.get() != 0, "dragging the handle should angle the band"
     win._scout_release(NS(inaxes=ax, xdata=sb["e2"][0], ydata=sb["e2"][1]))
     win.satband_enabled.set(False); win.n_slices.set(1)
+    win.fov_planning.set(False); win.recalculate()
+
+
+def test_satband_localizer_draws_on_acq_plane_and_shows_cross_angle(win):
+    """The localizer now draws the band as the projected slab on every panel (so the
+    cross-angle is visible where it tilts), with the interactive handles on the
+    acquired-plane panel — not the old primary panel."""
+    for orient in ("axial", "coronal", "sagittal"):
+        set_state(win, sequence="Spin Echo", region="Brain", orientation=orient)
+        win.fov_planning.set(True); win.satband_enabled.set(True)
+        win.satband_pos.set(50); win.satband_angle.set(0)
+        win.satband_angle2.set(40)          # a cross-angle to visualise
+        win.recalculate()
+        acq_ax = win.scout_axes[win._scout_plane_names.index(orient)]
+        assert win._scout_satband_ax is acq_ax, f"{orient}: band handles on the acq plane"
+        assert win._scout_satband_info is not None
+    win.satband_enabled.set(False); win.satband_angle2.set(0)
     win.fov_planning.set(False); win.recalculate()
 
 

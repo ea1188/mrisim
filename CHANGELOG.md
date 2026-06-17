@@ -12,6 +12,15 @@ frozen.)
 
 ## [Unreleased]
 
+### Added
+- **Desktop localizer shows the sat-band cross-angle on every panel.** The desktop drew
+  the saturation band on a single panel as a flat strip, so the cross-plane angle (the
+  out-of-plane slab tilt) wasn't visible there even though the slider set it. It's now
+  drawn as the projected 3-D slab on all three localizer panels — the same `scout_band`
+  projection the browser uses — so an angled band visibly tilts on the panel it cuts.
+  The drag handles (move along the normal, grab an end to angle in-plane) moved to the
+  acquired-plane panel, matching the browser. Completes the desktop sat-band parity.
+
 ### Fixed
 - **Desktop sat-band marker now tracks the band at any angle.** The amber tint on the
   reconstructed montage was a fixed *horizontal* strip at the position slider, so once

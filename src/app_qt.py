@@ -714,6 +714,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._scout_drag: dict | None = None
         self._scout_box_info: dict | None = None
         self._scout_satband_info: dict | None = None
+        self._scout_satband_ax: object = None
         self._scout_primary_plane: str | None = None
 
         # Main image figure
