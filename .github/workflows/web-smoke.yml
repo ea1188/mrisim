@@ -42,3 +42,6 @@ jobs:
 
       - name: Smoke test (headless Chromium boots Pyodide and renders)
         run: node web/smoke.mjs http://localhost:8765/
+
+      - name: Protocol-planning page smoke (boots, queue loads, Apply acquires)
+        run: node web/protocol_smoke.mjs http://localhost:8765/

@@ -10,6 +10,17 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **Protocol Planning page (browser) — plan a scan like a scanner console.** A new
+  workspace (linked from the toolbar, `protocol.html`) where you pick an exam, a
+  **protocol queue** of prebuilt sequences loads, and you **open a sequence, plan its
+  angles / FOV on the three scout viewports, edit its parameters, and Apply to acquire**
+  — the image then appears in a viewport. Reuses the existing Pyodide engine (the new
+  `protocols.py` queues + `web_adapter.render_scout_panels` per-panel scouts). First cut
+  is the core acquisition loop; drag-between-viewports and append/re-run follow.
+
 ## [1.30.0] — 2026-06-17
 
 ### Fixed
