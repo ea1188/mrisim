@@ -10,6 +10,7 @@
 const $ = (id) => document.getElementById(id);
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
 const snapAngle = (v) => { for (const t of [0, 15, 30, 45, -15, -30, -45]) if (Math.abs(v - t) <= 2.5) return t; return v; };
+const fmtTime = (s) => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const PLANES = ["sagittal", "coronal", "axial"];
 
 // ---- engine worker bridge (mirrors app.js) -------------------------------- //
@@ -50,6 +51,7 @@ let active = null;       // open queue item
 let seq = 0;             // id counter
 const vpGeom = {};       // plane -> last rendered panel geometry (for interaction)
 let refreshTimer = null;
+let lastSeriesPlane = null;   // viewport last hovered/scrolled (arrow keys page it)
 
 // ---- boot ----------------------------------------------------------------- //
 async function onReady() {
@@ -89,12 +91,16 @@ async function loadExam(name) {
 function renderQueue() {
   const ol = $("pp-list");
   ol.innerHTML = "";
+  let total = 0;
   queue.forEach((it, i) => {
     const li = document.createElement("li");
     li.className = (it === active ? "active " : "") + (it.status === "acquired" ? "acquired" : "");
     const dot = it.status === "acquired" ? "✓" : (it === active ? "▸" : "·");
+    const t = it.metrics && it.metrics.scan_time;
+    if (t) total += t;
     li.innerHTML = `<span class="q-num">${i + 1}</span>`
       + `<span class="q-label">${it.label}</span>`
+      + (t ? `<span class="q-time">${fmtTime(t)}</span>` : "")
       + `<span class="q-status">${dot}</span>`;
     li.addEventListener("click", () => openItem(it));
     if (it.status === "acquired") {           // re-run: append a fresh copy to the queue
@@ -106,6 +112,8 @@ function renderQueue() {
     }
     ol.appendChild(li);
   });
+  const acq = queue.filter((it) => it.status === "acquired").length;
+  $("pp-total").textContent = acq ? `acquired ${acq}/${queue.length} · ${fmtTime(total)}` : "";
 }
 
 // Append a fresh, pending copy of an acquired sequence so it can be re-run with edits.
@@ -136,19 +144,20 @@ async function openItem(it) {
     await renderScouts();
     return;
   }
+  // Provisional plan set synchronously, so hovers / refreshes during the preset
+  // fetch never see a null active.plan.
+  it.plan = it.plan || { orientation: "axial", slice: null, tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 };
   if (!it.params) {                      // first open: resolve the preset
     const bundle = await call("preset", it.preset);
+    if (active !== it) return;           // a newer open superseded this one — bail
     it.params = bundle.params;
     // Surface geometry defaults the panel shows, so the engine and the panel agree
     // (presets don't carry slice thickness / count).
     it.params.slice_thickness = it.params.slice_thickness ?? 5;
     it.params.n_slices = it.params.n_slices ?? 1;
-    it.plan = {
-      orientation: bundle.orientation || "axial",
-      slice: null,                       // null → mid slice (engine default)
-      tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100,
-    };
+    it.plan.orientation = bundle.orientation || "axial";
   }
+  if (active !== it) return;
   $("pp-seqname").textContent = `${it.label}  ·  ${it.sequence}`;
   $("pp-controls").hidden = false; $("pp-actions").hidden = false;
   paramsToPanel(it);
@@ -157,18 +166,26 @@ async function openItem(it) {
 }
 
 // ---- parameter panel ------------------------------------------------------ //
-const NUMP = { "pp-tr": "TR", "pp-te": "TE", "pp-flip": "flip_angle",
-               "pp-thk": "slice_thickness", "pp-nsl": "n_slices" };
+const NUMP = { "pp-tr": "TR", "pp-te": "TE", "pp-flip": "flip_angle", "pp-thk": "slice_thickness" };
+const nslKey = (p) => (p.acq3d ? "n_partitions" : "n_slices");   // 3-D uses partitions
 function paramsToPanel(it) {
   const p = it.params;
   $("pp-tr").value = p.TR ?? 500;
   $("pp-te").value = p.TE ?? 15;
   $("pp-flip").value = p.flip_angle ?? 90;
   $("pp-thk").value = p.slice_thickness ?? 5;
-  $("pp-nsl").value = p.n_slices ?? 1;
   $("pp-fov").value = it.plan.fov_pct;
   $("pp-tilt").value = it.plan.tilt;
   $("pp-rot").value = it.plan.rot;
+  // Only the parameter that *defines* this sequence is shown beyond the basics.
+  const isIR = it.sequence === "Inversion Recovery", isDWI = it.sequence === "Diffusion (DWI)";
+  $("pp-ti-row").hidden = !isIR;
+  $("pp-bval-row").hidden = !isDWI;
+  if (isIR) $("pp-ti").value = p.TI ?? 2500;
+  if (isDWI) $("pp-bval").value = p.b_value ?? 1000;
+  // A 3-D acquisition is a slab of partitions, not a 2-D multi-slice group.
+  $("pp-nsl-label").textContent = p.acq3d ? "Partitions" : "Slices";
+  $("pp-nsl").value = p.acq3d ? (p.n_partitions ?? 32) : (p.n_slices ?? 1);
 }
 function wireParamPanel() {
   Object.entries(NUMP).forEach(([id, key]) => {
@@ -178,10 +195,24 @@ function wireParamPanel() {
       scheduleScouts();
     });
   });
+  $("pp-nsl").addEventListener("input", () => {
+    if (!active || isLocalizer(active)) return;
+    active.params[nslKey(active.params)] = +$("pp-nsl").value;
+    scheduleScouts();
+  });
+  $("pp-ti").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.TI = +$("pp-ti").value; scheduleScouts(); } });
+  $("pp-bval").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.b_value = +$("pp-bval").value; scheduleScouts(); } });
   $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleScouts(); } });
   $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleScouts(); } });
   $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleScouts(); } });
   $("pp-apply").addEventListener("click", applyAndAcquire);
+  // ↑/↓ (←/→) page an acquired series, like the wheel.
+  window.addEventListener("keydown", (e) => {
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (!lastSeriesPlane || slotState[lastSeriesPlane].kind !== "series") return;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); scrollSeries(lastSeriesPlane, 1); }
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); scrollSeries(lastSeriesPlane, -1); }
+  });
 }
 
 // ---- viewports ------------------------------------------------------------ //
@@ -203,6 +234,8 @@ function scoutPayload() {
   return out;
 }
 async function renderScouts() {
+  if (!active || !active.plan) return;
+  if (!isLocalizer(active) && !active.params) return;   // params still resolving
   const res = await call("scoutPanels", scoutPayload());
   PLANES.forEach((plane) => {
     const panel = res[plane]; if (!panel) return;
@@ -221,6 +254,8 @@ function renderSlot(plane) {
   } else {                                                   // series: view-only, draggable
     const tag = (st.maxSlice ? `${st.label}  ·  ${st.slice}/${st.maxSlice}` : st.label) + "  ⠿";
     drawTile(plane, st.png, tag, false, true);
+    const img = $("vp-" + plane).querySelector("img");       // keep its window/level
+    if (img && st.wl) img.style.filter = `brightness(${st.wl.b}) contrast(${st.wl.c})`;
   }
 }
 function drawTile(plane, dataURL, tag, plannable, draggable) {
@@ -230,6 +265,7 @@ function drawTile(plane, dataURL, tag, plannable, draggable) {
   if (!img) { img = document.createElement("img"); box.appendChild(img); }
   img.src = dataURL;
   img.draggable = !!draggable;
+  img.style.filter = "";                                     // reset (series reapply theirs)
   box.querySelector(".vp-tag").textContent = tag;
   box._plannable = !!plannable;
 }
@@ -239,6 +275,7 @@ function moveSeries(src, dst) {
   if (src === dst || slotState[src].kind !== "series") return;
   slotState[dst] = slotState[src];
   slotState[src] = { kind: "scout" };
+  lastSeriesPlane = dst;
   renderSlot(src); renderSlot(dst);
 }
 function revertSlot(plane) {                 // double-click a series → bring the scout back
@@ -271,7 +308,7 @@ const cursorFor = (m) => ({
 
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
 function modeAt(p, loc) {
-  if (!p || !active) return null;
+  if (!p || !active || !active.plan) return null;
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
     const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
@@ -295,7 +332,13 @@ function wireViewport(plane) {
     const p = vpGeom[plane]; if (!p || !active) return null;
     const mode = modeAt(p, loc);
     const d = { mode, p };
-    if (mode === "oblique") { d.l0 = loc; d.tilt0 = active.plan.tilt; d.rot0 = active.plan.rot; }
+    if (mode === "oblique") {
+      d.l0 = loc; d.tilt0 = active.plan.tilt; d.rot0 = active.plan.rot;
+      // Which end of the band you grabbed — so the angle follows that end toward your
+      // cursor (drag the right/bottom end up/over → that end goes up/over), instead of
+      // a fixed global sign that feels reversed when you grab the other end.
+      d.side = p.map === "row" ? (loc.px >= 0.5 ? 1 : -1) : (loc.py >= 0.5 ? 1 : -1);
+    }
     if (mode === "slices") { d.half0 = p.slab.half; d.n0 = (+$("pp-nsl").value) || 1; }
     return d;
   };
@@ -317,8 +360,8 @@ function wireViewport(plane) {
       const perp = p.map === "row" ? loc.py : loc.px;
       const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
       active.params.n_slices = n; $("pp-nsl").value = n;
-    } else if (drag.mode === "oblique") {
-      const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
+    } else if (drag.mode === "oblique") {            // the grabbed end follows your cursor
+      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90 * drag.side;
       if (p.angle === "tilt") { pl.tilt = snapAngle(clampN(drag.tilt0 + d, -45, 45)); $("pp-tilt").value = pl.tilt; }
       else { pl.rot = snapAngle(clampN(drag.rot0 + d, -45, 45)); $("pp-rot").value = pl.rot; }
     }
@@ -348,12 +391,36 @@ function wireViewport(plane) {
     box.style.cursor = f ? cursorFor(modeAt(vpGeom[plane], f)) : "";
   });
 
-  // Scroll through the slices of an acquired series.
+  // Scroll through the slices of an acquired series (wheel; arrow keys page the
+  // last-touched series — see wireParamPanel).
+  box.addEventListener("pointerenter", () => {
+    if (slotState[plane].kind === "series") lastSeriesPlane = plane;
+  });
   box.addEventListener("wheel", (e) => {
     if (slotState[plane].kind !== "series" || !slotState[plane].payload) return;
     e.preventDefault();
     scrollSeries(plane, e.deltaY < 0 ? 1 : -1);
   }, { passive: false });
+
+  // Right-drag an acquired series → window / level (PACS convention): horizontal =
+  // contrast (window), vertical = brightness (level). Pure client-side CSS filter.
+  let wl = null;
+  box.addEventListener("contextmenu", (e) => { if (slotState[plane].kind === "series") e.preventDefault(); });
+  box.addEventListener("pointerdown", (e) => {
+    if (e.button !== 2 || slotState[plane].kind !== "series") return;
+    const st = slotState[plane];
+    wl = { lx: e.clientX, ly: e.clientY, b0: st.wl.b, c0: st.wl.c };
+    e.preventDefault();
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!wl) return;
+    const st = slotState[plane]; if (st.kind !== "series") { wl = null; return; }
+    st.wl.c = clampN(wl.c0 + (e.clientX - wl.lx) * 0.005, 0.2, 4);
+    st.wl.b = clampN(wl.b0 - (e.clientY - wl.ly) * 0.004, 0.2, 3);
+    const img = box.querySelector("img");
+    if (img) img.style.filter = `brightness(${st.wl.b}) contrast(${st.wl.c})`;
+  });
+  window.addEventListener("pointerup", () => { wl = null; });
 
   // Drag an acquired series between viewports; the source reverts to its scout.
   box.addEventListener("dragstart", (e) => {
@@ -367,7 +434,15 @@ function wireViewport(plane) {
     const src = e.dataTransfer.getData("text/plane");
     if (src) moveSeries(src, plane);
   });
-  box.addEventListener("dblclick", () => revertSlot(plane));
+  // Double-click: a series box brings its scout back; a scout box resets the
+  // prescription (angles + FOV) to straight/full — parity with the main app.
+  box.addEventListener("dblclick", () => {
+    if (slotState[plane].kind === "series") { revertSlot(plane); return; }
+    if (!active || isLocalizer(active)) return;
+    Object.assign(active.plan, { tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 });
+    $("pp-tilt").value = 0; $("pp-rot").value = 0; $("pp-fov").value = 100;
+    scheduleScouts();
+  });
 }
 
 // ---- Apply & acquire ------------------------------------------------------ //
@@ -385,16 +460,20 @@ async function applyAndAcquire() {
     const r = await call("render", payload);
     active.image = r.image;
     active.status = "acquired";
+    active.metrics = r.metrics || {};
     // the acquired series fills the acquired-plane viewport (drag it to any box;
     // double-click to bring the scout back; scroll to page through its slices)
     slotState[pl.orientation] = {
       kind: "series", itemId: active.id, png: r.image,
       label: `${active.label} (acquired)`, payload,
-      slice: r.slice_idx, maxSlice: r.max_slice,
+      slice: r.slice_idx, maxSlice: r.max_slice, wl: { b: 1, c: 1 },
     };
+    lastSeriesPlane = pl.orientation;            // arrow keys page it right away
     renderSlot(pl.orientation);
+    const m = active.metrics;
     $("pp-readout").textContent =
-      `Acquired ✓ — scroll to page through ${(r.max_slice ?? 0) + 1} slices, drag to any viewport, or open the next sequence.`;
+      `Acquired ✓ · ${fmtTime(m.scan_time)} · SNR ${Math.round(m.snr_wm || 0)} — `
+      + `scroll / ↑↓ to page slices, right-drag to window/level, drag to any viewport.`;
     renderQueue();
   } catch (err) {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
@@ -422,6 +501,7 @@ function scrollSeries(plane, step) {
 // Live prescription summary while planning.
 function updatePlanReadout() {
   if (!active || isLocalizer(active)) { $("pp-readout").textContent = ""; return; }
+  if (!active.plan || !active.params) return;
   const pl = active.plan, p = active.params;
   const sl = pl.slice == null ? "mid" : pl.slice;
   $("pp-readout").textContent =

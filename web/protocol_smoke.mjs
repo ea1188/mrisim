@@ -34,6 +34,20 @@ try {
   await page.waitForFunction(() => !document.querySelector("#pp-controls").hidden, { timeout: 15_000 });
   console.log("opened a sequence, TR =", await page.inputValue("#pp-tr"));
 
+  // angling follows the drag: grab the right end of the band on the sagittal scout and
+  // drag it UP → tilt goes positive (right end up), not the opposite way.
+  await page.evaluate(() => {
+    const img = document.querySelector("#vp-sagittal img"); const r = img.getBoundingClientRect();
+    const x = r.left + r.width * 0.82, y0 = r.top + r.height * 0.5, y1 = r.top + r.height * 0.25;
+    img.dispatchEvent(new PointerEvent("pointerdown", { button: 0, clientX: x, clientY: y0, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y1, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  });
+  await page.waitForFunction(() => parseFloat(document.querySelector("#pp-tilt").value) > 0, { timeout: 6_000 });
+  console.log("angle follows the drag ✓ (tilt =", await page.inputValue("#pp-tilt") + ")");
+  await page.dblclick("#vp-sagittal");                // reset the prescription
+  await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
+
   // tweak the in-plane FOV → scouts refresh without error
   await page.fill("#pp-fov", "70");
   await page.dispatchEvent("#pp-fov", "input");
@@ -57,6 +71,25 @@ try {
     () => /\d+\s*\/\s*\d+/.test(document.querySelector("#vp-axial .vp-tag").textContent),
     { timeout: 8_000 });
   console.log("scroll acquired slices ✓");
+
+  // scan time + SNR readout, and the protocol total time in the queue header
+  const rd = await page.textContent("#pp-readout");
+  if (!/\d:\d{2}.*SNR/.test(rd)) fail("scan time / SNR not shown after acquire");
+  const totalTxt = await page.textContent("#pp-total");
+  if (!/\d:\d{2}/.test(totalTxt)) fail("protocol total time not shown");
+  console.log("scan time + SNR ✓  (total:", JSON.stringify(totalTxt) + ")");
+
+  // window/level via right-drag changes the image's CSS filter
+  await page.evaluate(() => {
+    const box = document.querySelector("#vp-axial");
+    box.dispatchEvent(new PointerEvent("pointerdown", { button: 2, clientX: 100, clientY: 100, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointermove", { clientX: 170, clientY: 50, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  });
+  await page.waitForFunction(
+    () => { const im = document.querySelector("#vp-axial img"); return im && /brightness|contrast/.test(im.style.filter); },
+    { timeout: 6_000 });
+  console.log("window/level ✓");
 
   // drag the acquired series from the axial viewport to the coronal viewport; the
   // coronal box shows it and the axial box reverts to its scout. (Native HTML5 drag
@@ -89,6 +122,21 @@ try {
   await page.waitForFunction((n) => document.querySelectorAll("#pp-list li").length === n + 1,
     nBefore, { timeout: 8_000 });
   console.log("append / re-run ✓  (queue", nBefore, "→", nBefore + 1 + ")");
+
+  // double-click a scout resets the prescription (angle it, then undo)
+  await page.fill("#pp-tilt", "20");
+  await page.dispatchEvent("#pp-tilt", "input");
+  await page.dblclick("#vp-coronal");
+  await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
+  console.log("double-click reset ✓");
+
+  // sequence-relevant params: FLAIR (IR) shows TI; MPRAGE (3-D) labels the count "Partitions"
+  await page.click("#pp-list li:nth-child(4)");                      // FLAIR
+  await page.waitForFunction(() => !document.querySelector("#pp-ti-row").hidden, { timeout: 12_000 });
+  await page.click("#pp-list li:nth-child(8)");                      // MPRAGE (3-D)
+  await page.waitForFunction(
+    () => document.querySelector("#pp-nsl-label").textContent === "Partitions", { timeout: 12_000 });
+  console.log("sequence params (TI) + 3-D partitions ✓");
 } catch (e) {
   fail(e.message);
 }

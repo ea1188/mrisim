@@ -24,8 +24,12 @@ frozen.)
   per-panel scouts). The localizer controls mirror the main app — the plane **angles the
   way you drag**, the **cursor shows what each region does** (grab to angle, ↕ move the
   slice, ⇳ drag the slab edge to add/remove slices, resize the FOV box), you can **scroll
-  an acquired series through its slices**, and a live readout shows slice / count /
-  thickness / tilt / rot / FOV.
+  an acquired series through its slices** (wheel or ↑/↓), and a live readout shows slice /
+  count / thickness / tilt / rot / FOV. The parameter panel shows the param that **defines
+  each sequence** (TI for FLAIR/MPRAGE/STIR, b-value for DWI) and labels the count
+  **Partitions** for 3-D slabs; **double-click a scout** resets its angles + FOV. Each
+  acquisition reports its **scan time + SNR** (and the queue header totals the protocol
+  scan time), and you can **right-drag an acquired image to window/level** it (PACS-style).
 
 ## [1.30.0] — 2026-06-17
 
