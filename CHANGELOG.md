@@ -27,7 +27,9 @@ frozen.)
   an acquired series through its slices** (wheel or ↑/↓), and a live readout shows slice /
   count / thickness / tilt / rot / FOV. The parameter panel shows the param that **defines
   each sequence** (TI for FLAIR/MPRAGE/STIR, b-value for DWI) and labels the count
-  **Partitions** for 3-D slabs; **double-click a scout** resets its angles + FOV.
+  **Partitions** for 3-D slabs; **double-click a scout** resets its angles + FOV. Each
+  acquisition reports its **scan time + SNR** (and the queue header totals the protocol
+  scan time), and you can **right-drag an acquired image to window/level** it (PACS-style).
 
 ## [1.30.0] — 2026-06-17
 

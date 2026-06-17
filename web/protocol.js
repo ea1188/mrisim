@@ -10,6 +10,7 @@
 const $ = (id) => document.getElementById(id);
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
 const snapAngle = (v) => { for (const t of [0, 15, 30, 45, -15, -30, -45]) if (Math.abs(v - t) <= 2.5) return t; return v; };
+const fmtTime = (s) => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const PLANES = ["sagittal", "coronal", "axial"];
 
 // ---- engine worker bridge (mirrors app.js) -------------------------------- //
@@ -90,12 +91,16 @@ async function loadExam(name) {
 function renderQueue() {
   const ol = $("pp-list");
   ol.innerHTML = "";
+  let total = 0;
   queue.forEach((it, i) => {
     const li = document.createElement("li");
     li.className = (it === active ? "active " : "") + (it.status === "acquired" ? "acquired" : "");
     const dot = it.status === "acquired" ? "✓" : (it === active ? "▸" : "·");
+    const t = it.metrics && it.metrics.scan_time;
+    if (t) total += t;
     li.innerHTML = `<span class="q-num">${i + 1}</span>`
       + `<span class="q-label">${it.label}</span>`
+      + (t ? `<span class="q-time">${fmtTime(t)}</span>` : "")
       + `<span class="q-status">${dot}</span>`;
     li.addEventListener("click", () => openItem(it));
     if (it.status === "acquired") {           // re-run: append a fresh copy to the queue
@@ -107,6 +112,8 @@ function renderQueue() {
     }
     ol.appendChild(li);
   });
+  const acq = queue.filter((it) => it.status === "acquired").length;
+  $("pp-total").textContent = acq ? `acquired ${acq}/${queue.length} · ${fmtTime(total)}` : "";
 }
 
 // Append a fresh, pending copy of an acquired sequence so it can be re-run with edits.
@@ -137,19 +144,20 @@ async function openItem(it) {
     await renderScouts();
     return;
   }
+  // Provisional plan set synchronously, so hovers / refreshes during the preset
+  // fetch never see a null active.plan.
+  it.plan = it.plan || { orientation: "axial", slice: null, tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 };
   if (!it.params) {                      // first open: resolve the preset
     const bundle = await call("preset", it.preset);
+    if (active !== it) return;           // a newer open superseded this one — bail
     it.params = bundle.params;
     // Surface geometry defaults the panel shows, so the engine and the panel agree
     // (presets don't carry slice thickness / count).
     it.params.slice_thickness = it.params.slice_thickness ?? 5;
     it.params.n_slices = it.params.n_slices ?? 1;
-    it.plan = {
-      orientation: bundle.orientation || "axial",
-      slice: null,                       // null → mid slice (engine default)
-      tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100,
-    };
+    it.plan.orientation = bundle.orientation || "axial";
   }
+  if (active !== it) return;
   $("pp-seqname").textContent = `${it.label}  ·  ${it.sequence}`;
   $("pp-controls").hidden = false; $("pp-actions").hidden = false;
   paramsToPanel(it);
@@ -226,6 +234,8 @@ function scoutPayload() {
   return out;
 }
 async function renderScouts() {
+  if (!active || !active.plan) return;
+  if (!isLocalizer(active) && !active.params) return;   // params still resolving
   const res = await call("scoutPanels", scoutPayload());
   PLANES.forEach((plane) => {
     const panel = res[plane]; if (!panel) return;
@@ -244,6 +254,8 @@ function renderSlot(plane) {
   } else {                                                   // series: view-only, draggable
     const tag = (st.maxSlice ? `${st.label}  ·  ${st.slice}/${st.maxSlice}` : st.label) + "  ⠿";
     drawTile(plane, st.png, tag, false, true);
+    const img = $("vp-" + plane).querySelector("img");       // keep its window/level
+    if (img && st.wl) img.style.filter = `brightness(${st.wl.b}) contrast(${st.wl.c})`;
   }
 }
 function drawTile(plane, dataURL, tag, plannable, draggable) {
@@ -253,6 +265,7 @@ function drawTile(plane, dataURL, tag, plannable, draggable) {
   if (!img) { img = document.createElement("img"); box.appendChild(img); }
   img.src = dataURL;
   img.draggable = !!draggable;
+  img.style.filter = "";                                     // reset (series reapply theirs)
   box.querySelector(".vp-tag").textContent = tag;
   box._plannable = !!plannable;
 }
@@ -295,7 +308,7 @@ const cursorFor = (m) => ({
 
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
 function modeAt(p, loc) {
-  if (!p || !active) return null;
+  if (!p || !active || !active.plan) return null;
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
     const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
@@ -383,6 +396,26 @@ function wireViewport(plane) {
     scrollSeries(plane, e.deltaY < 0 ? 1 : -1);
   }, { passive: false });
 
+  // Right-drag an acquired series → window / level (PACS convention): horizontal =
+  // contrast (window), vertical = brightness (level). Pure client-side CSS filter.
+  let wl = null;
+  box.addEventListener("contextmenu", (e) => { if (slotState[plane].kind === "series") e.preventDefault(); });
+  box.addEventListener("pointerdown", (e) => {
+    if (e.button !== 2 || slotState[plane].kind !== "series") return;
+    const st = slotState[plane];
+    wl = { lx: e.clientX, ly: e.clientY, b0: st.wl.b, c0: st.wl.c };
+    e.preventDefault();
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!wl) return;
+    const st = slotState[plane]; if (st.kind !== "series") { wl = null; return; }
+    st.wl.c = clampN(wl.c0 + (e.clientX - wl.lx) * 0.005, 0.2, 4);
+    st.wl.b = clampN(wl.b0 - (e.clientY - wl.ly) * 0.004, 0.2, 3);
+    const img = box.querySelector("img");
+    if (img) img.style.filter = `brightness(${st.wl.b}) contrast(${st.wl.c})`;
+  });
+  window.addEventListener("pointerup", () => { wl = null; });
+
   // Drag an acquired series between viewports; the source reverts to its scout.
   box.addEventListener("dragstart", (e) => {
     if (slotState[plane].kind !== "series") { e.preventDefault(); return; }
@@ -421,17 +454,20 @@ async function applyAndAcquire() {
     const r = await call("render", payload);
     active.image = r.image;
     active.status = "acquired";
+    active.metrics = r.metrics || {};
     // the acquired series fills the acquired-plane viewport (drag it to any box;
     // double-click to bring the scout back; scroll to page through its slices)
     slotState[pl.orientation] = {
       kind: "series", itemId: active.id, png: r.image,
       label: `${active.label} (acquired)`, payload,
-      slice: r.slice_idx, maxSlice: r.max_slice,
+      slice: r.slice_idx, maxSlice: r.max_slice, wl: { b: 1, c: 1 },
     };
     lastSeriesPlane = pl.orientation;            // arrow keys page it right away
     renderSlot(pl.orientation);
+    const m = active.metrics;
     $("pp-readout").textContent =
-      `Acquired ✓ — scroll / ↑↓ to page through ${(r.max_slice ?? 0) + 1} slices, drag to any viewport, or open the next sequence.`;
+      `Acquired ✓ · ${fmtTime(m.scan_time)} · SNR ${Math.round(m.snr_wm || 0)} — `
+      + `scroll / ↑↓ to page slices, right-drag to window/level, drag to any viewport.`;
     renderQueue();
   } catch (err) {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
@@ -459,6 +495,7 @@ function scrollSeries(plane, step) {
 // Live prescription summary while planning.
 function updatePlanReadout() {
   if (!active || isLocalizer(active)) { $("pp-readout").textContent = ""; return; }
+  if (!active.plan || !active.params) return;
   const pl = active.plan, p = active.params;
   const sl = pl.slice == null ? "mid" : pl.slice;
   $("pp-readout").textContent =

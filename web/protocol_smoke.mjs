@@ -58,6 +58,25 @@ try {
     { timeout: 8_000 });
   console.log("scroll acquired slices ✓");
 
+  // scan time + SNR readout, and the protocol total time in the queue header
+  const rd = await page.textContent("#pp-readout");
+  if (!/\d:\d{2}.*SNR/.test(rd)) fail("scan time / SNR not shown after acquire");
+  const totalTxt = await page.textContent("#pp-total");
+  if (!/\d:\d{2}/.test(totalTxt)) fail("protocol total time not shown");
+  console.log("scan time + SNR ✓  (total:", JSON.stringify(totalTxt) + ")");
+
+  // window/level via right-drag changes the image's CSS filter
+  await page.evaluate(() => {
+    const box = document.querySelector("#vp-axial");
+    box.dispatchEvent(new PointerEvent("pointerdown", { button: 2, clientX: 100, clientY: 100, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointermove", { clientX: 170, clientY: 50, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  });
+  await page.waitForFunction(
+    () => { const im = document.querySelector("#vp-axial img"); return im && /brightness|contrast/.test(im.style.filter); },
+    { timeout: 6_000 });
+  console.log("window/level ✓");
+
   // drag the acquired series from the axial viewport to the coronal viewport; the
   // coronal box shows it and the axial box reverts to its scout. (Native HTML5 drag
   // can't be driven by Playwright's mouse, so dispatch the DnD events with a shared
