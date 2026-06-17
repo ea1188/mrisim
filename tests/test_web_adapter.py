@@ -849,3 +849,17 @@ def test_scout_reports_satband_thickness_mm():
     assert mm(0, on=False) is None
     thin, wide = mm(10), mm(40)
     assert thin and wide and wide > thin * 2.5, "thickness mm should scale with width %"
+
+
+def test_satband_not_drawn_on_oblique_scout():
+    """Parity with the desktop: the sat band isn't applied on the oblique path, so the
+    localizer must not draw a draggable band that won't saturate (and reports no mm)."""
+    wa.init()
+    def draws(tilt):
+        out = json.loads(wa.render_scout_json(json.dumps(
+            {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+             "tilt": tilt, "rot": 0, "satband_enabled": True, "satband_pos": 50,
+             "satband_width": 20, "params": {"sequence": "Spin Echo"}})))
+        return any("satband" in p for p in out["panels"]), out["satband_mm"]
+    assert draws(0)[0] is True and draws(0)[1] is not None      # orthogonal: drawn
+    assert draws(30) == (False, None)                            # oblique: not drawn

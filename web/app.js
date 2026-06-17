@@ -1434,8 +1434,13 @@ async function render() {
       scoutPanels = s.panels || [];
       $("satwidth-mm").textContent =
         (s.satband_mm != null) ? "≈ " + Math.round(s.satband_mm) + " mm" : "";
+      // Sat band isn't applied on the oblique path (the slab assumes orthogonal slice
+      // geometry) — warn rather than silently dropping it, like the desktop does.
+      const satOblique = $("satband").checked &&
+        (Math.abs(planTilt) > 0.5 || Math.abs(planRot) > 0.5);
       $("oblique-readout").textContent =
-        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag a cross-panel band to angle the plane; FOV box = resize/move; sat band = drag to move, grab an end to angle (on any plane it shows); dbl-click = reset`;
+        `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag a cross-panel band to angle the plane; FOV box = resize/move; sat band = drag to move, grab an end to angle (on any plane it shows); dbl-click = reset`
+        + (satOblique ? "  ·  ⚠ sat band not applied on oblique acquisitions" : "");
     }
     if (reconActive()) await runRecon();   // keep the reconstruction live with the slab
     if (!compareMode) stateToHash();   // keep the URL shareable/current

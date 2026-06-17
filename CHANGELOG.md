@@ -12,6 +12,13 @@ frozen.)
 
 ## [Unreleased]
 
+### Fixed
+- **Browser: sat band + oblique acquisition now matches the desktop.** On a tilted/
+  rotated acquisition the slab isn't applied (it assumes orthogonal slice geometry), but
+  the browser still drew a draggable band on the localizer and gave no warning — so it
+  looked like it would saturate when it wouldn't. The browser now hides the band on the
+  oblique path and the planning readout warns, exactly as the desktop does.
+
 ### Added
 - **Desktop localizer shows the sat-band cross-angle on every panel.** The desktop drew
   the saturation band on a single panel as a flat strip, so the cross-plane angle (the

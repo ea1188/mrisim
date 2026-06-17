@@ -933,7 +933,11 @@ class WebHost(CurvesMixin):
         ip_off = float(payload.get("inplane_off", 0.0))
         tilt = float(payload.get("tilt", 0.0))
         rot = float(payload.get("rot", 0.0))
-        sat_on = bool(payload.get("satband_enabled", False))
+        # The sat band isn't applied on the oblique path (the slab assumes orthogonal
+        # slice geometry), so don't draw a band that won't saturate — parity with the
+        # desktop; the front-end shows a warning instead.
+        sat_on = (bool(payload.get("satband_enabled", False))
+                  and abs(tilt) <= 0.5 and abs(rot) <= 0.5)
         self._scout_satband_mm = None            # band thickness (mm) for the readout
         sat_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0)) / 100.0
         sat_wf = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0)) / 100.0
