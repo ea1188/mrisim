@@ -82,6 +82,19 @@ def _png_b64(fig: Figure) -> str:
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def _png_b64_axes(fig: Figure, ax: object) -> str:
+    """One axes of a multi-panel figure as a standalone PNG (cropped to the axes box).
+
+    Lets the protocol page show each localizer panel in its own draggable viewport
+    while reusing the exact overlays/geometry the 3-up `render_scout` already drew.
+    """
+    fig.canvas.draw()
+    ext = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())  # type: ignore[attr-defined]
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=110, facecolor=fig.get_facecolor(), bbox_inches=ext)
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
 class WebHost(CurvesMixin):
     """Headless host: the Simulator + the shared renderers, composed with the
     desktop ``CurvesMixin`` (which only needs ``axes``/``plot_curve_mode``/
@@ -1157,6 +1170,21 @@ class WebHost(CurvesMixin):
         self._scout_panels = panels
         return _png_b64(self.scout_fig)
 
+    def render_scout_panels(self, payload: dict) -> dict:
+        """The 3 localizer panels as *separate* images (one per plane) + each panel's
+        planning geometry — for the protocol page's independent draggable viewports.
+
+        Reuses `render_scout` wholesale (same backgrounds, overlays and per-panel
+        geometry), then crops each axes to its own PNG. The geometry fractions are
+        already panel-local (0–1 within a panel), so they map straight onto the crops.
+        """
+        self.render_scout(payload)
+        geom = {e["name"]: e for e in self._scout_panels}
+        out: dict = {"satband_mm": getattr(self, "_scout_satband_mm", None)}
+        for ax, name in zip(self.scout_axes, ["axial", "coronal", "sagittal"], strict=True):
+            out[name] = {"png": _png_b64_axes(self.scout_fig, ax), "geom": geom.get(name, {})}
+        return out
+
 
 # --- module-level API the JS shell / tests call ----------------------------- #
 _HOST: "WebHost | None" = None
@@ -1207,6 +1235,20 @@ def render_scout_json(payload_json: str) -> str:
     png = h.render_scout(json.loads(payload_json))
     return json.dumps({"scout": png, "panels": h._scout_panels,
                        "satband_mm": getattr(h, "_scout_satband_mm", None)})
+
+
+def render_scout_panels_json(payload_json: str) -> str:
+    """The 3 localizer panels as separate images + geometry (protocol-page viewports)."""
+    return json.dumps(_host().render_scout_panels(json.loads(payload_json)))
+
+
+def protocols_json(exam_json: str) -> str:
+    """For the protocol page: the list of exams + the ordered sequence queue for one."""
+    import protocols
+    exam = json.loads(exam_json)
+    return json.dumps({"exams": protocols.exam_names(),
+                       "exam": exam,
+                       "queue": protocols.get_protocol(exam)})
 
 
 def reconstruct(payload: dict) -> dict:

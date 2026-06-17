@@ -863,3 +863,23 @@ def test_satband_not_drawn_on_oblique_scout():
         return any("satband" in p for p in out["panels"]), out["satband_mm"]
     assert draws(0)[0] is True and draws(0)[1] is not None      # orthogonal: drawn
     assert draws(30) == (False, None)                            # oblique: not drawn
+
+
+def test_render_scout_panels_returns_three_images_and_geometry():
+    """The protocol page renders the 3 localizer panels as separate viewport images;
+    each must be a valid PNG with its panel-local planning geometry (the acquired
+    plane carries the FOV box, the cross panels carry slice-band geometry)."""
+    import base64
+    wa.init()
+    out = json.loads(wa.render_scout_panels_json(json.dumps(
+        {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+         "inplane_fov_pct": 85, "tilt": 12, "rot": 0,
+         "params": {"sequence": "Spin Echo", "slice_thickness": 5, "n_slices": 5}})))
+    for name in ("axial", "coronal", "sagittal"):
+        panel = out[name]
+        raw = base64.b64decode(panel["png"].split(",", 1)[1])
+        assert raw[:8] == b"\x89PNG\r\n\x1a\n" and len(raw) > 2000, name
+        assert panel["geom"].get("name") == name
+    assert out["axial"]["geom"]["role"] == "acq"          # acquired plane
+    assert "fov_box" in out["axial"]["geom"]
+    assert out["coronal"]["geom"]["role"] == "cross"
