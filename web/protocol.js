@@ -226,7 +226,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 function scoutPayload() {
   const pl = active.plan;
   const out = {
-    region, orientation: pl.orientation, inplane_fov_pct: pl.fov_pct,
+    region, orientation: pl.orientation, fov_planning: true, inplane_fov_pct: pl.fov_pct,
     inplane_off: pl.inplane_off, tilt: pl.tilt, rot: pl.rot,
     params: isLocalizer(active) ? { sequence: "Spin Echo" } : active.params,
   };
@@ -450,7 +450,7 @@ async function applyAndAcquire() {
   if (!active || isLocalizer(active)) return;
   const pl = active.plan;
   const payload = {
-    region, orientation: pl.orientation, inplane_fov_pct: pl.fov_pct,
+    region, orientation: pl.orientation, fov_planning: true, inplane_fov_pct: pl.fov_pct,
     inplane_off: pl.inplane_off, tilt: pl.tilt, rot: pl.rot, params: active.params,
   };
   if (pl.slice != null) payload.slice_idx = pl.slice;
