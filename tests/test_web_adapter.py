@@ -883,3 +883,19 @@ def test_render_scout_panels_returns_three_images_and_geometry():
     assert out["axial"]["geom"]["role"] == "acq"          # acquired plane
     assert "fov_box" in out["axial"]["geom"]
     assert out["coronal"]["geom"]["role"] == "cross"
+
+
+def test_scout_panels_expose_slice_group_extent_for_drag():
+    """The protocol page lets you drag the slice-group edge to add/remove slices, so the
+    cross panels carry a 'slab' extent (center+half fraction) that grows with the count;
+    a 3-D slab acquisition exposes none (the count isn't the control there)."""
+    import json as _json
+    wa.init()
+    def coronal_slab(nsl, **extra):
+        out = _json.loads(wa.render_scout_panels_json(_json.dumps(
+            {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+             "params": {"sequence": "Spin Echo", "slice_thickness": 5, "n_slices": nsl, **extra}})))
+        return out["coronal"]["geom"].get("slab")
+    s1, s7 = coronal_slab(1), coronal_slab(7)
+    assert s1 and s7 and s7["half"] > s1["half"] * 2, "slab half-extent must grow with slices"
+    assert coronal_slab(1, acq3d=True) is None, "3-D slab acquisitions expose no slice-drag handle"

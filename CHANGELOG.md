@@ -21,7 +21,11 @@ frozen.)
   viewports** (double-click a series to bring its scout back), and any acquired sequence
   can be **appended to the queue to re-run with edited parameters** (＋). Reuses the
   existing Pyodide engine (the new `protocols.py` queues + `web_adapter.render_scout_panels`
-  per-panel scouts).
+  per-panel scouts). The localizer controls mirror the main app — the plane **angles the
+  way you drag**, the **cursor shows what each region does** (grab to angle, ↕ move the
+  slice, ⇳ drag the slab edge to add/remove slices, resize the FOV box), you can **scroll
+  an acquired series through its slices**, and a live readout shows slice / count /
+  thickness / tilt / rot / FOV.
 
 ## [1.30.0] — 2026-06-17
 
