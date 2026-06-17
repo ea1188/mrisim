@@ -113,9 +113,11 @@
             <label>TR (ms) <input type="number" id="pp-tr" min="5" max="10000" step="10" /></label>
             <label>TE (ms) <input type="number" id="pp-te" min="1" max="500" step="1" /></label>
             <label>Flip (°) <input type="number" id="pp-flip" min="1" max="180" step="1" /></label>
+            <label id="pp-ti-row" hidden>TI (ms) <input type="number" id="pp-ti" min="0" max="4000" step="10" /></label>
+            <label id="pp-bval-row" hidden>b-value <input type="number" id="pp-bval" min="0" max="3000" step="50" /></label>
             <label>FOV (%) <input type="number" id="pp-fov" min="20" max="100" step="5" /></label>
             <label>Slice thk (mm) <input type="number" id="pp-thk" min="1" max="10" step="1" /></label>
-            <label>Slices <input type="number" id="pp-nsl" min="1" max="32" step="1" /></label>
+            <label><span id="pp-nsl-label">Slices</span> <input type="number" id="pp-nsl" min="1" max="256" step="1" /></label>
             <label>Tilt (°) <input type="number" id="pp-tilt" min="-45" max="45" step="1" /></label>
             <label>Rot (°) <input type="number" id="pp-rot" min="-45" max="45" step="1" /></label>
           </div>

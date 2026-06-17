@@ -89,6 +89,21 @@ try {
   await page.waitForFunction((n) => document.querySelectorAll("#pp-list li").length === n + 1,
     nBefore, { timeout: 8_000 });
   console.log("append / re-run ✓  (queue", nBefore, "→", nBefore + 1 + ")");
+
+  // double-click a scout resets the prescription (angle it, then undo)
+  await page.fill("#pp-tilt", "20");
+  await page.dispatchEvent("#pp-tilt", "input");
+  await page.dblclick("#vp-coronal");
+  await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
+  console.log("double-click reset ✓");
+
+  // sequence-relevant params: FLAIR (IR) shows TI; MPRAGE (3-D) labels the count "Partitions"
+  await page.click("#pp-list li:nth-child(4)");                      // FLAIR
+  await page.waitForFunction(() => !document.querySelector("#pp-ti-row").hidden, { timeout: 12_000 });
+  await page.click("#pp-list li:nth-child(8)");                      // MPRAGE (3-D)
+  await page.waitForFunction(
+    () => document.querySelector("#pp-nsl-label").textContent === "Partitions", { timeout: 12_000 });
+  console.log("sequence params (TI) + 3-D partitions ✓");
 } catch (e) {
   fail(e.message);
 }

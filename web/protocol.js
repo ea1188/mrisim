@@ -50,6 +50,7 @@ let active = null;       // open queue item
 let seq = 0;             // id counter
 const vpGeom = {};       // plane -> last rendered panel geometry (for interaction)
 let refreshTimer = null;
+let lastSeriesPlane = null;   // viewport last hovered/scrolled (arrow keys page it)
 
 // ---- boot ----------------------------------------------------------------- //
 async function onReady() {
@@ -157,18 +158,26 @@ async function openItem(it) {
 }
 
 // ---- parameter panel ------------------------------------------------------ //
-const NUMP = { "pp-tr": "TR", "pp-te": "TE", "pp-flip": "flip_angle",
-               "pp-thk": "slice_thickness", "pp-nsl": "n_slices" };
+const NUMP = { "pp-tr": "TR", "pp-te": "TE", "pp-flip": "flip_angle", "pp-thk": "slice_thickness" };
+const nslKey = (p) => (p.acq3d ? "n_partitions" : "n_slices");   // 3-D uses partitions
 function paramsToPanel(it) {
   const p = it.params;
   $("pp-tr").value = p.TR ?? 500;
   $("pp-te").value = p.TE ?? 15;
   $("pp-flip").value = p.flip_angle ?? 90;
   $("pp-thk").value = p.slice_thickness ?? 5;
-  $("pp-nsl").value = p.n_slices ?? 1;
   $("pp-fov").value = it.plan.fov_pct;
   $("pp-tilt").value = it.plan.tilt;
   $("pp-rot").value = it.plan.rot;
+  // Only the parameter that *defines* this sequence is shown beyond the basics.
+  const isIR = it.sequence === "Inversion Recovery", isDWI = it.sequence === "Diffusion (DWI)";
+  $("pp-ti-row").hidden = !isIR;
+  $("pp-bval-row").hidden = !isDWI;
+  if (isIR) $("pp-ti").value = p.TI ?? 2500;
+  if (isDWI) $("pp-bval").value = p.b_value ?? 1000;
+  // A 3-D acquisition is a slab of partitions, not a 2-D multi-slice group.
+  $("pp-nsl-label").textContent = p.acq3d ? "Partitions" : "Slices";
+  $("pp-nsl").value = p.acq3d ? (p.n_partitions ?? 32) : (p.n_slices ?? 1);
 }
 function wireParamPanel() {
   Object.entries(NUMP).forEach(([id, key]) => {
@@ -178,10 +187,24 @@ function wireParamPanel() {
       scheduleScouts();
     });
   });
+  $("pp-nsl").addEventListener("input", () => {
+    if (!active || isLocalizer(active)) return;
+    active.params[nslKey(active.params)] = +$("pp-nsl").value;
+    scheduleScouts();
+  });
+  $("pp-ti").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.TI = +$("pp-ti").value; scheduleScouts(); } });
+  $("pp-bval").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.b_value = +$("pp-bval").value; scheduleScouts(); } });
   $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleScouts(); } });
   $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleScouts(); } });
   $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleScouts(); } });
   $("pp-apply").addEventListener("click", applyAndAcquire);
+  // ↑/↓ (←/→) page an acquired series, like the wheel.
+  window.addEventListener("keydown", (e) => {
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (!lastSeriesPlane || slotState[lastSeriesPlane].kind !== "series") return;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); scrollSeries(lastSeriesPlane, 1); }
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); scrollSeries(lastSeriesPlane, -1); }
+  });
 }
 
 // ---- viewports ------------------------------------------------------------ //
@@ -239,6 +262,7 @@ function moveSeries(src, dst) {
   if (src === dst || slotState[src].kind !== "series") return;
   slotState[dst] = slotState[src];
   slotState[src] = { kind: "scout" };
+  lastSeriesPlane = dst;
   renderSlot(src); renderSlot(dst);
 }
 function revertSlot(plane) {                 // double-click a series → bring the scout back
@@ -348,7 +372,11 @@ function wireViewport(plane) {
     box.style.cursor = f ? cursorFor(modeAt(vpGeom[plane], f)) : "";
   });
 
-  // Scroll through the slices of an acquired series.
+  // Scroll through the slices of an acquired series (wheel; arrow keys page the
+  // last-touched series — see wireParamPanel).
+  box.addEventListener("pointerenter", () => {
+    if (slotState[plane].kind === "series") lastSeriesPlane = plane;
+  });
   box.addEventListener("wheel", (e) => {
     if (slotState[plane].kind !== "series" || !slotState[plane].payload) return;
     e.preventDefault();
@@ -367,7 +395,15 @@ function wireViewport(plane) {
     const src = e.dataTransfer.getData("text/plane");
     if (src) moveSeries(src, plane);
   });
-  box.addEventListener("dblclick", () => revertSlot(plane));
+  // Double-click: a series box brings its scout back; a scout box resets the
+  // prescription (angles + FOV) to straight/full — parity with the main app.
+  box.addEventListener("dblclick", () => {
+    if (slotState[plane].kind === "series") { revertSlot(plane); return; }
+    if (!active || isLocalizer(active)) return;
+    Object.assign(active.plan, { tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 });
+    $("pp-tilt").value = 0; $("pp-rot").value = 0; $("pp-fov").value = 100;
+    scheduleScouts();
+  });
 }
 
 // ---- Apply & acquire ------------------------------------------------------ //
@@ -392,9 +428,10 @@ async function applyAndAcquire() {
       label: `${active.label} (acquired)`, payload,
       slice: r.slice_idx, maxSlice: r.max_slice,
     };
+    lastSeriesPlane = pl.orientation;            // arrow keys page it right away
     renderSlot(pl.orientation);
     $("pp-readout").textContent =
-      `Acquired ✓ — scroll to page through ${(r.max_slice ?? 0) + 1} slices, drag to any viewport, or open the next sequence.`;
+      `Acquired ✓ — scroll / ↑↓ to page through ${(r.max_slice ?? 0) + 1} slices, drag to any viewport, or open the next sequence.`;
     renderQueue();
   } catch (err) {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
