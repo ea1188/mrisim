@@ -10,6 +10,13 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Changed
+- **Protocol Planning is now front-and-centre.** The top-bar entry is a highlighted
+  call-to-action, it's a step in the feature tour, and it's called out in the welcome
+  dialog — so the scanner-console workflow is discoverable, not buried.
+
 ## [1.31.0] — 2026-06-17
 
 ### Added
