@@ -332,7 +332,13 @@ function wireViewport(plane) {
     const p = vpGeom[plane]; if (!p || !active) return null;
     const mode = modeAt(p, loc);
     const d = { mode, p };
-    if (mode === "oblique") { d.l0 = loc; d.tilt0 = active.plan.tilt; d.rot0 = active.plan.rot; }
+    if (mode === "oblique") {
+      d.l0 = loc; d.tilt0 = active.plan.tilt; d.rot0 = active.plan.rot;
+      // Which end of the band you grabbed — so the angle follows that end toward your
+      // cursor (drag the right/bottom end up/over → that end goes up/over), instead of
+      // a fixed global sign that feels reversed when you grab the other end.
+      d.side = p.map === "row" ? (loc.px >= 0.5 ? 1 : -1) : (loc.py >= 0.5 ? 1 : -1);
+    }
     if (mode === "slices") { d.half0 = p.slab.half; d.n0 = (+$("pp-nsl").value) || 1; }
     return d;
   };
@@ -354,8 +360,8 @@ function wireViewport(plane) {
       const perp = p.map === "row" ? loc.py : loc.px;
       const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
       active.params.n_slices = n; $("pp-nsl").value = n;
-    } else if (drag.mode === "oblique") {
-      const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
+    } else if (drag.mode === "oblique") {            // the grabbed end follows your cursor
+      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90 * drag.side;
       if (p.angle === "tilt") { pl.tilt = snapAngle(clampN(drag.tilt0 + d, -45, 45)); $("pp-tilt").value = pl.tilt; }
       else { pl.rot = snapAngle(clampN(drag.rot0 + d, -45, 45)); $("pp-rot").value = pl.rot; }
     }

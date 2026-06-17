@@ -34,6 +34,20 @@ try {
   await page.waitForFunction(() => !document.querySelector("#pp-controls").hidden, { timeout: 15_000 });
   console.log("opened a sequence, TR =", await page.inputValue("#pp-tr"));
 
+  // angling follows the drag: grab the right end of the band on the sagittal scout and
+  // drag it UP → tilt goes positive (right end up), not the opposite way.
+  await page.evaluate(() => {
+    const img = document.querySelector("#vp-sagittal img"); const r = img.getBoundingClientRect();
+    const x = r.left + r.width * 0.82, y0 = r.top + r.height * 0.5, y1 = r.top + r.height * 0.25;
+    img.dispatchEvent(new PointerEvent("pointerdown", { button: 0, clientX: x, clientY: y0, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y1, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  });
+  await page.waitForFunction(() => parseFloat(document.querySelector("#pp-tilt").value) > 0, { timeout: 6_000 });
+  console.log("angle follows the drag ✓ (tilt =", await page.inputValue("#pp-tilt") + ")");
+  await page.dblclick("#vp-sagittal");                // reset the prescription
+  await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
+
   // tweak the in-plane FOV → scouts refresh without error
   await page.fill("#pp-fov", "70");
   await page.dispatchEvent("#pp-fov", "input");
