@@ -1,0 +1,289 @@
+/* MRISim — Protocol Planning workspace (scanner-console workflow).
+ *
+ * Reuses the existing Pyodide engine (worker.js + web_adapter): pick an exam → a
+ * protocol queue loads → open a sequence → plan angles/FOV on the three scout
+ * viewports + edit parameters → Apply to acquire → the image appears in a viewport.
+ * Drag-between-viewports and append/re-run land in a follow-up.
+ */
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+const snapAngle = (v) => { for (const t of [0, 15, 30, 45, -15, -30, -45]) if (Math.abs(v - t) <= 2.5) return t; return v; };
+const PLANES = ["sagittal", "coronal", "axial"];
+
+// ---- engine worker bridge (mirrors app.js) -------------------------------- //
+const worker = new Worker("worker.js");
+let reqId = 0, booted = false, workerDead = false;
+const pending = new Map();
+function call(type, payload) {
+  if (workerDead) return Promise.reject(new Error("the engine has stopped — please reload"));
+  return new Promise((resolve, reject) => {
+    const id = ++reqId; pending.set(id, { resolve, reject });
+    worker.postMessage({ id, type, payload });
+  });
+}
+function onWorkerCrash(ev) {
+  if (workerDead) return; workerDead = true;
+  const msg = (ev && ev.message) || "the engine worker stopped";
+  for (const [, p] of pending) p.reject(new Error(msg));
+  pending.clear();
+  $("splash-status").textContent = "The engine failed to start — please reload.";
+}
+worker.onerror = onWorkerCrash;
+worker.onmessageerror = onWorkerCrash;
+worker.onmessage = (e) => {
+  const m = e.data;
+  if (m.type === "progress") { $("splash-bar").style.width = m.pct + "%"; if (m.msg) $("splash-status").textContent = m.msg; return; }
+  if (m.type === "ready") { onReady(); return; }
+  if (m.type === "error") { $("splash-status").textContent = "Failed to start: " + m.msg; return; }
+  const p = pending.get(m.id); if (!p) return;
+  pending.delete(m.id);
+  if (m.error) p.reject(new Error(m.error)); else p.resolve(m.result);
+};
+
+// ---- state ---------------------------------------------------------------- //
+let exam = "Brain";
+let region = "Brain";
+let queue = [];          // [{id, preset, label, sequence, status, params, plan, image}]
+let active = null;       // open queue item
+let seq = 0;             // id counter
+const vpGeom = {};       // plane -> last rendered panel geometry (for interaction)
+let refreshTimer = null;
+
+// ---- boot ----------------------------------------------------------------- //
+async function onReady() {
+  booted = true;
+  $("splash").hidden = true;
+  $("pp-root").hidden = false;
+  wireParamPanel();
+  PLANES.forEach(wireViewport);
+  await loadExam("Brain");
+}
+
+async function loadExam(name) {
+  exam = name;
+  const info = await call("protocols", name);
+  // exam picker (first time)
+  const sel = $("pp-exam");
+  if (!sel.options.length) {
+    info.exams.forEach((ex) => sel.add(new Option(ex, ex)));
+    sel.value = name;
+    sel.addEventListener("change", () => loadExam(sel.value));
+  }
+  region = name;                       // exam name == region name here (Brain)
+  await call("setRegion", region);
+  // build the queue
+  seq = 0;
+  queue = info.queue.map((it) => ({
+    id: ++seq, preset: it.preset, label: it.label, sequence: it.sequence,
+    status: "pending", params: null, plan: null, image: null,
+  }));
+  active = null;
+  renderQueue();
+  // open the localizer first so the scouts show immediately
+  openItem(queue[0]);
+}
+
+// ---- protocol queue (right column) ---------------------------------------- //
+function renderQueue() {
+  const ol = $("pp-list");
+  ol.innerHTML = "";
+  queue.forEach((it, i) => {
+    const li = document.createElement("li");
+    li.className = (it === active ? "active " : "") + (it.status === "acquired" ? "acquired" : "");
+    const dot = it.status === "acquired" ? "✓" : (it === active ? "▸" : "·");
+    li.innerHTML = `<span class="q-num">${i + 1}</span>`
+      + `<span class="q-label">${it.label}</span>`
+      + `<span class="q-status">${dot}</span>`;
+    li.addEventListener("click", () => openItem(it));
+    ol.appendChild(li);
+  });
+}
+
+const LOCALIZER = "Localizer";
+const isLocalizer = (it) => it && it.preset === LOCALIZER;
+
+// ---- open a sequence ------------------------------------------------------ //
+async function openItem(it) {
+  active = it;
+  renderQueue();
+  if (isLocalizer(it)) {
+    it.plan = it.plan || { orientation: "axial", slice: null, tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 };
+    $("pp-seqname").textContent = "Localizer — 3-plane scout";
+    $("pp-controls").hidden = true; $("pp-actions").hidden = true;
+    await renderScouts();
+    return;
+  }
+  if (!it.params) {                      // first open: resolve the preset
+    const bundle = await call("preset", it.preset);
+    it.params = bundle.params;
+    // Surface geometry defaults the panel shows, so the engine and the panel agree
+    // (presets don't carry slice thickness / count).
+    it.params.slice_thickness = it.params.slice_thickness ?? 5;
+    it.params.n_slices = it.params.n_slices ?? 1;
+    it.plan = {
+      orientation: bundle.orientation || "axial",
+      slice: null,                       // null → mid slice (engine default)
+      tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100,
+    };
+  }
+  $("pp-seqname").textContent = `${it.label}  ·  ${it.sequence}`;
+  $("pp-controls").hidden = false; $("pp-actions").hidden = false;
+  paramsToPanel(it);
+  await renderScouts();
+}
+
+// ---- parameter panel ------------------------------------------------------ //
+const NUMP = { "pp-tr": "TR", "pp-te": "TE", "pp-flip": "flip_angle",
+               "pp-thk": "slice_thickness", "pp-nsl": "n_slices" };
+function paramsToPanel(it) {
+  const p = it.params;
+  $("pp-tr").value = p.TR ?? 500;
+  $("pp-te").value = p.TE ?? 15;
+  $("pp-flip").value = p.flip_angle ?? 90;
+  $("pp-thk").value = p.slice_thickness ?? 5;
+  $("pp-nsl").value = p.n_slices ?? 1;
+  $("pp-fov").value = it.plan.fov_pct;
+  $("pp-tilt").value = it.plan.tilt;
+  $("pp-rot").value = it.plan.rot;
+}
+function wireParamPanel() {
+  Object.entries(NUMP).forEach(([id, key]) => {
+    $(id).addEventListener("input", () => {
+      if (!active || isLocalizer(active)) return;
+      active.params[key] = +$(id).value;
+      scheduleScouts();
+    });
+  });
+  $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleScouts(); } });
+  $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleScouts(); } });
+  $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleScouts(); } });
+  $("pp-apply").addEventListener("click", applyAndAcquire);
+}
+
+// ---- scout rendering ------------------------------------------------------ //
+function scoutPayload() {
+  const pl = active.plan;
+  const out = {
+    region, orientation: pl.orientation, inplane_fov_pct: pl.fov_pct,
+    inplane_off: pl.inplane_off, tilt: pl.tilt, rot: pl.rot,
+    params: isLocalizer(active) ? { sequence: "Spin Echo" } : active.params,
+  };
+  if (pl.slice != null) out.slice_idx = pl.slice;
+  return out;
+}
+async function renderScouts() {
+  const res = await call("scoutPanels", scoutPayload());
+  PLANES.forEach((plane) => {
+    const panel = res[plane]; if (!panel) return;
+    vpGeom[plane] = panel.geom || {};
+    setViewport(plane, panel.png, plane.charAt(0).toUpperCase() + plane.slice(1), true);
+  });
+}
+function scheduleScouts() { clearTimeout(refreshTimer); refreshTimer = setTimeout(renderScouts, 90); }
+
+// Put an image (scout or acquired series) into a viewport box.
+function setViewport(plane, dataURL, tag, plannable) {
+  const box = $("vp-" + plane);
+  box.classList.toggle("plannable", !!plannable);
+  let img = box.querySelector("img");
+  if (!img) { img = document.createElement("img"); box.appendChild(img); }
+  img.src = dataURL;
+  box.querySelector(".vp-tag").textContent = tag;
+  box._plannable = !!plannable;
+}
+
+// ---- viewport planning interaction (per panel) ---------------------------- //
+function imgFraction(img, cx, cy) {
+  const r = img.getBoundingClientRect();
+  if (!img.naturalWidth || !r.width) return null;
+  const nAR = img.naturalWidth / img.naturalHeight, eAR = r.width / r.height;
+  let cw, ch, ox, oy;
+  if (eAR > nAR) { ch = r.height; cw = ch * nAR; ox = (r.width - cw) / 2; oy = 0; }
+  else { cw = r.width; ch = cw / nAR; ox = 0; oy = (r.height - ch) / 2; }
+  const fx = (cx - r.left - ox) / cw, fy = (cy - r.top - oy) / ch;
+  return (fx >= 0 && fx <= 1 && fy >= 0 && fy <= 1) ? { px: fx, py: fy } : null;
+}
+function bandLocal(p, slice) {
+  const s = slice == null ? (p.n - 1) / 2 : slice;
+  if (p.map === "row") return 1 - s / (p.n - 1);
+  return (p.flip ? (p.n - 1 - s) : s) / (p.n - 1);
+}
+function wireViewport(plane) {
+  const box = $("vp-" + plane);
+  let drag = null;
+  const startDrag = (loc) => {
+    const p = vpGeom[plane]; if (!p || !active) return null;
+    if (p.role === "acq") {
+      const fb = p.fov_box; if (!fb) return { mode: "slice", p };
+      const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+      const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1), Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
+      return { mode: edge > 0.72 ? "resize" : "recenter", p };
+    }
+    const bp = bandLocal(p, active.plan.slice);
+    const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.10 : Math.abs(loc.px - bp) < 0.10;
+    if (near && p.angle) return { mode: "oblique", p, l0: loc, tilt0: active.plan.tilt, rot0: active.plan.rot };
+    return { mode: "slice", p };
+  };
+  const applyDrag = (loc) => {
+    if (!drag || !active) return;
+    const p = drag.p, pl = active.plan;
+    if (drag.mode === "slice") {
+      const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
+      pl.slice = clampN(Math.round(s), 0, p.n - 1);
+    } else if (drag.mode === "recenter") {
+      const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
+      pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
+    } else if (drag.mode === "resize") {
+      const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+      const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
+      pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
+      $("pp-fov").value = pl.fov_pct;
+    } else if (drag.mode === "oblique") {
+      const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
+      if (p.angle === "tilt") { pl.tilt = snapAngle(clampN(drag.tilt0 + d, -45, 45)); $("pp-tilt").value = pl.tilt; }
+      else { pl.rot = snapAngle(clampN(drag.rot0 + d, -45, 45)); $("pp-rot").value = pl.rot; }
+    }
+    scheduleScouts();
+  };
+  box.addEventListener("pointerdown", (e) => {
+    const img = box.querySelector("img");
+    if (!img || !box._plannable) return;          // acquired series → view-only (drag in PR C)
+    const f = imgFraction(img, e.clientX, e.clientY); if (!f) return;
+    drag = startDrag(f); if (drag) { applyDrag(f); e.preventDefault(); }
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const img = box.querySelector("img"); if (!img) return;
+    const f = imgFraction(img, e.clientX, e.clientY); if (f) applyDrag(f);
+  });
+  window.addEventListener("pointerup", () => { drag = null; });
+  window.addEventListener("pointercancel", () => { drag = null; });
+}
+
+// ---- Apply & acquire ------------------------------------------------------ //
+async function applyAndAcquire() {
+  if (!active || isLocalizer(active)) return;
+  const pl = active.plan;
+  const payload = {
+    region, orientation: pl.orientation, inplane_fov_pct: pl.fov_pct,
+    inplane_off: pl.inplane_off, tilt: pl.tilt, rot: pl.rot, params: active.params,
+  };
+  if (pl.slice != null) payload.slice_idx = pl.slice;
+  $("pp-apply").disabled = true;
+  $("pp-readout").textContent = "Acquiring…";
+  try {
+    const r = await call("render", payload);
+    active.image = r.image;
+    active.status = "acquired";
+    // the acquired series fills the acquired-plane viewport
+    setViewport(pl.orientation, r.image, `${active.label} (acquired)`, false);
+    $("pp-readout").textContent = "Acquired ✓ — open the next sequence to plan it.";
+    renderQueue();
+  } catch (err) {
+    $("pp-readout").textContent = "Acquisition failed: " + err.message;
+  } finally {
+    $("pp-apply").disabled = false;
+  }
+}

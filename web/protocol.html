@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MRISim · Protocol Planning</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- Protocol-planning workspace (scanner-console layout) ---- */
+    #pp-root { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+    #pp-head {
+      display: flex; align-items: center; gap: 14px; padding: 8px 14px;
+      border-bottom: 1px solid var(--line, #2a323c); background: #11151b;
+    }
+    #pp-head h1 { font-size: 15px; margin: 0; color: #e6edf3; font-weight: 600; }
+    #pp-head .spacer { flex: 1; }
+    #pp-head a { color: #7fb8ff; text-decoration: none; font-size: 13px; }
+    #pp-body {
+      display: grid; grid-template-columns: 1fr 300px; min-height: 0;
+    }
+    /* left: viewports over the parameter panel */
+    #pp-main { display: grid; grid-template-rows: 1fr auto; min-height: 0; min-width: 0; }
+    #pp-views {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+      padding: 8px; min-height: 0;
+    }
+    .vp {
+      position: relative; background: #05070a; border: 1px solid #232a33;
+      border-radius: 4px; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; min-height: 0;
+    }
+    .vp img { max-width: 100%; max-height: 100%; display: block; image-rendering: auto;
+      touch-action: none; user-select: none; -webkit-user-drag: none; }
+    .vp .vp-tag {
+      position: absolute; top: 4px; left: 6px; font-size: 11px; color: #9aa4b2;
+      background: rgba(8,10,14,.6); padding: 1px 6px; border-radius: 3px; pointer-events: none;
+    }
+    .vp.plannable { cursor: crosshair; }
+    .vp.empty { color: #54606e; font-size: 12px; }
+    /* parameter panel */
+    #pp-params {
+      border-top: 1px solid #232a33; background: #0d1116; padding: 10px 12px;
+      max-height: 42vh; overflow: auto;
+    }
+    #pp-params .pp-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+    #pp-params label { font-size: 12px; color: #9aa4b2; display: inline-flex; align-items: center; gap: 6px; }
+    #pp-params input[type=number] { width: 64px; }
+    #pp-params .seqname { color: #e6edf3; font-weight: 600; font-size: 13px; }
+    #pp-params .pp-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+    #pp-readout { color: #9aa4b2; font-size: 11px; margin-top: 6px; min-height: 1em; }
+    button.apply { background: #d9772e; color: #fff; border: 0; border-radius: 4px;
+      padding: 7px 18px; font-weight: 600; cursor: pointer; }
+    button.apply:disabled { opacity: .45; cursor: default; }
+    /* right: protocol queue */
+    #pp-queue { border-left: 1px solid #232a33; background: #0b0e13; display: grid;
+      grid-template-rows: auto 1fr; min-height: 0; }
+    #pp-queue .q-head { padding: 10px 12px; border-bottom: 1px solid #1c232c; }
+    #pp-queue .q-head .q-title { color: #e6edf3; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+    #pp-queue ol { list-style: none; margin: 0; padding: 6px; overflow: auto; }
+    #pp-queue li {
+      display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 4px;
+      cursor: pointer; font-size: 12px; color: #c4ccd6;
+    }
+    #pp-queue li:hover { background: #141a21; }
+    #pp-queue li.active { background: #1b2530; outline: 1px solid #2f4358; }
+    #pp-queue li .q-num { color: #5b6470; width: 16px; text-align: right; }
+    #pp-queue li .q-label { flex: 1; }
+    #pp-queue li .q-status { font-size: 14px; width: 18px; text-align: center; }
+    #pp-queue li.acquired .q-label { color: #7fd0a0; }
+    .q-dot { font-size: 11px; }
+  </style>
+</head>
+<body>
+  <!-- Boot splash (reuses the main app's pattern) -->
+  <div id="splash">
+    <div class="splash-card">
+      <img class="logo" src="logo.png" alt="MRISim logo" />
+      <h1>Protocol Planning</h1>
+      <p id="splash-status">Starting…</p>
+      <div class="bar"><div id="splash-bar"></div></div>
+      <p class="splash-note">Runs the real Python engine in your browser via Pyodide.
+        First load downloads ~30–50&nbsp;MB (cached afterwards).</p>
+    </div>
+  </div>
+
+  <div id="pp-root" hidden>
+    <header id="pp-head">
+      <h1>MRISim · Protocol Planning</h1>
+      <span class="spacer"></span>
+      <a href="index.html">← Back to the simulator</a>
+    </header>
+
+    <div id="pp-body">
+      <div id="pp-main">
+        <div id="pp-views">
+          <div class="vp" id="vp-sagittal" data-plane="sagittal"><span class="vp-tag">Sagittal</span></div>
+          <div class="vp" id="vp-coronal"  data-plane="coronal"><span class="vp-tag">Coronal</span></div>
+          <div class="vp" id="vp-axial"    data-plane="axial"><span class="vp-tag">Axial</span></div>
+        </div>
+
+        <div id="pp-params">
+          <div class="pp-row" style="margin-bottom:8px">
+            <span class="seqname" id="pp-seqname">Open a sequence from the protocol →</span>
+          </div>
+          <div class="pp-row" id="pp-controls" hidden>
+            <label>TR (ms) <input type="number" id="pp-tr" min="5" max="10000" step="10" /></label>
+            <label>TE (ms) <input type="number" id="pp-te" min="1" max="500" step="1" /></label>
+            <label>Flip (°) <input type="number" id="pp-flip" min="1" max="180" step="1" /></label>
+            <label>FOV (%) <input type="number" id="pp-fov" min="20" max="100" step="5" /></label>
+            <label>Slice thk (mm) <input type="number" id="pp-thk" min="1" max="10" step="1" /></label>
+            <label>Slices <input type="number" id="pp-nsl" min="1" max="32" step="1" /></label>
+            <label>Tilt (°) <input type="number" id="pp-tilt" min="-45" max="45" step="1" /></label>
+            <label>Rot (°) <input type="number" id="pp-rot" min="-45" max="45" step="1" /></label>
+          </div>
+          <div class="pp-actions" id="pp-actions" hidden>
+            <button class="apply" id="pp-apply">Apply &amp; acquire ▸</button>
+            <span id="pp-readout"></span>
+          </div>
+        </div>
+      </div>
+
+      <aside id="pp-queue">
+        <div class="q-head">
+          <div class="q-title">Protocol</div>
+          <label style="font-size:12px;color:#9aa4b2">Exam
+            <select id="pp-exam"></select>
+          </label>
+        </div>
+        <ol id="pp-list"></ol>
+      </aside>
+    </div>
+  </div>
+
+  <script src="protocol.js"></script>
+</body>
+</html>

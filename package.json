@@ -5,7 +5,7 @@
   "description": "Tooling for the MRISim browser build (web/): ESLint static analysis.",
   "type": "commonjs",
   "scripts": {
-    "lint": "eslint web/app.js web/worker.js web/sw.js web/smoke.mjs"
+    "lint": "eslint web/app.js web/worker.js web/sw.js web/smoke.mjs web/protocol.js web/protocol_smoke.mjs"
   },
   "repository": {
     "type": "git",
