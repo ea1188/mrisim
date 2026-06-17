@@ -49,6 +49,38 @@ try {
   const done = await page.$$eval("#pp-list li.acquired", (li) => li.length);
   if (done < 1) fail("queue item not marked acquired");
   console.log("acquired ✓  (axial tag:", JSON.stringify(tag) + ", done:", done + ")");
+
+  // drag the acquired series from the axial viewport to the coronal viewport; the
+  // coronal box shows it and the axial box reverts to its scout. (Native HTML5 drag
+  // can't be driven by Playwright's mouse, so dispatch the DnD events with a shared
+  // DataTransfer — this exercises the page's real dragstart/drop handlers.)
+  await page.evaluate(() => {
+    const dt = new DataTransfer();
+    const src = document.querySelector("#vp-axial img");
+    const dst = document.querySelector("#vp-coronal");
+    src.dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: dt }));
+    dst.dispatchEvent(new DragEvent("dragover", { bubbles: true, dataTransfer: dt }));
+    dst.dispatchEvent(new DragEvent("drop", { bubbles: true, dataTransfer: dt }));
+  });
+  await page.waitForFunction(
+    () => /acquired/i.test(document.querySelector("#vp-coronal .vp-tag").textContent)
+       && !/acquired/i.test(document.querySelector("#vp-axial .vp-tag").textContent),
+    { timeout: 8_000 });
+  console.log("drag between viewports ✓");
+
+  // double-click the series viewport → its scout returns
+  await page.dblclick("#vp-coronal");
+  await page.waitForFunction(
+    () => !/acquired/i.test(document.querySelector("#vp-coronal .vp-tag").textContent),
+    { timeout: 8_000 });
+  console.log("double-click revert ✓");
+
+  // append / re-run: the acquired queue item gets a ＋ that clones it to the queue
+  const nBefore = await page.$$eval("#pp-list li", (li) => li.length);
+  await page.click("#pp-list li.acquired .q-append");
+  await page.waitForFunction((n) => document.querySelectorAll("#pp-list li").length === n + 1,
+    nBefore, { timeout: 8_000 });
+  console.log("append / re-run ✓  (queue", nBefore, "→", nBefore + 1 + ")");
 } catch (e) {
   fail(e.message);
 }

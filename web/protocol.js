@@ -97,8 +97,28 @@ function renderQueue() {
       + `<span class="q-label">${it.label}</span>`
       + `<span class="q-status">${dot}</span>`;
     li.addEventListener("click", () => openItem(it));
+    if (it.status === "acquired") {           // re-run: append a fresh copy to the queue
+      const add = document.createElement("button");
+      add.className = "q-append"; add.title = "Append a copy to re-run with new parameters";
+      add.textContent = "＋";
+      add.addEventListener("click", (e) => { e.stopPropagation(); appendItem(it); });
+      li.appendChild(add);
+    }
     ol.appendChild(li);
   });
+}
+
+// Append a fresh, pending copy of an acquired sequence so it can be re-run with edits.
+function appendItem(src) {
+  const copy = {
+    id: ++seq, preset: src.preset, label: src.label + " (re-run)", sequence: src.sequence,
+    status: "pending", image: null,
+    params: src.params ? { ...src.params } : null,
+    plan: src.plan ? { ...src.plan } : null,
+  };
+  queue.push(copy);
+  renderQueue();
+  openItem(copy);
 }
 
 const LOCALIZER = "Localizer";
@@ -107,6 +127,7 @@ const isLocalizer = (it) => it && it.preset === LOCALIZER;
 // ---- open a sequence ------------------------------------------------------ //
 async function openItem(it) {
   active = it;
+  PLANES.forEach((p) => { slotState[p] = { kind: "scout" }; });   // fresh planning view
   renderQueue();
   if (isLocalizer(it)) {
     it.plan = it.plan || { orientation: "axial", slice: null, tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 };
@@ -162,7 +183,14 @@ function wireParamPanel() {
   $("pp-apply").addEventListener("click", applyAndAcquire);
 }
 
-// ---- scout rendering ------------------------------------------------------ //
+// ---- viewports ------------------------------------------------------------ //
+// Each of the three slots holds either the plane's scout (plannable) or an acquired
+// series (view-only, draggable to another slot). The scout images are cached so a
+// slot showing a series isn't clobbered when the scouts re-render.
+const slotState = { sagittal: { kind: "scout" }, coronal: { kind: "scout" }, axial: { kind: "scout" } };
+const scoutCache = {};   // plane -> {png, geom, label}
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 function scoutPayload() {
   const pl = active.plan;
   const out = {
@@ -177,21 +205,44 @@ async function renderScouts() {
   const res = await call("scoutPanels", scoutPayload());
   PLANES.forEach((plane) => {
     const panel = res[plane]; if (!panel) return;
-    vpGeom[plane] = panel.geom || {};
-    setViewport(plane, panel.png, plane.charAt(0).toUpperCase() + plane.slice(1), true);
+    scoutCache[plane] = { png: panel.png, geom: panel.geom || {}, label: cap(plane) };
   });
+  PLANES.forEach(renderSlot);
 }
 function scheduleScouts() { clearTimeout(refreshTimer); refreshTimer = setTimeout(renderScouts, 90); }
 
-// Put an image (scout or acquired series) into a viewport box.
-function setViewport(plane, dataURL, tag, plannable) {
+function renderSlot(plane) {
+  const st = slotState[plane];
+  if (st.kind === "scout") {
+    const sc = scoutCache[plane]; if (!sc) return;
+    vpGeom[plane] = sc.geom;
+    drawTile(plane, sc.png, sc.label, true, false);          // plannable, not draggable
+  } else {
+    drawTile(plane, st.png, st.label + "  ⠿", false, true);  // series: view-only, draggable
+  }
+}
+function drawTile(plane, dataURL, tag, plannable, draggable) {
   const box = $("vp-" + plane);
   box.classList.toggle("plannable", !!plannable);
   let img = box.querySelector("img");
   if (!img) { img = document.createElement("img"); box.appendChild(img); }
   img.src = dataURL;
+  img.draggable = !!draggable;
   box.querySelector(".vp-tag").textContent = tag;
   box._plannable = !!plannable;
+}
+
+// Drag a series from one slot to another; the source slot reverts to its scout.
+function moveSeries(src, dst) {
+  if (src === dst || slotState[src].kind !== "series") return;
+  slotState[dst] = slotState[src];
+  slotState[src] = { kind: "scout" };
+  renderSlot(src); renderSlot(dst);
+}
+function revertSlot(plane) {                 // double-click a series → bring the scout back
+  if (slotState[plane].kind !== "series") return;
+  slotState[plane] = { kind: "scout" };
+  renderSlot(plane);
 }
 
 // ---- viewport planning interaction (per panel) ---------------------------- //
@@ -249,7 +300,7 @@ function wireViewport(plane) {
   };
   box.addEventListener("pointerdown", (e) => {
     const img = box.querySelector("img");
-    if (!img || !box._plannable) return;          // acquired series → view-only (drag in PR C)
+    if (!img || !box._plannable) return;          // acquired series → view-only / draggable
     const f = imgFraction(img, e.clientX, e.clientY); if (!f) return;
     drag = startDrag(f); if (drag) { applyDrag(f); e.preventDefault(); }
   });
@@ -260,6 +311,20 @@ function wireViewport(plane) {
   });
   window.addEventListener("pointerup", () => { drag = null; });
   window.addEventListener("pointercancel", () => { drag = null; });
+
+  // Drag an acquired series between viewports; the source reverts to its scout.
+  box.addEventListener("dragstart", (e) => {
+    if (slotState[plane].kind !== "series") { e.preventDefault(); return; }
+    e.dataTransfer.setData("text/plane", plane);
+    e.dataTransfer.effectAllowed = "move";
+  });
+  box.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+  box.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const src = e.dataTransfer.getData("text/plane");
+    if (src) moveSeries(src, plane);
+  });
+  box.addEventListener("dblclick", () => revertSlot(plane));
 }
 
 // ---- Apply & acquire ------------------------------------------------------ //
@@ -277,9 +342,12 @@ async function applyAndAcquire() {
     const r = await call("render", payload);
     active.image = r.image;
     active.status = "acquired";
-    // the acquired series fills the acquired-plane viewport
-    setViewport(pl.orientation, r.image, `${active.label} (acquired)`, false);
-    $("pp-readout").textContent = "Acquired ✓ — open the next sequence to plan it.";
+    // the acquired series fills the acquired-plane viewport (drag it to any box;
+    // double-click to bring the scout back)
+    slotState[pl.orientation] = { kind: "series", itemId: active.id,
+                                  png: r.image, label: `${active.label} (acquired)` };
+    renderSlot(pl.orientation);
+    $("pp-readout").textContent = "Acquired ✓ — drag it to any viewport, or open the next sequence.";
     renderQueue();
   } catch (err) {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
