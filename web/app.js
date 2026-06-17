@@ -1432,6 +1432,8 @@ async function render() {
       });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
+      $("satwidth-mm").textContent =
+        (s.satband_mm != null) ? "≈ " + Math.round(s.satband_mm) + " mm" : "";
       $("oblique-readout").textContent =
         `Oblique tilt ${planTilt.toFixed(0)}° · rot ${planRot.toFixed(0)}°  —  drag a cross-panel band to angle the plane; FOV box = resize/move; sat band = drag to move, grab an end to angle (on any plane it shows); dbl-click = reset`;
     }

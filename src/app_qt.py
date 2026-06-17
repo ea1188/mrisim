@@ -1976,6 +1976,11 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         fov_mm = self._get_native_fov() * fov_pct / 100.0
         line = (f"{n} slice{'s' if n != 1 else ''} · {th:.0f} mm thick · gap {gap:.0f} vox   |   "
                 f"covers {span}/{through_len} planes · in-plane FOV {fov_pct:.0f}% (≈{fov_mm:.0f} mm)")
+        if self.satband_enabled.get():           # sat band thickness in mm (not just %)
+            rowax = sg._SLICE_AXES[orient][1]
+            voxel_mm = self._get_native_fov() / shape[2]
+            sat_mm = self.satband_width.get() / 100.0 * shape[rowax] * voxel_mm
+            line += f"   |   sat band {self.satband_width.get():.0f}% (≈{sat_mm:.0f} mm)"
         warns = []
         half = (n - 1) / 2.0 * (th + gap)
         if self.slice_idx.get() - half < 0 or self.slice_idx.get() + half > through_len - 1:

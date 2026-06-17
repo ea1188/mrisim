@@ -106,6 +106,7 @@ class WebHost(CurvesMixin):
         self._lesion_vol: dict = {}     # demo-pathology volumes, cached per kind
         self._applied_field: Any = None  # field the engine's global tissue table is set to
         self._scout_panels: list = []   # per-panel click→slice geometry
+        self._scout_satband_mm: float | None = None   # sat band thickness (mm) readout
         # Agg figures for the two panels.
         self.fig = Figure(figsize=(5.2, 5.2), facecolor=_C_CANVAS)
         self.img_ax = self.fig.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -933,6 +934,7 @@ class WebHost(CurvesMixin):
         tilt = float(payload.get("tilt", 0.0))
         rot = float(payload.get("rot", 0.0))
         sat_on = bool(payload.get("satband_enabled", False))
+        self._scout_satband_mm = None            # band thickness (mm) for the readout
         sat_pos = float(np.clip(payload.get("satband_pos", 50.0), 0.0, 100.0)) / 100.0
         sat_wf = float(np.clip(payload.get("satband_width", 15.0), 0.0, 60.0)) / 100.0
         sat_ang = math.radians(float(np.clip(payload.get("satband_angle", 0.0), -90.0, 90.0)))
@@ -990,6 +992,7 @@ class WebHost(CurvesMixin):
             sat_c1 = sg.sat_band_center(vol.shape, sat_n, 1.0)
             sat_thick_mm = max(1.0, sg.sat_band_half_width(
                 vol.shape[rowax], sat_wf) * 2.0 * voxel_mm)
+            self._scout_satband_mm = sat_thick_mm    # exposed for the width readout
             sat_band_proj = scout_band(vol.shape, sat_n, tuple(sat_c), n_slices=1,
                                        thickness_mm=sat_thick_mm, gap_mm=0.0,
                                        voxel_size=(voxel_mm, voxel_mm, voxel_mm))
@@ -1198,7 +1201,8 @@ def render_scout(payload: dict) -> str:
 def render_scout_json(payload_json: str) -> str:
     h = _host()
     png = h.render_scout(json.loads(payload_json))
-    return json.dumps({"scout": png, "panels": h._scout_panels})
+    return json.dumps({"scout": png, "panels": h._scout_panels,
+                       "satband_mm": getattr(h, "_scout_satband_mm", None)})
 
 
 def reconstruct(payload: dict) -> dict:
