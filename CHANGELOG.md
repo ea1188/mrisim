@@ -10,6 +10,20 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Fixed
+- **Desktop sat-band marker now tracks the band at any angle.** The amber tint on the
+  reconstructed montage was a fixed *horizontal* strip at the position slider, so once
+  the band was angled (e.g. the 90° band that nulls the aorta) the marker floated off
+  the actual nulled region. It's now drawn from the engine's real footprint
+  (`Simulator.sat_band_footprint`) run through the same FOV pipeline as the image, so it
+  lines up exactly whatever the band's angle, cross-angle, or position.
+- **Sat band + oblique acquisition now warns instead of silently doing nothing.** The
+  sat slab isn't applied when the slice is tilted/rotated (it assumes orthogonal slice
+  geometry); the prescription readout now says so rather than letting the band quietly
+  disappear.
+
 ## [1.29.0] — 2026-06-16
 
 ### Added

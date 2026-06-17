@@ -321,6 +321,35 @@ def test_satband_cross_angle_parity(win):
     win.fov_planning.set(False); win.recalculate()
 
 
+def test_satband_oblique_warning(win):
+    """Tilting the slice silently drops the sat band (the slab assumes orthogonal
+    geometry); the prescription readout must warn instead of failing silently."""
+    set_state(win, sequence="Spin Echo", region="Brain", orientation="axial")
+    win.fov_planning.set(True); win.satband_enabled.set(True)
+    win.slice_tilt.set(0.0); win._update_plan_readout(win.get_current_params())
+    assert "sat band not applied" not in win.plan_readout.text()
+    win.slice_tilt.set(30.0); win._update_plan_readout(win.get_current_params())
+    assert "sat band not applied on oblique" in win.plan_readout.text()
+    win.slice_tilt.set(0.0); win.satband_enabled.set(False)
+    win.fov_planning.set(False); win.recalculate()
+
+
+def test_satband_overlay_marks_the_actual_null(win):
+    """The desktop montage tint must mark the *actual* nulled footprint (from the
+    engine), aligned with the image at any angle — not a fixed horizontal strip."""
+    set_state(win, sequence="Spin Echo", region="Brain", orientation="sagittal")
+    win.fov_planning.set(True); win.satband_enabled.set(True)
+    win.satband_pos.set(40); win.satband_width.set(18); win.satband_angle.set(90)
+    win.recalculate()
+    params = win.get_current_params()
+    fp = win.sim.sat_band_footprint("sagittal", win.slice_idx.get(), params)
+    img = win.sim._get_phantom_slice("sagittal", win.slice_idx.get(), params)
+    assert fp is not None and fp.shape == img.shape and fp.any()
+    assert float(img[fp].max()) < 1e-6, "tinted pixels must be the nulled ones"
+    win.satband_enabled.set(False); win.satband_angle.set(0)
+    win.fov_planning.set(False); win.recalculate()
+
+
 def test_scout_hover_cursor_feedback(win):
     """Hovering the localizer shows what each region does: move over the box,
     resize over an edge — so the affordances are discoverable."""
