@@ -5,31 +5,33 @@ from scipy.ndimage import map_coordinates
 
 GAMMA_HZ_T = 42.577e6  # proton gyromagnetic ratio / 2π  (Hz/T)
 
-# Bulk susceptibility values in ppm (SI convention, relative to water)
-# Labels match phantom3d / nifti_region label scheme (0-21).
+# Bulk susceptibility values in ppm (SI convention, relative to water).
+# Labels follow the current tissue_db / atlas scheme (0–21); air-filled structures
+# (background, gas, bowel lumen, lungs) are paramagnetic vs tissue (~+0.36 ppm) and
+# are the dominant off-resonance source (sinuses, chest, abdomen).
 SUSCEPTIBILITY_PPM = {
     0:  0.00,   # background / air (no tissue)
     1: -9.05,   # CSF
-    2: -9.05,   # white matter
-    3: -9.05,   # gray matter
+    2: -9.05,   # gray matter
+    3: -9.05,   # white matter
     4: -8.86,   # fat
-    5: -9.05,   # skull (treated as soft tissue boundary)
+    5: -9.05,   # bone (synthetic-brain skull)
     6: -9.05,   # muscle / soft tissue generic
     7: -9.05,   # liver
     8: -9.05,   # spleen
-    9: -9.05,   # kidney
-    10: -9.05,  # pancreas
-    11: -9.05,  # gallbladder
-    12: -9.05,  # bladder
+    9: -9.05,   # kidney cortex
+    10: -9.05,  # kidney medulla
+    11: -9.05,  # blood / vessel
+    12: +0.36,  # gas — air-like
     13: -11.1,  # cortical bone
-    14: -9.05,  # blood vessels / vascular
-    15: -9.05,  # intervertebral disc
+    14: -9.05,  # marrow
+    15: -9.05,  # cartilage / intervertebral disc
     16: -9.05,  # spinal cord
-    17: +0.36,  # air cavity (sinuses, bowel gas, lungs)
-    18: -9.05,  # cartilage
-    19: -9.05,  # subcutaneous fat (same as fat)
-    20: -9.05,  # heart
-    21: -9.05,  # trachea / airway wall
+    17: +0.36,  # bowel (luminal gas) — air-like
+    18: +0.36,  # lung — air-filled
+    19: -9.05,  # pancreas
+    20: -9.05,  # heart / myocardium
+    21: -9.05,  # soft tissue / gland (prostate, adrenal, thyroid)
     # Demo pathologies (brain-only). The microhaemorrhage is strongly paramagnetic
     # (blood-breakdown products) → a large susceptibility jump from tissue that
     # blooms dark on SWI / gradient echo. The others are tissue-like so they don't
