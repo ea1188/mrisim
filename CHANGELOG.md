@@ -10,6 +10,16 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.33.1] — 2026-06-18
+
+### Fixed
+- **Sagittal acquired image A-P was mirrored vs the scout (both editions).** The
+  localizer flips sagittal left-right for the radiological convention (anterior on
+  the left), but the acquired image was drawn without that flip — so a Spine/Knee
+  sagittal image came out mirrored relative to the localizer it was planned on (and
+  to its own A/P orientation letters). The displayed image now matches the scout;
+  the orientation letters and the measure/hover coordinate mapping stay correct.
+
 ## [1.33.0] — 2026-06-18
 
 ### Added
