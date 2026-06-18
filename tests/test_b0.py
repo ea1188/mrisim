@@ -379,3 +379,19 @@ class TestApplyReadoutShift:
         out = apply_readout_shift(image, b0, bandwidth_hz_per_pixel=100.0,
                                   freq_encode_axis=0)
         assert not np.allclose(out, image)
+
+
+def test_lung_is_air_susceptibility_source():
+    """Regression: the lungs (label 18) are air-filled and must perturb the B0 field
+    (chest off-resonance → EPI/DWI distortion). They were mislabelled as tissue, so the
+    lungs produced no off-resonance at all."""
+    import numpy as np
+    import b0
+    assert b0.SUSCEPTIBILITY_PPM[18] > 0, "lung must be air-like (paramagnetic vs tissue)"
+    vol = np.full((20, 36, 36), 6, dtype=int)      # soft tissue
+    vol[:, 12:24, 12:24] = 18                       # enclosed lung
+    field = b0.susceptibility_b0_map(vol, (2.0, 2.0, 2.0), 3.0)
+    assert (field.max() - field.min()) > 50.0, "lung produced no B0 off-resonance"
+    # a tissue-only volume stays flat
+    flat = b0.susceptibility_b0_map(np.full((20, 36, 36), 6, dtype=int), (2.0, 2.0, 2.0), 3.0)
+    assert (flat.max() - flat.min()) < 1.0
