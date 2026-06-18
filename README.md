@@ -151,7 +151,7 @@ The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.githu
 
 ### Download a ready-to-run app (no Python needed)
 
-Grab the build for your system (these links always serve the [**latest release**](https://github.com/ea1188/mrisim/releases/latest), currently **v1.33.2**):
+Grab the build for your system (these links always serve the [**latest release**](https://github.com/ea1188/mrisim/releases/latest), currently **v1.34.0**):
 
 - **Windows** — download [`MRISim-windows.exe`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-windows.exe) and double-click it.
 - **macOS** — download [`MRISim-macos.zip`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-macos.zip), unzip it, drag `MRISim.app` to *Applications*, then allow it on first launch (see [macOS — "can't be opened"](#macos--mrisim-cant-be-opened--apple-could-not-verify) below).
