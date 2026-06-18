@@ -554,6 +554,16 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         dock_l.setSpacing(2)
         dock_l.addWidget(self.right_split, stretch=1)
 
+        # Left dock — Protocol Planning queue (sequences on the left, like a console)
+        self.protocol_dock = QWidget()
+        self.protocol_dock.setFixedWidth(236)
+        self.protocol_dock.setStyleSheet(f"background:{C_PANEL};")
+        pdl = QVBoxLayout(self.protocol_dock)
+        pdl.setContentsMargins(6, 8, 6, 6); pdl.setSpacing(0)
+        pdl.addWidget(self._build_protocol_section())
+        pdl.addStretch(1)
+
+        content_row.addWidget(self.protocol_dock)
         content_row.addWidget(self.center_panel, stretch=1)
         content_row.addWidget(self.right_dock)
         outer.addWidget(content, stretch=1)
@@ -1169,8 +1179,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._ctrl_search.textChanged.connect(self._filter_controls)
         L.addWidget(self._ctrl_search)
 
-        # \u2500\u2500 Protocol planning (exam queue \u2192 plan on the scout \u2192 acquire) \u2500\u2500\u2500\u2500\u2500\u2500
-        L.addWidget(self._build_protocol_section())
+        # (Protocol Planning queue lives in its own left dock \u2014 see build_ui.)
 
         # \u2500\u2500 Sequence & Protocol \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         seq_sec = CollapsibleSection("Sequence & Protocol")
