@@ -1380,3 +1380,29 @@ def test_protocol_planning_workflow(win):
     assert win.pp_queue[-1]["status"] == "pending" and "re-run" in win.pp_queue[-1]["label"]
 
     win.fov_planning.set(False); win.recalculate()
+
+
+def test_sagittal_image_is_lr_flipped_to_match_scout(win):
+    """Regression: the scout flips sagittal left-right (app_scout, 'sagittal needs LR
+    flip'), so the displayed image must too — otherwise its A-P reads mirrored vs the
+    localizer you planned on (and vs its own A/P letters). The fix inverts the image
+    axis for sagittal (keeping the transAxes letters and the event.xdata measure/hover
+    mapping correct); axial and coronal are untouched."""
+    set_state(win, region="Spine", sequence="FSE / TSE", orientation="sagittal")
+    xl = win.axes[0].get_xlim()
+    assert xl[0] > xl[1], "sagittal image axis must be inverted (anterior-left)"
+    for orient in ("axial", "coronal"):
+        set_state(win, region="Spine", orientation=orient)
+        x2 = win.axes[0].get_xlim()
+        assert x2[0] < x2[1], f"{orient} image axis must not be inverted"
+
+
+def test_sagittal_prescription_montage_is_lr_flipped(win):
+    """The FOV-planning / protocol-acquire montage (_display_prescription) flips sagittal
+    too, so the acquired image matches the scout it was planned on."""
+    set_state(win, region="Spine", sequence="FSE / TSE", orientation="sagittal")
+    win.n_slices.set(1)
+    win.fov_planning.set(True); win.recalculate()
+    xl = win.fig.axes[0].get_xlim()
+    assert xl[0] > xl[1], "sagittal prescription montage must be inverted"
+    win.fov_planning.set(False); win.recalculate()
