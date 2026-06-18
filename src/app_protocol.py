@@ -12,8 +12,11 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (QComboBox, QHBoxLayout, QLabel, QListWidget,
-                             QListWidgetItem, QPushButton, QWidget)
+                             QListWidgetItem, QPushButton, QScrollArea,
+                             QToolButton, QWidget)
 
 import protocols
 
@@ -32,6 +35,15 @@ class ProtocolMixin:
     get_current_params: Any
     simulate_with_params: Any
     _simulate_single_slice: Any
+    fig: Any
+    canvas: Any
+    display_cmap: Any
+    update_metrics: Any
+    _recalc_timer: Any
+    _wl_bounds: Any
+    _get_voxel_aspect: Any
+    _ensure_1x2_layout: Any
+    _annotate_image: Any
 
     _LOCALIZER = protocols.LOCALIZER
 
@@ -69,6 +81,27 @@ class ProtocolMixin:
         self.pp_readout.setStyleSheet("color:#9aa4b2; font-size:11px;")
         inner.addWidget(self.pp_readout)
 
+        # Acquired-series review: a thumbnail strip of what you've acquired so far —
+        # click a thumbnail (or an acquired queue row) to review it full-size.
+        self.pp_thumbs_label = QLabel("Acquired series")
+        self.pp_thumbs_label.setStyleSheet("color:#6f7886; font-size:10px;")
+        self.pp_thumbs_label.setVisible(False)
+        inner.addWidget(self.pp_thumbs_label)
+        self.pp_thumbs_scroll = QScrollArea()
+        self.pp_thumbs_scroll.setWidgetResizable(True)
+        self.pp_thumbs_scroll.setFixedHeight(92)
+        self.pp_thumbs_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.pp_thumbs_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.pp_thumbs_scroll.setStyleSheet("QScrollArea{border:none;}")
+        self.pp_thumbs_scroll.setVisible(False)
+        self.pp_thumbs_host = QWidget()
+        self.pp_thumbs_layout = QHBoxLayout(self.pp_thumbs_host)
+        self.pp_thumbs_layout.setContentsMargins(2, 2, 2, 2); self.pp_thumbs_layout.setSpacing(4)
+        self.pp_thumbs_layout.addStretch(1)
+        self.pp_thumbs_scroll.setWidget(self.pp_thumbs_host)
+        inner.addWidget(self.pp_thumbs_scroll)
+        self._pp_thumb_refs: list = []     # keep QImage buffers alive
+
         # state
         self.pp_queue: list[dict] = []
         self.pp_active: dict | None = None
@@ -88,6 +121,7 @@ class ProtocolMixin:
         ]
         self.pp_active = None
         self._pp_render_list()
+        self._pp_render_thumbs()
         self.pp_readout.setText("Open a sequence to plan it on the scout, then Acquire.")
 
     def _pp_render_list(self) -> None:
@@ -113,7 +147,13 @@ class ProtocolMixin:
     # --- open / acquire / re-run ------------------------------------------- #
     def _pp_item_clicked(self, item: QListWidgetItem) -> None:
         idx = self.pp_list.row(item)
-        if 0 <= idx < len(self.pp_queue):
+        if not (0 <= idx < len(self.pp_queue)):
+            return
+        entry = self.pp_queue[idx]
+        # An acquired row → review the stored image; a pending row → open it to plan.
+        if entry["status"] == "acquired" and entry.get("image") is not None:
+            self._pp_review(entry)
+        else:
             self._pp_open(self.pp_queue[idx])
 
     def _pp_open(self, entry: dict) -> None:
@@ -143,8 +183,11 @@ class ProtocolMixin:
         e["image"] = img
         e["metrics"] = metrics
         e["params"] = dict(params)
+        e["orientation"] = self.orientation.get()    # for faithful review / thumbnail
+        e["slice"] = int(self.slice_idx.get())
         e["status"] = "acquired"
         self._pp_render_list()
+        self._pp_render_thumbs()
         t = self._pp_fmt_time(metrics.get("scan_time"))
         # The SNR metrics are brain-tissue-keyed (white/grey matter); body exams
         # (Knee, Abdomen) have neither, so only show an SNR term when it's available.
@@ -175,3 +218,85 @@ class ProtocolMixin:
         self.pp_queue.append(copy)
         self._pp_render_list()
         self._pp_open(copy)
+
+    # --- acquired-series review -------------------------------------------- #
+    def _pp_thumb_pixmap(self, img: Any, orient: str, size: int = 70) -> QPixmap:
+        """A small grayscale thumbnail of an acquired image, windowed to its robust
+        range and oriented to match the main viewport (sagittal flipped, origin-lower
+        flipped to QImage's top-left)."""
+        a = np.asarray(img, dtype=float)
+        fg = a[a > 1e-6]
+        lo, hi = ((float(v) for v in np.percentile(fg, (1, 99))) if fg.size
+                  else (0.0, float(a.max() or 1.0)))
+        g = (np.clip((a - lo) / ((hi - lo) or 1.0), 0, 1) * 255).astype(np.uint8)
+        if orient == "sagittal":
+            g = np.fliplr(g)
+        g = np.ascontiguousarray(np.flipud(g))
+        self._pp_thumb_refs.append(g)                      # QImage shares the buffer
+        h, w = g.shape
+        qi = QImage(g.data, w, h, w, QImage.Format.Format_Grayscale8)  # type: ignore[call-overload]
+        return QPixmap.fromImage(qi).scaled(
+            size, size, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation)
+
+    def _pp_render_thumbs(self) -> None:
+        """Rebuild the acquired-series thumbnail strip from the queue."""
+        while self.pp_thumbs_layout.count() > 1:           # keep the trailing stretch
+            item = self.pp_thumbs_layout.takeAt(0)
+            w = item.widget() if item is not None else None
+            if w is not None:
+                w.deleteLater()
+        self._pp_thumb_refs = []
+        acquired = [e for e in self.pp_queue
+                    if e["status"] == "acquired" and e.get("image") is not None]
+        self.pp_thumbs_label.setVisible(bool(acquired))
+        self.pp_thumbs_scroll.setVisible(bool(acquired))
+        for e in acquired:
+            orient = e.get("orientation", "axial")
+            btn = QToolButton()
+            btn.setIcon(QIcon(self._pp_thumb_pixmap(e["image"], orient)))
+            btn.setIconSize(QSize(70, 70))
+            btn.setToolTip(f"{e['label'].strip()} · {e['sequence']} — click to review")
+            btn.setStyleSheet("QToolButton{border:1px solid #2a323c;border-radius:3px;"
+                              "padding:1px;background:#05070a;}"
+                              "QToolButton:hover{border-color:#4f9cf9;}")
+            btn.clicked.connect(lambda _=False, ent=e: self._pp_review(ent))
+            self.pp_thumbs_layout.insertWidget(self.pp_thumbs_layout.count() - 1, btn)
+
+    def _pp_review(self, entry: dict) -> None:
+        """Show a stored acquired image full-size on the main viewport (review mode —
+        no re-simulation). Leaves FOV planning, then draws the snapshot over the canvas."""
+        import render_overlay
+        img = entry.get("image")
+        if img is None:
+            return
+        self.pp_active = entry
+        if self.fov_planning.get():
+            self.fov_planning.set(False)         # on_fov_planning_toggle recalcs synchronously…
+        self._recalc_timer.stop()                # …and cancel any debounced recalc, then draw
+        self._ensure_1x2_layout()
+        self.current_image = np.asarray(img)
+        params = entry.get("params") or self.get_current_params()
+        orient = entry.get("orientation", self.orientation.get())
+        sl = int(entry.get("slice", params.get("slice_idx", self.slice_idx.get())))
+        vlo, vhi = self._wl_bounds(self.current_image)
+        center, width = (vlo + vhi) / 2.0, max(1e-6, vhi - vlo)
+        for i, ax in enumerate(self.fig.axes):
+            ax.clear()
+            if i > 0:
+                ax.set_axis_off()
+        ax = self.fig.axes[0]
+        ax.imshow(self.current_image, cmap=self.display_cmap.get(), origin="lower",
+                  aspect=self._get_voxel_aspect(orient), vmin=vlo, vmax=vhi)
+        render_overlay.frame_image_axes(ax)
+        self._annotate_image(ax, params, orient, sl, width, center)
+        if orient == "sagittal":                 # match the viewport's sagittal A-P flip
+            ax.invert_xaxis()
+        self.canvas.draw()
+        if entry.get("metrics"):
+            self.update_metrics(params, entry["metrics"])
+        self._pp_render_list()
+        t = self._pp_fmt_time((entry.get("metrics") or {}).get("scan_time"))
+        self.pp_readout.setText(
+            f"Reviewing {entry['label'].strip()} ✓ · {t} — click a thumbnail to review "
+            "another, or a pending row to plan.")

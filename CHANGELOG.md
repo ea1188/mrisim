@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **Desktop Protocol Planning: acquired-series review.** Acquired sequences now appear
+  as a thumbnail strip under the queue; click a thumbnail (or an acquired queue row) to
+  review that stored image full-size on the viewport — no re-scan — while pending rows
+  still open for planning. Brings the desktop closer to the browser's series viewports.
+
 ## [1.33.2] — 2026-06-18
 
 ### Fixed
