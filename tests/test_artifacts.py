@@ -291,3 +291,21 @@ class TestGradientDistortion:
         centre_change = np.abs(out[cy-3:cy+3, cx-3:cx+3] - g[cy-3:cy+3, cx-3:cx+3]).mean()
         corner_change = np.abs(out[:12, :12] - g[:12, :12]).mean()
         assert corner_change > centre_change
+
+
+class TestSusceptibilityLung:
+    """Regression: the lungs (label 18) are air-filled and are the dominant chest /
+    upper-abdomen susceptibility source — they must perturb the field, not be ignored."""
+
+    def test_lung_drives_susceptibility(self):
+        import numpy as np
+        from artifacts import add_susceptibility_artifact
+        # a chest-like slice: body (muscle 6) with an enclosed lung (18) cavity
+        s = np.zeros((64, 64), dtype=int)
+        s[8:56, 8:56] = 6           # body wall / soft tissue
+        s[20:44, 20:44] = 18        # lung (enclosed, air-filled)
+        img = np.full(s.shape, 0.5, dtype=float)
+        out = add_susceptibility_artifact(img, s, strength=0.3)   # default air_labels
+        # signal drops near the lung–tissue interface (not a no-op)
+        assert out.min() < 0.45 * img.min() or out.min() < 0.4, "lung did not perturb the field"
+        assert not np.allclose(out, img), "susceptibility had no effect around the lung"

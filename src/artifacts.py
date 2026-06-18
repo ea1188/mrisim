@@ -138,7 +138,11 @@ def add_susceptibility_artifact(
     Causes local field inhomogeneity -> signal dephasing -> signal loss.
     """
     if air_labels is None:
-        air_labels = [0, 12]   # background air + internal gas (bowel/lung/stomach)
+        # Air–tissue interfaces that perturb the field: background air (0),
+        # reserved internal-gas label (12), and the lungs (18) — the dominant
+        # susceptibility source in the chest / upper abdomen, which were ignored
+        # before (only incidental enclosed background pockets perturbed the field).
+        air_labels = [0, 12, 18]
     rows, cols = image.shape
 
     from scipy.ndimage import distance_transform_edt, binary_dilation, label
