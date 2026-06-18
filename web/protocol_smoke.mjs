@@ -34,17 +34,28 @@ try {
   await page.waitForFunction(() => !document.querySelector("#pp-controls").hidden, { timeout: 15_000 });
   console.log("opened a sequence, TR =", await page.inputValue("#pp-tr"));
 
+  // the interactive planning layer is a client-side SVG overlay: cross panels carry the
+  // band + angle handles (rects), the acquired plane carries the FOV box + handles.
+  await page.waitForFunction(
+    () => document.querySelectorAll("#vp-sagittal svg.pp-ov rect, #vp-sagittal svg.pp-ov circle").length > 0
+       && document.querySelectorAll("#vp-axial svg.pp-ov rect").length >= 4,
+    { timeout: 10_000 });
+  console.log("client SVG overlay handles render ✓");
+
   // angling follows the drag: grab the right end of the band on the sagittal scout and
-  // drag it UP → tilt goes positive (right end up), not the opposite way.
-  await page.evaluate(() => {
+  // drag it UP → tilt goes positive (right end up), not the opposite way. The band moves
+  // client-side on pointermove (no server round-trip) — tilt updates before pointerup.
+  const tiltDuringDrag = await page.evaluate(() => {
     const img = document.querySelector("#vp-sagittal img"); const r = img.getBoundingClientRect();
     const x = r.left + r.width * 0.82, y0 = r.top + r.height * 0.5, y1 = r.top + r.height * 0.25;
     img.dispatchEvent(new PointerEvent("pointerdown", { button: 0, clientX: x, clientY: y0, bubbles: true }));
     window.dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y1, bubbles: true }));
+    const t = parseFloat(document.querySelector("#pp-tilt").value);   // set synchronously, no server
     window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    return t;
   });
-  await page.waitForFunction(() => parseFloat(document.querySelector("#pp-tilt").value) > 0, { timeout: 6_000 });
-  console.log("angle follows the drag ✓ (tilt =", await page.inputValue("#pp-tilt") + ")");
+  if (!(tiltDuringDrag > 0)) fail("angle drag did not update tilt client-side during the drag");
+  console.log("angle follows the drag, client-side ✓ (tilt =", tiltDuringDrag + ")");
   await page.dblclick("#vp-sagittal");                // reset the prescription
   await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
 

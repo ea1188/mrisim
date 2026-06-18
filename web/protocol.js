@@ -50,7 +50,6 @@ let queue = [];          // [{id, preset, label, sequence, status, params, plan,
 let active = null;       // open queue item
 let seq = 0;             // id counter
 const vpGeom = {};       // plane -> last rendered panel geometry (for interaction)
-let refreshTimer = null;
 let lastSeriesPlane = null;   // viewport last hovered/scrolled (arrow keys page it)
 
 // ---- boot ----------------------------------------------------------------- //
@@ -60,6 +59,7 @@ async function onReady() {
   $("pp-root").hidden = false;
   wireParamPanel();
   PLANES.forEach(wireViewport);
+  window.addEventListener("resize", () => PLANES.forEach((p) => drawOverlay(p, null)));
   await loadExam("Brain");
 }
 
@@ -233,17 +233,27 @@ function scoutPayload() {
   if (pl.slice != null) out.slice_idx = pl.slice;
   return out;
 }
+// Coalesced: only one scoutPanels render in flight; bursts collapse to a single
+// follow-up render when it returns (no debounce lag, no pile-up).
+let scoutBusy = false, scoutDirty = false;
 async function renderScouts() {
-  if (!active || !active.plan) return;
-  if (!isLocalizer(active) && !active.params) return;   // params still resolving
-  const res = await call("scoutPanels", scoutPayload());
-  PLANES.forEach((plane) => {
-    const panel = res[plane]; if (!panel) return;
-    scoutCache[plane] = { png: panel.png, geom: panel.geom || {}, label: cap(plane) };
-  });
-  PLANES.forEach(renderSlot);
+  if (scoutBusy) { scoutDirty = true; return; }
+  scoutBusy = true;
+  try {
+    do {
+      scoutDirty = false;
+      if (!active || !active.plan) return;
+      if (!isLocalizer(active) && !active.params) return;   // params still resolving
+      const res = await call("scoutPanels", scoutPayload());
+      PLANES.forEach((plane) => {
+        const panel = res[plane]; if (!panel) return;
+        scoutCache[plane] = { png: panel.png, geom: panel.geom || {}, label: cap(plane) };
+      });
+      PLANES.forEach(renderSlot);
+    } while (scoutDirty);
+  } finally { scoutBusy = false; }
 }
-function scheduleScouts() { updatePlanReadout(); clearTimeout(refreshTimer); refreshTimer = setTimeout(renderScouts, 90); }
+function scheduleScouts() { updatePlanReadout(); renderScouts(); }
 
 function renderSlot(plane) {
   const st = slotState[plane];
@@ -251,6 +261,7 @@ function renderSlot(plane) {
     const sc = scoutCache[plane]; if (!sc) return;
     vpGeom[plane] = sc.geom;
     drawTile(plane, sc.png, sc.label, true, false);          // plannable, not draggable
+    drawOverlay(plane);                                      // crisp interactive handles
   } else {                                                   // series: view-only, draggable
     const tag = (st.maxSlice ? `${st.label}  ·  ${st.slice}/${st.maxSlice}` : st.label) + "  ⠿";
     drawTile(plane, st.png, tag, false, true);
@@ -268,6 +279,9 @@ function drawTile(plane, dataURL, tag, plannable, draggable) {
   img.style.filter = "";                                     // reset (series reapply theirs)
   box.querySelector(".vp-tag").textContent = tag;
   box._plannable = !!plannable;
+  const svg = ensureOverlay(box);
+  if (plannable) img.onload = () => drawOverlay(plane);       // reposition once decoded
+  else { svg.replaceChildren(); svg.style.display = "none"; img.onload = null; }
 }
 
 // Drag a series from one slot to another; the source slot reverts to its scout.
@@ -285,15 +299,119 @@ function revertSlot(plane) {                 // double-click a series → bring 
 }
 
 // ---- viewport planning interaction (per panel) ---------------------------- //
-function imgFraction(img, cx, cy) {
+// The displayed image is letterboxed inside its element; this returns the actual
+// pixel rectangle (so the SVG overlay and the fraction math agree exactly).
+function imgContentRect(img) {
   const r = img.getBoundingClientRect();
   if (!img.naturalWidth || !r.width) return null;
   const nAR = img.naturalWidth / img.naturalHeight, eAR = r.width / r.height;
   let cw, ch, ox, oy;
   if (eAR > nAR) { ch = r.height; cw = ch * nAR; ox = (r.width - cw) / 2; oy = 0; }
   else { cw = r.width; ch = cw / nAR; ox = 0; oy = (r.height - ch) / 2; }
-  const fx = (cx - r.left - ox) / cw, fy = (cy - r.top - oy) / ch;
+  return { ox, oy, cw, ch, left: r.left, top: r.top };
+}
+function imgFraction(img, cx, cy) {
+  const c = imgContentRect(img); if (!c) return null;
+  const fx = (cx - c.left - c.ox) / c.cw, fy = (cy - c.top - c.oy) / c.ch;
   return (fx >= 0 && fx <= 1 && fy >= 0 && fy <= 1) ? { px: fx, py: fy } : null;
+}
+
+// ---- client-side SVG planning overlay (band / FOV box / handles) ----------- //
+// Drawn live over the grayscale scout background so dragging is instant (no server
+// round-trip) and the grab points are crisp and labelled. Geometry comes from the
+// panel geom (web_adapter); during a drag the band/box follow the cursor directly.
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function ensureOverlay(box) {
+  let svg = box.querySelector("svg.pp-ov");
+  if (!svg) {
+    svg = el("svg", { class: "pp-ov", preserveAspectRatio: "none" });
+    box.appendChild(svg);
+  }
+  return svg;
+}
+// Position the overlay over the image's actual pixels and set its viewBox to the
+// pixel size, so geom fractions map to px (uniform, undistorted handles).
+function placeOverlay(box, img, svg) {
+  const c = imgContentRect(img), br = box.getBoundingClientRect();
+  if (!c) { svg.style.display = "none"; return null; }
+  svg.style.display = "";
+  svg.style.left = (c.left - br.left + c.ox) + "px";
+  svg.style.top = (c.top - br.top + c.oy) + "px";
+  svg.style.width = c.cw + "px";
+  svg.style.height = c.ch + "px";
+  svg.setAttribute("viewBox", `0 0 ${c.cw} ${c.ch}`);
+  return c;
+}
+// Draw the overlay for a scout panel. `live` (optional) overrides band/box during a
+// drag: { bandDir:[ux,uy] } points the band at the cursor; { fovBox:[x,y,w,h] }.
+function drawOverlay(plane, hoverMode, live) {
+  const box = $("vp-" + plane), svg = box.querySelector("svg.pp-ov");
+  if (!svg) return;
+  const st = slotState[plane];
+  const img = box.querySelector("img");
+  const g = vpGeom[plane];
+  if (st.kind !== "scout" || !box._plannable || !img || !g || !active || !active.plan) {
+    svg.replaceChildren(); svg.style.display = "none"; return;
+  }
+  const c = placeOverlay(box, img, svg); if (!c) return;
+  const W = c.cw, H = c.ch, hov = hoverMode, els = [];
+  const px = (f) => [f[0] * W, f[1] * H];
+  const HANDLE = "#ffdd44", LINE = "#ffdd44", FOV = "#7fb8ff", DIM = "#8a93a0";
+
+  if (g.center) {                                   // faint crosshair through the centre
+    const [cx, cy] = px(g.center);
+    els.push(el("line", { x1: cx, y1: 0, x2: cx, y2: H, stroke: DIM, "stroke-width": 0.6, "stroke-opacity": 0.35 }));
+    els.push(el("line", { x1: 0, y1: cy, x2: W, y2: cy, stroke: DIM, "stroke-width": 0.6, "stroke-opacity": 0.35 }));
+  }
+  // Cross panel: the slice band + diamond end-handles (grab to angle).
+  if (g.role === "cross") {
+    let a, b;
+    if (live && live.bandDir && g.center) {         // live drag: point the band at the cursor
+      const [cx, cy] = px(g.center), L = Math.hypot(W, H);
+      a = [cx - live.bandDir[0] * L, cy - live.bandDir[1] * L];
+      b = [cx + live.bandDir[0] * L, cy + live.bandDir[1] * L];
+    } else if (g.band) { a = px(g.band[0]); b = px(g.band[1]); }
+    if (g.slab_edges && !(live && live.bandDir)) {   // coverage rim lines (multi-slice)
+      for (const e2 of g.slab_edges) {
+        const p0 = px(e2[0]), p1 = px(e2[1]);
+        els.push(el("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: LINE, "stroke-width": 1, "stroke-opacity": 0.5, "stroke-dasharray": "3 3" }));
+      }
+    }
+    if (a && b) {
+      els.push(el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: LINE, "stroke-width": 1.8, "stroke-opacity": 0.95 }));
+      if (g.angle) for (const e2 of [a, b]) {        // angle handles only if this panel tilts
+        const r = hov === "oblique" ? 6 : 4.5;
+        const d = el("rect", { x: e2[0] - r, y: e2[1] - r, width: 2 * r, height: 2 * r,
+          transform: `rotate(45 ${e2[0]} ${e2[1]})`, fill: HANDLE, stroke: "#1a1f26", "stroke-width": 1 });
+        d.appendChild(el("title", {})).textContent = "Drag to angle the plane";
+        els.push(d);
+      }
+    }
+  }
+  // Acquired plane: the FOV box, corner resize handles, and a move dot.
+  if (g.role === "acq") {
+    const fb = (live && live.fovBox) || g.fov_box;
+    if (fb) {
+      const x = fb[0] * W, y = fb[1] * H, w = fb[2] * W, h = fb[3] * H;
+      els.push(el("rect", { x, y, width: w, height: h, fill: "none", stroke: FOV, "stroke-width": 1.6, "stroke-dasharray": "5 3" }));
+      const corners = [[x, y], [x + w, y], [x, y + h], [x + w, y + h]];
+      for (const [hx, hy] of corners) {
+        const r = hov === "resize" ? 5 : 3.5;
+        const sq = el("rect", { x: hx - r, y: hy - r, width: 2 * r, height: 2 * r, fill: FOV, stroke: "#1a1f26", "stroke-width": 1 });
+        sq.appendChild(el("title", {})).textContent = "Drag a corner to resize the FOV";
+        els.push(sq);
+      }
+      const cd = el("circle", { cx: x + w / 2, cy: y + h / 2, r: hov === "recenter" ? 5 : 3.5, fill: FOV, stroke: "#1a1f26", "stroke-width": 1 });
+      cd.appendChild(el("title", {})).textContent = "Drag to move the FOV";
+      els.push(cd);
+    }
+  }
+  svg.replaceChildren(...els);
 }
 function bandLocal(p, slice) {
   const s = slice == null ? (p.n - 1) / 2 : slice;
@@ -345,43 +463,60 @@ function wireViewport(plane) {
     const p = vpGeom[plane]; if (!p || !active) return null;
     const mode = modeAt(p, loc);
     const d = { mode, p };
-    if (mode === "oblique") {
-      d.l0 = loc; d.tilt0 = active.plan.tilt; d.rot0 = active.plan.rot;
-      // Which end of the band you grabbed — so the angle follows that end toward your
-      // cursor (drag the right/bottom end up/over → that end goes up/over), instead of
-      // a fixed global sign that feels reversed when you grab the other end.
-      d.side = p.map === "row" ? (loc.px >= 0.5 ? 1 : -1) : (loc.py >= 0.5 ? 1 : -1);
+    if (mode === "oblique") {                       // polar: track the cursor angle round the pivot
+      d.c = p.center || [0.5, 0.5];
+      d.a0 = p.angle === "tilt" ? active.plan.tilt : active.plan.rot;
+      d.theta0 = Math.atan2(d.c[1] - loc.py, loc.px - d.c[0]);   // y-up screen angle
     }
+    if (mode === "resize") { d.box0 = p.fov_box; d.pct0 = active.plan.fov_pct || 100; }
+    if (mode === "recenter") { d.box0 = p.fov_box; }
     if (mode === "slices") { d.half0 = p.slab.half; d.n0 = (+$("pp-nsl").value) || 1; }
     return d;
   };
+  // Drags that move the prescribed centre re-slice the localizer backgrounds (server);
+  // angle / resize only change the overlay, so they stay fully client-side until release.
+  const SERVER_DURING = { slice: 1, recenter: 1, slices: 1 };
   const applyDrag = (loc) => {
     if (!drag || !active) return;
     const p = drag.p, pl = active.plan;
+    let live = null;
     if (drag.mode === "slice") {                   // angles the *same way you drag* (engine parity)
       const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
       pl.slice = clampN(Math.round(s), 0, p.n - 1);
     } else if (drag.mode === "recenter") {
       const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
       pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
+      const fb = drag.box0;                         // optimistic: the box follows the cursor
+      if (fb) live = { fovBox: p.ip_dir === "x"
+        ? [clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), fb[1], fb[2], fb[3]]
+        : [fb[0], clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]), fb[2], fb[3]] };
     } else if (drag.mode === "resize") {
-      const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+      const fb = drag.box0, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
       const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
       pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
       $("pp-fov").value = pl.fov_pct;
+      const s = pl.fov_pct / (drag.pct0 || 100);    // scale the box around its centre
+      live = { fovBox: [cx - fb[2] / 2 * s, cy - fb[3] / 2 * s, fb[2] * s, fb[3] * s] };
     } else if (drag.mode === "slices") {           // drag the slab rim → number of slices
       const perp = p.map === "row" ? loc.py : loc.px;
       const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
       active.params.n_slices = n; $("pp-nsl").value = n;
-    } else if (drag.mode === "oblique") {            // the grabbed end follows your cursor
+    } else if (drag.mode === "oblique") {            // the band end follows the cursor exactly
       const sgn = (OBLIQUE_SIGN[pl.orientation] || {})[p.name] ?? 1;
-      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90 * drag.side * sgn;
-      if (p.angle === "tilt") { pl.tilt = snapAngle(clampN(drag.tilt0 + d, -45, 45)); $("pp-tilt").value = pl.tilt; }
-      else { pl.rot = snapAngle(clampN(drag.rot0 + d, -45, 45)); $("pp-rot").value = pl.rot; }
+      let dth = Math.atan2(drag.c[1] - loc.py, loc.px - drag.c[0]) - drag.theta0;  // y-up
+      dth = Math.atan2(Math.sin(dth), Math.cos(dth));       // wrap to (−π, π]
+      const val = snapAngle(clampN(drag.a0 + dth * 180 / Math.PI * sgn, -45, 45));
+      if (p.angle === "tilt") { pl.tilt = val; $("pp-tilt").value = val; }
+      else { pl.rot = val; $("pp-rot").value = val; }
+      const ux = loc.px - drag.c[0], uy = loc.py - drag.c[1], L = Math.hypot(ux, uy) || 1;
+      live = { bandDir: [ux / L, uy / L] };
     }
     updatePlanReadout();
-    scheduleScouts();
+    drawOverlay(plane, null, live);                          // instant client-side feedback
+    if (SERVER_DURING[drag.mode]) scheduleScouts();
+    else drag.needRefresh = true;                            // sync exact geometry on release
   };
+  const endDrag = () => { if (drag && drag.needRefresh) scheduleScouts(); drag = null; };
   box.addEventListener("pointerdown", (e) => {
     const img = box.querySelector("img");
     if (!img || !box._plannable) return;          // acquired series → view-only / draggable
@@ -393,17 +528,20 @@ function wireViewport(plane) {
     const img = box.querySelector("img"); if (!img) return;
     const f = imgFraction(img, e.clientX, e.clientY); if (f) applyDrag(f);
   });
-  window.addEventListener("pointerup", () => { drag = null; });
-  window.addEventListener("pointercancel", () => { drag = null; });
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
 
-  // Hover feedback: the cursor shows what each region does before you grab it.
+  // Hover feedback: cursor + highlight the handle under the pointer before you grab it.
   box.addEventListener("pointermove", (e) => {
     if (drag) return;
     const img = box.querySelector("img");
     if (!img || !box._plannable) { box.style.cursor = ""; return; }
     const f = imgFraction(img, e.clientX, e.clientY);
-    box.style.cursor = f ? cursorFor(modeAt(vpGeom[plane], f)) : "";
+    const mode = f ? modeAt(vpGeom[plane], f) : null;
+    box.style.cursor = f ? cursorFor(mode) : "";
+    drawOverlay(plane, mode);                                // enlarge the matching handle
   });
+  box.addEventListener("pointerleave", () => { if (!drag) drawOverlay(plane, null); });
 
   // Scroll through the slices of an acquired series (wheel; arrow keys page the
   // last-touched series — see wireParamPanel).
