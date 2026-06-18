@@ -371,12 +371,13 @@ function drawOverlay(plane, hoverMode, live) {
   // Cross panel: the slice band + diamond end-handles (grab to angle).
   if (g.role === "cross") {
     let a, b;
-    if (live && live.bandDir && g.center) {         // live drag: point the band at the cursor
+    if (live && live.bandDir && g.center) {         // angle drag: point the band at the cursor
       const [cx, cy] = px(g.center), L = Math.hypot(W, H);
       a = [cx - live.bandDir[0] * L, cy - live.bandDir[1] * L];
       b = [cx + live.bandDir[0] * L, cy + live.bandDir[1] * L];
-    } else if (g.band) { a = px(g.band[0]); b = px(g.band[1]); }
-    if (g.slab_edges && !(live && live.bandDir)) {   // coverage rim lines (multi-slice)
+    } else if (live && live.band) { a = px(live.band[0]); b = px(live.band[1]); }  // slide
+    else if (g.band) { a = px(g.band[0]); b = px(g.band[1]); }
+    if (g.slab_edges && !(live && (live.bandDir || live.band))) {   // coverage rim lines
       for (const e2 of g.slab_edges) {
         const p0 = px(e2[0]), p1 = px(e2[1]);
         els.push(el("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: LINE, "stroke-width": 1, "stroke-opacity": 0.5, "stroke-dasharray": "3 3" }));
@@ -384,12 +385,21 @@ function drawOverlay(plane, hoverMode, live) {
     }
     if (a && b) {
       els.push(el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: LINE, "stroke-width": 1.8, "stroke-opacity": 0.95 }));
-      if (g.angle) for (const e2 of [a, b]) {        // angle handles only if this panel tilts
+      if (g.angle) for (const e2 of [a, b]) {        // angle handles at the ends only
         const r = hov === "oblique" ? 6 : 4.5;
         const d = el("rect", { x: e2[0] - r, y: e2[1] - r, width: 2 * r, height: 2 * r,
           transform: `rotate(45 ${e2[0]} ${e2[1]})`, fill: HANDLE, stroke: "#1a1f26", "stroke-width": 1 });
-        d.appendChild(el("title", {})).textContent = "Drag to angle the plane";
+        d.appendChild(el("title", {})).textContent = "Drag an end to angle the plane";
         els.push(d);
+      }
+      const mc = (live && live.band)                 // centre handle: grab to slide the slices
+        ? [(live.band[0][0] + live.band[1][0]) / 2, (live.band[0][1] + live.band[1][1]) / 2]
+        : g.center;
+      if (mc && !(live && live.bandDir)) {
+        const [mx, my] = px(mc), r = hov === "slice" ? 5.5 : 4;
+        const md = el("circle", { cx: mx, cy: my, r, fill: "#0b0e13", stroke: LINE, "stroke-width": 1.6 });
+        md.appendChild(el("title", {})).textContent = "Drag the centre to move the slice position";
+        els.push(md);
       }
     }
   }
@@ -421,7 +431,7 @@ function bandLocal(p, slice) {
 // Which CSS cursor signals each grabbable region (so it's obvious where to grab).
 const cursorFor = (m) => ({
   recenter: "move", resize: "nwse-resize", oblique: "grab",
-  slice: "ns-resize", slices: "row-resize",
+  slice: "move", slices: "row-resize",
 }[m] || "crosshair");
 
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
@@ -437,9 +447,15 @@ function modeAt(p, loc) {
     const perp = p.map === "row" ? loc.py : loc.px;
     if (Math.abs(Math.abs(perp - p.slab.c) - p.slab.half) < 0.035) return "slices";
   }
-  const bp = bandLocal(p, active.plan.slice);      // near the band line → angle (if this panel tilts)
-  const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.08 : Math.abs(loc.px - bp) < 0.08;
-  if (near && p.angle) return "oblique";
+  // On the band line: grab an END to angle, the CENTRE to slide the slice package.
+  const bp = bandLocal(p, active.plan.slice);
+  const along = p.map === "row" ? loc.px : loc.py;
+  const perp = p.map === "row" ? loc.py : loc.px;
+  if (Math.abs(perp - bp) < 0.08) {
+    const cAlong = p.center ? (p.map === "row" ? p.center[0] : p.center[1]) : 0.5;
+    if (p.angle && Math.abs(along - cAlong) > 0.2) return "oblique";   // near an end → angle
+    return "slice";                                                    // near the centre → move
+  }
   return "slice";
 }
 
@@ -473,16 +489,20 @@ function wireViewport(plane) {
     if (mode === "slices") { d.half0 = p.slab.half; d.n0 = (+$("pp-nsl").value) || 1; }
     return d;
   };
-  // Drags that move the prescribed centre re-slice the localizer backgrounds (server);
-  // angle / resize only change the overlay, so they stay fully client-side until release.
-  const SERVER_DURING = { slice: 1, recenter: 1, slices: 1 };
   const applyDrag = (loc) => {
     if (!drag || !active) return;
     const p = drag.p, pl = active.plan;
     let live = null;
-    if (drag.mode === "slice") {                   // angles the *same way you drag* (engine parity)
+    if (drag.mode === "slice") {                   // slide the slice package along the cursor
       const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
       pl.slice = clampN(Math.round(s), 0, p.n - 1);
+      if (p.band) {                                // optimistic: the band follows the cursor
+        const isRow = p.map === "row";
+        const bc = p.center || [(p.band[0][0] + p.band[1][0]) / 2, (p.band[0][1] + p.band[1][1]) / 2];
+        const d = isRow ? loc.py - bc[1] : loc.px - bc[0];
+        const sh = isRow ? [0, d] : [d, 0];
+        live = { band: [[p.band[0][0] + sh[0], p.band[0][1] + sh[1]], [p.band[1][0] + sh[0], p.band[1][1] + sh[1]]] };
+      }
     } else if (drag.mode === "recenter") {
       const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
       pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
@@ -513,10 +533,9 @@ function wireViewport(plane) {
     }
     updatePlanReadout();
     drawOverlay(plane, null, live);                          // instant client-side feedback
-    if (SERVER_DURING[drag.mode]) scheduleScouts();
-    else drag.needRefresh = true;                            // sync exact geometry on release
+    drag.moved = true;                                       // sync exact backgrounds + geometry…
   };
-  const endDrag = () => { if (drag && drag.needRefresh) scheduleScouts(); drag = null; };
+  const endDrag = () => { if (drag && drag.moved) scheduleScouts(); drag = null; };  // …on release
   box.addEventListener("pointerdown", (e) => {
     const img = box.querySelector("img");
     if (!img || !box._plannable) return;          // acquired series → view-only / draggable
