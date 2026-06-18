@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.35.2] — 2026-06-18
+
+### Fixed
+- **Protocol Planning overlay polish.** The slice band drawn while angling no longer
+  overshoots or skews on non-square scout panels (it's clipped to the panel, aspect-
+  correct), and the multi-slice slab rim now shows a grab handle ("drag the rim to
+  add / remove slices") to match the angle / FOV / centre handles.
+
 ## [1.35.1] — 2026-06-18
 
 ### Changed
