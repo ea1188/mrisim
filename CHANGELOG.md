@@ -10,6 +10,13 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **Spine exam in Protocol Planning.** The exam picker now offers **Spine** alongside
+  Brain — its protocol queue (Localizer, T1/T2/STIR sagittal, axial T2, T1 post-Gd) loads
+  on the spine atlas, so you can plan and acquire a spine study end to end.
+
 ## [1.31.1] — 2026-06-17
 
 ### Changed

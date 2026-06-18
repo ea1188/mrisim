@@ -151,6 +151,14 @@ try {
   const a0 = await acquireTilt(0), a30 = await acquireTilt(30);
   if (a0 === a30) fail("the acquired image ignored the prescribed tilt");
   console.log("acquisition honours the prescription (tilt) ✓");
+
+  // switch the exam to Spine → the queue reloads with the spine protocol (lazy-loads
+  // the spine atlas the first time, so give it room).
+  await page.selectOption("#pp-exam", "Spine");
+  await page.waitForFunction(
+    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /sag/i.test(e.textContent)),
+    { timeout: 90_000 });
+  console.log("exam switch → Spine protocol ✓");
 } catch (e) {
   fail(e.message);
 }
