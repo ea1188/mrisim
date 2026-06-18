@@ -1406,3 +1406,53 @@ def test_sagittal_prescription_montage_is_lr_flipped(win):
     xl = win.fig.axes[0].get_xlim()
     assert xl[0] > xl[1], "sagittal prescription montage must be inverted"
     win.fov_planning.set(False); win.recalculate()
+
+
+@pytest.mark.parametrize("region,acq,panel,angle_var", [
+    ("Knee", "sagittal", "axial", "rot"),    # the reported reversed case (now fixed)
+    ("Brain", "axial", "coronal", "rot"),    # a control case that was already correct
+])
+def test_scout_angle_drag_follows_cursor(win, region, acq, panel, angle_var):
+    """Angling on the scout must rotate the slice band the way you drag (the grabbed end
+    follows the cursor). The band's screen rotation for +tilt/+rot is reversed on some
+    panels, so _ANGLE_SIGN flips the cursor delta there — verify the band end follows the
+    cursor for the reported Knee/sagittal case and an already-correct control case."""
+    import math
+    from oblique import plane_from_angles, scout_band
+    win.region.set(region); win.on_region_change()
+    win._set_orientation(acq); win.fov_planning.set(True)
+    win.slice_rot.set(8.0); win.slice_tilt.set(0.0)     # oblique → band-line handles exist
+    win._draw_scout(win.get_current_params())
+    handles = [h for h in win._scout_angle_handles if h[4] == panel and h[5] == angle_var]
+    assert handles, f"no {angle_var} handle on the {panel} panel for {acq} acquisition"
+    lx0, ly0, lx1, ly1, _plane, _av, cx, cy = handles[0]
+    gx, gy = lx1, ly1                                   # grab an endpoint
+
+    class _E:
+        def __init__(s, x, y):
+            s.xdata, s.ydata, s.button = x, y, 1
+            s.inaxes = win.scout_axes[win._scout_plane_names.index(panel)]
+
+    a = math.radians(5.0)                               # move cursor +5° CCW about the pivot
+    dx, dy = gx - cx, gy - cy
+    nx = cx + dx * math.cos(a) - dy * math.sin(a)
+    ny = cy + dx * math.sin(a) + dy * math.cos(a)
+    win._scout_drag = dict(mode="angle", x=gx, y=gy, angle_var=angle_var,
+                           cx=cx, cy=cy, h_plane=panel)
+    rot0 = win.slice_rot.get()
+    win._scout_motion(_E(nx, ny))
+    rot1 = win.slice_rot.get()
+    assert rot1 != rot0, "angle drag produced no change"
+
+    def band_end(rot):
+        n = plane_from_angles(acq, tilt_deg=win.slice_tilt.get(), rot_deg=rot)[0]
+        c0, r0, c1, r1 = scout_band(win.phantom_3d.shape, n,
+                                    win._scout_gizmo_center, 1, 4.0)[panel]["slices"][0]
+        return (c1, r1)
+
+    def ang(p):
+        return math.degrees(math.atan2(p[1] - cy, p[0] - cx))
+    da = (ang(band_end(rot1)) - ang(band_end(rot0)) + 180) % 360 - 180
+    assert da > 0, f"grabbed band end moved {da:+.1f}° against the +5° CCW cursor (reversed)"
+    win.slice_rot.set(0.0); win.slice_tilt.set(0.0)    # don't leak oblique state
+    win.fov_planning.set(False); win.recalculate()
