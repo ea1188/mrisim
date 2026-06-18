@@ -899,3 +899,37 @@ def test_scout_panels_expose_slice_group_extent_for_drag():
     s1, s7 = coronal_slab(1), coronal_slab(7)
     assert s1 and s7 and s7["half"] > s1["half"] * 2, "slab half-extent must grow with slices"
     assert coronal_slab(1, acq3d=True) is None, "3-D slab acquisitions expose no slice-drag handle"
+
+
+def test_sagittal_acquired_image_is_lr_flipped_to_match_scout():
+    """Regression: the scout panels show sagittal anterior-left (np.fliplr), so the
+    acquired image must too — otherwise its A-P reads mirrored vs the localizer it was
+    planned on. The fix inverts the display x-axis for sagittal (keeping the transAxes
+    orientation letters and the measure/probe coordinate mapping correct). Assert the
+    sagittal display is left-right inverted while axial/coronal are not."""
+    h = wa._host()
+    base = {"region": "Spine", "params": {"sequence": "FSE / TSE", "TR": 3500, "TE": 100}}
+    h.render({**base, "orientation": "sagittal"})
+    xl = h.img_ax.get_xlim()
+    assert xl[0] > xl[1], "sagittal display must be left-right inverted (anterior-left)"
+    for orient in ("axial", "coronal"):
+        h.render({**base, "orientation": orient})
+        x2 = h.img_ax.get_xlim()
+        assert x2[0] < x2[1], f"{orient} display must not be inverted"
+
+
+def test_probe_label_map_flips_with_sagittal_display():
+    """The hover/probe label map is flipped left-right for sagittal so it lines up with
+    the (inverted) sagittal image — same fliplr the picture gets."""
+    h = wa._host()
+    params = wa.default_params(sequence="FSE / TSE", TR=3500, TE=100)
+    h.render({"region": "Spine", "orientation": "sagittal",
+              "params": {"sequence": "FSE / TSE", "TR": 3500, "TE": 100}})
+    sl = h.slice_idx.get()
+    raw = np.asarray(h.sim._get_phantom_slice("sagittal", sl, params))
+    step = max(1, int(np.ceil(max(np.fliplr(raw).shape) / 160)))
+    expected = np.clip(np.fliplr(raw)[::step, ::step], 0, 255).astype(np.uint8)
+    pd = h._probe_data("sagittal", sl, params)
+    assert pd is not None
+    got = np.frombuffer(base64.b64decode(pd["labels"]), dtype=np.uint8).reshape(pd["h"], pd["w"])
+    assert got.shape == expected.shape and np.array_equal(got, expected)
