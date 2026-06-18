@@ -360,6 +360,18 @@ class ScoutMixin:
         "sagittal": {"primary": "tilt", "secondary": "rot"},
     }
 
+    # Per-(acquired orientation, panel) sign so the band follows the cursor under the
+    # angle drag. The direction a panel's band rotates on screen for +tilt/+rot depends
+    # on the plane geometry, so adding the cursor's angular motion straight to the engine
+    # angle is reversed for two combinations (rot on the axial panel of a sagittal or
+    # coronal acquisition). Derived from the real band-end motion (plane_from_angles +
+    # scout_band); mirrors web/protocol.js OBLIQUE_SIGN. (+1 leaves the drag unchanged.)
+    _ANGLE_SIGN: dict[str, dict[str, int]] = {
+        "axial":    {"coronal": 1, "sagittal": 1},
+        "sagittal": {"axial": -1, "coronal": 1},
+        "coronal":  {"axial": -1, "sagittal": 1},
+    }
+
     def _display_center(self, panel: str, center: np.ndarray) -> tuple:
         """Return (cx, cy) of the slab center in display coords for the given scout panel."""
         nY = self.phantom_3d.shape[1]
@@ -509,7 +521,8 @@ class ScoutMixin:
             if t < 0.25 or t > 0.75:
                 # Near an endpoint → angle drag
                 self._scout_drag = dict(mode="angle", x=px, y=py,
-                                        angle_var=angle_var, cx=cx, cy=cy)
+                                        angle_var=angle_var, cx=cx, cy=cy,
+                                        h_plane=h_plane)
                 return
             # Near the middle → stop checking handles, fall through to move routing
             break
@@ -642,6 +655,9 @@ class ScoutMixin:
                 d_angle -= 180
             elif d_angle < -90:
                 d_angle += 180
+            # The band's on-screen rotation for +tilt/+rot is reversed on some panels
+            # (see _ANGLE_SIGN), so flip the cursor delta there to keep the band tracking.
+            d_angle *= self._ANGLE_SIGN.get(orient, {}).get(d.get("h_plane"), 1)
             if d["angle_var"] == "tilt":
                 new_val = self._snap_angle(float(np.clip(self.slice_tilt.get() + d_angle, -45, 45)))
                 self.slice_tilt.set(new_val)

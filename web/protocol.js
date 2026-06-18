@@ -325,6 +325,19 @@ function modeAt(p, loc) {
   return "slice";
 }
 
+// Per-(acquired orientation, cross-panel) sign so a grabbed band end follows the
+// cursor. The direction a panel's slice band rotates for +tilt / +rot depends on the
+// plane geometry, so a single global sign feels reversed in some panels (e.g. angling
+// a Knee/sagittal acquisition on its axial panel). These signs were derived by
+// checking the actual band-end motion from oblique.plane_from_angles + scout_band for
+// every orientation×panel — stable across volume shapes. (+1 = the base formula is
+// already correct; only the two rot-on-axial-panel cases need flipping.)
+const OBLIQUE_SIGN = {
+  axial:    { coronal: 1, sagittal: 1 },
+  sagittal: { axial: -1, coronal: 1 },
+  coronal:  { axial: -1, sagittal: 1 },
+};
+
 function wireViewport(plane) {
   const box = $("vp-" + plane);
   let drag = null;
@@ -361,7 +374,8 @@ function wireViewport(plane) {
       const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
       active.params.n_slices = n; $("pp-nsl").value = n;
     } else if (drag.mode === "oblique") {            // the grabbed end follows your cursor
-      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90 * drag.side;
+      const sgn = (OBLIQUE_SIGN[pl.orientation] || {})[p.name] ?? 1;
+      const d = (p.map === "row" ? (drag.l0.py - loc.py) : (loc.px - drag.l0.px)) * 90 * drag.side * sgn;
       if (p.angle === "tilt") { pl.tilt = snapAngle(clampN(drag.tilt0 + d, -45, 45)); $("pp-tilt").value = pl.tilt; }
       else { pl.rot = snapAngle(clampN(drag.rot0 + d, -45, 45)); $("pp-rot").value = pl.rot; }
     }

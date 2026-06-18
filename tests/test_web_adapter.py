@@ -933,3 +933,46 @@ def test_probe_label_map_flips_with_sagittal_display():
     assert pd is not None
     got = np.frombuffer(base64.b64decode(pd["labels"]), dtype=np.uint8).reshape(pd["h"], pd["w"])
     assert got.shape == expected.shape and np.array_equal(got, expected)
+
+
+def test_protocol_oblique_drag_sign_matches_band_geometry():
+    """Guards the protocol page's angle-drag sign table (web/protocol.js OBLIQUE_SIGN).
+
+    Dragging a band end on a cross panel must rotate the plane so that end follows the
+    cursor. The direction a panel's band rotates for +tilt/+rot depends on the plane
+    geometry, so each (acquired orientation, cross panel) needs the right sign. This
+    derives the required sign straight from oblique.plane_from_angles + scout_band and
+    asserts it equals the table the JS ships — if the geometry conventions ever change,
+    this fails and flags that OBLIQUE_SIGN must be updated."""
+    from oblique import plane_from_angles, scout_band
+    shape = (160, 200, 180); nz, ny, nx = shape; ctr = (nz // 2, ny // 2, nx // 2)
+    obp = {"axial": {"coronal": "rot", "sagittal": "tilt"},
+           "coronal": {"axial": "rot", "sagittal": "tilt"},
+           "sagittal": {"axial": "rot", "coronal": "tilt"}}
+    mp = {"axial": {"coronal": "row", "sagittal": "row"},
+          "sagittal": {"axial": "col", "coronal": "col"},
+          "coronal": {"axial": "row", "sagittal": "col"}}
+    pshape = {"axial": (ny, nx), "coronal": (nz, nx), "sagittal": (nz, ny)}
+    # The verified table shipped in web/protocol.js (keep in sync).
+    js_sign = {"axial": {"coronal": 1, "sagittal": 1},
+               "sagittal": {"axial": -1, "coronal": 1},
+               "coronal": {"axial": -1, "sagittal": 1}}
+
+    def band(orient, panel, t, r):
+        rows, cols = pshape[panel]
+        fx = (lambda c: cols - 1 - c) if panel == "sagittal" else (lambda c: c)
+        n = plane_from_angles(orient, tilt_deg=t, rot_deg=r)[0]
+        c0, r0, c1, r1 = scout_band(shape, n, ctr, 1, 4.0)[panel]["slices"][0]
+        return [(fx(c0) / cols, 1 - r0 / rows), (fx(c1) / cols, 1 - r1 / rows)]
+
+    for orient in obp:
+        for panel, ang in obp[orient].items():
+            b0 = band(orient, panel, 0, 0)
+            bP = band(orient, panel, 10 if ang == "tilt" else 0, 10 if ang == "rot" else 0)
+            if mp[orient][panel] == "row":               # +side = right end; want it to follow up
+                i = 0 if b0[0][0] > b0[1][0] else 1
+                need = -1 if (bP[i][1] - b0[i][1]) > 0 else 1
+            else:                                        # +side = bottom end; follow right
+                i = 0 if b0[0][1] > b0[1][1] else 1
+                need = 1 if (bP[i][0] - b0[i][0]) > 0 else -1
+            assert need == js_sign[orient][panel], (orient, panel, ang, need)
