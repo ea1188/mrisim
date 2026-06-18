@@ -333,3 +333,48 @@ class TestSimulateDiffusionImageSparsePhantom:
         img = simulate_diffusion_image(ph, TISSUE_PROPERTIES, b_value=1000, TR=8000, TE=80)
         assert img.shape == (10, 10)
         assert np.all(img >= 0)
+
+
+class TestBodyDiffusionCoverage:
+    """Regression: body-atlas organs (Abdomen/Pelvis labels 7–21) must carry diffusion
+    properties so body DWI attenuates them and they show on the ADC map — they used to
+    fall through to ADC 0 (no DWI contrast, black ADC)."""
+
+    def test_body_organ_labels_have_adc(self):
+        from phantom3d_extended import get_diffusion_properties_3d
+        dp = get_diffusion_properties_3d(None)
+        # liver, spleen, kidney, disc, cord, bowel, pancreas, heart, soft tissue
+        for label in (7, 8, 9, 15, 16, 17, 19, 20, 21):
+            assert label in dp and dp[label]["ADC"] > 0, f"label {label} missing ADC"
+
+    def test_body_adc_map_not_black_and_ordered(self):
+        import numpy as np
+        from phantom3d_extended import simulate_adc_map_3d
+        # a slice with liver (7), kidney (9), bowel (17) — the ADC map used to be black here
+        sl = np.zeros((48, 48), dtype=int)
+        sl[6:18, 6:18] = 7; sl[6:18, 30:42] = 9; sl[30:42, 6:18] = 17
+        adc = simulate_adc_map_3d(sl)
+        for label in (7, 9, 17):
+            assert adc[sl == label].mean() > 0, f"label {label} ADC map is black"
+        # kidney (high ADC) reads higher than liver (lower ADC) on the map
+        assert adc[sl == 9].mean() > adc[sl == 7].mean()
+
+    def test_body_dwi_attenuates_per_adc(self):
+        """With body tissue props present, body DWI attenuates by exp(−b·ADC)."""
+        import numpy as np
+        from phantom3d import TISSUE_PROPERTIES_3D
+        from phantom3d_extended import simulate_diffusion_3d_slice
+        sl = np.zeros((40, 40), dtype=int); sl[8:32, 8:32] = 7   # liver
+        # body tissue props are merged into TISSUE_PROPERTIES_3D when a body region
+        # loads; inject liver here so the synthetic slice has a baseline (b=0) signal.
+        injected = 7 not in TISSUE_PROPERTIES_3D
+        if injected:
+            TISSUE_PROPERTIES_3D[7] = {"T1": 800, "T2": 50, "PD": 0.9, "T2star": 40, "name": "Liver"}
+        try:
+            b0 = simulate_diffusion_3d_slice(sl, 0, [1, 0])
+            b1 = simulate_diffusion_3d_slice(sl, 1000, [1, 0])
+            m = sl == 7
+            assert b1[m].mean() < 0.6 * b0[m].mean(), "body DWI did not attenuate"
+        finally:
+            if injected:
+                del TISSUE_PROPERTIES_3D[7]
