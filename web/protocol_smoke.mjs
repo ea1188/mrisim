@@ -167,6 +167,14 @@ try {
     () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /VIBE|phase/i.test(e.textContent)),
     { timeout: 90_000 });
   console.log("exam switch → Abdomen protocol ✓");
+
+  // the exam picker exposes all the protocol exams (data-driven from protocols.py);
+  // assert Pelvis is offered without paying for another atlas load.
+  const exams = await page.$$eval("#pp-exam option", (os) => os.map((o) => o.value));
+  for (const want of ["Brain", "Spine", "Knee", "Abdomen", "Pelvis"]) {
+    if (!exams.includes(want)) fail(`exam picker missing "${want}" (has ${exams.join(", ")})`);
+  }
+  console.log("exam picker offers Brain/Spine/Knee/Abdomen/Pelvis ✓");
 } catch (e) {
   fail(e.message);
 }

@@ -48,6 +48,14 @@ PROTOCOLS: dict[str, list[str]] = {
         "Abdomen 3D GRE (VIBE)",
         "Abdomen T1 FS Post-Gd",
     ],
+    "Pelvis": [
+        LOCALIZER,
+        "Pelvis T2 High-Res",
+        "Pelvis T1 SE",
+        "Pelvis STIR",
+        "Pelvis DWI",
+        "Pelvis T1 Post-Gd",
+    ],
 }
 
 # Short, scanner-style queue labels (preset name → label).
@@ -76,6 +84,11 @@ _LABELS: dict[str, str] = {
     "Abdomen DWI": "DWI  ax",
     "Abdomen 3D GRE (VIBE)": "VIBE 3D  ax",
     "Abdomen T1 FS Post-Gd": "VIBE FS Post-Gd",
+    "Pelvis T2 High-Res": "T2 HR  ax",
+    "Pelvis T1 SE": "T1 SE  ax",
+    "Pelvis STIR": "STIR  ax",
+    "Pelvis DWI": "DWI  ax",
+    "Pelvis T1 Post-Gd": "T1 Post-Gd  ax",
 }
 
 
