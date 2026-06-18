@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.35.5] — 2026-06-18
+
+### Fixed
+- **Knee DWI / ADC now show ligament & meniscus contrast.** The ligament/meniscus tissue
+  (and the gas label) were missing from the diffusion and B0 tables, so they fell through
+  to wrong defaults; they now have proper diffusion and susceptibility values. A new
+  cross-table consistency guard keeps every atlas tissue label in sync with the per-label
+  physics tables, so this class of drift is caught in CI.
+
 ## [1.35.4] — 2026-06-18
 
 ### Fixed
