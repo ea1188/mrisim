@@ -1167,6 +1167,43 @@
           }
         }
       ]
+    },
+    {
+      "title": "Planning the scan — coverage, angle & the queue",
+      "blurb": "Prescribe each scan on the localizer, then build a whole study.",
+      "steps": [
+        {
+          "text": "Real scans aren't acquired blind — each is <b>prescribed</b> on a quick <b>localizer</b> first. Tick <b>FOV planning</b>: the cross panels show a <b>scout</b>, and a coloured <b>box</b> marks where <i>this</i> scan's slices will sit — their position, coverage and angle. Right now it's a single slice through the middle of the head.",
+          "state": {
+            "region": "Brain",
+            "seq": "Spin Echo",
+            "orient": "axial",
+            "slice": 90,
+            "tr": 500,
+            "te": 12,
+            "fovplan": true,
+            "nslices": 1,
+            "sgap": 0,
+            "thick": 5
+          }
+        },
+        {
+          "text": "<b>Coverage.</b> One slice won't cover an organ — you prescribe a <b>stack</b>. I've set <b>20 slices</b>: watch the bands fill the brain on the cross panels, and the <b>scan time</b> climb on the right. More coverage costs time; that's the first planning trade. <i>(You can drag the edge of the slab on the scout to add or remove slices yourself.)</i>",
+          "state": {
+            "nslices": 20,
+            "sgap": 1,
+            "thick": 5
+          }
+        },
+        {
+          "text": "<b>Angle.</b> Heads (and joints, and spines) are rarely straight, so you <b>tilt the stack</b> to line it up with the anatomy. <b>Grab the slice block on the scout and rotate it</b> — angle the axial slices along the skull base, or to match a tilted head. An oblique prescription is the difference between a symmetric, readable study and a wonky one. The acquired image comes out in the plane you set.",
+          "state": {}
+        },
+        {
+          "text": "A real <b>study is many such scans</b> — each prescribed, then acquired in turn. That's what the dedicated <b>Protocol Planning</b> workspace is for: in the browser open it from the <b>toolbar link</b>; on the desktop it's the <b>Protocol panel on the left</b>. Pick an <b>exam</b> (Brain, Spine or Knee), a <b>queue</b> of sequences loads, and you prescribe each on the three scouts and hit <b>Acquire</b> — scan time and SNR are tallied as the series builds. Same prescription skills you just used, end to end.",
+          "state": {}
+        }
+      ]
     }
   ],
   "curriculum": [
@@ -1241,7 +1278,8 @@
     {
       "title": "9 · Putting it together",
       "lessons": [
-        "Choosing the protocol (capstone)"
+        "Choosing the protocol (capstone)",
+        "Planning the scan — coverage, angle & the queue"
       ]
     }
   ]
