@@ -103,6 +103,7 @@ from app_metrics import MetricsMixin  # noqa: E402
 from app_export import ExportMixin  # noqa: E402
 from app_lessons import LessonMixin  # noqa: E402
 from app_maps import MapsMixin  # noqa: E402
+from app_protocol import ProtocolMixin  # noqa: E402
 
 
 class CollapsibleSection(QWidget):
@@ -258,7 +259,7 @@ class TourOverlay:
 
 class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                    CurvesMixin, MetricsMixin, ExportMixin, LessonMixin,
-                   MapsMixin, QMainWindow):
+                   MapsMixin, ProtocolMixin, QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         from version import __version__
@@ -1168,6 +1169,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._ctrl_search.textChanged.connect(self._filter_controls)
         L.addWidget(self._ctrl_search)
 
+        # \u2500\u2500 Protocol planning (exam queue \u2192 plan on the scout \u2192 acquire) \u2500\u2500\u2500\u2500\u2500\u2500
+        L.addWidget(self._build_protocol_section())
+
         # \u2500\u2500 Sequence & Protocol \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         seq_sec = CollapsibleSection("Sequence & Protocol")
         L.addWidget(seq_sec)
@@ -2068,8 +2072,15 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         name = self.preset_name.get()
         if name in ["(Custom)", ""]:
             self.desc_label.config(text=""); return
+        self.apply_preset_by_name(name)
+
+    def apply_preset_by_name(self, name: str) -> bool:
+        """Apply a clinical preset's region / plane / sequence / params to the controls
+        and re-render. Shared by the preset dropdown and the Protocol queue. Returns
+        True if the preset was found and applied."""
         p = get_preset(name)
-        if not p: return
+        if not p:
+            return False
         region = get_preset_region(name)
         if region and region != self.region.get():
             self.region.set(region); self.on_region_change()
@@ -2114,6 +2125,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         if "etl" in p: self.etl.set(int(p["etl"]))
         if "echo_spacing" in p: self.echo_spacing.set(float(p["echo_spacing"]))
         self.recalculate()
+        return True
 
     def _sync_pc_frame(self) -> None:
         """Show the PC-only controls (VENC + display) only for Phase Contrast."""
