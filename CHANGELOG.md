@@ -16,6 +16,8 @@ frozen.)
 - **Spine exam in Protocol Planning.** The exam picker now offers **Spine** alongside
   Brain — its protocol queue (Localizer, T1/T2/STIR sagittal, axial T2, T1 post-Gd) loads
   on the spine atlas, so you can plan and acquire a spine study end to end.
+- **Knee exam in Protocol Planning.** A **Knee** protocol (Localizer, PD FSE, T1 FSE,
+  PD fat-sat, T2 fat-sat, GRE T2*) on the knee atlas — three exams now (Brain, Spine, Knee).
 
 ## [1.31.1] — 2026-06-17
 
