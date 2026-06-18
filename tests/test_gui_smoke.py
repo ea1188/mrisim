@@ -1342,3 +1342,41 @@ def test_control_search_and_editable_values(win):
     win._ctrl_search.setText("")
     assert not by_title["Spatial / Acquisition"].isHidden()
     assert not by_title["Timing"].isHidden(), "clearing the search did not restore sections"
+
+
+def test_protocol_planning_workflow(win):
+    """Desktop Protocol Planning: pick an exam → open a sequence (applies its preset and
+    turns on FOV planning to plan on the scout) → Acquire (snapshot + scan time/SNR,
+    advances) → re-run grows the queue. Reuses the existing scout + acquire path."""
+    import numpy as np
+    set_state(win, sequence="Spin Echo", region="Brain")
+    # the exam picker offers the protocol exams
+    exams = [win.pp_exam.itemText(i) for i in range(win.pp_exam.count())]
+    assert {"Brain", "Spine", "Knee"} <= set(exams)
+
+    win.pp_exam.setCurrentText("Brain")
+    assert win.pp_list.count() >= 6
+    assert win.pp_queue[0]["preset"] == "Localizer"
+
+    # open the T1 sequence (index 1) → preset applied + FOV planning on
+    win._pp_open(win.pp_queue[1])
+    assert win.fov_planning.get(), "opening a sequence should turn on FOV planning"
+    assert win.sequence_type.get(), "a sequence should be selected"
+
+    # acquire → snapshot stored, item marked acquired, advances to the next
+    win._pp_acquire()
+    e = win.pp_queue[1]
+    assert e["status"] == "acquired"
+    assert isinstance(e["image"], np.ndarray) and e["image"].size > 0
+    assert e["metrics"] and e["metrics"].get("scan_time")
+    assert "Acquired" in win.pp_readout.text()
+    assert win.pp_active is win.pp_queue[2], "acquire should advance to the next sequence"
+
+    # re-run the acquired T1 → a fresh pending copy at the end
+    n0 = len(win.pp_queue)
+    win.pp_list.setCurrentRow(1)
+    win._pp_rerun()
+    assert len(win.pp_queue) == n0 + 1
+    assert win.pp_queue[-1]["status"] == "pending" and "re-run" in win.pp_queue[-1]["label"]
+
+    win.fov_planning.set(False); win.recalculate()

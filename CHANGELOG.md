@@ -10,14 +10,24 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **Desktop Protocol Planning.** The scanner-console protocol workflow comes to the
+  desktop app: a **Protocol** panel (exam picker + sequence queue) that opens each
+  sequence onto the existing interactive 3-plane scout to plan it (angle / FOV / slice),
+  then **Acquire** snapshots it with scan time + SNR and advances; re-run appends a copy.
+  Reuses the desktop's FOV-planning scout + acquire (`app_protocol.ProtocolMixin`,
+  `apply_preset_by_name`).
+- **Knee exam in Protocol Planning.** A **Knee** protocol (Localizer, PD FSE, T1 FSE,
+  PD fat-sat, T2 fat-sat, GRE T2*) on the knee atlas — three exams now (Brain, Spine, Knee).
+
 ## [1.31.2] — 2026-06-18
 
 ### Added
 - **Spine exam in Protocol Planning.** The exam picker now offers **Spine** alongside
   Brain — its protocol queue (Localizer, T1/T2/STIR sagittal, axial T2, T1 post-Gd) loads
   on the spine atlas, so you can plan and acquire a spine study end to end.
-- **Knee exam in Protocol Planning.** A **Knee** protocol (Localizer, PD FSE, T1 FSE,
-  PD fat-sat, T2 fat-sat, GRE T2*) on the knee atlas — three exams now (Brain, Spine, Knee).
 
 ## [1.31.1] — 2026-06-17
 
