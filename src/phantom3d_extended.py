@@ -212,6 +212,7 @@ def get_diffusion_properties_3d(phantom: np.ndarray | None) -> dict[int, dict[st
         9: {"ADC": 2.0, "FA": 0.0},    # Kidney cortex (high — highly perfused)
         10: {"ADC": 1.9, "FA": 0.0},   # Kidney medulla
         11: {"ADC": 3.0, "FA": 0.0},   # Blood (flow void → strong signal loss)
+        12: {"ADC": 0.0, "FA": 0.0},   # Gas — air, no signal
         13: {"ADC": 0.0, "FA": 0.0},   # Cortical bone — no signal
         14: {"ADC": 0.4, "FA": 0.0},   # Marrow (fatty — low)
         15: {"ADC": 1.6, "FA": 0.0},   # Cartilage / disc
@@ -221,6 +222,7 @@ def get_diffusion_properties_3d(phantom: np.ndarray | None) -> dict[int, dict[st
         19: {"ADC": 1.3, "FA": 0.0},   # Pancreas
         20: {"ADC": 1.6, "FA": 0.0},   # Heart / myocardium
         21: {"ADC": 1.2, "FA": 0.0},   # Soft tissue / gland (prostate, adrenal…)
+        22: {"ADC": 1.0, "FA": 0.0},   # Ligament / meniscus (dense fibrous — low, dark)
         # Demo pathologies (brain-only). Acute infarct restricts diffusion (low
         # ADC) → bright on DWI; the others diffuse near-normally so they don't
         # spuriously light up on DWI (the default ADC=0 would make them bright).

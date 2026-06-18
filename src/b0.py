@@ -32,6 +32,7 @@ SUSCEPTIBILITY_PPM = {
     19: -9.05,  # pancreas
     20: -9.05,  # heart / myocardium
     21: -9.05,  # soft tissue / gland (prostate, adrenal, thyroid)
+    22: -9.05,  # ligament / meniscus (dense fibrous tissue)
     # Demo pathologies (brain-only). The microhaemorrhage is strongly paramagnetic
     # (blood-breakdown products) → a large susceptibility jump from tissue that
     # blooms dark on SWI / gradient echo. The others are tissue-like so they don't
