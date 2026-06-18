@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.35.0] — 2026-06-18
+
+### Changed
+- **Protocol Planning scouts: live, client-side planning overlay.** The slice band, FOV
+  box and grab handles are now drawn as a client-side SVG over each scout instead of
+  baked into a server-rendered image. Dragging the angle or the FOV box is instant (no
+  per-move server round-trip), the band end follows the cursor exactly (a polar angle
+  model), and the grab points are crisp, labelled handles that highlight on hover.
+
 ## [1.34.0] — 2026-06-18
 
 ### Added
