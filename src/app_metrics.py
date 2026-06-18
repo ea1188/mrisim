@@ -19,6 +19,7 @@ _SAR_SEQ_FACTORS: dict[str, float] = {
 class MetricsMixin:
     # Provided by the host window (MRISimulator); annotation-only.
     metrics_labels: Any
+    metrics_captions: Any
     compare_metrics_label: Any
     orientation: Any
     slice_idx: Any
@@ -37,9 +38,10 @@ class MetricsMixin:
             arrow = up if diff > 0 else down if diff < 0 else "="
             return f"{arrow} {abs(diff):{f}}{u} ({abs(pct):.0f}%)"
         rule = "\u2500\u2500"
+        sa = ma["snr_wm"] or ma.get("snr", 0); sb = mb["snr_wm"] or mb.get("snr", 0)
         cnr_a = abs(ma["snr_wm"] - ma["snr_gm"]); cnr_b = abs(mb["snr_wm"] - mb["snr_gm"])
         text = f"{rule} A vs B {rule}\nTime: {d(ma['scan_time'], mb['scan_time'], 's')}\n"
-        text += f"SNR WM: {d(ma['snr_wm'], mb['snr_wm'])}\nCNR: {d(cnr_a, cnr_b)}\n"
+        text += f"SNR: {d(sa, sb)}\nCNR: {d(cnr_a, cnr_b)}\n"
         text += f"Res: {d(ma['resolution'], mb['resolution'], 'mm', '.2f')}\nSAR: A={ma['sar_head']:.1f} B={mb['sar_head']:.1f} W/kg"
         self.compare_metrics_label.config(text=text, fg="#ffcc00")
 
@@ -78,9 +80,20 @@ class MetricsMixin:
         self.metrics_labels["scan_time"].config(text=st_text)
 
         self.metrics_labels["bw_pixel"].config(text=f"{params['bandwidth'] * 1000 / matrix:.1f}")
-        self.metrics_labels["snr_wm"].config(text=f"{metrics['snr_wm']:.1f}")
-        self.metrics_labels["snr_gm"].config(text=f"{metrics['snr_gm']:.1f}")
-        self.metrics_labels["cnr"].config(text=f"{abs(metrics['snr_wm'] - metrics['snr_gm']):.1f}")
+        # SNR: brain shows WM / GM / CNR; body regions (no white/grey matter) show a
+        # single representative tissue SNR with the other two cards blanked.
+        if metrics.get("snr_wm", 0) > 0:
+            self.metrics_captions["snr_wm"].setText("SNR  WM")
+            self.metrics_captions["snr_gm"].setText("SNR  GM")
+            self.metrics_labels["snr_wm"].config(text=f"{metrics['snr_wm']:.1f}")
+            self.metrics_labels["snr_gm"].config(text=f"{metrics['snr_gm']:.1f}")
+            self.metrics_labels["cnr"].config(text=f"{abs(metrics['snr_wm'] - metrics['snr_gm']):.1f}")
+        else:
+            self.metrics_captions["snr_wm"].setText("SNR")
+            self.metrics_captions["snr_gm"].setText("")
+            self.metrics_labels["snr_wm"].config(text=f"{metrics.get('snr', 0):.1f}")
+            self.metrics_labels["snr_gm"].config(text="—")
+            self.metrics_labels["cnr"].config(text="—")
         self.metrics_labels["snr_eff"].config(text=f"{metrics.get('snr_eff', 0):.1f}")
 
         # SAR: show max safe FA when limit exceeded

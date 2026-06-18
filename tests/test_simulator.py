@@ -345,3 +345,24 @@ def test_sat_band_footprint_none_when_off_or_oblique(sim):
     sim.satband_enabled = True
     sim.tilt = 30.0                   # oblique: band isn't applied, so no overlay
     assert sim.sat_band_footprint("axial", 20, base_params()) is None
+
+
+def test_measure_snr_is_region_agnostic():
+    """Body regions have no white/grey matter, so snr_wm/snr_gm are 0 — but a generic
+    tissue SNR (dominant non-background ROI / noise sigma) must still be reported so body
+    acquisitions don't show SNR 0 everywhere."""
+    import numpy as np
+    from simulator import Simulator
+    sim = Simulator()
+    lab = np.zeros((48, 48), dtype=int)
+    lab[10:38, 10:24] = 6        # muscle
+    lab[10:38, 26:40] = 7        # liver  (no WM=3 / GM=2 anywhere)
+    rng = np.random.default_rng(0)
+    recon = np.where(lab == 0, 0.0, 0.6) + rng.normal(0, 0.02, lab.shape)
+    out = sim._measure_snr(recon, lab)
+    assert out["wm"] == 0.0 and out["gm"] == 0.0, "no white/grey matter in a body slice"
+    assert out["snr"] > 0.0, "a generic tissue SNR must still be reported for body"
+    # brain-ish slice (has WM=3) keeps a white-matter SNR
+    lab2 = np.zeros((48, 48), dtype=int); lab2[10:38, 10:38] = 3
+    recon2 = np.where(lab2 == 0, 0.0, 0.6) + rng.normal(0, 0.02, lab2.shape)
+    assert sim._measure_snr(recon2, lab2)["wm"] > 0.0
