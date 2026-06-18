@@ -10,6 +10,16 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.35.4] — 2026-06-18
+
+### Fixed
+- **Lungs now perturb the B0 field (chest off-resonance / EPI distortion).** The B0
+  susceptibility table was keyed to a stale label scheme, so the air-filled lungs were
+  treated as tissue and produced no off-resonance — body B0 field maps and EPI/DWI
+  geometric distortion missed the dominant chest susceptibility source. The table is
+  corrected to the current atlas labels (lungs and gas are air-like); brain B0 / SWI /
+  EPI are unchanged.
+
 ## [1.35.3] — 2026-06-18
 
 ### Fixed
