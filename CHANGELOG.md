@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.35.1] — 2026-06-18
+
+### Changed
+- **Protocol Planning: grab the band centre to move the slice package.** The slice band
+  now has two zones — grab an **end** (the diamond handles) to angle the plane, or grab
+  the **centre** (a round handle) to slide the slice position along your cursor, instead
+  of the whole band angling.
+
 ## [1.35.0] — 2026-06-18
 
 ### Changed
