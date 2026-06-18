@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.32.1] — 2026-06-18
+
+### Changed
+- **Protocol Planning: the sequence queue moved to the left.** In both the browser
+  Protocol Planning page and the desktop app, the protocol/sequence queue now sits on
+  the left, so the workflow reads left→right like a scanner console (pick the queue →
+  plan on the scouts → acquire).
+
 ## [1.32.0] — 2026-06-18
 
 ### Added
