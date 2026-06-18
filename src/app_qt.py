@@ -829,6 +829,16 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
     def _frame_image_axes(self, ax: Any) -> None:
         """Give an image axes a clean framed-viewport look (shared helper)."""
         render_overlay.frame_image_axes(ax)
+        self._match_sagittal_flip(ax)
+
+    def _match_sagittal_flip(self, ax: Any) -> None:
+        """Flip a displayed image left-right for sagittal, matching the scout's
+        ``np.fliplr`` (app_scout) so the acquired image's A-P isn't mirrored vs the
+        localizer you planned on. Inverting the axis (not the data) keeps the
+        transAxes orientation letters put and the data-coordinate measure/hover
+        (event.xdata) correct, since matplotlib reports xdata on the inverted axis."""
+        if self.orientation.get() == "sagittal":
+            ax.invert_xaxis()
 
     def _annotate_image(self, ax: Any, params: dict, orient: str, sl_idx: int,
                         width: float, center: float) -> None:
@@ -1962,6 +1972,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             if 0 <= sl <= max_sl:
                 image = self._simulate_single_slice(params, orient, sl)
                 ax.imshow(image, cmap=cmap, origin="lower", aspect=_asp)
+                self._match_sagittal_flip(ax)
                 ax.set_title(f"#{sl}", color="white", fontsize=8)
             ax.set_axis_off()
 
@@ -2036,6 +2047,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                         ov = np.zeros((*fp.shape, 4))
                         ov[fp] = (0.902, 0.702, 0.353, 0.30)   # #e6b35a
                         ax.imshow(ov, origin="lower", aspect=_asp)
+                self._match_sagittal_flip(ax)
                 ax.set_title(f"#{idxs[k]}", color="white", fontsize=8)
         self.fig.suptitle(f"{params['sequence']}  |  {n} slice{'s' if n != 1 else ''}  "
                           f"|  FOV {self.inplane_fov_pct.get()}%",
