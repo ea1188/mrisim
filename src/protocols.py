@@ -31,6 +31,14 @@ PROTOCOLS: dict[str, list[str]] = {
         "Spine Axial T2",
         "Spine T1 Post-Gd",
     ],
+    "Knee": [
+        LOCALIZER,
+        "Knee PD FSE",
+        "Knee T1 FSE",
+        "Knee PD Fat-Sat (CHESS)",
+        "Knee T2 Fat-Sat",
+        "Knee GRE T2*",
+    ],
 }
 
 # Short, scanner-style queue labels (preset name → label).
@@ -48,6 +56,11 @@ _LABELS: dict[str, str] = {
     "Spine STIR": "STIR  sag",
     "Spine Axial T2": "T2  ax",
     "Spine T1 Post-Gd": "T1 Post-Gd  sag",
+    "Knee PD FSE": "PD FSE  sag",
+    "Knee T1 FSE": "T1 FSE  sag",
+    "Knee PD Fat-Sat (CHESS)": "PD FS  sag",
+    "Knee T2 Fat-Sat": "T2 FS  sag",
+    "Knee GRE T2*": "GRE T2*  sag",
 }
 
 
