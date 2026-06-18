@@ -173,14 +173,14 @@ def add_tissue_texture(phantom: np.ndarray, sigma_coarse: float = 10, sigma_fine
     """Create tissue inhomogeneity texture for more realistic images.
     Returns a multiplicative texture map (values around 1.0)."""
     nx, ny, nz = phantom.shape
-    np.random.seed(42)
+    rng = np.random.RandomState(42)
     
     # B1 inhomogeneity (smooth, affects whole image)
-    b1_field = np.random.randn(nx, ny, nz) * 0.04
+    b1_field = rng.randn(nx, ny, nz) * 0.04
     b1_field = gaussian_filter(b1_field, sigma=sigma_coarse)
     
     # Biological tissue variation (finer)
-    bio_variation = np.random.randn(nx, ny, nz) * 0.02
+    bio_variation = rng.randn(nx, ny, nz) * 0.02
     bio_variation = gaussian_filter(bio_variation, sigma=sigma_fine)
     
     texture = 1.0 + b1_field + bio_variation
@@ -188,7 +188,7 @@ def add_tissue_texture(phantom: np.ndarray, sigma_coarse: float = 10, sigma_fine
     # Additional per-tissue variation
     for label in [2, 3]:  # GM and WM have more internal variation
         mask = phantom == label
-        tissue_var = np.random.randn(nx, ny, nz) * 0.03
+        tissue_var = rng.randn(nx, ny, nz) * 0.03
         tissue_var = gaussian_filter(tissue_var, sigma=2)
         texture[mask] += tissue_var[mask]
     
@@ -247,10 +247,10 @@ def simulate_diffusion_3d_slice(
     image = np.zeros_like(phantom_slice, dtype=float)
     
     # Add directional variation for white matter
-    np.random.seed(45)
+    rng = np.random.RandomState(45)
     size = phantom_slice.shape
     # Fiber orientation field (smooth, varies across WM)
-    fiber_angle = gaussian_filter(np.random.randn(*size), sigma=8) * np.pi
+    fiber_angle = gaussian_filter(rng.randn(*size), sigma=8) * np.pi
     
     dir_vec = np.array(direction[:2] if len(direction) >= 2 else [direction[0], 0], dtype=float)
     dir_vec = dir_vec / (np.linalg.norm(dir_vec) + 1e-10)
@@ -291,7 +291,7 @@ def simulate_diffusion_3d_slice(
             image[mask] = signal
     
     # Add tissue texture
-    texture = gaussian_filter(np.random.randn(*size) * 0.03, sigma=3) + 1.0
+    texture = gaussian_filter(rng.randn(*size) * 0.03, sigma=3) + 1.0
     image *= texture
     image = np.clip(image, 0, None)
     
@@ -302,9 +302,9 @@ def simulate_adc_map_3d(phantom_slice: np.ndarray) -> np.ndarray:
     diff_props = get_diffusion_properties_3d(None)
     adc_map = np.zeros_like(phantom_slice, dtype=float)
     
-    np.random.seed(42)
+    rng = np.random.RandomState(42)
     size = phantom_slice.shape
-    variation = gaussian_filter(np.random.randn(*size) * 0.05, sigma=3)
+    variation = gaussian_filter(rng.randn(*size) * 0.05, sigma=3)
     
     for label, dp in diff_props.items():
         mask = phantom_slice == label
@@ -322,11 +322,11 @@ def simulate_fa_map_3d(phantom_slice: np.ndarray) -> np.ndarray:
     diff_props = get_diffusion_properties_3d(None)
     fa_map = np.zeros_like(phantom_slice, dtype=float)
     
-    np.random.seed(43)
+    rng = np.random.RandomState(43)
     size = phantom_slice.shape
     # Tract-like structure
-    tract_pattern = gaussian_filter(np.random.randn(*size), sigma=5)
-    fine_detail = gaussian_filter(np.random.randn(*size), sigma=2)
+    tract_pattern = gaussian_filter(rng.randn(*size), sigma=5)
+    fine_detail = gaussian_filter(rng.randn(*size), sigma=2)
     
     for label, dp in diff_props.items():
         mask = phantom_slice == label
@@ -381,8 +381,8 @@ def simulate_tof_3d_slice(
             image[mask] = gradient_echo_signal(props["T1"], T2star, props["PD"], TR, TE, flip_angle)
     
     # Add subtle texture
-    np.random.seed(46)
-    texture = gaussian_filter(np.random.randn(*phantom_slice.shape) * 0.02, sigma=2) + 1.0
+    rng = np.random.RandomState(46)
+    texture = gaussian_filter(rng.randn(*phantom_slice.shape) * 0.02, sigma=2) + 1.0
     image *= texture
     image = np.clip(image, 0, None)
     
@@ -423,8 +423,8 @@ def simulate_fmri_3d_slice(
             image[mask] = sig
     
     # Add tissue texture
-    np.random.seed(47)
-    texture = gaussian_filter(np.random.randn(*phantom_slice.shape) * 0.025, sigma=2) + 1.0
+    rng = np.random.RandomState(47)
+    texture = gaussian_filter(rng.randn(*phantom_slice.shape) * 0.025, sigma=2) + 1.0
     image *= texture
     image = np.clip(image, 0, None)
     

@@ -41,13 +41,13 @@ def generate_synthetic_3d_brain(nx=181, ny=217, nz=181):
     phantom[wm] = 3
     
     # --- Add cortical folding (sulci and gyri) ---
-    np.random.seed(42)
+    rng = np.random.RandomState(42)
     # Create 3D noise field for cortical folding
-    fold_noise = np.random.randn(nx, ny, nz)
+    fold_noise = rng.randn(nx, ny, nz)
     fold_noise = gaussian_filter(fold_noise, sigma=4)
     
     # Second frequency for finer folds
-    fine_folds = np.random.randn(nx, ny, nz)
+    fine_folds = rng.randn(nx, ny, nz)
     fine_folds = gaussian_filter(fine_folds, sigma=2.5)
     
     # Combined fold pattern
@@ -175,7 +175,7 @@ def generate_synthetic_3d_brain(nx=181, ny=217, nz=181):
                          (z - (cx + nx*0.12))**2 / (nx*0.13)**2) < 1)
     
     # Cerebellar gray matter (with foliation pattern)
-    cereb_noise = np.random.randn(nx, ny, nz)
+    cereb_noise = rng.randn(nx, ny, nz)
     cereb_noise = gaussian_filter(cereb_noise, sigma=1.5)
     
     cereb_gm = cerebellum_outer & (phantom == 0)
