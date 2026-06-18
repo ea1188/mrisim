@@ -951,6 +951,10 @@ class WebHost(CurvesMixin):
         acq_axis = self._ACQ_AXIS[orient]
         names = ["axial", "coronal", "sagittal"]
         amber, dim = "#ffdd44", "#6f7886"
+        # The protocol page draws the interactive overlay (band / FOV box / handles)
+        # client-side as a live SVG, so it asks for a background-only render + geometry;
+        # the main-app localizer bakes the overlay into the PNG (default).
+        bake = bool(payload.get("bake_overlays", True))
 
         # In-plane FOV box (square fraction) + its centre offset along the
         # acquired plane's in-plane axis; the crosshair follows that centre.
@@ -1038,6 +1042,10 @@ class WebHost(CurvesMixin):
             ra, ca = self._PANEL_AXES[name]
             title = name.capitalize()
             fc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
+            if not bake:                       # background only; client draws the overlay
+                ax.set_xlim(-0.5, W - 0.5); ax.set_ylim(-0.5, H - 0.5)
+                ax.set_title(title, color="#9aa4b2", fontsize=8, pad=2)
+                continue
             # crosshair through the prescribed centre (x flips for sagittal Y)
             ax.axvline(fc(ctr[ca]), color=dim, lw=0.6, alpha=0.5)
             ax.axhline(ctr[ra], color=dim, lw=0.6, alpha=0.5)
@@ -1150,6 +1158,16 @@ class WebHost(CurvesMixin):
             pos = ax.get_position()
             box = [float(pos.x0), float(1.0 - pos.y1), float(pos.x1), float(1.0 - pos.y0)]
             entry: dict = {"name": name, "box": box}
+            # Panel-local geometry the client SVG overlay draws from: the prescribed
+            # centre (angle pivot + move handle); below, the band centre-line + slab
+            # rim lines for cross panels. fcc flips the sagittal panel's column axis.
+            Hc, Wc = scouts[name].shape
+            fcc = (lambda c: ny - 1 - c) if name == "sagittal" else (lambda c: c)
+
+            def _seg(s: "tuple | list", _f: Any = fcc, _w: int = Wc, _h: int = Hc) -> list:
+                return [[float(_f(s[0]) / _w), float(1.0 - s[1] / _h)],
+                        [float(_f(s[2]) / _w), float(1.0 - s[3] / _h)]]
+            entry["center"] = [float(fcc(ctr[ca]) / Wc), float(1.0 - ctr[ra] / Hc)]
             if acq_axis == ra:
                 entry.update(map="row", n=int(vol.shape[ra]), flip=False, role="cross",
                              angle=self._OBLIQUE_PANEL[orient].get(name))
@@ -1170,6 +1188,17 @@ class WebHost(CurvesMixin):
                                       fb["w"] / W, fb["h"] / H])
                 if sat_on:                    # in-plane move + angle on the acquired panel
                     entry["satband"] = _satgeom(name, ra, ca, W, H, "angle")
+            # Cross panel: the prescribed slice centre-line (grab an end to angle) and
+            # the slab rim lines, for the client overlay to draw + handle.
+            if entry.get("role") == "cross":
+                ov = band.get(name) or {}
+                segs = ov.get("slices") or []
+                mid_seg = segs[len(segs) // 2] if segs else None
+                if mid_seg is not None:
+                    entry["band"] = _seg(mid_seg)
+                ed = ov.get("edges") or (None, None)
+                if ed[0] and ed[1] and len(segs) > 1:
+                    entry["slab_edges"] = [_seg(ed[0]), _seg(ed[1])]
             # Slice-group extent on a cross panel: drag its edge to add/remove slices.
             if entry.get("role") == "cross" and not acq3d:
                 ed = (band.get(name) or {}).get("edges") or (None, None)
@@ -1200,11 +1229,13 @@ class WebHost(CurvesMixin):
         """The 3 localizer panels as *separate* images (one per plane) + each panel's
         planning geometry — for the protocol page's independent draggable viewports.
 
-        Reuses `render_scout` wholesale (same backgrounds, overlays and per-panel
-        geometry), then crops each axes to its own PNG. The geometry fractions are
-        already panel-local (0–1 within a panel), so they map straight onto the crops.
+        Reuses `render_scout` for the grayscale backgrounds + per-panel geometry, then
+        crops each axes to its own PNG. The interactive overlay (band / FOV box / handles)
+        is drawn client-side as a live SVG, so the panels render background-only
+        (``bake_overlays=False``). The geometry fractions are panel-local (0–1 within a
+        panel), so they map straight onto the crops.
         """
-        self.render_scout(payload)
+        self.render_scout({**payload, "bake_overlays": False})
         geom = {e["name"]: e for e in self._scout_panels}
         out: dict = {"satband_mm": getattr(self, "_scout_satband_mm", None)}
         for ax, name in zip(self.scout_axes, ["axial", "coronal", "sagittal"], strict=True):

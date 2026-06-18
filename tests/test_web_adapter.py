@@ -976,3 +976,29 @@ def test_protocol_oblique_drag_sign_matches_band_geometry():
                 i = 0 if b0[0][1] > b0[1][1] else 1
                 need = 1 if (bP[i][0] - b0[i][0]) > 0 else -1
             assert need == js_sign[orient][panel], (orient, panel, ang, need)
+
+
+def test_scout_panels_background_only_with_overlay_geometry():
+    """The protocol page draws the band / FOV box / handles as a client-side SVG, so
+    render_scout_panels renders background-only PNGs (bake_overlays=False) and returns the
+    geometry the overlay needs: a `center` (angle pivot / move handle) on every panel and a
+    `band` centre-line on the cross panels. The main-app `render_scout` still bakes overlays."""
+    h = wa._host()
+    payload = {"region": "Knee", "orientation": "sagittal",
+               "params": {"sequence": "FSE / TSE", "TR": 3500, "TE": 100,
+                          "n_slices": 3, "slice_thickness": 4}, "fov_planning": True}
+    out = h.render_scout_panels(payload)
+    cross = 0
+    for name in ("axial", "coronal", "sagittal"):
+        g = out[name]["geom"]
+        _decode(out[name]["png"], f"{name} panel")            # valid, non-trivial PNG
+        assert g.get("center") and len(g["center"]) == 2, name
+        assert 0.0 <= g["center"][0] <= 1.0 and 0.0 <= g["center"][1] <= 1.0
+        if g.get("role") == "cross":
+            cross += 1
+            assert g.get("band") and len(g["band"]) == 2, f"{name} needs a band centre-line"
+    assert cross == 2, "a sagittal acquisition has two cross panels"
+
+    # the main-app localizer still bakes its overlays into the PNG (default)
+    baked = h.render_scout({**payload})
+    assert isinstance(baked, str) and baked.startswith("data:image/png")
