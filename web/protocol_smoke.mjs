@@ -59,6 +59,24 @@ try {
   await page.dblclick("#vp-sagittal");                // reset the prescription
   await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
 
+  // grabbing the CENTRE of the band moves the slice package (not the angle): drag the
+  // centre handle perpendicular → tilt stays 0 and the slice position changes.
+  const centreDrag = await page.evaluate(() => {
+    const img = document.querySelector("#vp-sagittal img"); const r = img.getBoundingClientRect();
+    const x = r.left + r.width * 0.5, y0 = r.top + r.height * 0.5, y1 = r.top + r.height * 0.3;
+    img.dispatchEvent(new PointerEvent("pointerdown", { button: 0, clientX: x, clientY: y0, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y1, bubbles: true }));
+    const out = { tilt: parseFloat(document.querySelector("#pp-tilt").value),
+                  readout: document.querySelector("#pp-readout").textContent };
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    return out;
+  });
+  if (centreDrag.tilt !== 0) fail("grabbing the band centre angled the plane instead of moving it");
+  if (!/slice\s+\d/.test(centreDrag.readout)) fail("grabbing the band centre did not move the slice position");
+  console.log("band centre moves the slice package (not angle) ✓");
+  await page.dblclick("#vp-sagittal");                // reset again
+  await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
+
   // tweak the in-plane FOV → scouts refresh without error
   await page.fill("#pp-fov", "70");
   await page.dispatchEvent("#pp-fov", "input");
