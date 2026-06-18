@@ -159,6 +159,14 @@ try {
     () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /sag/i.test(e.textContent)),
     { timeout: 90_000 });
   console.log("exam switch → Spine protocol ✓");
+
+  // and to Abdomen → the liver/abdomen queue loads (lazy-loads the abdomen atlas;
+  // wait for an abdomen-unique label, e.g. the VIBE post-Gd series).
+  await page.selectOption("#pp-exam", "Abdomen");
+  await page.waitForFunction(
+    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /VIBE|phase/i.test(e.textContent)),
+    { timeout: 90_000 });
+  console.log("exam switch → Abdomen protocol ✓");
 } catch (e) {
   fail(e.message);
 }

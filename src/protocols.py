@@ -39,6 +39,15 @@ PROTOCOLS: dict[str, list[str]] = {
         "Knee T2 Fat-Sat",
         "Knee GRE T2*",
     ],
+    "Abdomen": [
+        LOCALIZER,
+        "Abdomen T2 FSE",
+        "Abdomen In-Phase",
+        "Abdomen Opposed-Phase",
+        "Abdomen DWI",
+        "Abdomen 3D GRE (VIBE)",
+        "Abdomen T1 FS Post-Gd",
+    ],
 }
 
 # Short, scanner-style queue labels (preset name → label).
@@ -61,6 +70,12 @@ _LABELS: dict[str, str] = {
     "Knee PD Fat-Sat (CHESS)": "PD FS  sag",
     "Knee T2 Fat-Sat": "T2 FS  sag",
     "Knee GRE T2*": "GRE T2*  sag",
+    "Abdomen T2 FSE": "T2 FSE  ax",
+    "Abdomen In-Phase": "T1 in-phase  ax",
+    "Abdomen Opposed-Phase": "T1 opp-phase  ax",
+    "Abdomen DWI": "DWI  ax",
+    "Abdomen 3D GRE (VIBE)": "VIBE 3D  ax",
+    "Abdomen T1 FS Post-Gd": "VIBE FS Post-Gd",
 }
 
 

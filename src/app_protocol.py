@@ -146,7 +146,11 @@ class ProtocolMixin:
         e["status"] = "acquired"
         self._pp_render_list()
         t = self._pp_fmt_time(metrics.get("scan_time"))
-        snr = int(round(metrics.get("snr_wm", 0)))
+        # The SNR metrics are brain-tissue-keyed (white/grey matter); body exams
+        # (Knee, Abdomen) have neither, so only show an SNR term when it's available.
+        snr = int(round(metrics.get("snr_wm") or metrics.get("snr_gm")
+                        or metrics.get("snr_eff") or 0))
+        snr_txt = f" · SNR {snr}" if snr > 0 else ""
         # advance to the next still-pending sequence, then show the acquire confirmation
         # (set last so opening the next item doesn't overwrite it).
         nxt = next((q for q in self.pp_queue if q["status"] == "pending"
@@ -154,7 +158,7 @@ class ProtocolMixin:
         if nxt:
             self._pp_open(nxt)
         self.pp_readout.setText(
-            f"Acquired {e['label'].strip()} ✓ · {t} · SNR {snr}"
+            f"Acquired {e['label'].strip()} ✓ · {t}{snr_txt}"
             + (f" — now planning {nxt['label'].strip()}." if nxt else " — protocol complete."))
 
     def _pp_rerun(self) -> None:
