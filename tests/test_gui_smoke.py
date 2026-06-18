@@ -1352,7 +1352,7 @@ def test_protocol_planning_workflow(win):
     set_state(win, sequence="Spin Echo", region="Brain")
     # the exam picker offers the protocol exams
     exams = [win.pp_exam.itemText(i) for i in range(win.pp_exam.count())]
-    assert {"Brain", "Spine", "Knee"} <= set(exams)
+    assert {"Brain", "Spine", "Knee", "Abdomen"} <= set(exams)
 
     win.pp_exam.setCurrentText("Brain")
     assert win.pp_list.count() >= 6

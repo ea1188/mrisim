@@ -10,6 +10,21 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [Unreleased]
+
+### Added
+- **Abdomen exam in Protocol Planning.** A liver/abdomen protocol (Localizer, T2 FSE,
+  in-/opposed-phase T1 GRE, DWI, 3D GRE VIBE, fat-sat post-Gd VIBE) on the abdomen
+  atlas — four exams now (Brain, Spine, Knee, Abdomen), in both editions.
+- **Guided lesson "Planning the scan — coverage, angle & the queue."** Walks through
+  prescribing a scan on the localizer (coverage vs scan time, oblique angling) and
+  points to the Protocol Planning workspace; runs on both desktop and browser.
+
+### Changed
+- **Protocol Planning acquire readout no longer shows "SNR 0" for body exams.** The
+  SNR figure was white-matter-keyed, so Knee and Abdomen acquisitions printed a bare
+  "SNR 0"; the SNR term is now shown only when an SNR is available (both editions).
+
 ## [1.32.1] — 2026-06-18
 
 ### Changed
