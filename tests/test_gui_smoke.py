@@ -1456,3 +1456,39 @@ def test_scout_angle_drag_follows_cursor(win, region, acq, panel, angle_var):
     assert da > 0, f"grabbed band end moved {da:+.1f}° against the +5° CCW cursor (reversed)"
     win.slice_rot.set(0.0); win.slice_tilt.set(0.0)    # don't leak oblique state
     win.fov_planning.set(False); win.recalculate()
+
+
+def test_protocol_acquired_series_review(win):
+    """Desktop acquired-series review: after acquiring, a thumbnail strip appears; clicking
+    a thumbnail (or an acquired queue row) shows that stored image full-size on the main
+    viewport without re-simulating, and switching exam clears the strip."""
+    import numpy as np
+    win.pp_exam.setCurrentText("Knee")
+    assert win.pp_thumbs_scroll.isHidden(), "no thumbnails before acquiring"
+
+    win._pp_open(win.pp_queue[1]); win._pp_acquire()
+    win._pp_open(win.pp_queue[2]); win._pp_acquire()
+    assert not win.pp_thumbs_scroll.isHidden()
+    assert win.pp_thumbs_layout.count() - 1 == 2, "two acquired thumbnails"
+
+    acq = [e for e in win.pp_queue if e["status"] == "acquired"]
+    assert acq[0].get("orientation") == "sagittal"      # stored for faithful review
+    win._pp_review(acq[0])
+    assert not win.fov_planning.get(), "review leaves planning mode"
+    assert np.array_equal(np.asarray(win.current_image), np.asarray(acq[0]["image"]))
+    assert "Reviewing" in win.pp_readout.text()
+    xl = win.fig.axes[0].get_xlim()
+    assert xl[0] > xl[1], "sagittal review keeps the anterior-left flip"
+
+    # clicking an acquired row reviews; a pending row opens to plan
+    acq_row = win.pp_queue.index(acq[0])
+    win._pp_item_clicked(win.pp_list.item(acq_row))
+    assert "Reviewing" in win.pp_readout.text()
+    pending_row = next(i for i, e in enumerate(win.pp_queue) if e["status"] == "pending"
+                       and e["preset"] != win._LOCALIZER)
+    win._pp_item_clicked(win.pp_list.item(pending_row))
+    assert win.fov_planning.get(), "a pending row opens for planning"
+
+    win.pp_exam.setCurrentText("Brain")
+    assert win.pp_thumbs_scroll.isHidden(), "switching exam clears the strip"
+    win.fov_planning.set(False); win.recalculate()
