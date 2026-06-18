@@ -1492,3 +1492,18 @@ def test_protocol_acquired_series_review(win):
     win.pp_exam.setCurrentText("Brain")
     assert win.pp_thumbs_scroll.isHidden(), "switching exam clears the strip"
     win.fov_planning.set(False); win.recalculate()
+
+
+def test_metrics_snr_region_aware(win):
+    """The metrics panel shows SNR WM / GM / CNR for the brain, but a single representative
+    'SNR' (with GM/CNR blanked) for body regions that have no white/grey matter — and the
+    SNR is non-zero there (the body-SNR fix)."""
+    set_state(win, region="Brain", sequence="Spin Echo")
+    assert win.metrics_captions["snr_wm"].text().strip() == "SNR  WM"
+    assert float(win.metrics_labels["snr_wm"].text()) > 0
+
+    set_state(win, region="Abdomen", sequence="Spin Echo")
+    assert win.metrics_captions["snr_wm"].text().strip() == "SNR", "body relabels to generic SNR"
+    assert float(win.metrics_labels["snr_wm"].text()) > 0, "body SNR must be non-zero"
+    assert win.metrics_labels["cnr"].text() == "—", "CNR is brain-only"
+    set_state(win, region="Brain")          # restore for other tests

@@ -660,7 +660,7 @@ async function applyAndAcquire() {
     const m = active.metrics;
     // SNR metrics are brain-tissue-keyed; body exams (Knee, Abdomen) have none,
     // so only show an SNR term when one is available rather than a bare "SNR 0".
-    const snr = Math.round(m.snr_wm || m.snr_gm || m.snr_eff || 0);
+    const snr = Math.round(m.snr_wm || m.snr || m.snr_gm || m.snr_eff || 0);
     const snrTxt = snr > 0 ? ` · SNR ${snr}` : "";
     $("pp-readout").textContent =
       `Acquired ✓ · ${fmtTime(m.scan_time)}${snrTxt} — `

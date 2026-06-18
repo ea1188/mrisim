@@ -1489,6 +1489,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._separator(self.right_layout)
 
         self.metrics_labels: dict = {}
+        self.metrics_captions: dict = {}
 
         def _card(key: str, label: str, value_color: str = C_ACCENT) -> QWidget:
             card = QWidget()
@@ -1501,6 +1502,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             val = DLabel("--", base_style=f"font-size:13px; font-weight:bold; color:{value_color};")
             cl.addWidget(lbl); cl.addWidget(val)
             self.metrics_labels[key] = val
+            self.metrics_captions[key] = lbl
             return card
 
         # 2-column grid: SNR / timing / spatial

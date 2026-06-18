@@ -426,11 +426,17 @@ class Simulator:
             low = flat[: max(50, flat.size // 20)]
             sigma = (low.std() / RAYLEIGH) if low.std() > 0 else max(1e-6, float(np.max(recon)) * 1e-3)
 
-        out = {"sigma": float(sigma), "wm": 0.0, "gm": 0.0}
+        out = {"sigma": float(sigma), "wm": 0.0, "gm": 0.0, "snr": 0.0}
         for name, lab in (("wm", 3), ("gm", 2)):
             roi = recon[labels == lab]
             if roi.size and sigma > 0:
                 out[name] = float(roi.mean() / sigma)
+        # Region-agnostic tissue SNR: the largest non-background tissue ROI / sigma,
+        # so body regions (no white/grey matter) still report a meaningful SNR.
+        fg = [int(L) for L in np.unique(labels) if L != 0]
+        if fg and sigma > 0:
+            dominant = max(fg, key=lambda L: int((labels == L).sum()))
+            out["snr"] = float(recon[labels == dominant].mean() / sigma)
         return out
 
     # --- per-slice rendering ------------------------------------------------
@@ -630,8 +636,9 @@ class Simulator:
         # contiguous partitions with no gap, and the √(Nz·NEX) factor is the SNR
         # gain the slab buys over a single 2-D slice.
         metrics = {"scan_time": scan_time, "resolution": res_mm,
-                   "snr_wm": snr["wm"], "snr_gm": snr["gm"], "noise_sigma": snr["sigma"],
-                   "snr_eff": snr["wm"] / np.sqrt(max(scan_time / 60.0, 1e-6)),
+                   "snr_wm": snr["wm"], "snr_gm": snr["gm"], "snr": snr["snr"],
+                   "noise_sigma": snr["sigma"],
+                   "snr_eff": (snr["wm"] or snr["snr"]) / np.sqrt(max(scan_time / 60.0, 1e-6)),
                    "sar_head": sar_head, "sar_exceeds": sar_head > 3.2, "g_factor": 1.0,
                    "is_3d": True, "n_partitions": int(n_part),
                    "partition_mm": float(res_mm), "slab_mm": float(n_part * res_mm),
@@ -883,15 +890,16 @@ class Simulator:
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
-                   "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
+                   "snr": 0.0, "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
                    "g_factor": _accel_gfactor(R, params.get("accel_method", "SENSE"))}
         if not is_map:
             snr = self._measure_snr(reconstructed, phantom_slice)
             metrics["snr_wm"] = snr["wm"]
             metrics["snr_gm"] = snr["gm"]
+            metrics["snr"] = snr["snr"]
             metrics["noise_sigma"] = snr["sigma"]
             t_min = max(scan_time / 60.0, 1e-6)
-            metrics["snr_eff"] = snr["wm"] / np.sqrt(t_min)
+            metrics["snr_eff"] = (snr["wm"] or snr["snr"]) / np.sqrt(t_min)
         else:
             metrics["snr_eff"] = 0.0
         self.last_kspace = kspace_acquired

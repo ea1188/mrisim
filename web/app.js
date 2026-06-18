@@ -1029,9 +1029,12 @@ function showDelta(mA, mB) {
   const arrow = (a, b) => (b > a ? "↑" : b < a ? "↓" : "=");
   const pct = (a, b) => (a ? Math.round(Math.abs(b - a) / a * 100) : 0);
   const cnr = (m) => Math.abs(m.snr_wm - m.snr_gm);
+  const snr = (m) => m.snr_wm || m.snr || 0;          // brain WM, else generic tissue SNR
+  const cnrPart = (mA.snr_wm || mB.snr_wm)            // CNR is brain-only
+    ? `CNR ${arrow(cnr(mA), cnr(mB))} ${pct(cnr(mA), cnr(mB))}% · ` : "";
   $("abdelta").innerHTML =
-    `B vs A — SNR ${arrow(mA.snr_wm, mB.snr_wm)} ${pct(mA.snr_wm, mB.snr_wm)}% · ` +
-    `CNR ${arrow(cnr(mA), cnr(mB))} ${pct(cnr(mA), cnr(mB))}% · ` +
+    `B vs A — SNR ${arrow(snr(mA), snr(mB))} ${pct(snr(mA), snr(mB))}% · ` +
+    cnrPart +
     `time ${arrow(mA.scan_time, mB.scan_time)} ${pct(mA.scan_time, mB.scan_time)}%`;
 }
 
@@ -1477,11 +1480,17 @@ function setMetrics(res) {
   const m = res.metrics;
   $("x-res").textContent = m.resolution.toFixed(2) + " mm";
   $("x-scan").textContent = fmtTime(m.scan_time);
-  $("x-snr").textContent = `${m.snr_wm.toFixed(1)} / ${m.snr_gm.toFixed(1)}`;
-  $("x-cnr").textContent = Math.abs(m.snr_wm - m.snr_gm).toFixed(1);
+  // SNR: brain shows WM / GM / CNR; body regions (no white/grey matter) show a single
+  // representative tissue SNR (CNR is brain-only).
+  const brain = m.snr_wm > 0;
+  $("x-snr-cap").textContent = brain ? "SNR (WM / GM)" : "SNR";
+  $("x-cnr-cap").textContent = brain ? "CNR (WM–GM)" : "CNR";
+  $("m-snrwm-cap").textContent = brain ? "SNR (WM)" : "SNR";
+  $("x-snr").textContent = brain ? `${m.snr_wm.toFixed(1)} / ${m.snr_gm.toFixed(1)}` : (m.snr || 0).toFixed(1);
+  $("x-cnr").textContent = brain ? Math.abs(m.snr_wm - m.snr_gm).toFixed(1) : "—";
   $("x-sar").textContent = m.sar_head.toFixed(1) + " W/kg" + (m.sar_exceeds ? " ⚠" : "");
   $("m-scan").textContent = fmtTime(m.scan_time);
-  $("m-snrwm").textContent = m.snr_wm.toFixed(1);
+  $("m-snrwm").textContent = (brain ? m.snr_wm : (m.snr || 0)).toFixed(1);
   $("m-weight").textContent = weighting($("sequence").value, +$("tr").value, +$("te").value);
   if (!SEQ_SLOW_FIRST.has($("sequence").value)) $("hint").textContent = "";
   // 3D slab readout: what the partition count buys (isotropic resolution, total
