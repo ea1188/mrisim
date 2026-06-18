@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.33.2] — 2026-06-18
+
+### Fixed
+- **Protocol Planning: angling went the wrong way on some panels (both editions).**
+  Dragging a slice band to angle the plane rotated it opposite to the drag for two of
+  the six acquisition×panel combinations — rotating on the axial panel of a sagittal
+  (e.g. Knee) or coronal acquisition. The grabbed band end now follows the cursor in
+  every case (a per-panel sign derived from the actual plane geometry).
+
 ## [1.33.1] — 2026-06-18
 
 ### Fixed
