@@ -7,10 +7,10 @@ import presets
 
 def test_expected_exams_exist():
     exams = protocols.exam_names()
-    assert {"Brain", "Spine", "Knee", "Abdomen"} <= set(exams)
+    assert {"Brain", "Spine", "Knee", "Abdomen", "Pelvis"} <= set(exams)
 
 
-@pytest.mark.parametrize("exam", ["Brain", "Spine", "Knee", "Abdomen"])
+@pytest.mark.parametrize("exam", ["Brain", "Spine", "Knee", "Abdomen", "Pelvis"])
 def test_protocol_is_localizer_first_then_real_presets(exam):
     q = protocols.get_protocol(exam)
     assert q[0]["preset"] == protocols.LOCALIZER and q[0]["sequence"] is None

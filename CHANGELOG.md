@@ -13,9 +13,11 @@ frozen.)
 ## [Unreleased]
 
 ### Added
-- **Abdomen exam in Protocol Planning.** A liver/abdomen protocol (Localizer, T2 FSE,
-  in-/opposed-phase T1 GRE, DWI, 3D GRE VIBE, fat-sat post-Gd VIBE) on the abdomen
-  atlas — four exams now (Brain, Spine, Knee, Abdomen), in both editions.
+- **Abdomen & Pelvis exams in Protocol Planning.** A liver/abdomen protocol (Localizer,
+  T2 FSE, in-/opposed-phase T1 GRE, DWI, 3D GRE VIBE, fat-sat post-Gd VIBE) on the
+  abdomen atlas, and a pelvis staging protocol (Localizer, high-res T2, T1 SE, STIR,
+  DWI, post-Gd) on the pelvis atlas — five exams now (Brain, Spine, Knee, Abdomen,
+  Pelvis), in both editions.
 - **Guided lesson "Planning the scan — coverage, angle & the queue."** Walks through
   prescribing a scan on the localizer (coverage vs scan time, oblique angling) and
   points to the Protocol Planning workspace; runs on both desktop and browser.
