@@ -10,6 +10,24 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.35.3] — 2026-06-18
+
+### Fixed
+- **Body DWI / ADC now show organ contrast.** Diffusion properties were only defined for
+  brain tissues, so on Abdomen/Pelvis/Torso DWI the organs (liver, spleen, kidney,
+  pancreas, bowel…) showed no diffusion attenuation and were black on the ADC map. They
+  now attenuate by exp(−b·ADC) with clinical ADC values.
+- **SNR / CNR metrics now work for body regions.** The metrics were white/grey-matter-only,
+  so every Abdomen/Pelvis/Knee acquisition reported SNR 0. A region-agnostic tissue SNR is
+  now reported (shown as a single "SNR" for body; brain keeps SNR WM/GM/CNR).
+- **Susceptibility artifact now keys off the lungs.** It ignored the air-filled lungs
+  (the dominant chest air–tissue interface); they now perturb the field.
+
+### Changed
+- **No global-RNG side effect in render textures.** The synthetic-phantom and texture/map
+  functions now use a function-local `RandomState` instead of reseeding the global numpy
+  RNG (output is byte-identical).
+
 ## [1.35.2] — 2026-06-18
 
 ### Fixed
