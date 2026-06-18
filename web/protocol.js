@@ -326,6 +326,19 @@ function el(tag, attrs) {
   for (const k in attrs) e.setAttribute(k, attrs[k]);
   return e;
 }
+// The two points where the infinite line through P (direction D) crosses the
+// [0,W]×[0,H] rect — so a live band stays inside its panel instead of overshooting.
+function clipLine(P, D, W, H) {
+  const cand = [];
+  for (const [num, den] of [[-P[0], D[0]], [W - P[0], D[0]], [-P[1], D[1]], [H - P[1], D[1]]]) {
+    if (Math.abs(den) < 1e-9) continue;
+    const t = num / den, x = P[0] + t * D[0], y = P[1] + t * D[1];
+    if (x >= -0.5 && x <= W + 0.5 && y >= -0.5 && y <= H + 0.5) cand.push(t);
+  }
+  if (cand.length < 2) return null;
+  const lo = Math.min(...cand), hi = Math.max(...cand);
+  return [[P[0] + lo * D[0], P[1] + lo * D[1]], [P[0] + hi * D[0], P[1] + hi * D[1]]];
+}
 function ensureOverlay(box) {
   let svg = box.querySelector("svg.pp-ov");
   if (!svg) {
@@ -372,15 +385,18 @@ function drawOverlay(plane, hoverMode, live) {
   if (g.role === "cross") {
     let a, b;
     if (live && live.bandDir && g.center) {         // angle drag: point the band at the cursor
-      const [cx, cy] = px(g.center), L = Math.hypot(W, H);
-      a = [cx - live.bandDir[0] * L, cy - live.bandDir[1] * L];
-      b = [cx + live.bandDir[0] * L, cy + live.bandDir[1] * L];
+      const seg = clipLine(px(g.center), [live.bandDir[0] * W, live.bandDir[1] * H], W, H);
+      if (seg) { a = seg[0]; b = seg[1]; }          // clipped to the panel, aspect-correct
     } else if (live && live.band) { a = px(live.band[0]); b = px(live.band[1]); }  // slide
     else if (g.band) { a = px(g.band[0]); b = px(g.band[1]); }
-    if (g.slab_edges && !(live && (live.bandDir || live.band))) {   // coverage rim lines
+    if (g.slab_edges && !(live && (live.bandDir || live.band))) {   // coverage rim + slice handles
       for (const e2 of g.slab_edges) {
         const p0 = px(e2[0]), p1 = px(e2[1]);
         els.push(el("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: LINE, "stroke-width": 1, "stroke-opacity": 0.5, "stroke-dasharray": "3 3" }));
+        const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2, hw = hov === "slices" ? 7 : 5;
+        const bar = el("rect", { x: mx - hw, y: my - 2.5, width: 2 * hw, height: 5, rx: 1.5, fill: LINE, "fill-opacity": hov === "slices" ? 0.95 : 0.7, stroke: "#1a1f26", "stroke-width": 0.8 });
+        bar.appendChild(el("title", {})).textContent = "Drag the rim to add / remove slices";
+        els.push(bar);
       }
     }
     if (a && b) {
