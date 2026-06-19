@@ -56,8 +56,9 @@ let lastSeriesPlane = null;   // viewport last hovered/scrolled (arrow keys page
 // A lightweight "fake scanner" / positioning trainer: static scout images you can
 // angle on (illustrative — the angle is cosmetic), and a static example image per
 // sequence that pops up on Acquire. The acquired image is an example, NOT derived
-// from the prescription. Swap the placeholder data URLs below for real, properly-
-// licensed images (Creative Commons / public-domain / owned) per body part.
+// from the prescription. Drop real (properly-licensed) images into
+// web/img/exams/<part>/ — see that folder's README — and they replace the
+// labelled placeholders automatically; no code change needed.
 let imageExam = null;    // active image-exam data, or null for engine (simulated) exams
 
 function placeholderImg(title, sub, tint) {
@@ -74,20 +75,48 @@ function placeholderImg(title, sub, tint) {
     /%([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))));
 }
 
-const IMAGE_EXAMS = {
-  "Ankle (example)": {
+// Each image is a file under web/img/exams/<part>/<file>.png. If the file isn't
+// there yet it shows a labelled placeholder instead — so you can drop images in
+// one at a time (zero code) and the menu always works. See web/img/exams/README.
+function buildImageExam(part, sequences) {
+  const slug = part.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  const dir = `img/exams/${slug}`;
+  const f = (file, ph) => ({ src: `${dir}/${file}.png`, ph });
+  return {
     scouts: {
-      axial:    placeholderImg("Ankle", "Axial scout", "#7fb8ff"),
-      coronal:  placeholderImg("Ankle", "Coronal scout", "#7fb8ff"),
-      sagittal: placeholderImg("Ankle", "Sagittal scout", "#7fb8ff"),
+      axial:    f("scout_axial",    placeholderImg(part, "Axial scout", "#7fb8ff")),
+      coronal:  f("scout_coronal",  placeholderImg(part, "Coronal scout", "#7fb8ff")),
+      sagittal: f("scout_sagittal", placeholderImg(part, "Sagittal scout", "#7fb8ff")),
     },
-    sequences: [
-      { label: "T1 Sagittal",   plane: "sagittal", image: placeholderImg("Ankle", "T1 Sagittal", "#ffdd44") },
-      { label: "PD FS Axial",   plane: "axial",    image: placeholderImg("Ankle", "PD FS Axial", "#ffdd44") },
-      { label: "T2 FS Coronal", plane: "coronal",  image: placeholderImg("Ankle", "T2 FS Coronal", "#ffdd44") },
-      { label: "STIR Sagittal", plane: "sagittal", image: placeholderImg("Ankle", "STIR Sagittal", "#ffdd44") },
-    ],
-  },
+    sequences: sequences.map((s) => ({
+      label: s.label, plane: s.plane, ...f(s.file, placeholderImg(part, s.label, "#ffdd44")),
+    })),
+  };
+}
+// Default sequence lists (filenames are consistent across parts, so you always
+// know what t1_sag.png etc. is). Tweak per part as needed.
+const JOINT = [
+  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "T2 FS Coronal",  plane: "coronal",  file: "t2fs_cor" },
+];
+const LONGBONE = [
+  { label: "T1 Axial",     plane: "axial",   file: "t1_ax" },
+  { label: "T1 Coronal",   plane: "coronal", file: "t1_cor" },
+  { label: "STIR Coronal", plane: "coronal", file: "stir_cor" },
+  { label: "PD FS Axial",  plane: "axial",   file: "pdfs_ax" },
+];
+const IMAGE_EXAMS = {
+  Shoulder: buildImageExam("Shoulder", JOINT),
+  Humerus:  buildImageExam("Humerus", LONGBONE),
+  Forearm:  buildImageExam("Forearm", LONGBONE),
+  Wrist:    buildImageExam("Wrist", JOINT),
+  Hand:     buildImageExam("Hand", JOINT),
+  "Tib-Fib": buildImageExam("Tib-Fib", LONGBONE),
+  Ankle:    buildImageExam("Ankle", JOINT),
+  Foot:     buildImageExam("Foot", JOINT),
 };
 
 function loadImageExam(name) {
@@ -97,8 +126,8 @@ function loadImageExam(name) {
   queue = [{ id: ++seq, preset: LOCALIZER, label: "Localizer", sequence: null,
              status: "pending", image: null, plan: null }]
     .concat(imageExam.sequences.map((s) => ({
-      id: ++seq, preset: s.label, label: s.label, sequence: s.plane || "",
-      status: "pending", exampleImage: s.image, examplePlane: s.plane || "axial", plan: null,
+      id: ++seq, preset: s.label, label: s.label, sequence: s.plane || "", status: "pending",
+      exampleImage: s.src, examplePh: s.ph, examplePlane: s.plane || "axial", plan: null,
     })));
   active = null;
   renderQueue();
@@ -112,7 +141,8 @@ function imageScoutGeom(plane) {           // cosmetic band you can angle (per p
 }
 function renderImageScouts() {
   PLANES.forEach((plane) => {
-    scoutCache[plane] = { png: imageExam.scouts[plane], geom: imageScoutGeom(plane), label: cap(plane) };
+    const sc = imageExam.scouts[plane];
+    scoutCache[plane] = { png: sc.src, fallback: sc.ph, geom: imageScoutGeom(plane), label: cap(plane) };
   });
   PLANES.forEach(renderSlot);
 }
@@ -120,7 +150,7 @@ function acquireImageExample() {
   active.status = "acquired"; active.metrics = {};
   const plane = active.examplePlane || "axial";
   slotState[plane] = { kind: "series", itemId: active.id, png: active.exampleImage,
-                       label: `${active.label} (example)`, wl: { b: 1, c: 1 } };
+                       fallback: active.examplePh, label: `${active.label} (example)`, wl: { b: 1, c: 1 } };
   lastSeriesPlane = plane;
   renderSlot(plane);
   $("pp-readout").textContent = `Acquired ${active.label} ✓ — example image (illustrative, not simulated).`;
@@ -147,7 +177,10 @@ async function loadExam(name) {
   const sel = $("pp-exam");
   if (!sel.options.length) {
     info.exams.forEach((ex) => sel.add(new Option(ex, ex)));
-    Object.keys(IMAGE_EXAMS).forEach((ex) => sel.add(new Option(ex, ex)));
+    const og = document.createElement("optgroup");      // image-library exams, grouped + labelled
+    og.label = "Image library (examples)";
+    Object.keys(IMAGE_EXAMS).forEach((ex) => og.appendChild(new Option(ex, ex)));
+    sel.add(og);
     sel.value = name;
     sel.addEventListener("change", () => loadExam(sel.value));
   }
@@ -350,20 +383,22 @@ function renderSlot(plane) {
   if (st.kind === "scout") {
     const sc = scoutCache[plane]; if (!sc) return;
     vpGeom[plane] = sc.geom;
-    drawTile(plane, sc.png, sc.label, true, false);          // plannable, not draggable
-    drawOverlay(plane);                                      // crisp interactive handles
+    drawTile(plane, sc.png, sc.label, true, false, sc.fallback);   // plannable, not draggable
+    drawOverlay(plane);                                            // crisp interactive handles
   } else {                                                   // series: view-only, draggable
     const tag = (st.maxSlice ? `${st.label}  ·  ${st.slice}/${st.maxSlice}` : st.label) + "  ⠿";
-    drawTile(plane, st.png, tag, false, true);
+    drawTile(plane, st.png, tag, false, true, st.fallback);
     const img = $("vp-" + plane).querySelector("img");       // keep its window/level
     if (img && st.wl) img.style.filter = `brightness(${st.wl.b}) contrast(${st.wl.c})`;
   }
 }
-function drawTile(plane, dataURL, tag, plannable, draggable) {
+function drawTile(plane, dataURL, tag, plannable, draggable, fallback) {
   const box = $("vp-" + plane);
   box.classList.toggle("plannable", !!plannable);
   let img = box.querySelector("img");
   if (!img) { img = document.createElement("img"); box.appendChild(img); }
+  // image-library files may not exist yet → fall back to the labelled placeholder
+  img.onerror = fallback ? () => { img.onerror = null; img.src = fallback; } : null;
   img.src = dataURL;
   img.draggable = !!draggable;
   img.style.filter = "";                                     // reset (series reapply theirs)

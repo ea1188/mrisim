@@ -205,10 +205,12 @@ try {
   }
   console.log("exam picker offers Brain/Spine/Knee/Abdomen/Pelvis ✓");
 
-  // image-library exam (no engine): static scout images you can angle on (cosmetic),
-  // and an example image that pops up on Acquire.
-  if (!exams.includes("Ankle (example)")) fail("image-library exam not offered");
-  await page.selectOption("#pp-exam", "Ankle (example)");
+  // image-library exams (no engine): static scout images you can angle on (cosmetic),
+  // and an example image (placeholder until real ones are dropped in) on Acquire.
+  for (const want of ["Ankle", "Wrist", "Shoulder", "Foot"]) {
+    if (!exams.includes(want)) fail(`image-library exam "${want}" not offered`);
+  }
+  await page.selectOption("#pp-exam", "Ankle");
   await page.waitForFunction(
     () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /T1 Sagittal/.test(e.textContent)),
     { timeout: 10_000 });
