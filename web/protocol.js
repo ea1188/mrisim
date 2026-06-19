@@ -52,6 +52,79 @@ let seq = 0;             // id counter
 const vpGeom = {};       // plane -> last rendered panel geometry (for interaction)
 let lastSeriesPlane = null;   // viewport last hovered/scrolled (arrow keys page it)
 
+// ---- image-library exams (no engine: static scouts + example images) -------- //
+// A lightweight "fake scanner" / positioning trainer: static scout images you can
+// angle on (illustrative — the angle is cosmetic), and a static example image per
+// sequence that pops up on Acquire. The acquired image is an example, NOT derived
+// from the prescription. Swap the placeholder data URLs below for real, properly-
+// licensed images (Creative Commons / public-domain / owned) per body part.
+let imageExam = null;    // active image-exam data, or null for engine (simulated) exams
+
+function placeholderImg(title, sub, tint) {
+  const svg =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'>" +
+    "<rect width='320' height='320' fill='#0a0d12'/>" +
+    `<rect x='8' y='8' width='304' height='304' rx='6' fill='none' stroke='${tint}' stroke-opacity='0.5'/>` +
+    `<text x='160' y='150' fill='${tint}' font-family='sans-serif' font-size='22' font-weight='bold' text-anchor='middle'>${title}</text>` +
+    `<text x='160' y='180' fill='#9aa4b2' font-family='sans-serif' font-size='14' text-anchor='middle'>${sub}</text>` +
+    "<text x='160' y='300' fill='#5b6470' font-family='sans-serif' font-size='11' text-anchor='middle'>placeholder — drop in a real image</text>" +
+    "</svg>";
+  return "data:image/svg+xml;base64," + btoa(svg);
+}
+
+const IMAGE_EXAMS = {
+  "Ankle (example)": {
+    scouts: {
+      axial:    placeholderImg("Ankle", "Axial scout", "#7fb8ff"),
+      coronal:  placeholderImg("Ankle", "Coronal scout", "#7fb8ff"),
+      sagittal: placeholderImg("Ankle", "Sagittal scout", "#7fb8ff"),
+    },
+    sequences: [
+      { label: "T1 Sagittal",   plane: "sagittal", image: placeholderImg("Ankle", "T1 Sagittal", "#ffdd44") },
+      { label: "PD FS Axial",   plane: "axial",    image: placeholderImg("Ankle", "PD FS Axial", "#ffdd44") },
+      { label: "T2 FS Coronal", plane: "coronal",  image: placeholderImg("Ankle", "T2 FS Coronal", "#ffdd44") },
+      { label: "STIR Sagittal", plane: "sagittal", image: placeholderImg("Ankle", "STIR Sagittal", "#ffdd44") },
+    ],
+  },
+};
+
+function loadImageExam(name) {
+  imageExam = IMAGE_EXAMS[name];
+  exam = name; region = name;
+  seq = 0;
+  queue = [{ id: ++seq, preset: LOCALIZER, label: "Localizer", sequence: null,
+             status: "pending", image: null, plan: null }]
+    .concat(imageExam.sequences.map((s) => ({
+      id: ++seq, preset: s.label, label: s.label, sequence: s.plane || "",
+      status: "pending", exampleImage: s.image, examplePlane: s.plane || "axial", plan: null,
+    })));
+  active = null;
+  renderQueue();
+  openItem(queue[0]);
+}
+function imageScoutGeom(plane) {           // cosmetic band you can angle (per plane)
+  const d = (active && active.plan && active.plan.imgDir && active.plan.imgDir[plane]) || [1, 0];
+  const L = Math.hypot(d[0], d[1]) || 1, ux = d[0] / L * 0.42, uy = d[1] / L * 0.42;
+  return { name: plane, role: "cross", map: "row", n: 100, flip: false, angle: "tilt",
+           center: [0.5, 0.5], band: [[0.5 - ux, 0.5 - uy], [0.5 + ux, 0.5 + uy]] };
+}
+function renderImageScouts() {
+  PLANES.forEach((plane) => {
+    scoutCache[plane] = { png: imageExam.scouts[plane], geom: imageScoutGeom(plane), label: cap(plane) };
+  });
+  PLANES.forEach(renderSlot);
+}
+function acquireImageExample() {
+  active.status = "acquired"; active.metrics = {};
+  const plane = active.examplePlane || "axial";
+  slotState[plane] = { kind: "series", itemId: active.id, png: active.exampleImage,
+                       label: `${active.label} (example)`, wl: { b: 1, c: 1 } };
+  lastSeriesPlane = plane;
+  renderSlot(plane);
+  $("pp-readout").textContent = `Acquired ${active.label} ✓ — example image (illustrative, not simulated).`;
+  renderQueue();
+}
+
 // ---- boot ----------------------------------------------------------------- //
 async function onReady() {
   booted = true;
@@ -64,12 +137,15 @@ async function onReady() {
 }
 
 async function loadExam(name) {
+  if (name in IMAGE_EXAMS) { loadImageExam(name); return; }
+  imageExam = null;
   exam = name;
   const info = await call("protocols", name);
-  // exam picker (first time)
+  // exam picker (first time): simulated exams, then the image-library exams
   const sel = $("pp-exam");
   if (!sel.options.length) {
     info.exams.forEach((ex) => sel.add(new Option(ex, ex)));
+    Object.keys(IMAGE_EXAMS).forEach((ex) => sel.add(new Option(ex, ex)));
     sel.value = name;
     sel.addEventListener("change", () => loadExam(sel.value));
   }
@@ -137,6 +213,17 @@ async function openItem(it) {
   active = it;
   PLANES.forEach((p) => { slotState[p] = { kind: "scout" }; });   // fresh planning view
   renderQueue();
+  if (imageExam) {                                  // image-library exam: static scouts only
+    it.plan = it.plan || { orientation: "axial", tilt: 0, rot: 0, fov_pct: 100, imgDir: {} };
+    const loc = isLocalizer(it);
+    $("pp-seqname").textContent = loc ? "Localizer — 3-plane scout" : `${it.label}  ·  example image`;
+    $("pp-controls").hidden = true;                 // no simulated parameters
+    $("pp-actions").hidden = loc;                   // Acquire shown only for sequences
+    renderImageScouts();
+    $("pp-readout").textContent = loc ? ""
+      : "Angle on the scout (illustrative), then Acquire to see the example image.";
+    return;
+  }
   if (isLocalizer(it)) {
     it.plan = it.plan || { orientation: "axial", slice: null, tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 };
     $("pp-seqname").textContent = "Localizer — 3-plane scout";
@@ -237,6 +324,7 @@ function scoutPayload() {
 // follow-up render when it returns (no debounce lag, no pile-up).
 let scoutBusy = false, scoutDirty = false;
 async function renderScouts() {
+  if (imageExam) { renderImageScouts(); return; }   // static scouts, no engine
   if (scoutBusy) { scoutDirty = true; return; }
   scoutBusy = true;
   try {
@@ -453,6 +541,7 @@ const cursorFor = (m) => ({
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
 function modeAt(p, loc) {
   if (!p || !active || !active.plan) return null;
+  if (imageExam) return "oblique";                 // image scouts: drag anywhere to set the angle
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
     const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
@@ -546,6 +635,10 @@ function wireViewport(plane) {
       else { pl.rot = val; $("pp-rot").value = val; }
       const ux = loc.px - drag.c[0], uy = loc.py - drag.c[1], L = Math.hypot(ux, uy) || 1;
       live = { bandDir: [ux / L, uy / L] };
+      if (imageExam) {                          // persist the cosmetic angle per plane
+        active.plan.imgDir = active.plan.imgDir || {};
+        active.plan.imgDir[plane] = live.bandDir;
+      }
     }
     updatePlanReadout();
     drawOverlay(plane, null, live);                          // instant client-side feedback
@@ -635,6 +728,7 @@ function wireViewport(plane) {
 // ---- Apply & acquire ------------------------------------------------------ //
 async function applyAndAcquire() {
   if (!active || isLocalizer(active)) return;
+  if (imageExam) { acquireImageExample(); return; }   // pop up the example image
   const pl = active.plan;
   const payload = {
     region, orientation: pl.orientation, fov_planning: true, inplane_fov_pct: pl.fov_pct,
