@@ -67,9 +67,11 @@ function placeholderImg(title, sub, tint) {
     `<rect x='8' y='8' width='304' height='304' rx='6' fill='none' stroke='${tint}' stroke-opacity='0.5'/>` +
     `<text x='160' y='150' fill='${tint}' font-family='sans-serif' font-size='22' font-weight='bold' text-anchor='middle'>${title}</text>` +
     `<text x='160' y='180' fill='#9aa4b2' font-family='sans-serif' font-size='14' text-anchor='middle'>${sub}</text>` +
-    "<text x='160' y='300' fill='#5b6470' font-family='sans-serif' font-size='11' text-anchor='middle'>placeholder — drop in a real image</text>" +
+    "<text x='160' y='300' fill='#5b6470' font-family='sans-serif' font-size='11' text-anchor='middle'>placeholder - drop in a real image</text>" +
     "</svg>";
-  return "data:image/svg+xml;base64," + btoa(svg);
+  // unicode-safe base64 (btoa is Latin1-only), so non-ASCII titles can't throw at load
+  return "data:image/svg+xml;base64," + btoa(encodeURIComponent(svg).replace(
+    /%([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))));
 }
 
 const IMAGE_EXAMS = {
