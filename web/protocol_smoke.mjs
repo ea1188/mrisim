@@ -204,6 +204,24 @@ try {
     if (!exams.includes(want)) fail(`exam picker missing "${want}" (has ${exams.join(", ")})`);
   }
   console.log("exam picker offers Brain/Spine/Knee/Abdomen/Pelvis ✓");
+
+  // image-library exam (no engine): static scout images you can angle on (cosmetic),
+  // and an example image that pops up on Acquire.
+  if (!exams.includes("Ankle (example)")) fail("image-library exam not offered");
+  await page.selectOption("#pp-exam", "Ankle (example)");
+  await page.waitForFunction(
+    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /T1 Sagittal/.test(e.textContent)),
+    { timeout: 10_000 });
+  await page.waitForFunction(() => {                      // static placeholder scout loads
+    const im = document.querySelector("#vp-axial img");
+    return im && im.src.startsWith("data:image/svg");
+  }, { timeout: 8_000 });
+  await page.click("#pp-list li:nth-child(2)");           // T1 Sagittal
+  await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
+  await page.click("#pp-apply");                          // acquire → example image pops up
+  await page.waitForFunction(
+    () => /example/i.test(document.querySelector("#pp-readout").textContent), { timeout: 8_000 });
+  console.log("image-library exam (Ankle): static scouts + example acquire ✓");
 } catch (e) {
   fail(e.message);
 }
