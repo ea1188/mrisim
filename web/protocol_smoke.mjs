@@ -10,7 +10,14 @@ const BOOT = 180_000;
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errors = [];
-page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  // image-library exams reference per-part image files that may not exist yet and
+  // fall back to a placeholder — those 404s are expected, not a failure.
+  const loc = (m.location() && m.location().url) || "";
+  if (/img\/exams\//.test(loc) || /img\/exams\//.test(m.text())) return;
+  errors.push(m.text());
+});
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 
@@ -205,10 +212,12 @@ try {
   }
   console.log("exam picker offers Brain/Spine/Knee/Abdomen/Pelvis ✓");
 
-  // image-library exam (no engine): static scout images you can angle on (cosmetic),
-  // and an example image that pops up on Acquire.
-  if (!exams.includes("Ankle (example)")) fail("image-library exam not offered");
-  await page.selectOption("#pp-exam", "Ankle (example)");
+  // image-library exams (no engine): static scout images you can angle on (cosmetic),
+  // and an example image (placeholder until real ones are dropped in) on Acquire.
+  for (const want of ["Ankle", "Wrist", "Shoulder", "Foot"]) {
+    if (!exams.includes(want)) fail(`image-library exam "${want}" not offered`);
+  }
+  await page.selectOption("#pp-exam", "Ankle");
   await page.waitForFunction(
     () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /T1 Sagittal/.test(e.textContent)),
     { timeout: 10_000 });
