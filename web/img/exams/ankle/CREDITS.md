@@ -10,6 +10,8 @@ All ankle scout and sequence images in this folder:
 | `scout_axial.jpg` | Axial scout (PD) |
 | `scout_coronal.jpg` | Coronal scout (PD) |
 | `scout_sagittal.jpg` | Sagittal scout (PD) |
+| `pd_axial.jpg` | PD Axial (same slice as the axial scout) |
+| `pd_sag.jpg` | PD Sagittal (same slice as the sagittal scout) |
 | `pdfs_ax.jpg` | PD FS Axial |
 | `pdfs_cor.jpg` | PD FS Coronal |
 | `pdfs_sag.jpeg` | PD FS Sagittal |

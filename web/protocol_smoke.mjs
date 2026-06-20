@@ -227,10 +227,24 @@ try {
     const im = document.querySelector("#vp-axial img");
     return im && im.complete && im.naturalWidth > 0;
   }, { timeout: 8_000 });
-  await page.click("#pp-list li:nth-child(2)");           // first sequence after the localizer (PD FS Axial)
+  await page.click("#pp-list li:nth-child(2)");           // first sequence after the localizer (PD Axial → axial)
   await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
-  await page.waitForFunction(                             // in-plane FOV box drawn on the matching scout
+  await page.waitForFunction(                             // in-plane FOV box drawn on the matching (axial) scout
     () => !!document.querySelector("#vp-axial svg.pp-ov rect[stroke='#7fb8ff']"), { timeout: 8_000 });
+  // a cross scout shows an angle band; dragging near its centre MOVES the slice
+  await page.waitForFunction(
+    () => !!document.querySelector("#vp-sagittal svg.pp-ov line[stroke='#ffdd44']"), { timeout: 5_000 });
+  const bandY0 = await page.$eval("#vp-sagittal svg.pp-ov line[stroke='#ffdd44']", (l) => +l.getAttribute("y1"));
+  const vbb = await (await page.$("#vp-sagittal")).boundingBox();
+  const mx = vbb.x + vbb.width / 2, my = vbb.y + vbb.height / 2;
+  await page.mouse.move(mx, my); await page.mouse.down();
+  await page.mouse.move(mx, my + Math.round(vbb.height * 0.12), { steps: 4 });
+  await page.mouse.up();
+  await page.waitForFunction((prev) => {                  // the band moved with the cursor
+    const l = document.querySelector("#vp-sagittal svg.pp-ov line[stroke='#ffdd44']");
+    return l && Math.abs(+l.getAttribute("y1") - prev) > 1;
+  }, bandY0, { timeout: 5_000 });
+  console.log("image-exam: in-plane FOV box + slice move on cross scout ✓");
   await page.click("#pp-apply");                          // acquire → example image pops up
   await page.waitForFunction(
     () => /example/i.test(document.querySelector("#pp-readout").textContent), { timeout: 8_000 });

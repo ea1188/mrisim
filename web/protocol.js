@@ -104,6 +104,8 @@ const RP = (id, who) =>
 // Sequence lists are per part — each matches the slices actually saved for that case
 // (filename = the file: field, plane = which viewport the example opens in).
 const ANKLE = [
+  { label: "PD Axial",       plane: "axial",    file: "pd_axial" },
+  { label: "PD Sagittal",    plane: "sagittal", file: "pd_sag" },
   { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
   { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
   { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
@@ -174,10 +176,12 @@ function imageScoutGeom(plane) {
     const fb = (active.plan && active.plan.imgFov) || DEFAULT_IMG_FOV;
     return { name: plane, role: "acq", map: "row", n: 100, center: [0.5, 0.5], fov_box: fb };
   }
-  const d = (active && active.plan && active.plan.imgDir && active.plan.imgDir[plane]) || [1, 0];
+  const pl = active && active.plan;
+  const c = (pl && pl.imgCtr && pl.imgCtr[plane]) || [0.5, 0.5];   // movable slice centre
+  const d = (pl && pl.imgDir && pl.imgDir[plane]) || [1, 0];
   const L = Math.hypot(d[0], d[1]) || 1, ux = d[0] / L * 0.42, uy = d[1] / L * 0.42;
   return { name: plane, role: "cross", map: "row", n: 100, flip: false, angle: "tilt",
-           center: [0.5, 0.5], band: [[0.5 - ux, 0.5 - uy], [0.5 + ux, 0.5 + uy]] };
+           center: c, band: [[c[0] - ux, c[1] - uy], [c[0] + ux, c[1] + uy]] };
 }
 function renderImageScouts() {
   PLANES.forEach((plane) => {
@@ -375,8 +379,8 @@ async function openItem(it) {
     $("pp-actions").hidden = loc;                   // Acquire shown only for sequences
     renderImageScouts();
     $("pp-readout").textContent = loc ? ""
-      : "Position the FOV box on the in-plane scout, angle on the others (illustrative), "
-        + "then Acquire to see the example image.";
+      : "Position the FOV box on the in-plane scout; on the others drag the centre to move "
+        + "the slice or an end to angle it (illustrative). Acquire to see the example image.";
     return;
   }
   if (isLocalizer(it)) {
@@ -709,7 +713,8 @@ function modeAt(p, loc) {
       const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1), Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
       return edge > 0.72 ? "resize" : "recenter";
     }
-    return "oblique";                              // cross scouts: drag anywhere to set the angle
+    const cc = p.center || [0.5, 0.5];             // cross scout: centre → move slice, outer → angle
+    return Math.hypot(loc.px - cc[0], loc.py - cc[1]) < 0.16 ? "slice" : "oblique";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
@@ -767,7 +772,14 @@ function wireViewport(plane) {
     if (!drag || !active) return;
     const p = drag.p, pl = active.plan;
     let live = null;
-    if (drag.mode === "slice") {                   // slide the slice package along the cursor
+    if (drag.mode === "slice" && imageExam) {       // image scout: move the slice centre to the cursor
+      const cx = clampN(loc.px, 0.12, 0.88), cy = clampN(loc.py, 0.12, 0.88);
+      pl.imgCtr = pl.imgCtr || {};
+      pl.imgCtr[plane] = [cx, cy];
+      const d = (pl.imgDir && pl.imgDir[plane]) || [1, 0];
+      const L = Math.hypot(d[0], d[1]) || 1, ux = d[0] / L * 0.42, uy = d[1] / L * 0.42;
+      live = { band: [[cx - ux, cy - uy], [cx + ux, cy + uy]] };
+    } else if (drag.mode === "slice") {            // slide the slice package along the cursor
       const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
       pl.slice = clampN(Math.round(s), 0, p.n - 1);
       if (p.band) {                                // optimistic: the band follows the cursor
