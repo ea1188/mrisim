@@ -97,31 +97,62 @@ function buildImageExam(part, sequences, credit) {
     })),
   };
 }
-// Default sequence lists (filenames are consistent across parts, so you always
-// know what t1_sag.png etc. is). Tweak per part as needed.
-const JOINT = [
-  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
-  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
-  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
-  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
-  { label: "T2 FS Coronal",  plane: "coronal",  file: "t2fs_cor" },
-];
-const LONGBONE = [
+// Radiopaedia attribution line (CC BY-NC-SA 3.0) shown while an exam is open.
+const RP = (id, who) =>
+  `Images: case courtesy of ${who}, <a href="https://radiopaedia.org/cases/${id}" ` +
+  `target="_blank" rel="noopener">Radiopaedia.org rID ${id}</a> · CC BY-NC-SA 3.0`;
+// Sequence lists are per part — each matches the slices actually saved for that case
+// (filename = the file: field, plane = which viewport the example opens in).
+const LONGBONE = [   // placeholder template for parts not yet populated
   { label: "T1 Axial",     plane: "axial",   file: "t1_ax" },
   { label: "T1 Coronal",   plane: "coronal", file: "t1_cor" },
   { label: "STIR Coronal", plane: "coronal", file: "stir_cor" },
   { label: "PD FS Axial",  plane: "axial",   file: "pdfs_ax" },
 ];
+const ANKLE = [
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+];
+const WRIST = [
+  { label: "PD Axial",       plane: "axial",    file: "pd_ax" },
+  { label: "PD Coronal",     plane: "coronal",  file: "pd_cor" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+];
+const SHOULDER = [
+  { label: "PD Axial",      plane: "axial",   file: "pd_ax" },
+  { label: "PD Coronal",    plane: "coronal", file: "pd_cor" },
+  { label: "PD FS Axial",   plane: "axial",   file: "pdfs_ax" },
+  { label: "PD FS Coronal", plane: "coronal", file: "pdfs_cor" },
+];
+const FOOT = [
+  { label: "T1 Axial",       plane: "axial",    file: "t1_ax" },
+  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
+  { label: "T2 FS Sagittal", plane: "sagittal", file: "t12fs_sag" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+  { label: "T1 FS Coronal",  plane: "coronal",  file: "t1fs_cor" },
+  { label: "T2 Coronal",     plane: "coronal",  file: "t2_cor" },
+];
+const HAND = [
+  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
+  { label: "T1 Coronal",     plane: "coronal",  file: "t1_cor" },
+  { label: "T2 Axial",       plane: "axial",    file: "t2_ax" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+];
 const IMAGE_EXAMS = {
-  Shoulder: buildImageExam("Shoulder", JOINT),
+  Shoulder: buildImageExam("Shoulder", SHOULDER, RP(43115, "Andrew Dixon")),
   Humerus:  buildImageExam("Humerus", LONGBONE),
   Forearm:  buildImageExam("Forearm", LONGBONE),
-  Wrist:    buildImageExam("Wrist", JOINT),
-  Hand:     buildImageExam("Hand", JOINT),
+  Wrist:    buildImageExam("Wrist", WRIST, RP(42982, "Andrew Dixon")),
+  Hand:     buildImageExam("Hand", HAND, RP(161538, "Mohd Radhwan Bin Abidin")),
   "Tib-Fib": buildImageExam("Tib-Fib", LONGBONE),
-  Ankle:    buildImageExam("Ankle", JOINT,
-    'Images: case courtesy of Andrew Dixon, <a href="https://radiopaedia.org/cases/43117" target="_blank" rel="noopener">Radiopaedia.org rID 43117</a> · CC BY-NC-SA 3.0'),
-  Foot:     buildImageExam("Foot", JOINT),
+  Ankle:    buildImageExam("Ankle", ANKLE, RP(43117, "Andrew Dixon")),
+  Foot:     buildImageExam("Foot", FOOT, RP(163787, "Mohd Radhwan Bin Abidin")),
 };
 
 function loadImageExam(name) {

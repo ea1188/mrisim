@@ -219,18 +219,20 @@ try {
   }
   await page.selectOption("#pp-exam", "Ankle");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /T1 Sagittal/.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /PD FS/.test(e.textContent)),
     { timeout: 10_000 });
   await page.waitForFunction(() => {                      // scout loads (real image or placeholder)
     const im = document.querySelector("#vp-axial img");
     return im && im.complete && im.naturalWidth > 0;
   }, { timeout: 8_000 });
-  await page.click("#pp-list li:nth-child(2)");           // T1 Sagittal
+  await page.click("#pp-list li:nth-child(2)");           // first sequence after the localizer
   await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
   await page.click("#pp-apply");                          // acquire → example image pops up
   await page.waitForFunction(
     () => /example/i.test(document.querySelector("#pp-readout").textContent), { timeout: 8_000 });
-  console.log("image-library exam (Ankle): static scouts + example acquire ✓");
+  const credit = await page.$eval("#pp-credit", (e) => (e.hidden ? "" : e.textContent));
+  if (!/Radiopaedia/.test(credit)) fail(`image exam credit not shown (got "${credit}")`);
+  console.log("image-library exam (Ankle): static scouts + example acquire + credit ✓");
 } catch (e) {
   fail(e.message);
 }
