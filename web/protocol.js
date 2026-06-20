@@ -199,15 +199,91 @@ function acquireImageExample() {
   renderQueue();
 }
 
+// --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
+const TOUR = [
+  { el: "#pp-exam", title: "Pick an exam",
+    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand) are positioning examples on real MRI images." },
+  { el: "#pp-list", title: "The protocol queue",
+    text: "Every sequence in the exam, in order. Click one to open it and prescribe it; the status dot fills in as you acquire. The Localizer at the top is your 3-plane scout." },
+  { el: "#pp-views", title: "Prescribe on the scouts",
+    text: "The three scout planes. <b>Drag a band end</b> to angle the slice, <b>drag the centre</b> to move it, and on the in-plane view <b>drag the FOV box</b> (corner to resize, inside to move), like a scanner's graphic prescription." },
+  { el: "#pp-params", title: "Set parameters & acquire",
+    text: "For simulated exams, tweak <b>TR / TE / flip / FOV / slices</b> here, then <b>Apply &amp; acquire</b>: the slice is reconstructed with scan time and SNR. For image-library exams, Acquire pops up the example image for that sequence." },
+  { el: "#pp-tour-btn", title: "That's it",
+    text: "Open a sequence and try it. You can re-open this tour anytime from <b>▶ Tour</b>, or head <b>← Back to the simulator</b> for the single-slice workspace." },
+];
+let tourIdx = 0;
+
+function startTour() {
+  tourIdx = 0;
+  $("tour").hidden = false;
+  showTourStep();
+  window.addEventListener("resize", repositionTour);
+  window.addEventListener("keydown", tourKey);
+}
+function endTour() {
+  $("tour").hidden = true;
+  window.removeEventListener("resize", repositionTour);
+  window.removeEventListener("keydown", tourKey);
+  try { localStorage.setItem("mrisim_pp_tour", "1"); } catch (e) { /* private mode */ }
+}
+function tourKey(e) {
+  if (e.key === "Escape") endTour();
+  else if (e.key === "ArrowRight") nextTour();
+  else if (e.key === "ArrowLeft") prevTour();
+}
+function nextTour() { if (tourIdx >= TOUR.length - 1) { endTour(); return; } tourIdx++; showTourStep(); }
+function prevTour() { if (tourIdx > 0) { tourIdx--; showTourStep(); } }
+
+function showTourStep() {
+  const step = TOUR[tourIdx];
+  const el = document.querySelector(step.el);
+  if (!el || (!el.offsetParent && el.getClientRects().length === 0)) { nextTour(); return; }
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  $("tour-title").textContent = step.title;
+  $("tour-text").innerHTML = step.text;
+  $("tour-progress").textContent = `${tourIdx + 1} / ${TOUR.length}`;
+  $("tour-prev").disabled = tourIdx === 0;
+  $("tour-next").textContent = tourIdx === TOUR.length - 1 ? "Done" : "Next ›";
+  setTimeout(repositionTour, 220);                 // after the scroll/layout settles
+}
+function repositionTour() {
+  if ($("tour").hidden) return;
+  const el = document.querySelector(TOUR[tourIdx].el);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const pad = 6, spot = $("tour-spot");
+  spot.style.left = (r.left - pad) + "px"; spot.style.top = (r.top - pad) + "px";
+  spot.style.width = (r.width + 2 * pad) + "px"; spot.style.height = (r.height + 2 * pad) + "px";
+  const pop = $("tour-pop");
+  pop.style.visibility = "hidden"; pop.style.left = "0px"; pop.style.top = "0px";
+  const pw = pop.offsetWidth, ph = pop.offsetHeight, m = 12;
+  let left = r.right + m;
+  if (left + pw > window.innerWidth - 8) left = r.left - pw - m;       // flip to the left
+  if (left < 8) left = Math.min(Math.max(8, r.left), window.innerWidth - pw - 8);
+  const top = Math.max(8, Math.min(r.top + r.height / 2 - ph / 2, window.innerHeight - ph - 8));
+  pop.style.left = left + "px"; pop.style.top = top + "px"; pop.style.visibility = "visible";
+}
+function wireTour() {
+  $("pp-tour-btn").addEventListener("click", startTour);
+  $("tour-next").addEventListener("click", nextTour);
+  $("tour-prev").addEventListener("click", prevTour);
+  $("tour-skip").addEventListener("click", endTour);
+}
+
 // ---- boot ----------------------------------------------------------------- //
 async function onReady() {
   booted = true;
   $("splash").hidden = true;
   $("pp-root").hidden = false;
   wireParamPanel();
+  wireTour();
   PLANES.forEach(wireViewport);
   window.addEventListener("resize", () => PLANES.forEach((p) => drawOverlay(p, null)));
   await loadExam("Brain");
+  let seen = false;
+  try { seen = localStorage.getItem("mrisim_pp_tour") === "1"; } catch (e) { /* private mode */ }
+  if (!seen) setTimeout(startTour, 600);            // auto-start once, after the first exam loads
 }
 
 async function loadExam(name) {
