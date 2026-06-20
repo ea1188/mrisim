@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.38.0] — 2026-06-20
+
+### Added
+- **Guided tour for Protocol Planning.** A spotlight-coachmark walkthrough (same style as
+  the main app's tour) over the real controls: exam picker, protocol queue, scout
+  prescription, and parameters/acquire. A **▶ Tour** button re-opens it anytime, and it
+  auto-starts once on first visit.
+
+### Changed
+- **Lessons copyedit: fewer em-dashes.** The guided-lesson text now varies its punctuation
+  (colons, commas, periods) instead of leaning on the em-dash, for a less uniform read.
+
 ## [1.37.0] — 2026-06-20
 
 ### Added
