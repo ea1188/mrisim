@@ -87,6 +87,28 @@
     /* client-side planning overlay (band / FOV box / grab handles) */
     .vp svg.pp-ov { position: absolute; pointer-events: none; overflow: visible; z-index: 2; }
     .vp svg.pp-ov rect, .vp svg.pp-ov circle { transition: r 60ms, width 60ms, height 60ms; }
+
+    /* ---- Mobile / narrow screens: stack the console into one scrolling column ---- */
+    @media (max-width: 640px) {
+      #pp-root { height: auto; min-height: 100vh; min-height: 100dvh; }
+      #pp-head { flex-wrap: wrap; gap: 8px 12px; padding: 8px 12px; }
+      #pp-head h1 { font-size: 14px; }
+      #pp-head .spacer { display: none; }            /* let the links wrap naturally */
+      #pp-body { grid-template-columns: 1fr; }        /* single column */
+      #pp-queue { order: -1; border-right: 0; border-bottom: 1px solid #232a33; }
+      #pp-queue ol { max-height: 24vh; }              /* keep the queue compact, scroll it */
+      #pp-main { grid-template-rows: auto auto; }
+      #pp-views { grid-template-columns: 1fr; gap: 8px; }   /* viewports stack, full width */
+      .vp { min-height: 64vw; }                       /* big enough to prescribe on by touch */
+      #pp-params { max-height: none; }                /* params flow; the page scrolls */
+    }
+    /* Touch devices: bigger tap targets regardless of width. */
+    @media (pointer: coarse) {
+      #pp-queue li { padding: 11px 9px; font-size: 13px; }
+      #pp-tour-btn, #pp-head a { padding: 8px 12px; }
+      button.apply { padding: 11px 22px; }
+      #pp-params input[type=number] { width: 72px; min-height: 30px; }
+    }
   </style>
 </head>
 <body>
