@@ -260,6 +260,16 @@ try {
   for (let i = 0; i < total; i++) await page.click("#tour-next");   // last click = Done → closes
   await page.waitForFunction(() => document.querySelector("#tour").hidden, { timeout: 5_000 });
   console.log(`guided tour: ${total} steps, opens and closes ✓`);
+
+  // mobile layout: a phone-width viewport stacks the views into a single column
+  const desktopCols = await page.$eval("#pp-views", (el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(
+    () => getComputedStyle(document.querySelector("#pp-views")).gridTemplateColumns.split(" ").length === 1,
+    { timeout: 5_000 });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  if (desktopCols !== 3) fail(`desktop views should be 3 columns, got ${desktopCols}`);
+  console.log("mobile: views collapse to one column at phone width ✓");
 } catch (e) {
   fail(e.message);
 }
