@@ -225,14 +225,16 @@ try {
     const im = document.querySelector("#vp-axial img");
     return im && im.complete && im.naturalWidth > 0;
   }, { timeout: 8_000 });
-  await page.click("#pp-list li:nth-child(2)");           // first sequence after the localizer
+  await page.click("#pp-list li:nth-child(2)");           // first sequence after the localizer (PD FS Axial)
   await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
+  await page.waitForFunction(                             // in-plane FOV box drawn on the matching scout
+    () => !!document.querySelector("#vp-axial svg.pp-ov rect[stroke='#7fb8ff']"), { timeout: 8_000 });
   await page.click("#pp-apply");                          // acquire → example image pops up
   await page.waitForFunction(
     () => /example/i.test(document.querySelector("#pp-readout").textContent), { timeout: 8_000 });
   const credit = await page.$eval("#pp-credit", (e) => (e.hidden ? "" : e.textContent));
   if (!/Radiopaedia/.test(credit)) fail(`image exam credit not shown (got "${credit}")`);
-  console.log("image-library exam (Ankle): static scouts + example acquire + credit ✓");
+  console.log("image-library exam (Ankle): static scouts + in-plane FOV box + example acquire + credit ✓");
 } catch (e) {
   fail(e.message);
 }

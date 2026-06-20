@@ -166,7 +166,14 @@ function showCredit(html) {
   const el = $("pp-credit");
   if (html) { el.innerHTML = html; el.hidden = false; } else { el.textContent = ""; el.hidden = true; }
 }
-function imageScoutGeom(plane) {           // cosmetic band you can angle (per plane)
+const DEFAULT_IMG_FOV = [0.22, 0.22, 0.56, 0.56];   // in-plane FOV box: [x, y, w, h] fractions
+function imageScoutGeom(plane) {
+  // The scout matching the sequence's plane shows an in-plane FOV box you can move/resize
+  // (like a scanner's graphic prescription); the other two scouts show a cosmetic angle band.
+  if (active && active.examplePlane === plane && !isLocalizer(active)) {
+    const fb = (active.plan && active.plan.imgFov) || DEFAULT_IMG_FOV;
+    return { name: plane, role: "acq", map: "row", n: 100, center: [0.5, 0.5], fov_box: fb };
+  }
   const d = (active && active.plan && active.plan.imgDir && active.plan.imgDir[plane]) || [1, 0];
   const L = Math.hypot(d[0], d[1]) || 1, ux = d[0] / L * 0.42, uy = d[1] / L * 0.42;
   return { name: plane, role: "cross", map: "row", n: 100, flip: false, angle: "tilt",
@@ -292,7 +299,8 @@ async function openItem(it) {
     $("pp-actions").hidden = loc;                   // Acquire shown only for sequences
     renderImageScouts();
     $("pp-readout").textContent = loc ? ""
-      : "Angle on the scout (illustrative), then Acquire to see the example image.";
+      : "Position the FOV box on the in-plane scout, angle on the others (illustrative), "
+        + "then Acquire to see the example image.";
     return;
   }
   if (isLocalizer(it)) {
@@ -619,7 +627,14 @@ const cursorFor = (m) => ({
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
 function modeAt(p, loc) {
   if (!p || !active || !active.plan) return null;
-  if (imageExam) return "oblique";                 // image scouts: drag anywhere to set the angle
+  if (imageExam) {                                 // image scouts (engine-free)
+    if (p.role === "acq" && p.fov_box) {           // in-plane FOV box: corner → resize, inside → move
+      const fb = p.fov_box, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+      const edge = Math.max(Math.abs(loc.px - cx) / (fb[2] / 2 || 1), Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
+      return edge > 0.72 ? "resize" : "recenter";
+    }
+    return "oblique";                              // cross scouts: drag anywhere to set the angle
+  }
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
     const cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
@@ -687,19 +702,32 @@ function wireViewport(plane) {
         live = { band: [[p.band[0][0] + sh[0], p.band[0][1] + sh[1]], [p.band[1][0] + sh[0], p.band[1][1] + sh[1]]] };
       }
     } else if (drag.mode === "recenter") {
-      const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
-      pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
-      const fb = drag.box0;                         // optimistic: the box follows the cursor
-      if (fb) live = { fovBox: p.ip_dir === "x"
-        ? [clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), fb[1], fb[2], fb[3]]
-        : [fb[0], clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]), fb[2], fb[3]] };
+      const fb = drag.box0;
+      if (imageExam) {                              // move the in-plane FOV box to the cursor
+        const nx = clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), ny = clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]);
+        pl.imgFov = [nx, ny, fb[2], fb[3]];
+        live = { fovBox: pl.imgFov };
+      } else {
+        const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
+        pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
+        if (fb) live = { fovBox: p.ip_dir === "x"   // optimistic: the box follows the cursor
+          ? [clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), fb[1], fb[2], fb[3]]
+          : [fb[0], clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]), fb[2], fb[3]] };
+      }
     } else if (drag.mode === "resize") {
       const fb = drag.box0, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
-      const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
-      pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
-      $("pp-fov").value = pl.fov_pct;
-      const s = pl.fov_pct / (drag.pct0 || 100);    // scale the box around its centre
-      live = { fovBox: [cx - fb[2] / 2 * s, cy - fb[3] / 2 * s, fb[2] * s, fb[3] * s] };
+      if (imageExam) {                              // resize the in-plane FOV box around its centre
+        const hx = Math.min(Math.abs(loc.px - cx), cx, 1 - cx), hy = Math.min(Math.abs(loc.py - cy), cy, 1 - cy);
+        const w = Math.max(2 * hx, 0.12), h = Math.max(2 * hy, 0.12);
+        pl.imgFov = [cx - w / 2, cy - h / 2, w, h];
+        live = { fovBox: pl.imgFov };
+      } else {
+        const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
+        pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
+        $("pp-fov").value = pl.fov_pct;
+        const s = pl.fov_pct / (drag.pct0 || 100);  // scale the box around its centre
+        live = { fovBox: [cx - fb[2] / 2 * s, cy - fb[3] / 2 * s, fb[2] * s, fb[3] * s] };
+      }
     } else if (drag.mode === "slices") {           // drag the slab rim → number of slices
       const perp = p.map === "row" ? loc.py : loc.px;
       const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
