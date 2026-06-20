@@ -10,6 +10,17 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.36.0] — 2026-06-20
+
+### Added
+- **Image-library exams (positioning trainer) in Protocol Planning.** A new "Image library
+  (examples)" group in the Exam picker offers engine-free MSK exams — **Ankle, Wrist,
+  Shoulder, Foot, Hand** — built from static scout images you can angle on (the angle is
+  illustrative, not simulated) and a static example image per sequence that pops up on
+  Acquire. Each part uses real normal-anatomy MRI from Radiopaedia (CC BY-NC-SA 3.0, shown
+  as an on-page credit line); images load as `.png`, `.jpg`, or `.jpeg`, with a labelled
+  placeholder until one is dropped in. See `web/img/exams/README.md` to add more parts.
+
 ## [1.35.5] — 2026-06-18
 
 ### Fixed

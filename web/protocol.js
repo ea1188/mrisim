@@ -103,12 +103,6 @@ const RP = (id, who) =>
   `target="_blank" rel="noopener">Radiopaedia.org rID ${id}</a> · CC BY-NC-SA 3.0`;
 // Sequence lists are per part — each matches the slices actually saved for that case
 // (filename = the file: field, plane = which viewport the example opens in).
-const LONGBONE = [   // placeholder template for parts not yet populated
-  { label: "T1 Axial",     plane: "axial",   file: "t1_ax" },
-  { label: "T1 Coronal",   plane: "coronal", file: "t1_cor" },
-  { label: "STIR Coronal", plane: "coronal", file: "stir_cor" },
-  { label: "PD FS Axial",  plane: "axial",   file: "pdfs_ax" },
-];
 const ANKLE = [
   { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
   { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
@@ -146,11 +140,8 @@ const HAND = [
 ];
 const IMAGE_EXAMS = {
   Shoulder: buildImageExam("Shoulder", SHOULDER, RP(43115, "Andrew Dixon")),
-  Humerus:  buildImageExam("Humerus", LONGBONE),
-  Forearm:  buildImageExam("Forearm", LONGBONE),
   Wrist:    buildImageExam("Wrist", WRIST, RP(42982, "Andrew Dixon")),
   Hand:     buildImageExam("Hand", HAND, RP(161538, "Mohd Radhwan Bin Abidin")),
-  "Tib-Fib": buildImageExam("Tib-Fib", LONGBONE),
   Ankle:    buildImageExam("Ankle", ANKLE, RP(43117, "Andrew Dixon")),
   Foot:     buildImageExam("Foot", FOOT, RP(163787, "Mohd Radhwan Bin Abidin")),
 };
