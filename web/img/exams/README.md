@@ -26,36 +26,35 @@ scout_coronal.png
 scout_sagittal.png
 ```
 
-…plus **one file per sequence** (filenames are consistent across parts, so `t1_sag.png`
-is always the T1 sagittal):
+…plus **one file per sequence**. Filenames follow `<sequence>_<plane>` (e.g. `t1_sag`,
+`pdfs_ax`, `t2_cor`). Each part has its **own sequence list** matching the slices that case
+actually has — see the per-part list in `web/protocol.js` (`ANKLE`, `WRIST`, `SHOULDER`,
+`FOOT`, `HAND`, …) and the `CREDITS.md` in each populated folder for the exact file map.
+Parts not yet populated (`Humerus`, `Forearm`, `Tib-Fib`) use the `LONGBONE` placeholder
+list (`t1_ax`, `t1_cor`, `stir_cor`, `pdfs_ax`).
 
-| Joint parts — **Shoulder, Wrist, Hand, Ankle, Foot** | Long-bone parts — **Humerus, Forearm, Tib-Fib** |
-|---|---|
-| `t1_sag.png` (T1 Sagittal)    | `t1_ax.png`  (T1 Axial) |
-| `pdfs_sag.png` (PD FS Sagittal) | `t1_cor.png` (T1 Coronal) |
-| `pdfs_ax.png` (PD FS Axial)   | `stir_cor.png` (STIR Coronal) |
-| `pdfs_cor.png` (PD FS Coronal) | `pdfs_ax.png` (PD FS Axial) |
-| `t2fs_cor.png` (T2 FS Coronal) | |
+Images may be `.png`, `.jpg`, or `.jpeg` — the app tries each before the placeholder, so
+radiology JPEGs drop straight in.
 
 Example for the ankle:
 
 ```
-web/img/exams/ankle/scout_axial.png
-web/img/exams/ankle/scout_coronal.png
-web/img/exams/ankle/scout_sagittal.png
-web/img/exams/ankle/t1_sag.png
-web/img/exams/ankle/pdfs_sag.png
-web/img/exams/ankle/pdfs_ax.png
-web/img/exams/ankle/pdfs_cor.png
-web/img/exams/ankle/t2fs_cor.png
+web/img/exams/ankle/scout_axial.jpg
+web/img/exams/ankle/scout_coronal.jpg
+web/img/exams/ankle/scout_sagittal.jpg
+web/img/exams/ankle/pdfs_ax.jpg
+web/img/exams/ankle/pdfs_cor.jpg
+web/img/exams/ankle/pdfs_sag.jpeg
 ```
 
 ## Adding / changing exams
 
 The exam list and per-part sequence lists live in `web/protocol.js` (`IMAGE_EXAMS`,
-`JOINT`, `LONGBONE`, `buildImageExam`). To add a part, add one line to `IMAGE_EXAMS`; to
-change a part's sequences, give it a custom list instead of `JOINT` / `LONGBONE`. The
-filenames in the table above are just the `file:` fields in those lists.
+`buildImageExam`, and the per-part lists like `ANKLE`/`WRIST`/`FOOT`). To add a part, add a
+line to `IMAGE_EXAMS` with its sequence list and a credit string; to change a part's
+sequences, edit its list. The `file:` field in each entry is the on-disk filename (sans
+extension). `buildImageExam(part, list, credit)` — the credit shows as an on-page
+attribution line while that exam is open.
 
 ## Licensing
 

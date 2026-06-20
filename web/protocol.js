@@ -78,11 +78,15 @@ function placeholderImg(title, sub, tint) {
 // Each image is a file under web/img/exams/<part>/<file>.png. If the file isn't
 // there yet it shows a labelled placeholder instead — so you can drop images in
 // one at a time (zero code) and the menu always works. See web/img/exams/README.
-function buildImageExam(part, sequences) {
+function buildImageExam(part, sequences, credit) {
   const slug = part.toLowerCase().replace(/[^a-z0-9]+/g, "_");
   const dir = `img/exams/${slug}`;
-  const f = (file, ph) => ({ src: `${dir}/${file}.png`, ph });
+  // try .png first, then the JPEGs radiology sites serve natively; placeholder last.
+  const f = (file, ph) => ({
+    src: `${dir}/${file}.png`, alts: [`${dir}/${file}.jpg`, `${dir}/${file}.jpeg`], ph,
+  });
   return {
+    credit: credit || null,
     scouts: {
       axial:    f("scout_axial",    placeholderImg(part, "Axial scout", "#7fb8ff")),
       coronal:  f("scout_coronal",  placeholderImg(part, "Coronal scout", "#7fb8ff")),
@@ -93,30 +97,62 @@ function buildImageExam(part, sequences) {
     })),
   };
 }
-// Default sequence lists (filenames are consistent across parts, so you always
-// know what t1_sag.png etc. is). Tweak per part as needed.
-const JOINT = [
-  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
-  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
-  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
-  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
-  { label: "T2 FS Coronal",  plane: "coronal",  file: "t2fs_cor" },
-];
-const LONGBONE = [
+// Radiopaedia attribution line (CC BY-NC-SA 3.0) shown while an exam is open.
+const RP = (id, who) =>
+  `Images: case courtesy of ${who}, <a href="https://radiopaedia.org/cases/${id}" ` +
+  `target="_blank" rel="noopener">Radiopaedia.org rID ${id}</a> · CC BY-NC-SA 3.0`;
+// Sequence lists are per part — each matches the slices actually saved for that case
+// (filename = the file: field, plane = which viewport the example opens in).
+const LONGBONE = [   // placeholder template for parts not yet populated
   { label: "T1 Axial",     plane: "axial",   file: "t1_ax" },
   { label: "T1 Coronal",   plane: "coronal", file: "t1_cor" },
   { label: "STIR Coronal", plane: "coronal", file: "stir_cor" },
   { label: "PD FS Axial",  plane: "axial",   file: "pdfs_ax" },
 ];
+const ANKLE = [
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+];
+const WRIST = [
+  { label: "PD Axial",       plane: "axial",    file: "pd_ax" },
+  { label: "PD Coronal",     plane: "coronal",  file: "pd_cor" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+];
+const SHOULDER = [
+  { label: "PD Axial",      plane: "axial",   file: "pd_ax" },
+  { label: "PD Coronal",    plane: "coronal", file: "pd_cor" },
+  { label: "PD FS Axial",   plane: "axial",   file: "pdfs_ax" },
+  { label: "PD FS Coronal", plane: "coronal", file: "pdfs_cor" },
+];
+const FOOT = [
+  { label: "T1 Axial",       plane: "axial",    file: "t1_ax" },
+  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
+  { label: "T2 FS Sagittal", plane: "sagittal", file: "t12fs_sag" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+  { label: "T1 FS Coronal",  plane: "coronal",  file: "t1fs_cor" },
+  { label: "T2 Coronal",     plane: "coronal",  file: "t2_cor" },
+];
+const HAND = [
+  { label: "T1 Sagittal",    plane: "sagittal", file: "t1_sag" },
+  { label: "T1 Coronal",     plane: "coronal",  file: "t1_cor" },
+  { label: "T2 Axial",       plane: "axial",    file: "t2_ax" },
+  { label: "PD FS Axial",    plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+];
 const IMAGE_EXAMS = {
-  Shoulder: buildImageExam("Shoulder", JOINT),
+  Shoulder: buildImageExam("Shoulder", SHOULDER, RP(43115, "Andrew Dixon")),
   Humerus:  buildImageExam("Humerus", LONGBONE),
   Forearm:  buildImageExam("Forearm", LONGBONE),
-  Wrist:    buildImageExam("Wrist", JOINT),
-  Hand:     buildImageExam("Hand", JOINT),
+  Wrist:    buildImageExam("Wrist", WRIST, RP(42982, "Andrew Dixon")),
+  Hand:     buildImageExam("Hand", HAND, RP(161538, "Mohd Radhwan Bin Abidin")),
   "Tib-Fib": buildImageExam("Tib-Fib", LONGBONE),
-  Ankle:    buildImageExam("Ankle", JOINT),
-  Foot:     buildImageExam("Foot", JOINT),
+  Ankle:    buildImageExam("Ankle", ANKLE, RP(43117, "Andrew Dixon")),
+  Foot:     buildImageExam("Foot", FOOT, RP(163787, "Mohd Radhwan Bin Abidin")),
 };
 
 function loadImageExam(name) {
@@ -127,11 +163,17 @@ function loadImageExam(name) {
              status: "pending", image: null, plan: null }]
     .concat(imageExam.sequences.map((s) => ({
       id: ++seq, preset: s.label, label: s.label, sequence: s.plane || "", status: "pending",
-      exampleImage: s.src, examplePh: s.ph, examplePlane: s.plane || "axial", plan: null,
+      exampleImage: s.src, exampleAlts: s.alts, examplePh: s.ph,
+      examplePlane: s.plane || "axial", plan: null,
     })));
   active = null;
   renderQueue();
+  showCredit(imageExam.credit);
   openItem(queue[0]);
+}
+function showCredit(html) {
+  const el = $("pp-credit");
+  if (html) { el.innerHTML = html; el.hidden = false; } else { el.textContent = ""; el.hidden = true; }
 }
 function imageScoutGeom(plane) {           // cosmetic band you can angle (per plane)
   const d = (active && active.plan && active.plan.imgDir && active.plan.imgDir[plane]) || [1, 0];
@@ -142,7 +184,8 @@ function imageScoutGeom(plane) {           // cosmetic band you can angle (per p
 function renderImageScouts() {
   PLANES.forEach((plane) => {
     const sc = imageExam.scouts[plane];
-    scoutCache[plane] = { png: sc.src, fallback: sc.ph, geom: imageScoutGeom(plane), label: cap(plane) };
+    scoutCache[plane] = { png: sc.src, alts: sc.alts, fallback: sc.ph,
+                          geom: imageScoutGeom(plane), label: cap(plane) };
   });
   PLANES.forEach(renderSlot);
 }
@@ -150,7 +193,8 @@ function acquireImageExample() {
   active.status = "acquired"; active.metrics = {};
   const plane = active.examplePlane || "axial";
   slotState[plane] = { kind: "series", itemId: active.id, png: active.exampleImage,
-                       fallback: active.examplePh, label: `${active.label} (example)`, wl: { b: 1, c: 1 } };
+                       alts: active.exampleAlts, fallback: active.examplePh,
+                       label: `${active.label} (example)`, wl: { b: 1, c: 1 } };
   lastSeriesPlane = plane;
   renderSlot(plane);
   $("pp-readout").textContent = `Acquired ${active.label} ✓ — example image (illustrative, not simulated).`;
@@ -171,6 +215,7 @@ async function onReady() {
 async function loadExam(name) {
   if (name in IMAGE_EXAMS) { loadImageExam(name); return; }
   imageExam = null;
+  showCredit(null);
   exam = name;
   const info = await call("protocols", name);
   // exam picker (first time): simulated exams, then the image-library exams
@@ -383,22 +428,27 @@ function renderSlot(plane) {
   if (st.kind === "scout") {
     const sc = scoutCache[plane]; if (!sc) return;
     vpGeom[plane] = sc.geom;
-    drawTile(plane, sc.png, sc.label, true, false, sc.fallback);   // plannable, not draggable
+    drawTile(plane, sc.png, sc.label, true, false, sc.fallback, sc.alts);   // plannable, not draggable
     drawOverlay(plane);                                            // crisp interactive handles
   } else {                                                   // series: view-only, draggable
     const tag = (st.maxSlice ? `${st.label}  ·  ${st.slice}/${st.maxSlice}` : st.label) + "  ⠿";
-    drawTile(plane, st.png, tag, false, true, st.fallback);
+    drawTile(plane, st.png, tag, false, true, st.fallback, st.alts);
     const img = $("vp-" + plane).querySelector("img");       // keep its window/level
     if (img && st.wl) img.style.filter = `brightness(${st.wl.b}) contrast(${st.wl.c})`;
   }
 }
-function drawTile(plane, dataURL, tag, plannable, draggable, fallback) {
+function drawTile(plane, dataURL, tag, plannable, draggable, fallback, alts) {
   const box = $("vp-" + plane);
   box.classList.toggle("plannable", !!plannable);
   let img = box.querySelector("img");
   if (!img) { img = document.createElement("img"); box.appendChild(img); }
-  // image-library files may not exist yet → fall back to the labelled placeholder
-  img.onerror = fallback ? () => { img.onerror = null; img.src = fallback; } : null;
+  // image-library files may be absent or a different extension → try .jpg/.jpeg, then the
+  // labelled placeholder, walking the chain on each load error.
+  const chain = [...(alts || []), ...(fallback ? [fallback] : [])];
+  let ci = 0;
+  img.onerror = chain.length
+    ? () => { if (ci < chain.length) img.src = chain[ci++]; else img.onerror = null; }
+    : null;
   img.src = dataURL;
   img.draggable = !!draggable;
   img.style.filter = "";                                     // reset (series reapply theirs)

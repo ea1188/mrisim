@@ -213,24 +213,26 @@ try {
   console.log("exam picker offers Brain/Spine/Knee/Abdomen/Pelvis ✓");
 
   // image-library exams (no engine): static scout images you can angle on (cosmetic),
-  // and an example image (placeholder until real ones are dropped in) on Acquire.
+  // and an example image on Acquire (a real drop-in image, or a placeholder until one is added).
   for (const want of ["Ankle", "Wrist", "Shoulder", "Foot"]) {
     if (!exams.includes(want)) fail(`image-library exam "${want}" not offered`);
   }
   await page.selectOption("#pp-exam", "Ankle");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /T1 Sagittal/.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /PD FS/.test(e.textContent)),
     { timeout: 10_000 });
-  await page.waitForFunction(() => {                      // static placeholder scout loads
+  await page.waitForFunction(() => {                      // scout loads (real image or placeholder)
     const im = document.querySelector("#vp-axial img");
-    return im && im.src.startsWith("data:image/svg");
+    return im && im.complete && im.naturalWidth > 0;
   }, { timeout: 8_000 });
-  await page.click("#pp-list li:nth-child(2)");           // T1 Sagittal
+  await page.click("#pp-list li:nth-child(2)");           // first sequence after the localizer
   await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
   await page.click("#pp-apply");                          // acquire → example image pops up
   await page.waitForFunction(
     () => /example/i.test(document.querySelector("#pp-readout").textContent), { timeout: 8_000 });
-  console.log("image-library exam (Ankle): static scouts + example acquire ✓");
+  const credit = await page.$eval("#pp-credit", (e) => (e.hidden ? "" : e.textContent));
+  if (!/Radiopaedia/.test(credit)) fail(`image exam credit not shown (got "${credit}")`);
+  console.log("image-library exam (Ankle): static scouts + example acquire + credit ✓");
 } catch (e) {
   fail(e.message);
 }
