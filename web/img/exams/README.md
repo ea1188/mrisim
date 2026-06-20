@@ -29,9 +29,11 @@ scout_sagittal.png
 …plus **one file per sequence**. Filenames follow `<sequence>_<plane>` (e.g. `t1_sag`,
 `pdfs_ax`, `t2_cor`). Each part has its **own sequence list** matching the slices that case
 actually has — see the per-part list in `web/protocol.js` (`ANKLE`, `WRIST`, `SHOULDER`,
-`FOOT`, `HAND`, …) and the `CREDITS.md` in each populated folder for the exact file map.
-Parts not yet populated (`Humerus`, `Forearm`, `Tib-Fib`) use the `LONGBONE` placeholder
-list (`t1_ax`, `t1_cor`, `stir_cor`, `pdfs_ax`).
+`FOOT`, `HAND`) and the `CREDITS.md` in each populated folder for the exact file map.
+
+Currently populated: **Ankle, Wrist, Shoulder, Foot, Hand**. To add another part (e.g. a
+long bone), create its folder, add a sequence list + `IMAGE_EXAMS` entry in `protocol.js`,
+and drop the images in.
 
 Images may be `.png`, `.jpg`, or `.jpeg` — the app tries each before the placeholder, so
 radiology JPEGs drop straight in.

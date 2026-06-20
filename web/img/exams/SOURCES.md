@@ -20,9 +20,12 @@ These are grayscale "normal" reference cases — good for clean scout/example im
 | **Shoulder** → `shoulder/` | [Normal shoulder MRI](https://radiopaedia.org/cases/normal-shoulder-mri) | [Normal right shoulder MRI](https://radiopaedia.org/cases/normal-right-shoulder-mri) |
 | **Foot** → `foot/` | [Normal foot MRI](https://radiopaedia.org/cases/normal-foot-mri) | [Normal left foot MRI](https://radiopaedia.org/cases/normal-left-foot-mri) |
 | **Hand** → `hand/` | [Normal right hand MRI](https://radiopaedia.org/cases/normal-right-hand-mri) | — |
-| **Forearm** → `forearm/` | [Normal MRI of the forearm](https://radiopaedia.org/cases/normal-mri-of-the-forearm) | [Normal forearm MRI](https://radiopaedia.org/cases/normal-forearm-mri) |
-| **Humerus** → `humerus/` | [Normal MRI of the arm](https://radiopaedia.org/cases/normal-mri-of-the-arm) | — |
-| **Tib-Fib** → `tib_fib/` | [Normal MRI of the leg](https://radiopaedia.org/cases/normal-mri-of-the-leg) | — |
+
+### Not yet added (no exam entry — see README to add)
+
+- **Forearm** — [Normal MRI of the forearm](https://radiopaedia.org/cases/normal-mri-of-the-forearm) · [Normal forearm MRI](https://radiopaedia.org/cases/normal-forearm-mri)
+- **Humerus** — [Normal MRI of the arm](https://radiopaedia.org/cases/normal-mri-of-the-arm)
+- **Tib-Fib** — [Normal MRI of the leg](https://radiopaedia.org/cases/normal-mri-of-the-leg)
 
 ## Other free sources
 
