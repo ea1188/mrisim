@@ -213,7 +213,7 @@ try {
   console.log("exam picker offers Brain/Spine/Knee/Abdomen/Pelvis ✓");
 
   // image-library exams (no engine): static scout images you can angle on (cosmetic),
-  // and an example image (placeholder until real ones are dropped in) on Acquire.
+  // and an example image on Acquire (a real drop-in image, or a placeholder until one is added).
   for (const want of ["Ankle", "Wrist", "Shoulder", "Foot"]) {
     if (!exams.includes(want)) fail(`image-library exam "${want}" not offered`);
   }
@@ -221,9 +221,9 @@ try {
   await page.waitForFunction(
     () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /T1 Sagittal/.test(e.textContent)),
     { timeout: 10_000 });
-  await page.waitForFunction(() => {                      // static placeholder scout loads
+  await page.waitForFunction(() => {                      // scout loads (real image or placeholder)
     const im = document.querySelector("#vp-axial img");
-    return im && im.src.startsWith("data:image/svg");
+    return im && im.complete && im.naturalWidth > 0;
   }, { timeout: 8_000 });
   await page.click("#pp-list li:nth-child(2)");           // T1 Sagittal
   await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
