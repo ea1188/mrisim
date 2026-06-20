@@ -22,6 +22,8 @@ page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 
 try {
+  // suppress the first-visit auto-tour so it doesn't overlay the planning-flow steps
+  await page.addInitScript(() => { try { localStorage.setItem("mrisim_pp_tour", "1"); } catch (e) { /* private mode */ } });
   await page.goto(url, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#pp-root:not([hidden])", { timeout: BOOT });
   console.log("booted");
@@ -235,6 +237,15 @@ try {
   const credit = await page.$eval("#pp-credit", (e) => (e.hidden ? "" : e.textContent));
   if (!/Radiopaedia/.test(credit)) fail(`image exam credit not shown (got "${credit}")`);
   console.log("image-library exam (Ankle): static scouts + in-plane FOV box + example acquire + credit ✓");
+
+  // guided tour: opens from the button, steps through, and closes
+  await page.click("#pp-tour-btn");
+  await page.waitForFunction(() => !document.querySelector("#tour").hidden, { timeout: 5_000 });
+  const total = await page.$eval("#tour-progress", (e) => +e.textContent.split("/")[1]);
+  if (!(total >= 3)) fail(`tour has too few steps (${total})`);
+  for (let i = 0; i < total; i++) await page.click("#tour-next");   // last click = Done → closes
+  await page.waitForFunction(() => document.querySelector("#tour").hidden, { timeout: 5_000 });
+  console.log(`guided tour: ${total} steps, opens and closes ✓`);
 } catch (e) {
   fail(e.message);
 }

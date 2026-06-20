@@ -15,6 +15,11 @@
     #pp-head h1 { font-size: 15px; margin: 0; color: #e6edf3; font-weight: 600; }
     #pp-head .spacer { flex: 1; }
     #pp-head a { color: #7fb8ff; text-decoration: none; font-size: 13px; }
+    #pp-tour-btn {
+      background: transparent; color: #7fb8ff; border: 1px solid #2f5c8a;
+      border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+    }
+    #pp-tour-btn:hover { border-color: #4f86c0; background: rgba(127,184,255,.08); }
     #pp-body {
       display: grid; grid-template-columns: 300px 1fr; min-height: 0;
     }
@@ -101,6 +106,7 @@
     <header id="pp-head">
       <h1>MRISim · Protocol Planning</h1>
       <span class="spacer"></span>
+      <button id="pp-tour-btn" type="button">▶ Tour</button>
       <a href="index.html">← Back to the simulator</a>
     </header>
 
@@ -145,6 +151,24 @@
         </div>
         <ol id="pp-list"></ol>
       </aside>
+    </div>
+  </div>
+
+  <!-- Guided feature tour: a spotlight + tooltip that points at the real controls.
+       Non-modal (the page stays clickable); driven by the tooltip buttons. -->
+  <div id="tour" hidden>
+    <div id="tour-spot"></div>
+    <div id="tour-pop" role="dialog" aria-modal="false" aria-labelledby="tour-title">
+      <h3 id="tour-title"></h3>
+      <p id="tour-text"></p>
+      <div class="tour-foot">
+        <span id="tour-progress"></span>
+        <span class="tour-btns">
+          <button id="tour-skip" type="button">Skip</button>
+          <button id="tour-prev" type="button">‹ Back</button>
+          <button id="tour-next" type="button">Next ›</button>
+        </span>
+      </div>
     </div>
   </div>
 
