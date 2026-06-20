@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.40.0] — 2026-06-20
+
+### Added
+- **Mobile-responsive Protocol Planning.** The planning workspace now adapts to phones:
+  under 640px wide it stacks the protocol queue, scout viewports, and parameters into a
+  single scrolling column with full-width viewports, and touch devices get larger tap
+  targets. No separate mobile page is needed.
+
 ## [1.39.0] — 2026-06-20
 
 ### Added
