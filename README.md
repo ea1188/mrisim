@@ -60,10 +60,12 @@ The PyQt6 app drives the physics engine in real time:
 
 **Same simulator, in the browser** — pick a sequence and sweep TR / TE / flip / TI, switch anatomy (brain + the real body atlases, fetched on demand) and orientation, toggle 3D slab acquisition, apply clinical presets, and **compare A/B** side by side. The 3-plane localizer is interactive (drag the FOV box, drag a slice band to angle the plane, click a cross panel to move the slice), and **3D reconstruction opens as a PACS-style 2×2 quad** — axial / coronal / sagittal reformats plus a 3-D MIP overview of the slab. Drag a **ruler or ROI** on the image (or any reformat) to read distances in mm and an ROI's mean / SD / SNR; switch the **receive coil** to see surface-vs-array sensitivity shading; and quantitative T1 / T2 / T2\* / ADC / FA maps render with **perceptual, colorblind-safe colormaps and calibrated colorbars**.
 
+**Protocol planning (scanner console)** — a separate workspace plans a whole exam the way a real console does: pick a protocol, then for each sequence in the queue, prescribe it on the three scout images (angle the slice, move it, place the FOV box) and **Apply to acquire** it with scan time and SNR. It also includes an **image-library positioning trainer** — engine-free MSK exams (Ankle, Wrist, Shoulder, Foot, Hand) built from real normal-anatomy MRI: angle and position on static scouts, then pop up the example image for each sequence, to practise the graphical prescription. It has its own guided tour and a mobile-responsive layout.
+
 **A teaching layer for newcomers**
 
 - **Guided feature tour** — first-time visitors get a spotlight walkthrough that points at each real control (sequence, timing, the image, the curve, presets, compare, 3D reconstruction, measure, find-a-control, lessons). Re-launchable anytime from the **?** help button.
-- **Guided lessons** — short, reading-first walkthroughs that set up the scanner and explain what you're seeing, from a beginner *"Start here"* track through the deeper physics (40+ lessons, including gadolinium, receive coils, balanced SSFP, SWI and fMRI).
+- **Guided lessons** — short, reading-first walkthroughs that set up the scanner and explain what you're seeing, from a beginner *"Start here"* track through the deeper physics (35+ lessons, including gadolinium, receive coils, balanced SSFP, SWI and fMRI).
 - **"Learn MRI from scratch" curriculum** — a structured beginner path of modules that build on each other, with your progress saved on the device.
 - **Label the anatomy + tissue inspector** — name the structures, and hover any pixel to read which tissue it is and its T1 / T2 / PD.
 - **Show the math** — hover a pixel to see the active sequence's signal equation with that tissue's parameters and your TR / TE plugged in, and the resulting pixel value.
@@ -145,13 +147,13 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ### Run in your browser (nothing to install)
 
-The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)** — see [Browser edition](#browser-edition--learn-mri-with-nothing-to-install) above for the guided lessons, curriculum and full feature tour. The real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/) — pick a sequence, sweep TR/TE/flip, switch anatomy and orientation, toggle 3D slab acquisition, apply presets, compare A/B, and plan on the 3-plane localizer, all rendered by the same code as the desktop app. The localizer is interactive: the slice shows as a band of its true thickness (the whole slab in 3-D), and you can drag the FOV box to resize/recentre it, drag the slice band to angle the plane (oblique), and click a cross panel to move the slice. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards. **The body regions use the same real segmented anatomy as the desktop** — the Abdomen/Spine/Pelvis/Torso *and Knee* atlases are fetched on demand (~10–20 MB each, when you select them). Loading external NIfTI and DICOM export remain desktop-only.
+The quickest way to try MRISim: **[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)** — the real Python engine runs entirely client-side via [Pyodide](https://pyodide.org/), so there's nothing to install. See [Browser edition](#browser-edition--learn-mri-with-nothing-to-install) above for the full feature set, guided lessons and curriculum. The first visit downloads ~30–50 MB (Pyodide + numpy/scipy/matplotlib + the brain phantom) and is cached afterwards; the real body atlases are fetched on demand (~10–20 MB each, when selected). Loading external NIfTI and DICOM export remain desktop-only.
 
-> **For the fullest, most robust experience, use the downloadable desktop app.** The browser edition is newer and a convenience subset — it covers the core interactive simulator (now including interactive FOV planning with oblique), but the desktop build is more complete and battle-tested (multi-slice/gap prescription, NIfTI/DICOM import-export, the full FOV-planning workflow, faster rendering). If something feels limited or slow in the browser, the [desktop download](https://github.com/ea1188/mrisim/releases/latest) is the reference experience.
+> **For the fullest experience, use the [desktop app](https://github.com/ea1188/mrisim/releases/latest)** — it adds arbitrary NIfTI loading, DICOM export, multi-slice/gap prescription and faster rendering. See [Browser edition](#browser-edition--learn-mri-with-nothing-to-install) for what the in-browser version covers.
 
 ### Download a ready-to-run app (no Python needed)
 
-Grab the build for your system (these links always serve the [**latest release**](https://github.com/ea1188/mrisim/releases/latest), currently **v1.35.5**):
+Grab the build for your system (these links always serve the [**latest release**](https://github.com/ea1188/mrisim/releases/latest)):
 
 - **Windows** — download [`MRISim-windows.exe`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-windows.exe) and double-click it.
 - **macOS** — download [`MRISim-macos.zip`](https://github.com/ea1188/mrisim/releases/latest/download/MRISim-macos.zip), unzip it, drag `MRISim.app` to *Applications*, then allow it on first launch (see [macOS — "can't be opened"](#macos--mrisim-cant-be-opened--apple-could-not-verify) below).
@@ -193,86 +195,14 @@ python src/app_qt.py
 
 The BrainWeb brain **and all five body regions** (Abdomen, Spine, Pelvis, Torso and Knee) are bundled in the repo, so the app opens on real anatomy with **no dataset download required**. Only loading *other* subjects or regions needs the raw dataset (see [Anatomy and phantoms](#anatomy-and-phantoms)).
 
-### Step-by-step (no terminal experience needed)
-
-Never used a terminal? Follow these in order — you only do steps 1–5 once.
-
-**Step 1 — Install Python (version 3.11 or newer)**
-
-Go to [python.org/downloads](https://www.python.org/downloads/) and download the latest installer for your system, then run it.
-- **Windows:** on the first screen of the installer, **tick the box "Add Python to PATH"** before clicking *Install Now*. This matters — without it the commands below won't be found.
-- **macOS:** open the downloaded `.pkg` file and click through the installer.
-
-**Step 2 — Open a terminal**
-
-A "terminal" is a window where you type commands.
-- **Windows:** click Start, type `PowerShell`, and press Enter.
-- **macOS:** press `Cmd` + `Space`, type `Terminal`, and press Enter.
-- **Linux:** press `Ctrl` + `Alt` + `T`.
-
-Check Python is installed by typing this and pressing Enter:
-```bash
-python3 --version
-```
-You should see something like `Python 3.12.x`. (On Windows, if `python3` isn't found, try `python --version`.)
-
-**Step 3 — Download MRISim**
-
-The easiest way (no extra tools):
-1. Open the [latest release page](https://github.com/ea1188/mrisim/releases/latest).
-2. Under **Assets**, click **Source code (zip)** to download it.
-3. Find the downloaded `.zip` (usually in your *Downloads* folder) and unzip it. You'll get a folder like `mrisim-1.0.0`. Move it somewhere easy, e.g. your *Desktop*.
-
-**Step 4 — Point the terminal at that folder**
-
-In your terminal, type `cd ` (the letters c, d, then a space — don't press Enter yet), then **drag the unzipped folder from your file explorer onto the terminal window**. The folder's location fills in automatically. Now press Enter. For example:
-```bash
-cd /Users/yourname/Desktop/mrisim-1.0.0
-```
-
-**Step 5 — Set up and install (copy-paste one block for your system)**
-
-macOS / Linux:
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Windows (PowerShell):
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-This creates a private workspace (`.venv`) and downloads everything MRISim needs. It takes a few minutes the first time. (On Windows, if you get a message about scripts being disabled, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, press `Y`, then re-run the activate line.)
-
-**Step 6 — Run the simulator**
-
-```bash
-python src/app_qt.py
-```
-A window opens showing an MRI of a brain. That's it — explore the controls on the side panels.
-
-**Coming back later**
-
-Next time, you only need to open a terminal, `cd` into the folder again (Step 4), re-activate the workspace, and run the app:
-```bash
-source .venv/bin/activate     # Windows: .venv\Scripts\Activate.ps1
-python src/app_qt.py
-```
-
 ### If something goes wrong
 
-- **`python3: command not found` (or `python`):** Python isn't installed or (on Windows) "Add Python to PATH" wasn't ticked in Step 1. Reinstall Python and try again.
-- **`No such file or directory` after `cd`:** the terminal isn't in the project folder. Redo Step 4 (the `cd` + drag trick).
-- **`No module named ...` when running the app:** the install step didn't finish or the workspace isn't active. Make sure you ran the Step 5 block and see `(.venv)` at the start of your terminal line, then re-run `pip install -r requirements.txt`.
-- **Linux only — `could not load the Qt platform plugin "xcb"`:** install the system graphics libraries the window needs:
+- **Linux — `could not load the Qt platform plugin "xcb"`:** install the system graphics libraries the window needs:
   ```bash
   sudo apt-get install libxcb-cursor0 libgl1
   ```
   On a headless server (no screen), run under a virtual display: `xvfb-run python src/app_qt.py`.
-- **Optional extras:** `nibabel` (already installed in Step 5) loads real body anatomy; the `brainweb` package is only needed to regenerate the brain or use a different BrainWeb subject.
+- **Optional extras:** `nibabel` (in `requirements.txt`) loads real body anatomy; the `brainweb` package is only needed to regenerate the brain or use a different BrainWeb subject.
 
 > **Technical note:** the source modules import each other by bare name, so they expect `src/` on the import path. Running `python src/app_qt.py` handles this automatically (Python puts the script's directory first on `sys.path`), as does the test suite via `tests/conftest.py`. If you import the modules yourself, run from `src/` or set `PYTHONPATH=src`.
 
