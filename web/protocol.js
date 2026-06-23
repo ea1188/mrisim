@@ -118,10 +118,11 @@ const WRIST = [
   { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
 ];
 const SHOULDER = [
-  { label: "PD Axial",      plane: "axial",   file: "pd_ax" },
-  { label: "PD Coronal",    plane: "coronal", file: "pd_cor" },
-  { label: "PD FS Axial",   plane: "axial",   file: "pdfs_ax" },
-  { label: "PD FS Coronal", plane: "coronal", file: "pdfs_cor" },
+  { label: "PD Axial",      plane: "axial",    file: "pd_ax" },
+  { label: "PD Coronal",    plane: "coronal",  file: "pd_cor" },
+  { label: "PD Sagittal",   plane: "sagittal", file: "pd_sag" },
+  { label: "PD FS Axial",   plane: "axial",    file: "pdfs_ax" },
+  { label: "PD FS Coronal", plane: "coronal",  file: "pdfs_cor" },
 ];
 const FOOT = [
   { label: "T1 Axial",       plane: "axial",    file: "t1_ax" },

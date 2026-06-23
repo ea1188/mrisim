@@ -17,6 +17,7 @@ frozen.)
   in an image-library exam now seeds each scout's slice band to depict where that sequence's
   plane cuts the scout (axial → horizontal, sagittal/coronal → the orthogonal line), as a
   starting estimate, instead of always horizontal. You still angle freely from there.
+- Added a **PD Sagittal** example sequence to the Shoulder image-library exam.
 
 ## [1.40.0] — 2026-06-20
 
