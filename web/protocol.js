@@ -169,6 +169,18 @@ function showCredit(html) {
   if (html) { el.innerHTML = html; el.hidden = false; } else { el.textContent = ""; el.hidden = true; }
 }
 const DEFAULT_IMG_FOV = [0.22, 0.22, 0.56, 0.56];   // in-plane FOV box: [x, y, w, h] fractions
+// A sequence's prescription starts oriented to its acquired plane: on each cross scout the
+// slice band depicts where the acquired plane cuts that scout (axial → horizontal line,
+// coronal/sagittal → the orthogonal line). The user can then angle it freely from there.
+// Maps [scout plane][acquired plane] → band direction (unit vector); in-plane uses the box.
+const PRESET_DIR = {
+  sagittal: { axial: [1, 0], coronal: [0, 1] },
+  coronal:  { axial: [1, 0], sagittal: [0, 1] },
+  axial:    { coronal: [1, 0], sagittal: [0, 1] },
+};
+function presetImgDir(scout, acq) {
+  return (acq && PRESET_DIR[scout] && PRESET_DIR[scout][acq]) || [1, 0];
+}
 function imageScoutGeom(plane) {
   // The scout matching the sequence's plane shows an in-plane FOV box you can move/resize
   // (like a scanner's graphic prescription); the other two scouts show a cosmetic angle band.
@@ -178,7 +190,8 @@ function imageScoutGeom(plane) {
   }
   const pl = active && active.plan;
   const c = (pl && pl.imgCtr && pl.imgCtr[plane]) || [0.5, 0.5];   // movable slice centre
-  const d = (pl && pl.imgDir && pl.imgDir[plane]) || [1, 0];
+  const d = (pl && pl.imgDir && pl.imgDir[plane])                 // user angle, else preset estimate
+            || presetImgDir(plane, active && active.examplePlane);
   const L = Math.hypot(d[0], d[1]) || 1, ux = d[0] / L * 0.42, uy = d[1] / L * 0.42;
   return { name: plane, role: "cross", map: "row", n: 100, flip: false, angle: "tilt",
            center: c, band: [[c[0] - ux, c[1] - uy], [c[0] + ux, c[1] + uy]] };

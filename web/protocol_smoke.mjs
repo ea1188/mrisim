@@ -245,6 +245,18 @@ try {
     return l && Math.abs(+l.getAttribute("y1") - prev) > 1;
   }, bandY0, { timeout: 5_000 });
   console.log("image-exam: in-plane FOV box + slice move on cross scout ✓");
+  // presets orient the slice to the acquired plane: a sagittal sequence's cross band is vertical
+  await page.click("#pp-list li:nth-child(3)");           // PD Sagittal → sagittal plane
+  await page.waitForFunction(() => {
+    const l = document.querySelector("#vp-coronal svg.pp-ov line[stroke='#ffdd44']");
+    if (!l) return false;
+    const dx = Math.abs(+l.getAttribute("x2") - +l.getAttribute("x1"));
+    const dy = Math.abs(+l.getAttribute("y2") - +l.getAttribute("y1"));
+    return dy > dx * 1.5;                                  // vertical band for a sagittal acquisition
+  }, { timeout: 5_000 });
+  console.log("image-exam: preset band orients to the acquired plane ✓");
+  await page.click("#pp-list li:nth-child(2)");           // back to PD Axial to acquire
+  await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 8_000 });
   await page.click("#pp-apply");                          // acquire → example image pops up
   await page.waitForFunction(
     () => /example/i.test(document.querySelector("#pp-readout").textContent), { timeout: 8_000 });
