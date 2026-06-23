@@ -10,6 +10,14 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.42.0] — 2026-06-23
+
+### Changed
+- **Knee protocol queue reworked to the standard MSK set:** axial T2 FS, coronal PD FS,
+  coronal PD, sagittal PD, sagittal T2 FS. Adds coronal/axial knee presets so the planner
+  acquires each sequence in its proper plane. The Knee T1 FSE / GRE T2* presets remain
+  available in the preset menu, just not in the default queue.
+
 ## [1.41.0] — 2026-06-23
 
 ### Added
