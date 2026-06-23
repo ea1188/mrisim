@@ -500,6 +500,47 @@ PRESETS = {
         "n_partitions": 28,
         "description": "GRE T2* knee, acquired as a 3D slab for multi-planar reformat (MPR). Articular cartilage mapping. Sensitive to calcifications, haemosiderin, loose bodies."
     },
+    "Knee PD Coronal": {
+        "sequence": "FSE / TSE",
+        "TR": 3500,
+        "TE": 30,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 150,
+        "bandwidth": 200,
+        "NEX": 2,
+        "etl": 8,
+        "echo_spacing": 10,
+        "description": "PD-weighted FSE, coronal — collateral ligaments (MCL/LCL), the meniscal body and the tibiofemoral joint line."
+    },
+    "Knee PD FS Coronal": {
+        "sequence": "FSE / TSE",
+        "TR": 3500,
+        "TE": 30,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 150,
+        "bandwidth": 200,
+        "NEX": 2,
+        "etl": 8,
+        "echo_spacing": 10,
+        "fatsat_enabled": True,
+        "description": "PD-weighted FSE with spectral (CHESS) fat saturation, coronal — marrow oedema and collateral-ligament / meniscal injury against suppressed fat."
+    },
+    "Knee T2 FS Axial": {
+        "sequence": "Inversion Recovery",
+        "TR": 4000,
+        "TE": 60,
+        "TI": 265,
+        "flip_angle": 90,
+        "matrix_size": 256,
+        "FOV": 150,
+        "bandwidth": 200,
+        "NEX": 1,
+        "description": "T2 fat-saturated (STIR) knee, axial — patellofemoral cartilage, the retinacula and joint effusion; fluid-bright with marrow oedema."
+    },
 
     # ------------------------------------------------------------------ #
     #  Post-contrast (Gadolinium)
@@ -811,6 +852,9 @@ _PRESET_PLANE: dict[str, str] = {
     "Knee T2 Fat-Sat": "sagittal",
     "Knee GRE T2*": "sagittal",
     "Knee PD Fat-Sat (CHESS)": "sagittal",
+    "Knee PD Coronal": "coronal",
+    "Knee PD FS Coronal": "coronal",
+    "Knee T2 FS Axial": "axial",
     "Knee T1 FSE": "sagittal",
     "Knee bSSFP Cartilage": "sagittal",
     "Spine T1 Post-Gd": "sagittal",
@@ -855,7 +899,8 @@ _PRESET_ORDER: list[str] = [
     "Pelvis T1 SE", "Pelvis T2 High-Res", "Pelvis STIR", "Pelvis DWI",
     "Pelvis T1 Post-Gd", "Pelvis MR Urography",
     # Knee
-    "Knee PD FSE", "Knee T1 FSE", "Knee T2 Fat-Sat", "Knee PD Fat-Sat (CHESS)",
+    "Knee PD FSE", "Knee PD Coronal", "Knee T1 FSE",
+    "Knee T2 Fat-Sat", "Knee PD Fat-Sat (CHESS)", "Knee PD FS Coronal", "Knee T2 FS Axial",
     "Knee GRE T2*", "Knee bSSFP Cartilage", "Knee T2 Map (qMRI)",
     # Torso
     "Torso T2 Coronal", "Torso T1 GRE", "Torso STIR Coronal", "Torso Cine (bSSFP)",

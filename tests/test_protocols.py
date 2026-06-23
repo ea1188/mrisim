@@ -24,3 +24,10 @@ def test_protocol_is_localizer_first_then_real_presets(exam):
 
 def test_unknown_exam_is_empty():
     assert protocols.get_protocol("Nope") == []
+
+
+def test_knee_protocol_planes():
+    """Knee queue is the standard axial T2 FS, coronal PD FS / PD, sagittal PD / T2 FS."""
+    q = protocols.get_protocol("Knee")[1:]   # drop the localizer
+    planes = [presets.get_preset_plane(item["preset"]) for item in q]
+    assert planes == ["axial", "coronal", "coronal", "sagittal", "sagittal"]
