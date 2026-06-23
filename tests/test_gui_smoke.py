@@ -1466,8 +1466,11 @@ def test_protocol_acquired_series_review(win):
     win.pp_exam.setCurrentText("Knee")
     assert win.pp_thumbs_scroll.isHidden(), "no thumbnails before acquiring"
 
-    win._pp_open(win.pp_queue[1]); win._pp_acquire()
-    win._pp_open(win.pp_queue[2]); win._pp_acquire()
+    # acquire the two sagittal knee sequences (PD / T2 FS) so the sagittal A-P flip below holds
+    sag = [i for i, e in enumerate(win.pp_queue)
+           if e["preset"] != win._LOCALIZER and get_preset_plane(e["preset"]) == "sagittal"]
+    win._pp_open(win.pp_queue[sag[0]]); win._pp_acquire()
+    win._pp_open(win.pp_queue[sag[1]]); win._pp_acquire()
     assert not win.pp_thumbs_scroll.isHidden()
     assert win.pp_thumbs_layout.count() - 1 == 2, "two acquired thumbnails"
 
