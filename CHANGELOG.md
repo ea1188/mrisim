@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.41.0] — 2026-06-23
+
+### Added
+- **Image-library prescriptions start oriented to the acquired plane.** Opening a sequence
+  in an image-library exam now seeds each scout's slice band to depict where that sequence's
+  plane cuts the scout (axial → horizontal, sagittal/coronal → the orthogonal line), as a
+  starting estimate, instead of always horizontal. You still angle freely from there.
+- Added a **PD Sagittal** example sequence to the Shoulder image-library exam.
+
 ## [1.40.0] — 2026-06-20
 
 ### Added

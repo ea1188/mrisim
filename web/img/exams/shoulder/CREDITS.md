@@ -8,5 +8,6 @@
 | `scout_axial.jpg` / `scout_coronal.jpg` / `scout_sagittal.jpg` | Scouts |
 | `pd_ax.jpg` | PD Axial |
 | `pd_cor.jpg` | PD Coronal |
+| `pd_sag.jpg` | PD Sagittal (same slice as the sagittal scout) |
 | `pdfs_ax.jpg` | PD FS Axial |
 | `pdfs_cor.jpg` | PD FS Coronal |
