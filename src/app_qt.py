@@ -361,8 +361,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.satband_angle = Var(0)       # band tilt, degrees (0 = horizontal)
         self.satband_angle2 = Var(0)      # band cross-plane angle (out-of-plane slab tilt)
         self.prescription_preset = Var("(Custom)")   # quick geometry presets
-        self.slice_tilt = Var(0.0)        # tilt angle in degrees (-45…+45)
-        self.slice_rot  = Var(0.0)        # rotation angle in degrees (-45…+45)
+        self.slice_tilt = Var(0.0)        # tilt angle in degrees (-90…+90)
+        self.slice_rot  = Var(0.0)        # rotation angle in degrees (-90…+90)
 
         self.orientation = Var("axial")
         self.slice_idx = Var(90)
@@ -1233,8 +1233,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._slider(plan_l, "Sat band width (%)", self.satband_width, 0, 60)
         self._slider(plan_l, "Sat band angle (°)", self.satband_angle, -90, 90)
         self._slider(plan_l, "Sat band cross-angle (°)", self.satband_angle2, -90, 90)
-        self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -45, 45)
-        self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -45, 45)
+        self._slider(plan_l, "Tilt (\u00b0)", self.slice_tilt, -90, 90)
+        self._slider(plan_l, "Rotation (\u00b0)", self.slice_rot, -90, 90)
         _reset_row = QHBoxLayout(); _reset_row.setContentsMargins(4, 2, 4, 2)
         _reset_btn = QPushButton("Reset Angles && FOV")
         _reset_btn.setStyleSheet("font-size:10px; padding:3px 6px; background:#313842; color:#c4cad2; border:1px solid #313842;")

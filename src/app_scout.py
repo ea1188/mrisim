@@ -458,7 +458,7 @@ class ScoutMixin:
     }
 
     # Common oblique angles the drag magnets onto (degrees), within _SNAP_TOL.
-    _SNAP_TARGETS = (0.0, 15.0, 30.0, 45.0, -15.0, -30.0, -45.0)
+    _SNAP_TARGETS = (0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0, -15.0, -30.0, -45.0, -60.0, -75.0, -90.0)
     _SNAP_TOL = 2.5
 
     def _snap_angle(self, val: float) -> float:
@@ -659,10 +659,10 @@ class ScoutMixin:
             # (see _ANGLE_SIGN), so flip the cursor delta there to keep the band tracking.
             d_angle *= self._ANGLE_SIGN.get(orient, {}).get(d.get("h_plane"), 1)
             if d["angle_var"] == "tilt":
-                new_val = self._snap_angle(float(np.clip(self.slice_tilt.get() + d_angle, -45, 45)))
+                new_val = self._snap_angle(float(np.clip(self.slice_tilt.get() + d_angle, -90, 90)))
                 self.slice_tilt.set(new_val)
             else:
-                new_val = self._snap_angle(float(np.clip(self.slice_rot.get() + d_angle, -45, 45)))
+                new_val = self._snap_angle(float(np.clip(self.slice_rot.get() + d_angle, -90, 90)))
                 self.slice_rot.set(new_val)
             self._draw_scout(self.get_current_params())
             self.schedule_recalculate()

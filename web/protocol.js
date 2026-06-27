@@ -9,7 +9,7 @@
 
 const $ = (id) => document.getElementById(id);
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
-const snapAngle = (v) => { for (const t of [0, 15, 30, 45, -15, -30, -45]) if (Math.abs(v - t) <= 2.5) return t; return v; };
+const snapAngle = (v) => { for (const t of [0, 15, 30, 45, 60, 75, 90, -15, -30, -45, -60, -75, -90]) if (Math.abs(v - t) <= 2.5) return t; return v; };
 const fmtTime = (s) => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const PLANES = ["sagittal", "coronal", "axial"];
 
@@ -409,8 +409,8 @@ function wireParamPanel() {
   $("pp-ti").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.TI = +$("pp-ti").value; scheduleParamRender(); } });
   $("pp-bval").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.b_value = +$("pp-bval").value; scheduleParamRender(); } });
   $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleParamRender(); } });
-  $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleParamRender(); } });
-  $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleParamRender(); } });
+  $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -90, 90); scheduleParamRender(); } });
+  $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -90, 90); scheduleParamRender(); } });
   $("pp-apply").addEventListener("click", applyAndAcquire);
   // Re-prescribe: restore the full 3-plane planning view for the acquired sequence
   // (all scouts at the saved prescription) so the angle / FOV can be changed and it
@@ -804,7 +804,7 @@ const DRAG_APPLY = {
     const sgn = (OBLIQUE_SIGN[pl.orientation] || {})[p.name] ?? 1;
     let dth = Math.atan2(d.c[1] - loc.py, loc.px - d.c[0]) - d.theta0;   // y-up
     dth = Math.atan2(Math.sin(dth), Math.cos(dth));                     // wrap to (−π, π]
-    const val = snapAngle(clampN(d.a0 + dth * 180 / Math.PI * sgn, -45, 45));
+    const val = snapAngle(clampN(d.a0 + dth * 180 / Math.PI * sgn, -90, 90));
     if (p.angle === "tilt") { pl.tilt = val; $("pp-tilt").value = val; }
     else { pl.rot = val; $("pp-rot").value = val; }
     // Draw at the *applied* angle (snapped + clamped), not the raw cursor: the band visibly
