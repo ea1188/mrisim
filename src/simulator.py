@@ -12,6 +12,8 @@ and view state onto it, and delegates simulate/slice calls here.
 Volume axis convention matches phantom3d.get_slice: axis0=Z, axis1=Y, axis2=X.
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
@@ -48,6 +50,21 @@ _ACQ3D_SEQUENCES = frozenset({"Spin Echo", "Gradient Echo",
 
 _B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
 _BLOOD_LABEL = 11   # tissue_db: Blood / vascular (the painted vessel tree)
+
+
+@dataclass(frozen=True)
+class _SliceCtx:
+    """The per-call inputs a sequence renderer needs — assembled once in
+    `_simulate_single_slice` and passed to the matched `_render_*` handler."""
+    phantom_slice: np.ndarray
+    params: dict
+    orient: str
+    sl_idx: int
+    TR: float
+    TE: float
+    TI: float
+    FA: float
+    tprops: dict
 
 # Partial-Fourier fractions (string label → actual fraction).
 _PF_MAP: dict[str, float] = {
@@ -462,95 +479,126 @@ class Simulator:
                    "Echo Planar (EPI)": "GRE", "Balanced SSFP": "bSSFP"}
         if seq in seq_map:
             return rendering.simulate_slice_props(phantom_slice, TR, TE, seq_map[seq], TI, FA, tprops)
-        elif seq == "Susceptibility (SWI)":
-            # Long-TE GRE magnitude × a negative phase mask from the local
-            # susceptibility field (tissue + paramagnetic venous blood), so veins
-            # / iron / microbleeds darken. swi.py does the homodyne + masking.
-            mag = rendering.simulate_slice_props(phantom_slice, TR, TE, "GRE", TI, FA, tprops)
-            B0_T = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-            field = self._b0_field_slice(orient, sl_idx, params, B0_T,
-                                         field_vol=self._swi_b0_volume(B0_T))
-            if field.shape != mag.shape:                      # geometry guard
-                return mag
-            phase = swi.field_to_phase(field, TE)
-            return swi.swi_combine(mag, phase, power=4, hp_sigma=8.0)
-        elif seq == "FSE / TSE":
-            return simulate_fse_image(phantom_slice, TR, TE, params["etl"], params["echo_spacing"], tprops)
-        elif seq == "Diffusion (DWI)":
-            direction = {"Left-Right": [1.0, 0.0], "Up-Down": [0.0, 1.0], "Diagonal": [0.707, 0.707]}[params["diff_direction"]]
-            if params["diff_display"] == "DWI":
-                return simulate_diffusion_3d_slice(phantom_slice, params["b_value"], direction, TR, TE)
-            elif params["diff_display"] == "ADC Map":
-                return simulate_adc_map_3d(phantom_slice)
-            elif params["diff_display"] == "FA Map":
-                return simulate_fa_map_3d(phantom_slice)
-        elif seq == "Perfusion (ASL)":
-            # Arterial spin labeling: the label−control difference is the perfusion-
-            # weighted image (~1% modulation, grey matter brightest); calibrated against
-            # blood T1 it yields a quantitative CBF map. perfusion.py does the kinetics.
-            field = params.get("field_strength", "3T")
-            if params.get("perf_display") == "CBF Map":
-                return perfusion.compute_cbf_map(phantom_slice, field)
-            return perfusion.simulate_asl_weighted(
-                phantom_slice, field, params.get("pld", 1800.0), params.get("label_duration", 1800.0))
-        elif seq == "Perfusion (Dynamic)":
-            # Dynamic contrast-bolus perfusion (DSC + DCE). The per-slice engine has no
-            # time axis, so dsc_dce.py models the bolus / uptake kinetics and we emit the
-            # fitted parameter maps. All displays are quantitative maps.
-            disp = params.get("perf_dyn_display", "CBV (DSC)")
-            if "Ktrans" in disp:
-                return dsc_dce.compute_ktrans_map(phantom_slice)
-            if "MTT" in disp:
-                return dsc_dce.compute_mtt_map(phantom_slice)
-            if "CBF" in disp:
-                return dsc_dce.compute_cbf_map(phantom_slice)
-            return dsc_dce.compute_cbv_map(phantom_slice)
-        elif seq == "MR Angiography":
-            # Maneuverable rotating MIP of the 3D angio volume (azimuth/elevation),
-            # the way an angiogram is reviewed — not a fixed slice. During an
-            # interactive click-drag rotate, project a 2x-downsampled volume so the
-            # MIP stays responsive (~8x faster); full resolution renders on release.
-            # TOF projects inflow brightness; Phase Contrast projects velocity.
-            if params.get("angio_type") == "Phase Contrast":
-                vol = self._pc_volume(params.get("venc", 80.0),
-                                      params.get("pc_flow_velocity", 60.0),
-                                      params.get("angio_display", "Speed"))
-            else:
-                vol = self._tof_volume(TR, TE, FA)
-            if params.get("angio_fast"):
-                vol = np.ascontiguousarray(vol[::2, ::2, ::2])
-            return angiography.rotating_mip(vol,
-                                            params.get("angio_azimuth", 0),
-                                            params.get("angio_elevation", 0))
-        elif seq == "fMRI (BOLD)":
-            # Slice the activation with the SAME FOV crop / oblique geometry as the
-            # phantom so the two stay pixel-aligned (else masking raises IndexError).
-            act = self._get_phantom_slice(orient, sl_idx, params, volume=self.activation)
-            if params["fmri_display"] == "EPI Image":
-                return simulate_fmri_3d_slice(phantom_slice, act, TR, TE, FA, True)
-            elif params["fmri_display"] == "Activation Map":
-                return compute_activation_map_3d(phantom_slice, act, TR, TE, FA)
-            elif params["fmri_display"] == "T-statistic Map":
-                img = compute_tstat_map_3d(phantom_slice, act, TR, TE, FA, params["fmri_volumes"])
-                return np.where(img > params["fmri_threshold"], img, 0)
-        elif seq == "Quantitative (qMRI)":
-            disp = params["qmri_display"]
-            if disp == "T1 Map (VFA)":
-                fas = [2.0, 5.0, 10.0, 15.0, 20.0]
-                series = qmri.simulate_vfa_series(phantom_slice, fas, TR_ms=15.0, TE_ms=3.0, tissue_props=tprops)
-                return qmri.vfa_t1_map(series, fas, 15.0)
-            elif disp == "T2 Map (multi-echo)":
-                tes = [10.0, 30.0, 50.0, 70.0, 90.0, 110.0]
-                series = qmri.simulate_multi_echo_series(phantom_slice, tes, TR_ms=2000.0, sequence="SE", tissue_props=tprops)
-                return qmri.multi_echo_t2_map(series, tes)
-            elif disp == "T2* Map (multi-echo)":
-                tes = [5.0, 10.0, 20.0, 30.0, 40.0, 50.0]
-                series = qmri.simulate_multi_echo_series(phantom_slice, tes, TR_ms=500.0, flip_angle_deg=FA, sequence="GRE", tissue_props=tprops)
-                return qmri.t2star_map(series, tes)
-            elif disp == "Synthetic SE":
-                T1m, T2m, PDm = rendering.param_maps(phantom_slice, tprops, ("T1", "T2", "PD"))
-                return qmri.synthetic_contrast(T1m, T2m, PDm, TR, TE, sequence="SE")
+
+        # Specialised sequences each have a `_render_*` handler — register a new
+        # sequence by adding one entry here. A handler may return None for an
+        # unmatched sub-display, in which case we fall back to a blank slice.
+        handler = {
+            "Susceptibility (SWI)": self._render_swi,
+            "FSE / TSE": self._render_fse,
+            "Diffusion (DWI)": self._render_diffusion,
+            "Perfusion (ASL)": self._render_asl,
+            "Perfusion (Dynamic)": self._render_dynamic_perfusion,
+            "MR Angiography": self._render_mra,
+            "fMRI (BOLD)": self._render_fmri,
+            "Quantitative (qMRI)": self._render_qmri,
+        }.get(seq)
+        if handler is not None:
+            out = handler(_SliceCtx(phantom_slice, params, orient, sl_idx, TR, TE, TI, FA, tprops))
+            if out is not None:
+                return out
         return np.zeros((181, 181), dtype=float)
+
+    def _render_swi(self, c: "_SliceCtx") -> "np.ndarray | None":
+        # Long-TE GRE magnitude × a negative phase mask from the local
+        # susceptibility field (tissue + paramagnetic venous blood), so veins
+        # / iron / microbleeds darken. swi.py does the homodyne + masking.
+        mag = rendering.simulate_slice_props(c.phantom_slice, c.TR, c.TE, "GRE", c.TI, c.FA, c.tprops)
+        B0_T = _B0_MAP.get(c.params.get("field_strength", "3T"), 3.0)
+        field = self._b0_field_slice(c.orient, c.sl_idx, c.params, B0_T,
+                                     field_vol=self._swi_b0_volume(B0_T))
+        if field.shape != mag.shape:                      # geometry guard
+            return mag
+        phase = swi.field_to_phase(field, c.TE)
+        return swi.swi_combine(mag, phase, power=4, hp_sigma=8.0)
+
+    def _render_fse(self, c: "_SliceCtx") -> "np.ndarray | None":
+        return simulate_fse_image(c.phantom_slice, c.TR, c.TE, c.params["etl"], c.params["echo_spacing"], c.tprops)
+
+    def _render_diffusion(self, c: "_SliceCtx") -> "np.ndarray | None":
+        direction = {"Left-Right": [1.0, 0.0], "Up-Down": [0.0, 1.0], "Diagonal": [0.707, 0.707]}[c.params["diff_direction"]]
+        disp = c.params["diff_display"]
+        if disp == "DWI":
+            return simulate_diffusion_3d_slice(c.phantom_slice, c.params["b_value"], direction, c.TR, c.TE)
+        if disp == "ADC Map":
+            return simulate_adc_map_3d(c.phantom_slice)
+        if disp == "FA Map":
+            return simulate_fa_map_3d(c.phantom_slice)
+        return None
+
+    def _render_asl(self, c: "_SliceCtx") -> "np.ndarray | None":
+        # Arterial spin labeling: the label−control difference is the perfusion-
+        # weighted image (~1% modulation, grey matter brightest); calibrated against
+        # blood T1 it yields a quantitative CBF map. perfusion.py does the kinetics.
+        field = c.params.get("field_strength", "3T")
+        if c.params.get("perf_display") == "CBF Map":
+            return perfusion.compute_cbf_map(c.phantom_slice, field)
+        return perfusion.simulate_asl_weighted(
+            c.phantom_slice, field, c.params.get("pld", 1800.0), c.params.get("label_duration", 1800.0))
+
+    def _render_dynamic_perfusion(self, c: "_SliceCtx") -> "np.ndarray | None":
+        # Dynamic contrast-bolus perfusion (DSC + DCE). The per-slice engine has no
+        # time axis, so dsc_dce.py models the bolus / uptake kinetics and we emit the
+        # fitted parameter maps. All displays are quantitative maps.
+        disp = c.params.get("perf_dyn_display", "CBV (DSC)")
+        if "Ktrans" in disp:
+            return dsc_dce.compute_ktrans_map(c.phantom_slice)
+        if "MTT" in disp:
+            return dsc_dce.compute_mtt_map(c.phantom_slice)
+        if "CBF" in disp:
+            return dsc_dce.compute_cbf_map(c.phantom_slice)
+        return dsc_dce.compute_cbv_map(c.phantom_slice)
+
+    def _render_mra(self, c: "_SliceCtx") -> "np.ndarray | None":
+        # Maneuverable rotating MIP of the 3D angio volume (azimuth/elevation),
+        # the way an angiogram is reviewed — not a fixed slice. During an
+        # interactive click-drag rotate, project a 2x-downsampled volume so the
+        # MIP stays responsive (~8x faster); full resolution renders on release.
+        # TOF projects inflow brightness; Phase Contrast projects velocity.
+        if c.params.get("angio_type") == "Phase Contrast":
+            vol = self._pc_volume(c.params.get("venc", 80.0),
+                                  c.params.get("pc_flow_velocity", 60.0),
+                                  c.params.get("angio_display", "Speed"))
+        else:
+            vol = self._tof_volume(c.TR, c.TE, c.FA)
+        if c.params.get("angio_fast"):
+            vol = np.ascontiguousarray(vol[::2, ::2, ::2])
+        return angiography.rotating_mip(vol,
+                                        c.params.get("angio_azimuth", 0),
+                                        c.params.get("angio_elevation", 0))
+
+    def _render_fmri(self, c: "_SliceCtx") -> "np.ndarray | None":
+        # Slice the activation with the SAME FOV crop / oblique geometry as the
+        # phantom so the two stay pixel-aligned (else masking raises IndexError).
+        act = self._get_phantom_slice(c.orient, c.sl_idx, c.params, volume=self.activation)
+        disp = c.params["fmri_display"]
+        if disp == "EPI Image":
+            return simulate_fmri_3d_slice(c.phantom_slice, act, c.TR, c.TE, c.FA, True)
+        if disp == "Activation Map":
+            return compute_activation_map_3d(c.phantom_slice, act, c.TR, c.TE, c.FA)
+        if disp == "T-statistic Map":
+            img = compute_tstat_map_3d(c.phantom_slice, act, c.TR, c.TE, c.FA, c.params["fmri_volumes"])
+            return np.where(img > c.params["fmri_threshold"], img, 0)
+        return None
+
+    def _render_qmri(self, c: "_SliceCtx") -> "np.ndarray | None":
+        disp = c.params["qmri_display"]
+        if disp == "T1 Map (VFA)":
+            fas = [2.0, 5.0, 10.0, 15.0, 20.0]
+            series = qmri.simulate_vfa_series(c.phantom_slice, fas, TR_ms=15.0, TE_ms=3.0, tissue_props=c.tprops)
+            return qmri.vfa_t1_map(series, fas, 15.0)
+        if disp == "T2 Map (multi-echo)":
+            tes = [10.0, 30.0, 50.0, 70.0, 90.0, 110.0]
+            series = qmri.simulate_multi_echo_series(c.phantom_slice, tes, TR_ms=2000.0, sequence="SE", tissue_props=c.tprops)
+            return qmri.multi_echo_t2_map(series, tes)
+        if disp == "T2* Map (multi-echo)":
+            tes = [5.0, 10.0, 20.0, 30.0, 40.0, 50.0]
+            series = qmri.simulate_multi_echo_series(c.phantom_slice, tes, TR_ms=500.0, flip_angle_deg=c.FA, sequence="GRE", tissue_props=c.tprops)
+            return qmri.t2star_map(series, tes)
+        if disp == "Synthetic SE":
+            T1m, T2m, PDm = rendering.param_maps(c.phantom_slice, c.tprops, ("T1", "T2", "PD"))
+            return qmri.synthetic_contrast(T1m, T2m, PDm, c.TR, c.TE, sequence="SE")
+        return None
 
     # --- full acquisition ---------------------------------------------------
     _THROUGH_AXIS = {"axial": 0, "coronal": 1, "sagittal": 2}
