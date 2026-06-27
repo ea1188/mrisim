@@ -1698,6 +1698,7 @@ function mathHTML(t) {
 function weighting(seq, tr, te) {
   const map = {
     "Diffusion (DWI)": "Diffusion", "MR Angiography": "Flow", "fMRI (BOLD)": "T2* (BOLD)",
+    "Perfusion (ASL)": "Perfusion", "Perfusion (Dynamic)": "Perfusion",
     "Quantitative (qMRI)": "Quantitative", "Echo Planar (EPI)": "T2* (EPI)",
     "Balanced SSFP": "T2/T1",
   };
