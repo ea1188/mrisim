@@ -7,10 +7,10 @@ import globals from "globals";
 export default [
   { ignores: ["node_modules/**"] },
 
-  // Main thread: classic script in the browser. `Tour` is the shared tour engine
-  // (web/tour.js, loaded before app.js).
+  // Main-thread classic scripts in the browser (the simulator + Protocol Planning
+  // pages). `Tour` is the shared tour engine (web/tour.js, loaded before them).
   {
-    files: ["web/app.js"],
+    files: ["web/app.js", "web/protocol.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",

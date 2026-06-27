@@ -15,7 +15,7 @@ const PLANES = ["sagittal", "coronal", "axial"];
 
 // ---- engine worker bridge (mirrors app.js) -------------------------------- //
 const worker = new Worker("worker.js");
-let reqId = 0, booted = false, workerDead = false;
+let reqId = 0, workerDead = false;
 const pending = new Map();
 function call(type, payload) {
   if (workerDead) return Promise.reject(new Error("the engine has stopped — please reload"));
@@ -44,7 +44,6 @@ worker.onmessage = (e) => {
 };
 
 // ---- state ---------------------------------------------------------------- //
-let exam = "Brain";
 let region = "Brain";
 let queue = [];          // [{id, preset, label, sequence, status, params, plan, image}]
 let active = null;       // open queue item
@@ -151,7 +150,7 @@ const IMAGE_EXAMS = {
 
 function loadImageExam(name) {
   imageExam = IMAGE_EXAMS[name];
-  exam = name; region = name;
+  region = name;
   seq = 0;
   queue = [{ id: ++seq, preset: LOCALIZER, label: "Localizer", sequence: null,
              status: "pending", image: null, plan: null }]
@@ -236,7 +235,6 @@ const startPpTour = () => Tour.start(TOUR, { storageKey: "mrisim_pp_tour" });
 
 // ---- boot ----------------------------------------------------------------- //
 async function onReady() {
-  booted = true;
   $("splash").hidden = true;
   $("pp-root").hidden = false;
   wireParamPanel();
@@ -254,7 +252,6 @@ async function loadExam(name) {
   if (name in IMAGE_EXAMS) { loadImageExam(name); return; }
   imageExam = null;
   showCredit(null);
-  exam = name;
   const info = await call("protocols", name);
   // exam picker (first time): simulated exams, then the image-library exams
   const sel = $("pp-exam");
