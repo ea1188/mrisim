@@ -1780,7 +1780,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             import rendering
             mapspec = rendering.quantitative_map_spec(
                 current_params["sequence"], current_params.get("qmri_display", ""),
-                current_params.get("diff_display", ""))
+                current_params.get("diff_display", ""), current_params.get("perf_display", ""))
             img_cmap = mapspec[0] if (mapspec and cmap == "gray") else cmap
             self.axes[0].imshow(image_b, cmap=img_cmap, origin="lower",
                                 vmin=vlo, vmax=vhi, aspect=_asp)

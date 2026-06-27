@@ -27,6 +27,7 @@ from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d
                                 simulate_fa_map_3d, simulate_fmri_3d_slice, compute_activation_map_3d,
                                 compute_tstat_map_3d)
 from presets import estimate_sar
+import perfusion
 
 import tissue_db
 import qmri
@@ -119,6 +120,7 @@ def default_params(**overrides: object) -> dict:
         angio_fast=False, venc=80.0, angio_display="Speed", pc_flow_velocity=60.0,
         fmri_display="EPI Image", fmri_volumes=100, fmri_threshold=3.0,
         qmri_display="T1 Map (VFA)",
+        perf_display="Perfusion-weighted", pld=1800.0, label_duration=1800.0,
         field_strength="3T", contrast_enabled=False, contrast_dose=1,
         motion_enabled=False, motion_type="periodic", motion_amplitude=3.0,
         chemical_shift_enabled=False, susceptibility_enabled=False,
@@ -480,6 +482,15 @@ class Simulator:
                 return simulate_adc_map_3d(phantom_slice)
             elif params["diff_display"] == "FA Map":
                 return simulate_fa_map_3d(phantom_slice)
+        elif seq == "Perfusion (ASL)":
+            # Arterial spin labeling: the label−control difference is the perfusion-
+            # weighted image (~1% modulation, grey matter brightest); calibrated against
+            # blood T1 it yields a quantitative CBF map. perfusion.py does the kinetics.
+            field = params.get("field_strength", "3T")
+            if params.get("perf_display") == "CBF Map":
+                return perfusion.compute_cbf_map(phantom_slice, field)
+            return perfusion.simulate_asl_weighted(
+                phantom_slice, field, params.get("pld", 1800.0), params.get("label_duration", 1800.0))
         elif seq == "MR Angiography":
             # Maneuverable rotating MIP of the 3D angio volume (azimuth/elevation),
             # the way an angiogram is reviewed — not a fixed slice. During an
@@ -670,6 +681,7 @@ class Simulator:
         is_map = params["sequence"] == "Diffusion (DWI)" and params["diff_display"] in ["ADC Map", "FA Map"]
         is_map = is_map or (params["sequence"] == "fMRI (BOLD)" and params["fmri_display"] in ["Activation Map", "T-statistic Map"])
         is_map = is_map or (params["sequence"] == "Quantitative (qMRI)")
+        is_map = is_map or (params["sequence"] == "Perfusion (ASL)" and params.get("perf_display") == "CBF Map")
         # MRA renders a 3D-projection MIP, not a slice acquisition — bypass the
         # texture/k-space/noise pipeline and display the projection directly.
         is_map = is_map or (params["sequence"] == "MR Angiography")
@@ -885,7 +897,7 @@ class Simulator:
         scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000
         seq_map = {"Spin Echo": "SE", "FSE / TSE": "SE", "Gradient Echo": "GRE", "Inversion Recovery": "IR",
                    "Diffusion (DWI)": "Diffusion", "MR Angiography": "GRE", "fMRI (BOLD)": "EPI",
-                   "Echo Planar (EPI)": "EPI", "Balanced SSFP": "GRE"}
+                   "Perfusion (ASL)": "EPI", "Echo Planar (EPI)": "EPI", "Balanced SSFP": "GRE"}
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
         sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2

@@ -122,6 +122,20 @@ def test_t2_map_exceeds_t2star_map(sim):
     assert t2.max() > t2s.max()
 
 
+@pytest.mark.parametrize("disp", ["Perfusion-weighted", "CBF Map"])
+def test_perfusion_asl_renders(sim, disp):
+    """ASL perfusion renders both displays via the engine; grey-matter flow > white > 0,
+    and the CBF map is in the physiological range."""
+    p = base_params(sequence="Perfusion (ASL)", perf_display=disp)
+    img, _ = sim.simulate(p)
+    assert np.isfinite(img).all() and img.max() > 0
+    labels = sim._get_phantom_slice("axial", sim.slice_idx, p)
+    gm, wm = img[labels == 2], img[labels == 3]
+    assert gm.mean() > wm.mean() > 0                 # grey-matter perfusion exceeds white
+    if disp == "CBF Map":
+        assert 40 < gm.mean() < 90                   # physiological grey-matter CBF (mL/100g/min)
+
+
 def test_accel_lowers_snr_via_real_g_factor(sim):
     """R=3 carries a g-factor > 1, so its metric reflects the real coil penalty."""
     _, m1 = sim.simulate(base_params(accel_factor=1))
