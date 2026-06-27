@@ -19,10 +19,16 @@ try {
 
   // Old shareable deep links (index.html#<state>) must redirect to the simulator,
   // carrying the hash so existing links keep working.
-  await page.goto(base + "index.html#test", { waitUntil: "commit" });
-  // match on 'commit' — simulator.html then loads Pyodide (~30 MB), so don't wait for 'load'.
-  await page.waitForURL(/simulator\.html#test$/, { timeout: 10_000, waitUntil: "commit" });
-  console.log("deep-link redirect index.html#… → simulator.html ✓");
+  // (the head-script redirect fires during parse, replacing index.html with simulator.html;
+  //  poll page.url() rather than waitForURL, which races with the cancel-and-replace nav.)
+  await page.goto(base + "index.html#test", { waitUntil: "commit" }).catch(() => {});
+  let target = page.url();
+  for (let i = 0; i < 60 && !/simulator\.html#test$/.test(target); i++) {
+    await page.waitForTimeout(200);
+    target = page.url();
+  }
+  if (!/simulator\.html#test$/.test(target)) fail(`deep link did not redirect (final url: ${target})`);
+  else console.log("deep-link redirect index.html#… → simulator.html ✓");
 
   if (process.exitCode) console.error("HOME SMOKE FAILED"); else console.log("HOME SMOKE PASSED");
 } catch (e) {
