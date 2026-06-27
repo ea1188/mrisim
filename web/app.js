@@ -190,6 +190,8 @@ async function applyState(st) {
   if (st.angiotype) $("angiotype").value = st.angiotype;
   if (st.qmridisp) $("qmridisp").value = st.qmridisp;
   if (st.fmridisp) $("fmridisp").value = st.fmridisp;
+  if (st.perfdisp) $("perfdisp").value = st.perfdisp;
+  if (st.perfdyndisp) $("perfdyndisp").value = st.perfdyndisp;
   if (st.curvemode) $("curvemode").value = st.curvemode;
   if (st.receivecoil) $("receivecoil").value = st.receivecoil;
   // Pathology select (back-compat: the old boolean `lesion` maps to "lesion").
