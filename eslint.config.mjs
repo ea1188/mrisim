@@ -7,9 +7,25 @@ import globals from "globals";
 export default [
   { ignores: ["node_modules/**"] },
 
-  // Main thread: classic script in the browser.
+  // Main thread: classic script in the browser. `Tour` is the shared tour engine
+  // (web/tour.js, loaded before app.js).
   {
     files: ["web/app.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: { ...globals.browser, Tour: "readonly" },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      // Allow intentionally-unused error bindings (catch (e) { /* ignore */ }).
+      "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
+    },
+  },
+
+  // Shared tour engine: classic script that defines window.Tour for both pages.
+  {
+    files: ["web/tour.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
@@ -17,7 +33,6 @@ export default [
     },
     rules: {
       ...js.configs.recommended.rules,
-      // Allow intentionally-unused error bindings (catch (e) { /* ignore */ }).
       "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
     },
   },

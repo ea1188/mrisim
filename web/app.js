@@ -269,11 +269,9 @@ function hideIntro() { closeDialog("intro"); localStorage.setItem("mrisim_seen",
 function maybeShowIntro() {
   $("intro-ok").addEventListener("click", hideIntro);
   $("intro-x").addEventListener("click", hideIntro);
-  $("intro-tour").addEventListener("click", () => { hideIntro(); startTour(); });
+  $("intro-tour").addEventListener("click", () => { hideIntro(); Tour.start(TOUR, { storageKey: "mrisim_tour" }); });
   $("help").addEventListener("click", showIntro);
-  $("tour-next").addEventListener("click", nextTour);
-  $("tour-prev").addEventListener("click", prevTour);
-  $("tour-skip").addEventListener("click", endTour);
+  Tour.wire();
   try { if (!localStorage.getItem("mrisim_seen")) showIntro(); } catch (e) { /* private mode */ }
 }
 
@@ -302,63 +300,8 @@ const TOUR = [
   { el: "#lessons-btn", title: "Learn from scratch",
     text: "New to MRI? Open <b>📖 Lessons</b> for short guided walkthroughs, or <b>🎓 Curriculum</b> for a beginner path. You can re-open this tour anytime from <b>?</b>." },
 ];
-let tourIdx = 0;
-
-function startTour() {
-  tourIdx = 0;
-  $("tour").hidden = false;
-  showTourStep();
-  window.addEventListener("resize", repositionTour);
-  window.addEventListener("keydown", tourKey);
-}
-function endTour() {
-  $("tour").hidden = true;
-  window.removeEventListener("resize", repositionTour);
-  window.removeEventListener("keydown", tourKey);
-  try { localStorage.setItem("mrisim_tour", "1"); } catch (e) { /* private mode */ }
-}
-function tourKey(e) {
-  if (e.key === "Escape") endTour();
-  else if (e.key === "ArrowRight") nextTour();
-  else if (e.key === "ArrowLeft") prevTour();
-}
-function nextTour() { if (tourIdx >= TOUR.length - 1) { endTour(); return; } tourIdx++; showTourStep(); }
-function prevTour() { if (tourIdx > 0) { tourIdx--; showTourStep(); } }
-
-function showTourStep() {
-  const step = TOUR[tourIdx];
-  const el = document.querySelector(step.el);
-  if (!el) { nextTour(); return; }                 // skip a control that isn't present
-  const sec = el.closest("details.group");
-  if (sec && !sec.open) sec.open = true;            // open a collapsed section
-  // Skip a target with no layout box (e.g. the curve panel when the curve is hidden).
-  if (!el.offsetParent && el.getClientRects().length === 0) { nextTour(); return; }
-  el.scrollIntoView({ block: "center", behavior: "smooth" });
-  $("tour-title").textContent = step.title;
-  $("tour-text").innerHTML = step.text;
-  $("tour-progress").textContent = `${tourIdx + 1} / ${TOUR.length}`;
-  $("tour-prev").disabled = tourIdx === 0;
-  $("tour-next").textContent = tourIdx === TOUR.length - 1 ? "Done" : "Next ›";
-  setTimeout(repositionTour, 220);                 // after the scroll/layout settles
-}
-function repositionTour() {
-  if ($("tour").hidden) return;
-  const el = document.querySelector(TOUR[tourIdx].el);
-  if (!el) return;
-  const r = el.getBoundingClientRect();
-  const pad = 6, spot = $("tour-spot");
-  spot.style.left = (r.left - pad) + "px"; spot.style.top = (r.top - pad) + "px";
-  spot.style.width = (r.width + 2 * pad) + "px"; spot.style.height = (r.height + 2 * pad) + "px";
-  // Place the tooltip beside the target, clamped to the viewport.
-  const pop = $("tour-pop");
-  pop.style.visibility = "hidden"; pop.style.left = "0px"; pop.style.top = "0px";
-  const pw = pop.offsetWidth, ph = pop.offsetHeight, m = 12;
-  let left = r.right + m;
-  if (left + pw > window.innerWidth - 8) left = r.left - pw - m;     // flip to the left
-  if (left < 8) left = Math.min(Math.max(8, r.left), window.innerWidth - pw - 8);
-  let top = Math.max(8, Math.min(r.top + r.height / 2 - ph / 2, window.innerHeight - ph - 8));
-  pop.style.left = left + "px"; pop.style.top = top + "px"; pop.style.visibility = "visible";
-}
+// The tour engine lives in web/tour.js (shared with the Protocol Planning page);
+// app.js just supplies the steps above and drives it via window.Tour.
 
 // --- Guided lessons --------------------------------------------------------- //
 // Guided-lesson data lives in lessons.json (single source shared with the
