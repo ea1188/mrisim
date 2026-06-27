@@ -21,7 +21,7 @@ from presets import (get_preset, get_preset_names, get_preset_region,
 # The sequences offered in the GUI dropdown (app_qt build_controls).
 SEQUENCES = [
     "Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-    "Balanced SSFP", "Diffusion (DWI)", "Perfusion (ASL)", "MR Angiography", "Susceptibility (SWI)",
+    "Balanced SSFP", "Diffusion (DWI)", "Perfusion (ASL)", "Perfusion (Dynamic)", "MR Angiography", "Susceptibility (SWI)",
     "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)",
 ]
 

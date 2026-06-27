@@ -136,6 +136,21 @@ def test_perfusion_asl_renders(sim, disp):
         assert 40 < gm.mean() < 90                   # physiological grey-matter CBF (mL/100g/min)
 
 
+@pytest.mark.parametrize("disp", ["CBV (DSC)", "CBF (DSC)", "MTT (DSC)", "Ktrans (DCE)"])
+def test_perfusion_dynamic_renders(sim, disp):
+    """DSC/DCE dynamic perfusion renders every parameter map via the engine; grey matter
+    differs from white (perfused tissue) and the values are non-negative + finite."""
+    p = base_params(sequence="Perfusion (Dynamic)", perf_dyn_display=disp)
+    img, _ = sim.simulate(p)
+    assert np.isfinite(img).all() and img.min() >= 0 and img.max() > 0
+    labels = sim._get_phantom_slice("axial", sim.slice_idx, p)
+    gm, wm = img[labels == 2], img[labels == 3]
+    if disp in ("CBV (DSC)", "CBF (DSC)"):
+        assert gm.mean() > wm.mean() > 0             # grey > white blood volume / flow
+    elif disp == "MTT (DSC)":
+        assert wm.mean() > gm.mean() > 0             # white matter: longer transit time
+
+
 def test_accel_lowers_snr_via_real_g_factor(sim):
     """R=3 carries a g-factor > 1, so its metric reflects the real coil penalty."""
     _, m1 = sim.simulate(base_params(accel_factor=1))

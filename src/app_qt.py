@@ -413,6 +413,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self.qmri_display = Var("T1 Map (VFA)")
         # ASL perfusion (label-control weighted image / quantitative CBF map)
         self.perf_display = Var("Perfusion-weighted")
+        # DSC/DCE dynamic perfusion (CBV / CBF / MTT / Ktrans parameter maps)
+        self.perf_dyn_display = Var("CBV (DSC)")
 
         # Echo-planar imaging (integer Vars; interpreted as scaled units)
         self.epi_esp = Var(5)            # echo spacing, ×0.1 ms  (5 = 0.5 ms)
@@ -1203,7 +1205,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._seq_dropdown = self._dropdown(SL, "Sequence", self.sequence_type,
                        ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
                         "Balanced SSFP",
-                        "Diffusion (DWI)", "Perfusion (ASL)", "MR Angiography", "Susceptibility (SWI)",
+                        "Diffusion (DWI)", "Perfusion (ASL)", "Perfusion (Dynamic)", "MR Angiography", "Susceptibility (SWI)",
                         "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)"],
                        self.on_sequence_change)
         self.desc_label = DLabel("", base_style="color:#6b7585; font-size:9px; padding:2px 2px;")
@@ -1278,6 +1280,12 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         perf_l = QVBoxLayout(self.perf_frame); perf_l.setContentsMargins(0, 0, 0, 0); perf_l.setSpacing(1)
         self._dropdown(perf_l, "Display", self.perf_display, ["Perfusion-weighted", "CBF Map"], self.schedule_recalculate)
         TL.addWidget(self.perf_frame)
+
+        self.perf_dyn_frame = QWidget()
+        perf_dyn_l = QVBoxLayout(self.perf_dyn_frame); perf_dyn_l.setContentsMargins(0, 0, 0, 0); perf_dyn_l.setSpacing(1)
+        self._dropdown(perf_dyn_l, "Dynamic map", self.perf_dyn_display,
+                       ["CBV (DSC)", "CBF (DSC)", "MTT (DSC)", "Ktrans (DCE)"], self.schedule_recalculate)
+        TL.addWidget(self.perf_dyn_frame)
 
         self.angio_frame = QWidget()
         angio_l = QVBoxLayout(self.angio_frame); angio_l.setContentsMargins(0, 0, 0, 0); angio_l.setSpacing(1)
@@ -1562,7 +1570,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
                 "angio_fast": getattr(self, "_mra_rotating", False),
                 "fmri_display": self.fmri_display.get(), "fmri_volumes": self.fmri_volumes.get(),
                 "fmri_threshold": self.fmri_threshold.get(), "qmri_display": self.qmri_display.get(),
-                "perf_display": self.perf_display.get(),
+                "perf_display": self.perf_display.get(), "perf_dyn_display": self.perf_dyn_display.get(),
                 "epi_esp": self.epi_esp.get(), "epi_b0_hz": self.epi_b0_hz.get(),
                 "epi_ghost": self.epi_ghost.get(), "epi_correct_ghost": self.epi_correct_ghost.get(),
                 "slice_thickness": self.slice_thickness.get(), "snr_level": self.snr_level.get(),
@@ -1789,7 +1797,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             import rendering
             mapspec = rendering.quantitative_map_spec(
                 current_params["sequence"], current_params.get("qmri_display", ""),
-                current_params.get("diff_display", ""), current_params.get("perf_display", ""))
+                current_params.get("diff_display", ""), current_params.get("perf_display", ""),
+                current_params.get("perf_dyn_display", ""))
             img_cmap = mapspec[0] if (mapspec and cmap == "gray") else cmap
             self.axes[0].imshow(image_b, cmap=img_cmap, origin="lower",
                                 vmin=vlo, vmax=vhi, aspect=_asp)
@@ -2126,7 +2135,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         for k, v in [("b_value", self.b_value), ("diff_direction", self.diff_direction), ("diff_display", self.diff_display),
                      ("angio_type", self.angio_type), ("angio_mip_slab", self.angio_mip_slab),
                      ("fmri_display", self.fmri_display), ("fmri_volumes", self.fmri_volumes), ("fmri_threshold", self.fmri_threshold),
-                     ("perf_display", self.perf_display)]:
+                     ("perf_display", self.perf_display), ("perf_dyn_display", self.perf_dyn_display)]:
             if k in p: v.set(p[k])
         # Gadolinium: post-contrast presets enable it; reset to off otherwise so
         # switching back to a non-contrast preset clears it.
@@ -2194,7 +2203,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
     def on_sequence_change(self) -> None:
         seq = self.sequence_type.get()
         for frame in (self.ti_frame, self.fa_frame, self.fse_frame,
-                      self.diff_frame, self.perf_frame, self.angio_frame, self.fmri_frame,
+                      self.diff_frame, self.perf_frame, self.perf_dyn_frame, self.angio_frame, self.fmri_frame,
                       self.qmri_frame, self.epi_frame):
             frame.setVisible(False)
         if seq == "Inversion Recovery":
@@ -2210,6 +2219,8 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
             self.diff_frame.setVisible(True)
         elif seq == "Perfusion (ASL)":
             self.perf_frame.setVisible(True)
+        elif seq == "Perfusion (Dynamic)":
+            self.perf_dyn_frame.setVisible(True)
         elif seq == "MR Angiography":
             self.angio_frame.setVisible(True); self.fa_frame.setVisible(True)
         elif seq == "fMRI (BOLD)":
