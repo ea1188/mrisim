@@ -281,6 +281,14 @@ try {
   if (!/Radiopaedia/.test(credit)) fail(`image exam credit not shown (got "${credit}")`);
   console.log("image-library exam (Ankle): static scouts + in-plane FOV box + example acquire + credit ✓");
 
+  // after acquiring, "↻ Re-prescribe" restores the planning view so you can set it up again
+  await page.waitForFunction(() => !document.querySelector("#pp-replan").hidden, { timeout: 5_000 });
+  await page.click("#pp-replan");
+  await page.waitForFunction(            // the acquired (axial) plane is a plannable scout again (FOV box back)
+    () => document.querySelector("#pp-replan").hidden
+      && !!document.querySelector("#vp-axial svg.pp-ov rect[stroke='#7fb8ff']"), { timeout: 5_000 });
+  console.log("image-exam: re-prescribe restores the planning view ✓");
+
   // guided tour: opens from the button, steps through, and closes
   await page.click("#pp-tour-btn");
   await page.waitForFunction(() => !document.querySelector("#tour").hidden, { timeout: 5_000 });
