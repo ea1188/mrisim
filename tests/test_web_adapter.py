@@ -299,6 +299,32 @@ def test_scout_renders(orient):
     assert cross_angles == ["rot", "tilt"], f"{orient}: cross panels don't cover both DOF"
 
 
+def test_scout_bakes_overlay_only_when_requested():
+    """Characterise the baked overlay — the part the geometry tests don't cover. The
+    main-app localizer bakes the prescription into the PNG (``bake_overlays`` default
+    True): the acquired panel draws the FOV-box rectangle and the cross panels draw the
+    slice band. The protocol page asks for background-only (``bake_overlays`` False) and
+    gets neither — it draws the overlay client-side as an SVG. This pins the bake gating
+    so a render_scout refactor can't silently drop (or always draw) the baked overlay."""
+    from matplotlib.patches import Rectangle
+    wa.init()
+    h = wa._host()
+    payload = {"region": "Brain", "orientation": "axial", "slice_idx": 80,
+               "inplane_fov_pct": 70, "tilt": 0.0, "rot": 0.0,
+               "params": {"sequence": "Spin Echo", "n_slices": 3, "slice_thickness": 5}}
+    # scout_axes are [axial, coronal, sagittal]; axial == orientation == the acquired plane.
+    h.render_scout({**payload, "bake_overlays": True})
+    acq_ax, cross_ax = h.scout_axes[0], h.scout_axes[1]
+    assert any(isinstance(p, Rectangle) for p in acq_ax.patches), \
+        "baked acquired panel must draw the FOV-box rectangle"
+    assert len(cross_ax.lines) >= 4, \
+        f"baked cross panel must draw the slice band (got {len(cross_ax.lines)} lines)"
+
+    h.render_scout({**payload, "bake_overlays": False})
+    assert not any(isinstance(p, Rectangle) for p in h.scout_axes[0].patches), \
+        "background-only render must not bake the FOV box (the client draws it)"
+
+
 def test_double_oblique_renders_distinctly():
     """tilt, rot and tilt+rot must each produce a distinct image (both oblique
     degrees of freedom are honoured, not just one)."""
