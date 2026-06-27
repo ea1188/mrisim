@@ -75,7 +75,7 @@ def _field_T(field: str | float) -> float:
 
 def asl_delta_fraction(
     cbf: "float | np.ndarray",
-    pld_ms: float,
+    pld_ms: "float | np.ndarray",
     label_dur_ms: float,
     t1_blood_ms: float,
     alpha: float = LABEL_EFFICIENCY,

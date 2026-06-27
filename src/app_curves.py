@@ -12,6 +12,8 @@ from signal_engine import (spin_echo_signal, gradient_echo_signal,
                            inversion_recovery_signal, balanced_ssfp_signal)
 from fse import compute_fse_echo_train
 from phantom3d_extended import get_diffusion_properties_3d
+import perfusion
+import dsc_dce
 from theme_colors import C_CHIP, C_BORDER, C_TEXT, C_HEADER, C_TEXT_DIM, C_ACCENT
 
 
@@ -93,6 +95,44 @@ class CurvesMixin:
             ax.axvline(x=TE, color='yellow', linestyle='--', alpha=0.7, label=f'TE={TE:.0f}')
             ax.set_xlabel('TE (ms)', color='white')
             ax.set_title('BOLD Sensitivity vs TE', color='white', fontsize=11)
+
+        elif seq == "Perfusion (Dynamic)":
+            disp = params.get("perf_dyn_display", "CBV (DSC)")
+            if "Ktrans" in disp:
+                # DCE Tofts uptake: behind an intact blood–brain barrier the curve stays
+                # ~flat (Ktrans≈0); leaky tumour vasculature enhances over the acquisition.
+                t = np.linspace(0.0, 6.0, 240)            # minutes
+                for name, color, lab in [("Grey matter", '#69db7c', 2), ("White matter", '#ff6b6b', 3), ("Tumour", '#ffd43b', 26)]:
+                    ax.plot(t, dsc_dce.tofts_curve(t, dsc_dce.KTRANS_PERMIN[lab]), color=color, linewidth=2, label=name)
+                ax.set_xlabel('Time (min)', color='white')
+                ax.set_title('DCE uptake (Tofts) — Ktrans permeability', color='white', fontsize=11)
+            else:
+                # DSC first-pass bolus C(t) ∝ ΔR2*: peak height tracks CBF and width tracks
+                # MTT, so the area tracks CBV. A stroke core is low + delayed (long MTT);
+                # a tumour is high (raised CBV).
+                t = np.linspace(0.0, 60.0, 240)           # seconds
+                for name, color, lab in [("Grey matter", '#69db7c', 2), ("Infarct", '#74c0fc', 24), ("Tumour", '#ffd43b', 26)]:
+                    cbf, cbv = perfusion.CBF_ML100G[lab], dsc_dce.CBV_ML100G[lab]
+                    mtt = 60.0 * cbv / cbf                # central volume theorem (s)
+                    c = dsc_dce.gamma_variate(t, t0=8.0, alpha=3.0, beta=mtt / 3.0, amp=1.0)
+                    c = c / (float(np.max(c)) or 1.0) * (cbf / 60.0)   # peak height ∝ CBF (grey ≈ 1)
+                    ax.plot(t, c, color=color, linewidth=2, label=name)
+                ax.set_xlabel('Time (s)', color='white')
+                ax.set_title('DSC first-pass bolus — area ∝ CBV, width ∝ MTT', color='white', fontsize=11)
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
+
+        elif seq == "Perfusion (ASL)":
+            # The labelled blood signal decays with the post-label delay (blood T1), and
+            # grey-matter flow exceeds white; the marker shows the prescribed PLD.
+            pld = np.linspace(0.0, 4000.0, 200)           # ms
+            for name, color, lab in [("Grey matter", '#69db7c', 2), ("White matter", '#ff6b6b', 3)]:
+                frac = perfusion.asl_delta_fraction(np.full_like(pld, perfusion.CBF_ML100G[lab]), pld, 1800.0, 1650.0)
+                ax.plot(pld, np.asarray(frac) * 100.0, color=color, linewidth=2, label=name)
+            cur_pld = float(params.get("pld", 1800.0))
+            ax.axvline(x=cur_pld, color='yellow', linestyle='--', alpha=0.7, label=f'PLD={cur_pld:.0f}')
+            ax.set_xlabel('Post-label delay (ms)', color='white')
+            ax.set_title('ASL signal ΔM vs PLD (% of M0)', color='white', fontsize=11)
+            ax.legend(fontsize=8, facecolor=C_CHIP, edgecolor=C_BORDER, labelcolor=C_TEXT, framealpha=0.95)
 
         # --- SE / GRE / IR with mode toggle --------------------------------
         elif mode == "TR recovery":
