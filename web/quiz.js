@@ -91,7 +91,7 @@ async function showQuestion() {
   try {
     const r = await call("render", q.setup);
     const img = $("qz-img");
-    img.onload = () => { img.style.display = ""; $("qz-imgmsg").style.display = "none"; };
+    img.onload = () => { img.style.display = "block"; $("qz-imgmsg").style.display = "none"; };
     img.src = r.image;
   } catch (e) {
     $("qz-imgmsg").textContent = "Could not render this question — try the next one.";
@@ -111,9 +111,9 @@ function answer(choice) {
   if (correct) score++;
   $("qz-feedback").innerHTML =
     (correct ? '<b class="ok">Correct.</b> ' : '<b class="no">Not quite.</b> ') + (q.explain || "");
-  $("qz-feedback").style.display = "";
+  $("qz-feedback").style.display = "block";
   $("qz-next").textContent = idx + 1 < questions.length ? "Next ▸" : "See results ▸";
-  $("qz-next").style.display = "";
+  $("qz-next").style.display = "inline-block";
   setScore();
 }
 
@@ -128,7 +128,7 @@ function showSummary() {
     pct >= 80 ? "Excellent — you can read these confidently." :
     pct >= 50 ? "Good start — review the ones you missed and try again." :
     "Worth another pass — the explanations after each answer are the study material.";
-  $("qz-summary").style.display = "";
+  $("qz-summary").style.display = "block";
   $("qz-score").textContent = `Score ${score} / ${n}`;
 }
 

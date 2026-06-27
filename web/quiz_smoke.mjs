@@ -15,12 +15,16 @@ page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 
+// check *computed* visibility (not the inline style string) so a CSS display:none
+// that JS fails to override is caught here, not only at the next click.
+const shown = (id) => getComputedStyle(document.getElementById(id)).display !== "none";
 const rendered = () => page.waitForFunction(
-  () => { const im = document.getElementById("qz-img"); return im && im.src.startsWith("data:image") && im.style.display !== "none"; },
+  () => { const im = document.getElementById("qz-img"); return im && im.src.startsWith("data:image") && getComputedStyle(im).display !== "none"; },
   { timeout: 25_000 });
 const feedbackShown = () => page.waitForFunction(
-  () => document.getElementById("qz-feedback").style.display !== "none", { timeout: 5_000 });
-const summaryShown = () => page.$eval("#qz-summary", (e) => e.style.display !== "none").catch(() => false);
+  () => getComputedStyle(document.getElementById("qz-feedback")).display !== "none" && getComputedStyle(document.getElementById("qz-next")).display !== "none",
+  { timeout: 5_000 });
+const summaryShown = () => page.evaluate(shown, "qz-summary").catch(() => false);
 
 try {
   await page.goto(url, { waitUntil: "domcontentloaded" });
