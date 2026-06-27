@@ -81,11 +81,13 @@ try {
     if (eAR > nAR) { ch = r.height; cw = ch * nAR; ox = (r.width - cw) / 2; oy = 0; }
     else { cw = r.width; ch = cw / nAR; ox = 0; oy = (r.height - ch) / 2; }
     const cc = g.center || [0.5, 0.5], b = g.band;
-    const gx = cc[0] + (b[1][0] - cc[0]) * 0.75, gy = cc[1] + (b[1][1] - cc[1]) * 0.75;  // on the band, off-centre
+    const gx = b[0][0] + (b[1][0] - b[0][0]) * 0.85, gy = b[0][1] + (b[1][1] - b[0][1]) * 0.85;  // on the band, near an end
+    const rx = gx - cc[0], ry = gy - cc[1], rl = Math.hypot(rx, ry) || 1;
+    const tx = -ry / rl, ty = rx / rl;             // unit tangent (perp to the radius) → changes the angle
     const cx = r.left + ox + gx * cw, cy = r.top + oy + gy * ch;
     const before = parseFloat(document.querySelector("#pp-tilt").value);
     img.dispatchEvent(new PointerEvent("pointerdown", { button: 0, clientX: cx, clientY: cy, bubbles: true }));
-    window.dispatchEvent(new PointerEvent("pointermove", { clientX: cx + cw * 0.12, clientY: cy + ch * 0.2, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointermove", { clientX: cx + tx * cw * 0.22, clientY: cy + ty * ch * 0.22, bubbles: true }));
     const after = parseFloat(document.querySelector("#pp-tilt").value);
     window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
     return { before, after };
