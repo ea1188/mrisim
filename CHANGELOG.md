@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.47.0] — 2026-06-27
+
+### Added
+- **Guided perfusion lesson.** A curriculum lesson walks ASL → DSC → DCE through reading
+  a stroke (low CBF + prolonged MTT) against a tumour (high CBV + leaky Ktrans), driven by
+  the real engine and the pathology labels, with the bolus/uptake curves alongside.
+
+### Changed
+- Internal: `_plot_curves` refactored to a curve-builder registry (cog 99 → ~5), and the
+  shared `render_overlay` viewport module is now test-covered (incl. the radiological
+  orientation-label convention) — no behaviour change.
+
 ## [1.46.0] — 2026-06-27
 
 ### Added
