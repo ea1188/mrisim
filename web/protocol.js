@@ -793,8 +793,82 @@ const OBLIQUE_SIGN = {
   coronal:  { axial: -1, sagittal: 1 },
 };
 
-function wireViewport(plane) {
-  const box = $("vp-" + plane);
+// Per-mode drag application. Each returns the live overlay override the drag should show
+// ({band} | {fovBox} | {bandDir}) or null, and mutates the open item's plan/params as a
+// side effect. `d` is the in-flight drag (mode, geom `p`, and per-mode start state).
+const DRAG_APPLY = {
+  slice(d, loc, plane) {
+    const p = d.p, pl = active.plan;
+    if (imageExam) {                                // image scout: move the slice centre to the cursor
+      const cx = clampN(loc.px, 0.12, 0.88), cy = clampN(loc.py, 0.12, 0.88);
+      pl.imgCtr = pl.imgCtr || {};
+      pl.imgCtr[plane] = [cx, cy];
+      const dir = (pl.imgDir && pl.imgDir[plane]) || [1, 0];
+      const L = Math.hypot(dir[0], dir[1]) || 1, ux = dir[0] / L * 0.42, uy = dir[1] / L * 0.42;
+      return { band: [[cx - ux, cy - uy], [cx + ux, cy + uy]] };
+    }
+    const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
+    pl.slice = clampN(Math.round(s), 0, p.n - 1);
+    if (!p.band) return null;                       // optimistic: the band follows the cursor
+    const isRow = p.map === "row";
+    const bc = p.center || [(p.band[0][0] + p.band[1][0]) / 2, (p.band[0][1] + p.band[1][1]) / 2];
+    const off = isRow ? loc.py - bc[1] : loc.px - bc[0], sh = isRow ? [0, off] : [off, 0];
+    return { band: [[p.band[0][0] + sh[0], p.band[0][1] + sh[1]], [p.band[1][0] + sh[0], p.band[1][1] + sh[1]]] };
+  },
+  recenter(d, loc) {
+    const p = d.p, pl = active.plan, fb = d.box0;
+    if (imageExam) {                                // move the in-plane FOV box to the cursor
+      const nx = clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), ny = clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]);
+      pl.imgFov = [nx, ny, fb[2], fb[3]];
+      return { fovBox: pl.imgFov };
+    }
+    const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
+    pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
+    if (!fb) return null;
+    return { fovBox: p.ip_dir === "x"               // optimistic: the box follows the cursor
+      ? [clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), fb[1], fb[2], fb[3]]
+      : [fb[0], clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]), fb[2], fb[3]] };
+  },
+  resize(d, loc) {
+    const pl = active.plan, fb = d.box0, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
+    if (imageExam) {                                // resize the in-plane FOV box around its centre
+      const hx = Math.min(Math.abs(loc.px - cx), cx, 1 - cx), hy = Math.min(Math.abs(loc.py - cy), cy, 1 - cy);
+      const w = Math.max(2 * hx, 0.12), h = Math.max(2 * hy, 0.12);
+      pl.imgFov = [cx - w / 2, cy - h / 2, w, h];
+      return { fovBox: pl.imgFov };
+    }
+    const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
+    pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
+    $("pp-fov").value = pl.fov_pct;
+    const s = pl.fov_pct / (d.pct0 || 100);         // scale the box around its centre
+    return { fovBox: [cx - fb[2] / 2 * s, cy - fb[3] / 2 * s, fb[2] * s, fb[3] * s] };
+  },
+  slices(d, loc) {                                  // drag the slab rim → number of slices
+    const p = d.p, perp = p.map === "row" ? loc.py : loc.px;
+    active.params.n_slices = clampN(Math.round(d.n0 * Math.abs(perp - p.slab.c) / (d.half0 || 0.03)), 1, 32);
+    $("pp-nsl").value = active.params.n_slices;
+    return null;
+  },
+  oblique(d, loc, plane) {                          // band tracks the cursor, locked to the applied angle
+    const p = d.p, pl = active.plan;
+    const sgn = (OBLIQUE_SIGN[pl.orientation] || {})[p.name] ?? 1;
+    let dth = Math.atan2(d.c[1] - loc.py, loc.px - d.c[0]) - d.theta0;   // y-up
+    dth = Math.atan2(Math.sin(dth), Math.cos(dth));                     // wrap to (−π, π]
+    const val = snapAngle(clampN(d.a0 + dth * 180 / Math.PI * sgn, -45, 45));
+    if (p.angle === "tilt") { pl.tilt = val; $("pp-tilt").value = val; }
+    else { pl.rot = val; $("pp-rot").value = val; }
+    // Draw at the *applied* angle (snapped + clamped), not the raw cursor: the band visibly
+    // snaps, never overshoots ±45°, and doesn't jump when the server render lands.
+    const yup = d.theta0 + ((val - d.a0) * sgn) * Math.PI / 180;
+    const bandDir = [Math.cos(yup), -Math.sin(yup)];
+    if (imageExam) { pl.imgDir = pl.imgDir || {}; pl.imgDir[plane] = bandDir; }   // persist cosmetic angle
+    return { bandDir };
+  },
+};
+
+// Plan a scout on a viewport: drag to angle / move / resize / set slices, with hover
+// affordances. (Acquired-series viewing — scroll, window/level, DnD — is wireSeriesViewer.)
+function wirePlanningDrag(plane, box) {
   let drag = null;
   const startDrag = (loc) => {
     const p = vpGeom[plane]; if (!p || !active) return null;
@@ -812,83 +886,19 @@ function wireViewport(plane) {
   };
   const applyDrag = (loc) => {
     if (!drag || !active) return;
-    const p = drag.p, pl = active.plan;
-    let live = null;
-    if (drag.mode === "slice" && imageExam) {       // image scout: move the slice centre to the cursor
-      const cx = clampN(loc.px, 0.12, 0.88), cy = clampN(loc.py, 0.12, 0.88);
-      pl.imgCtr = pl.imgCtr || {};
-      pl.imgCtr[plane] = [cx, cy];
-      const d = (pl.imgDir && pl.imgDir[plane]) || [1, 0];
-      const L = Math.hypot(d[0], d[1]) || 1, ux = d[0] / L * 0.42, uy = d[1] / L * 0.42;
-      live = { band: [[cx - ux, cy - uy], [cx + ux, cy + uy]] };
-    } else if (drag.mode === "slice") {            // slide the slice package along the cursor
-      const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
-      pl.slice = clampN(Math.round(s), 0, p.n - 1);
-      if (p.band) {                                // optimistic: the band follows the cursor
-        const isRow = p.map === "row";
-        const bc = p.center || [(p.band[0][0] + p.band[1][0]) / 2, (p.band[0][1] + p.band[1][1]) / 2];
-        const d = isRow ? loc.py - bc[1] : loc.px - bc[0];
-        const sh = isRow ? [0, d] : [d, 0];
-        live = { band: [[p.band[0][0] + sh[0], p.band[0][1] + sh[1]], [p.band[1][0] + sh[0], p.band[1][1] + sh[1]]] };
-      }
-    } else if (drag.mode === "recenter") {
-      const fb = drag.box0;
-      if (imageExam) {                              // move the in-plane FOV box to the cursor
-        const nx = clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), ny = clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]);
-        pl.imgFov = [nx, ny, fb[2], fb[3]];
-        live = { fovBox: pl.imgFov };
-      } else {
-        const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
-        pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
-        if (fb) live = { fovBox: p.ip_dir === "x"   // optimistic: the box follows the cursor
-          ? [clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), fb[1], fb[2], fb[3]]
-          : [fb[0], clampN(loc.py - fb[3] / 2, 0, 1 - fb[3]), fb[2], fb[3]] };
-      }
-    } else if (drag.mode === "resize") {
-      const fb = drag.box0, cx = fb[0] + fb[2] / 2, cy = fb[1] + fb[3] / 2;
-      if (imageExam) {                              // resize the in-plane FOV box around its centre
-        const hx = Math.min(Math.abs(loc.px - cx), cx, 1 - cx), hy = Math.min(Math.abs(loc.py - cy), cy, 1 - cy);
-        const w = Math.max(2 * hx, 0.12), h = Math.max(2 * hy, 0.12);
-        pl.imgFov = [cx - w / 2, cy - h / 2, w, h];
-        live = { fovBox: pl.imgFov };
-      } else {
-        const half = Math.max(Math.abs(loc.px - cx), Math.abs(loc.py - cy));
-        pl.fov_pct = Math.round(clampN(2 * half, 0.3, 1.0) * 100 / 5) * 5;
-        $("pp-fov").value = pl.fov_pct;
-        const s = pl.fov_pct / (drag.pct0 || 100);  // scale the box around its centre
-        live = { fovBox: [cx - fb[2] / 2 * s, cy - fb[3] / 2 * s, fb[2] * s, fb[3] * s] };
-      }
-    } else if (drag.mode === "slices") {           // drag the slab rim → number of slices
-      const perp = p.map === "row" ? loc.py : loc.px;
-      const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
-      active.params.n_slices = n; $("pp-nsl").value = n;
-    } else if (drag.mode === "oblique") {            // band tracks the cursor, locked to the applied angle
-      const sgn = (OBLIQUE_SIGN[pl.orientation] || {})[p.name] ?? 1;
-      let dth = Math.atan2(drag.c[1] - loc.py, loc.px - drag.c[0]) - drag.theta0;  // y-up
-      dth = Math.atan2(Math.sin(dth), Math.cos(dth));       // wrap to (−π, π]
-      const val = snapAngle(clampN(drag.a0 + dth * 180 / Math.PI * sgn, -45, 45));
-      if (p.angle === "tilt") { pl.tilt = val; $("pp-tilt").value = val; }
-      else { pl.rot = val; $("pp-rot").value = val; }
-      // Draw at the *applied* angle (snapped + clamped), not the raw cursor: the band
-      // visibly snaps, never overshoots ±45°, and doesn't jump when the server render lands.
-      const yup = drag.theta0 + ((val - drag.a0) * sgn) * Math.PI / 180;
-      live = { bandDir: [Math.cos(yup), -Math.sin(yup)] };
-      if (imageExam) {                          // persist the cosmetic angle per plane
-        active.plan.imgDir = active.plan.imgDir || {};
-        active.plan.imgDir[plane] = live.bandDir;
-      }
-    }
+    const fn = DRAG_APPLY[drag.mode];
+    const live = fn ? fn(drag, loc, plane) : null;
     updatePlanReadout();
-    scheduleOverlay(plane, null, live);                      // rAF-coalesced client-side feedback
-    drag.moved = true;                                       // sync exact backgrounds + geometry…
+    scheduleOverlay(plane, null, live);             // rAF-coalesced client-side feedback
+    drag.moved = true;                              // sync exact backgrounds + geometry on release
   };
-  const endDrag = () => {                                    // …on release
+  const endDrag = () => {
     if (drag) { box.style.cursor = ""; delete _ovPending[plane]; if (drag.moved) scheduleScouts(); }
     drag = null;
   };
   box.addEventListener("pointerdown", (e) => {
     const img = box.querySelector("img");
-    if (!img || !box._plannable) return;          // acquired series → view-only / draggable
+    if (!img || !box._plannable) return;            // acquired series → view-only / draggable
     const f = imgFraction(img, e.clientX, e.clientY); if (!f) return;
     drag = startDrag(f);
     if (drag) {
@@ -905,7 +915,7 @@ function wireViewport(plane) {
   window.addEventListener("pointerup", endDrag);
   window.addEventListener("pointercancel", endDrag);
 
-  // Hover feedback: cursor + highlight the handle under the pointer before you grab it.
+  // Hover: cursor + highlight the handle under the pointer before you grab it.
   box.addEventListener("pointermove", (e) => {
     if (drag) return;
     const img = box.querySelector("img");
@@ -913,23 +923,25 @@ function wireViewport(plane) {
     const f = imgFraction(img, e.clientX, e.clientY);
     const mode = f ? modeAt(vpGeom[plane], f) : null;
     box.style.cursor = f ? cursorFor(mode) : "";
-    scheduleOverlay(plane, mode);                            // enlarge the matching handle
+    scheduleOverlay(plane, mode);
   });
   box.addEventListener("pointerleave", () => { if (!drag) scheduleOverlay(plane, null); });
+}
 
-  // Scroll through the slices of an acquired series (wheel; arrow keys page the
-  // last-touched series — see wireParamPanel).
-  box.addEventListener("pointerenter", () => {
+// View an acquired series on a viewport: wheel/arrow paging, right-drag window/level,
+// drag-between-viewports, and double-click reset.
+function wireSeriesViewer(plane, box) {
+  box.addEventListener("pointerenter", () => {      // arrow keys page the last-touched series
     if (slotState[plane].kind === "series") lastSeriesPlane = plane;
   });
-  box.addEventListener("wheel", (e) => {
+  box.addEventListener("wheel", (e) => {            // scroll through the series' slices
     if (slotState[plane].kind !== "series" || !slotState[plane].payload) return;
     e.preventDefault();
     scrollSeries(plane, e.deltaY < 0 ? 1 : -1);
   }, { passive: false });
 
-  // Right-drag an acquired series → window / level (PACS convention): horizontal =
-  // contrast (window), vertical = brightness (level). Pure client-side CSS filter.
+  // Right-drag → window / level (PACS): horizontal = window (contrast), vertical = level
+  // (brightness). Pure client-side CSS filter.
   let wl = null;
   box.addEventListener("contextmenu", (e) => { if (slotState[plane].kind === "series") e.preventDefault(); });
   box.addEventListener("pointerdown", (e) => {
@@ -960,8 +972,8 @@ function wireViewport(plane) {
     const src = e.dataTransfer.getData("text/plane");
     if (src) moveSeries(src, plane);
   });
-  // Double-click: a series box brings its scout back; a scout box resets the
-  // prescription (angles + FOV) to straight/full — parity with the main app.
+  // Double-click: a series box brings its scout back; a scout box resets the prescription
+  // (angles + FOV) to straight / full — parity with the main app.
   box.addEventListener("dblclick", () => {
     if (slotState[plane].kind === "series") { revertSlot(plane); return; }
     if (!active || isLocalizer(active)) return;
@@ -969,6 +981,12 @@ function wireViewport(plane) {
     $("pp-tilt").value = 0; $("pp-rot").value = 0; $("pp-fov").value = 100;
     scheduleScouts();
   });
+}
+
+function wireViewport(plane) {
+  const box = $("vp-" + plane);
+  wirePlanningDrag(plane, box);   // scout planning (drag to angle / move / resize / slices)
+  wireSeriesViewer(plane, box);   // acquired-series viewing (scroll, window/level, DnD)
 }
 
 // ---- Apply & acquire ------------------------------------------------------ //
