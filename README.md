@@ -56,7 +56,7 @@ The PyQt6 app drives the physics engine in real time:
 
 ## Browser edition — learn MRI with nothing to install
 
-**[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)** runs the *real* Python engine entirely in your browser via [Pyodide](https://pyodide.org/) — no install, shareable by link, and it **works offline after the first load**. It's the same physics code as the desktop, with a teaching layer built on top.
+**[ea1188.github.io/mrisim](https://ea1188.github.io/mrisim/)** runs the *real* Python engine entirely in your browser via [Pyodide](https://pyodide.org/) — no install, shareable by link, and it **works offline after the first load**. It's the same physics code as the desktop, with a teaching layer built on top. The site opens on a small launcher where you pick a mode — the **simulator**, the **protocol planner**, or the **read-the-scan quiz** (and the three cross-link in their headers).
 
 **Same simulator, in the browser** — pick a sequence and sweep TR / TE / flip / TI, switch anatomy (brain + the real body atlases, fetched on demand) and orientation, toggle 3D slab acquisition, apply clinical presets, and **compare A/B** side by side. The 3-plane localizer is interactive (drag the FOV box, drag a slice band to angle the plane, click a cross panel to move the slice), and **3D reconstruction opens as a PACS-style 2×2 quad** — axial / coronal / sagittal reformats plus a 3-D MIP overview of the slab. Drag a **ruler or ROI** on the image (or any reformat) to read distances in mm and an ROI's mean / SD / SNR; switch the **receive coil** to see surface-vs-array sensitivity shading; and quantitative T1 / T2 / T2\* / ADC / FA maps render with **perceptual, colorblind-safe colormaps and calibrated colorbars**.
 

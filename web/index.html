@@ -3,434 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MRISim — interactive MRI physics in your browser</title>
-  <meta name="description" content="An interactive MRI physics simulator running entirely in your browser via Pyodide — no install." />
-  <link rel="icon" href="logo.png" />
+  <title>MRISim — an interactive MRI physics simulator</title>
+  <!-- Preserve old shareable deep links: index.html#<state> used to open the simulator
+       directly. The simulator now lives at simulator.html, so route the hash there. -->
+  <script>if (location.hash.length > 1) location.replace("simulator.html" + location.hash);</script>
+  <meta name="description" content="MRISim — learn MRI in your browser: a real physics simulator, a scanner-console protocol planner, and a read-the-scan quiz." />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: #0b0e12; color: #e6edf3; margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #home { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 32px 18px; box-sizing: border-box; }
+    #home .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    #home .brand img { width: 46px; height: 46px; }
+    #home h1 { font-size: 30px; margin: 0; letter-spacing: 0.3px; }
+    #home .tag { color: #9aa4b2; font-size: 15px; margin: 6px 0 28px; text-align: center; max-width: 560px; line-height: 1.4; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      width: min(960px, 100%); }
+    .card { display: block; text-decoration: none; color: inherit; background: #141a21;
+      border: 1px solid #232c36; border-radius: 10px; padding: 22px 20px; transition: border-color .12s, transform .12s, background .12s; }
+    .card:hover { border-color: #4f7eb0; background: #18222c; transform: translateY(-2px); }
+    .card .ico { font-size: 30px; }
+    .card h2 { font-size: 18px; margin: 12px 0 6px; }
+    .card p { color: #aab3bf; font-size: 13.5px; line-height: 1.45; margin: 0; }
+    .card .go { color: #7fb8ff; font-size: 13px; font-weight: 600; margin-top: 12px; display: inline-block; }
+    #home footer { margin-top: 30px; color: #7c8794; font-size: 12.5px; text-align: center; }
+    #home footer a { color: #7fb8ff; text-decoration: none; }
+    @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } #home h1 { font-size: 25px; } }
+  </style>
 </head>
 <body>
-  <!-- First-load splash: Pyodide + numpy/scipy/matplotlib + the brain (~30–50 MB,
-       cached after the first visit). -->
-  <div id="splash">
-    <div class="splash-card">
-      <img class="logo" src="logo.png" alt="MRISim logo" />
-      <h1>MRISim</h1>
-      <p id="splash-status">Starting…</p>
-      <div class="bar"><div id="splash-bar"></div></div>
-      <p class="splash-note">Runs the real Python engine in your browser via Pyodide.
-        First load downloads ~30–50&nbsp;MB (cached afterwards). For the fullest,
-        most robust experience, the <a href="https://github.com/ea1188/mrisim/releases/latest"
-        target="_blank" rel="noopener">desktop app</a> is the reference.</p>
+  <main id="home">
+    <div class="brand"><img src="logo.png" alt="" /><h1>MRISim</h1></div>
+    <p class="tag">An interactive MRI physics simulator — the real Python engine runs in your
+      browser. Choose how you want to learn.</p>
+
+    <div class="cards">
+      <a class="card" href="simulator.html">
+        <div class="ico">🧲</div>
+        <h2>Simulator</h2>
+        <p>The full physics simulator: sweep TR / TE / flip / TI, switch sequences and anatomy,
+          and watch k-space, 3-D reconstruction and quantitative maps update in real time.</p>
+        <span class="go">Open the simulator →</span>
+      </a>
+      <a class="card" href="protocol.html">
+        <div class="ico">🩻</div>
+        <h2>Protocol planning</h2>
+        <p>A scanner-console workflow: pick an exam, prescribe each sequence on the three-plane
+          scout images, and acquire it — one after another, like a real console.</p>
+        <span class="go">Plan an exam →</span>
+      </a>
+      <a class="card" href="quiz.html">
+        <div class="ico">🎯</div>
+        <h2>Quiz</h2>
+        <p>Read-the-scan self-test: identify the sequence, weighting, pathology and perfusion
+          maps by topic, with scored feedback and explanations.</p>
+        <span class="go">Take the quiz →</span>
+      </a>
     </div>
-  </div>
 
-  <!-- First-run intro (shown once; dismissal remembered in localStorage). -->
-  <div id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="intro-h">
-    <div class="intro-card">
-      <button id="intro-x" class="dialog-x" type="button" aria-label="Close" title="Close">✕</button>
-      <h2 id="intro-h">Welcome to MRISim</h2>
-      <p class="intro-sub">The real MRI physics engine, running in your browser.</p>
-      <div class="intro-body">
-      <ul>
-        <li><b>New to MRI?</b> Open <b>📖 Lessons</b> and start the <b>“Start here”</b> track — short reading-first walkthroughs. Or tick <b>Label the anatomy</b> to name the structures and <b>hover</b> any pixel to see which tissue it is and its T1/T2/PD.</li>
-        <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel. Each value is editable — <b>type an exact number</b> (or arrow-key it) instead of dragging. Section headers <b>collapse</b>, and the <b>🔍 Find a control</b> box at the top jumps you to any parameter.</li>
-        <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets); <b>hover</b> the image to read the tissue and its T1/T2/PD under the cursor. <i>On a touchscreen: drag with one finger to window/level, and use the <b>Slice</b> slider to scroll slices.</i></li>
-        <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
-        <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
-        <li><b>🩻 Protocol planning</b> — the <b>scanner-console workflow</b> (top-bar button): pick an exam, then <b>prescribe each sequence on the scout images</b> and acquire it, one after another, like a real console. Reports scan time + SNR, and you can drag/window-level/re-run the acquired series.</li>
-        <li><b>Contrast map</b> — toggle the TR×TE map to see the whole contrast landscape for a tissue pair (bright = high contrast), with your current protocol marked — so you can see <i>where</i> contrast comes from, not just one curve.</li>
-        <li><b>Show the math</b> — toggle it on, then hover a pixel to see the active sequence's signal equation with that tissue's T1/T2/PD and your TR/TE plugged in, and the resulting signal — the number that becomes the pixel.</li>
-      </ul>
-      <p class="intro-note">This browser edition is a convenience subset. For the fullest, most
-        robust experience — real body atlases, NIfTI/DICOM, the complete planning workflow and
-        faster rendering — grab the <a href="https://github.com/ea1188/mrisim/releases/latest"
-        target="_blank" rel="noopener">desktop app</a>.</p>
-      </div>
-      <div class="intro-actions">
-        <button id="intro-tour" type="button" class="intro-primary">▶ Take the feature tour</button>
-        <button id="intro-ok" type="button">Explore on my own</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Guided feature tour: a spotlight + tooltip that points at the real controls.
-       Non-modal (the page stays clickable); driven by the tooltip buttons. -->
-  <div id="tour" hidden>
-    <div id="tour-spot"></div>
-    <div id="tour-pop" role="dialog" aria-modal="false" aria-labelledby="tour-title">
-      <h3 id="tour-title"></h3>
-      <p id="tour-text"></p>
-      <div class="tour-foot">
-        <span id="tour-progress"></span>
-        <span class="tour-btns">
-          <button id="tour-skip" type="button">Skip</button>
-          <button id="tour-prev" type="button">‹ Back</button>
-          <button id="tour-next" type="button">Next ›</button>
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lesson picker (populated from app.js) -->
-  <div id="lesson-picker" hidden role="dialog" aria-modal="true" aria-labelledby="lp-h">
-    <div class="intro-card lesson-card">
-      <button id="lesson-picker-x" class="dialog-x" type="button" aria-label="Close lessons" title="Close">✕</button>
-      <h2 id="lp-h">Guided lessons</h2>
-      <p class="intro-sub">Short walkthroughs — each step sets up the scanner and explains what you see.</p>
-      <div id="lesson-list"></div>
-      <button id="lesson-picker-close" type="button">Close</button>
-    </div>
-  </div>
-
-  <!-- Guided curriculum (beginner path, populated from app.js) -->
-  <div id="curriculum" hidden role="dialog" aria-modal="true" aria-labelledby="cur-h">
-    <div class="intro-card lesson-card">
-      <button id="curriculum-x" class="dialog-x" type="button" aria-label="Close curriculum" title="Close">✕</button>
-      <h2 id="cur-h">Learn MRI from scratch</h2>
-      <p class="intro-sub">A guided path for total beginners — work through the modules in order, each building on the last. Your progress is saved on this device.</p>
-      <div class="cur-progress" aria-hidden="true"><div class="cur-bar" id="cur-bar"></div></div>
-      <p class="tiny" id="cur-progress-text"></p>
-      <div id="curriculum-list"></div>
-      <div class="cur-actions">
-        <button id="curriculum-start" type="button">Start</button>
-        <button id="curriculum-reset" type="button" class="cur-reset" title="Clear saved progress">Reset progress</button>
-        <button id="curriculum-close" type="button">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Active-lesson panel (floats over the viewport) -->
-  <aside id="lesson-panel" hidden role="region" aria-labelledby="lesson-title">
-    <div class="lp-head"><span id="lesson-title"></span>
-      <button id="lesson-exit" type="button" title="Exit lesson" aria-label="Exit lesson">✕</button></div>
-    <p id="lesson-cur" class="lesson-cur" hidden></p>
-    <p id="lesson-step" aria-live="polite"></p>
-    <div class="lp-foot">
-      <span id="lesson-progress"></span>
-      <span class="lp-btns">
-        <button id="lesson-prev" type="button">‹ Back</button>
-        <button id="lesson-next" type="button">Next ›</button>
-      </span>
-    </div>
-  </aside>
-
-  <header id="topbar">
-    <div class="brand"><img class="logo-sm" src="logo.png" alt="" /><b>MRISim</b>
-      <span class="tag">browser edition</span></div>
-    <div class="topchips" role="group" aria-label="Quick metrics">
-      <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>
-      <span class="chip"><i id="m-snrwm-cap">SNR (WM)</i><b id="m-snrwm">—</b></span>
-      <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
-    </div>
-    <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">🎓 Curriculum</button>
-    <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">📖 Lessons</button>
-    <button id="help" class="ghlink" type="button" title="Help, welcome &amp; feature tour">?</button>
-    <a id="protocol-link" class="ghlink protocol-cta" href="protocol.html" title="Plan a whole exam like a scanner — pick a protocol, prescribe each sequence on the scouts, acquire">🩻 Protocol planning</a>
-    <a id="quiz-link" class="ghlink" href="quiz.html" title="Read-the-scan quiz — identify the sequence, weighting and pathology, with scoring">🎯 Quiz</a>
-    <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
-  </header>
-
-  <main id="app" hidden>
-    <!-- Controls -->
-    <section class="panel" id="controls" aria-label="Scan controls">
-      <div class="ctrl-search">
-        <input type="search" id="ctrl-find" placeholder="🔍  Find a control…"
-               aria-label="Filter controls" autocomplete="off" spellcheck="false" />
-        <button id="ctrl-find-x" type="button" title="Clear" aria-label="Clear search" hidden>✕</button>
-      </div>
-      <p class="tiny ctrl-find-empty" id="ctrl-find-empty" hidden>No control matches that.</p>
-
-      <details class="group" data-sec="protocol" open>
-        <summary><h2>Protocol</h2></summary>
-        <label>Preset
-          <select id="preset"><option value="">— custom —</option></select></label>
-        <div class="btnrow">
-          <button id="setA" type="button">Set as A</button>
-          <button id="compare" type="button">Compare A/B</button>
-          <button id="exitAB" type="button" hidden>Exit compare</button>
-        </div>
-        <p class="hint" id="abdelta" role="status" aria-live="polite"></p>
-        <div class="btnrow">
-          <button id="copylink" type="button" title="Copy a shareable link to this exact setup">Copy link</button>
-          <button id="download" type="button" title="Download the current image as PNG">Download PNG</button>
-        </div>
-      </details>
-
-      <details class="group" data-sec="anatomy" open>
-        <summary><h2>Anatomy &amp; Sequence</h2></summary>
-        <label>Region
-          <select id="region"></select></label>
-        <label>Sequence
-          <select id="sequence"></select></label>
-        <p class="tiny" id="seq-help" aria-live="polite"></p>
-        <label>Field strength
-          <select id="field"><option>1.5T</option><option selected>3T</option><option>7T</option></select></label>
-        <label id="diffdisp-row" hidden>Diffusion display
-          <select id="diffdisp"><option>DWI</option><option>ADC Map</option><option>FA Map</option></select></label>
-        <label id="perfdisp-row" hidden>Perfusion display
-          <select id="perfdisp"><option>Perfusion-weighted</option><option>CBF Map</option></select></label>
-        <label id="perfdyndisp-row" hidden>Dynamic map
-          <select id="perfdyndisp"><option>CBV (DSC)</option><option>CBF (DSC)</option><option>MTT (DSC)</option><option>Ktrans (DCE)</option></select></label>
-        <label id="angiotype-row" hidden>Angiography
-          <select id="angiotype"><option>TOF</option><option>Phase Contrast</option></select></label>
-        <label id="qmridisp-row" hidden>Quantitative map
-          <select id="qmridisp"><option>T1 Map (VFA)</option><option>T2 Map (multi-echo)</option><option>T2* Map (multi-echo)</option><option>Synthetic SE</option></select></label>
-        <label id="fmridisp-row" hidden>fMRI display
-          <select id="fmridisp"><option>EPI Image</option><option>Activation Map</option><option>T-statistic Map</option></select></label>
-        <label>Orientation
-          <div class="radios" id="orientation" role="group" aria-label="Slice orientation">
-            <button data-v="axial" class="on" aria-pressed="true">Axial</button>
-            <button data-v="coronal" aria-pressed="false">Coronal</button>
-            <button data-v="sagittal" aria-pressed="false">Sagittal</button>
-          </div>
-        </label>
-        <label>Slice <output id="slice-val"></output>
-          <input type="range" id="slice" min="0" max="180" value="90" /></label>
-        <label class="check"><input type="checkbox" id="labelanat" /> Label the anatomy (name the structures)</label>
-        <label id="pathology-row" title="Paint a demo lesion into the brain — each one is revealed by a specific sequence">Pathology (demo)
-          <select id="pathology">
-            <option value="">None</option>
-            <option value="lesion">White-matter lesion · T2/FLAIR</option>
-            <option value="ms">Multiple sclerosis · FLAIR (multiple plaques)</option>
-            <option value="stroke">Acute stroke · DWI</option>
-            <option value="hemorrhage">Microhaemorrhage · SWI</option>
-            <option value="tumor">Enhancing tumour · T1 + Gd</option>
-            <option value="abscess">Brain abscess · DWI + Gd rim</option>
-          </select></label>
-        <label class="check"><input type="checkbox" id="fovplan" /> FOV planning (3-plane localizer)</label>
-        <div id="planctl" hidden>
-          <label>In-plane FOV (%) <input type="number" id="ipfov-val" class="numval" min="30" max="100" step="5" value="100" />
-            <input type="range" id="ipfov" min="30" max="100" step="5" value="100" /></label>
-          <label class="check"><input type="checkbox" id="nowrap" /> Phase oversample (no wrap)</label>
-          <label class="check"><input type="checkbox" id="peswap" /> Swap phase-encode direction</label>
-          <label class="check"><input type="checkbox" id="satband" /> Saturation band</label>
-          <label>Sat band position (%) <input type="number" id="satpos-val" class="numval" min="0" max="100" step="5" value="50" />
-            <input type="range" id="satpos" min="0" max="100" step="5" value="50" /></label>
-          <label>Sat band width (%) <input type="number" id="satwidth-val" class="numval" min="0" max="60" step="5" value="15" />
-            <input type="range" id="satwidth" min="0" max="60" step="5" value="15" />
-            <span id="satwidth-mm" class="tiny" style="margin-left:6px"></span></label>
-          <label>Sat band angle (°) <input type="number" id="satangle-val" class="numval" min="-90" max="90" step="5" value="0" />
-            <input type="range" id="satangle" min="-90" max="90" step="5" value="0" /></label>
-          <label>Sat band cross-angle (°) <input type="number" id="satangle2-val" class="numval" min="-90" max="90" step="5" value="0" />
-            <input type="range" id="satangle2" min="-90" max="90" step="5" value="0" /></label>
-          <label># Slices <input type="number" id="nslices-val" class="numval" min="1" max="32" step="1" value="1" />
-            <input type="range" id="nslices" min="1" max="32" step="1" value="1" /></label>
-          <label>Slice gap (mm) <input type="number" id="sgap-val" class="numval" min="0" max="10" step="1" value="0" />
-            <input type="range" id="sgap" min="0" max="10" step="1" value="0" /></label>
-          <p class="tiny" id="oblique-readout">Oblique tilt 0° · rot 0°  —  drag either cross-panel's band to angle that plane (double-oblique); the FOV box to resize</p>
-        </div>
-      </details>
-
-      <details class="group" data-sec="visualizations">
-        <summary><h2>Visualizations</h2></summary>
-        <p class="tiny">Optional overlays &amp; side panels — each adds a view to help explain what's happening.</p>
-        <label class="check"><input type="checkbox" id="curveshow" checked /> Signal curve</label>
-        <label id="curvemode-row">Curve type
-          <select id="curvemode">
-            <option value="TE decay">TE decay (T2 contrast)</option>
-            <option value="TR recovery">TR recovery (T1 contrast)</option>
-            <option value="TI sweep">TI sweep (inversion)</option>
-            <option value="Flip angle">Flip angle (Ernst)</option>
-            <option value="Histogram">Signal histogram</option>
-          </select></label>
-        <label class="check"><input type="checkbox" id="cmap" /> Contrast map (TR×TE)</label>
-        <label class="check"><input type="checkbox" id="kspaceshow" /> Show k-space (the raw data)</label>
-        <label class="check"><input type="checkbox" id="psdshow" /> Show pulse-sequence diagram</label>
-        <label class="check"><input type="checkbox" id="b0mapshow" /> Show B0 field map (off-resonance)</label>
-        <label class="check"><input type="checkbox" id="gfactorshow" /> Show g-factor map (parallel imaging)</label>
-        <label class="check"><input type="checkbox" id="mathshow" /> Show the math (hover a pixel)</label>
-      </details>
-
-      <details class="group" data-sec="timing" open>
-        <summary><h2>Timing</h2></summary>
-        <label title="Repetition time — delay between excitations. Long TR lets tissues recover and reduces T1 weighting.">TR (ms) <input type="number" id="tr-val" class="numval" min="20" max="6000" step="10" value="500" />
-          <input type="range" id="tr" min="20" max="6000" step="10" value="500" /></label>
-        <label title="Echo time — delay before reading the signal. Long TE adds T2 weighting (long-T2 tissue like fluid stays bright).">TE (ms) <input type="number" id="te-val" class="numval" min="2" max="300" step="1" value="15" />
-          <input type="range" id="te" min="2" max="300" step="1" value="15" /></label>
-        <label id="ti-row" hidden title="Inversion time — delay after the 180° inversion. Pick it to null a tissue: FLAIR nulls CSF, STIR nulls fat.">TI (ms) <input type="number" id="ti-val" class="numval" min="50" max="3000" step="10" value="800" />
-          <input type="range" id="ti" min="50" max="3000" step="10" value="800" /></label>
-        <label id="fa-row" title="Flip angle — how far the magnetisation is tipped. Smaller angles speed up gradient-echo (the Ernst angle maximises signal).">Flip angle (°) <input type="number" id="fa-val" class="numval" min="1" max="180" step="1" value="90" />
-          <input type="range" id="fa" min="1" max="180" step="1" value="90" /></label>
-      </details>
-
-      <details class="group" data-sec="contrast" open>
-        <summary><h2>Contrast &amp; effects</h2></summary>
-        <label class="check"><input type="checkbox" id="fatsat" /> Fat saturation</label>
-        <label class="check"><input type="checkbox" id="gd" /> Gadolinium</label>
-        <label class="check"><input type="checkbox" id="flow" /> Flow enhancement</label>
-      </details>
-
-      <details class="group" data-sec="artifacts">
-        <summary><h2>Artifacts (teaching)</h2></summary>
-        <p class="tiny">Switch on a common artifact to learn what it looks like and which setting fixes it.</p>
-        <label class="check" title="Patient motion replicates the image as ghosts along the phase-encode direction. Averaging or motion-correction reduces it."><input type="checkbox" id="motion" /> Motion (ghosting)</label>
-        <label id="motiontype-row" hidden>Motion type
-          <select id="motiontype">
-            <option value="periodic">Periodic (breathing)</option>
-            <option value="random">Random (sudden)</option>
-            <option value="linear">Linear (drift)</option>
-          </select></label>
-        <label class="check" title="Fat and water resonate at slightly different frequencies, so fat shifts along the readout direction — worse at low bandwidth and high field. Raise the bandwidth to reduce it."><input type="checkbox" id="chemshift" /> Chemical shift (fat/water)</label>
-        <label class="check" title="Field distortion near air/bone interfaces causes signal dropout and warping — worst on gradient-echo and long TE."><input type="checkbox" id="suscept" /> Susceptibility (dropout)</label>
-        <p class="tiny" id="artifact-help"></p>
-      </details>
-
-      <details class="group" data-sec="acquisition">
-        <summary><h2>Acquisition</h2></summary>
-        <label title="Receive coil — the coil's spatial sensitivity shades the image. A surface coil gives high signal right next to it but drops off fast; multi-channel arrays cover the whole FOV but their raw sensitivity still varies (bright near the elements), which is why scanners apply intensity correction.">Receive coil
-          <select id="receivecoil">
-            <option value="uniform">Uniform (ideal)</option>
-            <option value="head8">Head array (8-ch)</option>
-            <option value="quad">Quadrature (2-ch)</option>
-            <option value="surface">Surface coil</option>
-          </select></label>
-        <label title="Matrix — number of pixels across. Higher = finer detail, but lower SNR and a longer scan.">Matrix <input type="number" id="matrix-val" class="numval" min="96" max="320" step="32" value="256" />
-          <input type="range" id="matrix" min="96" max="320" step="32" value="256" /></label>
-        <label title="Receiver bandwidth — wider is faster and cuts chemical-shift, but lowers SNR (∝ 1/√BW).">Bandwidth (kHz) <input type="number" id="bw-val" class="numval" min="16" max="500" step="2" value="125" />
-          <input type="range" id="bw" min="16" max="500" step="2" value="125" /></label>
-        <label title="Averages (NEX) — repeat the acquisition to raise SNR by √NEX, at a proportional time cost.">NEX (averages) <input type="number" id="nex-val" class="numval" min="1" max="8" step="1" value="1" />
-          <input type="range" id="nex" min="1" max="8" step="1" value="1" /></label>
-        <label title="Slice thickness — thicker slices have more signal (SNR) but blur small detail through the slice.">Slice thickness (mm) <input type="number" id="thick-val" class="numval" min="1" max="10" step="1" value="5" />
-          <input type="range" id="thick" min="1" max="10" step="1" value="5" /></label>
-        <label id="bval-row" hidden title="b-value — diffusion-weighting strength. Higher b suppresses freely-moving water and highlights restricted diffusion.">b-value (s/mm²) <input type="number" id="bval-val" class="numval" min="0" max="3000" step="50" value="1000" />
-          <input type="range" id="bval" min="0" max="3000" step="50" value="1000" /></label>
-        <label id="etl-row" hidden title="Echo train length — echoes per excitation in FSE. Longer trains scan faster but add blur and shift the effective TE.">Echo train (ETL) <input type="number" id="etl-val" class="numval" min="2" max="32" step="1" value="16" />
-          <input type="range" id="etl" min="2" max="32" step="1" value="16" /></label>
-      </details>
-
-      <details class="group" data-sec="measure">
-        <summary><h2>Measure</h2></summary>
-        <p class="tiny">Measure on the image: a ruler reads distance in mm; an ROI reads mean signal, noise (SD) and SNR.</p>
-        <div class="radios" id="measuremode" role="group" aria-label="Measurement tool">
-          <button data-m="off" class="on" aria-pressed="true">Off</button>
-          <button data-m="ruler" aria-pressed="false">Ruler</button>
-          <button data-m="roi" aria-pressed="false">ROI</button>
-        </div>
-        <p class="tiny" id="measure-readout" role="status" aria-live="polite">Pick Ruler or ROI, then drag on the image.</p>
-        <button id="measure-clear" type="button">Clear</button>
-      </details>
-
-      <details class="group" data-sec="recon3d">
-        <summary><h2>3D acquisition &amp; reconstruction</h2></summary>
-        <label class="check"><input type="checkbox" id="acq3d" /> 3D slab (acquire the whole volume once, reformat any plane)</label>
-        <label id="np-row" hidden>Slab depth (partitions) <input type="number" id="np-val" class="numval" min="4" max="400" step="1" />
-          <input type="range" id="np" min="4" max="400" step="1" value="400" /></label>
-        <label id="slabsharp-row" hidden>Slab-profile sharpness <input type="number" id="slabsharp-val" class="numval" min="0.4" max="1.5" step="0.05" value="0.85" />
-          <input type="range" id="slabsharp" min="0.4" max="1.5" step="0.05" value="0.85" /></label>
-        <label class="check" id="kzpf-row" hidden><input type="checkbox" id="kzpf" /> kz partial Fourier</label>
-        <p class="tiny" id="slab-readout" hidden></p>
-        <label class="check"><input type="checkbox" id="reconshow" disabled /> Reconstruction view <span class="tiny" id="recon-need">(enable a 3D slab first)</span></label>
-        <div id="reconctl" hidden>
-          <label>Mode
-            <select id="reconmode">
-              <option value="mpr">MPR — three planes</option>
-              <option value="mip">Thick-slab MIP</option>
-              <option value="rmip">Rotating MIP</option>
-              <option value="oblique">Oblique MPR</option>
-            </select></label>
-          <div id="recon-mpr" class="recon-modectl">
-            <label>Crosshair ↕ (Z) <output id="rz-val">50</output><input type="range" id="rz" min="0" max="100" value="50" /></label>
-            <label>Crosshair A–P (Y) <output id="ry-val">50</output><input type="range" id="ry" min="0" max="100" value="50" /></label>
-            <label>Crosshair L–R (X) <output id="rx-val">50</output><input type="range" id="rx" min="0" max="100" value="50" /></label>
-          </div>
-          <div id="recon-mip" class="recon-modectl" hidden>
-            <label>Projection
-              <select id="mipmode">
-                <option value="mip">MIP — brightest (vessels, fluid)</option>
-                <option value="minip">MinIP — darkest (vessels on SWI, air)</option>
-                <option value="aip">AIP — average (CT-style)</option>
-              </select></label>
-            <label>Projection plane
-              <select id="mipplane"><option>axial</option><option>coronal</option><option>sagittal</option></select></label>
-            <label>Slab thickness (partitions) <output id="mipthick-val">20</output><input type="range" id="mipthick" min="1" max="400" value="20" /></label>
-            <label>Slab position (%) <output id="mipcenter-val">50</output><input type="range" id="mipcenter" min="0" max="100" value="50" /></label>
-          </div>
-          <div id="recon-rmip" class="recon-modectl" hidden>
-            <label>Azimuth (°) <output id="raz-val">0</output><input type="range" id="raz" min="0" max="360" step="5" value="0" /></label>
-            <label>Elevation (°) <output id="rel-val">0</output><input type="range" id="rel" min="-60" max="60" step="5" value="0" /></label>
-            <button id="recon-spin" type="button" title="Auto-rotate the MIP (cine)">▶ Spin cine</button>
-          </div>
-          <div id="recon-oblique" class="recon-modectl" hidden>
-            <label>Tilt (°) <output id="rtilt-val">0</output><input type="range" id="rtilt" min="-45" max="45" value="0" /></label>
-            <label>Rotate (°) <output id="rrot-val">0</output><input type="range" id="rrot" min="-45" max="45" value="0" /></label>
-          </div>
-          <button id="recon-download" type="button" title="Download the reconstruction as PNG">Download recon PNG</button>
-        </div>
-      </details>
-
-      <details class="group" data-sec="parallel">
-        <summary><h2>Parallel imaging &amp; sampling</h2></summary>
-        <label>Acceleration R <input type="number" id="accel-val" class="numval" min="1" max="4" step="1" value="1" />
-          <input type="range" id="accel" min="1" max="4" step="1" value="1" /></label>
-        <label id="accelmethod-row" hidden>Method
-          <select id="accelmethod"><option>SENSE</option><option>GRAPPA</option><option>CS</option></select></label>
-        <label>Partial volume (×0.1 vox) <input type="number" id="pv-val" class="numval" min="0" max="30" step="1" value="10" />
-          <input type="range" id="pv" min="0" max="30" step="1" value="10" /></label>
-        <p class="tiny">Higher R is faster but noisier (g-factor); partial volume blurs sub-voxel tissue boundaries.</p>
-      </details>
-    </section>
-
-    <!-- Viewport -->
-    <section class="viewport" aria-label="Image viewport">
-      <div class="image-row">
-        <div class="images">
-          <div class="imgwrap" id="wrapA">
-            <span class="abtag" id="tagA" hidden>A</span>
-            <span class="ab-caption" id="capA" hidden></span>
-            <img id="mainImage" alt="reconstructed MR image" title="drag = window/level · double-click = reset · hover = inspect tissue" />
-            <svg id="measure-svg" aria-hidden="true"></svg>
-            <div class="probe" id="probe" hidden></div>
-          </div>
-          <div class="imgwrap" id="wrapB" hidden>
-            <span class="abtag">B</span>
-            <span class="ab-caption" id="capB" hidden></span>
-            <img id="mainImageB" alt="comparison image" />
-          </div>
-        </div>
-        <!-- Vertical slice rail beside the image: drag up/down to scroll slices
-             (handy on touch, where there's no scroll wheel). Mirrors #slice. -->
-        <div class="slice-rail" title="Drag to scroll through slices">
-          <input type="range" id="slice-v" class="slice-rail-input" orient="vertical"
-                 min="0" max="180" value="90" aria-label="Slice (scroll)" />
-        </div>
-      </div>
-      <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>
-      <div class="curvewrap" id="curvewrap"><img id="curveImage" alt="signal curve" /></div>
-      <div class="curvewrap" id="cmapwrap" hidden><img id="cmapImage" alt="TR×TE contrast map" /></div>
-      <div class="kspacewrap" id="kspacewrap" hidden><img id="kspaceImage" alt="k-space (log magnitude)" /></div>
-      <div class="kspacewrap" id="b0mapwrap" hidden><img id="b0mapImage" alt="B0 off-resonance field map" /></div>
-      <div class="kspacewrap" id="gfactorwrap" hidden><img id="gfactorImage" alt="parallel-imaging g-factor map" /></div>
-      <div class="curvewrap" id="psdwrap" hidden><img id="psdImage" alt="pulse-sequence diagram" /></div>
-      <div class="reconwrap" id="reconwrap" hidden>
-        <div class="recon-tri" id="recon-tri">
-          <img id="reconAxial" alt="MPR axial reformat" />
-          <img id="reconCoronal" alt="MPR coronal reformat" />
-          <img id="reconSagittal" alt="MPR sagittal reformat" />
-          <img id="reconOverview" alt="3D MIP overview of the slab" />
-        </div>
-        <div class="recon-single" id="recon-single" hidden><img id="reconMain" alt="reconstruction" /></div>
-        <svg id="recon-measure-svg" aria-hidden="true"></svg>
-        <p class="tiny" id="recon-msg" hidden></p>
-      </div>
-      <div class="mathwrap" id="mathwrap" hidden><div class="mathbox" id="math">Hover a pixel to see its signal equation.</div></div>
-    </section>
-
-    <!-- Metrics -->
-    <section class="panel" id="metrics" aria-label="Measurements">
-      <h2>Measurements</h2>
-      <table>
-        <tr><td>Resolution</td><td id="x-res">—</td></tr>
-        <tr><td>Scan time</td><td id="x-scan">—</td></tr>
-        <tr><td id="x-snr-cap">SNR (WM / GM)</td><td id="x-snr">—</td></tr>
-        <tr><td id="x-cnr-cap">CNR (WM–GM)</td><td id="x-cnr">—</td></tr>
-        <tr><td>SAR (head)</td><td id="x-sar">—</td></tr>
-      </table>
-      <p class="hint" id="hint" role="status" aria-live="polite"></p>
-    </section>
+    <footer>
+      Runs entirely client-side via <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>
+      — first load fetches ~30–50&nbsp;MB, cached afterwards. ·
+      <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
+    </footer>
   </main>
-
-  <!-- Pyodide is loaded inside worker.js (off the main thread). -->
-  <script src="tour.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>
