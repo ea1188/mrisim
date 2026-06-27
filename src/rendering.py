@@ -35,6 +35,9 @@ _MAP_CMAP: dict[str, tuple[str, str]] = {
     "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
     "FA":  ("cividis", "FA"),
     "CBF": ("plasma",  "CBF (mL/100g/min)"),
+    "CBV": ("inferno", "CBV (mL/100g)"),
+    "MTT": ("magma",   "MTT (s)"),
+    "Ktrans": ("inferno", "Ktrans (min⁻¹)"),
 }
 
 
@@ -108,12 +111,22 @@ def paint_brain_pathology(brain_vol: np.ndarray, kind: str) -> np.ndarray:
     return vol
 
 
-def quantitative_map_spec(sequence: str, qmri_display: str = "",
-                          diff_display: str = "", perf_display: str = "") -> "tuple[str, str] | None":
-    """(colormap, unit-label) when the current display is a quantitative parameter
-    map (qMRI T1/T2/T2*, diffusion ADC/FA, perfusion CBF), else None for a weighted image."""
+def quantitative_map_spec(sequence: str, qmri_display: str = "", diff_display: str = "",
+                          perf_display: str = "", perf_dyn_display: str = "") -> "tuple[str, str] | None":
+    """(colormap, unit-label) when the current display is a quantitative parameter map
+    (qMRI T1/T2/T2*, diffusion ADC/FA, perfusion CBF/CBV/MTT/Ktrans), else None for a
+    weighted image."""
     if sequence == "Perfusion (ASL)":
         return _MAP_CMAP["CBF"] if "CBF" in (perf_display or "") else None
+    if sequence == "Perfusion (Dynamic)":
+        d = perf_dyn_display or ""
+        if "Ktrans" in d:
+            return _MAP_CMAP["Ktrans"]
+        if "MTT" in d:
+            return _MAP_CMAP["MTT"]
+        if "CBF" in d:
+            return _MAP_CMAP["CBF"]
+        return _MAP_CMAP["CBV"]                        # CBV default
     if sequence == "Quantitative (qMRI)":
         d = qmri_display or ""
         if "T1" in d:
