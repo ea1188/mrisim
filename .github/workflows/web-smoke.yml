@@ -40,6 +40,9 @@ jobs:
           python -m http.server 8765 --directory web &
           for i in $(seq 1 20); do curl -sf http://localhost:8765/ >/dev/null && break; sleep 0.5; done
 
+      - name: Home launcher smoke (mode cards + deep-link redirect)
+        run: node web/home_smoke.mjs http://localhost:8765/
+
       - name: Smoke test (headless Chromium boots Pyodide and renders)
         run: node web/smoke.mjs http://localhost:8765/
 

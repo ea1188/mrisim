@@ -8,7 +8,8 @@
  */
 import { chromium } from "playwright";
 
-const url = process.argv[2] || "http://localhost:8765/";
+// The site root is now the launcher; the simulator lives at simulator.html.
+const url = (process.argv[2] || "http://localhost:8765/").replace(/\/?$/, "/") + "simulator.html";
 const BOOT_TIMEOUT = 180_000;   // first load pulls ~30–50 MB of wheels from the CDN
 
 const browser = await chromium.launch();
