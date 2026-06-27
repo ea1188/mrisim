@@ -11,6 +11,12 @@ const $ = (id) => document.getElementById(id);
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
 const snapAngle = (v) => { for (const t of [0, 15, 30, 45, 60, 75, 90, -15, -30, -45, -60, -75, -90]) if (Math.abs(v - t) <= 2.5) return t; return v; };
 const fmtTime = (s) => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+// Perpendicular distance from a point to the segment a→b (all in [0,1] panel fractions).
+const segDist = (px, py, a, b) => {
+  const dx = b[0] - a[0], dy = b[1] - a[1], len2 = dx * dx + dy * dy || 1e-9;
+  const t = Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / len2));
+  return Math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy));
+};
 const PLANES = ["sagittal", "coronal", "axial"];
 
 // ---- engine worker bridge (mirrors app.js) -------------------------------- //
@@ -479,6 +485,7 @@ function renderSlot(plane) {
   if (st.kind === "scout") {
     const sc = scoutCache[plane]; if (!sc) return;
     vpGeom[plane] = sc.geom;
+    window.vpGeom = vpGeom;        // exposed for the headless smoke's drag targeting
     drawTile(plane, sc.png, sc.label, true, false, sc.fallback, sc.alts);   // plannable, not draggable
     drawOverlay(plane);                                            // crisp interactive handles
   } else {                                                   // series: view-only, draggable
@@ -718,12 +725,23 @@ function modeAt(p, loc) {
     const perp = p.map === "row" ? loc.py : loc.px;
     if (Math.abs(Math.abs(perp - p.slab.c) - p.slab.half) < 0.035) return "slices";
   }
-  // On the band line: grab an END to angle, the CENTRE to slide the slice package.
+  // On the band line: grab toward an END to angle, the CENTRE to slide the slice package.
+  // Test the ACTUAL (possibly already-tilted) band — `p.band` is the rendered line, in the
+  // same panel-fraction space as `loc`. The old test used the STRAIGHT bandLocal position,
+  // so once you angled the plane the tilted band fell outside it → "rotate once, then it
+  // locks" (every later grab read as a slice move). Falls back to bandLocal if no geometry.
+  const cc = p.center || [0.5, 0.5];
+  if (p.angle && p.band) {
+    if (segDist(loc.px, loc.py, p.band[0], p.band[1]) < 0.07) {
+      return Math.hypot(loc.px - cc[0], loc.py - cc[1]) > 0.16 ? "oblique" : "slice";
+    }
+    return "slice";
+  }
   const bp = bandLocal(p, active.plan.slice);
   const along = p.map === "row" ? loc.px : loc.py;
   const perp = p.map === "row" ? loc.py : loc.px;
   if (Math.abs(perp - bp) < 0.08) {
-    const cAlong = p.center ? (p.map === "row" ? p.center[0] : p.center[1]) : 0.5;
+    const cAlong = p.map === "row" ? cc[0] : cc[1];
     if (p.angle && Math.abs(along - cAlong) > 0.2) return "oblique";   // near an end → angle
     return "slice";                                                    // near the centre → move
   }
