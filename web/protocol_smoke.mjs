@@ -168,10 +168,11 @@ try {
   await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
   console.log("double-click reset ✓");
 
-  // sequence-relevant params: FLAIR (IR) shows TI; MPRAGE (3-D) labels the count "Partitions"
-  await page.click("#pp-list li:nth-child(4)");                      // FLAIR
+  // sequence-relevant params: FLAIR (IR) shows TI; MPRAGE (3-D) labels the count "Partitions".
+  // Select by label text (robust to protocol queue reordering / added sequences).
+  await page.click("#pp-list li:has-text('FLAIR')");                 // FLAIR
   await page.waitForFunction(() => !document.querySelector("#pp-ti-row").hidden, { timeout: 12_000 });
-  await page.click("#pp-list li:nth-child(8)");                      // MPRAGE (3-D)
+  await page.click("#pp-list li:has-text('MPRAGE')");                // MPRAGE (3-D)
   await page.waitForFunction(
     () => document.querySelector("#pp-nsl-label").textContent === "Partitions", { timeout: 12_000 });
   console.log("sequence params (TI) + 3-D partitions ✓");

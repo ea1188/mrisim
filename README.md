@@ -133,7 +133,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 
 ### Field and hardware effects
 - **B0 field maps** — dipole convolution from susceptibility labels, polynomial shim residuals, Gaussian localised distortions; shown as an off-resonance field-map overlay in the browser
-- **Coil sensitivity** — head-array simulation, sum-of-squares combination, and parallel-imaging g-factor maps (the g-factor map is shown in the browser; explicit receive-coil selection is *library-only*)
+- **Coil sensitivity** — head-array simulation, sum-of-squares combination, and parallel-imaging g-factor maps; both apps expose the g-factor map and an explicit receive-coil selector (uniform / surface / head-array shading)
 - **Rician noise** — correct magnitude-image noise model, SNR estimation, bias correction
 - **Partial volume effects** — sub-voxel tissue mixing, exposed as a control in both apps
 
