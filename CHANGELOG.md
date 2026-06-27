@@ -10,6 +10,13 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.44.0] — 2026-06-27
+
+### Added
+- **DICOM export (desktop).** A `DICOM` button in the export row saves the current image
+  as a `.dcm` carrying the acquisition parameters (TR/TE/TI/flip, sequence, field strength,
+  pixel spacing, slice thickness), so it loads in any DICOM viewer / PACS.
+
 ## [1.43.0] — 2026-06-26
 
 ### Added
