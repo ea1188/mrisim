@@ -1125,8 +1125,10 @@ function wireScout() {
       return { mode: edge > 0.72 ? "resize" : "recenter", p };
     }
     const bp = bandLocal(p);
-    const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.10
-                                 : Math.abs(loc.px - bp) < 0.10;
+    // A forgiving grab zone around the slice band → "grab to angle"; the old 0.10 was
+    // easy to miss, so a near-miss became a slice move (the "it keeps clicking" feel).
+    const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.16
+                                 : Math.abs(loc.px - bp) < 0.16;
     if (near) return { mode: "oblique", p, l0: loc, tilt0: planTilt, rot0: planRot };
     return { mode: "slice", p };
   };
@@ -1176,10 +1178,12 @@ function wireScout() {
       // so the two cross panels give independent tilt + rot — full double-oblique.
       // Sign chosen so the plane angles the same way you drag (not the opposite).
       const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
-      if (p.angle === "tilt") planTilt = snapAngle(clampN(drag.tilt0 + d, -45, 45));
-      else planRot = snapAngle(clampN(drag.rot0 + d, -45, 45));
+      // Raw (un-snapped) while dragging so the plane tracks the cursor smoothly; the
+      // snap-to-15° only fires on release (live snapping made it stick / jump at 0).
+      if (p.angle === "tilt") planTilt = clampN(drag.tilt0 + d, -45, 45);
+      else planRot = clampN(drag.rot0 + d, -45, 45);
     }
-    schedule();
+    scheduleScoutDrag();   // throttled: the localizer follows the cursor during the drag
   };
 
   img.addEventListener("pointerdown", (e) => {
@@ -1197,8 +1201,16 @@ function wireScout() {
     const f = imgFraction(img, e.clientX, e.clientY);
     img.style.cursor = cursorFor(f ? (start(f) || {}).mode : null);
   });
-  window.addEventListener("pointerup", () => { drag = null; });
-  window.addEventListener("pointercancel", () => { drag = null; });
+  const endScoutDrag = () => {
+    if (!drag) return;
+    if (drag.mode === "oblique") {     // snap to 0 / ±15 / ±30 / ±45 only on release
+      planTilt = snapAngle(planTilt); planRot = snapAngle(planRot);
+    }
+    drag = null;
+    schedule();                        // one accurate render at the settled prescription
+  };
+  window.addEventListener("pointerup", endScoutDrag);
+  window.addEventListener("pointercancel", endScoutDrag);
   img.addEventListener("dblclick", (e) => {          // reset to straight / full FOV
     planOff = 0; planTilt = 0; planRot = 0;
     $("ipfov").value = 100; $("ipfov-val").value = 100;
@@ -1214,6 +1226,20 @@ function schedule() {
   updateSeqHelp();                                // keep the clinical blurb current
   clearTimeout(timer);
   timer = setTimeout(render, 90);    // debounce; the worker keeps the UI free
+}
+
+// During an interactive scout drag we THROTTLE renders (~9 fps) instead of debouncing.
+// The debounce above keeps deferring while the pointer moves, so the (server-baked)
+// localizer band/box would freeze mid-drag until you stopped — making angling feel stuck.
+// This renders steadily during the drag, plus a final time when motion settles.
+let _dragRenderAt = 0;
+function scheduleScoutDrag() {
+  if (!booted) return;
+  if (!applyingPreset) $("preset").value = "";
+  const now = Date.now(), gap = now - _dragRenderAt;
+  clearTimeout(timer);
+  if (gap >= 110) { _dragRenderAt = now; render(); }
+  else timer = setTimeout(() => { _dragRenderAt = Date.now(); render(); }, 110 - gap);
 }
 
 // --- 3-D reconstruction (MPR / MIP / oblique from the acquired slab) -------- //
