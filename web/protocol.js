@@ -212,7 +212,9 @@ function acquireImageExample() {
                        label: `${active.label} (example)`, wl: { b: 1, c: 1 } };
   lastSeriesPlane = plane;
   renderSlot(plane);
-  $("pp-readout").textContent = `Acquired ${active.label} ✓ — example image (illustrative, not simulated).`;
+  $("pp-readout").textContent =
+    `Acquired ${active.label} ✓ — example image (illustrative). ↻ Re-prescribe to change the plane and acquire again.`;
+  $("pp-replan").hidden = false;                  // let them set it up again
   renderQueue();
 }
 
@@ -326,6 +328,7 @@ const isLocalizer = (it) => it && it.preset === LOCALIZER;
 // ---- open a sequence ------------------------------------------------------ //
 async function openItem(it) {
   active = it;
+  $("pp-replan").hidden = true;                                   // we're in planning mode now
   PLANES.forEach((p) => { slotState[p] = { kind: "scout" }; });   // fresh planning view
   renderQueue();
   if (imageExam) {                                  // image-library exam: static scouts only
@@ -409,6 +412,10 @@ function wireParamPanel() {
   $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleParamRender(); } });
   $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleParamRender(); } });
   $("pp-apply").addEventListener("click", applyAndAcquire);
+  // Re-prescribe: restore the full 3-plane planning view for the acquired sequence
+  // (all scouts at the saved prescription) so the angle / FOV can be changed and it
+  // can be acquired again. openItem already rebuilds the scouts from active.plan.
+  $("pp-replan").addEventListener("click", () => { if (active) openItem(active); });
   // ↑/↓ (←/→) page an acquired series, like the wheel.
   window.addEventListener("keydown", (e) => {
     if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
@@ -964,8 +971,9 @@ async function applyAndAcquire() {
     const snr = Math.round(m.snr_wm || m.snr || m.snr_gm || m.snr_eff || 0);
     const snrTxt = snr > 0 ? ` · SNR ${snr}` : "";
     $("pp-readout").textContent =
-      `Acquired ✓ · ${fmtTime(m.scan_time)}${snrTxt} — `
-      + `scroll / ↑↓ to page slices, right-drag to window/level, drag to any viewport.`;
+      `Acquired ✓ · ${fmtTime(m.scan_time)}${snrTxt} — scroll / ↑↓ to page slices, `
+      + `right-drag to window/level, drag to any viewport. ↻ Re-prescribe to adjust & re-acquire.`;
+    $("pp-replan").hidden = false;               // re-open the scouts to change the prescription
     renderQueue();
   } catch (err) {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
