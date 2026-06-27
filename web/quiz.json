@@ -1,7 +1,14 @@
 {
-  "schema": 1,
+  "schema": 2,
+  "categories": [
+    {"id": "sequences", "label": "Sequences & weighting"},
+    {"id": "pathology", "label": "Pathology"},
+    {"id": "perfusion", "label": "Perfusion"},
+    {"id": "artifacts", "label": "Artifacts"}
+  ],
   "questions": [
     {
+      "category": "sequences",
       "prompt": "What is the weighting of this brain scan?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
@@ -10,6 +17,7 @@
       "explain": "Short TR (500 ms) and short TE (12 ms) give T1 weighting — fat/white matter bright, CSF dark."
     },
     {
+      "category": "sequences",
       "prompt": "And the weighting of this one?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
@@ -18,6 +26,16 @@
       "explain": "Long TR (4000 ms) and long TE (100 ms) give T2 weighting — fluid (CSF) is bright."
     },
     {
+      "category": "sequences",
+      "prompt": "Long TR but short TE — what weighting is this?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 12}},
+      "options": ["Proton-density", "T1-weighted", "T2-weighted", "FLAIR"],
+      "answer": 0,
+      "explain": "Long TR removes T1 weighting and short TE removes T2 weighting — what's left is proton-density: signal tracks tissue water content (grey > white, CSF intermediate)."
+    },
+    {
+      "category": "sequences",
       "prompt": "Which sequence is this — note the dark CSF in the ventricles despite the T2-like brightness elsewhere?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
@@ -26,6 +44,16 @@
       "explain": "Heavily T2-weighted but with CSF nulled by a long TI (~2500 ms) = FLAIR — the workhorse for periventricular lesions."
     },
     {
+      "category": "sequences",
+      "prompt": "This image shows bright vessels with no contrast injection. What technique produced it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "MR Angiography", "angio_type": "TOF"}},
+      "options": ["Time-of-flight MR angiography", "Digital subtraction angiography", "CT angiography", "Phase-contrast venography"],
+      "answer": 0,
+      "explain": "Time-of-flight (TOF) MRA relies on inflow enhancement — fresh unsaturated blood entering the slice is bright against saturated stationary tissue. No contrast needed."
+    },
+    {
+      "category": "pathology",
       "prompt": "A bright focus appears on this diffusion-weighted image of an acute-stroke patient. What does restricted diffusion most likely indicate here?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
@@ -34,22 +62,7 @@
       "explain": "Restricted diffusion (bright DWI / dark ADC) is the hallmark of an acute infarct — cytotoxic oedema traps water. Always confirm on the ADC map to exclude T2 shine-through."
     },
     {
-      "prompt": "This is a quantitative perfusion map. A mass shows markedly RAISED values here. Which map is it, and what does that suggest?",
-      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
-                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBV (DSC)"}},
-      "options": ["CBV — high CBV suggests a high-grade tumour", "MTT — prolonged transit", "Ktrans — intact barrier", "ADC — restricted diffusion"],
-      "answer": 0,
-      "explain": "This is the DSC cerebral blood VOLUME map. A tumour grows leaky neovasculature, so raised CBV is a marker of high tumour grade."
-    },
-    {
-      "prompt": "On this DCE permeability map, normal brain is dark but a lesion enhances brightly. What is being measured, and why does normal brain stay dark?",
-      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
-                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "Ktrans (DCE)"}},
-      "options": ["Ktrans — the intact blood-brain barrier blocks leakage", "CBF — normal brain has no flow", "T2* — susceptibility", "FA — anisotropy"],
-      "answer": 0,
-      "explain": "Ktrans is the volume transfer constant (permeability). An intact blood-brain barrier keeps contrast intravascular (Ktrans≈0); tumour/active-lesion vessels leak, so they light up."
-    },
-    {
+      "category": "pathology",
       "prompt": "Which sequence is best for detecting microhaemorrhages and iron, like the dark foci shown here?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
                 "params": {"sequence": "Susceptibility (SWI)", "TR": 28, "TE": 20, "flip_angle": 15}},
@@ -58,12 +71,59 @@
       "explain": "SWI exploits the strong susceptibility of blood products / iron / calcium — they bloom dark. It is the most sensitive sequence for microbleeds and mineralisation."
     },
     {
-      "prompt": "This image shows bright vessels with no contrast injection. What technique produced it?",
-      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
-                "params": {"sequence": "MR Angiography", "angio_type": "TOF"}},
-      "options": ["Time-of-flight MR angiography", "Digital subtraction angiography", "CT angiography", "Phase-contrast venography"],
+      "category": "pathology",
+      "prompt": "A mass enhances brightly on this post-gadolinium T1 scan. Why does gadolinium make it bright?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "contrast_enabled": true, "contrast_dose": 8}},
+      "options": ["Gadolinium shortens T1 where it leaks through a broken blood-brain barrier",
+                  "Gadolinium itself emits MR signal", "Gadolinium is T2-bright like fluid", "Gadolinium suppresses fat"],
       "answer": 0,
-      "explain": "Time-of-flight (TOF) MRA relies on inflow enhancement — fresh unsaturated blood entering the slice is bright against saturated stationary tissue. No contrast needed."
+      "explain": "Gadolinium is paramagnetic — it shortens nearby T1, so tissue brightens on T1-weighting. It only reaches the extravascular space where the blood-brain barrier is broken, so enhancement marks BBB breakdown (tumour, active inflammation)."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "This is a quantitative perfusion map. A mass shows markedly RAISED values here. Which map is it, and what does that suggest?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBV (DSC)"}},
+      "options": ["CBV — high CBV suggests a high-grade tumour", "MTT — prolonged transit", "Ktrans — intact barrier", "ADC — restricted diffusion"],
+      "answer": 0,
+      "explain": "This is the DSC cerebral blood VOLUME map. A tumour grows leaky neovasculature, so raised CBV is a marker of high tumour grade."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "On this DCE permeability map, normal brain is dark but a lesion enhances brightly. What is being measured, and why does normal brain stay dark?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "Ktrans (DCE)"}},
+      "options": ["Ktrans — the intact blood-brain barrier blocks leakage", "CBF — normal brain has no flow", "T2* — susceptibility", "FA — anisotropy"],
+      "answer": 0,
+      "explain": "Ktrans is the volume transfer constant (permeability). An intact blood-brain barrier keeps contrast intravascular (Ktrans≈0); tumour/active-lesion vessels leak, so they light up."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "This brain scan shows faint repeating copies of the head across the image. What artifact is this, and along which direction does it propagate?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "motion_enabled": true, "motion_type": "periodic", "motion_amplitude": 6}},
+      "options": ["Motion ghosting — along the phase-encode direction", "Chemical shift — along the readout", "Susceptibility dropout", "Aliasing / wraparound"],
+      "answer": 0,
+      "explain": "Periodic motion (respiration, pulsation) produces discrete ghosts spaced along the PHASE-ENCODE axis. Averaging (NEX), triggering, or breath-holding reduces them."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "This long-TE gradient-echo image loses signal near the skull base and air interfaces. What causes it, and how do you reduce it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20, "susceptibility_enabled": true, "susceptibility_strength": 7}},
+      "options": ["Susceptibility — use spin echo or a shorter TE", "Motion — average more signal", "Chemical shift — raise the bandwidth", "Low SNR — increase NEX"],
+      "answer": 0,
+      "explain": "Susceptibility differences at air/bone/tissue boundaries dephase spins — worst on long-TE gradient echo. A spin echo's 180° pulse refocuses the dephasing, and a shorter TE gives less time to dephase."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "At this fat–water boundary in the knee there is a dark/bright misregistration band along the readout. What is it, and the fix?",
+      "setup": {"region": "Knee", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "chemical_shift_enabled": true, "bandwidth": 30}},
+      "options": ["Chemical shift — raise the receiver bandwidth (or fat-suppress)", "Susceptibility — use spin echo", "Motion ghosting — average more", "Gibbs ringing — increase the matrix"],
+      "answer": 0,
+      "explain": "Fat and water resonate ~3.5 ppm apart, so they map to slightly different readout positions — a shift at fat–water borders. A higher receiver bandwidth (or fat suppression) shrinks it."
     }
   ]
 }
