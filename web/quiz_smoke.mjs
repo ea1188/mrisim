@@ -1,0 +1,68 @@
+/* Headless smoke for the Read-the-scan quiz: boots Pyodide, renders the first
+ * question via the engine, answers it (the known-correct option) and checks the
+ * score, then walks the rest to the end summary.
+ * Run: node web/quiz_smoke.mjs <base-url> */
+import { chromium } from "playwright";
+
+const base = (process.argv[2] || "http://localhost:8765/").replace(/\/?$/, "/");
+const url = base + "quiz.html";
+const BOOT = 180_000;
+
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const errors = [];
+page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
+const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
+
+// check *computed* visibility (not the inline style string) so a CSS display:none
+// that JS fails to override is caught here, not only at the next click.
+const shown = (id) => getComputedStyle(document.getElementById(id)).display !== "none";
+const rendered = () => page.waitForFunction(
+  () => { const im = document.getElementById("qz-img"); return im && im.src.startsWith("data:image") && getComputedStyle(im).display !== "none"; },
+  { timeout: 25_000 });
+const feedbackShown = () => page.waitForFunction(
+  () => getComputedStyle(document.getElementById("qz-feedback")).display !== "none" && getComputedStyle(document.getElementById("qz-next")).display !== "none",
+  { timeout: 5_000 });
+const summaryShown = () => page.evaluate(shown, "qz-summary").catch(() => false);
+
+try {
+  await page.goto(url, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#qz-root:not([hidden])", { timeout: BOOT });
+  console.log("booted");
+
+  // Question 1 renders an engine image and offers 4 options
+  await rendered();
+  const n = await page.$$eval("#qz-options .qz-opt", (b) => b.length);
+  if (n !== 4) fail(`expected 4 options, got ${n}`); else console.log("question 1 rendered with 4 options ✓");
+
+  // The known-correct answer to Q1 (T1-weighted, option 0) grades correct and scores 1/1
+  await page.click("#qz-options .qz-opt:first-child");
+  await feedbackShown();
+  const fb = await page.textContent("#qz-feedback");
+  if (!/Correct/.test(fb)) fail(`correct answer not graded correct (feedback: "${fb}")`);
+  const sc = await page.textContent("#qz-score");
+  if (!/\b1 \/ 1\b/.test(sc)) fail(`score not 1/1 after a correct answer (got "${sc}")`);
+  console.log("answered correctly → graded + scored ✓  (" + sc + ")");
+
+  // Walk the remaining questions to the end summary
+  await page.click("#qz-next");
+  let guard = 0;
+  while (guard++ < 25 && !(await summaryShown())) {
+    await rendered();
+    await page.click("#qz-options .qz-opt:first-child");
+    await feedbackShown();
+    await page.click("#qz-next");
+  }
+  await page.waitForFunction(() => document.getElementById("qz-summary").style.display !== "none", { timeout: 5_000 });
+  const summary = await page.textContent("#qz-summary-score");
+  if (!/\d+ \/ \d+\s*\(\d+%\)/.test(summary)) fail(`end summary score malformed (got "${summary}")`);
+  console.log("reached end summary ✓  (" + summary + ")");
+
+  if (errors.length) fail("console errors:\n  " + errors.join("\n  "));
+  if (process.exitCode) console.error("QUIZ SMOKE FAILED"); else console.log("QUIZ SMOKE PASSED");
+} catch (e) {
+  fail(e.message); console.error("QUIZ SMOKE FAILED");
+} finally {
+  await browser.close();
+}

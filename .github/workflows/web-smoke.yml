@@ -45,3 +45,6 @@ jobs:
 
       - name: Protocol-planning page smoke (boots, queue loads, Apply acquires)
         run: node web/protocol_smoke.mjs http://localhost:8765/
+
+      - name: Quiz page smoke (boots, renders a question, scores, reaches summary)
+        run: node web/quiz_smoke.mjs http://localhost:8765/

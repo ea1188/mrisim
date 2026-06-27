@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "questions": [
+    {
+      "prompt": "What is the weighting of this brain scan?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["T1-weighted", "T2-weighted", "Proton-density", "Diffusion"],
+      "answer": 0,
+      "explain": "Short TR (500 ms) and short TE (12 ms) give T1 weighting — fat/white matter bright, CSF dark."
+    },
+    {
+      "prompt": "And the weighting of this one?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
+      "options": ["T1-weighted", "T2-weighted", "Proton-density", "MR angiogram"],
+      "answer": 1,
+      "explain": "Long TR (4000 ms) and long TE (100 ms) give T2 weighting — fluid (CSF) is bright."
+    },
+    {
+      "prompt": "Which sequence is this — note the dark CSF in the ventricles despite the T2-like brightness elsewhere?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["T2-weighted SE", "FLAIR", "STIR", "T1-weighted SE"],
+      "answer": 1,
+      "explain": "Heavily T2-weighted but with CSF nulled by a long TI (~2500 ms) = FLAIR — the workhorse for periventricular lesions."
+    },
+    {
+      "prompt": "A bright focus appears on this diffusion-weighted image of an acute-stroke patient. What does restricted diffusion most likely indicate here?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Acute infarct (cytotoxic oedema)", "Chronic gliosis", "Fat", "Flow artifact"],
+      "answer": 0,
+      "explain": "Restricted diffusion (bright DWI / dark ADC) is the hallmark of an acute infarct — cytotoxic oedema traps water. Always confirm on the ADC map to exclude T2 shine-through."
+    },
+    {
+      "prompt": "This is a quantitative perfusion map. A mass shows markedly RAISED values here. Which map is it, and what does that suggest?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBV (DSC)"}},
+      "options": ["CBV — high CBV suggests a high-grade tumour", "MTT — prolonged transit", "Ktrans — intact barrier", "ADC — restricted diffusion"],
+      "answer": 0,
+      "explain": "This is the DSC cerebral blood VOLUME map. A tumour grows leaky neovasculature, so raised CBV is a marker of high tumour grade."
+    },
+    {
+      "prompt": "On this DCE permeability map, normal brain is dark but a lesion enhances brightly. What is being measured, and why does normal brain stay dark?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "Ktrans (DCE)"}},
+      "options": ["Ktrans — the intact blood-brain barrier blocks leakage", "CBF — normal brain has no flow", "T2* — susceptibility", "FA — anisotropy"],
+      "answer": 0,
+      "explain": "Ktrans is the volume transfer constant (permeability). An intact blood-brain barrier keeps contrast intravascular (Ktrans≈0); tumour/active-lesion vessels leak, so they light up."
+    },
+    {
+      "prompt": "Which sequence is best for detecting microhaemorrhages and iron, like the dark foci shown here?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
+                "params": {"sequence": "Susceptibility (SWI)", "TR": 28, "TE": 20, "flip_angle": 15}},
+      "options": ["Susceptibility-weighted imaging (SWI)", "T1-weighted SE", "Time-of-flight MRA", "STIR"],
+      "answer": 0,
+      "explain": "SWI exploits the strong susceptibility of blood products / iron / calcium — they bloom dark. It is the most sensitive sequence for microbleeds and mineralisation."
+    },
+    {
+      "prompt": "This image shows bright vessels with no contrast injection. What technique produced it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "MR Angiography", "angio_type": "TOF"}},
+      "options": ["Time-of-flight MR angiography", "Digital subtraction angiography", "CT angiography", "Phase-contrast venography"],
+      "answer": 0,
+      "explain": "Time-of-flight (TOF) MRA relies on inflow enhancement — fresh unsaturated blood entering the slice is bright against saturated stationary tissue. No contrast needed."
+    }
+  ]
+}

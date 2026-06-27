@@ -10,7 +10,7 @@ export default [
   // Main-thread classic scripts in the browser (the simulator + Protocol Planning
   // pages). `Tour` is the shared tour engine (web/tour.js, loaded before them).
   {
-    files: ["web/app.js", "web/protocol.js"],
+    files: ["web/app.js", "web/protocol.js", "web/quiz.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
