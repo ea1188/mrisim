@@ -10,6 +10,23 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.45.0] — 2026-06-27
+
+### Added
+- **Dynamic contrast-bolus perfusion (DSC/DCE).** A new `Perfusion (Dynamic)` sequence
+  with a parameter-map picker: **DSC** (gamma-variate first-pass) → CBV / CBF / MTT
+  (central-volume theorem) maps, and **DCE** (Tofts uptake) → Ktrans permeability — ~0
+  behind an intact blood-brain barrier, high in leaky tumour / active lesions. The bolus
+  kinetics live in `dsc_dce.py`; an infarct shows low CBV + prolonged MTT, a tumour high
+  CBV + Ktrans. In the browser and desktop apps, with a `Brain DSC Perfusion` preset.
+
+### Changed
+- ASL perfusion added to the Brain protocol-planner queue.
+
+### Fixed
+- The ASL perfusion-display dropdown now re-renders on change (it previously had no
+  listener and only updated by side effect).
+
 ## [1.44.0] — 2026-06-27
 
 ### Added
