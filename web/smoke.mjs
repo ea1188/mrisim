@@ -316,20 +316,35 @@ try {
   const sliceAfter = await page.inputValue("#slice");
   if (sliceAfter === sliceBefore) fail("scout click did not move the slice (before=" + sliceBefore + ")");
 
-  // Dragging the slice band on a cross panel must angle the plane (oblique). The
-  // band now sits at y≈0.82 of the coronal panel (the slice we just moved to);
-  // grab it and drag up — the oblique readout must report a non-zero angle.
-  const sr = await page.$eval("#scoutImage", (el) => {
-    const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
-  await page.mouse.move(sr.x + sr.w * 0.5, sr.y + sr.h * 0.82);
-  await page.mouse.down();
-  await page.mouse.move(sr.x + sr.w * 0.6, sr.y + sr.h * 0.55, { steps: 6 });
-  await page.mouse.up();
-  await page.waitForTimeout(900);
-  const readout = await page.textContent("#oblique-readout");
-  // The middle (coronal) cross panel controls rot, so after the drag the readout
-  // must no longer be all-zero (tilt 0° · rot 0°) — double-oblique is reachable.
-  if (/tilt\s*0°\s*·\s*rot\s*0°/.test(readout || "")) fail("oblique drag did not angle the plane (" + readout + ")");
+  // Dragging the slice band on a cross panel must angle the plane (oblique). Target the
+  // band at its ACTUAL rendered position (the engine's panel geometry), then drag it
+  // perpendicular — the oblique readout must report a non-zero angle. (Aiming at a fixed
+  // spot is unreliable: the band renders at a cropped/scaled position, not py·n.)
+  const grab = await page.evaluate(() => {
+    const panels = window.scoutPanels || [];
+    const p = panels.find((q) => q && q.role !== "acq" && q.angle && q.band);
+    if (!p) return null;
+    const r = document.getElementById("scoutImage").getBoundingClientRect();
+    const mg = [(p.band[0][0] + p.band[1][0]) / 2, (p.band[0][1] + p.band[1][1]) / 2];   // geom midpoint
+    const lpx = p.flip ? 1 - mg[0] : mg[0], lpy = 1 - mg[1];      // → panel-local (y-down)
+    const [l, t, rr, b] = p.box;
+    const cx = r.left + (l + lpx * (rr - l)) * r.width;           // → client px (image fills its box)
+    const cy = r.top + (t + lpy * (b - t)) * r.height;
+    const d = 0.22;                                               // perpendicular drag length
+    return { cx, cy, ex: cx + (p.map === "row" ? r.width * 0.1 : r.width * d),
+             ey: cy + (p.map === "row" ? r.height * d : r.height * 0.1) };
+  });
+  if (!grab) fail("no cross panel with band geometry for the oblique-drag test");
+  else {
+    await page.mouse.move(grab.cx, grab.cy);
+    await page.mouse.down();
+    await page.mouse.move(grab.ex, grab.ey, { steps: 8 });
+    await page.mouse.up();
+    await page.waitForTimeout(900);
+    const readout = await page.textContent("#oblique-readout");
+    if (/tilt\s*0°\s*·\s*rot\s*0°/.test(readout || "")) fail("oblique drag did not angle the plane (" + readout + ")");
+    else console.log("scout oblique drag angled the plane ✓");
+  }
 
   await page.uncheck("#fovplan");
 

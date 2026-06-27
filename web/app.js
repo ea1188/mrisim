@@ -1433,6 +1433,7 @@ async function render() {
       });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
+      window.scoutPanels = scoutPanels;   // exposed for the headless smoke's drag targeting
       $("satwidth-mm").textContent =
         (s.satband_mm != null) ? "≈ " + Math.round(s.satband_mm) + " mm" : "";
       // Sat band isn't applied on the oblique path (the slab assumes orthogonal slice
