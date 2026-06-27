@@ -37,6 +37,7 @@ const ACQ3D_SEQ = new Set(["Spin Echo", "Gradient Echo", "Inversion Recovery", "
 const SEQ_HELP = {
   "Diffusion (DWI)": "Restricted diffusion lights up — acute stroke, abscess, dense tumour. Always read with the ADC map to rule out T2 shine-through.",
   "Perfusion (ASL)": "Magnetically-labelled arterial blood as a tracer (no contrast) — the label-control difference is the perfusion-weighted image (~1% signal, grey matter brightest); the CBF map quantifies flow in mL/100g/min.",
+  "Perfusion (Dynamic)": "Gadolinium-bolus perfusion. DSC (T2*) bolus-tracking → CBV / CBF / MTT maps — stroke core shows low CBV + prolonged MTT. DCE (T1) uptake → Ktrans permeability — ~0 behind an intact blood-brain barrier, high in leaky tumour / active lesions.",
   "MR Angiography": "Flowing blood is bright (time-of-flight) — maps vessels with no contrast injection.",
   "Susceptibility (SWI)": "Blood products, iron and calcium go dark — microbleeds, veins, mineralisation.",
   "fMRI (BOLD)": "T2*-sensitive to the blood-oxygenation change with neural activity — functional mapping.",
@@ -561,7 +562,7 @@ function buildControls(info) {
   const reg = $("region");
   info.regions.forEach((r) => reg.add(new Option(r, r)));
   const seqs = ["Spin Echo", "FSE / TSE", "Gradient Echo", "Inversion Recovery",
-    "Balanced SSFP", "Diffusion (DWI)", "Perfusion (ASL)", "MR Angiography", "Susceptibility (SWI)",
+    "Balanced SSFP", "Diffusion (DWI)", "Perfusion (ASL)", "Perfusion (Dynamic)", "MR Angiography", "Susceptibility (SWI)",
     "fMRI (BOLD)", "Quantitative (qMRI)", "Echo Planar (EPI)"];
   const seq = $("sequence");
   seqs.forEach((s) => seq.add(new Option(s, s)));
@@ -638,7 +639,7 @@ function buildControls(info) {
   ["motion", "chemshift", "suscept"].forEach((id) =>
     $(id).addEventListener("change", () => { syncVisibility(); schedule(); }));
   $("motiontype").addEventListener("change", schedule);
-  ["diffdisp", "angiotype", "qmridisp", "fmridisp"].forEach((id) => $(id).addEventListener("change", schedule));
+  ["diffdisp", "perfdisp", "perfdyndisp", "angiotype", "qmridisp", "fmridisp"].forEach((id) => $(id).addEventListener("change", schedule));
   $("receivecoil").addEventListener("change", render);   // re-render with the coil's shading
   $("orientation").querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => {
@@ -677,6 +678,7 @@ function syncVisibility() {
   $("bval-row").hidden = s !== "Diffusion (DWI)";
   $("diffdisp-row").hidden = s !== "Diffusion (DWI)";
   $("perfdisp-row").hidden = s !== "Perfusion (ASL)";
+  $("perfdyndisp-row").hidden = s !== "Perfusion (Dynamic)";
   $("angiotype-row").hidden = s !== "MR Angiography";
   $("qmridisp-row").hidden = s !== "Quantitative (qMRI)";
   $("fmridisp-row").hidden = s !== "fMRI (BOLD)";
@@ -743,6 +745,7 @@ function collectPayload() {
   };
   if (s === "Diffusion (DWI)") { params.b_value = +$("bval").value; params.diff_display = $("diffdisp").value; }
   if (s === "Perfusion (ASL)") params.perf_display = $("perfdisp").value;
+  if (s === "Perfusion (Dynamic)") params.perf_dyn_display = $("perfdyndisp").value;
   if (s === "FSE / TSE") params.etl = +$("etl").value;
   if (s === "MR Angiography") params.angio_type = $("angiotype").value;
   if (s === "Quantitative (qMRI)") params.qmri_display = $("qmridisp").value;
@@ -804,6 +807,7 @@ async function onPreset() {
   set("bval", p.b_value); set("etl", p.etl); set("thick", p.slice_thickness);
   if (p.diff_display) $("diffdisp").value = p.diff_display;
   if (p.perf_display) $("perfdisp").value = p.perf_display;
+  if (p.perf_dyn_display) $("perfdyndisp").value = p.perf_dyn_display;
   if (p.angio_type) $("angiotype").value = p.angio_type;
   if (p.qmri_display) $("qmridisp").value = p.qmri_display;
   if (p.fmri_display) $("fmridisp").value = p.fmri_display;

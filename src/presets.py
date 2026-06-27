@@ -118,6 +118,21 @@ PRESETS = {
         "label_duration": 1800,
         "description": "Pseudo-continuous ASL CBF map — magnetically-labelled arterial blood as an endogenous tracer (no contrast). Grey-matter flow ~2.5–3× white. Stroke penumbra, tumour grade, vascular reserve. Switch Display to Perfusion-weighted to see the raw label−control difference."
     },
+    "Brain DSC Perfusion": {
+        "sequence": "Perfusion (Dynamic)",
+        "TR": 1500,
+        "TE": 30,
+        "TI": 150,
+        "flip_angle": 90,
+        "matrix_size": 128,
+        "FOV": 240,
+        "bandwidth": 250,
+        "NEX": 1,
+        "contrast_enabled": True,
+        "contrast_dose": 5,
+        "perf_dyn_display": "CBV (DSC)",
+        "description": "Dynamic Susceptibility Contrast (DSC) — a gadolinium-bolus T2*-EPI acquisition tracked over time. The default CBV map shows grey > white blood volume; an infarct core drops CBV with prolonged MTT, while a high-grade tumour shows raised CBV. Switch the Dynamic map to CBF / MTT, or to Ktrans (DCE) for blood-brain-barrier permeability."
+    },
     "Brain SWI": {
         "sequence": "Gradient Echo",
         "TR": 28,
@@ -900,7 +915,7 @@ _PRESET_ORDER: list[str] = [
     "Brain T1 Post-Gd", "Brain CISS (bSSFP)", "Brain EPI T2*",
     # Brain — diffusion / function / angiography
     "DWI Stroke", "DWI High-b", "ADC Map", "DTI FA Map",
-    "Brain ASL Perfusion",
+    "Brain ASL Perfusion", "Brain DSC Perfusion",
     "fMRI BOLD Standard", "fMRI High Resolution",
     "TOF MRA Circle of Willis", "TOF MRA Thin Slab",
     # Spine

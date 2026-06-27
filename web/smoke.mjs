@@ -443,15 +443,30 @@ try {
     dwiSrc, { timeout: 20_000 });
   if (!(await page.$$eval("#field option", (os) => os.some((o) => o.value === "7T" || o.textContent === "7T"))))
     fail("7T must be a selectable field strength");
+  // a render landed (src differs from `prev` and is a real PNG)
+  const rendered = (prev) => page.waitForFunction(
+    (p) => { const s = document.getElementById("mainImage").src; return s && s !== p && s.length > 2000; },
+    prev, { timeout: 20_000 });
+
   // ASL perfusion: exposes a Perfusion-weighted / CBF Map picker; selecting it and
   // switching to the CBF map must re-render (the engine renders perfusion via Pyodide).
+  let prevSrc = await page.getAttribute("#mainImage", "src");
   await page.selectOption("#sequence", "Perfusion (ASL)");
   await page.waitForSelector("#perfdisp-row:not([hidden])", { timeout: 5_000 });
-  const perfSrc = await page.getAttribute("#mainImage", "src");
+  await rendered(prevSrc);                                 // wait for the perfusion-weighted render
+  prevSrc = await page.getAttribute("#mainImage", "src");
   await page.selectOption("#perfdisp", "CBF Map");
-  await page.waitForFunction(
-    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev && s.length > 2000; },
-    perfSrc, { timeout: 20_000 });
+  await rendered(prevSrc);                                 // switching the display re-renders
+
+  // DSC/DCE dynamic perfusion: a CBV/CBF/MTT/Ktrans parameter-map picker; switching the
+  // map re-renders (the engine computes the maps via Pyodide).
+  prevSrc = await page.getAttribute("#mainImage", "src");
+  await page.selectOption("#sequence", "Perfusion (Dynamic)");
+  await page.waitForSelector("#perfdyndisp-row:not([hidden])", { timeout: 5_000 });
+  await rendered(prevSrc);                                 // CBV map render
+  prevSrc = await page.getAttribute("#mainImage", "src");
+  await page.selectOption("#perfdyndisp", "Ktrans (DCE)");
+  await rendered(prevSrc);                                 // Ktrans map re-renders
   await page.selectOption("#sequence", "Spin Echo");
 
   step("k-space + PSD");
