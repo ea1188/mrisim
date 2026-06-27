@@ -245,6 +245,23 @@ try {
     return l && Math.abs(+l.getAttribute("y1") - prev) > 1;
   }, bandY0, { timeout: 5_000 });
   console.log("image-exam: in-plane FOV box + slice move on cross scout ✓");
+
+  // angle drag: grab the band's actual on-screen end on a cross scout and rotate → it tilts
+  const covRect = await (await page.$("#vp-coronal svg.pp-ov")).boundingBox();
+  const band = await page.$eval("#vp-coronal svg.pp-ov line[stroke='#ffdd44']",
+    (l) => ["x1", "y1", "x2", "y2"].map((a) => +l.getAttribute(a)));
+  const dy0 = Math.abs(band[3] - band[1]);
+  const end = band[2] >= band[0] ? [band[2], band[3]] : [band[0], band[1]];   // the right-hand end
+  const sx = covRect.x + end[0], sy = covRect.y + end[1];
+  await page.mouse.move(sx, sy); await page.mouse.down();
+  await page.mouse.move(sx, sy + covRect.height * 0.25, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForFunction((prev) => {                  // the band gained a vertical tilt
+    const l = document.querySelector("#vp-coronal svg.pp-ov line[stroke='#ffdd44']");
+    return l && Math.abs(+l.getAttribute("y2") - +l.getAttribute("y1")) > prev + 5;
+  }, dy0, { timeout: 5_000 });
+  console.log("image-exam: angle drag tilts the band ✓");
+
   // presets orient the slice to the acquired plane: a sagittal sequence's cross band is vertical
   await page.click("#pp-list li:nth-child(3)");           // PD Sagittal → sagittal plane
   await page.waitForFunction(() => {

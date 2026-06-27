@@ -452,19 +452,19 @@ function wireParamPanel() {
     $(id).addEventListener("input", () => {
       if (!active || isLocalizer(active)) return;
       active.params[key] = +$(id).value;
-      scheduleScouts();
+      scheduleParamRender();
     });
   });
   $("pp-nsl").addEventListener("input", () => {
     if (!active || isLocalizer(active)) return;
     active.params[nslKey(active.params)] = +$("pp-nsl").value;
-    scheduleScouts();
+    scheduleParamRender();
   });
-  $("pp-ti").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.TI = +$("pp-ti").value; scheduleScouts(); } });
-  $("pp-bval").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.b_value = +$("pp-bval").value; scheduleScouts(); } });
-  $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleScouts(); } });
-  $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleScouts(); } });
-  $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleScouts(); } });
+  $("pp-ti").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.TI = +$("pp-ti").value; scheduleParamRender(); } });
+  $("pp-bval").addEventListener("input", () => { if (active && !isLocalizer(active)) { active.params.b_value = +$("pp-bval").value; scheduleParamRender(); } });
+  $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleParamRender(); } });
+  $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -45, 45); scheduleParamRender(); } });
+  $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -45, 45); scheduleParamRender(); } });
   $("pp-apply").addEventListener("click", applyAndAcquire);
   // ↑/↓ (←/→) page an acquired series, like the wheel.
   window.addEventListener("keydown", (e) => {
@@ -515,6 +515,14 @@ async function renderScouts() {
   } finally { scoutBusy = false; }
 }
 function scheduleScouts() { updatePlanReadout(); renderScouts(); }
+// Typed/spun parameter edits: update the readout now, but debounce the engine render so
+// "2200" fires one render, not four (2 → 22 → 220 → 2200).
+let _paramTimer = 0;
+function scheduleParamRender() {
+  updatePlanReadout();
+  clearTimeout(_paramTimer);
+  _paramTimer = setTimeout(renderScouts, 180);
+}
 
 function renderSlot(plane) {
   const st = slotState[plane];
@@ -628,6 +636,20 @@ function placeOverlay(box, img, svg) {
   svg.setAttribute("viewBox", `0 0 ${c.cw} ${c.ch}`);
   return c;
 }
+// Pointer events fire faster than the display refreshes; coalesce overlay redraws to one
+// per frame so a drag/hover does a single SVG rebuild per frame instead of per event.
+const _ovPending = {};
+let _ovRaf = 0;
+function scheduleOverlay(plane, hoverMode, live) {
+  _ovPending[plane] = { hoverMode, live };
+  if (!_ovRaf) _ovRaf = requestAnimationFrame(() => {
+    _ovRaf = 0;
+    for (const pl of Object.keys(_ovPending)) {
+      const a = _ovPending[pl]; delete _ovPending[pl];
+      drawOverlay(pl, a.hoverMode, a.live);
+    }
+  });
+}
 // Draw the overlay for a scout panel. `live` (optional) overrides band/box during a
 // drag: { bandDir:[ux,uy] } points the band at the cursor; { fovBox:[x,y,w,h] }.
 function drawOverlay(plane, hoverMode, live) {
@@ -658,6 +680,12 @@ function drawOverlay(plane, hoverMode, live) {
     } else if (live && live.band) { a = px(live.band[0]); b = px(live.band[1]); }  // slide
     else if (g.band) { a = px(g.band[0]); b = px(g.band[1]); }
     if (g.slab_edges && !(live && (live.bandDir || live.band))) {   // coverage rim + slice handles
+      const e0 = g.slab_edges[0], e1 = g.slab_edges[1];
+      if (e0 && e1) {                                // translucent slab fill (the slice coverage)
+        const quad = [px(e0[0]), px(e0[1]), px(e1[1]), px(e1[0])];
+        els.push(el("polygon", { points: quad.map((q) => q.join(",")).join(" "),
+          fill: LINE, "fill-opacity": 0.07, stroke: "none" }));
+      }
       for (const e2 of g.slab_edges) {
         const p0 = px(e2[0]), p1 = px(e2[1]);
         els.push(el("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: LINE, "stroke-width": 1, "stroke-opacity": 0.5, "stroke-dasharray": "3 3" }));
@@ -834,30 +862,40 @@ function wireViewport(plane) {
       const perp = p.map === "row" ? loc.py : loc.px;
       const n = clampN(Math.round(drag.n0 * Math.abs(perp - p.slab.c) / (drag.half0 || 0.03)), 1, 32);
       active.params.n_slices = n; $("pp-nsl").value = n;
-    } else if (drag.mode === "oblique") {            // the band end follows the cursor exactly
+    } else if (drag.mode === "oblique") {            // band tracks the cursor, locked to the applied angle
       const sgn = (OBLIQUE_SIGN[pl.orientation] || {})[p.name] ?? 1;
       let dth = Math.atan2(drag.c[1] - loc.py, loc.px - drag.c[0]) - drag.theta0;  // y-up
       dth = Math.atan2(Math.sin(dth), Math.cos(dth));       // wrap to (−π, π]
       const val = snapAngle(clampN(drag.a0 + dth * 180 / Math.PI * sgn, -45, 45));
       if (p.angle === "tilt") { pl.tilt = val; $("pp-tilt").value = val; }
       else { pl.rot = val; $("pp-rot").value = val; }
-      const ux = loc.px - drag.c[0], uy = loc.py - drag.c[1], L = Math.hypot(ux, uy) || 1;
-      live = { bandDir: [ux / L, uy / L] };
+      // Draw at the *applied* angle (snapped + clamped), not the raw cursor: the band
+      // visibly snaps, never overshoots ±45°, and doesn't jump when the server render lands.
+      const yup = drag.theta0 + ((val - drag.a0) * sgn) * Math.PI / 180;
+      live = { bandDir: [Math.cos(yup), -Math.sin(yup)] };
       if (imageExam) {                          // persist the cosmetic angle per plane
         active.plan.imgDir = active.plan.imgDir || {};
         active.plan.imgDir[plane] = live.bandDir;
       }
     }
     updatePlanReadout();
-    drawOverlay(plane, null, live);                          // instant client-side feedback
+    scheduleOverlay(plane, null, live);                      // rAF-coalesced client-side feedback
     drag.moved = true;                                       // sync exact backgrounds + geometry…
   };
-  const endDrag = () => { if (drag && drag.moved) scheduleScouts(); drag = null; };  // …on release
+  const endDrag = () => {                                    // …on release
+    if (drag) { box.style.cursor = ""; delete _ovPending[plane]; if (drag.moved) scheduleScouts(); }
+    drag = null;
+  };
   box.addEventListener("pointerdown", (e) => {
     const img = box.querySelector("img");
     if (!img || !box._plannable) return;          // acquired series → view-only / draggable
     const f = imgFraction(img, e.clientX, e.clientY); if (!f) return;
-    drag = startDrag(f); if (drag) { applyDrag(f); e.preventDefault(); }
+    drag = startDrag(f);
+    if (drag) {
+      if (drag.mode === "oblique") box.style.cursor = "grabbing";
+      try { box.setPointerCapture(e.pointerId); } catch (_) { /* unsupported */ }
+      applyDrag(f); e.preventDefault();
+    }
   });
   window.addEventListener("pointermove", (e) => {
     if (!drag) return;
@@ -875,9 +913,9 @@ function wireViewport(plane) {
     const f = imgFraction(img, e.clientX, e.clientY);
     const mode = f ? modeAt(vpGeom[plane], f) : null;
     box.style.cursor = f ? cursorFor(mode) : "";
-    drawOverlay(plane, mode);                                // enlarge the matching handle
+    scheduleOverlay(plane, mode);                            // enlarge the matching handle
   });
-  box.addEventListener("pointerleave", () => { if (!drag) drawOverlay(plane, null); });
+  box.addEventListener("pointerleave", () => { if (!drag) scheduleOverlay(plane, null); });
 
   // Scroll through the slices of an acquired series (wheel; arrow keys page the
   // last-touched series — see wireParamPanel).
