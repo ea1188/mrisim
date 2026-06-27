@@ -40,6 +40,11 @@ class ExportMixin(_Base):
         img, _ = self.simulate_with_params(self.get_current_params())
         self.compare_status.config(text=f"Saved: {os.path.basename(export_image(img, params=self.get_current_params()))}", fg='#69db7c')
 
+    def export_current_dicom(self) -> None:
+        from export import export_dicom
+        p = self.get_current_params(); img, _ = self.simulate_with_params(p)
+        self.compare_status.config(text=f"Saved: {os.path.basename(export_dicom(img, params=p))}", fg='#69db7c')
+
     def export_current_protocol(self) -> None:
         from export import export_protocol
         self.compare_status.config(text=f"Saved: {os.path.basename(export_protocol(self.get_current_params()))}", fg='#69db7c')

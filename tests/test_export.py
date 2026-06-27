@@ -56,6 +56,21 @@ class TestExportImage:
         assert os.path.exists(path)
 
 
+class TestExportDicom:
+    def test_writes_and_roundtrips(self, export_module, sample_image, sample_params):
+        import dicom_export
+        path = export_module.export_dicom(sample_image, sample_params, "scan.dcm")
+        assert path.endswith(".dcm") and os.path.exists(path)
+        assert dicom_export.load_dicom(path).shape == sample_image.shape   # pixels round-trip
+        meta = dicom_export.read_scan_params(path)                          # params in the header
+        assert meta["TR_ms"] == pytest.approx(500) and meta["TE_ms"] == pytest.approx(15)
+        assert meta["field_strength_T"] == pytest.approx(3.0)              # default "3T"
+
+    def test_auto_filename(self, export_module, sample_image, sample_params):
+        path = export_module.export_dicom(sample_image, sample_params)
+        assert os.path.exists(path) and path.endswith(".dcm")
+
+
 class TestExportProtocol:
     def test_creates_json(self, export_module, sample_params):
         path = export_module.export_protocol(sample_params, "proto.json")

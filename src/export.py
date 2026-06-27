@@ -38,8 +38,36 @@ def export_image(
     
     plt.savefig(filepath, dpi=150, bbox_inches='tight', facecolor='black')
     plt.close(fig)
-    
+
     return filepath
+
+def export_dicom(
+    image: np.ndarray,
+    params: dict | None = None,
+    filename: str | None = None,
+) -> str:
+    """Save the simulated image as a DICOM (.dcm) file, carrying the acquisition
+    parameters (TR/TE/TI/flip, sequence, field strength, geometry) so it loads in any
+    DICOM viewer / PACS. Uses the tested dicom_export module."""
+    import dicom_export
+
+    export_dir = ensure_export_dir()
+    if filename is None:
+        filename = f"mri_sim_{datetime.now().strftime('%Y%m%d_%H%M%S')}.dcm"
+    filepath = os.path.join(export_dir, filename)
+
+    p = params or {}
+    matrix = float(p.get("matrix_size", image.shape[0]) or image.shape[0])
+    fov_mm = float(p.get("FOV", 240) or 240)
+    field = str(p.get("field_strength", "3T")).rstrip("T") or "3"
+    ps = fov_mm / matrix if matrix else 1.0
+    return dicom_export.image_to_dicom(
+        image, filepath,
+        TR_ms=float(p.get("TR", 0) or 0), TE_ms=float(p.get("TE", 0) or 0),
+        TI_ms=float(p.get("TI", 0) or 0), flip_angle_deg=float(p.get("flip_angle", 0) or 0),
+        sequence=str(p.get("sequence", "")), field_strength_T=float(field),
+        pixel_spacing_mm=(ps, ps),
+        slice_thickness_mm=float(p.get("slice_thickness", 5) or 5))
 
 def export_protocol(params: dict, filename: str | None = None) -> str:
     """Save protocol parameters as JSON."""
