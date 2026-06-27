@@ -267,7 +267,8 @@ tests/                # pytest suite (one file per module)
 data/                 # phantom/atlas cache + optional TotalSegMRI dataset (git-ignored)
 ```
 
-See [`CHANGELOG.md`](CHANGELOG.md) for the release history and versioning policy.
+See [`CHANGELOG.md`](CHANGELOG.md) for the release history and versioning policy, and
+[`ROADMAP.md`](ROADMAP.md) for where the project is headed and how to extend it.
 
 ## Physics references
 
