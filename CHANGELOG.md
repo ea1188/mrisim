@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.48.0] — 2026-06-27
+
+### Added
+- **Read-the-scan quiz (browser).** A self-assessment mode that renders a real scan with
+  the engine and asks you to identify it — pick a topic (Sequences & weighting, Pathology,
+  Perfusion, Artifacts, Anatomy & planes) and answer multiple-choice with scored feedback,
+  explanations and an end summary. 25 questions, data-driven (`web/quiz.json`).
+- **Home launcher.** The browser site now opens on a launcher to choose a mode — the
+  simulator, the protocol planner, or the quiz — with the three cross-linked. The simulator
+  moves to `simulator.html`; existing shareable deep links are preserved (old
+  `index.html#…` links redirect to the simulator).
+
 ## [1.47.0] — 2026-06-27
 
 ### Added
