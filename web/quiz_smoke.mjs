@@ -31,6 +31,12 @@ try {
   await page.waitForSelector("#qz-root:not([hidden])", { timeout: BOOT });
   console.log("booted");
 
+  // The topic menu appears; pick "All topics" (first button) to run the full set
+  await page.waitForFunction(() => document.querySelectorAll("#qz-topics .qz-topic").length >= 2, { timeout: 10_000 });
+  const nTopics = await page.$$eval("#qz-topics .qz-topic", (b) => b.length);
+  if (nTopics < 2) fail(`expected several topics, got ${nTopics}`); else console.log(`topic menu offers ${nTopics} topics ✓`);
+  await page.click("#qz-topics .qz-topic:first-child");
+
   // Question 1 renders an engine image and offers 4 options
   await rendered();
   const n = await page.$$eval("#qz-options .qz-opt", (b) => b.length);
@@ -58,6 +64,11 @@ try {
   const summary = await page.textContent("#qz-summary-score");
   if (!/\d+ \/ \d+\s*\(\d+%\)/.test(summary)) fail(`end summary score malformed (got "${summary}")`);
   console.log("reached end summary ✓  (" + summary + ")");
+
+  // "Choose another topic" returns to the menu
+  await page.click("#qz-topics-back");
+  await page.waitForFunction(() => getComputedStyle(document.getElementById("qz-menu")).display !== "none", { timeout: 5_000 });
+  console.log("back to topic menu ✓");
 
   if (errors.length) fail("console errors:\n  " + errors.join("\n  "));
   if (process.exitCode) console.error("QUIZ SMOKE FAILED"); else console.log("QUIZ SMOKE PASSED");
