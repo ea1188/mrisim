@@ -1073,6 +1073,14 @@ function bandLocal(p) {                // panel-local position of the slice band
   const col = p.flip ? (p.n - 1 - s) : s;
   return col / (p.n - 1);                                  // x
 }
+// Perpendicular distance from a point to the segment a→b (all in [0,1] fractions).
+function segDist(px, py, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy || 1e-9;
+  let t = ((px - a[0]) * dx + (py - a[1]) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy));
+}
 
 // Map a localizer drag mode to a CSS cursor, so hovering shows what's grabbable.
 function cursorFor(mode) {
@@ -1124,12 +1132,21 @@ function wireScout() {
                             Math.abs(loc.py - cy) / (fb[3] / 2 || 1));
       return { mode: edge > 0.72 ? "resize" : "recenter", p };
     }
-    const bp = bandLocal(p);
-    // A forgiving grab zone around the slice band → "grab to angle"; the old 0.10 was
-    // easy to miss, so a near-miss became a slice move (the "it keeps clicking" feel).
-    const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.16
-                                 : Math.abs(loc.px - bp) < 0.16;
-    if (near) return { mode: "oblique", p, l0: loc, tilt0: planTilt, rot0: planRot };
+    // Grab the ACTUAL slice band (which may already be oblique) to angle; tap elsewhere
+    // to move the slice. The band geometry (p.band) is in y-up / sagittal-flipped panel
+    // fractions, so convert the click to match. Using the real band — not the straight
+    // bandLocal position — means a tilted band can still be re-grabbed and angled further
+    // (the old test missed it once it rotated → "angle once, then stuck").
+    if (p.angle && p.band) {
+      const gx = p.flip ? 1 - loc.px : loc.px, gy = 1 - loc.py;
+      if (segDist(gx, gy, p.band[0], p.band[1]) < 0.12) {
+        return { mode: "oblique", p, l0: loc, tilt0: planTilt, rot0: planRot };
+      }
+    } else if (p.angle) {                       // fallback: straight-band position
+      const bp = bandLocal(p);
+      const near = p.map === "row" ? Math.abs(loc.py - bp) < 0.16 : Math.abs(loc.px - bp) < 0.16;
+      if (near) return { mode: "oblique", p, l0: loc, tilt0: planTilt, rot0: planRot };
+    }
     return { mode: "slice", p };
   };
 
@@ -1416,6 +1433,7 @@ async function render() {
       });
       $("scoutImage").src = s.scout;
       scoutPanels = s.panels || [];
+      window.scoutPanels = scoutPanels;   // exposed for the headless smoke's drag targeting
       $("satwidth-mm").textContent =
         (s.satband_mm != null) ? "≈ " + Math.round(s.satband_mm) + " mm" : "";
       // Sat band isn't applied on the oblique path (the slab assumes orthogonal slice
