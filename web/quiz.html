@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MRISim · Quiz</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- Quiz mode (read-the-scan self-test) ---- */
+    #qz-root { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+    #qz-head {
+      display: flex; align-items: center; gap: 14px; padding: 8px 14px;
+      border-bottom: 1px solid #2a323c; background: #11151b;
+    }
+    #qz-head h1 { font-size: 15px; margin: 0; color: #e6edf3; font-weight: 600; }
+    #qz-head .spacer { flex: 1; }
+    #qz-head a { color: #7fb8ff; text-decoration: none; font-size: 13px; margin-left: 14px; }
+    #qz-score { color: #c4ccd6; font-size: 13px; font-variant-numeric: tabular-nums; }
+    #qz-body { display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 18px; }
+    #qz-card { width: min(720px, 96vw); background: #141a21; border: 1px solid #232c36;
+      border-radius: 8px; padding: 16px 18px 18px; }
+    #qz-progress { color: #8b95a1; font-size: 12px; margin: 0 0 8px; }
+    #qz-imgwrap { background: #05080b; border: 1px solid #232c36; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; min-height: 320px; }
+    #qz-img { max-width: 100%; max-height: 52vh; image-rendering: auto; display: none; }
+    #qz-imgmsg { color: #7c8794; font-size: 13px; }
+    #qz-prompt { color: #e6edf3; font-size: 15px; font-weight: 600; margin: 14px 0 10px; line-height: 1.35; }
+    #qz-options { display: grid; gap: 8px; }
+    .qz-opt { text-align: left; background: #1b2530; color: #d7dee8; border: 1px solid #2f4358;
+      border-radius: 5px; padding: 10px 12px; font-size: 14px; cursor: pointer; }
+    .qz-opt:hover:not(:disabled) { border-color: #4f7eb0; background: #20303f; }
+    .qz-opt:disabled { cursor: default; }
+    .qz-opt.correct { border-color: #3fb950; background: #16301d; color: #d7f5dd; }
+    .qz-opt.wrong { border-color: #d9534f; background: #311818; color: #f5d7d7; }
+    #qz-feedback { margin-top: 12px; font-size: 13.5px; line-height: 1.4; color: #c4ccd6; display: none; }
+    #qz-feedback b.ok { color: #3fb950; } #qz-feedback b.no { color: #e5736f; }
+    #qz-next { margin-top: 14px; background: #d9772e; color: #fff; border: 0; border-radius: 5px;
+      padding: 9px 20px; font-weight: 600; cursor: pointer; display: none; }
+    #qz-summary { text-align: center; display: none; }
+    #qz-summary h2 { color: #e6edf3; font-size: 22px; margin: 8px 0; }
+    #qz-summary p { color: #c4ccd6; }
+    #qz-restart { background: #d9772e; color: #fff; border: 0; border-radius: 5px;
+      padding: 9px 22px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    @media (max-width: 640px) { #qz-root { height: auto; min-height: 100dvh; } }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <div class="splash-card">
+      <img class="logo" src="logo.png" alt="MRISim logo" />
+      <h1>Quiz</h1>
+      <p id="splash-status">Starting…</p>
+      <div class="bar"><div id="splash-bar"></div></div>
+      <p class="splash-note">Runs the real Python engine in your browser via Pyodide.
+        First load downloads ~30–50&nbsp;MB (cached afterwards).</p>
+    </div>
+  </div>
+
+  <div id="qz-root" hidden>
+    <header id="qz-head">
+      <h1>MRISim · Read-the-scan quiz</h1>
+      <span class="spacer"></span>
+      <span id="qz-score">Score 0 / 0</span>
+      <a href="protocol.html">Protocol planning</a>
+      <a href="index.html">← Back to the simulator</a>
+    </header>
+
+    <div id="qz-body">
+      <div id="qz-card">
+        <p id="qz-progress"></p>
+        <div id="qz-imgwrap">
+          <img id="qz-img" alt="Quiz scan" />
+          <span id="qz-imgmsg">Rendering…</span>
+        </div>
+        <p id="qz-prompt"></p>
+        <div id="qz-options"></div>
+        <div id="qz-feedback"></div>
+        <button id="qz-next" type="button">Next ▸</button>
+
+        <div id="qz-summary">
+          <h2 id="qz-summary-score"></h2>
+          <p id="qz-summary-msg"></p>
+          <button id="qz-restart" type="button">↻ Try again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="quiz.js"></script>
+</body>
+</html>
