@@ -4,7 +4,8 @@
     {"id": "sequences", "label": "Sequences & weighting"},
     {"id": "pathology", "label": "Pathology"},
     {"id": "perfusion", "label": "Perfusion"},
-    {"id": "artifacts", "label": "Artifacts"}
+    {"id": "artifacts", "label": "Artifacts"},
+    {"id": "anatomy", "label": "Anatomy & planes"}
   ],
   "questions": [
     {
@@ -124,6 +125,114 @@
       "options": ["Chemical shift — raise the receiver bandwidth (or fat-suppress)", "Susceptibility — use spin echo", "Motion ghosting — average more", "Gibbs ringing — increase the matrix"],
       "answer": 0,
       "explain": "Fat and water resonate ~3.5 ppm apart, so they map to slightly different readout positions — a shift at fat–water borders. A higher receiver bandwidth (or fat suppression) shrinks it."
+    },
+    {
+      "category": "sequences",
+      "prompt": "On this knee scan the fatty marrow is suppressed (dark). Which fat-suppression technique uses an inversion pulse timed to null fat?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Inversion Recovery", "TR": 4000, "TE": 40, "TI": 180}},
+      "options": ["STIR (Short-TI Inversion Recovery)", "Dixon", "Spectral fat-sat (CHESS)", "Spin echo"],
+      "answer": 0,
+      "explain": "STIR uses a 180° inversion with a TI (~150–200 ms at 1.5T) chosen so fat crosses zero signal. It is robust to B0 inhomogeneity, but also nulls anything with fat-like T1 — so it is avoided after gadolinium."
+    },
+    {
+      "category": "sequences",
+      "prompt": "This sequence gives bright fluid and blood with T2/T1 contrast and a very fast acquisition. Which is it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Balanced SSFP", "TR": 5, "TE": 2.5, "flip_angle": 45}},
+      "options": ["Balanced SSFP", "Spin echo", "FLAIR", "Diffusion"],
+      "answer": 0,
+      "explain": "Balanced steady-state free precession (bSSFP / TrueFISP / FIESTA) gives high SNR with T2/T1 contrast — bright blood and fluid — used in cardiac and fetal imaging. It is prone to off-resonance banding."
+    },
+    {
+      "category": "sequences",
+      "prompt": "A gradient-echo image at a long TE. What is its dominant weighting?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20}},
+      "options": ["T2*", "T1", "Proton-density", "Diffusion"],
+      "answer": 0,
+      "explain": "Gradient echo has no 180° refocusing pulse, so signal decays by T2* (which includes susceptibility dephasing). A long-TE gradient echo is T2*-weighted — sensitive to blood products and iron."
+    },
+    {
+      "category": "pathology",
+      "prompt": "Multiple ovoid periventricular lesions are bright on this FLAIR scan. What is the classic diagnosis?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "ms",
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["Multiple sclerosis plaques", "Acute infarct", "A single metastasis", "Normal brain"],
+      "answer": 0,
+      "explain": "Ovoid periventricular/callosal lesions bright on FLAIR (often perpendicular to the ventricles — 'Dawson's fingers') are the hallmark of multiple sclerosis."
+    },
+    {
+      "category": "pathology",
+      "prompt": "The infarct that was bright on DWI is also DARK on this ADC map. What does the dark ADC confirm?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "ADC Map"}},
+      "options": ["True restricted diffusion (not T2 shine-through)", "T2 shine-through", "Fat", "Motion artifact"],
+      "answer": 0,
+      "explain": "Always pair DWI with ADC: genuine restriction is DARK on ADC. If the lesion were bright on ADC, the DWI signal would be T2 shine-through, not true restriction."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "This perfusion map was made with NO contrast injection — grey matter is bright, white matter dark. Which technique?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Perfusion (ASL)", "perf_display": "CBF Map"}},
+      "options": ["Arterial spin labeling (ASL)", "DSC (gadolinium bolus)", "DCE", "CT perfusion"],
+      "answer": 0,
+      "explain": "ASL magnetically labels arterial blood as an endogenous tracer — no contrast. Its CBF map shows grey matter perfused ~2–3× white matter."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "On this MTT map a territory shows markedly PROLONGED transit time. In acute stroke, what does that region represent?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "MTT (DSC)"}},
+      "options": ["Hypoperfused tissue (core ± penumbra)", "Normal brain", "A draining vein", "Fat"],
+      "answer": 0,
+      "explain": "Prolonged MTT marks tissue whose blood arrives slowly — hypoperfused territory. Combined with CBV it separates the infarct core (low CBV) from salvageable penumbra (preserved CBV, long MTT)."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "On this CBF map an area is strikingly DARK. What does reduced cerebral blood flow there indicate?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBF (DSC)"}},
+      "options": ["Ischaemia (reduced perfusion)", "Hyperperfusion", "Fat", "Calcification"],
+      "answer": 0,
+      "explain": "A dark region on CBF = reduced blood flow = ischaemia. In stroke the core has the lowest CBF; a perfusion–diffusion mismatch estimates salvageable tissue."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "A bright stripe of noise runs across this image as a fixed line. What artifact is it, and the usual cause?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "zipper_enabled": true}},
+      "options": ["Zipper — stray RF entering the scan room", "Motion ghosting", "Chemical shift", "Susceptibility dropout"],
+      "answer": 0,
+      "explain": "A zipper is a line of alternating bright/dark pixels from stray radiofrequency (a leaky door seal, electronics) reaching the receiver. Restoring RF shielding removes it."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "This image is geometrically warped, worse toward the edges. What causes it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "gradient_distort": 80}},
+      "options": ["Gradient nonlinearity (geometric distortion)", "Motion", "Chemical shift", "Low SNR"],
+      "answer": 0,
+      "explain": "Real gradients become nonlinear away from isocentre, so anatomy is spatially warped toward the periphery of the field of view. Vendor distortion correction (and keeping anatomy near isocentre) mitigates it."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which imaging plane is this brain slice?",
+      "setup": {"region": "Brain", "orientation": "coronal", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Coronal", "Axial", "Sagittal", "Oblique"],
+      "answer": 0,
+      "explain": "A coronal slice — viewed from the front, dividing anterior from posterior. The orbits, temporal lobes and the full vertical span of the ventricles come into view."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "And which plane is this one?",
+      "setup": {"region": "Brain", "orientation": "sagittal", "slice_idx": 110,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Sagittal", "Axial", "Coronal", "Oblique"],
+      "answer": 0,
+      "explain": "A sagittal slice — a side-on cut dividing left from right; the corpus callosum, brainstem and cerebellum line up in profile (a midline sagittal is the classic view of these)."
     }
   ]
 }

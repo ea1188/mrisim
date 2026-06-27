@@ -54,7 +54,7 @@ try {
   // Walk the remaining questions to the end summary
   await page.click("#qz-next");
   let guard = 0;
-  while (guard++ < 25 && !(await summaryShown())) {
+  while (guard++ < 60 && !(await summaryShown())) {
     await rendered();
     await page.click("#qz-options .qz-opt:first-child");
     await feedbackShown();
