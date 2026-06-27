@@ -10,6 +10,21 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.43.0] — 2026-06-26
+
+### Added
+- **Perfusion (ASL) — a new sequence family.** Arterial spin labeling uses magnetically-
+  labelled arterial blood as an endogenous tracer (no contrast): the label−control
+  difference is the perfusion-weighted image (~1% modulation, grey matter brightest) and a
+  quantitative **CBF map** (mL/100 g/min) calibrated against blood T1. Single-compartment
+  pCASL kinetics (`perfusion.py`), in the browser and desktop apps, with a `Brain ASL
+  Perfusion` preset.
+
+### Changed
+- **Protocol Planning: "↻ Re-prescribe".** After acquiring a sequence, a clear button
+  restores the full 3-plane planning view at the saved prescription, so the angle / FOV can
+  be changed and it can be acquired again.
+
 ## [1.42.0] — 2026-06-23
 
 ### Changed
