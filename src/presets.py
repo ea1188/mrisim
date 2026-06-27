@@ -103,6 +103,21 @@ PRESETS = {
         "n_partitions": 32,
         "description": "3D T2 (SPACE / CUBE / VISTA family): a heavily T2-weighted volumetric acquisition reformatted to any plane. Thin contiguous partitions and isotropic voxels; CSF and fluid bright. (Clinically a variable-flip 3D TSE; modelled here as a 3D spin-echo slab.)"
     },
+    "Brain ASL Perfusion": {
+        "sequence": "Perfusion (ASL)",
+        "TR": 4000,
+        "TE": 14,
+        "TI": 1800,
+        "flip_angle": 90,
+        "matrix_size": 128,
+        "FOV": 240,
+        "bandwidth": 250,
+        "NEX": 3,
+        "perf_display": "CBF Map",
+        "pld": 1800,
+        "label_duration": 1800,
+        "description": "Pseudo-continuous ASL CBF map — magnetically-labelled arterial blood as an endogenous tracer (no contrast). Grey-matter flow ~2.5–3× white. Stroke penumbra, tumour grade, vascular reserve. Switch Display to Perfusion-weighted to see the raw label−control difference."
+    },
     "Brain SWI": {
         "sequence": "Gradient Echo",
         "TR": 28,
@@ -885,6 +900,7 @@ _PRESET_ORDER: list[str] = [
     "Brain T1 Post-Gd", "Brain CISS (bSSFP)", "Brain EPI T2*",
     # Brain — diffusion / function / angiography
     "DWI Stroke", "DWI High-b", "ADC Map", "DTI FA Map",
+    "Brain ASL Perfusion",
     "fMRI BOLD Standard", "fMRI High Resolution",
     "TOF MRA Circle of Willis", "TOF MRA Thin Slab",
     # Spine

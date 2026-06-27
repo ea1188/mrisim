@@ -34,6 +34,7 @@ _MAP_CMAP: dict[str, tuple[str, str]] = {
     "T2":  ("magma",   "T2 (ms)"),
     "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
     "FA":  ("cividis", "FA"),
+    "CBF": ("plasma",  "CBF (mL/100g/min)"),
 }
 
 
@@ -108,9 +109,11 @@ def paint_brain_pathology(brain_vol: np.ndarray, kind: str) -> np.ndarray:
 
 
 def quantitative_map_spec(sequence: str, qmri_display: str = "",
-                          diff_display: str = "") -> "tuple[str, str] | None":
+                          diff_display: str = "", perf_display: str = "") -> "tuple[str, str] | None":
     """(colormap, unit-label) when the current display is a quantitative parameter
-    map (qMRI T1/T2/T2*, diffusion ADC/FA), else None for a weighted image."""
+    map (qMRI T1/T2/T2*, diffusion ADC/FA, perfusion CBF), else None for a weighted image."""
+    if sequence == "Perfusion (ASL)":
+        return _MAP_CMAP["CBF"] if "CBF" in (perf_display or "") else None
     if sequence == "Quantitative (qMRI)":
         d = qmri_display or ""
         if "T1" in d:

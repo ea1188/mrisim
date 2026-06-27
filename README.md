@@ -38,7 +38,7 @@ python src/app_qt.py
 The PyQt6 app drives the physics engine in real time:
 
 - **Anatomy** — real BrainWeb brain plus real segmented body regions (Abdomen, Spine, Pelvis, whole Torso) from the TotalSegmentator MRI dataset and a real Knee (KneeBones3Dify), each with a synthetic fallback; load any TotalSegmentator NIfTI mask from disk, or index a folder of masks by body region (see [Anatomy and phantoms](#anatomy-and-phantoms))
-- **Sequences** — Spin Echo, FSE/TSE (EPG echo train), Gradient Echo, Inversion Recovery, Balanced SSFP (with off-resonance banding), Echo-Planar (EPI), Diffusion (DWI with ADC/FA maps), MR Angiography (TOF / Phase Contrast), Susceptibility-Weighted Imaging (SWI), fMRI BOLD, and Quantitative (qMRI) parameter mapping
+- **Sequences** — Spin Echo, FSE/TSE (EPG echo train), Gradient Echo, Inversion Recovery, Balanced SSFP (with off-resonance banding), Echo-Planar (EPI), Diffusion (DWI with ADC/FA maps), **Perfusion (arterial spin labeling — label-control weighting + quantitative CBF maps)**, MR Angiography (TOF / Phase Contrast), Susceptibility-Weighted Imaging (SWI), fMRI BOLD, and Quantitative (qMRI) parameter mapping
 - **qMRI maps** — T1 (variable flip angle), T2 and T2\* (multi-echo), and Synthetic SE contrast rendered from the maps
 - **Contrast & field strength** — measured 1.5T / 3T tissue tables, Gadolinium dosing (brain and body, blood-pool weighted), magnetization transfer, B1+ inhomogeneity, flowing-blood signal (spin-echo void / gradient-echo inflow), and three fat-suppression methods (STIR, Dixon in-/opposed-phase, spectral CHESS)
 - **Acquisition** — matrix/resolution, FOV (magnify + wraparound when small, surround when large), bandwidth, NEX, partial Fourier, k-space apodisation, parallel imaging (SENSE / GRAPPA / compressed sensing) with g·√R noise, non-Cartesian radial sampling with streaks, and imperfect slice profile + multi-slice cross-talk
@@ -115,6 +115,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 - **Flow** — spin-echo flow void and gradient-echo inflow (time-of-flight) enhancement for moving blood
 - **fMRI BOLD** — T2\* modulation via neurovascular coupling, block-design t-statistic maps
 - **Diffusion (DWI/DTI)** — mono-exponential and tensor-based signal, ADC/FA maps
+- **Perfusion (ASL)** — single-compartment pCASL kinetics (Buxton/Alsop): the label−control ΔM perfusion-weighted image (~1% modulation) and a quantitative CBF map (mL/100 g/min) from a per-tissue flow table (`perfusion.py`)
 - **MR Angiography** — Time-of-Flight inflow enhancement, Phase Contrast velocity encoding
 - **Susceptibility-Weighted Imaging (SWI)** — long-TE GRE magnitude × a homodyne-high-passed negative phase mask from the local susceptibility field (paramagnetic venous blood / iron darkened), with a minimum-intensity projection venogram (`swi.py`)
 

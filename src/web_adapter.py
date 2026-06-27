@@ -566,7 +566,7 @@ class WebHost(CurvesMixin):
         import rendering
         return rendering.quantitative_map_spec(
             params.get("sequence", ""), params.get("qmri_display", ""),
-            params.get("diff_display", ""))
+            params.get("diff_display", ""), params.get("perf_display", ""))
 
     def _apply_coil_shading(self, image: np.ndarray, coil: "str | None") -> np.ndarray:
         """Modulate the image by a receive coil's spatial sensitivity (a display
