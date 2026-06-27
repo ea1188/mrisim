@@ -10,6 +10,19 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.46.0] — 2026-06-27
+
+### Added
+- **Perfusion signal curves.** The signal-curve panel now plots the dynamics behind the
+  perfusion maps: the DSC first-pass bolus (peak ∝ CBF, width ∝ MTT, area ∝ CBV — a
+  tumour is tall, a stroke core low + delayed), the DCE Tofts uptake (a leaky tumour
+  enhances while normal brain stays flat behind an intact blood-brain barrier), and the
+  ASL ΔM decay vs post-label delay. Sequence-driven, in both the browser and desktop.
+
+### Changed
+- Internal: the per-slice sequence dispatch is now a handler registry (`_render_*` methods)
+  instead of a long `if/elif` chain — no behaviour change.
+
 ## [1.45.0] — 2026-06-27
 
 ### Added
