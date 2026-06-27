@@ -142,7 +142,7 @@ All physics lives in tested, importable modules under `src/`; the GUI is a layer
 - **Scan geometry** — FOV, matrix, resolution, phase-encode direction, 3-plane localizer overlays
 - **Artifacts** — motion ghosting, sub-pixel chemical shift displacement, susceptibility signal loss (internal air), gradient-nonlinearity geometric distortion, zipper
 - **Pulse sequence diagrams** — SE, GRE, IR, FSE, Diffusion, balanced SSFP, EPI, TOF and qMRI renderers, each on a physically-ordered local timeline (excitation → echo → readout) with the correct events per sequence
-- **Export** — PNG/PDF report export; DICOM export *(library-only)*
+- **Export** — PNG image, PDF report, and **DICOM** (.dcm, carrying the acquisition parameters) export — all from the desktop toolbar
 
 ## Installation
 

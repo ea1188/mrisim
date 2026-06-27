@@ -1478,6 +1478,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         # \u2500\u2500 Export \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
         erow = QHBoxLayout(); erow.setContentsMargins(6, 6, 6, 4)
         self._button(erow, "Save Img", self.export_current_image)
+        self._button(erow, "DICOM", self.export_current_dicom)
         self._button(erow, "Protocol", self.export_current_protocol)
         self._button(erow, "PDF", self.export_current_report)
         self._button(erow, "Load", self.load_protocol_file)

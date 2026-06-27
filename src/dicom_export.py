@@ -211,7 +211,7 @@ def make_dataset(
 def image_to_dicom(
     image: np.ndarray,
     filepath: str,
-    **kwargs: float | str | int | None,
+    **kwargs: float | str | int | tuple[float, float] | None,
 ) -> str:
     """Write a 2-D simulated MR image to a DICOM file.
 
@@ -292,7 +292,7 @@ def volume_to_dicom_series(
             fname,
             slice_location_mm=loc,
             slice_thickness_mm=slice_thickness_mm,
-            pixel_spacing_mm=pixel_spacing_mm,  # type: ignore[arg-type]
+            pixel_spacing_mm=pixel_spacing_mm,
             instance_number=i + 1,
             study_uid=shared_study,
             series_uid=shared_series,
