@@ -1204,6 +1204,58 @@
           "state": {}
         }
       ]
+    },
+    {
+      "title": "Perfusion: blood flow, stroke and tumour grade",
+      "blurb": "Map blood flow without a needle (ASL), then with a contrast bolus (DSC/DCE) — and read a stroke against a tumour.",
+      "steps": [
+        {
+          "text": "<b>Perfusion</b> imaging maps blood <i>flow</i>, not just anatomy. The simplest is <b>arterial spin labeling (ASL)</b>: it magnetically tags arterial blood as a tracer, so it needs <b>no contrast injection</b>. This is the quantitative <b>CBF map</b> (cerebral blood flow, mL/100&nbsp;g/min) — grey matter is bright (~60), white matter dark (~22): cortex is perfused 2–3× more than white matter. The curve below shows the tagged signal fading as the post-label delay grows (the label decays with blood's T1).",
+          "state": {
+            "region": "Brain",
+            "seq": "Perfusion (ASL)",
+            "perfdisp": "CBF Map",
+            "orient": "axial",
+            "slice": 90,
+            "field": "3T",
+            "pathology": "",
+            "curveshow": true,
+            "labelanat": false,
+            "fovplan": false,
+            "cmap": false,
+            "mathshow": false
+          }
+        },
+        {
+          "text": "The workhorse is <b>DSC</b> (dynamic susceptibility contrast): a gadolinium <b>bolus</b> is tracked as it passes through the brain. The curve below is that <b>first pass</b> — the <i>area</i> under it is the blood <b>volume (CBV)</b>, the <i>width</i> is the mean transit time (<b>MTT</b>), and the peak follows flow. This is the <b>CBV map</b>; like CBF, grey&nbsp;&gt;&nbsp;white.",
+          "state": {
+            "seq": "Perfusion (Dynamic)",
+            "perfdyndisp": "CBV (DSC)"
+          }
+        },
+        {
+          "text": "Drop in a <b>stroke</b>. The infarct core has lost its supply, so on the <b>CBF map</b> it is a <b>dark hole</b> of reduced flow against the cortex. (Switch the dynamic map to <b>MTT</b> and that territory is also <i>prolonged</i> — the blood that does arrive transits slowly.) <b>Low CBF with long MTT</b> is the signature of the ischaemic core. Tick <b>Label the anatomy</b> to find it; the infarct's bolus curve below is the low, delayed one.",
+          "state": {
+            "pathology": "stroke",
+            "perfdyndisp": "CBF (DSC)",
+            "labelanat": true
+          }
+        },
+        {
+          "text": "Swap the stroke for a <b>tumour</b> and look at <b>CBV</b>: the mass is now <b>bright</b>. It has grown its own vessels (neovascularisation), so its blood volume is <i>raised</i> — and high CBV means a <b>high-grade</b> tumour. This is how perfusion grades a mass that can look bland on routine images. Its bolus curve below is the tall one.",
+          "state": {
+            "pathology": "tumor",
+            "perfdyndisp": "CBV (DSC)",
+            "labelanat": false
+          }
+        },
+        {
+          "text": "Finally switch the dynamic map to <b>Ktrans (DCE)</b> — a T1 acquisition that measures how fast contrast <b>leaks</b> across the blood–brain barrier. Normal brain keeps the barrier shut, so it stays dark (Ktrans ≈ 0); the tumour's leaky vessels light up. The curve makes it plain — normal tissue stays flat while the tumour <b>enhances</b> over time. ASL flow, DSC volume and transit, DCE permeability: three views of perfusion that together separate a stroke from a tumour.",
+          "state": {
+            "perfdyndisp": "Ktrans (DCE)"
+          }
+        }
+      ]
     }
   ],
   "curriculum": [
@@ -1272,7 +1324,8 @@
         "qMRI: measuring tissue, not a picture",
         "When images go wrong: artifacts",
         "B0 inhomogeneity & EPI distortion",
-        "A tour of the real anatomy"
+        "A tour of the real anatomy",
+        "Perfusion: blood flow, stroke and tumour grade"
       ]
     },
     {
