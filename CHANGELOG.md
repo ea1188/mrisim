@@ -10,6 +10,16 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.49.0] — 2026-06-27
+
+### Fixed
+- **Oblique angling on the localizer.** In the protocol planner you can now re-grab the
+  slice band after it is already tilted and keep angling (the hit-test was checking the
+  straight band position, so it locked after the first rotation). The oblique tilt/rot
+  range is widened from ±45° to **±90°** across the planner, the simulator, and the desktop.
+- The main simulator's scout drag is smoother — the band follows the cursor during the
+  drag (throttled render) with a more forgiving grab zone.
+
 ## [1.48.0] — 2026-06-27
 
 ### Added
