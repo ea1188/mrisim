@@ -1051,9 +1051,9 @@ function imgFraction(img, cx, cy) {
 }
 
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
-// Magnet a dragged oblique angle onto a common value (0 / ±15 / ±30 / ±45).
+// Magnet a dragged oblique angle onto a common value (every 15° up to ±90).
 const snapAngle = (v) => {
-  for (const t of [0, 15, 30, 45, -15, -30, -45]) if (Math.abs(v - t) <= 2.5) return t;
+  for (const t of [0, 15, 30, 45, 60, 75, 90, -15, -30, -45, -60, -75, -90]) if (Math.abs(v - t) <= 2.5) return t;
   return v;
 };
 function panelAt(f) {
@@ -1197,8 +1197,8 @@ function wireScout() {
       const d = (p.map === "row" ? (loc.py - drag.l0.py) : (drag.l0.px - loc.px)) * 90;
       // Raw (un-snapped) while dragging so the plane tracks the cursor smoothly; the
       // snap-to-15° only fires on release (live snapping made it stick / jump at 0).
-      if (p.angle === "tilt") planTilt = clampN(drag.tilt0 + d, -45, 45);
-      else planRot = clampN(drag.rot0 + d, -45, 45);
+      if (p.angle === "tilt") planTilt = clampN(drag.tilt0 + d, -90, 90);
+      else planRot = clampN(drag.rot0 + d, -90, 90);
     }
     scheduleScoutDrag();   // throttled: the localizer follows the cursor during the drag
   };
