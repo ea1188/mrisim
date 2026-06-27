@@ -230,64 +230,9 @@ const TOUR = [
   { el: "#pp-tour-btn", title: "That's it",
     text: "Open a sequence and try it. You can re-open this tour anytime from <b>▶ Tour</b>, or head <b>← Back to the simulator</b> for the single-slice workspace." },
 ];
-let tourIdx = 0;
-
-function startTour() {
-  tourIdx = 0;
-  $("tour").hidden = false;
-  showTourStep();
-  window.addEventListener("resize", repositionTour);
-  window.addEventListener("keydown", tourKey);
-}
-function endTour() {
-  $("tour").hidden = true;
-  window.removeEventListener("resize", repositionTour);
-  window.removeEventListener("keydown", tourKey);
-  try { localStorage.setItem("mrisim_pp_tour", "1"); } catch (e) { /* private mode */ }
-}
-function tourKey(e) {
-  if (e.key === "Escape") endTour();
-  else if (e.key === "ArrowRight") nextTour();
-  else if (e.key === "ArrowLeft") prevTour();
-}
-function nextTour() { if (tourIdx >= TOUR.length - 1) { endTour(); return; } tourIdx++; showTourStep(); }
-function prevTour() { if (tourIdx > 0) { tourIdx--; showTourStep(); } }
-
-function showTourStep() {
-  const step = TOUR[tourIdx];
-  const el = document.querySelector(step.el);
-  if (!el || (!el.offsetParent && el.getClientRects().length === 0)) { nextTour(); return; }
-  el.scrollIntoView({ block: "center", behavior: "smooth" });
-  $("tour-title").textContent = step.title;
-  $("tour-text").innerHTML = step.text;
-  $("tour-progress").textContent = `${tourIdx + 1} / ${TOUR.length}`;
-  $("tour-prev").disabled = tourIdx === 0;
-  $("tour-next").textContent = tourIdx === TOUR.length - 1 ? "Done" : "Next ›";
-  setTimeout(repositionTour, 220);                 // after the scroll/layout settles
-}
-function repositionTour() {
-  if ($("tour").hidden) return;
-  const el = document.querySelector(TOUR[tourIdx].el);
-  if (!el) return;
-  const r = el.getBoundingClientRect();
-  const pad = 6, spot = $("tour-spot");
-  spot.style.left = (r.left - pad) + "px"; spot.style.top = (r.top - pad) + "px";
-  spot.style.width = (r.width + 2 * pad) + "px"; spot.style.height = (r.height + 2 * pad) + "px";
-  const pop = $("tour-pop");
-  pop.style.visibility = "hidden"; pop.style.left = "0px"; pop.style.top = "0px";
-  const pw = pop.offsetWidth, ph = pop.offsetHeight, m = 12;
-  let left = r.right + m;
-  if (left + pw > window.innerWidth - 8) left = r.left - pw - m;       // flip to the left
-  if (left < 8) left = Math.min(Math.max(8, r.left), window.innerWidth - pw - 8);
-  const top = Math.max(8, Math.min(r.top + r.height / 2 - ph / 2, window.innerHeight - ph - 8));
-  pop.style.left = left + "px"; pop.style.top = top + "px"; pop.style.visibility = "visible";
-}
-function wireTour() {
-  $("pp-tour-btn").addEventListener("click", startTour);
-  $("tour-next").addEventListener("click", nextTour);
-  $("tour-prev").addEventListener("click", prevTour);
-  $("tour-skip").addEventListener("click", endTour);
-}
+// The tour engine lives in web/tour.js (shared with the main app); this page supplies
+// the steps above and starts it with its own storage key.
+const startPpTour = () => Tour.start(TOUR, { storageKey: "mrisim_pp_tour" });
 
 // ---- boot ----------------------------------------------------------------- //
 async function onReady() {
@@ -295,13 +240,14 @@ async function onReady() {
   $("splash").hidden = true;
   $("pp-root").hidden = false;
   wireParamPanel();
-  wireTour();
+  $("pp-tour-btn").addEventListener("click", startPpTour);
+  Tour.wire();
   PLANES.forEach(wireViewport);
   window.addEventListener("resize", () => PLANES.forEach((p) => drawOverlay(p, null)));
   await loadExam("Brain");
   let seen = false;
   try { seen = localStorage.getItem("mrisim_pp_tour") === "1"; } catch (e) { /* private mode */ }
-  if (!seen) setTimeout(startTour, 600);            // auto-start once, after the first exam loads
+  if (!seen) setTimeout(startPpTour, 600);          // auto-start once, after the first exam loads
 }
 
 async function loadExam(name) {
