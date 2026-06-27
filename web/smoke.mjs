@@ -443,6 +443,15 @@ try {
     dwiSrc, { timeout: 20_000 });
   if (!(await page.$$eval("#field option", (os) => os.some((o) => o.value === "7T" || o.textContent === "7T"))))
     fail("7T must be a selectable field strength");
+  // ASL perfusion: exposes a Perfusion-weighted / CBF Map picker; selecting it and
+  // switching to the CBF map must re-render (the engine renders perfusion via Pyodide).
+  await page.selectOption("#sequence", "Perfusion (ASL)");
+  await page.waitForSelector("#perfdisp-row:not([hidden])", { timeout: 5_000 });
+  const perfSrc = await page.getAttribute("#mainImage", "src");
+  await page.selectOption("#perfdisp", "CBF Map");
+  await page.waitForFunction(
+    (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev && s.length > 2000; },
+    perfSrc, { timeout: 20_000 });
   await page.selectOption("#sequence", "Spin Echo");
 
   step("k-space + PSD");
