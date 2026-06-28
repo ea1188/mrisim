@@ -54,10 +54,11 @@ try {
   if (!/\b1 \/ 1\b/.test(sc)) fail(`score not 1/1 after a correct answer (got "${sc}")`);
   console.log("answered correctly → graded + scored ✓  (" + sc + ")");
 
-  // Walk the remaining questions to the end summary
+  // Walk the remaining questions to the end summary. The guard must exceed the question
+  // count (the full "All topics" pool), so keep it well above how many questions exist.
   await page.click("#qz-next");
   let guard = 0;
-  while (guard++ < 60 && !(await summaryShown())) {
+  while (guard++ < 400 && !(await summaryShown())) {
     await rendered();
     await page.click("#qz-options .qz-opt:first-child");
     await feedbackShown();
