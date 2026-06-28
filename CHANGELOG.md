@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.50.0] — 2026-06-28
+
+### Added
+- **Read-the-scan quiz expanded 25 → 71 questions** across all topics (sequences,
+  pathology, perfusion, artifacts, anatomy & planes), each rendered live by the engine.
+- **"What changed?" image-pair questions** — a new type that shows two scans side-by-side
+  and asks which single parameter differs (TE, TR, fat-sat, gadolinium, sequence, plane).
+
+### Changed
+- Quiz options are now **shuffled** per question, so the correct answer isn't always in the
+  same slot.
+
 ## [1.49.0] — 2026-06-27
 
 ### Fixed
