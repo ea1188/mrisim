@@ -44,6 +44,7 @@ let allQuestions = [];     // every question from quiz.json
 let categories = [];       // [{id, label}]
 let pool = [];             // questions for the chosen topic
 let idx = 0, score = 0, answered = false;
+let correctIdx = 0;        // displayed position of the correct option after shuffling
 
 const QUESTION_PARTS = ["qz-progress", "qz-imgwrap", "qz-prompt", "qz-options", "qz-feedback", "qz-next"];
 
@@ -116,10 +117,19 @@ async function showQuestion() {
 
   const opts = $("qz-options");
   opts.innerHTML = "";
-  q.options.forEach((text, i) => {
+  // Shuffle option order (Fisher–Yates) so the correct answer isn't always in the same
+  // slot — the authored data is front-loaded on index 0, which would be a giveaway.
+  const order = q.options.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  correctIdx = order.indexOf(q.answer);
+  window.__qzCorrect = correctIdx;          // exposed for the headless smoke (answers are already in quiz.json)
+  order.forEach((orig, pos) => {
     const b = document.createElement("button");
-    b.className = "qz-opt"; b.type = "button"; b.textContent = text;
-    b.addEventListener("click", () => answer(i));
+    b.className = "qz-opt"; b.type = "button"; b.textContent = q.options[orig];
+    b.addEventListener("click", () => answer(pos));
     opts.appendChild(b);
   });
   setScore();
@@ -140,10 +150,10 @@ function answer(choice) {
   const q = pool[idx];
   [...$("qz-options").children].forEach((b, i) => {
     b.disabled = true;
-    if (i === q.answer) b.classList.add("correct");
+    if (i === correctIdx) b.classList.add("correct");
     else if (i === choice) b.classList.add("wrong");
   });
-  const correct = choice === q.answer;
+  const correct = choice === correctIdx;
   if (correct) score++;
   $("qz-feedback").innerHTML =
     (correct ? '<b class="ok">Correct.</b> ' : '<b class="no">Not quite.</b> ') + (q.explain || "");

@@ -42,8 +42,11 @@ try {
   const n = await page.$$eval("#qz-options .qz-opt", (b) => b.length);
   if (n !== 4) fail(`expected 4 options, got ${n}`); else console.log("question 1 rendered with 4 options ✓");
 
-  // The known-correct answer to Q1 (T1-weighted, option 0) grades correct and scores 1/1
-  await page.click("#qz-options .qz-opt:first-child");
+  // Options are shuffled, so click the correct one by its (exposed) shuffled position →
+  // grades correct and scores 1/1.
+  const correctPos = await page.evaluate(() => window.__qzCorrect);
+  if (typeof correctPos !== "number") fail("quiz did not expose the correct option position");
+  await page.click(`#qz-options .qz-opt:nth-child(${correctPos + 1})`);
   await feedbackShown();
   const fb = await page.textContent("#qz-feedback");
   if (!/Correct/.test(fb)) fail(`correct answer not graded correct (feedback: "${fb}")`);
