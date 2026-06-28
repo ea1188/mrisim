@@ -593,6 +593,78 @@
       "options": ["Midline sagittal", "Axial", "Coronal", "Oblique"],
       "answer": 0,
       "explain": "A midline sagittal lines up the midbrain, pons, medulla and the cervicomedullary junction into the cord — the survey view of the craniocervical junction."
+    },
+    {
+      "category": "sequences",
+      "type": "pair",
+      "prompt": "Same slice and sequence — what changed from A to B?",
+      "setupA": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 12}},
+      "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
+      "options": ["The echo time (TE) was lengthened — now T2-weighted", "The repetition time (TR) was shortened", "Gadolinium was added", "The imaging plane changed"],
+      "answer": 0,
+      "explain": "Only TE changed (12 → 100 ms), TR stayed long. The long TE lets CSF (long T2) go bright — B is T2-weighted while A is proton-density."
+    },
+    {
+      "category": "sequences",
+      "type": "pair",
+      "prompt": "Same slice and sequence — what changed from A to B?",
+      "setupA": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 12}},
+      "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["The repetition time (TR) was shortened — now T1-weighted", "The echo time (TE) was lengthened", "Fat was suppressed", "Contrast was injected"],
+      "answer": 0,
+      "explain": "Only TR changed (4000 → 500 ms), TE stayed short. The short TR adds T1 weighting — B is T1 (CSF dark) while A is proton-density."
+    },
+    {
+      "category": "sequences",
+      "type": "pair",
+      "prompt": "Same T2 knee, same plane — what changed from A to B?",
+      "setupA": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "setupB": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90, "fatsat_enabled": true}},
+      "options": ["Fat suppression was switched on — the bright fat is now dark", "The plane changed", "The echo time was shortened", "Gadolinium was added"],
+      "answer": 0,
+      "explain": "The only change is fat suppression. The bright subcutaneous/marrow fat in A is nulled in B, so fluid and oedema (e.g. a bone bruise) stand out — the basis of fluid-sensitive MSK imaging."
+    },
+    {
+      "category": "pathology",
+      "type": "pair",
+      "prompt": "Same T1 slice of a brain tumour — what changed from A to B?",
+      "setupA": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "contrast_enabled": true, "contrast_dose": 8}},
+      "options": ["Gadolinium was given — the lesion now enhances", "The echo time was lengthened", "The imaging plane changed", "Fat suppression was added"],
+      "answer": 0,
+      "explain": "Same T1 sequence; gadolinium was administered for B. The newly bright (enhancing) tissue marks where the blood-brain barrier is broken."
+    },
+    {
+      "category": "pathology",
+      "type": "pair",
+      "prompt": "Same slice in a patient with microhaemorrhages — what changed from A to B?",
+      "setupA": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
+                 "params": {"sequence": "Susceptibility (SWI)", "TR": 28, "TE": 20, "flip_angle": 15}},
+      "options": ["Switched to a susceptibility sequence (SWI) — the bleeds now bloom dark", "Gadolinium was added", "The plane changed", "The repetition time was lengthened"],
+      "answer": 0,
+      "explain": "B is SWI: the strong susceptibility of blood products blooms into dark foci that the T1 spin echo in A barely shows. SWI/GRE are far more sensitive to microbleeds."
+    },
+    {
+      "category": "anatomy",
+      "type": "pair",
+      "prompt": "Same T1 brain, same sequence — what changed from A to B?",
+      "setupA": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "setupB": {"region": "Brain", "orientation": "coronal", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["The imaging plane changed (axial → coronal)", "The weighting changed to T2", "Gadolinium was added", "The sequence changed"],
+      "answer": 0,
+      "explain": "Same T1 spin echo and weighting; only the slice orientation changed — A is axial (both hemispheres in cross-section), B is coronal (front-on)."
     }
   ]
 }
