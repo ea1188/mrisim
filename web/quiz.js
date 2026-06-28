@@ -110,7 +110,9 @@ async function showQuestion() {
   $("qz-progress").textContent = `Question ${idx + 1} of ${pool.length}`;
   $("qz-feedback").style.display = "none";
   $("qz-next").style.display = "none";
+  const isPair = q.type === "pair";
   $("qz-img").style.display = "none";
+  $("qz-pair").style.display = isPair ? "flex" : "none";
   $("qz-imgmsg").style.display = "";
   $("qz-imgmsg").textContent = "Rendering…";
   $("qz-prompt").textContent = q.prompt;
@@ -135,10 +137,21 @@ async function showQuestion() {
   setScore();
 
   try {
-    const r = await call("render", q.setup);
-    const img = $("qz-img");
-    img.onload = () => { img.style.display = "block"; $("qz-imgmsg").style.display = "none"; };
-    img.src = r.image;
+    if (isPair) {
+      // "What changed?" — render both setups side by side; hide the prompt's spinner once
+      // both have loaded so a slow second render doesn't look done early.
+      const [ra, rb] = await Promise.all([call("render", q.setupA), call("render", q.setupB)]);
+      const ia = $("qz-imgA"), ib = $("qz-imgB");
+      let loaded = 0;
+      const done = () => { if (++loaded === 2) $("qz-imgmsg").style.display = "none"; };
+      ia.onload = done; ib.onload = done;
+      ia.src = ra.image; ib.src = rb.image;
+    } else {
+      const r = await call("render", q.setup);
+      const img = $("qz-img");
+      img.onload = () => { img.style.display = "block"; $("qz-imgmsg").style.display = "none"; };
+      img.src = r.image;
+    }
   } catch (e) {
     $("qz-imgmsg").textContent = "Could not render this question — try the next one.";
   }

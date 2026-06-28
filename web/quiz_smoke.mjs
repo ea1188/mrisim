@@ -19,7 +19,16 @@ const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 // that JS fails to override is caught here, not only at the next click.
 const shown = (id) => getComputedStyle(document.getElementById(id)).display !== "none";
 const rendered = () => page.waitForFunction(
-  () => { const im = document.getElementById("qz-img"); return im && im.src.startsWith("data:image") && getComputedStyle(im).display !== "none"; },
+  () => {
+    const im = document.getElementById("qz-img");
+    if (im && im.src.startsWith("data:image") && getComputedStyle(im).display !== "none") return true;
+    const pair = document.getElementById("qz-pair");          // "what changed?" image-pair question
+    if (pair && getComputedStyle(pair).display !== "none") {
+      const a = document.getElementById("qz-imgA"), b = document.getElementById("qz-imgB");
+      return a && b && a.complete && b.complete && a.src.startsWith("data:image") && b.src.startsWith("data:image");
+    }
+    return false;
+  },
   { timeout: 25_000 });
 const feedbackShown = () => page.waitForFunction(
   () => getComputedStyle(document.getElementById("qz-feedback")).display !== "none" && getComputedStyle(document.getElementById("qz-next")).display !== "none",
@@ -57,13 +66,17 @@ try {
   // Walk the remaining questions to the end summary. The guard must exceed the question
   // count (the full "All topics" pool), so keep it well above how many questions exist.
   await page.click("#qz-next");
-  let guard = 0;
+  let guard = 0, sawPair = false;
   while (guard++ < 400 && !(await summaryShown())) {
     await rendered();
+    if (!sawPair) sawPair = await page.evaluate(
+      () => getComputedStyle(document.getElementById("qz-pair")).display !== "none");
     await page.click("#qz-options .qz-opt:first-child");
     await feedbackShown();
     await page.click("#qz-next");
   }
+  if (!sawPair) fail("never encountered an image-pair ('what changed?') question in the walk");
+  else console.log("image-pair question rendered two scans ✓");
   await page.waitForFunction(() => document.getElementById("qz-summary").style.display !== "none", { timeout: 5_000 });
   const summary = await page.textContent("#qz-summary-score");
   if (!/\d+ \/ \d+\s*\(\d+%\)/.test(summary)) fail(`end summary score malformed (got "${summary}")`);
