@@ -233,6 +233,366 @@
       "options": ["Sagittal", "Axial", "Coronal", "Oblique"],
       "answer": 0,
       "explain": "A sagittal slice — a side-on cut dividing left from right; the corpus callosum, brainstem and cerebellum line up in profile (a midline sagittal is the classic view of these)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "On this knee scan, joint fluid and the cartilage stand out bright while marrow fat is darker. What weighting is this?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Proton-density", "T1-weighted", "T2-weighted", "Diffusion"],
+      "answer": 2,
+      "explain": "Long TR (4000 ms) and long TE (90 ms) give T2 weighting — fluid is bright, so effusions, cartilage defects and meniscal tears (fluid tracking into a tear) are conspicuous."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Here the fatty marrow and subcutaneous fat are bright while joint fluid is dark. What weighting is this knee scan?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["T2-weighted", "T1-weighted", "Diffusion", "Proton-density"],
+      "answer": 1,
+      "explain": "Short TR (500 ms) and short TE (12 ms) give T1 weighting — fat (and fatty marrow) is bright, fluid is dark. T1 is the anatomy/marrow workhorse."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Diffusion, perfusion and fMRI all rely on a very fast single-shot readout that fills the whole slice after one excitation — fast, but prone to distortion and susceptibility dropout. What is that readout called?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Echo-planar imaging (EPI)", "Time-of-flight", "Spin echo", "Gradient-recalled echo"],
+      "answer": 0,
+      "explain": "Echo-planar imaging (EPI) samples all of k-space after a single excitation — the speed enabler for diffusion, dynamic perfusion and fMRI BOLD — at the cost of geometric distortion and susceptibility dropout near air."
+    },
+    {
+      "category": "sequences",
+      "prompt": "A spoiled gradient-echo with a short TE and a high flip angle (70°). What weighting dominates?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 5, "flip_angle": 70}},
+      "options": ["T2*", "Proton-density", "T1-weighted", "Diffusion"],
+      "answer": 2,
+      "explain": "In spoiled gradient echo the flip angle drives T1 weighting (a high flip gives more T1 contrast), and a short TE avoids T2* decay. This is the basis of fast 3D T1 volumes (e.g. spoiled-GRE / MPRAGE-type scans)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Raising the b-value from 0 to 1000 s/mm² makes this image more sensitive to what?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Fat content", "The random motion of water molecules (diffusion)", "T1 relaxation", "Blood-flow velocity"],
+      "answer": 1,
+      "explain": "The b-value sets the diffusion sensitisation: higher b weights more strongly for water mobility. Tissue where water is restricted (e.g. an acute infarct) stays bright as b increases."
+    },
+    {
+      "category": "pathology",
+      "prompt": "This ring-shaped lesion shows CENTRAL restricted diffusion (a bright core on DWI). What does that favour?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "abscess",
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Necrotic tumour", "Pyogenic abscess", "Simple CSF cyst", "Chronic gliosis"],
+      "answer": 1,
+      "explain": "Thick, viscous pus restricts diffusion, so a pyogenic abscess shows a bright (restricted) centre on DWI. A necrotic tumour cavity usually does NOT restrict centrally — a key way to tell them apart."
+    },
+    {
+      "category": "pathology",
+      "prompt": "A focal white-matter lesion is obvious on FLAIR but easy to miss on plain T2 near the ventricles. Why does FLAIR help?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "lesion",
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["It suppresses fat", "It is T1-weighted", "It nulls CSF, so periventricular lesions are not masked by bright fluid", "It requires gadolinium"],
+      "answer": 2,
+      "explain": "FLAIR is heavily T2-weighted but nulls CSF with a long TI. Lesions sitting next to the ventricles are no longer hidden by bright CSF — the reason FLAIR is the screen for periventricular disease."
+    },
+    {
+      "category": "pathology",
+      "prompt": "Around this mass, finger-like T2 hyperintensity spreads through the surrounding white matter. What is it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
+      "options": ["Vasogenic oedema tracking along white-matter pathways", "Subcutaneous fat", "Calcification", "Flow artifact"],
+      "answer": 0,
+      "explain": "A leaky tumour drives vasogenic oedema that spreads through the white matter (sparing cortex), bright on T2/FLAIR. Surrounding oedema out of proportion to a lesion is a clue to an underlying mass."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "DSC perfusion follows a gadolinium bolus through the brain. What signal change does the passing bolus cause?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBV (DSC)"}},
+      "options": ["A transient T2* signal DROP from susceptibility as the bolus passes", "A steady T1 signal rise", "No signal change at all", "A chemical-shift artifact"],
+      "answer": 0,
+      "explain": "In Dynamic Susceptibility Contrast the concentrated bolus causes a brief T2* signal dip; the depth and timing of that dip across the passage are fitted to CBV, CBF and MTT."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "A patient with poor renal function needs perfusion imaging but cannot receive gadolinium. Which method fits?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Perfusion (ASL)", "perf_display": "CBF Map"}},
+      "options": ["DSC (gadolinium bolus)", "DCE (gadolinium)", "Arterial spin labeling (ASL)", "CT perfusion with iodinated contrast"],
+      "answer": 2,
+      "explain": "ASL magnetically labels arterial blood as an endogenous tracer — no exogenous contrast — so it is the perfusion method of choice when gadolinium is contraindicated."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "These ghosts repeat along the phase-encode axis from patient motion. Which option does NOT help reduce them?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "motion_enabled": true, "motion_type": "periodic", "motion_amplitude": 6}},
+      "options": ["Breath-holding or cardiac/respiratory triggering", "Signal averaging (more NEX)", "Increasing the echo time (TE)", "Swapping the phase- and frequency-encode directions"],
+      "answer": 2,
+      "explain": "Motion ghosts are tamed by triggering/breath-holding, averaging, motion correction, or swapping the phase direction to throw ghosts off the anatomy of interest. Increasing TE does nothing for motion (it tends to worsen other problems)."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "Chemical-shift artifact at fat–water borders is worse at 3T than at 1.5T. Why?",
+      "setup": {"region": "Knee", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "chemical_shift_enabled": true, "bandwidth": 30}},
+      "options": ["The fat–water frequency difference (in Hz) is larger at higher field", "Gradients are weaker at 3T", "Image SNR is lower at 3T", "TE is automatically longer at 3T"],
+      "answer": 0,
+      "explain": "The fat–water shift is fixed at ~3.5 ppm, so in Hz it doubles from 1.5T to 3T — a larger pixel misregistration for the same receiver bandwidth. Raise the bandwidth (or fat-suppress) to shrink it."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which imaging plane is this brain slice?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Sagittal", "Axial", "Coronal", "Oblique"],
+      "answer": 1,
+      "explain": "An axial (transverse) slice — it divides superior from inferior and shows both hemispheres symmetrically, with the lateral ventricles and basal ganglia in cross-section."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane of the knee is this — the view that shows the cruciate ligaments and the menisci in profile?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial", "Coronal", "Sagittal", "Oblique"],
+      "answer": 2,
+      "explain": "Sagittal — the side-on plane along the ACL/PCL and through the meniscal body, the standard plane for assessing the cruciates and meniscal tears."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "This long side-on image stacks the vertebral bodies and intervertebral discs. Which region and plane is it?",
+      "setup": {"region": "Spine", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial brain", "Coronal abdomen", "Sagittal knee", "Sagittal spine"],
+      "answer": 3,
+      "explain": "A sagittal spine image — vertebral bodies, discs and the spinal cord line up vertically. Sagittal is the default survey plane for the spine."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane best displays the corpus callosum along its whole length (genu, body and splenium)?",
+      "setup": {"region": "Brain", "orientation": "sagittal", "slice_idx": 110,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial", "Midline sagittal", "Coronal", "Oblique"],
+      "answer": 1,
+      "explain": "The corpus callosum is a midline C-shaped band, so a midline sagittal shows it end-to-end. Axial and coronal slices only cut it in fragments."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which body region is this examination — femoral condyles, tibial plateau and the joint space?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Brain", "Lumbar spine", "Abdomen", "Knee"],
+      "answer": 3,
+      "explain": "The knee — femoral condyles above, tibial plateau below, the patella anteriorly, and the menisci and cruciate ligaments within the joint."
+    },
+    {
+      "category": "sequences",
+      "prompt": "This angiogram encodes flow as velocity-dependent phase shifts and can be tuned to a velocity range (VENC). Which technique is it?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "MR Angiography", "angio_type": "PC"}},
+      "options": ["Time-of-flight MRA", "Phase-contrast MRA", "CT angiography", "Black-blood imaging"],
+      "answer": 1,
+      "explain": "Phase-contrast MRA uses bipolar gradients so moving spins accrue phase proportional to velocity (set by the VENC). It yields flow speed AND direction — unlike time-of-flight, which relies on inflow brightness."
+    },
+    {
+      "category": "sequences",
+      "prompt": "With the b-value set to 0, a diffusion scan carries no diffusion sensitisation. What weighting does it then resemble — the basis of 'T2 shine-through'?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 0}},
+      "options": ["T1-weighted", "T2-weighted", "Proton-density", "Fat-suppressed"],
+      "answer": 1,
+      "explain": "A b=0 image is essentially T2-weighted. So a lesion that is bright on high-b DWI purely because it is T2-bright (not truly restricting) is 'T2 shine-through' — always confirm with the ADC map."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Why does a gradient echo decay by T2* while a spin echo decays by the slower T2?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20}},
+      "options": ["The spin echo's 180° refocusing pulse reverses static field dephasing", "The gradient echo uses a longer TR", "The spin echo suppresses fat", "The gradient echo is T1-weighted"],
+      "answer": 0,
+      "explain": "A spin echo's 180° pulse refocuses dephasing from static field inhomogeneity (T2'), leaving pure T2. A gradient echo has no such pulse, so it keeps that extra dephasing — T2* = T2 plus susceptibility/inhomogeneity. That makes GRE sensitive to blood products and iron."
+    },
+    {
+      "category": "pathology",
+      "prompt": "On this T2*-weighted gradient-echo scan, small old bleeds appear as dark 'blooming' foci. Why does GRE reveal them when spin echo may not?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
+                "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20}},
+      "options": ["GRE keeps susceptibility dephasing (no 180° refocusing), so blood products bloom", "GRE injects contrast", "GRE is fat-suppressed", "GRE has higher spatial resolution"],
+      "answer": 0,
+      "explain": "Without a 180° refocusing pulse, the strong susceptibility of haemosiderin/blood products dephases spins and 'blooms' dark on GRE (and even more on SWI). A spin echo refocuses that dephasing and can hide microbleeds."
+    },
+    {
+      "category": "pathology",
+      "prompt": "Multiple sclerosis plaques are bright on FLAIR. On this T1 scan a plaque appears DARK (a 'black hole'). What does that indicate?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "ms",
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Chronic axonal loss / tissue destruction", "An acute, actively inflamed plaque", "Fat within the lesion", "A flow artifact"],
+      "answer": 0,
+      "explain": "Persistent T1-hypointense 'black holes' mark chronic, destructive demyelination with axonal loss — a marker of disease severity beyond simple lesion counting on FLAIR."
+    },
+    {
+      "category": "pathology",
+      "prompt": "After gadolinium this tumour shows a bright enhancing rim around a non-enhancing centre. What does the non-enhancing core most likely represent?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "contrast_enabled": true, "contrast_dose": 8}},
+      "options": ["Central necrosis", "Subcutaneous fat", "Calcification", "Normal CSF"],
+      "answer": 0,
+      "explain": "The enhancing rim is viable, vascularised tumour with a broken blood-brain barrier; the non-enhancing core is necrosis. A pyogenic abscess can look similar — DWI separates them, because pus restricts diffusion centrally."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "On this ASL cerebral-blood-flow map, grey matter is brighter than white matter. Why?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Perfusion (ASL)", "perf_display": "CBF Map"}},
+      "options": ["Grey matter receives ~2–3× the blood flow of white matter", "White matter contains more fat", "ASL only labels the cortex", "It is a susceptibility artifact"],
+      "answer": 0,
+      "explain": "Cortical grey matter is perfused about 2–3× more than white matter, so it is brighter on a CBF map. ASL measures this quantitatively using magnetically labelled blood — no contrast."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "Which dynamic perfusion method tracks contrast leakage on T1-weighting over minutes to measure permeability (Ktrans)?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "Ktrans (DCE)"}},
+      "options": ["DSC (first-pass T2*)", "DCE (dynamic contrast-enhanced)", "ASL", "Time-of-flight"],
+      "answer": 1,
+      "explain": "DCE acquires T1-weighted images over minutes and models contrast leaking into the extravascular space → Ktrans (permeability). DSC is the fast first-pass T2* method that yields CBV/CBF/MTT."
+    },
+    {
+      "category": "artifacts",
+      "prompt": "Near a metallic implant the image shows signal voids and geometric warping. Which choice REDUCES this susceptibility artifact?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20, "susceptibility_enabled": true, "susceptibility_strength": 8}},
+      "options": ["Spin echo with a short TE and high receiver bandwidth", "A long-TE gradient echo", "Lowering the receiver bandwidth", "Doing nothing — it cannot be reduced"],
+      "answer": 0,
+      "explain": "Susceptibility near metal is worst on long-TE gradient echo. A spin echo's 180° pulse refocuses the dephasing; a short TE and high bandwidth (plus dedicated metal-artifact-reduction sequences) shrink the voids and distortion."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which body region is this axial scan — liver, spleen, both kidneys and bowel loops?",
+      "setup": {"region": "Abdomen", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Brain", "Chest", "Abdomen", "Knee"],
+      "answer": 2,
+      "explain": "The abdomen — liver and spleen, both kidneys and bowel; the axial plane is the survey workhorse for abdominal anatomy."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which region is this axial scan, centred on the bladder with the pelvic bones and musculature around it?",
+      "setup": {"region": "Pelvis", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Pelvis", "Abdomen", "Knee", "Brain"],
+      "answer": 0,
+      "explain": "The pelvis — the bladder centrally, the bony pelvis and the pelvic floor/gluteal musculature; in practice the reproductive organs and rectum are the targets."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane is best for comparing the two hippocampi side-by-side (e.g. when looking for mesial temporal sclerosis)?",
+      "setup": {"region": "Brain", "orientation": "coronal", "slice_idx": 110,
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["Axial", "Coronal", "Sagittal", "Oblique"],
+      "answer": 1,
+      "explain": "A coronal plane (perpendicular to the long axis of the hippocampus) shows both hippocampi symmetrically for direct left-vs-right comparison — the standard view for mesial temporal sclerosis."
+    },
+    {
+      "category": "sequences",
+      "prompt": "On this knee scan the TR is long but the TE is short — high-signal, intermediate contrast that shows cartilage and menisci well. What weighting is it?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 3000, "TE": 15}},
+      "options": ["Proton-density", "T1-weighted", "T2-weighted", "Diffusion"],
+      "answer": 0,
+      "explain": "Long TR + short TE = proton-density: high SNR with intermediate contrast. With fat suppression it is the MSK workhorse for cartilage and menisci."
+    },
+    {
+      "category": "sequences",
+      "prompt": "In an inversion-recovery sequence, what sets which tissue is nulled (appears darkest)?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["The inversion time (TI) relative to that tissue's T1", "The repetition time (TR)", "The flip angle", "The receiver bandwidth"],
+      "answer": 0,
+      "explain": "A tissue is nulled when TI ≈ 0.69 × its T1 (its longitudinal magnetisation crosses zero). A short TI (~150–200 ms) nulls fat (STIR); a long TI (~2000–2500 ms) nulls CSF (FLAIR)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "STIR uses a short TI (~150 ms) and FLAIR a long TI (~2500 ms). What does each one null?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["STIR nulls fat; FLAIR nulls CSF", "STIR nulls CSF; FLAIR nulls fat", "Both null fat", "Both null CSF"],
+      "answer": 0,
+      "explain": "The null follows TI ≈ 0.69 × T1: a short TI matches fat's short T1 (STIR → dark fat), a long TI matches CSF's long T1 (FLAIR → dark CSF)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Holding TR long, you LENGTHEN the echo time (TE). Which way does the contrast move?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
+      "options": ["Toward T2 weighting", "Toward T1 weighting", "Toward proton-density", "Toward diffusion weighting"],
+      "answer": 0,
+      "explain": "TE controls T2 weighting — a longer TE lets long-T2 tissue (fluid) stay bright while short-T2 tissue decays. (TR controls T1 weighting; a long TR removes it.)"
+    },
+    {
+      "category": "pathology",
+      "prompt": "This infarct is bright on DWI but is still NOT visible on FLAIR. What does that DWI–FLAIR mismatch suggest about timing?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Hyperacute / early (roughly within 4.5 hours)", "Chronic (months old)", "It is not a stroke at all", "Subcutaneous fat"],
+      "answer": 0,
+      "explain": "DWI turns positive within minutes; FLAIR lags by hours. A DWI-positive but FLAIR-negative infarct is therefore early — a marker used to select unknown-onset strokes for thrombolysis."
+    },
+    {
+      "category": "pathology",
+      "prompt": "Days after onset this infarct has become bright on FLAIR (it was already bright on DWI from the start). What changed to make it show here?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["Vasogenic oedema raised the tissue water and T2", "It started to bleed", "Fat was deposited", "It calcified"],
+      "answer": 0,
+      "explain": "Over hours-to-days vasogenic oedema increases tissue water and T2, so the infarct brightens on T2/FLAIR — while DWI was positive from the first minutes (cytotoxic oedema)."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "In acute stroke the DWI lesion is small but the MTT perfusion abnormality is much larger. What does this 'mismatch' represent?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "MTT (DSC)"}},
+      "options": ["Salvageable penumbra (tissue at risk)", "Completed infarct core", "Normal brain", "A draining vein"],
+      "answer": 0,
+      "explain": "The diffusion lesion approximates the irreversible core; the larger perfusion deficit also includes hypoperfused-but-viable penumbra. A big diffusion–perfusion mismatch means more tissue to save with reperfusion."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane of the knee is this — the cross-section through the patellofemoral joint?",
+      "setup": {"region": "Knee", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial", "Sagittal", "Coronal", "Oblique"],
+      "answer": 0,
+      "explain": "Axial — looking down through the knee; the patella in the trochlear groove (the patellofemoral joint) and the retinacula are assessed in this plane."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane shows the medial and lateral collateral ligaments and the meniscal bodies side-to-side?",
+      "setup": {"region": "Knee", "orientation": "coronal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Coronal", "Axial", "Sagittal", "Oblique"],
+      "answer": 0,
+      "explain": "Coronal — a front-on plane that lays out both collateral ligaments and the meniscal bodies from side to side."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which body region is this axial scan — heart and great vessels centrally, lungs to the sides?",
+      "setup": {"region": "Torso", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Chest / thorax", "Abdomen", "Pelvis", "Brain"],
+      "answer": 0,
+      "explain": "The thorax — the heart and great vessels in the mediastinum centrally, with the lungs laterally; axial is the standard survey plane."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which single plane best shows the brainstem continuing into the cervical spinal cord?",
+      "setup": {"region": "Brain", "orientation": "sagittal", "slice_idx": 110,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Midline sagittal", "Axial", "Coronal", "Oblique"],
+      "answer": 0,
+      "explain": "A midline sagittal lines up the midbrain, pons, medulla and the cervicomedullary junction into the cord — the survey view of the craniocervical junction."
     }
   ]
 }

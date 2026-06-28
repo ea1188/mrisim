@@ -42,8 +42,11 @@ try {
   const n = await page.$$eval("#qz-options .qz-opt", (b) => b.length);
   if (n !== 4) fail(`expected 4 options, got ${n}`); else console.log("question 1 rendered with 4 options ✓");
 
-  // The known-correct answer to Q1 (T1-weighted, option 0) grades correct and scores 1/1
-  await page.click("#qz-options .qz-opt:first-child");
+  // Options are shuffled, so click the correct one by its (exposed) shuffled position →
+  // grades correct and scores 1/1.
+  const correctPos = await page.evaluate(() => window.__qzCorrect);
+  if (typeof correctPos !== "number") fail("quiz did not expose the correct option position");
+  await page.click(`#qz-options .qz-opt:nth-child(${correctPos + 1})`);
   await feedbackShown();
   const fb = await page.textContent("#qz-feedback");
   if (!/Correct/.test(fb)) fail(`correct answer not graded correct (feedback: "${fb}")`);
@@ -51,10 +54,11 @@ try {
   if (!/\b1 \/ 1\b/.test(sc)) fail(`score not 1/1 after a correct answer (got "${sc}")`);
   console.log("answered correctly → graded + scored ✓  (" + sc + ")");
 
-  // Walk the remaining questions to the end summary
+  // Walk the remaining questions to the end summary. The guard must exceed the question
+  // count (the full "All topics" pool), so keep it well above how many questions exist.
   await page.click("#qz-next");
   let guard = 0;
-  while (guard++ < 60 && !(await summaryShown())) {
+  while (guard++ < 400 && !(await summaryShown())) {
     await rendered();
     await page.click("#qz-options .qz-opt:first-child");
     await feedbackShown();
