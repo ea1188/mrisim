@@ -254,12 +254,12 @@
     },
     {
       "category": "sequences",
-      "prompt": "This whole slice was filled in a single rapid, slightly distorted readout. Which family of techniques relies on this echo-planar readout?",
+      "prompt": "Diffusion, perfusion and fMRI all rely on a very fast single-shot readout that fills the whole slice after one excitation — fast, but prone to distortion and susceptibility dropout. What is that readout called?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
-                "params": {"sequence": "EPI", "TR": 3000, "TE": 80}},
-      "options": ["Standard anatomical T1", "Time-of-flight MRA", "STIR fat suppression", "Diffusion, perfusion and fMRI (echo-planar readout)"],
-      "answer": 3,
-      "explain": "Echo-planar imaging (EPI) samples all of k-space after one excitation — very fast but prone to distortion and susceptibility dropout. It is the readout engine for diffusion, dynamic perfusion and fMRI BOLD."
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Echo-planar imaging (EPI)", "Time-of-flight", "Spin echo", "Gradient-recalled echo"],
+      "answer": 0,
+      "explain": "Echo-planar imaging (EPI) samples all of k-space after a single excitation — the speed enabler for diffusion, dynamic perfusion and fMRI BOLD — at the cost of geometric distortion and susceptibility dropout near air."
     },
     {
       "category": "sequences",
@@ -494,6 +494,105 @@
       "options": ["Axial", "Coronal", "Sagittal", "Oblique"],
       "answer": 1,
       "explain": "A coronal plane (perpendicular to the long axis of the hippocampus) shows both hippocampi symmetrically for direct left-vs-right comparison — the standard view for mesial temporal sclerosis."
+    },
+    {
+      "category": "sequences",
+      "prompt": "On this knee scan the TR is long but the TE is short — high-signal, intermediate contrast that shows cartilage and menisci well. What weighting is it?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 3000, "TE": 15}},
+      "options": ["Proton-density", "T1-weighted", "T2-weighted", "Diffusion"],
+      "answer": 0,
+      "explain": "Long TR + short TE = proton-density: high SNR with intermediate contrast. With fat suppression it is the MSK workhorse for cartilage and menisci."
+    },
+    {
+      "category": "sequences",
+      "prompt": "In an inversion-recovery sequence, what sets which tissue is nulled (appears darkest)?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["The inversion time (TI) relative to that tissue's T1", "The repetition time (TR)", "The flip angle", "The receiver bandwidth"],
+      "answer": 0,
+      "explain": "A tissue is nulled when TI ≈ 0.69 × its T1 (its longitudinal magnetisation crosses zero). A short TI (~150–200 ms) nulls fat (STIR); a long TI (~2000–2500 ms) nulls CSF (FLAIR)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "STIR uses a short TI (~150 ms) and FLAIR a long TI (~2500 ms). What does each one null?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["STIR nulls fat; FLAIR nulls CSF", "STIR nulls CSF; FLAIR nulls fat", "Both null fat", "Both null CSF"],
+      "answer": 0,
+      "explain": "The null follows TI ≈ 0.69 × T1: a short TI matches fat's short T1 (STIR → dark fat), a long TI matches CSF's long T1 (FLAIR → dark CSF)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Holding TR long, you LENGTHEN the echo time (TE). Which way does the contrast move?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
+      "options": ["Toward T2 weighting", "Toward T1 weighting", "Toward proton-density", "Toward diffusion weighting"],
+      "answer": 0,
+      "explain": "TE controls T2 weighting — a longer TE lets long-T2 tissue (fluid) stay bright while short-T2 tissue decays. (TR controls T1 weighting; a long TR removes it.)"
+    },
+    {
+      "category": "pathology",
+      "prompt": "This infarct is bright on DWI but is still NOT visible on FLAIR. What does that DWI–FLAIR mismatch suggest about timing?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
+      "options": ["Hyperacute / early (roughly within 4.5 hours)", "Chronic (months old)", "It is not a stroke at all", "Subcutaneous fat"],
+      "answer": 0,
+      "explain": "DWI turns positive within minutes; FLAIR lags by hours. A DWI-positive but FLAIR-negative infarct is therefore early — a marker used to select unknown-onset strokes for thrombolysis."
+    },
+    {
+      "category": "pathology",
+      "prompt": "Days after onset this infarct has become bright on FLAIR (it was already bright on DWI from the start). What changed to make it show here?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
+      "options": ["Vasogenic oedema raised the tissue water and T2", "It started to bleed", "Fat was deposited", "It calcified"],
+      "answer": 0,
+      "explain": "Over hours-to-days vasogenic oedema increases tissue water and T2, so the infarct brightens on T2/FLAIR — while DWI was positive from the first minutes (cytotoxic oedema)."
+    },
+    {
+      "category": "perfusion",
+      "prompt": "In acute stroke the DWI lesion is small but the MTT perfusion abnormality is much larger. What does this 'mismatch' represent?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
+                "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "MTT (DSC)"}},
+      "options": ["Salvageable penumbra (tissue at risk)", "Completed infarct core", "Normal brain", "A draining vein"],
+      "answer": 0,
+      "explain": "The diffusion lesion approximates the irreversible core; the larger perfusion deficit also includes hypoperfused-but-viable penumbra. A big diffusion–perfusion mismatch means more tissue to save with reperfusion."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane of the knee is this — the cross-section through the patellofemoral joint?",
+      "setup": {"region": "Knee", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial", "Sagittal", "Coronal", "Oblique"],
+      "answer": 0,
+      "explain": "Axial — looking down through the knee; the patella in the trochlear groove (the patellofemoral joint) and the retinacula are assessed in this plane."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane shows the medial and lateral collateral ligaments and the meniscal bodies side-to-side?",
+      "setup": {"region": "Knee", "orientation": "coronal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Coronal", "Axial", "Sagittal", "Oblique"],
+      "answer": 0,
+      "explain": "Coronal — a front-on plane that lays out both collateral ligaments and the meniscal bodies from side to side."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which body region is this axial scan — heart and great vessels centrally, lungs to the sides?",
+      "setup": {"region": "Torso", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Chest / thorax", "Abdomen", "Pelvis", "Brain"],
+      "answer": 0,
+      "explain": "The thorax — the heart and great vessels in the mediastinum centrally, with the lungs laterally; axial is the standard survey plane."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which single plane best shows the brainstem continuing into the cervical spinal cord?",
+      "setup": {"region": "Brain", "orientation": "sagittal", "slice_idx": 110,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Midline sagittal", "Axial", "Coronal", "Oblique"],
+      "answer": 0,
+      "explain": "A midline sagittal lines up the midbrain, pons, medulla and the cervicomedullary junction into the cord — the survey view of the craniocervical junction."
     }
   ]
 }
