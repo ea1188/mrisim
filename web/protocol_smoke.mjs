@@ -192,7 +192,13 @@ try {
     nBefore, { timeout: 8_000 });
   console.log("append / re-run ✓  (queue", nBefore, "→", nBefore + 1 + ")");
 
-  // double-click a scout resets the prescription (angle it, then undo)
+  // double-click a scout resets the prescription (angle it, then undo). The append above
+  // re-rendered the queue/params, so wait for the tilt control to settle before driving it
+  // — filling it mid-re-render intermittently hit a detached input (30 s timeout flake).
+  await page.waitForFunction(() => {
+    const e = document.querySelector("#pp-tilt");
+    return e && !e.disabled && e.offsetParent !== null;
+  }, { timeout: 12_000 });
   await page.fill("#pp-tilt", "20");
   await page.dispatchEvent("#pp-tilt", "input");
   await page.dblclick("#vp-coronal");
