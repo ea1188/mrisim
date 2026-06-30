@@ -10,6 +10,15 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.51.0] — 2026-06-30
+
+### Changed
+- **Web UI polish — a cleaner, more professional look** while keeping the dark clinical
+  layout. Removed the emoji icons (home launcher, nav, buttons, tour/help text), the
+  pill-shaped tags and the gradient/glow accents; squared the buttons and tightened the
+  panel/modal corner radii; toned the accent from a bright blue to a muted clinical blue;
+  muted the control-panel section headers; gave the launcher cards restrained line icons.
+
 ## [1.50.0] — 2026-06-28
 
 ### Added
