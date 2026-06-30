@@ -34,10 +34,12 @@ _MAP_CMAP: dict[str, tuple[str, str]] = {
     "T2":  ("magma",   "T2 (ms)"),
     "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
     "FA":  ("cividis", "FA"),
-    "CBF": ("plasma",  "CBF (mL/100g/min)"),
-    "CBV": ("inferno", "CBV (mL/100g)"),
-    "MTT": ("magma",   "MTT (s)"),
-    "Ktrans": ("inferno", "Ktrans (min⁻¹)"),
+    # Perfusion maps are read in grayscale here (radiology convention preference) — high
+    # value = bright. The colorbar + unit label still convey the scale.
+    "CBF": ("gray", "CBF (mL/100g/min)"),
+    "CBV": ("gray", "CBV (mL/100g)"),
+    "MTT": ("gray", "MTT (s)"),
+    "Ktrans": ("gray", "Ktrans (min⁻¹)"),
 }
 
 
