@@ -4,7 +4,7 @@
   --canvas: #050607; --panel: #171c23; --raised: #222932; --header: #0d1014;
   --chip: #11151a; --border: #252c34; --border-hi: #323b46;
   --text: #dfe5ec; --text-dim: #9aa4b2; --text-faint: #6b7585;
-  --accent: #4f9cf9; --accent-hi: #7fb8ff; --accent-ink: #081019;
+  --accent: #4385cc; --accent-hi: #6ea7df; --accent-ink: #081019;
 }
 * { box-sizing: border-box; }
 /* The [hidden] attribute must always win over element display rules below
@@ -27,7 +27,7 @@ body {
 .splash-card h1 { margin: 14px 0 6px; font-size: 30px; letter-spacing: .5px; }
 .splash-card .logo {
   width: 104px; height: 104px; margin: 0 auto 4px; display: block;
-  object-fit: contain; filter: drop-shadow(0 4px 18px rgba(127, 184, 255, 0.18));
+  object-fit: contain;
 }
 #splash-status { color: var(--text-dim); min-height: 1.2em; }
 .splash-note { color: var(--text-faint); font-size: 11px; margin-top: 18px; }
@@ -59,9 +59,9 @@ body {
 
 /* Layout */
 #app { display: grid; grid-template-columns: 270px 1fr 230px; gap: 10px; padding: 10px; height: calc(100% - 52px); }
-.panel { background: var(--panel); border-radius: 10px; padding: 12px; overflow-y: auto; }
+.panel { background: var(--panel); border-radius: 6px; padding: 12px; overflow-y: auto; }
 .group { border-top: 1px solid #1b222a; padding: 8px 0; }
-.group h2 { font-size: 11px; letter-spacing: .4px; color: var(--accent-hi); text-transform: uppercase; margin: 0; }
+.group h2 { font-size: 11px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin: 0; }
 
 /* Collapsible control groups: the <summary> is the clickable header with a chevron. */
 details.group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; padding: 2px 0 8px; }
@@ -164,7 +164,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
      does not on a range input). Absolute positioning keeps the input out of flow,
      so it can never grow the row or overlap/intercept the image. */
   position: relative; flex: none; width: 30px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
 }
 .slice-rail-input {
   /* Vertical range with the maximum (superior slice) at the top, so dragging up
@@ -187,7 +187,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   .slice-rail-input { width: 32px; }
 }
 .scoutwrap {
-  background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 6px;
   display: grid; place-items: center; overflow: hidden;
   /* Size to the localizer's natural height (capped) rather than a fixed box: a
      percentage height on the image is unreliable inside this grid row and let the
@@ -202,7 +202,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .images .imgwrap { flex: 1; min-width: 0; }
 .imgwrap, .curvewrap {
   position: relative;
-  background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 6px;
   display: grid; place-items: center; overflow: hidden;
 }
 .imgwrap { min-height: 0; }
@@ -228,12 +228,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 #curveImage, #cmapImage, #psdImage { width: 100%; height: auto; display: block; }
 /* k-space is square: centre it in a dark panel, capped so it doesn't dominate. */
 .kspacewrap {
-  background: var(--canvas); border: 1px solid var(--border); border-radius: 10px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 6px;
   display: grid; place-items: center; padding: 4px; overflow: hidden;
 }
 #kspaceImage, #b0mapImage, #gfactorImage { display: block; height: auto; max-width: 100%; max-height: 320px; }
 /* 3-D reconstruction panels: triplanar MPR grid + a single MIP/oblique view. */
-.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 6px; }
+.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
 /* align-items:start so a thin reformat keeps its true (aspect-derived) height
    instead of being stretched to the tallest panel's row height. */
 .reconwrap { position: relative; }
@@ -248,7 +248,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .recon-single img { display: block; height: auto; max-width: 100%; max-height: 56vh; }
 .recon-modectl { margin-top: 2px; }
 @media (max-width: 560px) { .recon-tri { grid-template-columns: 1fr; } }
-.mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
 .mathbox { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
 .mathbox .m-tissue { color: var(--text-dim); font-size: 11px; margin-bottom: 4px; }
 .mathbox .m-eq { color: var(--accent-hi); }
@@ -315,8 +315,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .lesson-cur { color: var(--accent-hi); font-size: 11px; font-weight: 700; margin: 0 0 6px; }
 .intro-card {
   position: relative; width: min(520px, 94vw); background: var(--panel);
-  border: 1px solid var(--border-hi); border-radius: 14px; padding: 22px 24px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-hi); border-radius: 8px; padding: 22px 24px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
   /* Never taller than the viewport — the body scrolls while the title, corner ✕
      and footer button stay pinned (so long dialogs don't lose their controls). */
   display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
@@ -358,8 +358,8 @@ kbd {
 }
 #tour-pop {
   position: absolute; max-width: 330px; pointer-events: auto;
-  background: var(--panel); border: 1px solid var(--border-hi); border-radius: 10px;
-  padding: 13px 15px; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+  background: var(--panel); border: 1px solid var(--border-hi); border-radius: 6px;
+  padding: 13px 15px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
 }
 #tour-pop h3 { margin: 0 0 6px; font-size: 13px; color: var(--accent-hi); }
 #tour-pop p { margin: 0 0 11px; font-size: 12.5px; color: var(--text); line-height: 1.5; }
@@ -375,10 +375,10 @@ kbd {
 #tour-next { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
 #help {
   background: var(--raised); border: 1px solid var(--border); color: var(--text-dim);
-  width: 26px; height: 26px; border-radius: 50%; font-weight: 800; cursor: pointer; padding: 0;
+  width: 26px; height: 26px; border-radius: 5px; font-weight: 800; cursor: pointer; padding: 0;
 }
 #help:hover { color: var(--accent-hi); border-color: var(--accent); }
-#lessons-btn, #curriculum-btn { background: var(--raised); border: 1px solid var(--border); border-radius: 16px; padding: 4px 12px; cursor: pointer; }
+#lessons-btn, #curriculum-btn { background: var(--raised); border: 1px solid var(--border); border-radius: 5px; padding: 4px 12px; cursor: pointer; }
 #lessons-btn:hover { color: var(--accent-hi); border-color: var(--accent); }
 
 /* Lesson picker: a height-capped card whose list scrolls internally, with a
@@ -411,8 +411,8 @@ kbd {
 /* Active-lesson panel */
 #lesson-panel {
   position: fixed; left: 16px; bottom: 16px; z-index: 40; width: min(360px, calc(100vw - 32px));
-  background: var(--panel); border: 1px solid var(--accent); border-radius: 12px;
-  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5); padding: 13px 15px;
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); padding: 13px 15px;
   /* Cap to the viewport and scroll the step text, so a long step on a short
      screen doesn't push the panel (or its Back/Next buttons) off-screen. */
   display: flex; flex-direction: column; max-height: calc(100vh - 32px);

@@ -16,18 +16,20 @@
       align-items: center; justify-content: center; padding: 32px 18px; box-sizing: border-box; }
     #home .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
     #home .brand img { width: 46px; height: 46px; }
-    #home h1 { font-size: 30px; margin: 0; letter-spacing: 0.3px; }
-    #home .tag { color: #9aa4b2; font-size: 15px; margin: 6px 0 28px; text-align: center; max-width: 560px; line-height: 1.4; }
+    #home h1 { font-size: 28px; font-weight: 600; margin: 0; letter-spacing: -0.2px; }
+    #home .tag { color: #9aa4b2; font-size: 14.5px; margin: 8px 0 30px; text-align: center; max-width: 540px; line-height: 1.5; }
     .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
       width: min(960px, 100%); }
     .card { display: block; text-decoration: none; color: inherit; background: #141a21;
       border: 1px solid #232c36; border-radius: 8px; padding: 20px; transition: border-color .12s, background .12s; }
-    .card:hover { border-color: #4f7eb0; background: #18222c; }
-    .card h2 { font-size: 18px; margin: 0 0 6px; }
-    .card p { color: #aab3bf; font-size: 13.5px; line-height: 1.45; margin: 0; }
-    .card .go { color: #7fb8ff; font-size: 13px; font-weight: 600; margin-top: 12px; display: inline-block; }
+    .card:hover { border-color: #3f6f9c; background: #18222c; }
+    .card .card-ico { width: 22px; height: 22px; color: #8b97a6; display: block; margin-bottom: 14px; }
+    .card:hover .card-ico { color: #6ea7df; }
+    .card h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.1px; margin: 0 0 7px; }
+    .card p { color: #aab3bf; font-size: 13px; line-height: 1.5; margin: 0; }
+    .card .go { color: #6ea7df; font-size: 13px; font-weight: 600; margin-top: 12px; display: inline-block; }
     #home footer { margin-top: 30px; color: #7c8794; font-size: 12.5px; text-align: center; }
-    #home footer a { color: #7fb8ff; text-decoration: none; }
+    #home footer a { color: #6ea7df; text-decoration: none; }
     @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } #home h1 { font-size: 25px; } }
   </style>
 </head>
@@ -39,18 +41,21 @@
 
     <div class="cards">
       <a class="card" href="simulator.html">
+        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.3" fill="#141a21"/><circle cx="15" cy="12" r="2.3" fill="#141a21"/><circle cx="8" cy="17" r="2.3" fill="#141a21"/></svg>
         <h2>Simulator</h2>
         <p>The full physics simulator: sweep TR / TE / flip / TI, switch sequences and anatomy,
           and watch k-space, 3-D reconstruction and quantitative maps update in real time.</p>
         <span class="go">Open the simulator →</span>
       </a>
       <a class="card" href="protocol.html">
+        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M12 9.5v11"/></svg>
         <h2>Protocol planning</h2>
         <p>A scanner-console workflow: pick an exam, prescribe each sequence on the three-plane
           scout images, and acquire it — one after another, like a real console.</p>
         <span class="go">Plan an exam →</span>
       </a>
       <a class="card" href="quiz.html">
+        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
         <h2>Quiz</h2>
         <p>Read-the-scan self-test: identify the sequence, weighting, pathology and perfusion
           maps by topic, with scored feedback and explanations.</p>
