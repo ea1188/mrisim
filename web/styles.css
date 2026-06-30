@@ -31,35 +31,35 @@ body {
 }
 #splash-status { color: var(--text-dim); min-height: 1.2em; }
 .splash-note { color: var(--text-faint); font-size: 11px; margin-top: 18px; }
-.bar { height: 6px; background: #1c2027; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+.bar { height: 6px; background: #1c2027; border-radius: 2px; overflow: hidden; margin: 12px 0; }
 #splash-bar { height: 100%; width: 5%; background: var(--accent); transition: width .3s; }
 
 /* Top bar */
 #topbar {
-  display: flex; align-items: center; gap: 18px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 14px; padding: 8px 14px;
   background: var(--header); border-bottom: 1px solid #1b222a;
 }
-.brand { display: flex; align-items: center; gap: 9px; font-size: 16px; }
+.brand { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; }
 .logo-sm {
-  width: 34px; height: 34px; object-fit: contain; display: block;
+  width: 30px; height: 30px; object-fit: contain; display: block;
 }
-.tag { color: var(--text-faint); font-size: 11px; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; }
-.topchips { display: flex; gap: 8px; margin-left: auto; }
-.chip { background: var(--chip); border: 1px solid #1b222a; border-radius: 4px; padding: 4px 11px; line-height: 1.2; }
-.chip i { display: block; color: var(--text-faint); font-size: 8px; font-style: normal; font-weight: 700; }
-.chip b { color: var(--accent-hi); font-size: 13px; }
-.ghlink { color: var(--text-dim); text-decoration: none; font-size: 12px; }
+.tag { color: var(--text-faint); font-size: 11px; }
+.topchips { display: flex; gap: 18px; margin-left: auto; }
+.chip { line-height: 1.2; }
+.chip i { display: block; color: var(--text-faint); font-size: 8px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
+.chip b { color: var(--accent-hi); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ghlink { color: var(--text-dim); text-decoration: none; font-size: 13px; }
 .ghlink:hover { color: var(--accent-hi); }
 /* Protocol-planning call-to-action — a flagship workflow, so it stands out. */
 .protocol-cta {
   color: var(--accent-ink); background: var(--accent);
-  padding: 4px 10px; border-radius: 4px; font-weight: 600;
+  padding: 4px 10px; border-radius: 2px; font-weight: 600;
 }
 .protocol-cta:hover { color: var(--accent-ink); background: var(--accent-hi); }
 
 /* Layout */
 #app { display: grid; grid-template-columns: 270px 1fr 230px; gap: 10px; padding: 10px; height: calc(100% - 52px); }
-.panel { background: var(--panel); border-radius: 4px; padding: 12px; overflow-y: auto; }
+.panel { background: var(--panel); border-radius: 2px; padding: 12px; overflow-y: auto; }
 .group { border-top: 1px solid #1b222a; padding: 8px 0; }
 .group h2 { font-size: 11px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin: 0; }
 
@@ -79,7 +79,7 @@ details.group[data-sec="protocol"] { border-top: none; padding-top: 0; }
 .ctrl-search { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 0 0 8px; }
 #ctrl-find {
   width: 100%; box-sizing: border-box; padding: 7px 26px 7px 10px;
-  background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: 12px;
+  background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px; font-size: 12px;
 }
 #ctrl-find:focus { border-color: var(--accent); outline: none; }
 #ctrl-find-x {
@@ -97,7 +97,7 @@ output { float: right; color: var(--text); font-weight: 700; }
 /* Editable numeric value paired with a slider — type or arrow-key an exact value. */
 .numval {
   float: right; width: 58px; margin: 0; padding: 1px 5px; text-align: right;
-  background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 4px;
+  background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px;
   font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; -moz-appearance: textfield;
 }
 .numval:focus { border-color: var(--accent); outline: none; }
@@ -105,7 +105,7 @@ output { float: right; color: var(--text); font-weight: 700; }
 select, input[type=range] { width: 100%; margin-top: 5px; }
 select {
   background: var(--raised); color: var(--text); border: 1px solid var(--border);
-  border-radius: 4px; padding: 6px 8px;
+  border-radius: 2px; padding: 6px 8px;
 }
 select:focus { border-color: var(--accent); outline: none; }
 input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
@@ -116,8 +116,8 @@ input[type=range] {
   -webkit-appearance: none; appearance: none;
   width: 100%; margin-top: 6px; height: 22px; background: transparent; cursor: pointer;
 }
-input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px; background: var(--border); }
-input[type=range]::-moz-range-track { height: 5px; border-radius: 3px; background: var(--border); }
+input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 2px; background: var(--border); }
+input[type=range]::-moz-range-track { height: 5px; border-radius: 2px; background: var(--border); }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none; margin-top: -8px;
   width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 2px solid #0b0f14;
@@ -130,7 +130,7 @@ input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--
 
 /* Visible keyboard focus on every interactive control (mouse clicks stay clean). */
 button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible {
-  outline: 2px solid var(--accent-hi); outline-offset: 2px; border-radius: 4px;
+  outline: 2px solid var(--accent-hi); outline-offset: 2px; border-radius: 2px;
 }
 
 /* Touch devices: enlarge the hit targets (thumb, checkboxes, buttons). */
@@ -148,7 +148,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .radios { display: flex; gap: 5px; margin-top: 5px; }
 .radios button {
   flex: 1; background: var(--raised); color: var(--text-dim); border: 1px solid var(--border);
-  border-radius: 4px; padding: 6px 0; font-size: 11px; font-weight: 700; cursor: pointer;
+  border-radius: 2px; padding: 6px 0; font-size: 11px; font-weight: 700; cursor: pointer;
 }
 .radios button.on { background: #142231; color: var(--accent-hi); border-color: var(--accent); }
 
@@ -164,7 +164,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
      does not on a range input). Absolute positioning keeps the input out of flow,
      so it can never grow the row or overlap/intercept the image. */
   position: relative; flex: none; width: 30px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 4px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 2px;
 }
 .slice-rail-input {
   /* Vertical range with the maximum (superior slice) at the top, so dragging up
@@ -178,16 +178,16 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   writing-mode: vertical-lr; direction: rtl;
   width: 22px; height: 280px; cursor: ns-resize; accent-color: var(--accent);
 }
-.slice-rail-input::-webkit-slider-runnable-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
+.slice-rail-input::-webkit-slider-runnable-track { width: 5px; height: auto; background: var(--border); border-radius: 2px; }
 .slice-rail-input::-webkit-slider-thumb { -webkit-appearance: auto; margin: 0; width: auto; height: auto; border: none; background: initial; box-shadow: none; }
-.slice-rail-input::-moz-range-track { width: 5px; height: auto; background: var(--border); border-radius: 3px; }
+.slice-rail-input::-moz-range-track { width: 5px; height: auto; background: var(--border); border-radius: 2px; }
 .slice-rail-input::-moz-range-thumb { width: 16px; height: 16px; }
 @media (pointer: coarse) {
   .slice-rail { width: 42px; }
   .slice-rail-input { width: 32px; }
 }
 .scoutwrap {
-  background: var(--canvas); border: 1px solid var(--border); border-radius: 4px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 2px;
   display: grid; place-items: center; overflow: hidden;
   /* Size to the localizer's natural height (capped) rather than a fixed box: a
      percentage height on the image is unreliable inside this grid row and let the
@@ -202,7 +202,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .images .imgwrap { flex: 1; min-width: 0; }
 .imgwrap, .curvewrap {
   position: relative;
-  background: var(--canvas); border: 1px solid var(--border); border-radius: 4px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 2px;
   display: grid; place-items: center; overflow: hidden;
 }
 .imgwrap { min-height: 0; }
@@ -221,19 +221,19 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 #measure-svg .m-end { fill: #ffd24a; }
 #measure-svg .m-roi { fill: rgba(255, 210, 74, 0.12); stroke: #ffd24a; stroke-width: 1.6; }
 .imgwrap.measuring #mainImage { cursor: crosshair; }
-#measure-clear { margin-top: 6px; background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 5px 12px; font-weight: 600; cursor: pointer; }
+#measure-clear { margin-top: 6px; background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px; padding: 5px 12px; font-weight: 600; cursor: pointer; }
 #measure-clear:hover { border-color: var(--accent); }
 #measure-readout b { color: var(--accent-hi); }
 #mainImageB { max-width: 100%; max-height: 100%; }
 #curveImage, #cmapImage, #psdImage { width: 100%; height: auto; display: block; }
 /* k-space is square: centre it in a dark panel, capped so it doesn't dominate. */
 .kspacewrap {
-  background: var(--canvas); border: 1px solid var(--border); border-radius: 4px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 2px;
   display: grid; place-items: center; padding: 4px; overflow: hidden;
 }
 #kspaceImage, #b0mapImage, #gfactorImage { display: block; height: auto; max-width: 100%; max-height: 320px; }
 /* 3-D reconstruction panels: triplanar MPR grid + a single MIP/oblique view. */
-.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 4px; padding: 6px; }
+.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 2px; padding: 6px; }
 /* align-items:start so a thin reformat keeps its true (aspect-derived) height
    instead of being stretched to the tallest panel's row height. */
 .reconwrap { position: relative; }
@@ -241,14 +241,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 #recon-measure-svg { position: absolute; pointer-events: none; left: 0; top: 0; width: 0; height: 0; overflow: visible; }
 .reconwrap.measuring .recon-tri img:not(#reconOverview) { cursor: crosshair; }
 .recon-tri { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
-.recon-tri img { width: 100%; height: auto; display: block; background: var(--canvas); border-radius: 4px; cursor: crosshair; }
+.recon-tri img { width: 100%; height: auto; display: block; background: var(--canvas); border-radius: 2px; cursor: crosshair; }
 /* The 3D MIP overview is a reference, not a cross panel — no click-to-navigate. */
 .recon-tri #reconOverview { cursor: default; }
 .recon-single { display: grid; place-items: center; }
 .recon-single img { display: block; height: auto; max-width: 100%; max-height: 56vh; }
 .recon-modectl { margin-top: 2px; }
 @media (max-width: 560px) { .recon-tri { grid-template-columns: 1fr; } }
-.mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; }
+.mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 2px; padding: 12px 14px; }
 .mathbox { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
 .mathbox .m-tissue { color: var(--text-dim); font-size: 11px; margin-bottom: 4px; }
 .mathbox .m-eq { color: var(--accent-hi); }
@@ -258,7 +258,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .mathbox sup { font-size: 0.78em; }
 .abtag {
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
-  color: var(--accent-ink); background: var(--accent-hi); border-radius: 4px; padding: 1px 7px;
+  color: var(--accent-ink); background: var(--accent-hi); border-radius: 2px; padding: 1px 7px;
 }
 /* Compare-mode caption: what each side actually is (pathology · sequence). */
 .ab-caption {
@@ -269,7 +269,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .probe {
   position: absolute; left: 8px; bottom: 8px; z-index: 3; pointer-events: none;
   background: rgba(5, 8, 11, 0.74); color: var(--accent-hi);
-  border: 1px solid var(--border); border-radius: 4px; padding: 3px 9px;
+  border: 1px solid var(--border); border-radius: 2px; padding: 3px 9px;
   font-size: 11px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
   max-width: calc(100% - 16px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -278,7 +278,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .btnrow { display: flex; gap: 6px; margin-top: 8px; }
 .btnrow button {
   flex: 1; background: var(--raised); color: var(--text); border: 1px solid var(--border);
-  border-radius: 4px; padding: 6px 4px; font-size: 11px; font-weight: 700; cursor: pointer;
+  border-radius: 2px; padding: 6px 4px; font-size: 11px; font-weight: 700; cursor: pointer;
 }
 .btnrow button:hover { border-color: var(--border-hi); }
 .btnrow button.on { background: #142231; color: var(--accent-hi); border-color: var(--accent); }
@@ -297,25 +297,25 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   background: rgba(3, 5, 8, 0.72); padding: 16px;
 }
 /* Curriculum: progress bar, module cards, completion ticks. */
-.cur-progress { height: 7px; background: var(--raised); border-radius: 4px; overflow: hidden; margin: 4px 0 6px; }
+.cur-progress { height: 7px; background: var(--raised); border-radius: 2px; overflow: hidden; margin: 4px 0 6px; }
 .cur-bar { height: 100%; width: 0; background: var(--accent); transition: width .25s; }
 #curriculum-list { flex: 1; min-height: 0; overflow-y: auto; margin: 6px 0 12px; }
 .cur-module { border-top: 1px solid var(--border); padding: 9px 0 4px; }
 .cur-module:first-child { border-top: none; }
 .cur-module-h { display: flex; justify-content: space-between; align-items: baseline; color: var(--accent-hi); font-weight: 800; font-size: 13px; margin-bottom: 4px; }
 .cur-module-h .cur-count { color: var(--text-faint); font-weight: 600; font-size: 11px; }
-.cur-lesson { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: none; color: #c4cad2; font-size: 12px; padding: 5px 6px; border-radius: 4px; cursor: pointer; }
+.cur-lesson { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: none; color: #c4cad2; font-size: 12px; padding: 5px 6px; border-radius: 2px; cursor: pointer; }
 .cur-lesson:hover { background: var(--raised); color: var(--text); }
 .cur-lesson .tick { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border-hi); display: grid; place-items: center; font-size: 10px; color: var(--canvas); }
 .cur-lesson.done .tick { background: var(--accent); border-color: var(--accent); }
 .cur-lesson.done { color: var(--text-faint); }
 .cur-actions { display: flex; gap: 8px; align-items: center; }
-.cur-actions #curriculum-start { background: var(--accent); color: var(--accent-ink); border: none; border-radius: 4px; padding: 8px 16px; font-weight: 800; cursor: pointer; }
-.cur-actions .cur-reset { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-faint); border-radius: 4px; padding: 7px 11px; cursor: pointer; font-size: 11px; }
+.cur-actions #curriculum-start { background: var(--accent); color: var(--accent-ink); border: none; border-radius: 2px; padding: 8px 16px; font-weight: 800; cursor: pointer; }
+.cur-actions .cur-reset { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-faint); border-radius: 2px; padding: 7px 11px; cursor: pointer; font-size: 11px; }
 .lesson-cur { color: var(--accent-hi); font-size: 11px; font-weight: 700; margin: 0 0 6px; }
 .intro-card {
   position: relative; width: min(520px, 94vw); background: var(--panel);
-  border: 1px solid var(--border-hi); border-radius: 4px; padding: 22px 24px;
+  border: 1px solid var(--border-hi); border-radius: 2px; padding: 22px 24px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
   /* Never taller than the viewport — the body scrolls while the title, corner ✕
      and footer button stay pinned (so long dialogs don't lose their controls). */
@@ -335,30 +335,30 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .intro-note a, .splash-note a { color: var(--accent-hi); }
 kbd {
   background: var(--raised); border: 1px solid var(--border-hi); border-bottom-width: 2px;
-  border-radius: 4px; padding: 0 6px; font-size: 11px; font-family: inherit; color: var(--text);
+  border-radius: 2px; padding: 0 6px; font-size: 11px; font-family: inherit; color: var(--text);
 }
 .intro-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
 #intro-tour {
   background: var(--accent); color: var(--accent-ink);
-  border: none; border-radius: 4px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer;
+  border: none; border-radius: 2px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer;
 }
 #intro-tour:hover { background: var(--accent-hi); }
 #intro-ok {
   background: var(--raised); color: var(--text); border: 1px solid var(--border-hi);
-  border-radius: 4px; padding: 9px 16px; font-weight: 600; font-size: 13px; cursor: pointer;
+  border-radius: 2px; padding: 9px 16px; font-weight: 600; font-size: 13px; cursor: pointer;
 }
 #intro-ok:hover { border-color: var(--accent); }
 
 /* Guided feature tour — spotlight coachmarks over the real controls. */
 #tour { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
 #tour-spot {
-  position: absolute; border-radius: 4px; border: 2px solid var(--accent-hi);
+  position: absolute; border-radius: 2px; border: 2px solid var(--accent-hi);
   box-shadow: 0 0 0 9999px rgba(2, 6, 12, 0.62);
   transition: left .2s, top .2s, width .2s, height .2s; pointer-events: none;
 }
 #tour-pop {
   position: absolute; max-width: 330px; pointer-events: auto;
-  background: var(--panel); border: 1px solid var(--border-hi); border-radius: 4px;
+  background: var(--panel); border: 1px solid var(--border-hi); border-radius: 2px;
   padding: 13px 15px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
 }
 #tour-pop h3 { margin: 0 0 6px; font-size: 13px; color: var(--accent-hi); }
@@ -368,17 +368,17 @@ kbd {
 .tour-btns { display: flex; gap: 6px; }
 .tour-btns button {
   background: var(--raised); color: var(--text); border: 1px solid var(--border);
-  border-radius: 4px; padding: 5px 11px; font-size: 12px; cursor: pointer;
+  border-radius: 2px; padding: 5px 11px; font-size: 12px; cursor: pointer;
 }
 .tour-btns button:hover { border-color: var(--border-hi); }
 #tour-prev:disabled { opacity: .4; cursor: default; }
 #tour-next { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
 #help {
   background: var(--raised); border: 1px solid var(--border); color: var(--text-dim);
-  width: 26px; height: 26px; border-radius: 4px; font-weight: 800; cursor: pointer; padding: 0;
+  width: 26px; height: 26px; border-radius: 2px; font-weight: 800; cursor: pointer; padding: 0;
 }
 #help:hover { color: var(--accent-hi); border-color: var(--accent); }
-#lessons-btn, #curriculum-btn { background: var(--raised); border: 1px solid var(--border); border-radius: 4px; padding: 4px 12px; cursor: pointer; }
+#lessons-btn, #curriculum-btn { background: var(--raised); border: 1px solid var(--border); border-radius: 2px; padding: 4px 12px; cursor: pointer; }
 #lessons-btn:hover { color: var(--accent-hi); border-color: var(--accent); }
 
 /* Lesson picker: a height-capped card whose list scrolls internally, with a
@@ -388,7 +388,7 @@ kbd {
 .lesson-card #lesson-picker-close { flex: none; align-self: flex-start; margin-top: 14px; }
 .dialog-x {
   position: absolute; top: 12px; right: 12px; z-index: 1;
-  width: 30px; height: 30px; border-radius: 4px; padding: 0; line-height: 1;
+  width: 30px; height: 30px; border-radius: 2px; padding: 0; line-height: 1;
   background: var(--raised); border: 1px solid var(--border); color: var(--text-dim);
   font-size: 15px; font-weight: 800; cursor: pointer;
 }
@@ -397,7 +397,7 @@ kbd {
 /* Lesson picker list */
 #lesson-list { display: grid; gap: 8px; margin: 4px 0 0; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
 .lesson-item {
-  text-align: left; background: var(--raised); border: 1px solid var(--border); border-radius: 4px;
+  text-align: left; background: var(--raised); border: 1px solid var(--border); border-radius: 2px;
   padding: 11px 13px; cursor: pointer; color: var(--text);
 }
 .lesson-item:hover { border-color: var(--accent); }
@@ -406,12 +406,12 @@ kbd {
 .lesson-item.beginner { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: color-mix(in srgb, var(--accent) 8%, var(--raised)); }
 .lesson-section { margin: 10px 2px 2px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
 .lesson-section:first-child { margin-top: 0; }
-#lesson-picker-close { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
+#lesson-picker-close { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
 
 /* Active-lesson panel */
 #lesson-panel {
   position: fixed; left: 16px; bottom: 16px; z-index: 40; width: min(360px, calc(100vw - 32px));
-  background: var(--panel); border: 1px solid var(--accent); border-radius: 4px;
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 2px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); padding: 13px 15px;
   /* Cap to the viewport and scroll the step text, so a long step on a short
      screen doesn't push the panel (or its Back/Next buttons) off-screen. */
@@ -424,7 +424,7 @@ kbd {
 #lesson-step { color: #c4cad2; font-size: 13px; line-height: 1.5; margin: 9px 0 12px; }
 .lp-foot { display: flex; align-items: center; justify-content: space-between; }
 #lesson-progress { color: var(--text-faint); font-size: 11px; }
-.lp-btns button { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-left: 6px; }
+.lp-btns button { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-left: 6px; }
 .lp-btns button:hover:not(:disabled) { border-color: var(--accent); }
 .lp-btns button:disabled { opacity: 0.4; cursor: default; }
 
