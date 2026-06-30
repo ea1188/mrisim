@@ -45,8 +45,25 @@ let categories = [];       // [{id, label}]
 let pool = [];             // questions for the chosen topic
 let idx = 0, score = 0, answered = false;
 let correctIdx = 0;        // displayed position of the correct option after shuffling
+let currentTopic = "all";  // topic id of the active run (best score is keyed by it)
+let missed = [];           // questions answered wrong this run (for the review pass)
+let reviewing = false;     // a review-the-missed run — don't overwrite the topic's best
 
 const QUESTION_PARTS = ["qz-progress", "qz-imgwrap", "qz-prompt", "qz-options", "qz-feedback", "qz-next"];
+
+// ---- progress (per-topic best score), persisted in localStorage ------------- //
+const PROGRESS_KEY = "mrisim_quiz_progress_v1";
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function saveBest(topicId, sc, total) {
+  if (!total) return;
+  const prog = loadProgress();
+  const prev = prog[topicId] || { best: 0, runs: 0 };
+  prog[topicId] = { best: Math.max(prev.best || 0, sc), total, runs: (prev.runs || 0) + 1 };
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(prog)); } catch (e) { /* storage off */ }
+}
 
 async function onReady() {
   $("splash").hidden = true;
@@ -59,26 +76,29 @@ async function onReady() {
     $("qz-prompt").textContent = "Could not load the quiz.";
     return;
   }
-  buildMenu();
   showMenu();
 }
 
 function buildMenu() {
   const wrap = $("qz-topics");
   wrap.innerHTML = "";
+  const prog = loadProgress();
   const topics = [{ id: "all", label: "All topics" },
                   ...categories.filter((c) => allQuestions.some((q) => q.category === c.id))];
   for (const t of topics) {
     const n = t.id === "all" ? allQuestions.length : allQuestions.filter((q) => q.category === t.id).length;
+    const best = prog[t.id];
+    const bestTxt = best ? ` · best ${best.best}/${best.total}` : "";
     const b = document.createElement("button");
     b.className = "qz-topic"; b.type = "button";
-    b.innerHTML = `<span>${t.label}</span><span class="n">${n} question${n === 1 ? "" : "s"}</span>`;
+    b.innerHTML = `<span>${t.label}</span><span class="n">${n} question${n === 1 ? "" : "s"}${bestTxt}</span>`;
     b.addEventListener("click", () => selectTopic(t.id));
     wrap.appendChild(b);
   }
 }
 
 function showMenu() {
+  buildMenu();                              // rebuild so best scores reflect the latest run
   $("qz-menu").style.display = "block";
   $("qz-summary").style.display = "none";
   for (const id of QUESTION_PARTS) $(id).style.display = "none";
@@ -86,13 +106,14 @@ function showMenu() {
 }
 
 function selectTopic(catId) {
+  currentTopic = catId; reviewing = false;
   pool = catId === "all" ? allQuestions.slice() : allQuestions.filter((q) => q.category === catId);
   $("qz-menu").style.display = "none";
   startOver();
 }
 
 function startOver() {
-  idx = 0; score = 0;
+  idx = 0; score = 0; missed = [];
   $("qz-summary").style.display = "none";
   showQuestion();
 }
@@ -167,7 +188,7 @@ function answer(choice) {
     else if (i === choice) b.classList.add("wrong");
   });
   const correct = choice === correctIdx;
-  if (correct) score++;
+  if (correct) score++; else missed.push(q);
   $("qz-feedback").innerHTML =
     (correct ? '<b class="ok">Correct.</b> ' : '<b class="no">Not quite.</b> ') + (q.explain || "");
   $("qz-feedback").style.display = "block";
@@ -180,13 +201,32 @@ function showSummary() {
   for (const id of QUESTION_PARTS) $(id).style.display = "none";
   const n = pool.length;
   const pct = n ? Math.round((score / n) * 100) : 0;
+  // A full topic run banks the best score; a review-the-missed run must not (it is scored
+  // out of however many you missed, not the whole topic).
+  if (!reviewing) saveBest(currentTopic, score, n);
   $("qz-summary-score").textContent = `${score} / ${n}  (${pct}%)`;
   $("qz-summary-msg").textContent =
     pct >= 80 ? "Excellent — you can read these confidently." :
     pct >= 50 ? "Good start — review the ones you missed and try again." :
     "Worth another pass — the explanations after each answer are the study material.";
+  // Offer a focused review of just the ones missed this run.
+  const reviewBtn = $("qz-review");
+  if (missed.length) {
+    reviewBtn.textContent = `Review ${missed.length} missed ▸`;
+    reviewBtn.style.display = "inline-block";
+  } else {
+    reviewBtn.style.display = "none";
+  }
   $("qz-summary").style.display = "block";
   $("qz-score").textContent = `Score ${score} / ${n}`;
+}
+
+function reviewMissed() {
+  if (!missed.length) return;
+  reviewing = true;
+  pool = missed.slice();                    // startOver resets `missed`; copy first
+  $("qz-summary").style.display = "none";
+  startOver();
 }
 
 $("qz-next").addEventListener("click", () => {
@@ -195,4 +235,5 @@ $("qz-next").addEventListener("click", () => {
   else showSummary();
 });
 $("qz-restart").addEventListener("click", startOver);
+$("qz-review").addEventListener("click", reviewMissed);
 $("qz-topics-back").addEventListener("click", showMenu);

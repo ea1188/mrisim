@@ -43,9 +43,9 @@
     #qz-summary { text-align: center; display: none; }
     #qz-summary h2 { color: #e6edf3; font-size: 22px; margin: 8px 0; }
     #qz-summary p { color: #c4ccd6; }
-    #qz-restart { background: #4385cc; color: #fff; border: 0; border-radius: 2px;
+    #qz-restart, #qz-review { background: #4385cc; color: #fff; border: 0; border-radius: 2px;
       padding: 9px 22px; font-weight: 600; cursor: pointer; margin: 10px 6px 0; }
-    #qz-next:hover, #qz-restart:hover { background: #4f93d6; }
+    #qz-next:hover, #qz-restart:hover, #qz-review:hover { background: #4f93d6; }
     #qz-menu { text-align: center; padding: 6px 0 4px; }
     #qz-menu h2 { color: #e6edf3; font-size: 17px; margin: 4px 0 16px; }
     #qz-topics { display: grid; gap: 10px; max-width: 440px; margin: 0 auto; }
@@ -103,6 +103,7 @@
         <div id="qz-summary">
           <h2 id="qz-summary-score"></h2>
           <p id="qz-summary-msg"></p>
+          <button id="qz-review" type="button" style="display:none">Review missed</button>
           <button id="qz-restart" type="button">↻ Try again</button>
           <button id="qz-topics-back" type="button">← Choose another topic</button>
         </div>

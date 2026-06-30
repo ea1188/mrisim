@@ -28,6 +28,7 @@
     .card h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.1px; margin: 0 0 7px; }
     .card p { color: #aab3bf; font-size: 13px; line-height: 1.5; margin: 0; }
     .card .go { color: #6ea7df; font-size: 13px; font-weight: 600; margin-top: 12px; display: inline-block; }
+    .card-progress { display: block; color: #7c8794; font-size: 12px; margin-top: 10px; font-variant-numeric: tabular-nums; }
     #home footer { margin-top: 30px; color: #7c8794; font-size: 12.5px; text-align: center; }
     #home footer a { color: #6ea7df; text-decoration: none; }
     @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } #home h1 { font-size: 25px; } }
@@ -60,6 +61,7 @@
         <p>Read-the-scan self-test: identify the sequence, weighting, pathology and perfusion
           maps by topic, with scored feedback and explanations.</p>
         <span class="go">Take the quiz →</span>
+        <span class="card-progress" id="quiz-progress"></span>
       </a>
     </div>
 
@@ -69,5 +71,18 @@
       <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
     </footer>
   </main>
+  <script>
+    // Show the learner's best quiz score (written by quiz.js to localStorage) on the card.
+    (function () {
+      try {
+        var p = JSON.parse(localStorage.getItem("mrisim_quiz_progress_v1") || "{}");
+        var keys = Object.keys(p), el = document.getElementById("quiz-progress");
+        if (!el || !keys.length) return;
+        el.textContent = p.all
+          ? "Best so far: " + p.all.best + " / " + p.all.total + " (all topics)"
+          : keys.length + " topic" + (keys.length === 1 ? "" : "s") + " attempted";
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
 </body>
 </html>
