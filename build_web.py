@@ -134,6 +134,16 @@ def _bundle_regions() -> None:
         else:
             print(f"  region {region}: no real atlas cache — browser uses synthetic")
 
+    # Guard: the web build must ship a real atlas for every body region — never silently
+    # deploy the synthetic-phantom fallback (Brain is the real BrainWeb phantom, fetched
+    # separately). The source data is committed, so a miss means something is genuinely off.
+    expected = list(_REGION_SUBJECT) + list(_REGION_CACHE)
+    missing = [r for r in expected if not os.path.exists(os.path.join(out, f"{r}_atlas.npy"))]
+    if missing:
+        raise SystemExit(
+            f"build_web: no real atlas bundled for {missing} — the browser would render "
+            f"synthetic procedural anatomy. Provide the source data and rebuild.")
+
 
 if __name__ == "__main__":
     build()

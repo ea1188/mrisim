@@ -10,6 +10,19 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.53.0] — 2026-06-30
+
+### Fixed
+- **The quiz (and any direct render) now uses the real region atlases, not the synthetic
+  phantom.** In the browser, only `setRegion` lazy-fetched a region's real atlas, so the
+  quiz — which renders with the region embedded in the payload — fell back to the synthetic
+  procedural anatomy for Knee/Spine/Abdomen/Pelvis/Torso. The engine worker now fetches the
+  atlas for every region-bearing render/scout call.
+
+### Changed
+- The web build now **fails** if any body region is missing its real atlas, instead of
+  silently deploying the synthetic-phantom fallback.
+
 ## [1.52.0] — 2026-06-30
 
 ### Changed
