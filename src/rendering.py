@@ -28,14 +28,15 @@ import pv
 
 # Quantitative parameter maps get a perceptually-uniform, colorblind-safe colormap
 # + units (shared by the browser and desktop apps), rather than grayscale.
+# Quantitative parameter maps render in grayscale (radiology convention — these are read
+# in black-and-white), high value = bright. What marks an image as a *map* is the colorbar
+# + unit label, not colour. (cmap, unit-label) per map type.
 _MAP_CMAP: dict[str, tuple[str, str]] = {
-    "T1":  ("viridis", "T1 (ms)"),
-    "T2*": ("magma",   "T2* (ms)"),
-    "T2":  ("magma",   "T2 (ms)"),
-    "ADC": ("viridis", "ADC (×10⁻³ mm²/s)"),
-    "FA":  ("cividis", "FA"),
-    # Perfusion maps are read in grayscale here (radiology convention preference) — high
-    # value = bright. The colorbar + unit label still convey the scale.
+    "T1":  ("gray", "T1 (ms)"),
+    "T2*": ("gray", "T2* (ms)"),
+    "T2":  ("gray", "T2 (ms)"),
+    "ADC": ("gray", "ADC (×10⁻³ mm²/s)"),
+    "FA":  ("gray", "FA"),
     "CBF": ("gray", "CBF (mL/100g/min)"),
     "CBV": ("gray", "CBV (mL/100g)"),
     "MTT": ("gray", "MTT (s)"),

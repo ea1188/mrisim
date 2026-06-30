@@ -81,12 +81,12 @@ def test_signal_curve_renders(host: WebHost) -> None:
     ("Diffusion (DWI)", "diff_display", "ADC Map"),
     ("Diffusion (DWI)", "diff_display", "FA Map"),
 ])
-def test_quantitative_maps_use_a_perceptual_colormap(host: WebHost, seq, dispkey, disp) -> None:
-    """Quantitative parameter maps render colormapped (perceptual, colorblind-safe)
-    rather than grayscale — the anatomy in the centre carries real colour."""
+def test_quantitative_maps_render_grayscale(host: WebHost, seq, dispkey, disp) -> None:
+    """Quantitative parameter maps render in grayscale (radiology convention — read in
+    black-and-white). The colorbar + unit label, not colour, mark them as maps."""
     r = host.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
                      "params": {"sequence": seq, dispkey: disp}})
-    assert _central_colorfulness(r["image"]) > 0.08, f"{disp} did not colormap"
+    assert _central_colorfulness(r["image"]) < 0.02, f"{disp} should be grayscale"
 
 
 @pytest.mark.parametrize("seq,dispkey,disp", [

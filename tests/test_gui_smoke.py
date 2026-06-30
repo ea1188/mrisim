@@ -873,12 +873,12 @@ def test_phase_contrast_lessons_now_supported(win):
     assert "Choosing the protocol (capstone)" in titles
 
 
-def test_quantitative_maps_get_perceptual_colormap_on_desktop(win):
-    """Desktop parity: quantitative maps render with a perceptual colormap + a
-    colorbar inset; weighted images stay grayscale with no colorbar."""
+def test_quantitative_maps_grayscale_with_colorbar_on_desktop(win):
+    """Desktop parity: quantitative maps render grayscale with a colorbar inset; weighted
+    images are also grayscale but have no colorbar — the colorbar is what marks a map."""
     set_state(win, sequence="Quantitative (qMRI)")
     win.qmri_display.set("T1 Map (VFA)"); win.recalculate()
-    assert win.axes[0].images[0].get_cmap().name in ("viridis", "magma", "cividis")
+    assert win.axes[0].images[0].get_cmap().name == "gray"
     assert getattr(win, "_map_cbar", None) is not None, "map should have a colorbar"
     set_state(win, sequence="Spin Echo"); win.recalculate()
     assert win.axes[0].images[0].get_cmap().name == "gray"
