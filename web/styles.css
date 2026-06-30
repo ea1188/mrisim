@@ -3,7 +3,7 @@
 :root {
   --canvas: #050607; --panel: #171c23; --raised: #222932; --header: #0d1014;
   --chip: #11151a; --border: #252c34; --border-hi: #323b46;
-  --text: #dfe5ec; --text-dim: #9aa4b2; --text-faint: #6b7585;
+  --text: #dfe5ec; --text-dim: #9aa4b2; --text-faint: #757f8f;
   --accent: #4385cc; --accent-hi: #6ea7df; --accent-ink: #081019;
 }
 * { box-sizing: border-box; }
