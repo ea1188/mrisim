@@ -4,7 +4,7 @@
   --canvas: #050607; --panel: #171c23; --raised: #222932; --header: #0d1014;
   --chip: #11151a; --border: #252c34; --border-hi: #323b46;
   --text: #dfe5ec; --text-dim: #9aa4b2; --text-faint: #6b7585;
-  --accent: #4f9cf9; --accent-hi: #7fb8ff; --accent-ink: #081019;
+  --accent: #4385cc; --accent-hi: #6ea7df; --accent-ink: #081019;
 }
 * { box-sizing: border-box; }
 /* The [hidden] attribute must always win over element display rules below
@@ -61,7 +61,7 @@ body {
 #app { display: grid; grid-template-columns: 270px 1fr 230px; gap: 10px; padding: 10px; height: calc(100% - 52px); }
 .panel { background: var(--panel); border-radius: 6px; padding: 12px; overflow-y: auto; }
 .group { border-top: 1px solid #1b222a; padding: 8px 0; }
-.group h2 { font-size: 11px; letter-spacing: .4px; color: var(--accent-hi); text-transform: uppercase; margin: 0; }
+.group h2 { font-size: 11px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin: 0; }
 
 /* Collapsible control groups: the <summary> is the clickable header with a chevron. */
 details.group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; padding: 2px 0 8px; }
