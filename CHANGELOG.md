@@ -10,6 +10,16 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.54.0] — 2026-06-30
+
+### Added
+- **Quiz progress.** Per-topic best scores persist in `localStorage` and show in the topic
+  menu and on the home launcher; a run now tracks the questions you missed and offers a
+  **"Review N missed"** pass that re-drills just those.
+- **More body / MSK quiz content** (now 80 questions): spine T2 and abdomen T1/T2 weighting,
+  STIR for knee marrow oedema, and clinically-framed plane questions across spine, abdomen,
+  pelvis and chest — all rendered on the real region atlases.
+
 ## [1.53.0] — 2026-06-30
 
 ### Fixed
