@@ -32,12 +32,12 @@
       <p class="intro-sub">The real MRI physics engine, running in your browser.</p>
       <div class="intro-body">
       <ul>
-        <li><b>New to MRI?</b> Open <b>📖 Lessons</b> and start the <b>“Start here”</b> track — short reading-first walkthroughs. Or tick <b>Label the anatomy</b> to name the structures and <b>hover</b> any pixel to see which tissue it is and its T1/T2/PD.</li>
-        <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel. Each value is editable — <b>type an exact number</b> (or arrow-key it) instead of dragging. Section headers <b>collapse</b>, and the <b>🔍 Find a control</b> box at the top jumps you to any parameter.</li>
+        <li><b>New to MRI?</b> Open <b>Lessons</b> and start the <b>“Start here”</b> track — short reading-first walkthroughs. Or tick <b>Label the anatomy</b> to name the structures and <b>hover</b> any pixel to see which tissue it is and its T1/T2/PD.</li>
+        <li><b>Sequence &amp; timing</b> — pick a sequence and sweep TR / TE / flip on the left panel. Each value is editable — <b>type an exact number</b> (or arrow-key it) instead of dragging. Section headers <b>collapse</b>, and the <b>Find a control</b> box at the top jumps you to any parameter.</li>
         <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets); <b>hover</b> the image to read the tissue and its T1/T2/PD under the cursor. <i>On a touchscreen: drag with one finger to window/level, and use the <b>Slice</b> slider to scroll slices.</i></li>
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
         <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
-        <li><b>🩻 Protocol planning</b> — the <b>scanner-console workflow</b> (top-bar button): pick an exam, then <b>prescribe each sequence on the scout images</b> and acquire it, one after another, like a real console. Reports scan time + SNR, and you can drag/window-level/re-run the acquired series.</li>
+        <li><b>Protocol planning</b> — the <b>scanner-console workflow</b> (top-bar button): pick an exam, then <b>prescribe each sequence on the scout images</b> and acquire it, one after another, like a real console. Reports scan time + SNR, and you can drag/window-level/re-run the acquired series.</li>
         <li><b>Contrast map</b> — toggle the TR×TE map to see the whole contrast landscape for a tissue pair (bright = high contrast), with your current protocol marked — so you can see <i>where</i> contrast comes from, not just one curve.</li>
         <li><b>Show the math</b> — toggle it on, then hover a pixel to see the active sequence's signal equation with that tissue's T1/T2/PD and your TR/TE plugged in, and the resulting signal — the number that becomes the pixel.</li>
       </ul>
@@ -47,7 +47,7 @@
         target="_blank" rel="noopener">desktop app</a>.</p>
       </div>
       <div class="intro-actions">
-        <button id="intro-tour" type="button" class="intro-primary">▶ Take the feature tour</button>
+        <button id="intro-tour" type="button" class="intro-primary">Take the feature tour</button>
         <button id="intro-ok" type="button">Explore on my own</button>
       </div>
     </div>
@@ -122,12 +122,12 @@
       <span class="chip"><i id="m-snrwm-cap">SNR (WM)</i><b id="m-snrwm">—</b></span>
       <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
     </div>
-    <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">🎓 Curriculum</button>
-    <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">📖 Lessons</button>
+    <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">Curriculum</button>
+    <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">Lessons</button>
     <button id="help" class="ghlink" type="button" title="Help, welcome &amp; feature tour">?</button>
-    <a id="protocol-link" class="ghlink protocol-cta" href="protocol.html" title="Plan a whole exam like a scanner — pick a protocol, prescribe each sequence on the scouts, acquire">🩻 Protocol planning</a>
-    <a id="quiz-link" class="ghlink" href="quiz.html" title="Read-the-scan quiz — identify the sequence, weighting and pathology, with scoring">🎯 Quiz</a>
-    <a class="ghlink" href="index.html" title="MRISim home — choose a mode">🏠 Home</a>
+    <a id="protocol-link" class="ghlink protocol-cta" href="protocol.html" title="Plan a whole exam like a scanner — pick a protocol, prescribe each sequence on the scouts, acquire">Protocol planning</a>
+    <a id="quiz-link" class="ghlink" href="quiz.html" title="Read-the-scan quiz — identify the sequence, weighting and pathology, with scoring">Quiz</a>
+    <a class="ghlink" href="index.html" title="MRISim home — choose a mode">Home</a>
     <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 
@@ -135,7 +135,7 @@
     <!-- Controls -->
     <section class="panel" id="controls" aria-label="Scan controls">
       <div class="ctrl-search">
-        <input type="search" id="ctrl-find" placeholder="🔍  Find a control…"
+        <input type="search" id="ctrl-find" placeholder="Find a control…"
                aria-label="Filter controls" autocomplete="off" spellcheck="false" />
         <button id="ctrl-find-x" type="button" title="Clear" aria-label="Clear search" hidden>✕</button>
       </div>

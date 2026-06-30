@@ -235,7 +235,7 @@ const TOUR = [
   { el: "#pp-params", title: "Set parameters & acquire",
     text: "For simulated exams, tweak <b>TR / TE / flip / FOV / slices</b> here, then <b>Apply &amp; acquire</b>: the slice is reconstructed with scan time and SNR. For image-library exams, Acquire pops up the example image for that sequence." },
   { el: "#pp-tour-btn", title: "That's it",
-    text: "Open a sequence and try it. You can re-open this tour anytime from <b>▶ Tour</b>, or head <b>← Back to the simulator</b> for the single-slice workspace." },
+    text: "Open a sequence and try it. You can re-open this tour anytime from <b>Tour</b>, or head <b>← Back to the simulator</b> for the single-slice workspace." },
 ];
 // The tour engine lives in web/tour.js (shared with the main app); this page supplies
 // the steps above and starts it with its own storage key.
