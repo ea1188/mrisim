@@ -665,6 +665,87 @@
       "options": ["The imaging plane changed (axial → coronal)", "The weighting changed to T2", "Gadolinium was added", "The sequence changed"],
       "answer": 0,
       "explain": "Same T1 spin echo and weighting; only the slice orientation changed — A is axial (both hemispheres in cross-section), B is coronal (front-on)."
+    },
+    {
+      "category": "sequences",
+      "prompt": "On this sagittal spine, CSF is bright and outlines the cord while the discs and marrow are intermediate. What weighting is it?",
+      "setup": {"region": "Spine", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
+      "options": ["Proton-density", "T1-weighted", "T2-weighted", "STIR"],
+      "answer": 2,
+      "explain": "Long TR/TE gives T2 weighting — bright CSF produces a 'myelographic' look that outlines the cord and nerve roots. T2 sagittals are the workhorse for discs, canal stenosis and cord signal."
+    },
+    {
+      "category": "sequences",
+      "prompt": "On this abdominal scan, fluid — bile, urine, cysts — is bright while fat is darker. What weighting is it?",
+      "setup": {"region": "Abdomen", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["T1-weighted", "T2-weighted", "Diffusion", "Proton-density"],
+      "answer": 1,
+      "explain": "Long TR/TE T2 — fluid is bright. This underlies heavily-T2 fluid imaging (MRCP-style) and the characterisation of cysts and fluid collections in the abdomen."
+    },
+    {
+      "category": "sequences",
+      "prompt": "Here the abdominal fat is bright and fluid is dark, giving crisp anatomic detail. What weighting is it?",
+      "setup": {"region": "Abdomen", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["T2-weighted", "T1-weighted", "Diffusion", "STIR"],
+      "answer": 1,
+      "explain": "Short TR/TE T1 — fat bright, fluid dark; sharp anatomy. T1 is the basis of in/out-of-phase fat detection (adrenal adenoma, fatty liver) and post-gadolinium abdominal imaging."
+    },
+    {
+      "category": "sequences",
+      "prompt": "To detect bone-marrow oedema (e.g. a bone bruise or occult fracture) in the knee, which fat-suppressed, fluid-sensitive sequence is best?",
+      "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Inversion Recovery", "TR": 4000, "TE": 40, "TI": 180}},
+      "options": ["STIR", "T1 spin echo", "Time-of-flight", "In-phase gradient echo"],
+      "answer": 0,
+      "explain": "STIR nulls fat and is fluid-sensitive, so marrow oedema (bright fluid signal) stands out against the suppressed fatty marrow — the go-to sequence for bone bruises and occult fractures."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which single plane best shows vertebral-body alignment and the spinal cord across many levels at once?",
+      "setup": {"region": "Spine", "orientation": "sagittal", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial", "Sagittal", "Coronal", "Oblique"],
+      "answer": 1,
+      "explain": "A sagittal image stacks the vertebral bodies, discs and cord in one view — the survey plane for alignment, spondylolisthesis and cord compression."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane shows a single vertebral level in cross-section — the canal, lateral recesses and neural foramina?",
+      "setup": {"region": "Spine", "orientation": "axial", "slice_idx": 100,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Axial", "Sagittal", "Coronal", "Oblique"],
+      "answer": 0,
+      "explain": "Axial — a cross-section through one level, used to judge canal stenosis, the lateral recesses and neural foramina, and the side of a disc herniation."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane is this frontal slice through the abdomen, showing both kidneys and the liver's full height in one image?",
+      "setup": {"region": "Abdomen", "orientation": "coronal", "slice_idx": 100,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Coronal", "Axial", "Sagittal", "Oblique"],
+      "answer": 0,
+      "explain": "Coronal — a frontal slice; it shows both kidneys, the liver's craniocaudal extent and the great vessels along their length in a single view."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which plane shows the bladder, the pelvic organs and both femoral heads in cross-section?",
+      "setup": {"region": "Pelvis", "orientation": "axial", "slice_idx": 40,
+                "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
+      "options": ["Axial", "Coronal", "Sagittal", "Oblique"],
+      "answer": 0,
+      "explain": "Axial — the cross-sectional plane through the pelvic organs (bladder, prostate/uterus, rectum) and the femoral heads; the workhorse plane for pelvic anatomy."
+    },
+    {
+      "category": "anatomy",
+      "prompt": "Which frontal plane through the chest shows both lung fields and the cardiac silhouette together, like a frontal chest radiograph?",
+      "setup": {"region": "Torso", "orientation": "coronal", "slice_idx": 100,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
+      "options": ["Coronal", "Axial", "Sagittal", "Oblique"],
+      "answer": 0,
+      "explain": "Coronal — a frontal slice; both lung fields and the heart appear side by side, the orientation closest to a frontal chest radiograph."
     }
   ]
 }
