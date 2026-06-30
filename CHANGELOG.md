@@ -10,6 +10,13 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.55.0] — 2026-06-30
+
+### Changed
+- **Quantitative parameter maps now render in grayscale** (radiology convention) rather than
+  colour colormaps — qMRI T1/T2/T2*, diffusion ADC/FA and perfusion CBV/CBF/MTT/Ktrans. The
+  colorbar + unit label mark an image as a map.
+
 ## [1.54.0] — 2026-06-30
 
 ### Added
