@@ -75,6 +75,10 @@ async function ensureRegionData(name) {
 self.onmessage = async (e) => {
   const { id, type, payload } = e.data;
   try {
+    // Direct render/scout/scoutPanels calls embed the region in the payload (the quiz and
+    // the protocol scouts issue no separate setRegion) — lazy-load that region's real atlas
+    // too, so e.g. Knee/Spine use the real anatomy instead of the synthetic-phantom fallback.
+    if (payload && payload.region) await ensureRegionData(payload.region);
     let result;
     if (type === "render") result = JSON.parse(renderFn(JSON.stringify(payload)));
     else if (type === "scout") result = JSON.parse(scoutFn(JSON.stringify(payload)));
