@@ -287,7 +287,7 @@ const TOUR = [
     text: "Sweep <b>TR / TE / flip</b> to change the contrast — drag the slider, or type an exact value in the box (or arrow-key it)." },
   { el: "#mainImage", title: "The image",
     text: "The reconstructed slice. <b>Scroll</b> (or ↑/↓) to change slice, <b>drag</b> to window/level, and <b>hover</b> any pixel to read its tissue and T1 / T2 / PD." },
-  { el: "#protocol-link", title: "🩻 Protocol planning",
+  { el: "#protocol-link", title: "Protocol planning",
     text: "Plan a whole exam like a <b>scanner console</b>: pick a protocol, then for each sequence <b>prescribe it on the scout images</b> — angle the plane, place the FOV, set the slices — and <b>Apply to acquire</b> (with scan time + SNR). Drag the acquired images between viewports, window/level, and re-run sequences. Opens in a new workspace." },
   { el: "#curvewrap", title: "The signal curve",
     text: "Shows how signal depends on your settings. Switch what it plots — or hide it — in the <b>Visualizations</b> section." },
@@ -302,7 +302,7 @@ const TOUR = [
   { el: "#ctrl-find", title: "Find anything",
     text: "Lost a control? Type here to jump straight to it — the panel filters as you type." },
   { el: "#lessons-btn", title: "Learn from scratch",
-    text: "New to MRI? Open <b>📖 Lessons</b> for short guided walkthroughs, or <b>🎓 Curriculum</b> for a beginner path. You can re-open this tour anytime from <b>?</b>." },
+    text: "New to MRI? Open <b>Lessons</b> for short guided walkthroughs, or <b>Curriculum</b> for a beginner path. You can re-open this tour anytime from <b>?</b>." },
 ];
 // The tour engine lives in web/tour.js (shared with the Protocol Planning page);
 // app.js just supplies the steps above and drives it via window.Tour.

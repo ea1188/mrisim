@@ -21,10 +21,9 @@
     .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
       width: min(960px, 100%); }
     .card { display: block; text-decoration: none; color: inherit; background: #141a21;
-      border: 1px solid #232c36; border-radius: 10px; padding: 22px 20px; transition: border-color .12s, transform .12s, background .12s; }
-    .card:hover { border-color: #4f7eb0; background: #18222c; transform: translateY(-2px); }
-    .card .ico { font-size: 30px; }
-    .card h2 { font-size: 18px; margin: 12px 0 6px; }
+      border: 1px solid #232c36; border-radius: 8px; padding: 20px; transition: border-color .12s, background .12s; }
+    .card:hover { border-color: #4f7eb0; background: #18222c; }
+    .card h2 { font-size: 18px; margin: 0 0 6px; }
     .card p { color: #aab3bf; font-size: 13.5px; line-height: 1.45; margin: 0; }
     .card .go { color: #7fb8ff; font-size: 13px; font-weight: 600; margin-top: 12px; display: inline-block; }
     #home footer { margin-top: 30px; color: #7c8794; font-size: 12.5px; text-align: center; }
@@ -40,21 +39,18 @@
 
     <div class="cards">
       <a class="card" href="simulator.html">
-        <div class="ico">🧲</div>
         <h2>Simulator</h2>
         <p>The full physics simulator: sweep TR / TE / flip / TI, switch sequences and anatomy,
           and watch k-space, 3-D reconstruction and quantitative maps update in real time.</p>
         <span class="go">Open the simulator →</span>
       </a>
       <a class="card" href="protocol.html">
-        <div class="ico">🩻</div>
         <h2>Protocol planning</h2>
         <p>A scanner-console workflow: pick an exam, prescribe each sequence on the three-plane
           scout images, and acquire it — one after another, like a real console.</p>
         <span class="go">Plan an exam →</span>
       </a>
       <a class="card" href="quiz.html">
-        <div class="ico">🎯</div>
         <h2>Quiz</h2>
         <p>Read-the-scan self-test: identify the sequence, weighting, pathology and perfusion
           maps by topic, with scored feedback and explanations.</p>
