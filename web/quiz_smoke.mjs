@@ -82,10 +82,22 @@ try {
   if (!/\d+ \/ \d+\s*\(\d+%\)/.test(summary)) fail(`end summary score malformed (got "${summary}")`);
   console.log("reached end summary ✓  (" + summary + ")");
 
-  // "Choose another topic" returns to the menu
+  // A completed run persists the best score, and (we answered most wrong) offers a review.
+  const prog = await page.evaluate(() => localStorage.getItem("mrisim_quiz_progress_v1"));
+  if (!prog || !/"all"/.test(prog)) fail(`quiz progress not persisted (got ${prog})`);
+  else console.log("best score persisted to localStorage ✓");
+  const reviewShown = await page.evaluate(
+    () => { const e = document.getElementById("qz-review"); return !!e && getComputedStyle(e).display !== "none"; });
+  if (!reviewShown) fail("review-missed button not offered after missing questions");
+  else console.log("review-missed offered ✓");
+
+  // "Choose another topic" returns to the menu, now showing the per-topic best score
   await page.click("#qz-topics-back");
   await page.waitForFunction(() => getComputedStyle(document.getElementById("qz-menu")).display !== "none", { timeout: 5_000 });
-  console.log("back to topic menu ✓");
+  const menuHasBest = await page.evaluate(
+    () => [...document.querySelectorAll("#qz-topics .qz-topic")].some((b) => /best \d+\/\d+/.test(b.textContent)));
+  if (!menuHasBest) fail("topic menu does not show a best score after a run");
+  else console.log("back to topic menu with best score ✓");
 
   if (errors.length) fail("console errors:\n  " + errors.join("\n  "));
   if (process.exitCode) console.error("QUIZ SMOKE FAILED"); else console.log("QUIZ SMOKE PASSED");
