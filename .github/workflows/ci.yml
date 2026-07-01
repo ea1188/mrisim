@@ -33,10 +33,13 @@ jobs:
       - name: Type check (mypy)
         run: python -m mypy src/
 
-      - name: Run tests (with coverage regression floor)
-        # One pass runs the suite AND enforces the coverage floor — failing if
-        # total coverage drops below it guards against new untested code.
-        # Current total ~87% (non-GUI engine ~94%, GUI ~74%); the floor sits a
-        # couple of points below so it catches regressions without being
-        # brittle to platform line-count noise.
-        run: python -m pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=85 --tb=short -q
+      - name: Run tests (parallel, with coverage regression floor)
+        # One pass runs the suite across all cores (xdist) AND enforces the
+        # coverage floor — failing if total coverage drops below it guards
+        # against new untested code. Current total ~87% (non-GUI engine ~94%,
+        # GUI ~74%); the floor sits a couple of points below so it catches
+        # regressions without being brittle to platform line-count noise.
+        # --dist loadfile keeps each test file on one worker in file order, so
+        # session-scoped stateful fixtures (the GUI smoke window) behave exactly
+        # as in a serial run — parallelism across files only, no ordering flakes.
+        run: python -m pytest tests/ -n auto --dist loadfile --cov=src --cov-report=term-missing --cov-fail-under=85 --tb=short -q

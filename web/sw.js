@@ -27,7 +27,7 @@
 const CACHE = "mrisim-v3";                  // bump when this file's caching logic changes
 const SHELL = [
   "./", "index.html", "simulator.html", "app.js", "styles.css", "worker.js", "logo.png", "lessons.json",
-  "protocol.html", "protocol.js", "quiz.html", "quiz.js", "quiz.json",
+  "protocol.html", "protocol.js", "quiz.html", "quiz.js", "quiz.json", "tour.js",
 ];
 
 self.addEventListener("install", (event) => {
