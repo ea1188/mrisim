@@ -28,9 +28,10 @@ htmlcov/
 # macOS
 .DS_Store
 
-# Editor
+# Editor / assistant
 .vscode/
 .idea/
+.claude/
 
 # PyInstaller build artifacts
 build/

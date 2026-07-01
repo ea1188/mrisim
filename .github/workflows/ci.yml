@@ -25,7 +25,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov mypy ruff
+        run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Lint (ruff)
         run: python -m ruff check src/ tests/
@@ -33,12 +33,10 @@ jobs:
       - name: Type check (mypy)
         run: python -m mypy src/
 
-      - name: Run tests
-        run: python -m pytest tests/ --tb=short -q
-
-      - name: Coverage report (with regression floor)
-        # Fails if total coverage drops below the floor — guards against new
-        # untested code. Current total ~87% (non-GUI engine ~94%, GUI ~74%); the
-        # floor sits a couple of points below so it catches regressions without
-        # being brittle to platform line-count noise.
-        run: python -m pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=85 --tb=no -q
+      - name: Run tests (with coverage regression floor)
+        # One pass runs the suite AND enforces the coverage floor — failing if
+        # total coverage drops below it guards against new untested code.
+        # Current total ~87% (non-GUI engine ~94%, GUI ~74%); the floor sits a
+        # couple of points below so it catches regressions without being
+        # brittle to platform line-count noise.
+        run: python -m pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=85 --tb=short -q
