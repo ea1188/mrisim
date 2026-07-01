@@ -5,6 +5,10 @@
   --chip: #11151a; --border: #252c34; --border-hi: #323b46;
   --text: #dfe5ec; --text-dim: #9aa4b2; --text-faint: #757f8f;
   --accent: #4385cc; --accent-hi: #6ea7df; --accent-ink: #081019;
+  /* Sans for prose/labels; a monospace for numeric readouts — scan parameters, metrics
+     and timers, the way a real scanner console / DICOM overlay renders them (tabular). */
+  --font-sans: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 /* The [hidden] attribute must always win over element display rules below
@@ -14,7 +18,7 @@
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--canvas); color: var(--text);
-  font-family: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif;
+  font-family: var(--font-sans);
   font-size: 13px;
 }
 
@@ -47,7 +51,7 @@ body {
 .topchips { display: flex; gap: 18px; margin-left: auto; }
 .chip { line-height: 1.2; }
 .chip i { display: block; color: var(--text-faint); font-size: 8px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
-.chip b { color: var(--accent-hi); font-size: 13px; font-variant-numeric: tabular-nums; }
+.chip b { color: var(--accent-hi); font-size: 13px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .ghlink { color: var(--text-dim); text-decoration: none; font-size: 13px; }
 .ghlink:hover { color: var(--accent-hi); }
 /* Protocol-planning call-to-action — a flagship workflow, so it stands out. */
@@ -81,7 +85,7 @@ details.group[data-sec="protocol"] { border-top: none; padding-top: 0; }
   width: 100%; box-sizing: border-box; padding: 7px 26px 7px 10px;
   background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px; font-size: 12px;
 }
-#ctrl-find:focus { border-color: var(--accent); outline: none; }
+#ctrl-find:focus { border-color: var(--accent); }
 #ctrl-find-x {
   position: absolute; right: 6px; top: 5px; width: 22px; height: 26px; line-height: 24px;
   background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px;
@@ -98,16 +102,20 @@ output { float: right; color: var(--text); font-weight: 700; }
 .numval {
   float: right; width: 58px; margin: 0; padding: 1px 5px; text-align: right;
   background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px;
-  font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; -moz-appearance: textfield;
+  font-weight: 700; font-size: 12px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; -moz-appearance: textfield;
 }
-.numval:focus { border-color: var(--accent); outline: none; }
+.numval:focus { border-color: var(--accent); }
 .numval::-webkit-outer-spin-button, .numval::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 select, input[type=range] { width: 100%; margin-top: 5px; }
 select {
   background: var(--raised); color: var(--text); border: 1px solid var(--border);
   border-radius: 2px; padding: 6px 8px;
 }
-select:focus { border-color: var(--accent); outline: none; }
+select:focus { border-color: var(--accent); }
+/* Suppress the default outline only for pointer focus — keyboard focus keeps the visible
+   ring (via the :focus-visible rule below), which the id/class specificity was overriding. */
+#ctrl-find:focus:not(:focus-visible), .numval:focus:not(:focus-visible),
+select:focus:not(:focus-visible) { outline: none; }
 input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
 
 /* Sliders: a custom, larger thumb so they're easy to grab (mouse and touch) and
