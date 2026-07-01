@@ -5,7 +5,7 @@ directions with honest effort/value notes, not a committed schedule. MRISim is t
 at once: a **teaching platform** for learning MRI, and a **research-grade sequence
 simulator** with a headless API. Most decisions below trade off between those two hats.
 
-## Where we are (v1.48)
+## Where we are (v1.56)
 
 A mature, dual-edition (PyQt desktop + Pyodide browser) simulator over one shared physics
 engine. It already covers:
@@ -18,8 +18,9 @@ engine. It already covers:
   parallel imaging (SENSE/GRAPPA/CS) with g-factor, partial Fourier, non-Cartesian radial,
   contrast/Gd, fat-sat (STIR/Dixon/CHESS), B0/B1, MT, artifacts, coil shading.
 - **Teaching layer** — guided lessons + a 9-module curriculum, an image-library positioning
-  trainer, a scanner-console protocol planner, a read-the-scan quiz (5 topics), and a home
-  launcher tying the modes together.
+  trainer, a scanner-console protocol planner, a read-the-scan quiz (5 topics / 80 questions,
+  image-pair "what changed?" items, per-topic best scores + review-missed), and a home
+  launcher tying the modes together with quiz progress.
 - **Foundations** — ~2200 tests, ruff/mypy/eslint + Playwright smokes in CI, guarded
   releases (web deploy + 3 binaries), a knowledge-graph index + ADR.
 
@@ -44,10 +45,9 @@ they unlock genuinely new teaching (e.g. spectroscopy) or research use.
 The platform teaches well but barely *measures* learning. This is where small effort buys
 the most.
 
-- **Quiz depth & progress** *(S–M)* — persist per-topic scores (localStorage), add a
-  "review the ones you missed" pass and lightweight spaced repetition; difficulty levels;
-  more question types ("which parameter changed?" on an image pair; "tune this to match the
-  target"). Pure `quiz.json` + small `quiz.js` work.
+- **Quiz depth** *(S–M)* — per-topic scores, review-missed, and image-pair questions
+  shipped (v1.53–v1.54); still open: lightweight spaced repetition, difficulty levels,
+  and "tune this to match the target". Pure `quiz.json` + small `quiz.js` work.
 - **More guided content** *(S, ongoing)* — advanced lesson tracks (an artifacts deep-dive,
   a perfusion track, MSK/body reading, contrast & fat-sat). Data-only via `lessons.json`.
 - **"Reproduce the image" challenges** *(M)* — show a target image; the learner tunes
@@ -90,8 +90,9 @@ entry, see ADR-4).
   lazy-loading atlases / a lighter math path for the common case.
 - **Render performance** *(M–L)* — profile the hot render path; consider caching or a
   WASM/WebGL assist for interactive sweeps.
-- **Mobile & accessibility** *(S–M)* — a focused a11y pass (keyboard nav, ARIA, contrast)
-  and continued mobile polish; the platform is educational and should be reachable.
+- **Mobile & accessibility** *(S–M)* — WCAG AA contrast, keyboard focus rings, and the
+  typography pass shipped (v1.56); still open: ARIA roles/labels on the custom widgets,
+  full keyboard operation of the viewports, and continued mobile polish.
 - **Headless-API docs** *(S)* — document the `Simulator` API + `default_params` contract as
   a first-class research entry point (it is the project's stated preferred surface).
 
@@ -105,11 +106,12 @@ entry, see ADR-4).
 
 ## Suggested next 3–5 (if picking up tomorrow)
 
-1. **Quiz progress + a 2nd lesson track** *(S–M, high value, no assets)* — banks the
-   learning-platform lead with near-zero risk.
-2. **"Reproduce the image" challenge mode** *(M)* — a fresh, engaging teaching mechanic that
+1. **"Reproduce the image" challenge mode** *(M)* — a fresh, engaging teaching mechanic that
    reuses everything already built.
-3. **Validation-report expansion** *(S–M)* — cheap credibility for the research hat.
+2. **Connect learn → test** *(S)* — lesson↔quiz cross-links + a progress view on the home
+   launcher; small work that compounds the assessment features just shipped.
+3. **Validation-report expansion + citability** *(S–M)* — `CITATION.cff`/DOI and more
+   literature benchmarks; cheap credibility for the research hat.
 4. **MR Spectroscopy** *(L)* — the marquee new modality, when ready for a bigger build.
 5. **Browser DICOM/NIfTI import** *(M)* — closes the import/export loop.
 
