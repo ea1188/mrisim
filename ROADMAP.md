@@ -106,10 +106,10 @@ entry, see ADR-4).
 
 ## Suggested next 3–5 (if picking up tomorrow)
 
-1. **Protocol-planner interactivity** *(M)* — client-side overlay so band/FOV/angle drags
-   are instant and precise (plan on file); the biggest hands-on-feel win.
-2. **"Reproduce the image" challenge mode** *(M)* — a fresh, engaging teaching mechanic that
+1. **"Reproduce the image" challenge mode** *(M)* — a fresh, engaging teaching mechanic that
    reuses everything already built.
+2. **Connect learn → test** *(S)* — lesson↔quiz cross-links + a progress view on the home
+   launcher; small work that compounds the assessment features just shipped.
 3. **Validation-report expansion + citability** *(S–M)* — `CITATION.cff`/DOI and more
    literature benchmarks; cheap credibility for the research hat.
 4. **MR Spectroscopy** *(L)* — the marquee new modality, when ready for a bigger build.
