@@ -300,6 +300,13 @@ try {
   }, dy0, { timeout: 5_000 });
   console.log("image-exam: angle drag tilts the band ✓");
 
+  // The angle drag above captured the pointer on the viewport and kicked off a debounced
+  // overlay/scout update. Clicking a queue item immediately after intermittently hung on
+  // Playwright's actionability check (the recurring 30 s timeout in this smoke): move the
+  // pointer off the viewport to drop the capture context, then let it settle first.
+  await page.mouse.move(4, 4);
+  await page.waitForTimeout(600);
+
   // presets orient the slice to the acquired plane: a sagittal sequence's cross band is vertical
   await page.click("#pp-list li:nth-child(3)");           // PD Sagittal → sagittal plane
   await page.waitForFunction(() => {
