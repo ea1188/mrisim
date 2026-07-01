@@ -10,6 +10,18 @@ and docs, a minor bump (`x.Y.0`) for new features. (Earlier in development the
 `v1.0.0` tag was re-pointed as the app evolved; from `v1.0.1` onward tags are
 frozen.)
 
+## [1.56.0] — 2026-06-30
+
+### Changed
+- **Typography:** numeric readouts — scan parameters (TR/TE/flip/TI), the top-bar metrics
+  (scan time / SNR / weighting), the quiz score and the protocol queue times — now render
+  in a monospace, tabular font, the way a scanner console / DICOM overlay shows data.
+
+### Fixed
+- **Accessibility (WCAG AA):** raised the accent-button and faint-label contrast to ≥4.5:1
+  (accent buttons now use dark text on the toned blue); restored the keyboard focus ring on
+  the search box, numeric inputs and selects (an `outline: none` was overriding it).
+
 ## [1.55.0] — 2026-06-30
 
 ### Changed
