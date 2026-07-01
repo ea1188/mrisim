@@ -49,7 +49,7 @@
     }
     #pp-params .pp-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
     #pp-params label { font-size: 12px; color: #9aa4b2; display: inline-flex; align-items: center; gap: 6px; }
-    #pp-params input[type=number] { width: 64px; }
+    #pp-params input[type=number] { width: 64px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
     #pp-params .seqname { color: #e6edf3; font-weight: 600; font-size: 13px; }
     #pp-params .pp-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
     #pp-readout { color: #9aa4b2; font-size: 11px; margin-top: 6px; min-height: 1em; }
@@ -74,9 +74,9 @@
     }
     #pp-queue li:hover { background: #141a21; }
     #pp-queue li.active { background: #1b2530; outline: 1px solid #2f4358; }
-    #pp-queue .q-head #pp-total { color: #6f7886; font-weight: 400; font-size: 11px; margin-left: 6px; }
-    #pp-queue li .q-num { color: #5b6470; width: 16px; text-align: right; }
-    #pp-queue li .q-time { color: #7f8a98; font-size: 11px; font-variant-numeric: tabular-nums; }
+    #pp-queue .q-head #pp-total { color: #6f7886; font-weight: 400; font-size: 11px; margin-left: 6px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    #pp-queue li .q-num { color: #5b6470; width: 16px; text-align: right; font-family: var(--font-mono); }
+    #pp-queue li .q-time { color: #7f8a98; font-size: 11px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
     #pp-queue li .q-label { flex: 1; }
     #pp-queue li .q-status { font-size: 14px; width: 18px; text-align: center; }
     #pp-queue li.acquired .q-label { color: #7fd0a0; }
