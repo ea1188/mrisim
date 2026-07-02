@@ -841,6 +841,7 @@ function setCompare(on) {
   compareMode = on;
   if (on && !protocolA) protocolA = collectPayload();
   $("compare").classList.toggle("on", on);
+  $("compare").hidden = on;    // in compare mode only "Exit compare" shows (avoid a toggle that reads as "compare")
   $("exitAB").hidden = !on;
   $("wrapB").hidden = !on;
   $("tagA").hidden = !on;
@@ -974,6 +975,17 @@ function captionFor(payload) {
   const bits = [];
   if (payload.pathology && PATHOLOGY_LABEL[payload.pathology]) bits.push(PATHOLOGY_LABEL[payload.pathology]);
   if (payload.params?.sequence) bits.push(payload.params.sequence);
+  if (payload.params?.contrast_enabled) bits.push("+Gd");
+  return bits.join(" · ");
+}
+
+// The on-image compare caption shows only what the image doesn't already bake in
+// (pathology, +Gd) — the sequence is already annotated top-left on every panel —
+// so in the common case it's empty and the overlay hides, avoiding any collision
+// with the corner annotations.
+function captionExtras(payload) {
+  const bits = [];
+  if (payload.pathology && PATHOLOGY_LABEL[payload.pathology]) bits.push(PATHOLOGY_LABEL[payload.pathology]);
   if (payload.params?.contrast_enabled) bits.push("+Gd");
   return bits.join(" · ");
 }
@@ -1415,9 +1427,9 @@ async function render() {
       setMetrics(resB);
       syncSlice(resB, reqSlice);
       showDelta(resA.metrics, resB.metrics);
-      // Label each side with what it actually shows (e.g. "Abscess · DWI").
+      // Label each side with what the baked annotation doesn't cover (e.g. "Abscess").
       for (const [id, p] of [["capA", A], ["capB", B]]) {
-        const t = captionFor(p);
+        const t = captionExtras(p);
         $(id).textContent = t; $(id).hidden = !t;
       }
     } else {
