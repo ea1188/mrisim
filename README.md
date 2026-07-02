@@ -218,6 +218,27 @@ pytest                  # or: python -m pytest
 
 2,000+ tests, all passing. Coverage is ~94% across the non-GUI engine modules and ~87% overall; the PyQt GUI is additionally exercised by a headless smoke-test harness. CI runs `ruff` (lint) and strict `mypy` (type-checking) on every push, and enforces a **coverage floor** so new untested code fails the build.
 
+## Headless / scripted use (research API)
+
+The simulation engine is **Qt-free**: give `Simulator` a label volume and a
+parameter dict and it returns `(image, metrics)` — no GUI, no display. This is
+the project's preferred surface for scripted research and reproducible results.
+
+```python
+import sys; sys.path.insert(0, "src")
+import simulator
+from brainweb_loader import get_brainweb_or_synthetic
+
+sim = simulator.Simulator()
+sim.volume, _ = get_brainweb_or_synthetic()
+sim.native_fov = 220.0; sim.orientation = "axial"; sim.slice_idx = 90
+image, metrics = sim.simulate(simulator.default_params(sequence="Spin Echo", TR=4000, TE=100))
+```
+
+See [**`docs/HEADLESS_API.md`**](docs/HEADLESS_API.md) for the full input/output
+contract, and [`examples/headless_demo.py`](examples/headless_demo.py) for a
+runnable end-to-end script.
+
 ## Validation
 
 [**`docs/VALIDATION.md`**](docs/VALIDATION.md) is a generated benchmark report that pins the engine's quantitative behaviour to the literature: measured 1.5 T / 3 T tissue relaxation vs published means (Wansapura 1999, Stanisz 2005, de Bazelaire 2004), the contrast/nulling each clinical weighting produces (T1w WM > GM > CSF, T2w CSF > GM > WM, FLAIR/STIR nulls), analytic landmarks (Ernst angle, bSSFP banding null at 1/2TR, fat–water shift at 3.5 ppm·γ·B0), diffusion ADCs, qMRI round-trips, and the **demo pathologies' discriminating features** (acute-infarct restricted diffusion, microhaemorrhage T2\*/susceptibility, the abscess's DWI-bright core vs. a tumour's facilitated core — Schaefer 2000, Haacke 2009, Ebisu 1996). Every row carries a PASS/FAIL tolerance, and `tests/test_validation_report.py` fails if any check regresses — so the report can't drift from the physics. Regenerate with `python scripts/validation_report.py`.
@@ -269,6 +290,11 @@ data/                 # phantom/atlas cache + optional TotalSegMRI dataset (git-
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the release history and versioning policy, and
 [`ROADMAP.md`](ROADMAP.md) for where the project is headed and how to extend it.
+
+## Citing
+
+If you use MRISim in teaching or research, please cite it — GitHub renders a
+"Cite this repository" button from [`CITATION.cff`](CITATION.cff).
 
 ## Physics references
 
