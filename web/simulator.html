@@ -6,6 +6,12 @@
   <title>MRISim — interactive MRI physics in your browser</title>
   <meta name="description" content="An interactive MRI physics simulator running entirely in your browser via Pyodide — no install." />
   <link rel="icon" href="logo.png" />
+  <!-- Warm the Pyodide CDN connection during page parse: the engine worker
+       only fetches from cdn.jsdelivr.net later (importScripts + wheels), so
+       preconnecting here overlaps DNS/TCP/TLS with boot. crossorigin because
+       the runtime + wheels are CORS fetches. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
