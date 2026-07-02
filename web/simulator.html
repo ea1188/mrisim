@@ -127,6 +127,9 @@
       <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>
       <span class="chip"><i id="m-snrwm-cap">SNR (WM)</i><b id="m-snrwm">—</b></span>
       <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
+      <!-- Composed, contextual announcement of the metrics after each recalculation,
+           so a screen-reader user sweeping TR/TE hears the result change. -->
+      <span id="a11y-metrics" class="visually-hidden" role="status" aria-live="polite"></span>
     </div>
     <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">Curriculum</button>
     <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">Lessons</button>

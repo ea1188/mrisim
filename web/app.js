@@ -1488,7 +1488,11 @@ function setMetrics(res) {
   $("x-sar").textContent = m.sar_head.toFixed(1) + " W/kg" + (m.sar_exceeds ? " ⚠" : "");
   $("m-scan").textContent = fmtTime(m.scan_time);
   $("m-snrwm").textContent = (brain ? m.snr_wm : (m.snr || 0)).toFixed(1);
-  $("m-weight").textContent = weighting($("sequence").value, +$("tr").value, +$("te").value);
+  const weight = weighting($("sequence").value, +$("tr").value, +$("te").value);
+  $("m-weight").textContent = weight;
+  // Announce the result to assistive tech (the chips update silently otherwise).
+  $("a11y-metrics").textContent =
+    `${weight}. Scan time ${fmtTime(m.scan_time)}. ${brain ? "SNR white matter" : "SNR"} ${$("m-snrwm").textContent}.`;
   if (!SEQ_SLOW_FIRST.has($("sequence").value)) $("hint").textContent = "";
   // 3D slab readout: what the partition count buys (isotropic resolution, total
   // slab coverage, and the √Nz SNR gain over a single 2D slice).
