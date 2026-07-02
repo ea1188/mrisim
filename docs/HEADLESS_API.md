@@ -46,8 +46,10 @@ A 3-D integer **label** array with axis convention `axis0=Z, axis1=Y, axis2=X`
 
 - `brainweb_loader.get_brainweb_or_synthetic()` — the real BrainWeb brain if the
   phantom is present, else a synthetic brain. Returns `(volume, source_label)`.
-- `body_phantoms.build_region(name)` / `nifti_region.load_region(name)` — body
-  regions (Abdomen, Pelvis, Torso, Knee, Spine), real atlas if bundled.
+- `body_phantoms.build_region(name)` — body regions (Abdomen, Pelvis, Torso,
+  Knee, Spine); returns a label volume with a synthetic fallback. For the real
+  segmented atlas, `nifti_region.load_region_nifti(region, data_dir)` returns a
+  remapped label volume (or `None` if the dataset isn't present).
 - Any label volume you construct yourself, as long as its codes exist in
   `tissue_db`.
 
