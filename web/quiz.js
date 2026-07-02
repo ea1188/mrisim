@@ -184,8 +184,10 @@ function answer(choice) {
   const q = pool[idx];
   [...$("qz-options").children].forEach((b, i) => {
     b.disabled = true;
-    if (i === correctIdx) b.classList.add("correct");
-    else if (i === choice) b.classList.add("wrong");
+    // Convey correct/wrong to assistive tech and colorblind users, not by
+    // border colour alone (WCAG 1.4.1): annotate the accessible name.
+    if (i === correctIdx) { b.classList.add("correct"); b.setAttribute("aria-label", `${b.textContent} — correct answer`); }
+    else if (i === choice) { b.classList.add("wrong"); b.setAttribute("aria-label", `${b.textContent} — your answer, incorrect`); }
   });
   const correct = choice === correctIdx;
   if (correct) score++; else missed.push(q);
