@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use MRISim in teaching or research, please cite it as below."
+type: software
+title: "MRISim: an interactive MRI physics simulator"
+abstract: >-
+  A dual-edition (desktop + in-browser) MRI physics simulator that models the
+  signal chain from tissue properties and pulse-sequence parameters through
+  k-space acquisition to the reconstructed image — covering the major clinical
+  contrast mechanisms, acquisition strategies, and artifacts — with a guided
+  teaching layer and a Qt-free headless API for scripted research use.
+authors:
+  - family-names: Akkoc
+    given-names: Erol
+license: MIT
+repository-code: "https://github.com/ea1188/mrisim"
+url: "https://ea1188.github.io/mrisim/"
+version: 1.56.0
+date-released: 2026-07-01
+keywords:
+  - MRI
+  - magnetic resonance imaging
+  - physics simulation
+  - pulse sequences
+  - k-space
+  - medical imaging education
+  - Pyodide
