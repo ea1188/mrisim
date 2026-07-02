@@ -161,8 +161,13 @@ try {
   if (!imgB || !imgB.startsWith("data:image/png")) fail("compare B image did not render");
   const delta = await page.textContent("#abdelta");
   if (!delta || !/SNR/.test(delta)) fail("compare delta did not populate: " + delta);
-  // Each compare panel is captioned with what it shows (sequence at minimum).
-  if (!((await page.textContent("#capB")) || "").trim()) fail("compare caption B is empty");
+  // Compare-mode controls: only "Exit compare" shows — the "Compare A/B" toggle is
+  // hidden while comparing so it can't read as "compare" when you're already there.
+  if (!(await page.isHidden("#compare"))) fail("'Compare A/B' should be hidden while comparing");
+  if (!(await page.isVisible("#exitAB"))) fail("'Exit compare' should be visible while comparing");
+  // The per-side caption carries only what the image doesn't bake in (pathology/+Gd);
+  // with none set it stays hidden, clear of the baked corner annotations.
+  if (!(await page.isHidden("#capB"))) fail("compare caption B should be hidden when there are no extras");
   // Window/level works in compare and re-windows BOTH sides: dragging on A must
   // change both A and B images (shared window/level for a fair comparison).
   const a0 = await page.getAttribute("#mainImage", "src");

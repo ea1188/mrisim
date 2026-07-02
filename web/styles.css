@@ -273,9 +273,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   position: absolute; top: 7px; left: 8px; z-index: 2; font-weight: 800; font-size: 11px;
   color: var(--accent-ink); background: var(--accent-hi); border-radius: 2px; padding: 1px 7px;
 }
-/* Compare-mode caption: what each side actually is (pathology · sequence). */
+/* Compare-mode caption: the extras the image doesn't bake in (pathology / +Gd).
+   Centred just below the top "A" orientation letter — the one edge zone clear of
+   the baked corner annotations (title top-left, region top-right, W/L + FOV + the
+   "P" letter along the bottom). Usually empty, so the overlay hides entirely. */
 .ab-caption {
-  position: absolute; top: 7px; left: 34px; right: 8px; z-index: 2; text-align: right;
+  position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 2; max-width: calc(100% - 130px); text-align: center; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
   font-weight: 700; font-size: 11px; color: var(--accent-hi);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); pointer-events: none;
 }
