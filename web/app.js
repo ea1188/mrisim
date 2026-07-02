@@ -1407,6 +1407,8 @@ async function render() {
       const resB = await call("render", B);
       $("mainImage").src = resA.image;
       $("mainImageB").src = resB.image;
+      $("mainImage").alt = `Protocol A (simulated): ${captionFor(A) || A.params?.sequence || "MR image"}`;
+      $("mainImageB").alt = `Protocol B (simulated): ${captionFor(B) || B.params?.sequence || "MR image"}`;
       $("mainImage").style.filter = "";        // drop the live drag-preview filter
       $("mainImageB").style.filter = "";
       $("curveImage").src = resB.curve;
@@ -1505,6 +1507,7 @@ function setMetrics(res) {
 
 function applyResult(res, reqSlice) {
   $("mainImage").src = res.image;
+  $("mainImage").alt = imageAlt();    // describe the current contrast / plane / slice for AT
   $("mainImage").style.filter = "";   // server image is correctly windowed; drop the live W/L preview filter
   $("curveImage").src = res.curve;
   probe = res.probe || null;          // aligned label map for the hover tissue readout
@@ -1743,6 +1746,14 @@ function mathHTML(t) {
   }
   return head + `<div class="m-eq">${sym}</div>` + (sub ? `<div class="m-sub">${sub}</div>` : "")
     + `<div class="m-res">signal S = <b>${t.S.toFixed(3)}</b></div>`;
+}
+
+// A descriptive alt for the reconstructed image so assistive tech conveys what's
+// shown (contrast, plane, slice) instead of the static "reconstructed MR image".
+function imageAlt() {
+  const seq = $("sequence").value;
+  const w = weighting(seq, +$("tr").value, +$("te").value);
+  return `${w} ${curOrient()} MR image, slice ${$("slice").value} of ${$("slice").max} — simulated ${seq}`;
 }
 
 function weighting(seq, tr, te) {
