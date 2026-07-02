@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MRISim for educators — teach MRI physics with a working simulator</title>
+  <meta name="description" content="A real, browser-based MRI physics simulator for radiography and MRI technology programs. Free and open. Piloting with programs for Fall 2026." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: #050607; color: #dfe5ec; margin: 0;
+      font-family: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif; line-height: 1.5; }
+    a { color: #6ea7df; }
+    .wrap { width: min(960px, 100%); margin: 0 auto; padding: 0 18px; box-sizing: border-box; }
+
+    /* Top bar */
+    .edu-top { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #171d24; }
+    .edu-top .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; text-decoration: none; color: inherit; }
+    .edu-top .brand img { width: 26px; height: 26px; }
+    .edu-top .spacer { flex: 1; }
+    .edu-top a.nav { color: #9aa4b2; text-decoration: none; font-size: 13.5px; margin-left: 16px; }
+    .edu-top a.nav:hover { color: #6ea7df; }
+
+    /* Hero */
+    .hero { padding: 62px 0 42px; text-align: center; }
+    .hero h1 { font-size: 34px; font-weight: 600; letter-spacing: -0.4px; margin: 0 0 14px; }
+    .hero p.sub { color: #aab3bf; font-size: 16.5px; max-width: 620px; margin: 0 auto 26px; }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn { display: inline-block; text-decoration: none; border-radius: 2px; padding: 11px 22px; font-weight: 600; font-size: 14.5px; }
+    .btn.primary { background: #4385cc; color: #081019; }
+    .btn.primary:hover { background: #6ea7df; }
+    .btn.ghost { border: 1px solid #2f4358; color: #dfe5ec; }
+    .btn.ghost:hover { border-color: #4f6580; background: #141a21; }
+
+    /* Stat band */
+    .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 26px; margin: 34px 0 4px;
+      color: #8b97a6; font-size: 13px; font-family: var(--font-mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; }
+    .stats b { color: #cfd6df; font-weight: 600; }
+
+    /* Sections */
+    section { padding: 40px 0; border-top: 1px solid #171d24; }
+    section h2 { font-size: 21px; font-weight: 600; letter-spacing: -0.2px; margin: 0 0 20px; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .feat { background: #141a21; border: 1px solid #232c36; border-radius: 2px; padding: 20px; }
+    .feat .ico { width: 22px; height: 22px; color: #6ea7df; display: block; margin-bottom: 12px; }
+    .feat h3 { font-size: 15.5px; font-weight: 600; margin: 0 0 7px; }
+    .feat p { color: #aab3bf; font-size: 13.5px; margin: 0; }
+    .feat .soon { display: inline-block; font-family: var(--font-mono, ui-monospace, Menlo, monospace); font-size: 10.5px;
+      letter-spacing: .06em; text-transform: uppercase; color: #6ea7df; border: 1px solid #2f4358; border-radius: 2px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; }
+
+    /* Pilot callout */
+    .pilot { background: #10161d; border: 1px solid #232c36; border-radius: 2px; padding: 28px; text-align: center; }
+    .pilot h2 { margin-top: 0; }
+    .pilot p { color: #aab3bf; font-size: 14.5px; max-width: 620px; margin: 0 auto 20px; }
+
+    /* Form */
+    form.pilot-form { max-width: 560px; margin: 0 auto; display: grid; gap: 12px; text-align: left; }
+    form.pilot-form label { display: block; color: #9aa4b2; font-size: 12px; margin-bottom: 4px; }
+    form.pilot-form input, form.pilot-form select, form.pilot-form textarea {
+      width: 100%; box-sizing: border-box; background: #0d1116; color: #dfe5ec;
+      border: 1px solid #252c34; border-radius: 2px; padding: 9px 11px; font-size: 14px; font-family: inherit; }
+    form.pilot-form textarea { min-height: 92px; resize: vertical; }
+    form.pilot-form input:focus, form.pilot-form select:focus, form.pilot-form textarea:focus { outline: none; border-color: #4385cc; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    form.pilot-form button { justify-self: start; background: #4385cc; color: #081019; border: 0; border-radius: 2px;
+      padding: 11px 24px; font-weight: 600; font-size: 14.5px; cursor: pointer; }
+    form.pilot-form button:hover { background: #6ea7df; }
+    #form-note { color: #8b97a6; font-size: 12.5px; margin-top: 2px; }
+    #form-thanks { display: none; color: #7fd0a0; font-size: 14.5px; text-align: center; padding: 8px 0; }
+
+    footer.edu { padding: 30px 0 44px; border-top: 1px solid #171d24; color: #7c8794; font-size: 12.5px; text-align: center; }
+    footer.edu a { text-decoration: none; }
+    footer.edu .disclaim { margin-top: 8px; color: #6b7480; }
+
+    @media (max-width: 680px) {
+      .hero h1 { font-size: 27px; } .grid { grid-template-columns: 1fr; } .two { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="edu-top wrap" style="max-width:960px">
+    <a class="brand" href="index.html"><img src="logo.png" alt="" />MRISim</a>
+    <span class="spacer"></span>
+    <a class="nav" href="index.html">Live demo</a>
+    <a class="nav" href="#pilot">Fall pilot</a>
+    <a class="nav" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <h1>Teach MRI physics with a working simulator.</h1>
+      <p class="sub">The full physics engine runs in the browser. Students change TR, TE, and the pulse
+        sequence and watch the image and the signal curve respond in real time — the actual signal chain,
+        not a slide deck. Free, open, and nothing to install.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="index.html">Try the live demo &rarr;</a>
+        <a class="btn ghost" href="#pilot">Request a fall pilot</a>
+      </div>
+      <div class="stats">
+        <span><b>13</b> pulse sequences</span>
+        <span>real BrainWeb + <b>5</b> body atlases</span>
+        <span><b>80</b>-question quiz</span>
+        <span>guided lessons + a <b>9</b>-module curriculum</span>
+      </div>
+    </div>
+
+    <section>
+      <h2>What your students get</h2>
+      <div class="grid">
+        <div class="feat">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.3" fill="#141a21"/><circle cx="15" cy="12" r="2.3" fill="#141a21"/><circle cx="8" cy="17" r="2.3" fill="#141a21"/></svg>
+          <h3>Real physics, real anatomy</h3>
+          <p>Spin echo, gradient echo, IR, EPI, diffusion, perfusion, angiography and more — over real
+            BrainWeb and segmented body atlases. K-space, artifacts, and live SNR / SAR / scan-time, so
+            students see cause and effect, not canned pictures.</p>
+        </div>
+        <div class="feat">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+          <h3>Nothing to install</h3>
+          <p>Runs entirely in the browser on any laptop. Share a link to any exact setup — a specific
+            TR/TE on a specific slice — so a demonstration drops straight into your slides or LMS.</p>
+        </div>
+        <div class="feat">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
+          <h3>Ready-made teaching</h3>
+          <p>Guided lessons, a nine-module beginner curriculum, a scanner-console protocol planner, and
+            an 80-question read-the-scan quiz with scored feedback and explanations — slot them in
+            week by week.</p>
+        </div>
+        <div class="feat">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="13" rx="1.5"/><path d="M8 20h8M12 17v3"/><path d="M7 12l2.5 2.5L15 9"/></svg>
+          <h3>Instructor tools <span class="soon">with pilots</span></h3>
+          <p>Cohorts, assignable exercises auto-graded against known-correct parameter ranges, and a
+            progress dashboard — in development now, and shaped directly by our fall pilot partners.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pilot">
+      <div class="pilot">
+        <h2>Piloting this fall — free</h2>
+        <p>We're partnering with a small number of radiography and MRI technology programs for the
+          Fall&nbsp;2026 semester. Pilot partners get the full platform at no cost and help shape the
+          instructor tools. In return we ask for structured feedback through the term and, if it earns it,
+          a testimonial. No commitment beyond the semester.</p>
+
+        <form class="pilot-form" id="pilot-form">
+          <div class="two">
+            <div><label for="f-name">Your name</label><input id="f-name" name="name" required autocomplete="name" /></div>
+            <div><label for="f-email">Email</label><input id="f-email" name="email" type="email" required autocomplete="email" /></div>
+          </div>
+          <div class="two">
+            <div><label for="f-inst">Institution / program</label><input id="f-inst" name="institution" required /></div>
+            <div><label for="f-role">Your role</label>
+              <select id="f-role" name="role">
+                <option>Program director</option>
+                <option>Instructor / faculty</option>
+                <option>Clinical coordinator</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="f-msg">How do you teach MRI physics today, and what would help most?</label>
+            <textarea id="f-msg" name="message"></textarea>
+          </div>
+          <button type="submit">Request a pilot</button>
+          <p id="form-note">Educational and research use only — not a medical device.</p>
+        </form>
+        <p id="form-thanks">Thanks — your message is on its way. We'll be in touch about a fall pilot.</p>
+      </div>
+    </section>
+
+    <footer class="edu">
+      Built on the open-source <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">MRISim</a>
+      engine, validated against published relaxation values.
+      <div class="disclaim">MRISim is for education and research only and is not intended for clinical decision-making.</div>
+    </footer>
+  </div>
+
+  <script>
+    // Pilot-interest capture. Until a form backend is set up, submissions fall back to the
+    // visitor's mail client — so the page works the day it ships. To capture server-side,
+    // paste a form endpoint (e.g. a Formspree/Formcarry POST URL) into FORM_ENDPOINT.
+    var FORM_ENDPOINT = "";                        // TODO: paste form-capture POST URL here
+    var CONTACT_EMAIL = "erolakkoc8@gmail.com";    // TODO: swap for a business address before launch
+    (function () {
+      var form = document.getElementById("pilot-form");
+      var thanks = document.getElementById("form-thanks");
+      function done() { form.style.display = "none"; thanks.style.display = "block"; }
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var data = new FormData(form);
+        if (FORM_ENDPOINT) {
+          fetch(FORM_ENDPOINT, { method: "POST", body: data, headers: { Accept: "application/json" } })
+            .then(function (r) { if (r.ok) done(); else fallback(data); })
+            .catch(function () { fallback(data); });
+        } else {
+          fallback(data);
+        }
+      });
+      function fallback(data) {
+        var body = "Name: " + (data.get("name") || "") +
+          "\nEmail: " + (data.get("email") || "") +
+          "\nInstitution: " + (data.get("institution") || "") +
+          "\nRole: " + (data.get("role") || "") +
+          "\n\n" + (data.get("message") || "");
+        var subject = "MRISim pilot interest — " + (data.get("institution") || "");
+        window.location.href = "mailto:" + CONTACT_EMAIL +
+          "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+        done();
+      }
+    })();
+  </script>
+</body>
+</html>
