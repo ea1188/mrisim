@@ -34,8 +34,16 @@
       border-radius: 2px; padding: 10px 12px; font-size: 14px; cursor: pointer; }
     .qz-opt:hover:not(:disabled) { border-color: #3f6f9c; background: #20303f; }
     .qz-opt:disabled { cursor: default; }
+    .qz-opt { position: relative; }
+    /* A text marker so correct/wrong reads without relying on border colour. */
+    .qz-opt.correct, .qz-opt.wrong { padding-right: 84px; }
     .qz-opt.correct { border-color: #3fb950; background: #16301d; color: #d7f5dd; }
     .qz-opt.wrong { border-color: #d9534f; background: #311818; color: #f5d7d7; }
+    .qz-opt.correct::after, .qz-opt.wrong::after {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+    .qz-opt.correct::after { content: "correct"; color: #7fe0a0; }
+    .qz-opt.wrong::after { content: "your pick"; color: #f0a0a0; }
     #qz-feedback { margin-top: 12px; font-size: 13.5px; line-height: 1.4; color: #c4ccd6; display: none; }
     #qz-feedback b.ok { color: #3fb950; } #qz-feedback b.no { color: #e5736f; }
     #qz-next { margin-top: 14px; background: #4385cc; color: #081019; border: 0; border-radius: 2px;
@@ -74,7 +82,7 @@
     <header id="qz-head">
       <h1>MRISim · MRI Quizzes</h1>
       <span class="spacer"></span>
-      <span id="qz-score">Score 0 / 0</span>
+      <span id="qz-score" role="status" aria-live="polite" aria-atomic="true">Score 0 / 0</span>
       <a href="protocol.html">Protocol</a>
       <a href="simulator.html">Simulator</a>
       <a href="index.html">Home</a>
@@ -93,11 +101,11 @@
             <figure><img id="qz-imgB" alt="Scan B" /><figcaption>B</figcaption></figure>
           </div>
           <img id="qz-img" alt="Quiz scan" />
-          <span id="qz-imgmsg">Rendering…</span>
+          <span id="qz-imgmsg" role="status" aria-live="polite">Rendering…</span>
         </div>
         <p id="qz-prompt"></p>
-        <div id="qz-options"></div>
-        <div id="qz-feedback"></div>
+        <div id="qz-options" role="group" aria-label="Answer choices"></div>
+        <div id="qz-feedback" role="status" aria-live="polite"></div>
         <button id="qz-next" type="button">Next ▸</button>
 
         <div id="qz-summary">
