@@ -206,6 +206,8 @@ function showSummary() {
   // A full topic run banks the best score; a review-the-missed run must not (it is scored
   // out of however many you missed, not the whole topic).
   if (!reviewing) saveBest(currentTopic, score, n);
+  // Sync the run to the instructor backend when signed in (no-op otherwise).
+  if (!reviewing && window.Accounts) Accounts.logActivity("quiz_attempt", currentTopic, score, n);
   $("qz-summary-score").textContent = `${score} / ${n}  (${pct}%)`;
   $("qz-summary-msg").textContent =
     pct >= 80 ? "Excellent — you can read these confidently." :

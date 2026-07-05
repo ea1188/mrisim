@@ -15,11 +15,28 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
-      globals: { ...globals.browser, Tour: "readonly" },
+      globals: { ...globals.browser, Tour: "readonly", Accounts: "readonly" },
     },
     rules: {
       ...js.configs.recommended.rules,
       // Allow intentionally-unused error bindings (catch (e) { /* ignore */ }).
+      "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
+    },
+  },
+
+  // Optional accounts layer (Supabase-backed instructor/student features) and its
+  // account-page controller — classic browser scripts. accounts.js defines
+  // window.Accounts (lazy-loading supabase-js via a dynamic import); account.js
+  // consumes it; config*.js just set window.MRISIM_SUPABASE.
+  {
+    files: ["web/accounts.js", "web/account.js", "web/config.js", "web/config.example.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: { ...globals.browser, Accounts: "readonly" },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
       "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
     },
   },

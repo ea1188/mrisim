@@ -6,10 +6,21 @@ has done what. It is deliberately *formative* — it tracks practice, not truste
 grades — and it never gets in the way of the open, no-account experience that is
 the project's adoption funnel.
 
-Status: **Phase 1 (data model + access policies)** landed here as
-[`supabase/migrations/0001_instructor_formative.sql`](../supabase/migrations/0001_instructor_formative.sql).
-Phase 2 (front-end auth + progress sync + instructor dashboard) is next and needs a
-live Supabase project to build against.
+Status: **Phase 1 (schema + RLS)** and **Phase 2 (front-end)** are both in. Phase 1
+is [`supabase/migrations/0001_instructor_formative.sql`](../supabase/migrations/0001_instructor_formative.sql),
+verified against a live project (a two-user RLS integration test + a supabase-js
+call-shape harness both pass). Phase 2 adds:
+
+- `web/accounts.js` — the client layer (lazy-loads supabase-js; inert without config).
+- `web/account.html` + `web/account.js` — passwordless (magic-link) sign-in, then a
+  role-adaptive view: an **instructor dashboard** (create class, join code, per-student
+  practice) or a **student view** (join by code, my classes, recent activity).
+- `web/config.js` (+ `config.example.js`) — the public project URL + anon key.
+- A `.accounts-only` "Sign in" link on the home page, and best-effort quiz-score sync
+  (`quiz.js` → `Accounts.logActivity`) that is a no-op when signed out.
+
+The **magic-link sign-in and dashboard UI** are the one piece that needs a real inbox
+to accept end-to-end (the data/RLS layer is already proven headlessly).
 
 ## Principles
 
