@@ -49,7 +49,12 @@ _ACQ3D_SEQUENCES = frozenset({"Spin Echo", "Gradient Echo",
                               "Inversion Recovery", "Balanced SSFP"})
 
 _B0_MAP: dict[str, float] = {"1.5T": 1.5, "3T": 3.0}
-_BLOOD_LABEL = 11   # tissue_db: Blood / vascular (the painted vessel tree)
+_BLOOD_LABEL = 11        # tissue_db: Blood / vascular (the painted vessel tree)
+_MICROBLEED_LABEL = 25   # tissue_db: Microhaemorrhage (hemosiderin, paramagnetic)
+# SWI is read as a thin-slab minimum-intensity venogram, not a single slice — this
+# is how many neighbouring slices are min-projected so the continuous venous tree
+# (not just the veins piercing one plane) shows. Odd; centred on the imaged slice.
+_SWI_MINIP_SLAB = 5
 
 
 @dataclass(frozen=True)
@@ -348,26 +353,31 @@ class Simulator:
         """Susceptibility B0 field (Hz) driving the SWI phase mask.
 
         Where a vessel tree is present (brain), the field is the dipole field of
-        the vessels as **paramagnetic venous blood** (deoxy, ≈ +0.45 ppm vs
-        tissue): veins accrue negative phase and darken, parenchyma stays ≈ flat —
-        the clean SWI venogram. (The raw tissue susceptibility field is dominated
-        by air–tissue boundaries whose phase wraps and speckles the parenchyma, so
-        it is not used here.) Without vessels (body) it falls back to the tissue
-        susceptibility field."""
+        the paramagnetic sources that SWI is built to show — **venous blood**
+        (deoxy, ≈ +0.45 ppm vs tissue) and **microhaemorrhages** (hemosiderin,
+        ~2× that): both accrue negative phase and darken, while parenchyma stays
+        ≈ flat — the clean SWI venogram. (The raw tissue susceptibility field is
+        dominated by air–tissue boundaries whose phase wraps and speckles the
+        parenchyma, so it is not used here; and the tissue field's -8.40 ppm for
+        label 25 is a magnitude-blooming driver in a different sign convention,
+        not a literal χ, so it is not reused for the phase.) Without vessels
+        (body) it falls back to the tissue susceptibility field."""
         vessels = self.vessels
         assert self.volume is not None
         if vessels is None or vessels.shape != self.volume.shape:
             return self._b0_volume(field_strength_T)
         # `vessels` is the full labelled volume with the vascular tree painted as
-        # blood (label 11); the venous mask is that label, not every voxel.
+        # blood (label 11); the paramagnetic masks are those labels, not every voxel.
         vein_mask = vessels == _BLOOD_LABEL
-        if not vein_mask.any():
+        bleed_mask = vessels == _MICROBLEED_LABEL
+        if not vein_mask.any() and not bleed_mask.any():
             return self._b0_volume(field_strength_T)
-        key = (vessels.shape, int(vein_mask.sum()), round(float(field_strength_T), 3))
+        key = (vessels.shape, int(vein_mask.sum()), int(bleed_mask.sum()),
+               round(float(field_strength_T), 3))
         if self._swi_vein_cache is None or self._swi_vein_cache[0] != key:
-            vein_chi = 0.45 * vein_mask.astype(np.float64)
-            vein_field = b0.field_from_chi(vein_chi, field_strength_T=field_strength_T)
-            self._swi_vein_cache = (key, vein_field)
+            chi = 0.45 * vein_mask.astype(np.float64) + 0.90 * bleed_mask.astype(np.float64)
+            field = b0.field_from_chi(chi, field_strength_T=field_strength_T)
+            self._swi_vein_cache = (key, field)
         return self._swi_vein_cache[1]
 
     def _b0_field_slice(self, orient: str, sl_idx: int, params: dict,
@@ -499,18 +509,34 @@ class Simulator:
                 return out
         return np.zeros((181, 181), dtype=float)
 
+    def _swi_slab_indices(self, orient: str, sl_idx: int) -> "list[int]":
+        """In-bounds slice indices for the SWI MinIP slab, centred on ``sl_idx``.
+        Clamped to the volume and de-duplicated at the edges."""
+        assert self.volume is not None
+        n = self.volume.shape[sg.cfg_for(orient)["through_axis"]]
+        half = _SWI_MINIP_SLAB // 2
+        return sorted({int(np.clip(sl_idx + d, 0, n - 1)) for d in range(-half, half + 1)})
+
     def _render_swi(self, c: "_SliceCtx") -> "np.ndarray | None":
-        # Long-TE GRE magnitude × a negative phase mask from the local
-        # susceptibility field (tissue + paramagnetic venous blood), so veins
-        # / iron / microbleeds darken. swi.py does the homodyne + masking.
-        mag = rendering.simulate_slice_props(c.phantom_slice, c.TR, c.TE, "GRE", c.TI, c.FA, c.tprops)
+        # SWI = long-TE GRE magnitude × a negative phase mask from the local
+        # susceptibility field (venous blood + microbleeds), projected as a
+        # thin-slab **minimum-intensity venogram** over neighbouring slices — the
+        # way SWI is read clinically, so the continuous venous tree shows, not just
+        # the veins piercing one plane (a single slice reads like a plain T2* GRE).
+        # swi.py does the per-slice homodyne + masking; the min is the projection.
         B0_T = _B0_MAP.get(c.params.get("field_strength", "3T"), 3.0)
-        field = self._b0_field_slice(c.orient, c.sl_idx, c.params, B0_T,
-                                     field_vol=self._swi_b0_volume(B0_T))
-        if field.shape != mag.shape:                      # geometry guard
-            return mag
-        phase = swi.field_to_phase(field, c.TE)
-        return swi.swi_combine(mag, phase, power=4, hp_sigma=8.0)
+        field_vol = self._swi_b0_volume(B0_T)             # cached; shared across the slab
+        combined: "np.ndarray | None" = None
+        for idx in self._swi_slab_indices(c.orient, c.sl_idx):
+            ph = self._get_phantom_slice(c.orient, idx, c.params)
+            mag = rendering.simulate_slice_props(ph, c.TR, c.TE, "GRE", c.TI, c.FA, c.tprops)
+            field = self._b0_field_slice(c.orient, idx, c.params, B0_T, field_vol=field_vol)
+            if field.shape != mag.shape:                  # geometry guard (e.g. oblique)
+                slab = mag
+            else:
+                slab = swi.swi_combine(mag, swi.field_to_phase(field, c.TE), power=4, hp_sigma=8.0)
+            combined = slab if combined is None else np.minimum(combined, slab)
+        return combined
 
     def _render_fse(self, c: "_SliceCtx") -> "np.ndarray | None":
         return simulate_fse_image(c.phantom_slice, c.TR, c.TE, c.params["etl"], c.params["echo_spacing"], c.tprops)

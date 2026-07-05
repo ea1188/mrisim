@@ -134,7 +134,7 @@ PRESETS = {
         "description": "Dynamic Susceptibility Contrast (DSC) — a gadolinium-bolus T2*-EPI acquisition tracked over time. The default CBV map shows grey > white blood volume; an infarct core drops CBV with prolonged MTT, while a high-grade tumour shows raised CBV. Switch the Dynamic map to CBF / MTT, or to Ktrans (DCE) for blood-brain-barrier permeability."
     },
     "Brain SWI": {
-        "sequence": "Gradient Echo",
+        "sequence": "Susceptibility (SWI)",
         "TR": 28,
         "TE": 20,
         "TI": 150,

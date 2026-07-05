@@ -73,6 +73,12 @@ class TestPresets:
             assert PRESETS[name]["sequence"] in slab_seqs, (
                 f"{name} sets acq3d but its sequence can't be acquired as a 3-D slab")
 
+    def test_swi_preset_uses_the_swi_sequence(self):
+        """The 'Brain SWI' preset must drive the phase-mask SWI path, not a plain
+        gradient echo — otherwise it renders a T2* GRE ('hemoflash') with no
+        venogram (regression: it was silently pointed at 'Gradient Echo')."""
+        assert PRESETS["Brain SWI"]["sequence"] == "Susceptibility (SWI)"
+
     def test_3d_named_presets_actually_enable_3d(self):
         """Presets whose name/description sells a 3-D acquisition must set acq3d,
         so they don't just claim 3-D in prose (regression: MPRAGE/CISS/SPACE)."""
