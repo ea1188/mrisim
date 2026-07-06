@@ -77,6 +77,12 @@ async function onReady() {
     return;
   }
   showMenu();
+  // Deep-link: quiz.html?topic=<category id> opens that topic directly (used by the
+  // course page's end-of-topic quiz link).
+  try {
+    const t = new URLSearchParams(location.search).get("topic");
+    if (t && categories.some((c) => c.id === t)) selectTopic(t);
+  } catch (e) { /* ignore */ }
 }
 
 function buildMenu() {
