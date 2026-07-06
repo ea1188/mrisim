@@ -6,7 +6,8 @@
     {"id": "perfusion", "label": "Perfusion"},
     {"id": "artifacts", "label": "Artifacts"},
     {"id": "anatomy", "label": "Anatomy & planes"},
-    {"id": "image-quality", "label": "Image quality"}
+    {"id": "image-quality", "label": "Image quality"},
+    {"id": "safety", "label": "MR safety"}
   ],
   "questions": [
     {
@@ -804,6 +805,55 @@
       "options": ["Thicker slices — more partial-volume averaging", "A finer acquisition matrix", "More signal averaging (higher NEX)", "A longer echo time (TE)"],
       "answer": 0,
       "explain": "B uses thicker slices, so each voxel averages more tissue through-plane (the partial-volume effect) — small structures blur into their neighbours and the image looks smoother. Thinner slices reduce partial volume, at some SNR cost."
+    },
+    {
+      "category": "safety",
+      "prompt": "MRI facilities are divided into four safety zones. Which zone is the magnet room itself — the strongest field and the most tightly controlled access?",
+      "options": ["Zone IV", "Zone I", "Zone II", "Zone III"],
+      "answer": 0,
+      "explain": "Zone IV is the scanner (magnet) room — the highest static field and the most restricted area; entry is only under the direct supervision of trained MR personnel. Zones I–III step down in access control from the public entrance inward."
+    },
+    {
+      "category": "safety",
+      "prompt": "A steel oxygen cylinder is wheeled too close to the bore. What is the principal static-field hazard?",
+      "options": ["The projectile (missile) effect — ferromagnetic objects are pulled into the bore with great force", "RF heating of the cylinder", "Peripheral nerve stimulation", "Acoustic damage"],
+      "answer": 0,
+      "explain": "The static B0 field exerts a strong pull on ferromagnetic objects (the projectile/missile effect) — a leading cause of serious MRI accidents. Ferromagnetic items must never enter Zone IV; use only MR-safe equipment."
+    },
+    {
+      "category": "safety",
+      "prompt": "Why is screening for implants (pacemakers, aneurysm clips, cochlear implants) mandatory before a patient enters Zone IV?",
+      "options": ["The magnetic field and RF can displace, heat, or disrupt the device", "Implants only blur the image", "Gadolinium reacts with the metal", "The gradients harmlessly reset the device"],
+      "answer": 0,
+      "explain": "Ferromagnetic implants can move or torque, conductive ones can heat, and active devices (e.g. pacemakers) can malfunction. Every patient is screened and each device checked against its MR-safe / MR-conditional labelling before entry."
+    },
+    {
+      "category": "safety",
+      "prompt": "The scanner limits the specific absorption rate (SAR). What does SAR quantify, and what is the main patient risk?",
+      "options": ["RF power deposited in tissue — the risk is heating and burns", "Static field strength — the risk is projectiles", "Gradient slew rate — the risk is nerve stimulation", "Acoustic output — the risk is hearing loss"],
+      "answer": 0,
+      "explain": "SAR (W/kg) is the RF energy absorbed as heat. High-SAR scans (long echo trains, higher field) warm tissue; risks include general heating and focal burns — e.g. from looped cables or skin-to-skin contact. The scanner caps SAR to stay within limits."
+    },
+    {
+      "category": "safety",
+      "prompt": "Rapidly switching gradients in a fast sequence can produce which patient sensation, limited by which parameter?",
+      "options": ["Peripheral nerve stimulation (tingling or twitching) — limited by dB/dt", "Warmth — limited by SAR", "A pull toward the bore — limited by the fringe field", "Nausea — limited by the TR"],
+      "answer": 0,
+      "explain": "Fast gradient switching (high dB/dt) induces currents that can stimulate peripheral nerves — tingling or muscle twitching. Scanners cap dB/dt below the stimulation threshold; this is distinct from RF heating (SAR) and from static-field effects."
+    },
+    {
+      "category": "safety",
+      "prompt": "During a magnet quench the superconducting coil suddenly goes resistive. What is the immediate hazard in the scan room?",
+      "options": ["Boil-off of cryogenic helium can displace oxygen (asphyxiation) and cause frostbite", "The RF coil overheats and burns the patient", "The gadolinium supply becomes toxic", "The gradient coils explode"],
+      "answer": 0,
+      "explain": "A quench rapidly boils the liquid helium to gas. It should vent outside through the quench pipe; if venting fails, the cold gas displaces room oxygen (asphyxiation risk) and is extremely cold. Know the oxygen-monitor alarm and the emergency evacuation procedure."
+    },
+    {
+      "category": "safety",
+      "prompt": "Gadolinium-based contrast carries which recognised risk, particularly in patients with severe renal impairment?",
+      "options": ["Nephrogenic systemic fibrosis (NSF)", "Iodine anaphylaxis", "Lactic acidosis", "Thyroid storm"],
+      "answer": 0,
+      "explain": "In severe renal impairment, retained gadolinium is linked to nephrogenic systemic fibrosis (fibrosis of skin and organs). Screen renal function (eGFR), use the lowest effective dose / macrocyclic agents, and note gadolinium is unrelated to iodinated CT contrast."
     }
   ]
 }
