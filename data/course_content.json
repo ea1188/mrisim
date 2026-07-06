@@ -3521,6 +3521,22 @@
           "Mild reactions get antihistamines; anaphylaxis is treated first with epinephrine."
         ]
       }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "education",
+      "ord": 88,
+      "body": {
+        "title": "Flip angle: the Ernst angle and the SAR trade-off",
+        "html": "<p>The <b>flip angle</b> is the angle by which the RF pulse tips the net magnetisation away from the main field. It is one of the most useful contrast knobs in MRI, and what it does depends on the sequence family.</p><ul><li><b>90 degrees</b> puts all the magnetisation into the transverse plane, giving the maximum signal from a single excitation. This is the classic spin-echo excitation.</li><li><b>Gradient echo</b> does not use 90 degrees. With short TRs there is no time for full longitudinal recovery, so a <b>smaller flip angle</b> yields more steady-state signal.</li><li>The <b>Ernst angle</b> is the flip that maximises signal for a given TR and tissue T1, following cos(Ernst angle) = exp(-TR / T1); a shorter TR or shorter T1 means a smaller Ernst angle.</li></ul><p>In gradient echo the flip angle also steers <b>contrast</b>: a <b>larger flip</b> leans toward <b>T1 weighting</b>, while a <b>smaller flip</b> leans toward <b>proton density and T2*</b>. The catch is <b>SAR</b>: flip angle scales with RF power, so a bigger flip deposits more heat, which is why fast, high-flip, short-TR sequences can reach SAR limits, especially at higher field strength.</p>",
+        "keypoints": [
+          "The flip angle is how far the RF pulse tips the magnetisation from the main field.",
+          "90 degrees gives maximum single-shot signal (classic spin echo).",
+          "Gradient echo uses a smaller flip; the Ernst angle maximises signal for a given TR and T1.",
+          "Larger flip leans to T1 weighting; smaller flip leans to proton density and T2*.",
+          "Flip angle scales with RF power, so a larger flip raises SAR."
+        ]
+      }
     }
   ]
 }
