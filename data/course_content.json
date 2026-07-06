@@ -1,0 +1,247 @@
+{
+  "_note": "PREMIUM course content — EXCLUSIVE to the paid program. Source only: this file is NEVER copied into web/ (build_web.py copies named files, not data/*.json). It is loaded into the Supabase course_content table via scripts/seed_course_content.py (needs the service_role key). RLS then serves it only to entitled users. See docs/COURSE.md.",
+  "course": "mri-core",
+  "items": [
+    {
+      "topic": "contrast-weighting",
+      "kind": "education",
+      "ord": 10,
+      "body": {
+        "title": "Contrast & weighting — the exam synthesis",
+        "html": "<p>Image contrast in conventional spin echo is set by two knobs: <b>TR</b> governs how much <b>T1</b> weighting you get, and <b>TE</b> governs how much <b>T2</b> weighting. Combine them:</p><ul><li><b>Short TR / short TE → T1-weighted.</b> Fat and white matter bright; fluid (CSF) dark.</li><li><b>Long TR / long TE → T2-weighted.</b> Fluid bright — this is where most pathology (extra water) shows.</li><li><b>Long TR / short TE → proton density.</b> Both weightings minimised; signal tracks tissue water content.</li></ul><p><b>Inversion recovery</b> adds a preparatory 180° pulse and a <b>TI</b>. Choosing TI at a tissue's null point suppresses it: <b>STIR</b> (short TI ≈ 0.69·T1 of fat) nulls <b>fat</b>; <b>FLAIR</b> (long TI ≈ 2000–2500 ms) nulls <b>CSF</b> so periventricular lesions aren't hidden. <b>Gradient echo</b> uses a flip angle instead of a 180° refocuser and is sensitive to <b>T2*</b> (susceptibility). <b>Gadolinium</b> shortens T1, so enhancing tissue is bright on T1 — it marks blood-brain-barrier breakdown.</p><p>The fastest read: <b>find the fluid</b> (ventricles, eyeballs). Dark fluid → T1. Bright fluid → T2. Bright everything-but-fluid → FLAIR.</p>",
+        "keypoints": [
+          "TR controls T1 weighting; TE controls T2 weighting.",
+          "Short TR/short TE = T1; long TR/long TE = T2; long TR/short TE = PD.",
+          "STIR nulls fat (TI ≈ 0.69·T1 fat); FLAIR nulls CSF (long TI).",
+          "Gradient echo → flip angle, T2* sensitive.",
+          "Gadolinium shortens T1 → bright on T1 at BBB breakdown."
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "education",
+      "ord": 20,
+      "body": {
+        "title": "Image quality — SNR, CNR, resolution & the trade-offs",
+        "html": "<p><b>SNR</b> (signal-to-noise) rises with <b>voxel volume</b> (bigger voxels = more signal), with <b>√NEX</b> (averages), with lower <b>receiver bandwidth</b>, with <b>field strength</b>, and with better coils. <b>CNR</b> (contrast-to-noise) is the difference in signal between two tissues over the noise — it's what actually makes a lesion visible.</p><p><b>Spatial resolution</b> is set by voxel size: a finer <b>matrix</b> or smaller <b>FOV</b> or thinner <b>slice</b> = smaller voxels = more detail, but each holds less signal, so <b>SNR falls</b>. That is the fundamental <b>resolution ↔ SNR</b> trade at fixed scan time.</p><p><b>Scan time (2D SE) = TR × phase-encode steps × NEX.</b> So doubling the phase matrix doubles both resolution-in-that-axis <i>and</i> scan time. Everything is a four-way balance of <b>SNR, resolution, coverage, and time</b>.</p><p>Two efficiency levers: the <b>Ernst angle</b> maximises GRE signal for a given TR/T1, and <b>parallel imaging</b> (SENSE/GRAPPA) buys speed at an SNR cost of <b>g·√R</b> (the g-factor, worst centrally).</p>",
+        "keypoints": [
+          "SNR ∝ voxel volume × √NEX; lower bandwidth and higher field raise it.",
+          "Finer matrix / smaller FOV / thinner slice = more resolution, less SNR.",
+          "Scan time (2D SE) = TR × phase steps × NEX.",
+          "CNR (not raw SNR) determines lesion conspicuity.",
+          "Parallel imaging costs SNR by g·√R (g-factor)."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "education",
+      "ord": 30,
+      "body": {
+        "title": "MR safety — the exam-focused overview",
+        "html": "<p>MRI has <b>no ionising radiation</b>, but three fields are always present. The <b>static field</b> is always on: its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness, a metallic taste, magnetophosphenes) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat — <b>SAR</b> (W/kg) — risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public → IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labelling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium — vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
+        "keypoints": [
+          "Three fields: static (projectile), gradient (PNS + acoustic), RF (SAR/burns).",
+          "Zone IV = magnet room, most restricted; no ferromagnetic items.",
+          "MR-conditional = safe ONLY under the stated conditions.",
+          "Quench → helium boil-off → possible oxygen displacement.",
+          "Gadolinium + severe renal impairment → NSF risk."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "education",
+      "ord": 40,
+      "body": {
+        "title": "Patient care — screening to monitoring",
+        "html": "<p><b>Screen before every scan</b> (status changes): implants, pacemakers, aneurysm clips, cochlear implants, neurostimulators, and metal. A history of metalwork/grinding needs <b>orbital radiographs</b> to exclude an intra-orbital fragment. <b>Prepare</b> the patient: remove all ferromagnetic items, gown as needed, explain the loud noise, and give <b>hearing protection</b>.</p><p><b>Position</b> for signal and comfort: centre the anatomy in the <b>coil at isocentre</b>, immobilise to reduce motion, and hand over the <b>call/squeeze device</b>. For <b>contrast</b>, check <b>eGFR</b> and prior reactions, obtain consent, and know the plan for an acute reaction (hives/wheeze/hypotension → stop, help, ABCs, epinephrine for anaphylaxis). Avoid gadolinium in <b>pregnancy</b> unless essential.</p><p><b>Monitor</b> throughout: keep verbal contact, manage <b>claustrophobia</b> (reassurance, call system, wide/open bore, sedation), and use only <b>MR-safe</b> monitoring equipment for sedated or unstable patients.</p>",
+        "keypoints": [
+          "Screen before every scan; orbital radiographs for metal-in-eye history.",
+          "Hearing protection for every patient.",
+          "Contrast: check eGFR, consent, know reaction management (epinephrine for anaphylaxis).",
+          "Avoid gadolinium in pregnancy unless essential.",
+          "Monitor continuously; MR-safe equipment only."
+        ]
+      }
+    },
+
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 110,
+      "body": {
+        "prompt": "A spin-echo sequence uses a short TR and a short TE. What weighting results?",
+        "options": ["T1-weighted", "T2-weighted", "Proton density", "Diffusion-weighted"],
+        "answer": 0,
+        "explain": "Short TR emphasises T1 recovery differences; short TE minimises T2 decay. The result is T1 weighting — fat and white matter bright, fluid dark."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 111,
+      "body": {
+        "prompt": "STIR suppresses fat by choosing an inversion time (TI) equal to approximately:",
+        "options": ["0.69 × the T1 of fat (fat's null point)", "The T1 of water", "Twice the TE", "Half the TR"],
+        "answer": 0,
+        "explain": "In inversion recovery, a tissue is nulled when TI ≈ 0.69·T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal — useful where spectral fat-sat fails (off-isocentre, metal, poor shim)."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 112,
+      "body": {
+        "prompt": "On a FLAIR image, why does CSF appear dark despite the heavy T2 weighting?",
+        "options": ["A long inversion time nulls the CSF signal", "The TE is very short", "Gadolinium suppresses it", "CSF has a short T2"],
+        "answer": 0,
+        "explain": "FLAIR is an inversion-recovery sequence with a long TI (~2000–2500 ms) set to CSF's null point, so fluid is dark while the underlying image stays T2-weighted — periventricular lesions no longer hide in bright CSF."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 113,
+      "body": {
+        "prompt": "Gadolinium makes enhancing tissue bright on T1-weighted images because it:",
+        "options": ["Shortens the T1 of nearby tissue where it accumulates", "Emits its own MR signal", "Is bright like fluid on T2", "Suppresses fat"],
+        "answer": 0,
+        "explain": "Gadolinium is paramagnetic and shortens local T1, so tissue it reaches brightens on T1 weighting. It only crosses a broken blood-brain barrier, so enhancement marks BBB breakdown (tumour, active inflammation)."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 120,
+      "body": {
+        "prompt": "Increasing NEX (signal averages) from 1 to 4 changes SNR by roughly what factor, and at what time cost?",
+        "options": ["×2 SNR for ×4 scan time", "×4 SNR for ×2 time", "×2 SNR for ×2 time", "No SNR change"],
+        "answer": 0,
+        "explain": "SNR scales with the square root of the number of averages, so 4 averages give √4 = 2× SNR — but scan time scales linearly, so it costs 4× the time. Averaging is an expensive way to buy SNR."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 121,
+      "body": {
+        "prompt": "Lowering the receiver bandwidth raises SNR but worsens which artifact (and lengthens the minimum TE)?",
+        "options": ["Chemical shift", "Motion ghosting", "Zipper", "Aliasing"],
+        "answer": 0,
+        "explain": "A narrower bandwidth spends longer sampling each echo (more signal, higher SNR) but spreads fat and water further apart in the readout direction — worse chemical-shift misregistration — and forces a longer minimum TE."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 122,
+      "body": {
+        "prompt": "For a 2-D spin-echo acquisition, total scan time equals:",
+        "options": ["TR × phase-encode steps × NEX", "TE × matrix × NEX", "TR × TE × slices", "TR × frequency steps"],
+        "answer": 0,
+        "explain": "Each TR collects one phase-encode line; you need one per phase step, repeated for each average. So time = TR × (phase steps) × NEX. Frequency encoding is free (within the readout), which is why the phase matrix — not the frequency matrix — drives scan time."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 123,
+      "body": {
+        "prompt": "The centre of k-space predominantly encodes:",
+        "options": ["Overall image contrast and signal", "Fine edge detail and resolution", "The receiver bandwidth", "The slice position"],
+        "answer": 0,
+        "explain": "Low spatial frequencies (k-space centre) carry the bulk of the signal and overall contrast; the periphery carries high spatial frequencies — edges and fine detail (resolution). This is why partial-Fourier and centric ordering behave as they do."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 124,
+      "body": {
+        "prompt": "Aliasing (wraparound) in the phase-encode direction occurs when:",
+        "options": ["The FOV is smaller than the object being imaged", "The TE is too long", "The magnet is poorly shimmed", "The flip angle exceeds the Ernst angle"],
+        "answer": 0,
+        "explain": "Anatomy outside the phase-encode FOV is under-sampled (below Nyquist) and folds back to the opposite side. Fixes: enlarge the FOV, apply no-phase-wrap (phase oversampling), or saturate the out-of-FOV tissue."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 130,
+      "body": {
+        "prompt": "An implant labelled 'MR Conditional' means it is:",
+        "options": ["Safe to scan only under the specified conditions (field strength, SAR, slew rate)", "Safe in any MRI scanner", "Never to be scanned", "Made of non-metallic material only"],
+        "answer": 0,
+        "explain": "MR-Conditional means safe only within stated limits — e.g. up to a given field strength, SAR, and gradient slew rate, sometimes with a required scan mode. MR-Safe = no known hazards in any MR environment; MR-Unsafe = keep out of Zone IV."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 131,
+      "body": {
+        "prompt": "Moving into a 3-T bore, a patient reports a brief metallic taste and mild dizziness. This is best explained as:",
+        "options": ["A benign, transient bioeffect of the static field", "An allergic reaction to gadolinium", "Peripheral nerve stimulation from the gradients", "The onset of an RF burn"],
+        "answer": 0,
+        "explain": "Movement through a strong static field can transiently stimulate the vestibular system and tongue (a metallic taste), causing brief dizziness — benign and self-limited. It is unrelated to gradients (PNS), RF (heating), or contrast."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 132,
+      "body": {
+        "prompt": "Which practice best prevents RF (SAR) burns during a scan?",
+        "options": ["Keep cables straight and padded; avoid skin-to-skin loops (uncross ankles/hands)", "Raise the receiver bandwidth", "Lower the static field", "Shorten the TR"],
+        "answer": 0,
+        "explain": "RF burns arise where induced currents concentrate — conductive loops (looped cables) or skin-to-skin contact forming a loop. Straighten and pad cables, insulate the patient from the bore, and uncross limbs. Bandwidth/field/TR don't address the loop."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 133,
+      "body": {
+        "prompt": "A pregnant MRI technologist may:",
+        "options": ["Continue working in the MRI environment but should not remain in the bore during scanning", "Not enter Zone III or IV at all", "Only work at 1.5 T", "Work only if wearing a lead apron"],
+        "answer": 0,
+        "explain": "Guidelines permit pregnant staff to work in and around the MRI suite; the usual precaution is not to remain inside the bore during active scanning. MRI uses no ionising radiation, so lead aprons are irrelevant."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 140,
+      "body": {
+        "prompt": "The first-line drug for a gadolinium-induced anaphylactic reaction is:",
+        "options": ["Epinephrine (adrenaline)", "Diphenhydramine alone", "Furosemide", "Metformin"],
+        "answer": 0,
+        "explain": "Anaphylaxis is treated first with epinephrine, alongside airway/breathing/circulation support and calling for help. Antihistamines and steroids are adjuncts, not the first-line agent for true anaphylaxis."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 141,
+      "body": {
+        "prompt": "Which measure most helps a claustrophobic patient tolerate the exam?",
+        "options": ["Communication plus feet-first/prone positioning or a wide-bore magnet", "Raising the SAR to finish faster", "Removing the call button to reduce distraction", "Turning off hearing protection"],
+        "answer": 0,
+        "explain": "Reassurance and steady communication, the call/squeeze system, feet-first or prone entry, mirrors/prism glasses, a wide/open-bore magnet, or sedation all help. Never remove the patient's means to signal distress."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 142,
+      "body": {
+        "prompt": "Before administering gadolinium, the single most important lab value to review is:",
+        "options": ["eGFR (renal function)", "Fasting glucose", "Serum potassium", "Haemoglobin A1c"],
+        "answer": 0,
+        "explain": "Renal function (eGFR) drives the risk of nephrogenic systemic fibrosis with gadolinium. Severe impairment prompts avoiding contrast or using the lowest dose of a macrocyclic agent. Also confirm prior reactions and consent."
+      }
+    }
+  ]
+}
