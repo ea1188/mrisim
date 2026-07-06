@@ -24,7 +24,7 @@
  */
 "use strict";
 
-const CACHE = "mrisim-v5";                  // bump when this file's caching logic changes
+const CACHE = "mrisim-v6";                  // bump when this file's caching logic changes
 const SHELL = [
   "./", "index.html", "simulator.html", "app.js", "styles.css", "worker.js", "logo.png", "lessons.json",
   "protocol.html", "protocol.js", "quiz.html", "quiz.js", "quiz.json", "tour.js",
