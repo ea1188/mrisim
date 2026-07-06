@@ -140,7 +140,7 @@ async function onReady(info) {
 function maybeStartDeepLinkLesson() {
   try {
     const t = new URLSearchParams(location.search).get("lesson");
-    if (t && LESSON_INDEX.has(t)) { curriculumPos = -1; startLesson(LESSON_INDEX.get(t)); return true; }
+    if (t && LESSON_INDEX.has(t)) { curriculumPos = -1; deepLinkLesson = true; startLesson(LESSON_INDEX.get(t)); return true; }
   } catch (e) { /* ignore */ }
   return false;
 }
@@ -331,6 +331,7 @@ let LESSON_INDEX = new Map();
 // Flat ordered path of lesson indices (skip any title that doesn't resolve).
 let CURRICULUM_PATH = [];
 let curriculumPos = -1;     // position in CURRICULUM_PATH while following the path; -1 = free lesson
+let deepLinkLesson = false; // true when the current lesson was opened via ?lesson= (course-page embed)
 
 function curriculumDone() {
   try { return new Set(JSON.parse(localStorage.getItem("mrisim_curriculum") || "[]")); }
@@ -415,6 +416,9 @@ function finishLesson() {
     openCurriculum();          // show the (now fully ticked) overview
     return;
   }
+  // Opened straight from the course page (deep-link): still record completion so the
+  // course's progress ticks — the two share localStorage across the iframe boundary.
+  if (deepLinkLesson && lessonIdx >= 0) curriculumMarkDone(LESSONS[lessonIdx].title);
   exitLesson();
 }
 
@@ -426,7 +430,7 @@ function startLesson(i) {
   applyStep();
 }
 function exitLesson() {
-  lessonIdx = -1; curriculumPos = -1; $("lesson-panel").hidden = true;
+  lessonIdx = -1; curriculumPos = -1; deepLinkLesson = false; $("lesson-panel").hidden = true;
   if (compareMode) setCompare(false);   // a lesson may have ended in a comparison
 }
 

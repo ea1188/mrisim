@@ -9,15 +9,19 @@
   var COURSE = "mri-core";
   var root = document.getElementById("course-root");
   var whoami = document.getElementById("whoami");
+  var overlay = document.getElementById("lesson-overlay");
+  var frame = document.getElementById("lesson-frame");
+  // Live references so we can re-render progress after an inline lesson closes.
+  var CTX = null; // { curriculum, byTitle, byTopic, rail, main, mod }
 
   // Which free curriculum module maps to which premium topic keys + free quiz categories.
   // Modules absent here just show their free lessons (no premium block / topic quiz yet).
   var TOPIC_CFG = {
     "2 · Where contrast comes from":  { premium: ["contrast-weighting"], quiz: ["sequences"] },
-    "4 · Reading pathology":          { premium: [], quiz: ["pathology"] },
+    "4 · Reading pathology":          { premium: ["pathology"], quiz: ["pathology"] },
     "5 · Image quality & speed":      { premium: ["image-quality"], quiz: ["image-quality"] },
-    "6 · How the image is built":     { premium: ["image-quality"], quiz: ["image-quality"] },
-    "8 · Flow, function & artifacts": { premium: [], quiz: ["artifacts", "perfusion"] },
+    "6 · How the image is built":     { premium: ["image-quality", "pulse-sequences"], quiz: ["image-quality"] },
+    "8 · Flow, function & artifacts": { premium: ["flow-artifacts"], quiz: ["artifacts", "perfusion"] },
     "10 · Safety & patient care":     { premium: ["safety", "patient-care"], quiz: ["safety", "patient-care"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
@@ -86,39 +90,54 @@
 
   // --- the course --------------------------------------------------------- //
   function courseView(curriculum, lessonsByTitle, premiumByTopic) {
-    var done = loadDone();
-    var totalLessons = curriculum.reduce(function (n, m) { return n + m.lessons.length; }, 0);
-    var doneCount = curriculum.reduce(function (n, m) {
-      return n + m.lessons.filter(function (t) { return done[t]; }).length; }, 0);
-
     var wrap = h("div", { class: "course" });
     var rail = h("div", { class: "rail" });
     var main = h("div", { class: "main" });
+    CTX = { curriculum: curriculum, byTitle: lessonsByTitle, byTopic: premiumByTopic,
+      rail: rail, main: main, mod: curriculum[0] };
 
-    rail.appendChild(h("div", { class: "prog" }, [
-      document.createTextNode(doneCount + " / " + totalLessons + " lessons"),
-      h("div", { class: "bar" }, [h("i", { style: "width:" + Math.round(100 * doneCount / totalLessons) + "%" })]),
-    ]));
-    curriculum.forEach(function (mod, i) {
-      var modDone = mod.lessons.every(function (t) { return done[t]; });
-      var btn = h("button", { class: "topic", onclick: function () {
-        [].forEach.call(rail.querySelectorAll(".topic"), function (b) { b.classList.remove("on"); });
-        btn.classList.add("on");
-        renderTopic(main, mod, lessonsByTitle, premiumByTopic);
-      } }, [
-        modDone ? h("span", { class: "tk", text: "✓" }) : h("span", { class: "tk", text: "" }),
-        document.createTextNode(mod.title),
-      ]);
-      if (i === 0) btn.classList.add("on");
-      rail.appendChild(btn);
-    });
-
+    buildRail();
     wrap.appendChild(rail); wrap.appendChild(main);
     clear(root); root.appendChild(wrap);
     renderTopic(main, curriculum[0], lessonsByTitle, premiumByTopic);
   }
 
+  // (Re)build the topic rail from current progress; highlights CTX.mod. Called on load
+  // and again after an inline lesson closes, so lesson completions tick through live.
+  function buildRail() {
+    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone();
+    var total = curriculum.reduce(function (n, m) { return n + m.lessons.length; }, 0);
+    var doneCount = curriculum.reduce(function (n, m) {
+      return n + m.lessons.filter(function (t) { return done[t]; }).length; }, 0);
+    clear(rail);
+    rail.appendChild(h("div", { class: "prog" }, [
+      document.createTextNode(doneCount + " / " + total + " lessons"),
+      h("div", { class: "bar" }, [h("i", { style: "width:" + (total ? Math.round(100 * doneCount / total) : 0) + "%" })]),
+    ]));
+    curriculum.forEach(function (mod) {
+      var modDone = mod.lessons.length && mod.lessons.every(function (t) { return done[t]; });
+      var btn = h("button", { class: "topic" + (mod === CTX.mod ? " on" : ""), onclick: function () {
+        CTX.mod = mod;
+        [].forEach.call(rail.querySelectorAll(".topic"), function (b) { b.classList.remove("on"); });
+        btn.classList.add("on");
+        renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
+      } }, [
+        h("span", { class: "tk", text: modDone ? "✓" : "" }),
+        document.createTextNode(mod.title),
+      ]);
+      rail.appendChild(btn);
+    });
+  }
+
+  // Re-sync the whole view with localStorage progress (after a lesson overlay closes).
+  function refresh() {
+    if (!CTX) return;
+    buildRail();
+    renderTopic(CTX.main, CTX.mod, CTX.byTitle, CTX.byTopic);
+  }
+
   function renderTopic(main, mod, lessonsByTitle, premiumByTopic) {
+    if (CTX) CTX.mod = mod;
     var cfg = TOPIC_CFG[mod.title] || { premium: [], quiz: [] };
     clear(main);
     main.appendChild(h("h2", { text: mod.title }));
@@ -144,16 +163,23 @@
       main.appendChild(esec);
     }
 
-    // 2) Free interactive lessons — launch each in the simulator via the deep-link.
+    // 2) Free interactive lessons — open each in place (iframe overlay) so the learner
+    //    never leaves the course. A ✓ shows once the simulator marks it complete.
+    var done = loadDone();
     var lsec = h("div", { class: "sec" }, [h("h3", { text: "Lessons" })]);
     mod.lessons.forEach(function (title) {
       var L = lessonsByTitle[title] || {};
-      lsec.appendChild(h("div", { class: "lcard" }, [
+      var isDone = !!done[title];
+      lsec.appendChild(h("div", { class: "lcard" + (isDone ? " done" : "") }, [
         h("div", { class: "grow" }, [
-          h("div", { class: "lt", text: title }),
+          h("div", { class: "lt" }, [
+            isDone ? h("span", { class: "lk", text: "✓ " }) : document.createTextNode(""),
+            document.createTextNode(title),
+          ]),
           L.blurb ? h("div", { class: "lb", text: L.blurb }) : document.createTextNode(""),
         ]),
-        h("a", { href: "simulator.html?lesson=" + encodeURIComponent(title), text: "▶ Open lesson" }),
+        h("button", { class: "launch", type: "button", text: isDone ? "▶ Review lesson" : "▶ Open lesson",
+          onclick: function () { openLesson(title); } }),
       ]));
     });
     main.appendChild(lsec);
@@ -223,6 +249,26 @@
       localStorage.setItem(COURSE_QUIZ_KEY, JSON.stringify(s));
     } catch (e) { /* storage off */ }
   }
+
+  // --- inline lesson overlay ---------------------------------------------- //
+  // The lesson runs the real simulator in an iframe (simulator.html?lesson=…&embed=1),
+  // so the learner stays on the course page. Same origin ⇒ shared localStorage, so any
+  // completion the sim records is visible to refresh() the moment we close.
+  function openLesson(title) {
+    document.getElementById("lesson-title").textContent = title;
+    frame.src = "simulator.html?lesson=" + encodeURIComponent(title) + "&embed=1";
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+  function closeLesson() {
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    frame.src = "about:blank";          // tear down Pyodide / stop the worker
+    document.body.style.overflow = "";
+    refresh();                          // pick up any completion the sim just recorded
+  }
+  document.getElementById("lesson-close").addEventListener("click", closeLesson);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLesson(); });
 
   // --- boot: resolve the gate, then load the course --------------------- //
   if (!window.Accounts || !Accounts.enabled()) { notConfigured(); return; }

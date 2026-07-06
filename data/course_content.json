@@ -1,5 +1,5 @@
 {
-  "_note": "PREMIUM course content — EXCLUSIVE to the paid program. Source only: this file is NEVER copied into web/ (build_web.py copies named files, not data/*.json). It is loaded into the Supabase course_content table via scripts/seed_course_content.py (needs the service_role key). RLS then serves it only to entitled users. See docs/COURSE.md.",
+  "_note": "PREMIUM course content. EXCLUSIVE to the paid program. Source only: this file is NEVER copied into web/ (build_web.py copies named files, not data/*.json). It is loaded into the Supabase course_content table via scripts/seed_course_content.py (needs the service_role key). RLS then serves it only to entitled users. See docs/COURSE.md.",
   "course": "mri-core",
   "items": [
     {
@@ -7,8 +7,8 @@
       "kind": "education",
       "ord": 10,
       "body": {
-        "title": "Contrast & weighting — the exam synthesis",
-        "html": "<p>Image contrast in conventional spin echo is set by two knobs: <b>TR</b> governs how much <b>T1</b> weighting you get, and <b>TE</b> governs how much <b>T2</b> weighting. Combine them:</p><ul><li><b>Short TR / short TE → T1-weighted.</b> Fat and white matter bright; fluid (CSF) dark.</li><li><b>Long TR / long TE → T2-weighted.</b> Fluid bright — this is where most pathology (extra water) shows.</li><li><b>Long TR / short TE → proton density.</b> Both weightings minimised; signal tracks tissue water content.</li></ul><p><b>Inversion recovery</b> adds a preparatory 180° pulse and a <b>TI</b>. Choosing TI at a tissue's null point suppresses it: <b>STIR</b> (short TI ≈ 0.69·T1 of fat) nulls <b>fat</b>; <b>FLAIR</b> (long TI ≈ 2000–2500 ms) nulls <b>CSF</b> so periventricular lesions aren't hidden. <b>Gradient echo</b> uses a flip angle instead of a 180° refocuser and is sensitive to <b>T2*</b> (susceptibility). <b>Gadolinium</b> shortens T1, so enhancing tissue is bright on T1 — it marks blood-brain-barrier breakdown.</p><p>The fastest read: <b>find the fluid</b> (ventricles, eyeballs). Dark fluid → T1. Bright fluid → T2. Bright everything-but-fluid → FLAIR.</p>",
+        "title": "Contrast & weighting: the exam synthesis",
+        "html": "<p>Image contrast in conventional spin echo is set by two knobs: <b>TR</b> governs how much <b>T1</b> weighting you get, and <b>TE</b> governs how much <b>T2</b> weighting. Combine them:</p><ul><li><b>Short TR / short TE → T1-weighted.</b> Fat and white matter bright; fluid (CSF) dark.</li><li><b>Long TR / long TE → T2-weighted.</b> Fluid bright. This is where most pathology (extra water) shows.</li><li><b>Long TR / short TE → proton density.</b> Both weightings minimised; signal tracks tissue water content.</li></ul><p><b>Inversion recovery</b> adds a preparatory 180° pulse and a <b>TI</b>. Choosing TI at a tissue's null point suppresses it: <b>STIR</b> (short TI ≈ 0.69·T1 of fat) nulls <b>fat</b>; <b>FLAIR</b> (long TI ≈ 2000-2500 ms) nulls <b>CSF</b> so periventricular lesions aren't hidden. <b>Gradient echo</b> uses a flip angle instead of a 180° refocuser and is sensitive to <b>T2*</b> (susceptibility). <b>Gadolinium</b> shortens T1, so enhancing tissue is bright on T1, which marks blood-brain-barrier breakdown.</p><p>The fastest read: <b>find the fluid</b> (ventricles, eyeballs). Dark fluid → T1. Bright fluid → T2. Bright everything-but-fluid → FLAIR.</p>",
         "keypoints": [
           "TR controls T1 weighting; TE controls T2 weighting.",
           "Short TR/short TE = T1; long TR/long TE = T2; long TR/short TE = PD.",
@@ -23,8 +23,8 @@
       "kind": "education",
       "ord": 20,
       "body": {
-        "title": "Image quality — SNR, CNR, resolution & the trade-offs",
-        "html": "<p><b>SNR</b> (signal-to-noise) rises with <b>voxel volume</b> (bigger voxels = more signal), with <b>√NEX</b> (averages), with lower <b>receiver bandwidth</b>, with <b>field strength</b>, and with better coils. <b>CNR</b> (contrast-to-noise) is the difference in signal between two tissues over the noise — it's what actually makes a lesion visible.</p><p><b>Spatial resolution</b> is set by voxel size: a finer <b>matrix</b> or smaller <b>FOV</b> or thinner <b>slice</b> = smaller voxels = more detail, but each holds less signal, so <b>SNR falls</b>. That is the fundamental <b>resolution ↔ SNR</b> trade at fixed scan time.</p><p><b>Scan time (2D SE) = TR × phase-encode steps × NEX.</b> So doubling the phase matrix doubles both resolution-in-that-axis <i>and</i> scan time. Everything is a four-way balance of <b>SNR, resolution, coverage, and time</b>.</p><p>Two efficiency levers: the <b>Ernst angle</b> maximises GRE signal for a given TR/T1, and <b>parallel imaging</b> (SENSE/GRAPPA) buys speed at an SNR cost of <b>g·√R</b> (the g-factor, worst centrally).</p>",
+        "title": "Image quality: SNR, CNR, resolution & the trade-offs",
+        "html": "<p><b>SNR</b> (signal-to-noise) rises with <b>voxel volume</b> (bigger voxels = more signal), with <b>√NEX</b> (averages), with lower <b>receiver bandwidth</b>, with <b>field strength</b>, and with better coils. <b>CNR</b> (contrast-to-noise) is the difference in signal between two tissues over the noise, and it is what actually makes a lesion visible.</p><p><b>Spatial resolution</b> is set by voxel size: a finer <b>matrix</b> or smaller <b>FOV</b> or thinner <b>slice</b> = smaller voxels = more detail, but each holds less signal, so <b>SNR falls</b>. That is the fundamental <b>resolution ↔ SNR</b> trade at fixed scan time.</p><p><b>Scan time (2D SE) = TR × phase-encode steps × NEX.</b> So doubling the phase matrix doubles both resolution-in-that-axis <i>and</i> scan time. Everything is a four-way balance of <b>SNR, resolution, coverage, and time</b>.</p><p>Two efficiency levers: the <b>Ernst angle</b> maximises GRE signal for a given TR/T1, and <b>parallel imaging</b> (SENSE/GRAPPA) buys speed at an SNR cost of <b>g·√R</b> (the g-factor, worst centrally).</p>",
         "keypoints": [
           "SNR ∝ voxel volume × √NEX; lower bandwidth and higher field raise it.",
           "Finer matrix / smaller FOV / thinner slice = more resolution, less SNR.",
@@ -39,8 +39,8 @@
       "kind": "education",
       "ord": 30,
       "body": {
-        "title": "MR safety — the exam-focused overview",
-        "html": "<p>MRI has <b>no ionising radiation</b>, but three fields are always present. The <b>static field</b> is always on: its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness, a metallic taste, magnetophosphenes) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat — <b>SAR</b> (W/kg) — risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public → IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labelling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium — vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
+        "title": "MR safety: the exam-focused overview",
+        "html": "<p>MRI has <b>no ionising radiation</b>, but three fields are always present. The <b>static field</b> is always on: its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness, a metallic taste, magnetophosphenes) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat (<b>SAR</b>, W/kg), risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public → IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labelling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium, which is vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
         "keypoints": [
           "Three fields: static (projectile), gradient (PNS + acoustic), RF (SAR/burns).",
           "Zone IV = magnet room, most restricted; no ferromagnetic items.",
@@ -55,7 +55,7 @@
       "kind": "education",
       "ord": 40,
       "body": {
-        "title": "Patient care — screening to monitoring",
+        "title": "Patient care: screening to monitoring",
         "html": "<p><b>Screen before every scan</b> (status changes): implants, pacemakers, aneurysm clips, cochlear implants, neurostimulators, and metal. A history of metalwork/grinding needs <b>orbital radiographs</b> to exclude an intra-orbital fragment. <b>Prepare</b> the patient: remove all ferromagnetic items, gown as needed, explain the loud noise, and give <b>hearing protection</b>.</p><p><b>Position</b> for signal and comfort: centre the anatomy in the <b>coil at isocentre</b>, immobilise to reduce motion, and hand over the <b>call/squeeze device</b>. For <b>contrast</b>, check <b>eGFR</b> and prior reactions, obtain consent, and know the plan for an acute reaction (hives/wheeze/hypotension → stop, help, ABCs, epinephrine for anaphylaxis). Avoid gadolinium in <b>pregnancy</b> unless essential.</p><p><b>Monitor</b> throughout: keep verbal contact, manage <b>claustrophobia</b> (reassurance, call system, wide/open bore, sedation), and use only <b>MR-safe</b> monitoring equipment for sedated or unstable patients.</p>",
         "keypoints": [
           "Screen before every scan; orbital radiographs for metal-in-eye history.",
@@ -66,16 +66,20 @@
         ]
       }
     },
-
     {
       "topic": "contrast-weighting",
       "kind": "quiz",
       "ord": 110,
       "body": {
         "prompt": "A spin-echo sequence uses a short TR and a short TE. What weighting results?",
-        "options": ["T1-weighted", "T2-weighted", "Proton density", "Diffusion-weighted"],
+        "options": [
+          "T1-weighted",
+          "T2-weighted",
+          "Proton density",
+          "Diffusion-weighted"
+        ],
         "answer": 0,
-        "explain": "Short TR emphasises T1 recovery differences; short TE minimises T2 decay. The result is T1 weighting — fat and white matter bright, fluid dark."
+        "explain": "Short TR emphasises T1 recovery differences; short TE minimises T2 decay. The result is T1 weighting: fat and white matter bright, fluid dark."
       }
     },
     {
@@ -84,9 +88,14 @@
       "ord": 111,
       "body": {
         "prompt": "STIR suppresses fat by choosing an inversion time (TI) equal to approximately:",
-        "options": ["0.69 × the T1 of fat (fat's null point)", "The T1 of water", "Twice the TE", "Half the TR"],
+        "options": [
+          "0.69 × the T1 of fat (fat's null point)",
+          "The T1 of water",
+          "Twice the TE",
+          "Half the TR"
+        ],
         "answer": 0,
-        "explain": "In inversion recovery, a tissue is nulled when TI ≈ 0.69·T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal — useful where spectral fat-sat fails (off-isocentre, metal, poor shim)."
+        "explain": "In inversion recovery, a tissue is nulled when TI ≈ 0.69·T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal, useful where spectral fat-sat fails (off-isocentre, metal, poor shim)."
       }
     },
     {
@@ -95,9 +104,14 @@
       "ord": 112,
       "body": {
         "prompt": "On a FLAIR image, why does CSF appear dark despite the heavy T2 weighting?",
-        "options": ["A long inversion time nulls the CSF signal", "The TE is very short", "Gadolinium suppresses it", "CSF has a short T2"],
+        "options": [
+          "A long inversion time nulls the CSF signal",
+          "The TE is very short",
+          "Gadolinium suppresses it",
+          "CSF has a short T2"
+        ],
         "answer": 0,
-        "explain": "FLAIR is an inversion-recovery sequence with a long TI (~2000–2500 ms) set to CSF's null point, so fluid is dark while the underlying image stays T2-weighted — periventricular lesions no longer hide in bright CSF."
+        "explain": "FLAIR is an inversion-recovery sequence with a long TI (~2000-2500 ms) set to CSF's null point, so fluid is dark while the underlying image stays T2-weighted, so periventricular lesions no longer hide in bright CSF."
       }
     },
     {
@@ -106,7 +120,12 @@
       "ord": 113,
       "body": {
         "prompt": "Gadolinium makes enhancing tissue bright on T1-weighted images because it:",
-        "options": ["Shortens the T1 of nearby tissue where it accumulates", "Emits its own MR signal", "Is bright like fluid on T2", "Suppresses fat"],
+        "options": [
+          "Shortens the T1 of nearby tissue where it accumulates",
+          "Emits its own MR signal",
+          "Is bright like fluid on T2",
+          "Suppresses fat"
+        ],
         "answer": 0,
         "explain": "Gadolinium is paramagnetic and shortens local T1, so tissue it reaches brightens on T1 weighting. It only crosses a broken blood-brain barrier, so enhancement marks BBB breakdown (tumour, active inflammation)."
       }
@@ -117,9 +136,14 @@
       "ord": 120,
       "body": {
         "prompt": "Increasing NEX (signal averages) from 1 to 4 changes SNR by roughly what factor, and at what time cost?",
-        "options": ["×2 SNR for ×4 scan time", "×4 SNR for ×2 time", "×2 SNR for ×2 time", "No SNR change"],
+        "options": [
+          "×2 SNR for ×4 scan time",
+          "×4 SNR for ×2 time",
+          "×2 SNR for ×2 time",
+          "No SNR change"
+        ],
         "answer": 0,
-        "explain": "SNR scales with the square root of the number of averages, so 4 averages give √4 = 2× SNR — but scan time scales linearly, so it costs 4× the time. Averaging is an expensive way to buy SNR."
+        "explain": "SNR scales with the square root of the number of averages, so 4 averages give √4 = 2× SNR, but scan time scales linearly, so it costs 4× the time. Averaging is an expensive way to buy SNR."
       }
     },
     {
@@ -128,9 +152,14 @@
       "ord": 121,
       "body": {
         "prompt": "Lowering the receiver bandwidth raises SNR but worsens which artifact (and lengthens the minimum TE)?",
-        "options": ["Chemical shift", "Motion ghosting", "Zipper", "Aliasing"],
+        "options": [
+          "Chemical shift",
+          "Motion ghosting",
+          "Zipper",
+          "Aliasing"
+        ],
         "answer": 0,
-        "explain": "A narrower bandwidth spends longer sampling each echo (more signal, higher SNR) but spreads fat and water further apart in the readout direction — worse chemical-shift misregistration — and forces a longer minimum TE."
+        "explain": "A narrower bandwidth spends longer sampling each echo (more signal, higher SNR) but spreads fat and water further apart in the readout direction (worse chemical-shift misregistration) and forces a longer minimum TE."
       }
     },
     {
@@ -139,9 +168,14 @@
       "ord": 122,
       "body": {
         "prompt": "For a 2-D spin-echo acquisition, total scan time equals:",
-        "options": ["TR × phase-encode steps × NEX", "TE × matrix × NEX", "TR × TE × slices", "TR × frequency steps"],
+        "options": [
+          "TR × phase-encode steps × NEX",
+          "TE × matrix × NEX",
+          "TR × TE × slices",
+          "TR × frequency steps"
+        ],
         "answer": 0,
-        "explain": "Each TR collects one phase-encode line; you need one per phase step, repeated for each average. So time = TR × (phase steps) × NEX. Frequency encoding is free (within the readout), which is why the phase matrix — not the frequency matrix — drives scan time."
+        "explain": "Each TR collects one phase-encode line; you need one per phase step, repeated for each average. So time = TR × (phase steps) × NEX. Frequency encoding is free (within the readout), which is why the phase matrix (not the frequency matrix) drives scan time."
       }
     },
     {
@@ -150,9 +184,14 @@
       "ord": 123,
       "body": {
         "prompt": "The centre of k-space predominantly encodes:",
-        "options": ["Overall image contrast and signal", "Fine edge detail and resolution", "The receiver bandwidth", "The slice position"],
+        "options": [
+          "Overall image contrast and signal",
+          "Fine edge detail and resolution",
+          "The receiver bandwidth",
+          "The slice position"
+        ],
         "answer": 0,
-        "explain": "Low spatial frequencies (k-space centre) carry the bulk of the signal and overall contrast; the periphery carries high spatial frequencies — edges and fine detail (resolution). This is why partial-Fourier and centric ordering behave as they do."
+        "explain": "Low spatial frequencies (k-space centre) carry the bulk of the signal and overall contrast; the periphery carries high spatial frequencies: edges and fine detail (resolution). This is why partial-Fourier and centric ordering behave as they do."
       }
     },
     {
@@ -161,7 +200,12 @@
       "ord": 124,
       "body": {
         "prompt": "Aliasing (wraparound) in the phase-encode direction occurs when:",
-        "options": ["The FOV is smaller than the object being imaged", "The TE is too long", "The magnet is poorly shimmed", "The flip angle exceeds the Ernst angle"],
+        "options": [
+          "The FOV is smaller than the object being imaged",
+          "The TE is too long",
+          "The magnet is poorly shimmed",
+          "The flip angle exceeds the Ernst angle"
+        ],
         "answer": 0,
         "explain": "Anatomy outside the phase-encode FOV is under-sampled (below Nyquist) and folds back to the opposite side. Fixes: enlarge the FOV, apply no-phase-wrap (phase oversampling), or saturate the out-of-FOV tissue."
       }
@@ -172,9 +216,14 @@
       "ord": 130,
       "body": {
         "prompt": "An implant labelled 'MR Conditional' means it is:",
-        "options": ["Safe to scan only under the specified conditions (field strength, SAR, slew rate)", "Safe in any MRI scanner", "Never to be scanned", "Made of non-metallic material only"],
+        "options": [
+          "Safe to scan only under the specified conditions (field strength, SAR, slew rate)",
+          "Safe in any MRI scanner",
+          "Never to be scanned",
+          "Made of non-metallic material only"
+        ],
         "answer": 0,
-        "explain": "MR-Conditional means safe only within stated limits — e.g. up to a given field strength, SAR, and gradient slew rate, sometimes with a required scan mode. MR-Safe = no known hazards in any MR environment; MR-Unsafe = keep out of Zone IV."
+        "explain": "MR-Conditional means safe only within stated limits, for example up to a given field strength, SAR, and gradient slew rate, sometimes with a required scan mode. MR-Safe = no known hazards in any MR environment; MR-Unsafe = keep out of Zone IV."
       }
     },
     {
@@ -183,9 +232,14 @@
       "ord": 131,
       "body": {
         "prompt": "Moving into a 3-T bore, a patient reports a brief metallic taste and mild dizziness. This is best explained as:",
-        "options": ["A benign, transient bioeffect of the static field", "An allergic reaction to gadolinium", "Peripheral nerve stimulation from the gradients", "The onset of an RF burn"],
+        "options": [
+          "A benign, transient bioeffect of the static field",
+          "An allergic reaction to gadolinium",
+          "Peripheral nerve stimulation from the gradients",
+          "The onset of an RF burn"
+        ],
         "answer": 0,
-        "explain": "Movement through a strong static field can transiently stimulate the vestibular system and tongue (a metallic taste), causing brief dizziness — benign and self-limited. It is unrelated to gradients (PNS), RF (heating), or contrast."
+        "explain": "Movement through a strong static field can transiently stimulate the vestibular system and tongue (a metallic taste), causing brief dizziness, benign and self-limited. It is unrelated to gradients (PNS), RF (heating), or contrast."
       }
     },
     {
@@ -194,9 +248,14 @@
       "ord": 132,
       "body": {
         "prompt": "Which practice best prevents RF (SAR) burns during a scan?",
-        "options": ["Keep cables straight and padded; avoid skin-to-skin loops (uncross ankles/hands)", "Raise the receiver bandwidth", "Lower the static field", "Shorten the TR"],
+        "options": [
+          "Keep cables straight and padded; avoid skin-to-skin loops (uncross ankles/hands)",
+          "Raise the receiver bandwidth",
+          "Lower the static field",
+          "Shorten the TR"
+        ],
         "answer": 0,
-        "explain": "RF burns arise where induced currents concentrate — conductive loops (looped cables) or skin-to-skin contact forming a loop. Straighten and pad cables, insulate the patient from the bore, and uncross limbs. Bandwidth/field/TR don't address the loop."
+        "explain": "RF burns arise where induced currents concentrate: conductive loops (looped cables) or skin-to-skin contact forming a loop. Straighten and pad cables, insulate the patient from the bore, and uncross limbs. Bandwidth/field/TR don't address the loop."
       }
     },
     {
@@ -205,7 +264,12 @@
       "ord": 133,
       "body": {
         "prompt": "A pregnant MRI technologist may:",
-        "options": ["Continue working in the MRI environment but should not remain in the bore during scanning", "Not enter Zone III or IV at all", "Only work at 1.5 T", "Work only if wearing a lead apron"],
+        "options": [
+          "Continue working in the MRI environment but should not remain in the bore during scanning",
+          "Not enter Zone III or IV at all",
+          "Only work at 1.5 T",
+          "Work only if wearing a lead apron"
+        ],
         "answer": 0,
         "explain": "Guidelines permit pregnant staff to work in and around the MRI suite; the usual precaution is not to remain inside the bore during active scanning. MRI uses no ionising radiation, so lead aprons are irrelevant."
       }
@@ -216,7 +280,12 @@
       "ord": 140,
       "body": {
         "prompt": "The first-line drug for a gadolinium-induced anaphylactic reaction is:",
-        "options": ["Epinephrine (adrenaline)", "Diphenhydramine alone", "Furosemide", "Metformin"],
+        "options": [
+          "Epinephrine (adrenaline)",
+          "Diphenhydramine alone",
+          "Furosemide",
+          "Metformin"
+        ],
         "answer": 0,
         "explain": "Anaphylaxis is treated first with epinephrine, alongside airway/breathing/circulation support and calling for help. Antihistamines and steroids are adjuncts, not the first-line agent for true anaphylaxis."
       }
@@ -227,7 +296,12 @@
       "ord": 141,
       "body": {
         "prompt": "Which measure most helps a claustrophobic patient tolerate the exam?",
-        "options": ["Communication plus feet-first/prone positioning or a wide-bore magnet", "Raising the SAR to finish faster", "Removing the call button to reduce distraction", "Turning off hearing protection"],
+        "options": [
+          "Communication plus feet-first/prone positioning or a wide-bore magnet",
+          "Raising the SAR to finish faster",
+          "Removing the call button to reduce distraction",
+          "Turning off hearing protection"
+        ],
         "answer": 0,
         "explain": "Reassurance and steady communication, the call/squeeze system, feet-first or prone entry, mirrors/prism glasses, a wide/open-bore magnet, or sedation all help. Never remove the patient's means to signal distress."
       }
@@ -238,9 +312,270 @@
       "ord": 142,
       "body": {
         "prompt": "Before administering gadolinium, the single most important lab value to review is:",
-        "options": ["eGFR (renal function)", "Fasting glucose", "Serum potassium", "Haemoglobin A1c"],
+        "options": [
+          "eGFR (renal function)",
+          "Fasting glucose",
+          "Serum potassium",
+          "Haemoglobin A1c"
+        ],
         "answer": 0,
         "explain": "Renal function (eGFR) drives the risk of nephrogenic systemic fibrosis with gadolinium. Severe impairment prompts avoiding contrast or using the lowest dose of a macrocyclic agent. Also confirm prior reactions and consent."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "education",
+      "ord": 50,
+      "body": {
+        "title": "Pulse sequences: SE, FSE, GRE, EPI and how they are built",
+        "html": "<p>A pulse sequence is a timed recipe of RF pulses and gradients that fills <b>k-space</b> line by line. The families you must recognise:</p><ul><li><b>Spin echo (SE):</b> a 90&deg; excitation then a 180&deg; refocusing pulse. The 180&deg; cancels static field inhomogeneity, so SE is <b>T2</b> (not T2*) weighted and robust to susceptibility, though one echo per TR makes it slow.</li><li><b>Fast/turbo spin echo (FSE/TSE):</b> multiple 180&deg; pulses after each excitation collect an <b>echo train</b> (ETL). Scan time drops by roughly the ETL factor. The <b>effective TE</b> is set by when the <b>centre of k-space</b> is filled, not by the first echo. Long trains blur and make fat stay bright.</li><li><b>Gradient echo (GRE):</b> a single flip angle with no 180&deg;; the echo is formed by a gradient reversal, so residual field inhomogeneity is <b>not</b> refocused and GRE is <b>T2*</b> weighted. <b>Spoiled</b> GRE gives T1/T2* contrast, while <b>balanced SSFP</b> keeps transverse magnetisation for a bright-fluid T2/T1 ratio image.</li><li><b>Echo-planar imaging (EPI):</b> fills all (or many) k-space lines after a single excitation, the basis of <b>DWI</b> and <b>fMRI</b>. It is extremely fast but very sensitive to susceptibility, causing <b>geometric distortion</b> and signal dropout near air and bone.</li></ul><p><b>Diffusion (DWI)</b> adds paired motion-probing gradients scaled by the <b>b-value</b>; tissue where water cannot move (acute stroke) stays bright while the <b>ADC map</b> is dark. The single organising idea is that how you refocus the echo (180&deg; versus gradient) and how many lines you read per excitation together set the contrast, the speed, and the artifacts.</p>",
+        "keypoints": [
+          "SE uses a 180 refocuser for true T2: susceptibility-robust but slow.",
+          "FSE reads an echo train (ETL), cutting time by the ETL factor; effective TE is when the k-space centre is filled.",
+          "GRE has no 180, so it is T2* weighted; spoiled gives T1/T2*, balanced SSFP gives bright fluid.",
+          "EPI fills k-space in one shot: fast (DWI and fMRI) but prone to geometric distortion.",
+          "DWI: restricted diffusion is bright on DWI and dark on the ADC map."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 150,
+      "body": {
+        "prompt": "Compared with conventional spin echo, fast/turbo spin echo (FSE/TSE) shortens scan time mainly by:",
+        "options": [
+          "Collecting several k-space lines per TR via an echo train (ETL)",
+          "Using a larger flip angle",
+          "Omitting the 180-degree refocusing pulses",
+          "Lowering the receiver bandwidth"
+        ],
+        "answer": 0,
+        "explain": "FSE applies multiple 180-degree refocusing pulses after each excitation, collecting an echo train. Scan time falls by roughly the echo-train length, because that many phase-encode lines are filled per TR."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 151,
+      "body": {
+        "prompt": "In an FSE acquisition, the effective TE that determines image contrast is set by:",
+        "options": [
+          "The echo whose data fills the centre of k-space",
+          "The first echo in the train",
+          "The last echo in the train",
+          "The average of all echo times"
+        ],
+        "answer": 0,
+        "explain": "Contrast is dominated by the low spatial frequencies at the centre of k-space. Whichever echo is played out while the centre is being filled sets the effective TE, regardless of the other echoes in the train."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 152,
+      "body": {
+        "prompt": "Gradient-echo sequences are more sensitive to susceptibility (T2*) than spin echo because they:",
+        "options": [
+          "Lack a 180-degree pulse to refocus static field inhomogeneity",
+          "Use a longer TR",
+          "Always use a smaller matrix",
+          "Deposit more RF energy"
+        ],
+        "answer": 0,
+        "explain": "A gradient reversal reforms the echo but does not cancel static field inhomogeneity the way a 180-degree pulse does. So GRE decays with T2* and blooms on blood, calcium and metal, which SWI exploits but which becomes a liability near air."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 153,
+      "body": {
+        "prompt": "Single-shot echo-planar imaging (EPI), the workhorse of DWI and fMRI, is most limited by:",
+        "options": [
+          "Geometric distortion and dropout from susceptibility",
+          "Excessive scan time",
+          "Inability to produce T2 contrast",
+          "A required 180-degree pulse per line"
+        ],
+        "answer": 0,
+        "explain": "EPI reads all of k-space after one excitation, so it is very fast but accumulates phase errors from off-resonance, producing geometric distortion and signal dropout near air and bone interfaces (skull base, sinuses, posterior fossa)."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "education",
+      "ord": 60,
+      "body": {
+        "title": "Reading pathology: where lesions hide and what lights them up",
+        "html": "<p>Most pathology adds <b>water</b> (oedema, inflammation, many tumours), so it is <b>bright on T2</b> and on <b>FLAIR</b>. Because FLAIR nulls CSF, periventricular and cortical lesions no longer hide in bright fluid. A short checklist of the sequences that reveal specific disease:</p><ul><li><b>DWI and ADC:</b> restricted diffusion is <b>bright on DWI and dark on ADC</b>. This is the signature of <b>acute infarct</b>, and also of abscess and hypercellular tumour. Beware <b>T2 shine-through</b>: always check the ADC to confirm true restriction.</li><li><b>Post-gadolinium T1:</b> enhancement marks <b>blood-brain-barrier breakdown</b> such as tumour, active demyelination, or infection. Patterns matter (a ring-enhancing lesion suggests abscess, glioblastoma or metastasis).</li><li><b>GRE and SWI:</b> <b>blooming</b> (exaggerated dark signal) reveals blood products, calcium and iron through susceptibility.</li></ul><p>Finally, know what is <b>bright on T1 <i>without</i> contrast</b>: <b>fat</b>, <b>subacute haemorrhage</b> (methaemoglobin), <b>melanin</b> (melanoma metastases), <b>proteinaceous or highly concentrated fluid</b>, and slow flow. Recognising these keeps you from mistaking intrinsic T1 brightness for enhancement.</p>",
+        "keypoints": [
+          "Most pathology is extra water, so it is bright on T2 and FLAIR (FLAIR nulls CSF).",
+          "Restricted diffusion is bright on DWI and dark on ADC: acute stroke, abscess, dense tumour.",
+          "Post-gadolinium enhancement marks blood-brain-barrier breakdown.",
+          "GRE and SWI blooming reveals blood, calcium and iron.",
+          "Intrinsically T1-bright: fat, subacute blood, melanin, proteinaceous fluid."
+        ]
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 160,
+      "body": {
+        "prompt": "An acute cerebral infarct classically appears:",
+        "options": [
+          "Bright on DWI and dark on the ADC map (restricted diffusion)",
+          "Dark on DWI and bright on ADC",
+          "Bright on both DWI and ADC",
+          "Only visible after gadolinium"
+        ],
+        "answer": 0,
+        "explain": "Cytotoxic oedema restricts water diffusion within minutes of infarction: bright on DWI, dark on ADC. This appears well before T2 and FLAIR changes, which is why DWI is the key stroke sequence."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 161,
+      "body": {
+        "prompt": "Which lesion is intrinsically BRIGHT on a T1-weighted image WITHOUT any gadolinium?",
+        "options": [
+          "Subacute haematoma (methaemoglobin)",
+          "Simple CSF-filled cyst",
+          "Acute cytotoxic oedema",
+          "A purely calcified nodule"
+        ],
+        "answer": 0,
+        "explain": "Methaemoglobin in subacute blood shortens T1, so it is bright on unenhanced T1, as are fat, melanin and proteinaceous fluid. Simple fluid is dark on T1, and calcium is usually dark on standard sequences."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 162,
+      "body": {
+        "prompt": "Why is FLAIR preferred over standard T2 for detecting periventricular MS plaques?",
+        "options": [
+          "It nulls bright CSF so lesions next to the ventricles stand out",
+          "It is a T1-weighted sequence",
+          "It suppresses fat",
+          "It is faster than T2"
+        ],
+        "answer": 0,
+        "explain": "FLAIR is an inversion-recovery sequence with a long TI that nulls CSF while keeping T2 weighting. Periventricular plaques that would blend into bright ventricular fluid on T2 become conspicuous."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 163,
+      "body": {
+        "prompt": "A focus that blooms (looks larger and darker) on gradient-echo or SWI most likely represents:",
+        "options": [
+          "Blood products, calcium or iron (susceptibility)",
+          "Simple fluid",
+          "Fat",
+          "Flowing arterial blood"
+        ],
+        "answer": 0,
+        "explain": "Susceptibility from haemosiderin, calcium or iron dephases spins and exaggerates the dark signal on T2*-weighted GRE and SWI, called blooming. It is how microhaemorrhages and mineralisation are detected."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "education",
+      "ord": 70,
+      "body": {
+        "title": "Flow, function and artifacts: MRA methods and the artifacts to name",
+        "html": "<p><b>Imaging flow.</b> Three ways to see vessels without catheters:</p><ul><li><b>Time-of-flight (TOF) MRA:</b> stationary tissue is saturated by rapid RF, while fresh <b>inflowing</b> blood is unsaturated and bright (<b>flow-related enhancement</b>). It fails for <b>in-plane</b> flow because those spins saturate, so use thin slabs perpendicular to the vessel. A <b>saturation band</b> on one side selects arteries versus veins.</li><li><b>Phase-contrast (PC) MRA:</b> bipolar gradients give moving spins a net phase proportional to velocity. You set a <b>VENC</b> (encoding velocity); if the true velocity <b>exceeds VENC</b>, the phase wraps and you get <b>velocity aliasing</b>. PC also quantifies flow and direction.</li><li><b>Contrast-enhanced MRA:</b> gadolinium shortens blood T1 for a fast, flow-independent angiogram, where timing the bolus to the arterial phase is everything.</li></ul><p><b>Artifacts to recognise by name:</b> <b>motion</b> produces ghosting along the phase-encode direction (pulsatile flow ghosts too, so a saturation band or gating helps); <b>chemical shift</b> lies along the <b>frequency</b> direction (worse at high field or low bandwidth); <b>aliasing or wraparound</b> occurs when the FOV is smaller than the object in the phase direction; <b>Gibbs or truncation</b> appears as parallel ringing lines at high-contrast borders (reduce with a finer matrix); <b>susceptibility</b> distorts near metal or air, worst on GRE and EPI; and the <b>zipper</b> comes from stray RF.</p>",
+        "keypoints": [
+          "TOF MRA: inflowing unsaturated spins are bright; it fails for in-plane flow.",
+          "Phase contrast: velocity above VENC gives aliasing; PC also quantifies flow direction.",
+          "Motion and pulsatile-flow ghosts propagate along the PHASE-encode direction.",
+          "Chemical shift is in the FREQUENCY direction; worse at high field or low bandwidth.",
+          "Gibbs or truncation is ringing at sharp borders; reduce it with a higher matrix."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 170,
+      "body": {
+        "prompt": "Ghosting artifact from patient motion or pulsatile flow propagates in which direction?",
+        "options": [
+          "The phase-encode direction",
+          "The frequency-encode direction",
+          "The slice-select direction",
+          "Diagonally, at 45 degrees"
+        ],
+        "answer": 0,
+        "explain": "Motion between successive phase-encode steps corrupts the slowly-sampled phase axis, so ghosts replicate along the phase-encode direction. Swapping phase and frequency directions can move ghosts off the anatomy of interest."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 171,
+      "body": {
+        "prompt": "In phase-contrast MRA, choosing a VENC well BELOW the true peak velocity causes:",
+        "options": [
+          "Velocity aliasing (phase wraps, direction reverses)",
+          "Complete loss of all signal",
+          "Chemical-shift artifact",
+          "Increased SNR with no downside"
+        ],
+        "answer": 0,
+        "explain": "PC encodes velocity as phase; velocities beyond the VENC wrap past plus or minus 180 degrees, so the fastest flow is mismapped and can appear to reverse direction. Setting VENC too high, by contrast, wastes velocity sensitivity."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 172,
+      "body": {
+        "prompt": "Time-of-flight MRA makes flowing blood bright because:",
+        "options": [
+          "Fresh inflowing spins are unsaturated while stationary tissue is saturated",
+          "Gadolinium is always injected first",
+          "Blood has a very short T1",
+          "The 180-degree pulse refocuses only moving spins"
+        ],
+        "answer": 0,
+        "explain": "Rapid RF saturates stationary tissue to low signal; blood flowing into the slice has not seen those pulses, so it is fully magnetised and bright, which is flow-related enhancement. In-plane flow saturates and dims, which is the main weakness of TOF."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 173,
+      "body": {
+        "prompt": "Chemical-shift misregistration (the fat/water edge shift) appears along the frequency direction and gets WORSE when you:",
+        "options": [
+          "Lower the receiver bandwidth or raise field strength",
+          "Raise the receiver bandwidth",
+          "Shorten the TR",
+          "Increase the NEX"
+        ],
+        "answer": 0,
+        "explain": "Fat and water precess at slightly different frequencies; a lower bandwidth assigns fewer Hz per pixel, so that frequency gap maps to more pixels of shift, and the gap in Hz grows with field strength. Raising bandwidth reduces the shift, at an SNR cost."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 174,
+      "body": {
+        "prompt": "Fine parallel bright and dark lines running alongside a sharp high-contrast interface (for example cord and CSF) are the hallmark of:",
+        "options": [
+          "Gibbs (truncation) artifact",
+          "Chemical-shift artifact",
+          "Zipper artifact",
+          "Magic-angle artifact"
+        ],
+        "answer": 0,
+        "explain": "Truncating k-space at a sharp edge produces ringing (the Gibbs phenomenon): regularly spaced lines paralleling the boundary. Increasing the matrix (sampling more k-space) narrows and reduces it."
       }
     }
   ]

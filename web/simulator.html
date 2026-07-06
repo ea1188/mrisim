@@ -13,6 +13,16 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- Embedded-lesson mode: the guided course (course.html) opens a lesson in an
+       iframe as simulator.html?lesson=…&embed=1. We then hide the outbound-navigation
+       chrome so the embedded view stays focused on the lesson and can't navigate the
+       frame off to another page. Applied to <html> during parse to avoid a flash. -->
+  <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
+  <style>
+    html.embed #protocol-link, html.embed #quiz-link,
+    html.embed #topbar > a[href="index.html"],
+    html.embed #topbar > a[href*="github.com"] { display: none !important; }
+  </style>
 </head>
 <body>
   <!-- First-load splash: Pyodide + numpy/scipy/matplotlib + the brain (~30–50 MB,
