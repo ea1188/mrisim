@@ -1256,6 +1256,18 @@
           }
         }
       ]
+    },
+    {
+      "title": "MR safety: fields, zones & screening",
+      "blurb": "Why the magnet is always dangerous — the four zones, the projectile effect, screening, and the gradient/RF/quench hazards.",
+      "beginner": true,
+      "steps": [
+        {"text": "MRI uses no ionising radiation, but the <b>magnet is always on</b> — even between patients — so safety is built around three ever-present fields: the strong <b>static</b> field, the switching <b>gradients</b>, and the <b>RF</b> pulses. Facilities are split into four <b>zones</b> of rising control: Zone I is freely public; <b>Zone IV is the scanner room</b> itself, entered only under the direct supervision of trained MR personnel."},
+        {"text": "The static field's biggest danger is the <b>projectile (‘missile’) effect</b>: it pulls ferromagnetic (iron-containing) objects toward the bore with lethal force — an oxygen cylinder, an IV pole, even scissors. <b>Nothing ferromagnetic enters Zone IV.</b> Equipment is labelled <b>MR-safe</b> (no metal), <b>MR-conditional</b> (safe under stated conditions), or <b>MR-unsafe</b>."},
+        {"text": "Everyone and everything is <b>screened</b> before entering. Implants are the crux: a ferromagnetic aneurysm clip can <b>move</b>, a conductive wire can <b>heat</b>, and an active device such as a <b>pacemaker</b> can malfunction. Each implant is checked against its MR-conditional labelling — when in doubt, keep it out."},
+        {"text": "The other two fields have their own limits. Rapidly switching <b>gradients</b> (high dB/dt) can cause <b>peripheral nerve stimulation</b> — tingling or muscle twitching — so the scanner caps dB/dt. The <b>RF</b> pulses deposit energy as heat, measured by the <b>SAR</b> (W/kg); high SAR risks burns, so avoid looped cables and skin-to-skin contact, and the scanner limits SAR."},
+        {"text": "Finally, the emergency: a <b>quench</b>. The superconducting magnet suddenly goes resistive and boils off its liquid <b>helium</b>, which should vent outside through the quench pipe. If venting fails, the cold gas can <b>displace room oxygen</b> — an asphyxiation risk — so know the oxygen-monitor alarm and the evacuation route."}
+      ]
     }
   ],
   "curriculum": [
@@ -1340,6 +1352,12 @@
       "lessons": [
         "Choosing the protocol (capstone)",
         "Planning the scan: coverage, angle & the queue"
+      ]
+    },
+    {
+      "title": "10 · MR safety",
+      "lessons": [
+        "MR safety: fields, zones & screening"
       ]
     }
   ]
