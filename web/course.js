@@ -18,10 +18,10 @@
   // Modules absent here just show their free lessons (no premium block / topic quiz yet).
   var TOPIC_CFG = {
     "2 · Where contrast comes from":  { premium: ["contrast-weighting"], quiz: ["sequences"] },
-    "4 · Reading pathology":          { premium: [], quiz: ["pathology"] },
+    "4 · Reading pathology":          { premium: ["pathology"], quiz: ["pathology"] },
     "5 · Image quality & speed":      { premium: ["image-quality"], quiz: ["image-quality"] },
-    "6 · How the image is built":     { premium: ["image-quality"], quiz: ["image-quality"] },
-    "8 · Flow, function & artifacts": { premium: [], quiz: ["artifacts", "perfusion"] },
+    "6 · How the image is built":     { premium: ["image-quality", "pulse-sequences"], quiz: ["image-quality"] },
+    "8 · Flow, function & artifacts": { premium: ["flow-artifacts"], quiz: ["artifacts", "perfusion"] },
     "10 · Safety & patient care":     { premium: ["safety", "patient-care"], quiz: ["safety", "patient-care"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";

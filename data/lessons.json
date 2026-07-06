@@ -263,7 +263,7 @@
           "state": {}
         },
         {
-          "text": "Raise <b>NEX</b> to 4 and watch your tissue ROI: the <b>mean holds</b> but the background SD <b>drops</b>, so SNR climbs by √4 = 2× (at 4× the scan time). The on-image ROI turns the SNR–time tradeoff into something you can measure yourself.",
+          "text": "Raise <b>NEX</b> to 4 and watch your tissue ROI: the <b>mean holds</b> but the background SD <b>drops</b>, so SNR climbs by √4 = 2× (at 4× the scan time). The on-image ROI turns the SNR-time tradeoff into something you can measure yourself.",
           "state": {
             "nex": 4
           }
@@ -444,7 +444,7 @@
           }
         },
         {
-          "text": "Next an <b>enhancing tumour</b>. It breaks the blood–brain barrier, so it takes up contrast. Compare T1 <b>before</b> and <b>after</b> gadolinium (toggle <b>Gadolinium</b>): the tumour <b>brightens</b>, 'enhancement', the hallmark of an aggressive or breakdown lesion.",
+          "text": "Next an <b>enhancing tumour</b>. It breaks the blood-brain barrier, so it takes up contrast. Compare T1 <b>before</b> and <b>after</b> gadolinium (toggle <b>Gadolinium</b>): the tumour <b>brightens</b>, 'enhancement', the hallmark of an aggressive or breakdown lesion.",
           "state": {
             "seq": "Spin Echo",
             "tr": 600,
@@ -655,7 +655,7 @@
       "blurb": "Fat and water beating in and out of phase, the India-ink sign.",
       "steps": [
         {
-          "text": "Real <b>abdomen</b> at 1.5 T, gradient echo. At an <b>in-phase</b> TE (4 ms) fat and water in the same voxel <b>add</b>, watch the <b>Fat–water phase</b> readout report <i>In-phase</i>.",
+          "text": "Real <b>abdomen</b> at 1.5 T, gradient echo. At an <b>in-phase</b> TE (4 ms) fat and water in the same voxel <b>add</b>, watch the <b>Fat-water phase</b> readout report <i>In-phase</i>.",
           "state": {
             "region": "Abdomen",
             "seq": "Gradient Echo",
@@ -668,13 +668,13 @@
           }
         },
         {
-          "text": "Now an <b>opposed-phase</b> TE (2 ms): fat and water point opposite ways and <b>cancel</b>. Voxels with both lose signal, a dark <b>India-ink</b> outline appears at fat–water boundaries (organ edges).",
+          "text": "Now an <b>opposed-phase</b> TE (2 ms): fat and water point opposite ways and <b>cancel</b>. Voxels with both lose signal, a dark <b>India-ink</b> outline appears at fat-water boundaries (organ edges).",
           "state": {
             "te": 2
           }
         },
         {
-          "text": "This is the basis of <b>Dixon</b> fat–water imaging and of spotting <b>microscopic fat</b> (adrenal adenoma, fatty liver): tissue that drops signal on opposed- vs in-phase contains intravoxel fat.",
+          "text": "This is the basis of <b>Dixon</b> fat-water imaging and of spotting <b>microscopic fat</b> (adrenal adenoma, fatty liver): tissue that drops signal on opposed- vs in-phase contains intravoxel fat.",
           "state": {
             "te": 2
           }
@@ -810,7 +810,7 @@
           }
         },
         {
-          "text": "Push to <b>R = 4</b>: the g-factor map <b>blows up</b> in the centre, noise amplification grows sharply with R. That's why clinical SENSE rarely exceeds R≈2–3: past that the g-factor penalty outweighs the time saved.",
+          "text": "Push to <b>R = 4</b>: the g-factor map <b>blows up</b> in the centre, noise amplification grows sharply with R. That's why clinical SENSE rarely exceeds R≈2-3: past that the g-factor penalty outweighs the time saved.",
           "state": {
             "accel": 4
           }
@@ -819,7 +819,7 @@
     },
     {
       "title": "B0 inhomogeneity & EPI distortion",
-      "blurb": "Off-resonance near air–tissue interfaces warps fast sequences.",
+      "blurb": "Off-resonance near air-tissue interfaces warps fast sequences.",
       "steps": [
         {
           "text": "Tick <b>Show B0 field map</b>. Even after shimming, susceptibility differences (air sinuses, bone) leave the field <b>off-resonance</b>. The map shows the local frequency error in Hz, largest near the skull base and sinuses.",
@@ -857,7 +857,7 @@
           }
         },
         {
-          "text": "In <b>MPR</b> mode you get the three orthogonal reformats from the <i>one</i> acquisition at once. Drag the <b>crosshair</b> sliders (Z / A–P / L–R) to move through the volume in every plane simultaneously, exactly how a workstation navigates a 3D dataset.",
+          "text": "In <b>MPR</b> mode you get the three orthogonal reformats from the <i>one</i> acquisition at once. Drag the <b>crosshair</b> sliders (Z / A-P / L-R) to move through the volume in every plane simultaneously, exactly how a workstation navigates a 3D dataset.",
           "state": {}
         },
         {
@@ -935,7 +935,7 @@
           }
         },
         {
-          "text": "Now I've given <b>gadolinium</b> (tick <b>Gadolinium</b>). The tumour <b>lights up bright</b>. Gd is a <b>T1-shortening</b> agent. It pools where the blood–brain barrier is broken or tissue is vascular, and short T1 reads <b>bright on T1</b>.",
+          "text": "Now I've given <b>gadolinium</b> (tick <b>Gadolinium</b>). The tumour <b>lights up bright</b>. Gd is a <b>T1-shortening</b> agent. It pools where the blood-brain barrier is broken or tissue is vascular, and short T1 reads <b>bright on T1</b>.",
           "state": {
             "gd": true
           }
@@ -1052,7 +1052,7 @@
           }
         },
         {
-          "text": "Switch the display to the <b>Activation Map</b>. Colour marks where signal <b>rose during a task</b>, a tiny (~1–3%) change, teased out of a long time series and overlaid on the anatomy.",
+          "text": "Switch the display to the <b>Activation Map</b>. Colour marks where signal <b>rose during a task</b>, a tiny (~1-3%) change, teased out of a long time series and overlaid on the anatomy.",
           "state": {
             "fmridisp": "Activation Map"
           }
@@ -1207,10 +1207,10 @@
     },
     {
       "title": "Perfusion: blood flow, stroke and tumour grade",
-      "blurb": "Map blood flow without a needle (ASL), then with a contrast bolus (DSC/DCE) — and read a stroke against a tumour.",
+      "blurb": "Map blood flow without a needle (ASL), then with a contrast bolus (DSC/DCE), and read a stroke against a tumour.",
       "steps": [
         {
-          "text": "<b>Perfusion</b> imaging maps blood <i>flow</i>, not just anatomy. The simplest is <b>arterial spin labeling (ASL)</b>: it magnetically tags arterial blood as a tracer, so it needs <b>no contrast injection</b>. This is the quantitative <b>CBF map</b> (cerebral blood flow, mL/100&nbsp;g/min) — grey matter is bright (~60), white matter dark (~22): cortex is perfused 2–3× more than white matter. The curve below shows the tagged signal fading as the post-label delay grows (the label decays with blood's T1).",
+          "text": "<b>Perfusion</b> imaging maps blood <i>flow</i>, not just anatomy. The simplest is <b>arterial spin labeling (ASL)</b>: it magnetically tags arterial blood as a tracer, so it needs <b>no contrast injection</b>. This is the quantitative <b>CBF map</b> (cerebral blood flow, mL/100&nbsp;g/min): grey matter is bright (~60), white matter dark (~22): cortex is perfused 2-3× more than white matter. The curve below shows the tagged signal fading as the post-label delay grows (the label decays with blood's T1).",
           "state": {
             "region": "Brain",
             "seq": "Perfusion (ASL)",
@@ -1227,14 +1227,14 @@
           }
         },
         {
-          "text": "The workhorse is <b>DSC</b> (dynamic susceptibility contrast): a gadolinium <b>bolus</b> is tracked as it passes through the brain. The curve below is that <b>first pass</b> — the <i>area</i> under it is the blood <b>volume (CBV)</b>, the <i>width</i> is the mean transit time (<b>MTT</b>), and the peak follows flow. This is the <b>CBV map</b>; like CBF, grey&nbsp;&gt;&nbsp;white.",
+          "text": "The workhorse is <b>DSC</b> (dynamic susceptibility contrast): a gadolinium <b>bolus</b> is tracked as it passes through the brain. The curve below is that <b>first pass</b>; the <i>area</i> under it is the blood <b>volume (CBV)</b>, the <i>width</i> is the mean transit time (<b>MTT</b>), and the peak follows flow. This is the <b>CBV map</b>; like CBF, grey&nbsp;&gt;&nbsp;white.",
           "state": {
             "seq": "Perfusion (Dynamic)",
             "perfdyndisp": "CBV (DSC)"
           }
         },
         {
-          "text": "Drop in a <b>stroke</b>. The infarct core has lost its supply, so on the <b>CBF map</b> it is a <b>dark hole</b> of reduced flow against the cortex. (Switch the dynamic map to <b>MTT</b> and that territory is also <i>prolonged</i> — the blood that does arrive transits slowly.) <b>Low CBF with long MTT</b> is the signature of the ischaemic core. Tick <b>Label the anatomy</b> to find it; the infarct's bolus curve below is the low, delayed one.",
+          "text": "Drop in a <b>stroke</b>. The infarct core has lost its supply, so on the <b>CBF map</b> it is a <b>dark hole</b> of reduced flow against the cortex. (Switch the dynamic map to <b>MTT</b> and that territory is also <i>prolonged</i>, and the blood that does arrive transits slowly.) <b>Low CBF with long MTT</b> is the signature of the ischaemic core. Tick <b>Label the anatomy</b> to find it; the infarct's bolus curve below is the low, delayed one.",
           "state": {
             "pathology": "stroke",
             "perfdyndisp": "CBF (DSC)",
@@ -1242,7 +1242,7 @@
           }
         },
         {
-          "text": "Swap the stroke for a <b>tumour</b> and look at <b>CBV</b>: the mass is now <b>bright</b>. It has grown its own vessels (neovascularisation), so its blood volume is <i>raised</i> — and high CBV means a <b>high-grade</b> tumour. This is how perfusion grades a mass that can look bland on routine images. Its bolus curve below is the tall one.",
+          "text": "Swap the stroke for a <b>tumour</b> and look at <b>CBV</b>: the mass is now <b>bright</b>. It has grown its own vessels (neovascularisation), so its blood volume is <i>raised</i>, and high CBV means a <b>high-grade</b> tumour. This is how perfusion grades a mass that can look bland on routine images. Its bolus curve below is the tall one.",
           "state": {
             "pathology": "tumor",
             "perfdyndisp": "CBV (DSC)",
@@ -1250,7 +1250,7 @@
           }
         },
         {
-          "text": "Finally switch the dynamic map to <b>Ktrans (DCE)</b> — a T1 acquisition that measures how fast contrast <b>leaks</b> across the blood–brain barrier. Normal brain keeps the barrier shut, so it stays dark (Ktrans ≈ 0); the tumour's leaky vessels light up. The curve makes it plain — normal tissue stays flat while the tumour <b>enhances</b> over time. ASL flow, DSC volume and transit, DCE permeability: three views of perfusion that together separate a stroke from a tumour.",
+          "text": "Finally switch the dynamic map to <b>Ktrans (DCE)</b>, a T1 acquisition that measures how fast contrast <b>leaks</b> across the blood-brain barrier. Normal brain keeps the barrier shut, so it stays dark (Ktrans ≈ 0); the tumour's leaky vessels light up. The curve makes it plain: normal tissue stays flat while the tumour <b>enhances</b> over time. ASL flow, DSC volume and transit, DCE permeability: three views of perfusion that together separate a stroke from a tumour.",
           "state": {
             "perfdyndisp": "Ktrans (DCE)"
           }
@@ -1259,26 +1259,26 @@
     },
     {
       "title": "MR safety: fields, zones & screening",
-      "blurb": "Why the magnet is always dangerous — the four zones, the projectile effect, screening, and the gradient/RF/quench hazards.",
+      "blurb": "Why the magnet is always dangerous: the four zones, the projectile effect, screening, and the gradient/RF/quench hazards.",
       "beginner": true,
       "steps": [
-        {"text": "MRI uses no ionising radiation, but the <b>magnet is always on</b> — even between patients — so safety is built around three ever-present fields: the strong <b>static</b> field, the switching <b>gradients</b>, and the <b>RF</b> pulses. Facilities are split into four <b>zones</b> of rising control: Zone I is freely public; <b>Zone IV is the scanner room</b> itself, entered only under the direct supervision of trained MR personnel."},
-        {"text": "The static field's biggest danger is the <b>projectile (‘missile’) effect</b>: it pulls ferromagnetic (iron-containing) objects toward the bore with lethal force — an oxygen cylinder, an IV pole, even scissors. <b>Nothing ferromagnetic enters Zone IV.</b> Equipment is labelled <b>MR-safe</b> (no metal), <b>MR-conditional</b> (safe under stated conditions), or <b>MR-unsafe</b>."},
-        {"text": "Everyone and everything is <b>screened</b> before entering. Implants are the crux: a ferromagnetic aneurysm clip can <b>move</b>, a conductive wire can <b>heat</b>, and an active device such as a <b>pacemaker</b> can malfunction. Each implant is checked against its MR-conditional labelling — when in doubt, keep it out."},
-        {"text": "The other two fields have their own limits. Rapidly switching <b>gradients</b> (high dB/dt) can cause <b>peripheral nerve stimulation</b> — tingling or muscle twitching — so the scanner caps dB/dt. The <b>RF</b> pulses deposit energy as heat, measured by the <b>SAR</b> (W/kg); high SAR risks burns, so avoid looped cables and skin-to-skin contact, and the scanner limits SAR."},
-        {"text": "Finally, the emergency: a <b>quench</b>. The superconducting magnet suddenly goes resistive and boils off its liquid <b>helium</b>, which should vent outside through the quench pipe. If venting fails, the cold gas can <b>displace room oxygen</b> — an asphyxiation risk — so know the oxygen-monitor alarm and the evacuation route."}
+        {"text": "MRI uses no ionising radiation, but the <b>magnet is always on</b>, even between patients, so safety is built around three ever-present fields: the strong <b>static</b> field, the switching <b>gradients</b>, and the <b>RF</b> pulses. Facilities are split into four <b>zones</b> of rising control: Zone I is freely public; <b>Zone IV is the scanner room</b> itself, entered only under the direct supervision of trained MR personnel."},
+        {"text": "The static field's biggest danger is the <b>projectile (‘missile’) effect</b>: it pulls ferromagnetic (iron-containing) objects toward the bore with lethal force: an oxygen cylinder, an IV pole, even scissors. <b>Nothing ferromagnetic enters Zone IV.</b> Equipment is labelled <b>MR-safe</b> (no metal), <b>MR-conditional</b> (safe under stated conditions), or <b>MR-unsafe</b>."},
+        {"text": "Everyone and everything is <b>screened</b> before entering. Implants are the crux: a ferromagnetic aneurysm clip can <b>move</b>, a conductive wire can <b>heat</b>, and an active device such as a <b>pacemaker</b> can malfunction. Each implant is checked against its MR-conditional labelling. When in doubt, keep it out."},
+        {"text": "The other two fields have their own limits. Rapidly switching <b>gradients</b> (high dB/dt) can cause <b>peripheral nerve stimulation</b> (tingling or muscle twitching), so the scanner caps dB/dt. The <b>RF</b> pulses deposit energy as heat, measured by the <b>SAR</b> (W/kg); high SAR risks burns, so avoid looped cables and skin-to-skin contact, and the scanner limits SAR."},
+        {"text": "Finally, the emergency: a <b>quench</b>. The superconducting magnet suddenly goes resistive and boils off its liquid <b>helium</b>, which should vent outside through the quench pipe. If venting fails, the cold gas can <b>displace room oxygen</b> (an asphyxiation risk), so know the oxygen-monitor alarm and the evacuation route."}
       ]
     },
     {
       "title": "Patient care: screening, contrast & monitoring",
-      "blurb": "The patient journey — screening, preparation, positioning, contrast safety and monitoring.",
+      "blurb": "The patient journey: screening, preparation, positioning, contrast safety and monitoring.",
       "beginner": true,
       "steps": [
-        {"text": "MRI safety starts with <b>screening</b>. Every patient completes a detailed questionnaire <b>before every scan</b> — status changes, and new implants or devices may have appeared since a prior study. Screen for pacemakers, aneurysm clips, cochlear implants, neurostimulators and any metal. A grinder or metalworker with possible <b>intra-orbital metal</b> needs orbital radiographs first."},
-        {"text": "Prepare the patient. Remove all <b>ferromagnetic items</b> — jewellery, hairpins, watches, cards, hearing aids, clothing with metal. Explain the exam and its <b>loud knocking noise</b>, and provide <b>hearing protection</b>: gradient switching reaches ~100–120 dB and can damage hearing. Confirm the questionnaire one more time before entering Zone IV."},
-        {"text": "Position for signal <i>and</i> comfort. Centre the target anatomy in the <b>coil and at isocentre</b> for the best signal and field homogeneity, and immobilise gently to minimise <b>motion</b> — a still, relaxed patient gives the best images. Hand over the <b>call button / squeeze-ball</b> and explain how to reach you at any time."},
-        {"text": "If <b>gadolinium</b> is used, screen <b>renal function (eGFR)</b> — severe impairment risks nephrogenic systemic fibrosis — and ask about prior <b>contrast reactions</b>. Watch for acute reactions (hives, wheeze, low blood pressure); know the emergency plan and where drugs and oxygen are kept. In <b>pregnancy</b>, gadolinium is avoided unless essential."},
-        {"text": "<b>Monitor the patient throughout.</b> Keep verbal contact between sequences and watch for distress or <b>claustrophobia</b> — reassure, use the call system, take a break, and consider a wide/open-bore magnet or sedation. Sedated or unstable patients need physiological monitoring with <b>MR-safe</b> equipment only."}
+        {"text": "MRI safety starts with <b>screening</b>. Every patient completes a detailed questionnaire <b>before every scan</b>: status changes, and new implants or devices may have appeared since a prior study. Screen for pacemakers, aneurysm clips, cochlear implants, neurostimulators and any metal. A grinder or metalworker with possible <b>intra-orbital metal</b> needs orbital radiographs first."},
+        {"text": "Prepare the patient. Remove all <b>ferromagnetic items</b>: jewellery, hairpins, watches, cards, hearing aids, clothing with metal. Explain the exam and its <b>loud knocking noise</b>, and provide <b>hearing protection</b>: gradient switching reaches ~100-120 dB and can damage hearing. Confirm the questionnaire one more time before entering Zone IV."},
+        {"text": "Position for signal <i>and</i> comfort. Centre the target anatomy in the <b>coil and at isocentre</b> for the best signal and field homogeneity, and immobilise gently to minimise <b>motion</b>; a still, relaxed patient gives the best images. Hand over the <b>call button / squeeze-ball</b> and explain how to reach you at any time."},
+        {"text": "If <b>gadolinium</b> is used, screen <b>renal function (eGFR)</b>: severe impairment risks nephrogenic systemic fibrosis. Also ask about prior <b>contrast reactions</b>. Watch for acute reactions (hives, wheeze, low blood pressure); know the emergency plan and where drugs and oxygen are kept. In <b>pregnancy</b>, gadolinium is avoided unless essential."},
+        {"text": "<b>Monitor the patient throughout.</b> Keep verbal contact between sequences and watch for distress or <b>claustrophobia</b>: reassure, use the call system, take a break, and consider a wide/open-bore magnet or sedation. Sedated or unstable patients need physiological monitoring with <b>MR-safe</b> equipment only."}
       ]
     }
   ],
