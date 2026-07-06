@@ -27,6 +27,10 @@ const rendered = () => page.waitForFunction(
       const a = document.getElementById("qz-imgA"), b = document.getElementById("qz-imgB");
       return a && b && a.complete && b.complete && a.src.startsWith("data:image") && b.src.startsWith("data:image");
     }
+    // Text/concept question (e.g. MR safety): no engine image — ready when the image
+    // area is collapsed and the four options are populated.
+    const wrap = document.getElementById("qz-imgwrap"), opts = document.getElementById("qz-options");
+    if (wrap && getComputedStyle(wrap).display === "none" && opts && opts.children.length === 4) return true;
     return false;
   },
   { timeout: 25_000 });

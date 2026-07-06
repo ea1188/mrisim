@@ -132,6 +132,10 @@ async function showQuestion() {
   $("qz-feedback").style.display = "none";
   $("qz-next").style.display = "none";
   const isPair = q.type === "pair";
+  // A question with no engine setup is a text/concept item (e.g. MR safety) — skip
+  // the render entirely and collapse the image area so only the prompt + options show.
+  const isText = !q.setup && !q.setupA;
+  $("qz-imgwrap").style.display = isText ? "none" : "";
   $("qz-img").style.display = "none";
   $("qz-pair").style.display = isPair ? "flex" : "none";
   $("qz-imgmsg").style.display = "";
@@ -156,6 +160,8 @@ async function showQuestion() {
     opts.appendChild(b);
   });
   setScore();
+
+  if (isText) return;                         // no image to render for a concept question
 
   try {
     if (isPair) {
