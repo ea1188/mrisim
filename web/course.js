@@ -17,11 +17,15 @@
   // Which free curriculum module maps to which premium topic keys + free quiz categories.
   // Modules absent here just show their free lessons (no premium block / topic quiz yet).
   var TOPIC_CFG = {
+    "1 · What an MRI image is":       { premium: ["instrumentation"], quiz: [] },
     "2 · Where contrast comes from":  { premium: ["contrast-weighting"], quiz: ["sequences"] },
-    "4 · Reading pathology":          { premium: ["pathology"], quiz: ["pathology"] },
+    "3 · Making a tissue disappear":  { premium: ["fat-suppression"], quiz: [] },
+    "4 · Reading pathology":          { premium: ["pathology", "procedures-anatomy"], quiz: ["pathology"] },
     "5 · Image quality & speed":      { premium: ["image-quality"], quiz: ["image-quality"] },
-    "6 · How the image is built":     { premium: ["image-quality", "pulse-sequences"], quiz: ["image-quality"] },
+    "6 · How the image is built":     { premium: ["image-quality", "pulse-sequences", "data-acquisition"], quiz: ["image-quality"] },
+    "7 · 3D imaging & reconstruction": { premium: ["three-d-recon"], quiz: [] },
     "8 · Flow, function & artifacts": { premium: ["flow-artifacts"], quiz: ["artifacts", "perfusion"] },
+    "9 · Putting it together":        { premium: ["procedures-protocols"], quiz: [] },
     "10 · Safety & patient care":     { premium: ["safety", "patient-care"], quiz: ["safety", "patient-care"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";

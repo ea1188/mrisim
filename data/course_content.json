@@ -577,6 +577,1478 @@
         "answer": 0,
         "explain": "Truncating k-space at a sharp edge produces ringing (the Gibbs phenomenon): regularly spaced lines paralleling the boundary. Increasing the matrix (sampling more k-space) narrows and reduces it."
       }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 300,
+      "body": {
+        "prompt": "A long-TR, long-TE spin-echo sequence produces which weighting?",
+        "options": [
+          "T2-weighted",
+          "T1-weighted",
+          "Proton density",
+          "Diffusion-weighted"
+        ],
+        "answer": 0,
+        "explain": "Long TR reduces T1 weighting and long TE emphasises T2 decay, so the image is T2-weighted with bright fluid."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 301,
+      "body": {
+        "prompt": "Which parameter most directly controls the amount of T2 weighting?",
+        "options": [
+          "TE",
+          "TR",
+          "TI",
+          "Flip angle"
+        ],
+        "answer": 0,
+        "explain": "TE sets how much transverse (T2) decay is sampled before readout, so a longer TE gives heavier T2 weighting."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 302,
+      "body": {
+        "prompt": "On a standard T1-weighted brain image, cerebrospinal fluid appears:",
+        "options": [
+          "Dark",
+          "Bright",
+          "The same as fat",
+          "Absent"
+        ],
+        "answer": 0,
+        "explain": "CSF has a long T1, so it recovers little longitudinal magnetisation by the next excitation and stays dark on T1."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 303,
+      "body": {
+        "prompt": "STIR is often chosen over spectral (chemical) fat saturation because STIR:",
+        "options": [
+          "Suppresses fat uniformly even where the field is inhomogeneous (off-isocentre, near metal)",
+          "Is always faster",
+          "Gives higher SNR",
+          "Needs no inversion pulse"
+        ],
+        "answer": 0,
+        "explain": "STIR nulls fat by its T1, which is insensitive to field inhomogeneity, so it works where spectral fat-sat fails."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 304,
+      "body": {
+        "prompt": "A proton-density-weighted image is produced by:",
+        "options": [
+          "Long TR and short TE",
+          "Short TR and short TE",
+          "Long TR and long TE",
+          "Short TR and long TE"
+        ],
+        "answer": 0,
+        "explain": "Long TR minimises T1 weighting and short TE minimises T2 weighting, so signal tracks tissue proton density."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 305,
+      "body": {
+        "prompt": "Enhancement from gadolinium is best demonstrated on which sequence?",
+        "options": [
+          "Post-contrast T1-weighted",
+          "T2-weighted",
+          "STIR",
+          "Diffusion-weighted"
+        ],
+        "answer": 0,
+        "explain": "Gadolinium shortens T1, so enhancing tissue brightens on T1-weighted images acquired after injection."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 306,
+      "body": {
+        "prompt": "Doubling the slice thickness (all else equal) has what effect on SNR?",
+        "options": [
+          "Roughly doubles SNR",
+          "Halves SNR",
+          "No effect",
+          "Quadruples SNR"
+        ],
+        "answer": 0,
+        "explain": "A thicker slice is a larger voxel holding more spins, so signal and SNR rise roughly in proportion to the thickness."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 307,
+      "body": {
+        "prompt": "Which change increases spatial resolution?",
+        "options": [
+          "A smaller FOV at the same matrix",
+          "A larger FOV",
+          "A thicker slice",
+          "More averages"
+        ],
+        "answer": 0,
+        "explain": "Shrinking the FOV while keeping the matrix makes each voxel smaller, which improves resolution but lowers SNR."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 308,
+      "body": {
+        "prompt": "A rectangular (reduced phase) FOV shortens scan time by:",
+        "options": [
+          "Acquiring fewer phase-encode steps",
+          "Lowering the TR",
+          "Raising the bandwidth",
+          "Adding averages"
+        ],
+        "answer": 0,
+        "explain": "Reducing the phase-direction FOV drops the number of phase-encode lines, and scan time scales with that count."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 309,
+      "body": {
+        "prompt": "Parallel imaging at an acceleration factor of R=2 mainly:",
+        "options": [
+          "Halves the phase-encode lines for a shorter scan, at an SNR cost",
+          "Doubles SNR",
+          "Doubles resolution",
+          "Removes all artifacts"
+        ],
+        "answer": 0,
+        "explain": "Coil sensitivity encoding lets you skip phase lines, cutting scan time by about R, but SNR falls by roughly g times the square root of R."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 310,
+      "body": {
+        "prompt": "The main penalty of using a very high receiver bandwidth is:",
+        "options": [
+          "Reduced SNR",
+          "Worse chemical shift",
+          "A longer minimum TE",
+          "Wraparound"
+        ],
+        "answer": 0,
+        "explain": "A wider bandwidth samples the echo faster and admits more noise per pixel, so SNR drops (though chemical shift improves)."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 311,
+      "body": {
+        "prompt": "Partial-Fourier (half-Fourier) acquisition shortens the scan by:",
+        "options": [
+          "Acquiring just over half of k-space and synthesising the rest from symmetry",
+          "Doubling NEX",
+          "Raising bandwidth",
+          "Enlarging the FOV"
+        ],
+        "answer": 0,
+        "explain": "k-space is nearly conjugate-symmetric, so slightly more than half is sampled and the remainder is estimated, at some SNR cost."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 312,
+      "body": {
+        "prompt": "The principal hazard of the static magnetic field is:",
+        "options": [
+          "The projectile (missile) effect on ferromagnetic objects",
+          "Tissue heating",
+          "Peripheral nerve stimulation",
+          "Acoustic noise"
+        ],
+        "answer": 0,
+        "explain": "The always-on static field can accelerate ferromagnetic objects into the bore with lethal force, so no loose metal is allowed."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 313,
+      "body": {
+        "prompt": "Loud acoustic noise during scanning is produced by:",
+        "options": [
+          "Rapid gradient switching",
+          "The RF pulses",
+          "The static field",
+          "Helium boil-off"
+        ],
+        "answer": 0,
+        "explain": "Gradient coils flex against the static field as they switch, generating the knocking noise that mandates hearing protection."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 314,
+      "body": {
+        "prompt": "Peripheral nerve stimulation during fast sequences is caused by:",
+        "options": [
+          "Rapidly switching gradients (dB/dt)",
+          "The static field",
+          "RF heating",
+          "The contrast agent"
+        ],
+        "answer": 0,
+        "explain": "Fast-changing gradient fields induce currents that can stimulate peripheral nerves, felt as tingling or twitching."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 315,
+      "body": {
+        "prompt": "SAR (specific absorption rate) quantifies:",
+        "options": [
+          "RF power deposited as heat per unit body mass",
+          "Gradient slew rate",
+          "Static field strength",
+          "Acoustic output"
+        ],
+        "answer": 0,
+        "explain": "SAR measures RF energy absorbed as heat, in watts per kilogram, and is limited to prevent excessive patient heating."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 316,
+      "body": {
+        "prompt": "During a magnet quench, the immediate life-threatening risk inside the magnet room is:",
+        "options": [
+          "Oxygen displacement (asphyxiation) if helium vents into the room",
+          "Electric shock",
+          "Ionising radiation",
+          "A projectile"
+        ],
+        "answer": 0,
+        "explain": "A quench boils off helium; if the vent fails, the cold gas can displace room oxygen, so the room must be evacuated."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 317,
+      "body": {
+        "prompt": "Zone IV of an MRI facility refers to:",
+        "options": [
+          "The magnet (scanner) room itself",
+          "The public reception area",
+          "The control room",
+          "The changing area"
+        ],
+        "answer": 0,
+        "explain": "Zone IV is the scanner room, the most restricted zone, entered only after full screening because the field is always on."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 318,
+      "body": {
+        "prompt": "A metallic implant of unknown composition and no documentation should be treated as:",
+        "options": [
+          "MR-unsafe until proven otherwise",
+          "MR-safe",
+          "MR-conditional",
+          "Low risk"
+        ],
+        "answer": 0,
+        "explain": "Without documentation you cannot confirm safe conditions, so the conservative and correct approach is to treat it as unsafe."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 319,
+      "body": {
+        "prompt": "Non-conditional cardiac pacemakers are dangerous in MRI mainly because the fields can:",
+        "options": [
+          "Alter device function or heat the leads",
+          "Demagnetise the battery",
+          "Block the RF signal",
+          "Trigger claustrophobia"
+        ],
+        "answer": 0,
+        "explain": "The static, gradient and RF fields can reprogram or inhibit the device and induce lead-tip heating, risking arrhythmia or burns."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 320,
+      "body": {
+        "prompt": "A patient reporting a history of grinding metal who may have an eye fragment needs which study first?",
+        "options": [
+          "Orbital radiographs",
+          "Renal ultrasound",
+          "Chest CT",
+          "No screening"
+        ],
+        "answer": 0,
+        "explain": "Plain orbital radiographs exclude an intra-orbital metallic foreign body that could move in the field and injure the eye."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 321,
+      "body": {
+        "prompt": "Before giving gadolinium to a patient with severe renal impairment, the chief concern is:",
+        "options": [
+          "Nephrogenic systemic fibrosis",
+          "Contrast-induced nephropathy",
+          "Thyroid storm",
+          "Acoustic injury"
+        ],
+        "answer": 0,
+        "explain": "Gadolinium retention in severe renal failure is linked to nephrogenic systemic fibrosis, so eGFR is checked first."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 322,
+      "body": {
+        "prompt": "The best single measure to reduce motion artifact from an anxious patient is:",
+        "options": [
+          "Clear communication with comfortable immobilisation",
+          "Raising the SAR",
+          "Removing the call button",
+          "Increasing NEX only"
+        ],
+        "answer": 0,
+        "explain": "A calm, well-supported, well-informed patient holds still, which prevents motion at its source rather than treating it afterward."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 323,
+      "body": {
+        "prompt": "Gradient acoustic noise can reach approximately:",
+        "options": [
+          "100 to 120 dB",
+          "40 dB",
+          "200 dB",
+          "It is not loud"
+        ],
+        "answer": 0,
+        "explain": "Peak gradient noise commonly reaches 100 to 120 dB, loud enough to damage hearing, so protection is required for everyone."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 324,
+      "body": {
+        "prompt": "Which patient can most safely receive gadolinium contrast?",
+        "options": [
+          "One with normal renal function and no prior reaction",
+          "One with severe chronic kidney disease",
+          "One with prior gadolinium anaphylaxis",
+          "One in the first trimester of pregnancy"
+        ],
+        "answer": 0,
+        "explain": "Normal renal function and no prior reaction is the low-risk profile; the other three each carry a specific contraindication or caution."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 325,
+      "body": {
+        "prompt": "For a sedated or unstable patient monitored inside the bore, the equipment must be:",
+        "options": [
+          "MR-safe (or MR-conditional for the field used)",
+          "Any standard hospital monitor",
+          "Lead-shielded",
+          "Battery-free only"
+        ],
+        "answer": 0,
+        "explain": "Only MR-safe or appropriately MR-conditional monitors may enter the magnet room, to avoid projectiles and image or device interference."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 326,
+      "body": {
+        "prompt": "A mild contrast reaction with limited hives and itching is usually managed with:",
+        "options": [
+          "Antihistamines and observation",
+          "Immediate intramuscular epinephrine",
+          "Furosemide",
+          "Intubation"
+        ],
+        "answer": 0,
+        "explain": "Isolated urticaria is a mild reaction treated supportively with antihistamines; epinephrine is reserved for true anaphylaxis."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 327,
+      "body": {
+        "prompt": "Balanced SSFP (TrueFISP / FIESTA / balanced-FFE) produces contrast that depends on:",
+        "options": [
+          "The T2/T1 ratio, giving bright fluid",
+          "Pure T1",
+          "Diffusion only",
+          "Proton density only"
+        ],
+        "answer": 0,
+        "explain": "Balanced SSFP preserves transverse magnetisation so contrast tracks the T2/T1 ratio, making fluid bright, useful in cardiac and MRCP imaging."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 328,
+      "body": {
+        "prompt": "An inversion-recovery sequence begins with a pulse of:",
+        "options": [
+          "180 degrees",
+          "90 degrees",
+          "45 degrees",
+          "A gradient only"
+        ],
+        "answer": 0,
+        "explain": "IR starts with a 180-degree inversion pulse; the chosen TI then selects which tissue is nulled (fat in STIR, CSF in FLAIR)."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 329,
+      "body": {
+        "prompt": "Diffusion weighting is made stronger by:",
+        "options": [
+          "Increasing the b-value",
+          "Increasing TR",
+          "Decreasing TE",
+          "Adding averages"
+        ],
+        "answer": 0,
+        "explain": "The b-value scales the diffusion-sensitising gradients, so a higher b-value produces heavier diffusion weighting."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 330,
+      "body": {
+        "prompt": "A spoiled gradient-echo sequence deliberately destroys residual:",
+        "options": [
+          "Transverse magnetisation, giving T1 or T2* contrast",
+          "Longitudinal magnetisation",
+          "The RF pulse",
+          "The readout gradient"
+        ],
+        "answer": 0,
+        "explain": "Spoiling dephases leftover transverse magnetisation between TRs so it cannot contribute steady-state signal, yielding clean T1 or T2* contrast."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 331,
+      "body": {
+        "prompt": "The sequence underlying most BOLD functional MRI is:",
+        "options": [
+          "Gradient-echo EPI",
+          "Conventional spin echo",
+          "STIR",
+          "Balanced SSFP"
+        ],
+        "answer": 0,
+        "explain": "BOLD fMRI needs fast T2*-sensitive imaging, provided by single-shot gradient-echo EPI acquired repeatedly over time."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 332,
+      "body": {
+        "prompt": "The most sensitive sequence for hyperacute ischaemic stroke is:",
+        "options": [
+          "Diffusion-weighted imaging",
+          "T1-weighted",
+          "Proton density",
+          "Post-contrast T1"
+        ],
+        "answer": 0,
+        "explain": "Cytotoxic oedema restricts diffusion within minutes, so DWI shows infarction long before T2 or FLAIR changes appear."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 333,
+      "body": {
+        "prompt": "Susceptibility-weighted imaging (SWI) is especially good at detecting:",
+        "options": [
+          "Microhaemorrhages and iron",
+          "Vasogenic oedema",
+          "Fat",
+          "Flowing blood"
+        ],
+        "answer": 0,
+        "explain": "SWI exploits T2* susceptibility, so blood products, iron and calcium bloom and become conspicuous even when tiny."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 334,
+      "body": {
+        "prompt": "Vasogenic oedema around a tumour is best appreciated as high signal on:",
+        "options": [
+          "T2 or FLAIR",
+          "T1-weighted",
+          "SWI",
+          "Phase contrast"
+        ],
+        "answer": 0,
+        "explain": "Vasogenic oedema is extra extracellular water, which is bright on T2, and FLAIR nulls adjacent CSF to make it stand out."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 335,
+      "body": {
+        "prompt": "Enhancement of a lesion after gadolinium indicates:",
+        "options": [
+          "Blood-brain-barrier breakdown or a vascular lesion",
+          "Calcification",
+          "Fat content",
+          "Rapid flow"
+        ],
+        "answer": 0,
+        "explain": "Gadolinium only reaches tissue where the barrier is broken or vascularity is high, so enhancement flags those processes."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 336,
+      "body": {
+        "prompt": "Fat within a lesion is confirmed when its signal drops on:",
+        "options": [
+          "Fat-suppressed sequences",
+          "Diffusion-weighted imaging",
+          "SWI",
+          "Phase-contrast imaging"
+        ],
+        "answer": 0,
+        "explain": "If bright T1 signal disappears with fat suppression, the source is fat, distinguishing a lipoma or dermoid from haemorrhage."
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "quiz",
+      "ord": 337,
+      "body": {
+        "prompt": "A fluid-fluid level inside a lesion most suggests:",
+        "options": [
+          "Haemorrhage or layering of components of different density",
+          "Simple CSF",
+          "Calcification",
+          "A flow void"
+        ],
+        "answer": 0,
+        "explain": "Settling of blood or proteinaceous debris produces a fluid-fluid level, seen in haemorrhagic cysts and some tumours."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 338,
+      "body": {
+        "prompt": "Wrap-around (aliasing) artifact is corrected by:",
+        "options": [
+          "Enlarging the FOV or applying phase oversampling",
+          "Raising the bandwidth",
+          "Shortening the TE",
+          "Adding fat suppression"
+        ],
+        "answer": 0,
+        "explain": "Aliasing is undersampling of anatomy outside the phase FOV, so enlarging the FOV or oversampling the phase direction removes it."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 339,
+      "body": {
+        "prompt": "The dark India-ink outline around organs on opposed-phase imaging results from:",
+        "options": [
+          "Fat and water signal cancelling in voxels at their border",
+          "Motion",
+          "Susceptibility",
+          "Aliasing"
+        ],
+        "answer": 0,
+        "explain": "In border voxels containing both fat and water, their signals are out of phase and subtract, drawing a dark outline."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 340,
+      "body": {
+        "prompt": "Signal void and geometric distortion around metallic hardware is called:",
+        "options": [
+          "Susceptibility artifact",
+          "Chemical shift",
+          "Truncation",
+          "Aliasing"
+        ],
+        "answer": 0,
+        "explain": "Metal disturbs local field homogeneity, dephasing spins and mismapping them, worst on gradient-echo and EPI sequences."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 341,
+      "body": {
+        "prompt": "Saturation (sat) bands are applied to:",
+        "options": [
+          "Suppress signal or flow from a selected region, such as inflowing blood",
+          "Raise SNR",
+          "Shorten TR",
+          "Null fat globally"
+        ],
+        "answer": 0,
+        "explain": "A sat band pre-saturates spins in a chosen slab so they give no signal, used to remove flow ghosts or unwanted anatomy."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 342,
+      "body": {
+        "prompt": "The magic-angle artifact brightens tendons oriented at about:",
+        "options": [
+          "55 degrees to the main field on short-TE sequences",
+          "90 degrees",
+          "0 degrees",
+          "Any angle equally"
+        ],
+        "answer": 0,
+        "explain": "At roughly 55 degrees, dipolar interactions are minimised so tendon T2 lengthens and it appears artefactually bright on short-TE images."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 343,
+      "body": {
+        "prompt": "Cardiac and respiratory gating are used chiefly to reduce:",
+        "options": [
+          "Motion and pulsation ghosting",
+          "Chemical shift",
+          "Truncation",
+          "Zipper artifact"
+        ],
+        "answer": 0,
+        "explain": "Synchronising acquisition to the cardiac or respiratory cycle keeps anatomy in a consistent position, suppressing motion ghosts."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 400,
+      "body": {
+        "prompt": "Spectral (chemical-shift) fat saturation works by exploiting:",
+        "options": [
+          "The resonance-frequency difference between fat and water",
+          "The T1 difference only",
+          "Diffusion of fat",
+          "Flow of fat"
+        ],
+        "answer": 0,
+        "explain": "A frequency-selective pulse saturates fat at its precession frequency, so it needs a homogeneous field to separate the fat and water peaks."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 401,
+      "body": {
+        "prompt": "Spectral fat saturation is most likely to fail:",
+        "options": [
+          "Off-isocentre or near metal, where the field is inhomogeneous",
+          "At the exact centre of the bore",
+          "In a well-shimmed field",
+          "At very short TE"
+        ],
+        "answer": 0,
+        "explain": "Field inhomogeneity blurs the fat and water peaks together, so the frequency-selective pulse can no longer target fat cleanly."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 402,
+      "body": {
+        "prompt": "STIR suppresses fat by:",
+        "options": [
+          "Setting a short TI to null fat by its T1",
+          "Saturating the fat frequency",
+          "Dephasing fat with a gradient",
+          "Using a long TE"
+        ],
+        "answer": 0,
+        "explain": "STIR is inversion recovery with TI at the null point of fat's T1, which is insensitive to field inhomogeneity, unlike spectral fat-sat."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 403,
+      "body": {
+        "prompt": "Why should STIR generally not be combined with gadolinium?",
+        "options": [
+          "Gadolinium shortens tissue T1 toward fat's null, so enhancement can be suppressed too",
+          "It causes burns",
+          "It nulls water instead",
+          "It doubles scan time"
+        ],
+        "answer": 0,
+        "explain": "STIR nulls tissue by T1, and gadolinium-shortened tissue can fall near that same null, masking the very enhancement you want to see."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 404,
+      "body": {
+        "prompt": "The Dixon technique separates fat and water using:",
+        "options": [
+          "In-phase and opposed-phase echoes (chemical shift)",
+          "Two different flip angles",
+          "Diffusion gradients",
+          "A saturation band"
+        ],
+        "answer": 0,
+        "explain": "Dixon acquires echoes where fat and water are in and out of phase, then combines them to compute separate water-only and fat-only images."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 405,
+      "body": {
+        "prompt": "Water excitation suppresses fat by:",
+        "options": [
+          "Selectively exciting only the water protons",
+          "Inverting fat first",
+          "Dephasing water",
+          "Saturating water"
+        ],
+        "answer": 0,
+        "explain": "A composite RF pulse tips only water into the transverse plane, leaving fat largely unexcited, useful in high-resolution cartilage imaging."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 406,
+      "body": {
+        "prompt": "At 1.5 T compared with 3 T, spectral fat saturation is:",
+        "options": [
+          "Harder, because the fat-water frequency gap in Hz is smaller",
+          "Easier",
+          "Unaffected by field strength",
+          "Impossible"
+        ],
+        "answer": 0,
+        "explain": "The chemical-shift separation scales with field strength, so the fat and water peaks are closer together at 1.5 T, making selective saturation harder."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 407,
+      "body": {
+        "prompt": "The main reason to suppress fat before or after gadolinium is to:",
+        "options": [
+          "Improve conspicuity of enhancement and oedema by removing bright fat",
+          "Shorten the TR",
+          "Reduce SAR",
+          "Prevent aliasing"
+        ],
+        "answer": 0,
+        "explain": "Bright fat can hide enhancing lesions and marrow or soft-tissue oedema, so removing it raises the contrast of the findings you care about."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 408,
+      "body": {
+        "prompt": "The periphery of k-space predominantly encodes:",
+        "options": [
+          "Fine detail and spatial resolution (high spatial frequencies)",
+          "Overall contrast",
+          "The slice position",
+          "The receiver gain"
+        ],
+        "answer": 0,
+        "explain": "High spatial frequencies at the edges of k-space carry edges and fine detail, while the centre carries bulk signal and contrast."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 409,
+      "body": {
+        "prompt": "Frequency encoding is performed:",
+        "options": [
+          "During readout, while the frequency-encode gradient is on",
+          "Before the excitation pulse",
+          "During slice selection only",
+          "After the image is reconstructed"
+        ],
+        "answer": 0,
+        "explain": "The readout (frequency-encode) gradient is applied while the echo is sampled, mapping position along that axis to signal frequency."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 410,
+      "body": {
+        "prompt": "Phase encoding differs from frequency encoding in that it is:",
+        "options": [
+          "Stepped once per TR to fill successive k-space lines",
+          "Applied continuously during readout",
+          "Never gradient-based",
+          "Only used in 3D"
+        ],
+        "answer": 0,
+        "explain": "Each TR applies a different phase-encode gradient amplitude to fill one k-space line, which is why the phase matrix drives scan time."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 411,
+      "body": {
+        "prompt": "The mathematical operation that converts sampled k-space into an image is the:",
+        "options": [
+          "Fourier transform",
+          "Laplace transform",
+          "Convolution kernel",
+          "Hough transform"
+        ],
+        "answer": 0,
+        "explain": "A 2D (or 3D) inverse Fourier transform turns the spatial-frequency (k-space) data into the spatial-domain image."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 412,
+      "body": {
+        "prompt": "Aliasing (wraparound) is avoided when sampling satisfies the Nyquist criterion, meaning:",
+        "options": [
+          "The FOV encompasses the whole object in the phase direction",
+          "The TE is short enough",
+          "The bandwidth is high",
+          "The flip angle is small"
+        ],
+        "answer": 0,
+        "explain": "Undersampling anatomy outside the phase FOV violates Nyquist and folds it back; covering the object or oversampling prevents the wrap."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 413,
+      "body": {
+        "prompt": "A true 3D acquisition encodes the slice direction by:",
+        "options": [
+          "A second phase-encode (partition) gradient along the slab",
+          "A thicker slice-select pulse",
+          "A longer readout",
+          "More averages"
+        ],
+        "answer": 0,
+        "explain": "3D imaging phase-encodes through the slab thickness, yielding thin contiguous partitions and high SNR from the whole-volume excitation."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 414,
+      "body": {
+        "prompt": "Zero-filling (k-space interpolation) does what?",
+        "options": [
+          "Interpolates to a finer display matrix without adding true resolution",
+          "Acquires extra k-space lines",
+          "Raises the true spatial resolution",
+          "Removes noise"
+        ],
+        "answer": 0,
+        "explain": "Padding k-space with zeros produces a smoother, larger display matrix but adds no new high-frequency data, so real resolution is unchanged."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 415,
+      "body": {
+        "prompt": "Centric (low-to-high) k-space ordering is used to:",
+        "options": [
+          "Capture contrast at a specific moment, e.g. peak arterial enhancement",
+          "Increase the matrix",
+          "Lower SAR",
+          "Suppress fat"
+        ],
+        "answer": 0,
+        "explain": "Sampling the k-space centre first locks in contrast at that instant, valuable in dynamic contrast MRA where arterial timing matters."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 416,
+      "body": {
+        "prompt": "Clinical superconducting magnets maintain their field because the windings are:",
+        "options": [
+          "Cooled by liquid helium to become superconducting",
+          "Made of permanent magnets",
+          "Powered continuously from the mains",
+          "Cooled by liquid nitrogen only"
+        ],
+        "answer": 0,
+        "explain": "Superconducting niobium-titanium coils bathed in liquid helium carry current with no resistance, sustaining a stable high field."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 417,
+      "body": {
+        "prompt": "Shimming is performed to:",
+        "options": [
+          "Improve homogeneity of the main magnetic field",
+          "Increase gradient strength",
+          "Boost RF power",
+          "Cool the magnet"
+        ],
+        "answer": 0,
+        "explain": "Passive or active shims correct field inhomogeneity, which is essential for spectral fat suppression and artifact-free imaging."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 418,
+      "body": {
+        "prompt": "Gradient coils are responsible for:",
+        "options": [
+          "Producing linear spatial variation of the field for spatial encoding",
+          "Exciting the spins",
+          "Cooling the bore",
+          "Detecting the signal"
+        ],
+        "answer": 0,
+        "explain": "The x, y and z gradient coils superimpose position-dependent field changes used for slice selection and frequency and phase encoding."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 419,
+      "body": {
+        "prompt": "The RF transmit coil primarily:",
+        "options": [
+          "Excites the spins by producing the B1 field",
+          "Encodes spatial position",
+          "Cools the magnet",
+          "Shields external RF"
+        ],
+        "answer": 0,
+        "explain": "The transmit coil delivers the B1 RF pulse that tips magnetisation; receive coils then detect the returning signal."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 420,
+      "body": {
+        "prompt": "Phased-array surface coils are used chiefly to:",
+        "options": [
+          "Raise SNR near the coil and enable parallel imaging",
+          "Increase the static field",
+          "Generate gradients",
+          "Suppress fat"
+        ],
+        "answer": 0,
+        "explain": "Multiple small elements each see high local SNR and provide the spatial sensitivity information that parallel imaging exploits."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 421,
+      "body": {
+        "prompt": "The RF (Faraday) shield around the scanner room prevents:",
+        "options": [
+          "External radiofrequency interference (e.g. zipper artifact)",
+          "Static field leakage",
+          "Helium loss",
+          "Gradient noise"
+        ],
+        "answer": 0,
+        "explain": "The conductive shield blocks stray external RF from corrupting the received signal, which would otherwise show as zipper or noise bands."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 422,
+      "body": {
+        "prompt": "Moving from 1.5 T to 3 T generally increases all of the following EXCEPT:",
+        "options": [
+          "Inherent acoustic quietness of the scanner",
+          "SNR",
+          "SAR",
+          "Chemical-shift and susceptibility effects"
+        ],
+        "answer": 0,
+        "explain": "Higher field raises SNR but also SAR, chemical shift and susceptibility; it does not inherently make the scanner quieter."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 423,
+      "body": {
+        "prompt": "The fringe (stray) field outside the bore is the reason for:",
+        "options": [
+          "The 5-gauss line and access restrictions around the magnet",
+          "Hearing protection",
+          "Contrast screening",
+          "Gradient warming"
+        ],
+        "answer": 0,
+        "explain": "The static fringe field extends beyond the bore; the 5-gauss line marks where it can affect implants and electronics, so access is controlled."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 424,
+      "body": {
+        "prompt": "A key advantage of a 3D volumetric acquisition over 2D multislice is:",
+        "options": [
+          "Thin contiguous slices with high SNR that reformat in any plane",
+          "Lower SAR always",
+          "No need for gradients",
+          "Immunity to motion"
+        ],
+        "answer": 0,
+        "explain": "3D imaging excites the whole slab, giving high SNR, thin gapless partitions and isotropic data that can be reformatted freely."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 425,
+      "body": {
+        "prompt": "A maximum-intensity projection (MIP) is used mainly to display:",
+        "options": [
+          "Bright vessels in MR angiography",
+          "Dark veins",
+          "Fat",
+          "CSF flow voids"
+        ],
+        "answer": 0,
+        "explain": "MIP renders the brightest voxel along each ray, ideal for showing the high signal of arteries in a TOF or contrast-enhanced MRA."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 426,
+      "body": {
+        "prompt": "Isotropic voxels are desirable because they allow:",
+        "options": [
+          "Multiplanar reformatting in any plane without distortion",
+          "Faster RF pulses",
+          "Lower field strength",
+          "Fat suppression"
+        ],
+        "answer": 0,
+        "explain": "Equal voxel dimensions in all three directions let reformatted planes preserve resolution, so one acquisition serves every viewing angle."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 427,
+      "body": {
+        "prompt": "A minimum-intensity projection (MinIP) is best suited to display:",
+        "options": [
+          "Dark structures such as veins on susceptibility imaging",
+          "Bright arteries",
+          "Bright fat",
+          "Enhancing tumour"
+        ],
+        "answer": 0,
+        "explain": "MinIP keeps the darkest voxel along each ray, which highlights low-signal structures like veins on SWI or air in the airways."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 428,
+      "body": {
+        "prompt": "Compared with a 2D acquisition, 3D gradient echo typically offers:",
+        "options": [
+          "Thinner, gapless slices and higher SNR per slice",
+          "Larger slice gaps",
+          "Lower resolution",
+          "No reformatting"
+        ],
+        "answer": 0,
+        "explain": "Because the whole volume is excited and phase-encoded through the slab, 3D yields contiguous thin partitions with strong SNR."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 429,
+      "body": {
+        "prompt": "Multiplanar reformation (MPR) requires:",
+        "options": [
+          "A volumetric (3D) dataset",
+          "A single 2D slice",
+          "A projection radiograph",
+          "A k-space centre only"
+        ],
+        "answer": 0,
+        "explain": "Reformatting arbitrary planes needs a full volume of data; a single 2D slice cannot be re-sliced in another orientation."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 430,
+      "body": {
+        "prompt": "Partial-volume averaging is worst with:",
+        "options": [
+          "Thick slices",
+          "Thin isotropic voxels",
+          "A high matrix",
+          "A small FOV"
+        ],
+        "answer": 0,
+        "explain": "Thick slices blend signal from structures across the slice, blurring small findings; thinner voxels reduce partial-volume effects."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 431,
+      "body": {
+        "prompt": "Cross-talk between adjacent 2D slices is reduced by:",
+        "options": [
+          "Interslice gaps or interleaved slice ordering",
+          "Higher SAR",
+          "A larger FOV",
+          "More averages"
+        ],
+        "answer": 0,
+        "explain": "Imperfect slice profiles let neighbouring slices saturate each other; a gap or interleaving separates their excitation in space or time."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 432,
+      "body": {
+        "prompt": "Thin high-resolution heavily T2-weighted images of the internal auditory canals are obtained to evaluate:",
+        "options": [
+          "The vestibulocochlear nerve and acoustic neuroma",
+          "The pituitary",
+          "The knee menisci",
+          "The liver"
+        ],
+        "answer": 0,
+        "explain": "Sequences like CISS or FIESTA show the cisternal cranial nerves against bright CSF, screening for a vestibular schwannoma."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 433,
+      "body": {
+        "prompt": "The pituitary gland is best assessed with:",
+        "options": [
+          "Thin dynamic post-contrast coronal T1 images",
+          "Axial DWI",
+          "Thick sagittal T2",
+          "MIP MRA"
+        ],
+        "answer": 0,
+        "explain": "Small microadenomas enhance differently over time, so thin dynamic coronal T1 through the sella is the standard technique."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 434,
+      "body": {
+        "prompt": "MR cholangiopancreatography (MRCP) depicts the biliary and pancreatic ducts using:",
+        "options": [
+          "Heavily T2-weighted sequences that make static fluid bright",
+          "Post-contrast T1",
+          "Diffusion only",
+          "Time-of-flight"
+        ],
+        "answer": 0,
+        "explain": "MRCP relies on the long T2 of stationary bile and pancreatic fluid, so heavily T2-weighted images show the ducts as bright channels."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 435,
+      "body": {
+        "prompt": "The supraspinatus tendon of the rotator cuff is best evaluated on:",
+        "options": [
+          "Oblique coronal images",
+          "Axial images only",
+          "Sagittal T1 only",
+          "A MIP"
+        ],
+        "answer": 0,
+        "explain": "The oblique coronal plane parallels the supraspinatus, showing its full length and any tear to best advantage."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 436,
+      "body": {
+        "prompt": "Cardiac cine imaging of wall motion typically uses:",
+        "options": [
+          "ECG-gated balanced SSFP",
+          "Single-shot DWI",
+          "STIR",
+          "Time-of-flight MRA"
+        ],
+        "answer": 0,
+        "explain": "Balanced SSFP gives bright blood-to-myocardium contrast and, with ECG gating, produces the cine loops used to assess function."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 437,
+      "body": {
+        "prompt": "On a routine spine MRI, cerebrospinal fluid appears bright (a myelographic effect) on:",
+        "options": [
+          "T2-weighted images",
+          "T1-weighted images",
+          "STIR of marrow",
+          "GRE only"
+        ],
+        "answer": 0,
+        "explain": "CSF has a long T2, so heavily T2-weighted sagittals outline the cord and nerve roots against bright fluid."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 438,
+      "body": {
+        "prompt": "Characterising a focal liver lesion relies most on:",
+        "options": [
+          "Multiphase dynamic post-gadolinium T1 imaging",
+          "A single unenhanced T2",
+          "Diffusion alone",
+          "Time-of-flight"
+        ],
+        "answer": 0,
+        "explain": "Arterial, portal-venous and delayed phases show the enhancement pattern that distinguishes haemangioma, FNH, HCC and metastases."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 439,
+      "body": {
+        "prompt": "The anterior cruciate ligament of the knee is usually best displayed on:",
+        "options": [
+          "Sagittal (slightly oblique) images",
+          "Axial T1 only",
+          "Coronal STIR only",
+          "A MIP"
+        ],
+        "answer": 0,
+        "explain": "The ACL runs obliquely; a sagittal plane angled along the ligament shows its fibres and any tear most completely."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 440,
+      "body": {
+        "prompt": "A routine brain MRI protocol most typically includes:",
+        "options": [
+          "T1, T2, FLAIR and DWI (with post-gadolinium T1 as needed)",
+          "Only T1",
+          "Only time-of-flight",
+          "Only DWI"
+        ],
+        "answer": 0,
+        "explain": "This core set covers anatomy, fluid-sensitive pathology, periventricular disease and acute ischaemia, with contrast added when indicated."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 441,
+      "body": {
+        "prompt": "For suspected hyperacute stroke, the single indispensable sequence is:",
+        "options": [
+          "Diffusion-weighted imaging with its ADC map",
+          "Post-contrast T1",
+          "Proton density",
+          "Time-of-flight only"
+        ],
+        "answer": 0,
+        "explain": "DWI detects the restricted diffusion of cytotoxic oedema within minutes, well before conventional sequences change."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 442,
+      "body": {
+        "prompt": "A multiple-sclerosis brain protocol places particular emphasis on:",
+        "options": [
+          "FLAIR, with post-contrast T1 to flag active lesions",
+          "Time-of-flight MRA",
+          "Cardiac cine",
+          "MRCP"
+        ],
+        "answer": 0,
+        "explain": "FLAIR shows periventricular and juxtacortical plaques, and enhancement on post-contrast T1 marks lesions with active barrier breakdown."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 443,
+      "body": {
+        "prompt": "Intracranial arteries are most commonly screened without contrast using:",
+        "options": [
+          "3D time-of-flight MRA",
+          "Phase-contrast venography",
+          "STIR",
+          "MRCP"
+        ],
+        "answer": 0,
+        "explain": "3D TOF exploits flow-related enhancement of inflowing arterial blood, giving a non-contrast angiogram of the circle of Willis."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 444,
+      "body": {
+        "prompt": "To reduce CSF-pulsation ghosting on a spine study, a technologist can:",
+        "options": [
+          "Apply flow compensation, gating or saturation bands",
+          "Raise the SAR",
+          "Shorten the FOV below the cord",
+          "Turn off hearing protection"
+        ],
+        "answer": 0,
+        "explain": "Pulsatile CSF creates ghosts; flow compensation, cardiac gating and sat bands all reduce the signal or phase errors that cause them."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 445,
+      "body": {
+        "prompt": "Contrast-enhanced MRA depends critically on:",
+        "options": [
+          "Timing the acquisition to the arterial phase of the bolus",
+          "A very long TR",
+          "Fat suppression only",
+          "A high b-value"
+        ],
+        "answer": 0,
+        "explain": "CE-MRA is flow-independent but timing-dependent: the k-space centre must be filled while contrast is in the arteries, before venous return."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 446,
+      "body": {
+        "prompt": "A temporal-lobe (seizure) protocol characteristically adds:",
+        "options": [
+          "Thin oblique coronal T2 and FLAIR through the hippocampi",
+          "Whole-body STIR",
+          "Cardiac cine",
+          "MRCP"
+        ],
+        "answer": 0,
+        "explain": "Angled thin coronals perpendicular to the hippocampi reveal mesial temporal sclerosis, the common substrate of temporal-lobe epilepsy."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 447,
+      "body": {
+        "prompt": "To reduce susceptibility artifact when imaging around metal hardware, a good strategy is to:",
+        "options": [
+          "Prefer spin-echo/STIR over gradient echo, raise bandwidth, and use metal-artifact-reduction techniques",
+          "Switch to gradient echo",
+          "Lower the bandwidth",
+          "Use a longer TE"
+        ],
+        "answer": 0,
+        "explain": "Spin echo refocuses static inhomogeneity, and high bandwidth plus view-angle-tilting methods (MARS/MAVRIC/SEMAC) further shrink metal distortion."
+      }
     }
   ]
 }
