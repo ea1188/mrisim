@@ -7,7 +7,8 @@
     {"id": "artifacts", "label": "Artifacts"},
     {"id": "anatomy", "label": "Anatomy & planes"},
     {"id": "image-quality", "label": "Image quality"},
-    {"id": "safety", "label": "MR safety"}
+    {"id": "safety", "label": "MR safety"},
+    {"id": "patient-care", "label": "Patient care"}
   ],
   "questions": [
     {
@@ -854,6 +855,55 @@
       "options": ["Nephrogenic systemic fibrosis (NSF)", "Iodine anaphylaxis", "Lactic acidosis", "Thyroid storm"],
       "answer": 0,
       "explain": "In severe renal impairment, retained gadolinium is linked to nephrogenic systemic fibrosis (fibrosis of skin and organs). Screen renal function (eGFR), use the lowest effective dose / macrocyclic agents, and note gadolinium is unrelated to iodinated CT contrast."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "Why must a patient complete MRI screening before every scan, even if they were scanned safely last month?",
+      "options": ["Their implant/device status or foreign-body exposure may have changed since", "Screening is only a billing formality", "The magnet weakens between patients", "A prior screening legally expires after 24 hours"],
+      "answer": 0,
+      "explain": "Status changes — a new pacemaker, stent, or metal fragment may have appeared since the last visit — so screening is repeated before every scan. A previous safe scan does not guarantee current safety."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "A metal grinder reports a possible fragment in his eye. What should happen before he enters Zone IV?",
+      "options": ["Obtain orbital radiographs to exclude an intra-orbital metallic foreign body", "Proceed — small fragments are harmless", "Give gadolinium to outline the fragment", "Use a louder gradient to detect it"],
+      "answer": 0,
+      "explain": "A ferromagnetic intra-orbital fragment can move in the field and injure the eye. Patients with a credible history (grinding, metalwork, shrapnel) are screened with orbital radiographs before scanning."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "Before giving gadolinium contrast, which check is essential?",
+      "options": ["Renal function (eGFR) and any history of a prior contrast reaction", "Blood glucose", "A recent chest radiograph", "The patient's height"],
+      "answer": 0,
+      "explain": "Severe renal impairment raises the risk of nephrogenic systemic fibrosis, so eGFR is screened; a prior reaction changes the agent or requires premedication. Confirm the indication and consent as well."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "Minutes after gadolinium, a patient develops hives, wheezing, and low blood pressure. What is happening, and what comes first?",
+      "options": ["An acute allergic-type reaction — stop, call for help, and manage airway/breathing/circulation (epinephrine for anaphylaxis)", "Nephrogenic systemic fibrosis — reassure and continue", "A normal contrast sensation — no action needed", "A quench — evacuate the room"],
+      "answer": 0,
+      "explain": "This is an acute allergic-like reaction, potentially anaphylaxis. Stop the injection, call for help, support the ABCs, and give epinephrine for anaphylaxis per protocol. Know where the emergency drugs and oxygen are kept."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "Why is hearing protection given to every MRI patient?",
+      "options": ["Rapid gradient switching produces loud acoustic noise (~100–120 dB) that can damage hearing", "The RF pulses are audible and painful", "The helium pump is loud", "It muffles the technologist's instructions"],
+      "answer": 0,
+      "explain": "Forces on the switching gradient coils make loud knocking and buzzing up to ~120 dB. Earplugs or headphones are standard for every patient (and for staff who remain in the room)."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "A patient becomes claustrophobic and distressed partway through the scan. Appropriate management includes:",
+      "options": ["Reassurance and communication, the call/squeeze system, and considering a wide-bore magnet or sedation", "Ignoring it until the sequence finishes", "Raising the SAR to speed things up", "Removing their hearing protection so they can hear you"],
+      "answer": 0,
+      "explain": "Talk the patient through it, remind them of the squeeze-ball/call button, and take a break if needed — then consider a wide/open-bore system, feet-first or prone entry, or sedation. Monitor the patient continuously."
+    },
+    {
+      "category": "patient-care",
+      "prompt": "For MRI in a pregnant patient, what is the standard position on gadolinium contrast?",
+      "options": ["Avoid gadolinium unless essential; unenhanced MRI is generally used when imaging is indicated", "Double the dose to cover two patients", "Gadolinium is preferred over ultrasound", "Contrast is mandatory in pregnancy"],
+      "answer": 0,
+      "explain": "Gadolinium crosses the placenta and is avoided in pregnancy unless the benefit clearly outweighs the risk. MRI without contrast is considered acceptable when clinically indicated — it uses no ionising radiation."
     }
   ]
 }
