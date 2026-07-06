@@ -132,7 +132,17 @@ async function onReady(info) {
   await applyHashState();        // restore a shared prescription, if the URL has one
   render();
   updateSeqHelp();
-  maybeShowIntro();
+  if (!maybeStartDeepLinkLesson()) maybeShowIntro();
+}
+
+// Deep-link: simulator.html?lesson=<exact title> opens that guided lesson on load,
+// so the course page can launch an interactive lesson directly (skips the intro).
+function maybeStartDeepLinkLesson() {
+  try {
+    const t = new URLSearchParams(location.search).get("lesson");
+    if (t && LESSON_INDEX.has(t)) { curriculumPos = -1; startLesson(LESSON_INDEX.get(t)); return true; }
+  } catch (e) { /* ignore */ }
+  return false;
 }
 
 // --- Shareable URL state + export ------------------------------------------- //
