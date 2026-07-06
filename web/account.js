@@ -140,9 +140,9 @@
         // Aggregate per student.
         var by = {};
         acts.forEach(function (a) {
-          var s = by[a.student_id] || (by[a.student_id] = { quizzes: 0, lessons: 0, bestPct: null, last: null });
+          var s = by[a.student_id] || (by[a.student_id] = { quizzes: 0, lessons: {}, bestPct: null, last: null });
           if (a.kind === "quiz_attempt") { s.quizzes++; if (a.total) { var p = (100 * a.score) / a.total; if (s.bestPct == null || p > s.bestPct) s.bestPct = p; } }
-          if (a.kind === "lesson_complete") s.lessons++;
+          if (a.kind === "lesson_complete") s.lessons[a.ref] = true;   // distinct lessons, not repeats
           if (!s.last || a.created_at > s.last) s.last = a.created_at;
         });
         var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
@@ -151,10 +151,10 @@
         var tb = h("tbody");
         roster.forEach(function (r) {
           var p = (r.profiles && r.profiles.display_name) || "(unnamed)";
-          var s = by[r.student_id] || { quizzes: 0, lessons: 0, bestPct: null, last: null };
+          var s = by[r.student_id] || { quizzes: 0, lessons: {}, bestPct: null, last: null };
           tb.appendChild(h("tr", {}, [
             td(p), tdNum(s.quizzes), tdNum(s.bestPct == null ? "—" : Math.round(s.bestPct) + "%"),
-            tdNum(s.lessons), tdNum(s.last ? when(s.last) : "—"),
+            tdNum(Object.keys(s.lessons).length), tdNum(s.last ? when(s.last) : "—"),
           ]));
         });
         tbl.appendChild(tb);
