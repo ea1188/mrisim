@@ -105,6 +105,56 @@
     .lcard button.launch:hover { color: #8fbdec; }
     @media (max-width: 780px) { .course { grid-template-columns: 1fr; } .rail { border-right: none; border-bottom: 1px solid #1b222a; } }
 
+    /* Practice exam: rail entry + setup + timed run + review */
+    .exam-cta { display: block; width: calc(100% - 24px); margin: 2px 12px 10px; text-align: left;
+      background: #152232; border: 1px solid #274763; color: #8fbdec; font: inherit; font-size: 13px;
+      font-weight: 600; border-radius: 3px; padding: 9px 12px; cursor: pointer; }
+    .exam-cta:hover { border-color: #3f6f9c; color: #bcd8f5; }
+    .exam-cta.on { background: #1c3350; border-color: #4385cc; color: #dbe9fa; }
+    .exam-cta .ec-sub { display: block; font-weight: 400; font-size: 11px; color: #7c8794; margin-top: 2px; }
+
+    .exam-setup { background: #141a21; border: 1px solid #232c36; border-radius: 3px; padding: 18px; margin-top: 12px; }
+    .exam-setup h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #838d9c; margin: 0 0 10px; }
+    .exam-lens { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 4px; }
+    .exam-len { background: #0b0f14; border: 1px solid #2b3644; color: #dfe5ec; border-radius: 3px;
+      padding: 8px 16px; font: inherit; font-size: 13px; cursor: pointer; }
+    .exam-len:hover { border-color: #3f6f9c; }
+    .exam-len.on { background: #1c3350; border-color: #4385cc; color: #fff; }
+    .exam-timed { display: flex; align-items: center; gap: 8px; color: #c4cad2; font-size: 13px; margin: 14px 0 2px; cursor: pointer; }
+    .exam-timed input { width: auto; }
+    .exam-note { color: #838d9c; font-size: 12px; margin: 8px 0 0; }
+
+    .exam-bar { position: sticky; top: 52px; z-index: 5; display: flex; align-items: center; gap: 14px;
+      background: #0d1014; border: 1px solid #232c36; border-radius: 3px; padding: 10px 14px; margin-bottom: 16px; }
+    .exam-bar .eb-count { color: #c4cad2; font-size: 13px; }
+    .exam-bar .eb-timer { color: #8fbdec; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .exam-bar .sp { flex: 1; }
+    .exam-bar .eb-submit { margin-top: 0; padding: 7px 14px; }
+
+    .exam-q { background: #141a21; border: 1px solid #232c36; border-radius: 3px; padding: 16px 18px; margin-bottom: 12px; }
+    .exam-q .eq-num { color: #838d9c; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin: 0 0 8px; }
+    .exam-q .prompt { font-size: 14px; font-weight: 600; margin: 0 0 12px; line-height: 1.4; }
+    .exam-q.miss { border-color: #5a3030; }
+    .exam-q .miss-tag { color: #d98a8a; font-size: 10px; margin-left: 8px; border: 1px solid #5a3030; border-radius: 2px; padding: 1px 5px; }
+    .exam-q .fb { font-size: 13px; color: #c4cad2; margin-top: 10px; line-height: 1.5; }
+    .exam-q .fb.muted { color: #9aa4b2; font-style: italic; }
+    .exam-opt { display: block; width: 100%; text-align: left; background: #0b0f14; border: 1px solid #2b3644;
+      color: #dfe5ec; border-radius: 3px; padding: 9px 12px; font: inherit; font-size: 13.5px; margin: 6px 0; cursor: pointer; }
+    .exam-opt:hover:not(:disabled) { border-color: #3f6f9c; }
+    .exam-opt.sel { border-color: #4385cc; background: #132132; }
+    .exam-opt.correct { border-color: #3f8f5a; background: #14261a; }
+    .exam-opt.wrong { border-color: #8f3f3f; background: #261414; }
+    .exam-foot { margin: 18px 0 0; }
+
+    .exam-result { background: #141a21; border: 1px solid #232c36; border-radius: 3px; padding: 18px; margin-bottom: 16px; text-align: center; }
+    .exam-result .er-score { font-size: 30px; font-weight: 700; color: #fff; }
+    .exam-result .er-pct { font-size: 15px; color: #8fbdec; margin-top: 2px; }
+    .exam-result .er-meta { color: #838d9c; font-size: 12px; margin-top: 6px; }
+    .exam-result .er-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+    .exam-result .er-actions .btn { margin-top: 0; }
+    .btn.ghost { background: none; border: 1px solid #2b3644; color: #c4cad2; }
+    .btn.ghost:hover { border-color: #3f6f9c; background: #12171d; color: #fff; }
+
     /* Inline lesson overlay: the simulator runs in an iframe here so learners never
        leave the course. Fixed, full-viewport, above the sticky top bar (z-index 10). */
     #lesson-overlay { position: fixed; inset: 0; z-index: 50; background: #050607;

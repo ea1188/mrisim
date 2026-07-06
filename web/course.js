@@ -31,6 +31,8 @@
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
   var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
+  var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
+  var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
 
   // --- tiny DOM builder (textContent-safe; html: only for trusted premium bodies) --- //
   function h(tag, attrs, kids) {
@@ -145,6 +147,10 @@
       document.createTextNode(complete + " / " + total + " read"),
       h("div", { class: "bar" }, [h("i", { style: "width:" + (total ? Math.round(100 * complete / total) : 0) + "%" })]),
     ]));
+    rail.appendChild(h("button", { class: "exam-cta" + (EXAM ? " on" : ""), type: "button", onclick: openExam }, [
+      document.createTextNode("Practice exam"),
+      h("span", { class: "ec-sub", text: "Registry-style run across the whole bank" }),
+    ]));
     perMod.forEach(function (pm) {
       var mod = pm.mod, subs = pm.subs;
       var modDone = subs.length && pm.c === subs.length;
@@ -212,6 +218,7 @@
   }
 
   function renderTopic(main, mod, lessonsByTitle, premiumByTopic) {
+    stopExam();  // leaving the practice exam (if any) for a topic
     if (CTX) CTX.mod = mod;
     var cfg = TOPIC_CFG[mod.title] || { premium: [], quiz: [] };
     clear(main);
@@ -308,6 +315,203 @@
     });
     box.appendChild(fb);
     return box;
+  }
+
+  // --- practice exam ------------------------------------------------------ //
+  // A registry-style run over the WHOLE premium question bank: pick a length, answer
+  // with no feedback, then submit for a score + per-question review. Best score is
+  // kept locally (server-side sync comes later). Option order is fixed per run.
+  function shuffleInts(n) {
+    var a = []; for (var i = 0; i < n; i++) a.push(i);
+    for (var k = a.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)); var t = a[k]; a[k] = a[j]; a[j] = t; }
+    return a;
+  }
+  function examPool() {
+    var pool = [];
+    Object.keys(CTX.byTopic).forEach(function (key) {
+      (CTX.byTopic[key] || []).forEach(function (it) { if (it.kind === "quiz") pool.push(it.body); });
+    });
+    return pool;
+  }
+  function clearExamTimer() { if (EXAM && EXAM.timer) { clearInterval(EXAM.timer); EXAM.timer = null; } }
+  function stopExam() { clearExamTimer(); EXAM = null; }
+  function fmtTime(s) { var m = Math.floor(s / 60), ss = s % 60; return m + ":" + (ss < 10 ? "0" : "") + ss; }
+
+  // Setup screen: choose length + timing, then start.
+  function openExam() {
+    stopExam();
+    EXAM = { setup: true };  // marks the CTA active; no timer yet
+    CTX.mod = null;
+    buildRail();
+    renderExamSetup(CTX.main);
+  }
+  function renderExamSetup(main) {
+    clear(main);
+    main.appendChild(h("h2", { text: "Practice exam" }));
+    var pool = examPool();
+    if (!pool.length) {
+      main.appendChild(h("p", { class: "lede", text: "No practice questions are available yet." }));
+      window.scrollTo(0, 0); return;
+    }
+    main.appendChild(h("p", { class: "lede", text: "A registry-style run drawn at random from the full course bank of " + pool.length + " questions. You get no feedback until you submit." }));
+
+    var lenOpts = [];
+    [50, 100].forEach(function (n) { if (n < pool.length) lenOpts.push(n); });
+    lenOpts.push(pool.length);
+    var chosen = lenOpts[0], timed = false;
+
+    var lenRow = h("div", { class: "exam-lens" });
+    var lenBtns = [];
+    lenOpts.forEach(function (n) {
+      var label = n === pool.length ? "All (" + n + ")" : String(n);
+      var b = h("button", { class: "exam-len" + (n === chosen ? " on" : ""), type: "button", onclick: function () {
+        chosen = n; lenBtns.forEach(function (x) { x.el.classList.toggle("on", x.n === n); });
+      } }, [document.createTextNode(label)]);
+      lenBtns.push({ el: b, n: n }); lenRow.appendChild(b);
+    });
+
+    var check = h("input", { type: "checkbox", onchange: function () { timed = check.checked; } });
+    var timedRow = h("label", { class: "exam-timed" }, [check, document.createTextNode("Timed run (about one minute per question, auto-submits at zero)")]);
+
+    var best = loadExamBest();
+    var bestLine = best && best.bestPct != null
+      ? h("p", { class: "exam-note", text: "Your best so far: " + best.bestPct + "% (" + best.bestScore + " of " + best.bestTotal + ")." })
+      : document.createTextNode("");
+
+    var start = h("button", { class: "btn", text: "Start exam", onclick: function () { startExam(chosen, timed); } });
+
+    main.appendChild(h("div", { class: "exam-setup" }, [
+      h("h3", { text: "How many questions" }), lenRow, timedRow, bestLine, start,
+    ]));
+    window.scrollTo(0, 0);
+  }
+  function startExam(n, timed) {
+    var pool = examPool();
+    var order = shuffleInts(pool.length).slice(0, Math.min(n, pool.length));
+    var questions = order.map(function (idx) { var q = pool[idx]; return { q: q, order: shuffleInts(q.options.length) }; });
+    beginExam(questions, timed);
+  }
+  function retryMissed(missed) {
+    beginExam(missed.map(function (q) { return { q: q, order: shuffleInts(q.options.length) }; }), false);
+  }
+  function beginExam(questions, timed) {
+    stopExam();
+    EXAM = {
+      questions: questions, picks: questions.map(function () { return -1; }),
+      timed: timed, remaining: timed ? questions.length * 60 : 0, elapsed: 0,
+      reviewing: false, timer: null,
+    };
+    CTX.mod = null;
+    buildRail();
+    renderExam(CTX.main);
+    EXAM.timer = setInterval(tickExam, 1000);
+  }
+  function tickExam() {
+    if (!EXAM || EXAM.reviewing) return;
+    if (EXAM.timed) {
+      EXAM.remaining -= 1;
+      if (EXAM.remaining <= 0) { EXAM.remaining = 0; updateExamBar(); submitExam(); return; }
+    } else { EXAM.elapsed += 1; }
+    updateExamBar();
+  }
+  function renderExam(main) {
+    clear(main);
+    EXAM.barCount = h("span", { class: "eb-count" });
+    EXAM.barTimer = h("span", { class: "eb-timer" });
+    main.appendChild(h("div", { class: "exam-bar" }, [
+      EXAM.barCount, h("span", { class: "sp" }), EXAM.barTimer,
+      h("button", { class: "btn eb-submit", text: "Submit exam", onclick: confirmSubmit }),
+    ]));
+    main.appendChild(h("h2", { text: "Practice exam" }));
+    EXAM.questions.forEach(function (item, qi) {
+      var box = h("div", { class: "exam-q" }, [
+        h("p", { class: "eq-num", text: "Question " + (qi + 1) + " of " + EXAM.questions.length }),
+        h("p", { class: "prompt", text: item.q.prompt }),
+      ]);
+      item.order.forEach(function (orig) {
+        var opt = h("button", { class: "exam-opt", type: "button", onclick: function () { selectOpt(qi, orig, box, opt); } },
+          [document.createTextNode(item.q.options[orig])]);
+        box.appendChild(opt);
+      });
+      main.appendChild(box);
+    });
+    main.appendChild(h("div", { class: "exam-foot" }, [h("button", { class: "btn", text: "Submit exam", onclick: confirmSubmit })]));
+    updateExamBar();
+    window.scrollTo(0, 0);
+  }
+  function selectOpt(qi, orig, box, opt) {
+    if (!EXAM || EXAM.reviewing) return;
+    EXAM.picks[qi] = orig;
+    [].forEach.call(box.querySelectorAll(".exam-opt"), function (o) { o.classList.remove("sel"); });
+    opt.classList.add("sel");
+    updateExamBar();
+  }
+  function updateExamBar() {
+    if (!EXAM || !EXAM.barCount) return;
+    var answered = EXAM.picks.filter(function (p) { return p >= 0; }).length;
+    EXAM.barCount.textContent = answered + " / " + EXAM.questions.length + " answered";
+    EXAM.barTimer.textContent = EXAM.timed ? "Time left " + fmtTime(EXAM.remaining) : "Elapsed " + fmtTime(EXAM.elapsed);
+  }
+  function confirmSubmit() {
+    if (!EXAM || EXAM.reviewing) return;
+    var blank = EXAM.picks.filter(function (p) { return p < 0; }).length;
+    if (blank > 0 && !window.confirm(blank + " question(s) are unanswered and will be marked wrong. Submit now?")) return;
+    submitExam();
+  }
+  function submitExam() {
+    if (!EXAM || EXAM.reviewing) return;
+    EXAM.reviewing = true;
+    clearExamTimer();
+    var correct = 0;
+    EXAM.questions.forEach(function (item, qi) { if (EXAM.picks[qi] === item.q.answer) correct += 1; });
+    var total = EXAM.questions.length, pct = Math.round(100 * correct / total);
+    saveExamBest(correct, total, pct);
+    renderExamReview(correct, total, pct);
+  }
+  function renderExamReview(correct, total, pct) {
+    var main = CTX.main; clear(main);
+    var missed = [];
+    EXAM.questions.forEach(function (item, qi) { if (EXAM.picks[qi] !== item.q.answer) missed.push(item.q); });
+    var used = EXAM.timed ? (EXAM.questions.length * 60 - EXAM.remaining) : EXAM.elapsed;
+    var best = loadExamBest();
+
+    var actions = h("div", { class: "er-actions" });
+    if (missed.length) actions.appendChild(h("button", { class: "btn", text: "Retry " + missed.length + " missed", onclick: function () { retryMissed(missed); } }));
+    actions.appendChild(h("button", { class: "btn ghost", text: "New exam", onclick: openExam }));
+
+    main.appendChild(h("h2", { text: "Exam results" }));
+    main.appendChild(h("div", { class: "exam-result" }, [
+      h("div", { class: "er-score", text: correct + " / " + total }),
+      h("div", { class: "er-pct", text: pct + "%" }),
+      h("div", { class: "er-meta", text: "Time " + fmtTime(used) + (best && best.bestPct != null ? " · best " + best.bestPct + "%" : "") }),
+      actions,
+    ]));
+
+    EXAM.questions.forEach(function (item, qi) {
+      var pick = EXAM.picks[qi], right = pick === item.q.answer;
+      var num = h("p", { class: "eq-num" }, [document.createTextNode("Question " + (qi + 1))]);
+      if (!right) num.appendChild(h("span", { class: "miss-tag", text: "Missed" }));
+      var box = h("div", { class: "exam-q reviewed" + (right ? "" : " miss") }, [num, h("p", { class: "prompt", text: item.q.prompt })]);
+      item.order.forEach(function (orig) {
+        var cls = "exam-opt";
+        if (orig === item.q.answer) cls += " correct";
+        else if (orig === pick) cls += " wrong";
+        box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
+      });
+      if (pick < 0) box.appendChild(h("div", { class: "fb muted", text: "You left this one blank." }));
+      box.appendChild(h("div", { class: "fb", text: item.q.explain }));
+      main.appendChild(box);
+    });
+    window.scrollTo(0, 0);
+  }
+  function loadExamBest() { try { return JSON.parse(localStorage.getItem(COURSE_EXAM_KEY) || "null"); } catch (e) { return null; } }
+  function saveExamBest(score, total, pct) {
+    try {
+      var b = loadExamBest() || {};
+      if (b.bestPct == null || pct > b.bestPct) { b.bestPct = pct; b.bestScore = score; b.bestTotal = total; b.at = Date.now(); }
+      b.lastPct = pct; b.lastAt = Date.now();
+      localStorage.setItem(COURSE_EXAM_KEY, JSON.stringify(b));
+    } catch (e) { /* storage off */ }
   }
 
   // --- progress persistence (local, best-effort) -------------------------- //
