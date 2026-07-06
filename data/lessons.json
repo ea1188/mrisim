@@ -1263,7 +1263,8 @@
       "title": "1 · What an MRI image is",
       "lessons": [
         "Start here: what is an MRI image?",
-        "Start here: dark or bright? T1 vs T2"
+        "Start here: dark or bright? T1 vs T2",
+        "Slice thickness & partial volume"
       ]
     },
     {
@@ -1271,7 +1272,9 @@
       "lessons": [
         "Start here: why so many sequences?",
         "T1, T2 & PD contrast",
-        "Where contrast comes from"
+        "Where contrast comes from",
+        "With contrast: what gadolinium does",
+        "Balanced SSFP: bright fluid, fast"
       ]
     },
     {
@@ -1297,7 +1300,8 @@
         "SNR vs. scan time",
         "Resolution vs SNR: the matrix trade-off",
         "The Ernst angle: flip for max signal",
-        "Parallel imaging & the g-factor"
+        "Parallel imaging & the g-factor",
+        "Bandwidth: the hidden three-way trade"
       ]
     },
     {
@@ -1305,7 +1309,8 @@
       "lessons": [
         "Reading k-space",
         "Multi-slice cross-talk & the gap",
-        "Measuring the image: ruler, ROI & SNR"
+        "Measuring the image: ruler, ROI & SNR",
+        "Receive coils: why the picture isn't evenly bright"
       ]
     },
     {
@@ -1325,7 +1330,9 @@
         "When images go wrong: artifacts",
         "B0 inhomogeneity & EPI distortion",
         "A tour of the real anatomy",
-        "Perfusion: blood flow, stroke and tumour grade"
+        "Perfusion: blood flow, stroke and tumour grade",
+        "SWI: veins, iron & old blood",
+        "fMRI: watching the brain light up"
       ]
     },
     {
