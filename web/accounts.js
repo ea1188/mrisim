@@ -143,6 +143,16 @@
         .order("created_at", { ascending: false });
     }).then(function (r) { return r.data || []; });
   }
+  function archiveClass(classId, archived) {
+    return client().then(function (c) {
+      return c.from("classes").update({ archived: !!archived }).eq("id", classId);
+    });
+  }
+  function deleteClass(classId) {
+    return client().then(function (c) {
+      return c.from("classes").delete().eq("id", classId);   // cascades enrollments + activity
+    });
+  }
   function roster(classId) {
     return client().then(function (c) {
       return c.from("enrollments")
@@ -174,6 +184,7 @@
     profile: profile, onChange: onChange, logActivity: logActivity,
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
+    archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
   };
 })();

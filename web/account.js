@@ -114,10 +114,22 @@
 
     function classCard(cl) {
       var body = h("div");
+      var archiveBtn = h("button", { class: "ghost", text: cl.archived ? "Unarchive" : "Archive", onclick: function () {
+        archiveBtn.disabled = true;
+        Accounts.archiveClass(cl.id, !cl.archived).then(function () { load(); })
+          .catch(function () { archiveBtn.disabled = false; });
+      } });
+      var delBtn = h("button", { class: "ghost", text: "Delete", onclick: function () {
+        if (!window.confirm("Delete \"" + cl.name + "\"? This removes its roster and all its activity. This cannot be undone.")) return;
+        delBtn.disabled = true;
+        Accounts.deleteClass(cl.id).then(function () { load(); })
+          .catch(function () { delBtn.disabled = false; });
+      } });
       var head = h("div", { class: "classhead" }, [
         h("h2", { class: "grow", text: cl.name + (cl.archived ? " (archived)" : "") }),
         h("span", { class: "muted", text: "Join code:" }),
         h("span", { class: "code", text: cl.join_code }),
+        archiveBtn, delBtn,
       ]);
       var c = card([head, body]);
       body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
