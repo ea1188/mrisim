@@ -3393,6 +3393,134 @@
         "answer": 0,
         "explain": "Distortion in EPI accumulates with the time between lines, so tighter echo spacing (or parallel imaging) reduces the geometric warping."
       }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "education",
+      "ord": 80,
+      "body": {
+        "title": "Fat suppression: STIR, spectral, Dixon and water excitation",
+        "html": "<p><b>Fat is bright</b> on most sequences and can hide pathology, so suppressing it raises the conspicuity of oedema, enhancement and marrow disease. Four methods dominate:</p><ul><li><b>STIR</b> (short-TI inversion recovery) nulls fat by its <b>T1</b>. Because it acts on T1 and not frequency, it is <b>uniform</b> even in a poor field (off-isocentre, near metal), but it is not fat-specific and will null anything with fat's short T1, including gadolinium-enhancing tissue, so it is not combined with contrast.</li><li><b>Spectral (chemical-shift) saturation</b> uses a frequency-selective pulse to saturate fat before readout. It is fat-specific and contrast-compatible but <b>fails where the field is inhomogeneous</b>, and it is harder at lower field where the fat-water frequency gap is smaller.</li><li><b>Dixon</b> acquires <b>in-phase and opposed-phase</b> echoes and computes separate water-only and fat-only images, robustly and quantitatively.</li><li><b>Water excitation</b> tips only the water protons, used in high-resolution cartilage imaging.</li></ul><p>Choosing among them trades <b>uniformity</b> (STIR) against <b>specificity and contrast compatibility</b> (spectral, Dixon) and speed.</p>",
+        "keypoints": [
+          "STIR nulls fat by T1: uniform in a poor field, but not contrast-compatible.",
+          "Spectral fat-sat is fat-specific and contrast-compatible but needs a homogeneous field.",
+          "Dixon uses in-phase and opposed-phase echoes for robust water-only and fat-only images.",
+          "Water excitation tips only water, used in high-resolution cartilage imaging.",
+          "Suppressing bright fat raises conspicuity of enhancement, oedema and marrow disease."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "education",
+      "ord": 81,
+      "body": {
+        "title": "Data acquisition: k-space, encoding and the Fourier transform",
+        "html": "<p>MRI does not measure the image directly; it fills <b>k-space</b>, a grid of spatial-frequency data, and the <b>Fourier transform</b> converts that into the picture. Two gradients encode position within a slice: <b>frequency encoding</b> is applied during readout, mapping position to signal frequency, and <b>phase encoding</b> is stepped once per <b>TR</b> to fill successive k-space lines. Because each line needs its own TR, the <b>phase matrix (not the frequency matrix) drives scan time</b>.</p><p>The <b>centre of k-space</b> carries bulk signal and contrast; the <b>periphery</b> carries edges and fine detail (resolution). This explains many techniques: <b>partial Fourier</b> samples just over half of k-space using its symmetry; <b>centric ordering</b> fills the centre first to capture contrast at a chosen instant (dynamic MRA); <b>parallel imaging</b> skips lines and uses coil sensitivities to unfold the result; and <b>zero-filling</b> interpolates to a finer display matrix without adding true resolution. A true <b>3D</b> acquisition adds a second phase-encode (partition) gradient through the slab.</p>",
+        "keypoints": [
+          "MRI fills k-space; the Fourier transform makes the image.",
+          "Frequency encoding is during readout; phase encoding steps once per TR.",
+          "The phase matrix drives scan time; the frequency matrix is essentially free.",
+          "k-space centre = contrast and signal; periphery = resolution and edges.",
+          "Partial Fourier, parallel imaging and centric ordering all manipulate how k-space is filled."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "education",
+      "ord": 82,
+      "body": {
+        "title": "MRI instrumentation: magnet, gradients, RF and coils",
+        "html": "<p>An MRI scanner is four subsystems working together. The <b>main magnet</b> provides the strong static field, usually a <b>superconducting</b> magnet cooled by <b>liquid helium</b>; its homogeneity is fine-tuned by <b>shim</b> coils, and its <b>fringe field</b> extends beyond the bore, bounded by the <b>5-gauss line</b>. <b>Gradient coils</b> (x, y, z) superimpose linear field variations for slice selection and spatial encoding; their fast switching makes the acoustic noise and can cause peripheral nerve stimulation. The <b>RF system</b> uses a <b>transmit coil</b> to excite spins (the B1 field) and <b>receive coils</b> (often <b>phased arrays</b>) to detect the tiny returning signal and enable parallel imaging.</p><p>Supporting these, the <b>RF (Faraday) shield</b> around the room blocks external radio interference, and higher <b>field strength</b> (for example 3 T versus 1.5 T) raises SNR but also raises SAR, chemical shift and susceptibility. A <b>quench</b> is the sudden loss of superconductivity that boils off helium, which is why the room has an oxygen monitor and a vent.</p>",
+        "keypoints": [
+          "Superconducting magnets are cooled by liquid helium; shims optimise homogeneity.",
+          "Gradient coils encode position and cause the acoustic noise and PNS.",
+          "The RF transmit coil excites spins; receive (phased-array) coils detect signal.",
+          "The Faraday shield blocks external RF (zipper); the 5-gauss line bounds the fringe field.",
+          "Higher field raises SNR but also SAR, chemical shift and susceptibility."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "education",
+      "ord": 83,
+      "body": {
+        "title": "3D imaging and reconstruction: volumes, MIP and reformats",
+        "html": "<p>A <b>2D</b> acquisition excites one slice at a time; a <b>3D volumetric</b> acquisition excites a whole slab and phase-encodes through it, yielding <b>thin, contiguous (gapless) partitions with high SNR</b>. When the voxels are <b>isotropic</b> (equal in all directions), the volume can be <b>reformatted (MPR)</b> into any plane without loss of resolution, so one acquisition serves every viewing angle.</p><p>Volumes are also shown as <b>projections</b>: a <b>maximum-intensity projection (MIP)</b> keeps the brightest voxel along each ray to show bright vessels in MR angiography, while a <b>minimum-intensity projection (MinIP)</b> keeps the darkest voxel to show veins on susceptibility imaging or air. The trade-offs to remember: 3D gives thin slices and high SNR but is more motion-sensitive and can take longer, while thick 2D slices are fast but suffer <b>partial-volume averaging</b>. Adjacent 2D slices can also <b>cross-talk</b> through imperfect slice profiles, reduced by an interslice gap or interleaving.</p>",
+        "keypoints": [
+          "3D excites a slab and partition-encodes it: thin gapless slices, high SNR.",
+          "Isotropic voxels allow multiplanar reformatting in any plane.",
+          "MIP displays bright vessels; MinIP displays dark veins or air.",
+          "Thick 2D slices are fast but blur small findings (partial volume).",
+          "Slice cross-talk is reduced with an interslice gap or interleaving."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "education",
+      "ord": 84,
+      "body": {
+        "title": "Regional anatomy: planes and sequences by body part",
+        "html": "<p>Each body part has a preferred <b>plane</b> and <b>sequence</b> chosen to display its key structures. A few high-yield examples:</p><ul><li><b>Neuro:</b> the internal auditory canals are screened with thin heavily T2-weighted images (CISS/FIESTA) for the vestibulocochlear nerve; the <b>pituitary</b> with thin dynamic post-contrast coronal T1; the temporal lobes with thin oblique coronals through the hippocampi.</li><li><b>Musculoskeletal:</b> the <b>rotator cuff</b> (supraspinatus) on oblique coronal; the <b>ACL</b> on sagittal oblique; the <b>menisci</b> on short-TE (proton-density) sagittal and coronal.</li><li><b>Body:</b> <b>MRCP</b> uses heavily T2-weighted sequences so static bile and pancreatic fluid are bright; the <b>liver</b> is characterised with multiphase dynamic post-gadolinium T1; the <b>prostate</b> with high-resolution T2 plus diffusion and dynamic contrast; the <b>breast</b> with fat-suppressed dynamic T1 and subtraction.</li></ul><p>The recurring logic: pick the plane that lies <b>along or across</b> the structure of interest, and the contrast that makes its pathology stand out (fluid-sensitive, fat-suppressed, or dynamic enhancement).</p>",
+        "keypoints": [
+          "Choose the plane along or across the structure of interest.",
+          "Neuro: thin T2 for cranial nerves; dynamic coronal T1 for the pituitary.",
+          "MSK: oblique coronal for the cuff, sagittal for the ACL, short-TE for menisci.",
+          "Body: MRCP is heavily T2; liver, prostate and breast rely on dynamic contrast.",
+          "Match the contrast (fluid-sensitive, fat-sat, dynamic) to the pathology sought."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "education",
+      "ord": 85,
+      "body": {
+        "title": "Building a protocol: why each sequence is there",
+        "html": "<p>A protocol is a deliberate sequence of acquisitions, each present for a reason. A <b>routine brain</b> study typically includes <b>T1</b> (anatomy), <b>T2</b> and <b>FLAIR</b> (fluid-sensitive pathology, with FLAIR nulling CSF), and <b>DWI</b> (acute ischaemia), with <b>post-gadolinium T1</b> added when enhancement is relevant. Disease-specific protocols tune this base: acute stroke leans on <b>DWI/ADC</b>; multiple sclerosis emphasises <b>FLAIR</b> plus post-contrast T1; a brain tumour adds <b>perfusion</b> to grade vascularity; the temporal lobes get thin hippocampal coronals for epilepsy.</p><p>Body and vascular protocols follow the same logic: cardiac viability uses <b>late gadolinium enhancement</b>, enterography distends bowel and images dynamically, and non-contrast <b>angiography</b> uses time-of-flight or phase contrast. The technologist also builds in artifact control: <b>flow compensation, gating and saturation bands</b> for pulsatile flow, and <b>metal-artifact-reduction</b> choices (spin echo over gradient echo, high bandwidth) around hardware.</p>",
+        "keypoints": [
+          "Routine brain: T1, T2, FLAIR, DWI, plus post-gadolinium T1 when needed.",
+          "Each sequence answers a specific question; disease tunes the base protocol.",
+          "Stroke leans on DWI; MS on FLAIR; tumour adds perfusion.",
+          "Angiography uses TOF, phase contrast or timed contrast.",
+          "Protocols build in artifact control (gating, sat bands, metal-reduction)."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "education",
+      "ord": 86,
+      "body": {
+        "title": "MR angiography and venography: TOF, PC and contrast methods",
+        "html": "<p>MR angiography shows vessels three ways. <b>Time-of-flight (TOF)</b> saturates stationary tissue so fresh <b>inflowing</b> blood is bright (flow-related enhancement); it needs thin slabs perpendicular to flow and fails for in-plane flow. <b>Phase contrast (PC)</b> encodes velocity as phase, so it not only depicts vessels but <b>quantifies flow velocity and direction</b>; its <b>VENC</b> must exceed the true velocity or the phase aliases. <b>Contrast-enhanced MRA</b> shortens blood T1 with gadolinium for a fast, flow-independent angiogram, where <b>bolus timing to the arterial phase</b> is everything (peripheral run-off uses a moving-table bolus chase, and time-resolved methods trade spatial for temporal resolution).</p><p><b>MR venography</b> assesses the dural sinuses or deep veins with 2D TOF, PC or post-contrast venography. For patients who cannot receive gadolinium, <b>non-contrast</b> techniques (TOF, PC, and ECG-gated fresh-blood or quiescent-interval methods) provide angiograms with no contrast at all.</p>",
+        "keypoints": [
+          "TOF: inflowing unsaturated blood is bright; it fails for in-plane flow.",
+          "Phase contrast quantifies velocity and direction; VENC must exceed peak flow.",
+          "CE-MRA is fast and flow-independent but depends on arterial bolus timing.",
+          "MR venography uses TOF, PC or post-contrast to assess sinuses and deep veins.",
+          "Non-contrast MRA (TOF, PC, fresh-blood) serves patients who cannot have gadolinium."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-agents",
+      "kind": "education",
+      "ord": 87,
+      "body": {
+        "title": "MRI contrast agents: gadolinium, safety and special agents",
+        "html": "<p>The workhorse MRI contrast agents are <b>gadolinium chelates</b>. Gadolinium is <b>paramagnetic</b> and <b>shortens the T1</b> of nearby tissue, so where it accumulates the tissue brightens on T1-weighted images. In the brain it reaches tissue only where the <b>blood-brain barrier is broken</b>, so enhancement flags tumour, active demyelination or infection. Agents are <b>excreted by the kidneys</b>, which is why renal function (<b>eGFR</b>) is checked first: in severe impairment, less-stable <b>linear</b> agents are linked to <b>nephrogenic systemic fibrosis (NSF)</b>, so more stable <b>macrocyclic</b> agents at the lowest effective dose are preferred, or contrast is avoided.</p><p>Reactions range from mild (hives, treated with antihistamines and observation) to rare <b>anaphylaxis</b>, whose first-line treatment is <b>epinephrine</b>. Gadolinium is avoided in <b>pregnancy</b> unless essential. Beyond standard extracellular agents, <b>hepatobiliary</b> agents aid liver characterisation, <b>iron-based</b> agents can act as blood-pool agents, and <b>negative oral</b> agents darken bowel fluid for MRCP.</p>",
+        "keypoints": [
+          "Gadolinium is paramagnetic, shortens T1, and brightens tissue on T1 images.",
+          "Brain enhancement marks blood-brain-barrier breakdown.",
+          "Check eGFR: NSF links less-stable linear agents to severe renal failure.",
+          "Prefer stable macrocyclic agents at the lowest effective dose; avoid in pregnancy unless essential.",
+          "Mild reactions get antihistamines; anaphylaxis is treated first with epinephrine."
+        ]
+      }
     }
   ]
 }
