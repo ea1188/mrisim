@@ -36,17 +36,20 @@
     .hero .metrics .l { font-size: 12px; color: var(--dim); margin-top: 3px; }
 
     /* the instrument (C's signature): a live scope card */
-    .scope { border: 1px solid var(--line-2); border-radius: 12px; background: #05070a; overflow: hidden;
-      box-shadow: 0 30px 80px -46px rgba(0,0,0,.9); }
+    .scope { border: 1px solid var(--line-2); border-radius: 2px; background: #05070a; overflow: hidden; }
     .scope .schead { display: flex; align-items: center; gap: 12px; padding: 11px 14px; font-family: var(--mono);
       font-size: 11px; letter-spacing: .06em; color: var(--dim); border-bottom: 1px solid var(--line);
-      background: linear-gradient(#0a0d12,#080b10); }
-    .scope .live { color: var(--signal); display: inline-flex; align-items: center; gap: 6px; }
-    .scope .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal);
-      box-shadow: 0 0 10px var(--signal); animation: blink 1.4s step-end infinite; }
+      background: #0a0d12; }
     .scope .sp { margin-left: auto; }
-    @keyframes blink { 50% { opacity: .28; } }
-    .scope canvas#fid { display: block; width: 100%; height: 232px; }
+    .scope canvas#mri { display: block; width: 100%; height: auto; aspect-ratio: 181 / 212; background: #04060a; }
+    .simctl { display: grid; gap: 9px; padding: 13px 15px; border-top: 1px solid var(--line); }
+    .simctl label { display: grid; grid-template-columns: 40px 1fr 58px; align-items: center; gap: 10px; }
+    .simctl .cl { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+    .simctl .cv { font-family: var(--mono); font-size: 12px; color: var(--accent); text-align: right; font-variant-numeric: tabular-nums; }
+    .simctl input[type=range] { -webkit-appearance: none; appearance: none; height: 3px; background: var(--line-2); }
+    .simctl input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--accent); cursor: pointer; border: 0; }
+    .simctl input[type=range]::-moz-range-thumb { width: 12px; height: 12px; background: var(--accent); cursor: pointer; border: 0; }
+    .simctl input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
     .scope .readout { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--line);
       font-family: var(--mono); }
     .scope .readout div { padding: 11px 14px; border-right: 1px solid var(--line); }
@@ -63,7 +66,7 @@
     /* ---- tools grid ---- */
     .tools { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
     .tool { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line);
-      border-radius: 12px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
+      border-radius: 2px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
     .tool:hover { border-color: var(--accent-deep); background: var(--panel-2); transform: translateY(-2px); }
     .tool .ico { width: 24px; height: 24px; color: var(--muted); margin-bottom: 14px; }
     .tool:hover .ico { color: var(--accent); }
@@ -72,12 +75,12 @@
     .tool .go { color: var(--accent); font-size: 13px; font-weight: 600; margin-top: 16px; }
     .tool .prog { display: block; color: var(--dim); font-size: 12px; margin-top: 8px; font-variant-numeric: tabular-nums; }
     .tool .tag { align-self: flex-start; font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
-      text-transform: uppercase; color: var(--signal); border: 1px solid #234436; border-radius: 999px;
+      text-transform: uppercase; color: var(--signal); border: 1px solid #234436; border-radius: 2px;
       padding: 2px 9px; margin-bottom: 12px; }
 
     /* ---- proof strip: the real product tiles ---- */
     .proof { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
-    .ptile { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #06080b; }
+    .ptile { border: 1px solid var(--line); border-radius: 2px; overflow: hidden; background: #06080b; }
     .ptile .cv { position: relative; aspect-ratio: 16 / 11; }
     .ptile canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
     .ptile .meta { padding: 12px 14px; border-top: 1px solid var(--line); }
@@ -85,8 +88,7 @@
     .ptile .meta .d { color: var(--muted); font-size: 12px; margin-top: 3px; }
 
     /* ---- course band ---- */
-    .band { border: 1px solid var(--line-2); border-radius: 16px; background:
-      radial-gradient(120% 140% at 100% 0%, rgba(93,176,239,.10), transparent 55%), var(--panel);
+    .band { border: 1px solid var(--line-2); border-radius: 2px; background: var(--panel);
       padding: clamp(26px,4vw,44px); display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
     .band .txt { flex: 1 1 340px; }
     .band h2 { font-size: clamp(21px,2.6vw,28px); font-weight: 660; }
@@ -108,7 +110,7 @@
       .proof { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 520px) { .proof { grid-template-columns: 1fr; } }
-    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .scope .live i { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   </style>
 </head>
 <body>
@@ -133,8 +135,8 @@
         <div>
           <span class="eyebrow">Interactive MR physics · in the browser</span>
           <h1>Learn MRI by running the physics, <em>not memorizing it.</em></h1>
-          <p class="sub">The real simulation engine runs client-side. Pulse a sequence and watch the
-            free-induction decay, k-space, the 3D reconstruction and quantitative maps recompute in real time.</p>
+          <p class="sub">The real simulation engine runs client-side. Drag TR, TE and the flip angle
+            and watch the contrast recompute on an actual brain slice, pixel by pixel, in real time.</p>
           <div class="cta">
             <a class="btn pri" href="simulator.html">Open the simulator →</a>
             <a class="btn sec" href="course.html">Guided course</a>
@@ -145,17 +147,16 @@
             <div><div class="n">100%</div><div class="l">runs client-side</div></div>
           </div>
         </div>
-        <div class="scope" aria-hidden="true">
+        <div class="scope">
           <div class="schead">
-            <span class="live"><i></i>ACQUIRING</span>
-            <span>spin-echo</span><span>B0 1.5 T</span>
-            <span class="sp"></span><span>CH1 · FID</span>
+            <span>spoiled GRE</span><span>B0 3 T</span>
+            <span class="sp"></span><span>brainweb · axial</span>
           </div>
-          <canvas id="fid" width="560" height="232"></canvas>
-          <div class="readout">
-            <div><div class="k">TR</div><div class="v">500 ms</div></div>
-            <div><div class="k">TE</div><div class="v">14 ms</div></div>
-            <div><div class="k">FLIP</div><div class="v">90°</div></div>
+          <canvas id="mri" width="362" height="424"></canvas>
+          <div class="simctl">
+            <label><span class="cl">TR</span><input id="s-tr" type="range" min="5" max="3000" step="5" value="500" aria-label="Repetition time TR"><span class="cv" id="v-tr">500 ms</span></label>
+            <label><span class="cl">TE</span><input id="s-te" type="range" min="2" max="150" step="1" value="15" aria-label="Echo time TE"><span class="cv" id="v-te">15 ms</span></label>
+            <label><span class="cl">Flip</span><input id="s-fl" type="range" min="5" max="90" step="1" value="90" aria-label="Flip angle"><span class="cv" id="v-fl">90°</span></label>
           </div>
         </div>
       </div>
@@ -282,18 +283,6 @@
         cv.width = Math.max(2, r.width * d); cv.height = Math.max(2, r.height * d);
         var g = cv.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0); return { g: g, w: r.width, h: r.height };
       }
-      function slice(cv) {
-        var s = fit(cv), g = s.g, w = s.w, h = s.h, cx = w/2, cy = h/2, rx = w*0.34, ry = h*0.42;
-        g.fillStyle = "#05070a"; g.fillRect(0,0,w,h);
-        for (var i = 0; i < 46; i++) {
-          var rr = 1 - i/46, v = Math.round(120*rr + 40 + (i%3)*10);
-          g.beginPath(); g.ellipse(cx, cy, rx*rr, ry*rr, 0, 0, 7);
-          g.fillStyle = "rgba("+v+","+v+","+(v+6)+",0.14)"; g.fill();
-        }
-        g.fillStyle = "rgba(10,14,20,.9)";
-        g.beginPath(); g.ellipse(cx-6, cy, w*0.05, h*0.14, .3, 0, 7); g.fill();
-        g.beginPath(); g.ellipse(cx+6, cy, w*0.05, h*0.14, -.3, 0, 7); g.fill();
-      }
       function kspace(cv) {
         var s = fit(cv), g = s.g, w = s.w, h = s.h, cx = w/2, cy = h/2, step = Math.max(6, w/24);
         g.fillStyle = "#04060a"; g.fillRect(0,0,w,h);
@@ -315,29 +304,71 @@
       }
       document.querySelectorAll("canvas[data-kind]").forEach(function (cv) {
         var k = cv.getAttribute("data-kind");
-        if (k === "slice") slice(cv); else if (k === "kspace") kspace(cv); else if (k === "map") heat(cv);
+        if (k === "kspace") kspace(cv); else if (k === "map") heat(cv);
       });
 
-      var fidc = document.getElementById("fid");
-      if (fidc) {
-        var s = fit(fidc), g = s.g, W = s.w, H = s.h, t0 = performance.now();
-        function grid() {
-          g.clearRect(0,0,W,H); g.fillStyle = "#04060a"; g.fillRect(0,0,W,H);
-          g.strokeStyle = "rgba(93,176,239,.10)"; g.lineWidth = 1;
-          for (var x=0;x<W;x+=W/10){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}
-          for (var y=0;y<H;y+=H/5){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}
+      // Hero mini-simulator: the REAL brainweb axial slice (data/brain_slice.bin, uint8
+      // tissue labels) rendered with the engine's own spoiled-GRE signal model, recomputed
+      // in JS as the viewer drags TR / TE / flip. Tissue table = tissue_db.py (3 T);
+      // equation = signal_engine.gradient_echo_signal. A genuine slice of the simulator.
+      var mri = document.getElementById("mri");
+      if (mri) {
+        var SW = 181, SH = 212;                        // native dims of brain_slice.bin
+        var TIS = {                                    // label -> {T1, T2*, PD} at 3 T
+          0:{t1:1,t2:1,pd:0}, 1:{t1:4500,t2:1000,pd:1.00}, 2:{t1:1330,t2:60,pd:0.80},
+          3:{t1:830,t2:48,pd:0.65}, 4:{t1:382,t2:45,pd:0.95}, 5:{t1:250,t2:2,pd:0.10},
+          6:{t1:898,t2:24,pd:0.75}, 11:{t1:1900,t2:200,pd:0.95}, 14:{t1:586,t2:40,pd:0.92},
+          15:{t1:1100,t2:24,pd:0.72}
+        };
+        var mctx = mri.getContext("2d");
+        var off = document.createElement("canvas"); off.width = SW; off.height = SH;
+        var octx = off.getContext("2d"), imgd = octx.createImageData(SW, SH), labels = null;
+        var trI = document.getElementById("s-tr"), teI = document.getElementById("s-te"), flI = document.getElementById("s-fl");
+        var trV = document.getElementById("v-tr"), teV = document.getElementById("v-te"), flV = document.getElementById("v-fl");
+        function gre(t, TR, TE, cosA, sinA) {                 // spoiled gradient echo
+          if (t.pd === 0) return 0;
+          var E1 = Math.exp(-TR / t.t1), denom = 1 - cosA * E1;
+          if (Math.abs(denom) < 1e-9) return 0;
+          return t.pd * sinA * (1 - E1) * Math.exp(-TE / t.t2) / denom;
         }
-        function trace(ph) {
-          g.strokeStyle = "#57e0a8"; g.lineWidth = 2; g.shadowColor = "#57e0a8"; g.shadowBlur = 8;
-          g.beginPath();
-          for (var px=0; px<=W; px++) {
-            var x = px/W*8, yy = Math.sin(x*6.3 - ph) * Math.exp(-x*0.55);
-            var py = H/2 - yy*(H*0.36); px ? g.lineTo(px,py) : g.moveTo(px,py);
+        function computeInto(TR, TE, FL) {                    // fill `off` with the signal image
+          if (!labels) return;
+          var aR = FL * Math.PI / 180, cosA = Math.cos(aR), sinA = Math.sin(aR);
+          var sig = {}, maxS = 1e-6;
+          Object.keys(TIS).forEach(function (k) {
+            var s = gre(TIS[k], TR, TE, cosA, sinA); sig[k] = s; if (k !== "0" && s > maxS) maxS = s;
+          });
+          var d = imgd.data;
+          for (var i = 0; i < labels.length; i++) {
+            var s = sig[labels[i]] || 0, v = (s / maxS * 255) | 0; if (v > 255) v = 255; if (v < 0) v = 0;
+            var p = i * 4; d[p] = v; d[p + 1] = v; d[p + 2] = v; d[p + 3] = 255;
           }
-          g.stroke(); g.shadowBlur = 0;
+          octx.putImageData(imgd, 0, 0);
         }
-        if (reduce) { grid(); trace(0); }
-        else (function loop(now){ grid(); trace(((now-t0)/1000*3.2)%(Math.PI*2)); requestAnimationFrame(loop); })(t0);
+        function blit(cv, cctx) {
+          cctx.imageSmoothingEnabled = true; cctx.clearRect(0, 0, cv.width, cv.height);
+          cctx.drawImage(off, 0, 0, cv.width, cv.height);
+        }
+        function render() {
+          if (!labels) return;
+          var TR = +trI.value, TE = +teI.value, FL = +flI.value;
+          trV.textContent = TR + " ms"; teV.textContent = TE + " ms"; flV.textContent = FL + "°";
+          computeInto(TR, TE, FL); blit(mri, mctx);
+        }
+        function paintTile(cv, TR, TE, FL) {                  // same real slice+model, fixed params
+          var r = cv.getBoundingClientRect(), dp = Math.min(devicePixelRatio || 1, 2);
+          cv.width = Math.max(2, r.width * dp); cv.height = Math.max(2, r.height * dp);
+          computeInto(TR, TE, FL); blit(cv, cv.getContext("2d"));
+        }
+        [trI, teI, flI].forEach(function (el) { el.addEventListener("input", render); });
+        fetch("data/brain_slice.bin").then(function (r) { return r.arrayBuffer(); })
+          .then(function (buf) {
+            labels = new Uint8Array(buf);
+            render();                                         // hero (uses the sliders)
+            var pslice = document.querySelector('canvas[data-kind="slice"]');
+            if (pslice) paintTile(pslice, 500, 12, 80);       // "Reconstruction" proof tile: T1 weighted
+          })
+          .catch(function () { /* asset unavailable: leave the panel blank */ });
       }
     })();
   </script>

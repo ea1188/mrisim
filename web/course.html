@@ -20,7 +20,7 @@
     .top img { width: 26px; height: 26px; }
     .top h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
     .top .badge { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--accent); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 9px; }
+      color: var(--accent); border: 1px solid var(--line-2); border-radius: 2px; padding: 2px 9px; }
     .top .sp { flex: 1; }
     .top a, .top button { color: var(--muted); text-decoration: none; font: inherit; font-size: 13px;
       background: none; border: none; cursor: pointer; transition: color .15s; }
@@ -29,17 +29,17 @@
 
     /* Gate screens (sign-in / paywall / notices) */
     .gate { max-width: 520px; margin: 8vh auto; padding: 0 18px; }
-    .gate .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 26px; }
+    .gate .card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 26px; }
     .gate h2 { font-size: 19px; margin: 0 0 10px; }
     .gate p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0 0 14px; }
     .gate label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 5px; }
     .gate input { width: 100%; box-sizing: border-box; background: var(--bg-2); border: 1px solid var(--line-2);
-      color: var(--text); border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 14px; }
+      color: var(--text); border-radius: 2px; padding: 10px 12px; font: inherit; font-size: 14px; }
     .gate input:focus { outline: none; border-color: var(--accent); }
 
     /* Local solid-accent button (overrides theme .btn base for bare `.btn` usage in course.js) */
     .btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; background: var(--accent);
-      color: var(--accent-ink); border: 1px solid transparent; border-radius: 8px; padding: 10px 16px;
+      color: var(--accent-ink); border: 1px solid transparent; border-radius: 2px; padding: 10px 16px;
       font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; transition: .16s; }
     .btn:hover { background: #7cc0f4; }
     .msg { font-size: 13px; margin-top: 12px; } .msg.ok { color: var(--ok); } .msg.err { color: var(--warn); }
@@ -48,7 +48,7 @@
     .course { display: grid; grid-template-columns: 288px 1fr; min-height: calc(100vh - 56px); }
     .rail { border-right: 1px solid var(--line); padding: 12px 0; overflow-y: auto; }
     .rail .prog { padding: 6px 18px 14px; color: var(--dim); font-size: 11px; font-family: var(--mono); letter-spacing: .04em; }
-    .rail .bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 7px 0 0; }
+    .rail .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 7px 0 0; }
     .rail .bar > i { display: block; height: 100%; background: var(--accent); }
     .topic { display: block; width: 100%; text-align: left; background: none; border: none; cursor: pointer;
       color: #c4cad2; font: inherit; font-size: 13.5px; padding: 9px 18px; border-left: 2px solid transparent; }
@@ -74,7 +74,7 @@
     .sub:hover { background: var(--panel-2); color: var(--text); }
     .sub.done { color: #7f8a97; }
     .sub .box { flex: none; width: 14px; height: 14px; margin-top: 1px; border: 1px solid var(--line-2);
-      border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 2px; display: inline-flex; align-items: center; justify-content: center;
       font-size: 9px; line-height: 1; color: var(--accent-ink); }
     .sub .box.on { background: var(--accent); border-color: var(--accent); }
     .sub .sl { flex: 1; }
@@ -86,7 +86,7 @@
     .sec { margin: 30px 0 0; }
     .sec h3 { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
       color: var(--dim); margin: 0 0 12px; }
-    .edu { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; }
+    .edu { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 18px 20px; margin-bottom: 12px; }
     .edu h4 { margin: 0 0 8px; font-size: 15.5px; }
     .edu .body { color: #c4cad2; font-size: 13.5px; line-height: 1.65; }
     .edu .body p { margin: 0 0 10px; } .edu .body ul { margin: 6px 0 10px 18px; padding: 0; }
@@ -94,17 +94,17 @@
     .keypoints b { color: var(--muted); font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; display: block; margin-bottom: 7px; }
     .keypoints li { color: #c4cad2; font-size: 13px; margin: 3px 0 3px 18px; }
     .lcard { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line);
-      border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; transition: border-color .15s, background .15s; }
+      border-radius: 2px; padding: 13px 15px; margin-bottom: 8px; transition: border-color .15s, background .15s; }
     .lcard:hover { border-color: var(--accent-deep); background: var(--panel-2); }
     .lcard .grow { flex: 1; } .lcard .lt { font-size: 14px; } .lcard .lb { color: var(--dim); font-size: 12px; margin-top: 2px; }
     .lcard a { color: var(--accent); text-decoration: none; font-size: 13px; white-space: nowrap; }
     .lcard a:hover { color: #8fc6f5; }
 
     /* Inline premium quiz */
-    .q { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+    .q { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 16px 18px; margin-bottom: 12px; }
     .q .prompt { font-size: 14px; font-weight: 600; margin: 0 0 12px; line-height: 1.45; }
     .q .opt { display: block; width: 100%; text-align: left; background: var(--bg-2); border: 1px solid var(--line-2);
-      color: var(--text); border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 13.5px; margin: 6px 0; cursor: pointer; transition: border-color .14s; }
+      color: var(--text); border-radius: 2px; padding: 10px 12px; font: inherit; font-size: 13.5px; margin: 6px 0; cursor: pointer; transition: border-color .14s; }
     .q .opt:hover:not(:disabled) { border-color: var(--accent-deep); }
     .q .opt.correct { border-color: #3f8f5a; background: #14261a; }
     .q .opt.wrong { border-color: #8f3f3f; background: #261414; }
@@ -121,15 +121,15 @@
     /* Practice exam: rail entry + setup + timed run + review */
     .exam-cta { display: block; width: calc(100% - 24px); margin: 4px 12px 12px; text-align: left;
       background: var(--panel); border: 1px solid var(--line-2); color: var(--accent); font: inherit; font-size: 13px;
-      font-weight: 600; border-radius: 10px; padding: 11px 13px; cursor: pointer; transition: .15s; }
+      font-weight: 600; border-radius: 2px; padding: 11px 13px; cursor: pointer; transition: .15s; }
     .exam-cta:hover { border-color: var(--accent-deep); background: var(--panel-2); }
     .exam-cta.on { background: #12212f; border-color: var(--accent); color: #dbe9fa; }
     .exam-cta .ec-sub { display: block; font-weight: 400; font-size: 11px; color: var(--dim); margin-top: 3px; }
 
-    .exam-setup { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 12px; }
+    .exam-setup { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 20px; margin-top: 12px; }
     .exam-setup h3 { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--dim); margin: 0 0 12px; }
     .exam-lens { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 4px; }
-    .exam-len { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 8px;
+    .exam-len { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--text); border-radius: 2px;
       padding: 8px 16px; font: inherit; font-size: 13px; cursor: pointer; transition: border-color .14s; }
     .exam-len:hover { border-color: var(--accent-deep); }
     .exam-len.on { background: #12212f; border-color: var(--accent); color: #fff; }
@@ -138,29 +138,29 @@
     .exam-note { color: var(--dim); font-size: 12px; margin: 8px 0 0; }
 
     .exam-bar { position: sticky; top: 56px; z-index: 5; display: flex; align-items: center; gap: 14px;
-      background: rgba(13,17,22,.92); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 10px;
+      background: rgba(13,17,22,.92); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 2px;
       padding: 10px 14px; margin-bottom: 16px; }
     .exam-bar .eb-count { color: #c4cad2; font-size: 13px; }
     .exam-bar .eb-timer { color: var(--accent); font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
     .exam-bar .sp { flex: 1; }
     .exam-bar .eb-submit { margin-top: 0; padding: 8px 15px; }
 
-    .exam-q { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+    .exam-q { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 16px 18px; margin-bottom: 12px; }
     .exam-q .eq-num { font-family: var(--mono); color: var(--dim); font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em; margin: 0 0 8px; }
     .exam-q .prompt { font-size: 14px; font-weight: 600; margin: 0 0 12px; line-height: 1.45; }
     .exam-q.miss { border-color: #5a3030; }
-    .exam-q .miss-tag { color: var(--warn); font-family: var(--mono); font-size: 10px; margin-left: 8px; border: 1px solid #5a3030; border-radius: 999px; padding: 1px 7px; }
+    .exam-q .miss-tag { color: var(--warn); font-family: var(--mono); font-size: 10px; margin-left: 8px; border: 1px solid #5a3030; border-radius: 2px; padding: 1px 7px; }
     .exam-q .fb { font-size: 13px; color: #c4cad2; margin-top: 10px; line-height: 1.55; }
     .exam-q .fb.muted { color: var(--muted); font-style: italic; }
     .exam-opt { display: block; width: 100%; text-align: left; background: var(--bg-2); border: 1px solid var(--line-2);
-      color: var(--text); border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 13.5px; margin: 6px 0; cursor: pointer; transition: border-color .14s; }
+      color: var(--text); border-radius: 2px; padding: 10px 12px; font: inherit; font-size: 13.5px; margin: 6px 0; cursor: pointer; transition: border-color .14s; }
     .exam-opt:hover:not(:disabled) { border-color: var(--accent-deep); }
     .exam-opt.sel { border-color: var(--accent); background: #12212f; }
     .exam-opt.correct { border-color: #3f8f5a; background: #14261a; }
     .exam-opt.wrong { border-color: #8f3f3f; background: #261414; }
     .exam-foot { margin: 18px 0 0; }
 
-    .exam-result { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-bottom: 16px; text-align: center; }
+    .exam-result { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 22px; margin-bottom: 16px; text-align: center; }
     .exam-result .er-score { font-size: 32px; font-weight: 700; color: #fff; letter-spacing: -.02em; }
     .exam-result .er-pct { font-size: 15px; color: var(--accent); margin-top: 2px; }
     .exam-result .er-meta { color: var(--dim); font-family: var(--mono); font-size: 12px; margin-top: 8px; }
@@ -180,7 +180,7 @@
     #lesson-overlay .obar .osub { font-size: 11.5px; color: var(--dim); }
     #lesson-overlay .obar .sp { flex: 1; }
     #lesson-overlay .obar button { color: #c4cad2; background: var(--panel-2); border: 1px solid var(--line-2);
-      border-radius: 8px; padding: 7px 13px; font: inherit; font-size: 12.5px; cursor: pointer; transition: .15s; }
+      border-radius: 2px; padding: 7px 13px; font: inherit; font-size: 12.5px; cursor: pointer; transition: .15s; }
     #lesson-overlay .obar button:hover { border-color: var(--accent-deep); color: #fff; }
     #lesson-overlay iframe { flex: 1 1 auto; width: 100%; border: 0; background: var(--bg); }
   </style>

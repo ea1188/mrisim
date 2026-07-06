@@ -22,11 +22,11 @@ h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
 .wrap { max-width: var(--wrap); margin: 0 auto; padding-left: var(--pad); padding-right: var(--pad); }
 .mono { font-family: var(--mono); }
 .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
 /* Shared button primitive (pages may override for local variants). */
 .btn { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;
-  padding: 11px 18px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: .16s; }
+  padding: 11px 18px; border-radius: 2px; border: 1px solid transparent; cursor: pointer; transition: .16s; }
 .btn.pri { background: var(--accent); color: var(--accent-ink); }
 .btn.pri:hover { background: #7cc0f4; }
 .btn.sec { border-color: var(--line-2); color: var(--text); }
