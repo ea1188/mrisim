@@ -7,76 +7,292 @@
   <!-- Preserve old shareable deep links: index.html#<state> used to open the simulator
        directly. The simulator now lives at simulator.html, so route the hash there. -->
   <script>if (location.hash.length > 1) location.replace("simulator.html" + location.hash);</script>
-  <meta name="description" content="MRISim — learn MRI in your browser: a real physics simulator, a scanner-console protocol planner, and a read-the-scan quiz." />
+  <meta name="description" content="MRISim — learn MRI in your browser: a real physics simulator, a scanner-console protocol planner, a guided course and a read-the-scan quiz." />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    body { background: #050607; color: #dfe5ec; margin: 0;
-      font-family: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif; }
-    #home { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 32px 18px; box-sizing: border-box; }
-    #home .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-    #home .brand img { width: 46px; height: 46px; }
-    #home h1 { font-size: 28px; font-weight: 600; margin: 0; letter-spacing: -0.2px; }
-    #home .tag { color: #9aa4b2; font-size: 14.5px; margin: 8px 0 30px; text-align: center; max-width: 540px; line-height: 1.5; }
-    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-      width: min(960px, 100%); }
-    .card { display: block; text-decoration: none; color: inherit; background: #141a21;
-      border: 1px solid #232c36; border-radius: 2px; padding: 20px; transition: border-color .12s, background .12s; }
-    .card:hover { border-color: #3f6f9c; background: #18222c; }
-    .card .card-ico { width: 22px; height: 22px; color: #8b97a6; display: block; margin-bottom: 14px; }
-    .card:hover .card-ico { color: #6ea7df; }
-    .card h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.1px; margin: 0 0 7px; }
-    .card p { color: #aab3bf; font-size: 13px; line-height: 1.5; margin: 0; }
-    .card .go { color: #6ea7df; font-size: 13px; font-weight: 600; margin-top: 12px; display: inline-block; }
-    .card-progress { display: block; color: #7c8794; font-size: 12px; margin-top: 10px; font-variant-numeric: tabular-nums; }
-    #home footer { margin-top: 30px; color: #7c8794; font-size: 12.5px; text-align: center; }
-    #home footer a { color: #6ea7df; text-decoration: none; }
-    @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } #home h1 { font-size: 25px; } }
+    /* ---- design tokens (A+C blend: flat graphite bones, one cyan accent, a lone
+       instrument-green used ONLY for the live signal). These graduate to a shared
+       sheet as the other pages adopt them. ---- */
+    :root {
+      --bg: #07090c; --bg-2: #0b0f14; --panel: #10151b; --panel-2: #141b23;
+      --line: #1e262f; --line-2: #2a3441;
+      --text: #e8edf3; --muted: #8b97a6; --dim: #5f6b78;
+      --accent: #5db0ef; --accent-deep: #3f86c8; --accent-ink: #04121f;
+      --signal: #57e0a8;
+      --sans: "SF Pro Display","SF Pro Text",-apple-system,"Segoe UI",Inter,system-ui,sans-serif;
+      --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+      --wrap: 1120px; --pad: clamp(18px,5vw,40px);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+    .wrap { max-width: var(--wrap); margin: 0 auto; padding-left: var(--pad); padding-right: var(--pad); }
+    .mono { font-family: var(--mono); }
+    .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+    /* ---- nav ---- */
+    .nav { position: sticky; top: 0; z-index: 30; background: rgba(7,9,12,.78);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+    .nav .row { display: flex; align-items: center; gap: 24px; height: 58px; }
+    .nav .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.3px; font-size: 16px; }
+    .nav .logo .mark { width: 24px; height: 24px; }
+    .nav .links { display: flex; gap: 22px; margin-left: auto; font-size: 13.5px; color: var(--muted); }
+    .nav .links a { transition: color .15s; }
+    .nav .links a:hover { color: var(--text); }
+    .nav .signin { font-size: 13px; color: var(--accent); }
+
+    /* ---- shared button ---- */
+    .btn { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;
+      padding: 11px 18px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: .16s; }
+    .btn.pri { background: var(--accent); color: var(--accent-ink); }
+    .btn.pri:hover { background: #7cc0f4; }
+    .btn.sec { border-color: var(--line-2); color: var(--text); }
+    .btn.sec:hover { border-color: var(--accent-deep); background: #12171d; }
+
+    /* ---- hero ---- */
+    .hero { padding: clamp(40px,8vw,88px) 0 clamp(30px,5vw,56px); }
+    .hero .grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(24px,5vw,60px); align-items: center; }
+    .hero h1 { font-size: clamp(34px,5.4vw,60px); font-weight: 680; line-height: 1.03; margin: 16px 0 0; }
+    .hero h1 em { font-style: normal; color: var(--muted); }
+    .hero .sub { margin: 22px 0 0; max-width: 46ch; color: var(--muted); font-size: 16.5px; line-height: 1.62; }
+    .hero .cta { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+    .hero .metrics { display: flex; gap: 34px; margin-top: 42px; }
+    .hero .metrics .n { font-size: 22px; font-weight: 680; font-variant-numeric: tabular-nums; }
+    .hero .metrics .l { font-size: 12px; color: var(--dim); margin-top: 3px; }
+
+    /* the instrument (C's signature): a live scope card */
+    .scope { border: 1px solid var(--line-2); border-radius: 12px; background: #05070a; overflow: hidden;
+      box-shadow: 0 30px 80px -46px rgba(0,0,0,.9); }
+    .scope .schead { display: flex; align-items: center; gap: 12px; padding: 11px 14px; font-family: var(--mono);
+      font-size: 11px; letter-spacing: .06em; color: var(--dim); border-bottom: 1px solid var(--line);
+      background: linear-gradient(#0a0d12,#080b10); }
+    .scope .live { color: var(--signal); display: inline-flex; align-items: center; gap: 6px; }
+    .scope .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal);
+      box-shadow: 0 0 10px var(--signal); animation: blink 1.4s step-end infinite; }
+    .scope .sp { margin-left: auto; }
+    @keyframes blink { 50% { opacity: .28; } }
+    .scope canvas#fid { display: block; width: 100%; height: 232px; }
+    .scope .readout { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--line);
+      font-family: var(--mono); }
+    .scope .readout div { padding: 11px 14px; border-right: 1px solid var(--line); }
+    .scope .readout div:last-child { border-right: none; }
+    .scope .readout .k { font-size: 9.5px; color: var(--dim); letter-spacing: .12em; }
+    .scope .readout .v { font-size: 15px; color: var(--accent); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+    /* ---- section scaffolding ---- */
+    .section { padding: clamp(40px,6vw,72px) 0; border-top: 1px solid var(--line); }
+    .section .head { max-width: 60ch; margin-bottom: 28px; }
+    .section .head h2 { font-size: clamp(22px,3vw,30px); font-weight: 660; }
+    .section .head p { color: var(--muted); font-size: 15px; margin: 10px 0 0; }
+
+    /* ---- tools grid ---- */
+    .tools { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+    .tool { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 12px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
+    .tool:hover { border-color: var(--accent-deep); background: var(--panel-2); transform: translateY(-2px); }
+    .tool .ico { width: 24px; height: 24px; color: var(--muted); margin-bottom: 14px; }
+    .tool:hover .ico { color: var(--accent); }
+    .tool h3 { font-size: 17px; font-weight: 640; }
+    .tool p { color: var(--muted); font-size: 13.5px; line-height: 1.55; margin: 8px 0 0; }
+    .tool .go { color: var(--accent); font-size: 13px; font-weight: 600; margin-top: 16px; }
+    .tool .prog { display: block; color: var(--dim); font-size: 12px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    .tool .tag { align-self: flex-start; font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--signal); border: 1px solid #234436; border-radius: 999px;
+      padding: 2px 9px; margin-bottom: 12px; }
+
+    /* ---- proof strip: the real product tiles ---- */
+    .proof { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .ptile { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #06080b; }
+    .ptile .cv { position: relative; aspect-ratio: 16 / 11; }
+    .ptile canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .ptile .meta { padding: 12px 14px; border-top: 1px solid var(--line); }
+    .ptile .meta .t { font-size: 13.5px; font-weight: 620; }
+    .ptile .meta .d { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+    /* ---- course band ---- */
+    .band { border: 1px solid var(--line-2); border-radius: 16px; background:
+      radial-gradient(120% 140% at 100% 0%, rgba(93,176,239,.10), transparent 55%), var(--panel);
+      padding: clamp(26px,4vw,44px); display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+    .band .txt { flex: 1 1 340px; }
+    .band h2 { font-size: clamp(21px,2.6vw,28px); font-weight: 660; }
+    .band p { color: var(--muted); font-size: 14.5px; margin: 10px 0 0; max-width: 52ch; }
+    .band .acts { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* ---- footer ---- */
+    footer.site { border-top: 1px solid var(--line); padding: 34px 0 48px; color: var(--dim); font-size: 13px; }
+    footer.site .row { display: flex; gap: 18px 26px; flex-wrap: wrap; align-items: center; }
+    footer.site a { color: var(--muted); }
+    footer.site a:hover { color: var(--text); }
+    footer.site .sp { margin-left: auto; }
+
+    @media (max-width: 860px) {
+      .hero .grid { grid-template-columns: 1fr; }
+      .hero .scope { order: 2; }
+      .tools { grid-template-columns: 1fr; }
+      .nav .links { display: none; }
+      .proof { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 520px) { .proof { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .scope .live i { animation: none; } }
   </style>
 </head>
 <body>
-  <main id="home">
-    <div class="brand"><img src="logo.png" alt="" /><h1>MRISim</h1></div>
-    <p class="tag">An interactive MRI physics simulator — the real Python engine runs in your
-      browser. Choose how you want to learn.</p>
-
-    <div class="cards">
-      <a class="card" href="simulator.html">
-        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.3" fill="#141a21"/><circle cx="15" cy="12" r="2.3" fill="#141a21"/><circle cx="8" cy="17" r="2.3" fill="#141a21"/></svg>
-        <h2>Simulator</h2>
-        <p>The full physics simulator: sweep TR / TE / flip / TI, switch sequences and anatomy,
-          and watch k-space, 3-D reconstruction and quantitative maps update in real time.</p>
-        <span class="go">Open the simulator →</span>
-      </a>
-      <a class="card" href="protocol.html">
-        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M12 9.5v11"/></svg>
-        <h2>Protocol planning</h2>
-        <p>A scanner-console workflow: pick an exam, prescribe each sequence on the three-plane
-          scout images, and acquire it — one after another, like a real console.</p>
-        <span class="go">Plan an exam →</span>
-      </a>
-      <a class="card" href="quiz.html">
-        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
-        <h2>Quiz</h2>
-        <p>Read-the-scan self-test: identify the sequence, weighting, pathology and perfusion
-          maps by topic, with scored feedback and explanations.</p>
-        <span class="go">Take the quiz →</span>
-        <span class="card-progress" id="quiz-progress"></span>
-      </a>
+  <nav class="nav">
+    <div class="wrap row">
+      <a class="logo" href="index.html">
+        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="#5db0ef" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M4 8l16 8" stroke-opacity=".5"/></svg>MRISim</a>
+      <div class="links">
+        <a href="simulator.html">Simulator</a>
+        <a href="course.html">Course</a>
+        <a href="reference.html">Reference</a>
+        <a href="quiz.html">Quiz</a>
+      </div>
+      <a class="signin accounts-only" href="account.html" hidden>Sign in</a>
     </div>
+  </nav>
 
-    <footer>
-      Runs entirely client-side via <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>
-      — first load fetches ~30–50&nbsp;MB, cached afterwards. ·
-      <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
-      · <a href="course.html">Guided course</a>
-      <span class="accounts-only" hidden> · <a href="account.html">Sign in</a></span>
-    </footer>
+  <main>
+    <!-- HERO: A's restrained layout, C's live-instrument centerpiece -->
+    <section class="hero">
+      <div class="wrap grid">
+        <div>
+          <span class="eyebrow">Interactive MR physics · in the browser</span>
+          <h1>Learn MRI by running the physics, <em>not memorizing it.</em></h1>
+          <p class="sub">The real simulation engine runs client-side. Pulse a sequence and watch the
+            free-induction decay, k-space, the 3D reconstruction and quantitative maps recompute in real time.</p>
+          <div class="cta">
+            <a class="btn pri" href="simulator.html">Open the simulator →</a>
+            <a class="btn sec" href="course.html">Guided course</a>
+          </div>
+          <div class="metrics">
+            <div><div class="n">10</div><div class="l">guided modules</div></div>
+            <div><div class="n">240+</div><div class="l">questions &amp; references</div></div>
+            <div><div class="n">100%</div><div class="l">runs client-side</div></div>
+          </div>
+        </div>
+        <div class="scope" aria-hidden="true">
+          <div class="schead">
+            <span class="live"><i></i>ACQUIRING</span>
+            <span>spin-echo</span><span>B0 1.5 T</span>
+            <span class="sp"></span><span>CH1 · FID</span>
+          </div>
+          <canvas id="fid" width="560" height="232"></canvas>
+          <div class="readout">
+            <div><div class="k">TR</div><div class="v">500 ms</div></div>
+            <div><div class="k">TE</div><div class="v">14 ms</div></div>
+            <div><div class="k">FLIP</div><div class="v">90°</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOOLS -->
+    <section class="section" id="tools">
+      <div class="wrap">
+        <div class="head">
+          <h2>Four ways in</h2>
+          <p>Start where it suits you. Everything runs on the same real engine, so what you learn in one
+            place holds true in the next.</p>
+        </div>
+        <div class="tools">
+          <a class="tool" href="simulator.html">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.3" fill="#10151b"/><circle cx="15" cy="12" r="2.3" fill="#10151b"/><circle cx="8" cy="17" r="2.3" fill="#10151b"/></svg>
+            <h3>Simulator</h3>
+            <p>Sweep TR, TE, flip and TI, switch sequences and anatomy, and watch k-space, the 3D
+              reconstruction and quantitative maps update live.</p>
+            <span class="go">Open the simulator →</span>
+          </a>
+          <a class="tool" href="protocol.html">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.5h17M12 9.5v11"/></svg>
+            <h3>Protocol planning</h3>
+            <p>A scanner-console workflow: pick an exam, prescribe each sequence on the three-plane scout,
+              and acquire it one after another, like a real console.</p>
+            <span class="go">Plan an exam →</span>
+          </a>
+          <a class="tool" href="quiz.html">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
+            <h3>Quiz</h3>
+            <p>Read-the-scan self-test: identify the sequence, weighting, pathology and perfusion maps by
+              topic, with scored feedback and explanations.</p>
+            <span class="go">Take the quiz →</span>
+            <span class="prog" id="quiz-progress"></span>
+          </a>
+          <a class="tool" href="course.html">
+            <span class="tag">Guided · premium</span>
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>
+            <h3>Guided course</h3>
+            <p>A structured curriculum with exclusive course material, inline lessons, a mock-exam mode and
+              a searchable reference library, building toward the registry.</p>
+            <span class="go">Explore the course →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROOF: the actual product, not a video -->
+    <section class="section" id="proof">
+      <div class="wrap">
+        <div class="head">
+          <h2>The real engine, not a diagram</h2>
+          <p>These are computed, not clip-art: the Python engine simulates the signal, so every panel
+            responds to the physics you set.</p>
+        </div>
+        <div class="proof">
+          <div class="ptile">
+            <div class="cv"><canvas data-kind="slice"></canvas></div>
+            <div class="meta"><div class="t">Reconstruction</div><div class="d">The slice, rebuilt from the acquired signal.</div></div>
+          </div>
+          <div class="ptile">
+            <div class="cv"><canvas data-kind="kspace"></canvas></div>
+            <div class="meta"><div class="t">k-space</div><div class="d">Where the raw signal actually lives.</div></div>
+          </div>
+          <div class="ptile">
+            <div class="cv"><canvas data-kind="map"></canvas></div>
+            <div class="meta"><div class="t">Quantitative map</div><div class="d">T2, ADC and perfusion, pixel by pixel.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COURSE BAND -->
+    <section class="section">
+      <div class="wrap">
+        <div class="band">
+          <div class="txt">
+            <h2>Ready to go deeper?</h2>
+            <p>The guided course turns the simulator into a full curriculum: exclusive material, a timed
+              mock-exam mode, and a searchable reference library, aligned to the ARRT MRI registry.</p>
+          </div>
+          <div class="acts">
+            <a class="btn pri" href="course.html">Start the course →</a>
+            <a class="btn sec" href="reference.html">Browse the reference</a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="site">
+    <div class="wrap row">
+      <span>Runs entirely client-side via
+        <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>.
+        First load fetches ~30&ndash;50&nbsp;MB, cached afterwards.</span>
+      <span class="sp"></span>
+      <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
+      <a href="course.html">Guided course</a>
+      <a class="accounts-only" href="account.html" hidden>Sign in</a>
+    </div>
+  </footer>
+
   <script src="config.js"></script>
   <script src="accounts.js"></script>
   <script>
-    // Show the learner's best quiz score (written by quiz.js to localStorage) on the card.
+    // Best quiz score (written by quiz.js to localStorage) on the quiz card.
     (function () {
       try {
         var p = JSON.parse(localStorage.getItem("mrisim_quiz_progress_v1") || "{}");
@@ -86,6 +302,73 @@
           ? "Best so far: " + p.all.best + " / " + p.all.total + " (all topics)"
           : keys.length + " topic" + (keys.length === 1 ? "" : "s") + " attempted";
       } catch (e) { /* ignore */ }
+    })();
+
+    // Live hero instrument + product tiles (Canvas). Respects reduced motion.
+    (function () {
+      var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      function fit(cv) {
+        var r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+        cv.width = Math.max(2, r.width * d); cv.height = Math.max(2, r.height * d);
+        var g = cv.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0); return { g: g, w: r.width, h: r.height };
+      }
+      function slice(cv) {
+        var s = fit(cv), g = s.g, w = s.w, h = s.h, cx = w/2, cy = h/2, rx = w*0.34, ry = h*0.42;
+        g.fillStyle = "#05070a"; g.fillRect(0,0,w,h);
+        for (var i = 0; i < 46; i++) {
+          var rr = 1 - i/46, v = Math.round(120*rr + 40 + (i%3)*10);
+          g.beginPath(); g.ellipse(cx, cy, rx*rr, ry*rr, 0, 0, 7);
+          g.fillStyle = "rgba("+v+","+v+","+(v+6)+",0.14)"; g.fill();
+        }
+        g.fillStyle = "rgba(10,14,20,.9)";
+        g.beginPath(); g.ellipse(cx-6, cy, w*0.05, h*0.14, .3, 0, 7); g.fill();
+        g.beginPath(); g.ellipse(cx+6, cy, w*0.05, h*0.14, -.3, 0, 7); g.fill();
+      }
+      function kspace(cv) {
+        var s = fit(cv), g = s.g, w = s.w, h = s.h, cx = w/2, cy = h/2, step = Math.max(6, w/24);
+        g.fillStyle = "#04060a"; g.fillRect(0,0,w,h);
+        for (var y = step/2; y < h; y += step) for (var x = step/2; x < w; x += step) {
+          var dx = (x-cx)/(w/2), dy = (y-cy)/(h/2), a = Math.exp(-(dx*dx+dy*dy)*3.2);
+          g.fillStyle = "rgba(93,176,239," + (0.08 + a*0.9).toFixed(3) + ")";
+          g.beginPath(); g.arc(x, y, 0.6 + a*2.2, 0, 7); g.fill();
+        }
+      }
+      function heat(cv) {
+        var s = fit(cv), g = s.g, w = s.w, h = s.h, n = 12, cw = w/n, ch = h/n;
+        var ramp = [[13,17,23],[26,40,74],[30,86,120],[40,150,140],[120,200,110],[235,220,120]];
+        for (var j=0;j<n;j++) for (var i=0;i<n;i++){
+          var dx=(i/(n-1)-.5), dy=(j/(n-1)-.5), d=Math.sqrt(dx*dx+dy*dy)*1.7;
+          var val=Math.max(0,Math.min(.999,1-d + Math.sin(i*1.3)*.06));
+          var c=ramp[Math.floor(val*(ramp.length-1))];
+          g.fillStyle="rgb("+c[0]+","+c[1]+","+c[2]+")"; g.fillRect(i*cw, j*ch, cw+1, ch+1);
+        }
+      }
+      document.querySelectorAll("canvas[data-kind]").forEach(function (cv) {
+        var k = cv.getAttribute("data-kind");
+        if (k === "slice") slice(cv); else if (k === "kspace") kspace(cv); else if (k === "map") heat(cv);
+      });
+
+      var fidc = document.getElementById("fid");
+      if (fidc) {
+        var s = fit(fidc), g = s.g, W = s.w, H = s.h, t0 = performance.now();
+        function grid() {
+          g.clearRect(0,0,W,H); g.fillStyle = "#04060a"; g.fillRect(0,0,W,H);
+          g.strokeStyle = "rgba(93,176,239,.10)"; g.lineWidth = 1;
+          for (var x=0;x<W;x+=W/10){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}
+          for (var y=0;y<H;y+=H/5){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}
+        }
+        function trace(ph) {
+          g.strokeStyle = "#57e0a8"; g.lineWidth = 2; g.shadowColor = "#57e0a8"; g.shadowBlur = 8;
+          g.beginPath();
+          for (var px=0; px<=W; px++) {
+            var x = px/W*8, yy = Math.sin(x*6.3 - ph) * Math.exp(-x*0.55);
+            var py = H/2 - yy*(H*0.36); px ? g.lineTo(px,py) : g.moveTo(px,py);
+          }
+          g.stroke(); g.shadowBlur = 0;
+        }
+        if (reduce) { grid(); trace(0); }
+        else (function loop(now){ grid(); trace(((now-t0)/1000*3.2)%(Math.PI*2)); requestAnimationFrame(loop); })(t0);
+      }
     })();
   </script>
 </body>
