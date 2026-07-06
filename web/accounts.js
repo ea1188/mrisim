@@ -167,6 +167,23 @@
     }).then(function (r) { return r.data || []; });
   }
 
+  // --- paid course: entitlement + exclusive premium content ---------------- //
+  // isEntitled: does the signed-in user hold this course? (RLS returns only own rows.)
+  function isEntitled(course) {
+    if (!ENABLED) return Promise.resolve(false);
+    return client().then(function (c) {
+      return c.from("entitlements").select("course").eq("course", course).maybeSingle();
+    }).then(function (r) { return !!(r && r.data); }).catch(function () { return false; });
+  }
+  // premiumContent: the exclusive course material — RLS serves rows only to an entitled
+  // user, so a signed-out or non-entitled caller gets [].
+  function premiumContent(course) {
+    return client().then(function (c) {
+      return c.from("course_content").select("topic,kind,ord,body")
+        .eq("course", course).order("ord", { ascending: true });
+    }).then(function (r) { return r.data || []; }).catch(function () { return []; });
+  }
+
   // Reveal any element tagged .accounts-only when the layer is configured
   // (e.g. the "Sign in" link in a page footer), so it stays hidden otherwise.
   function _revealLinks() {
@@ -186,5 +203,6 @@
     createClass: createClass, instructorClasses: instructorClasses,
     archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
+    isEntitled: isEntitled, premiumContent: premiumContent,
   };
 })();
