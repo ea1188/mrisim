@@ -440,6 +440,12 @@ kbd {
 .lp-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; color: var(--accent-hi); font-size: 14px; }
 .lp-head button { background: none; border: none; color: var(--text-dim); font-size: 15px; cursor: pointer; }
 #lesson-step { color: #c4cad2; font-size: 13px; line-height: 1.5; margin: 9px 0 12px; }
+/* Reading/concept step (no simulator image to examine) — a small eyebrow so it
+   reads as a reading card rather than a "look at the scan" instruction. */
+#lesson-panel.reading #lesson-step::before {
+  content: "Reading"; display: block; color: var(--text-faint);
+  font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px;
+}
 .lp-foot { display: flex; align-items: center; justify-content: space-between; }
 #lesson-progress { color: var(--text-faint); font-size: 11px; }
 .lp-btns button { background: var(--raised); color: var(--text); border: 1px solid var(--border); border-radius: 2px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-left: 6px; }

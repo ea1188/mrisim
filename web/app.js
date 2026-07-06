@@ -163,6 +163,7 @@ function stateToHash() {
 // Only keys present are set, so callers can override a subset (presets, lessons,
 // shared links). Booleans for the checkbox keys.
 async function applyState(st) {
+  st = st || {};                    // a reading/concept lesson step carries no state
   applyingPreset = true;
   if (st.region && st.region !== curRegion()
       && [...$("region").options].some((o) => o.value === st.region)) {
@@ -481,6 +482,9 @@ function wireCurriculum() {
 async function applyStep() {
   const L = LESSONS[lessonIdx], s = L.steps[stepIdx];
   $("lesson-title").textContent = L.title;
+  // A step with no simulator state is a reading/concept step (e.g. MR safety):
+  // mark the panel so it reads as a reading card, and leave the viewport as-is.
+  $("lesson-panel").classList.toggle("reading", !s.state && !s.compareWith);
   $("lesson-step").innerHTML = s.text;
   $("lesson-progress").textContent = `Step ${stepIdx + 1} / ${L.steps.length}`;
   $("lesson-prev").disabled = stepIdx === 0;
