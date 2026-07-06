@@ -1268,6 +1268,18 @@
         {"text": "The other two fields have their own limits. Rapidly switching <b>gradients</b> (high dB/dt) can cause <b>peripheral nerve stimulation</b> — tingling or muscle twitching — so the scanner caps dB/dt. The <b>RF</b> pulses deposit energy as heat, measured by the <b>SAR</b> (W/kg); high SAR risks burns, so avoid looped cables and skin-to-skin contact, and the scanner limits SAR."},
         {"text": "Finally, the emergency: a <b>quench</b>. The superconducting magnet suddenly goes resistive and boils off its liquid <b>helium</b>, which should vent outside through the quench pipe. If venting fails, the cold gas can <b>displace room oxygen</b> — an asphyxiation risk — so know the oxygen-monitor alarm and the evacuation route."}
       ]
+    },
+    {
+      "title": "Patient care: screening, contrast & monitoring",
+      "blurb": "The patient journey — screening, preparation, positioning, contrast safety and monitoring.",
+      "beginner": true,
+      "steps": [
+        {"text": "MRI safety starts with <b>screening</b>. Every patient completes a detailed questionnaire <b>before every scan</b> — status changes, and new implants or devices may have appeared since a prior study. Screen for pacemakers, aneurysm clips, cochlear implants, neurostimulators and any metal. A grinder or metalworker with possible <b>intra-orbital metal</b> needs orbital radiographs first."},
+        {"text": "Prepare the patient. Remove all <b>ferromagnetic items</b> — jewellery, hairpins, watches, cards, hearing aids, clothing with metal. Explain the exam and its <b>loud knocking noise</b>, and provide <b>hearing protection</b>: gradient switching reaches ~100–120 dB and can damage hearing. Confirm the questionnaire one more time before entering Zone IV."},
+        {"text": "Position for signal <i>and</i> comfort. Centre the target anatomy in the <b>coil and at isocentre</b> for the best signal and field homogeneity, and immobilise gently to minimise <b>motion</b> — a still, relaxed patient gives the best images. Hand over the <b>call button / squeeze-ball</b> and explain how to reach you at any time."},
+        {"text": "If <b>gadolinium</b> is used, screen <b>renal function (eGFR)</b> — severe impairment risks nephrogenic systemic fibrosis — and ask about prior <b>contrast reactions</b>. Watch for acute reactions (hives, wheeze, low blood pressure); know the emergency plan and where drugs and oxygen are kept. In <b>pregnancy</b>, gadolinium is avoided unless essential."},
+        {"text": "<b>Monitor the patient throughout.</b> Keep verbal contact between sequences and watch for distress or <b>claustrophobia</b> — reassure, use the call system, take a break, and consider a wide/open-bore magnet or sedation. Sedated or unstable patients need physiological monitoring with <b>MR-safe</b> equipment only."}
+      ]
     }
   ],
   "curriculum": [
@@ -1355,9 +1367,10 @@
       ]
     },
     {
-      "title": "10 · MR safety",
+      "title": "10 · Safety & patient care",
       "lessons": [
-        "MR safety: fields, zones & screening"
+        "MR safety: fields, zones & screening",
+        "Patient care: screening, contrast & monitoring"
       ]
     }
   ]
