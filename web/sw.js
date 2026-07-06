@@ -24,9 +24,9 @@
  */
 "use strict";
 
-const CACHE = "mrisim-v9";                  // bump when this file's caching logic changes
+const CACHE = "mrisim-v10";                 // bump when this file's caching logic changes
 const SHELL = [
-  "./", "index.html", "simulator.html", "app.js", "styles.css", "worker.js", "logo.png", "lessons.json",
+  "./", "index.html", "simulator.html", "app.js", "styles.css", "theme.css", "worker.js", "logo.png", "lessons.json",
   "protocol.html", "protocol.js", "quiz.html", "quiz.js", "quiz.json", "tour.js",
   // Optional accounts layer + paid course (config.js may be absent — allSettled tolerates it).
   "config.js", "accounts.js", "account.html", "account.js", "course.html", "course.js",
