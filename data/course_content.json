@@ -3537,6 +3537,286 @@
           "Flip angle scales with RF power, so a larger flip raises SAR."
         ]
       }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "reference",
+      "ord": 700,
+      "body": {
+        "title": "What makes an image T1 weighted?",
+        "html": "<p>T1 weighting comes from a <b>short TR</b> and a <b>short TE</b>. A short TR does not give tissues time to fully recover along the main field, so tissues with a short T1 such as fat recover more signal and look bright, while tissues with a long T1 such as fluid stay dark. The short TE keeps T2 differences from having much say.</p><p>T1 weighted images show anatomy well: fat is bright, water and CSF are dark, and gadolinium enhancement stands out because it shortens T1.</p>",
+        "keypoints": [
+          "Short TR and short TE produce T1 weighting.",
+          "Fat is bright and fluid is dark on T1.",
+          "Gadolinium shortens T1, so enhancing tissue looks bright."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "reference",
+      "ord": 701,
+      "body": {
+        "title": "Why is fluid bright on a T2 weighted image?",
+        "html": "<p>T2 weighting uses a <b>long TR</b> and a <b>long TE</b>. The long TE lets transverse magnetisation decay before the echo is read, so tissues with a long T2 like water and CSF keep their signal and stay bright, while short T2 tissues lose signal and go darker.</p><p>Because many diseases raise local water content, they become bright on T2 and are easy to spot, which is why T2 is often called the sensitive sequence for pathology.</p>",
+        "keypoints": [
+          "Long TR and long TE produce T2 weighting.",
+          "Water and CSF are bright on T2.",
+          "Most pathology raises water content, so it lights up on T2."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "reference",
+      "ord": 702,
+      "body": {
+        "title": "How does spin echo differ from gradient echo?",
+        "html": "<p><b>Spin echo</b> uses a 90 degree excitation and a 180 degree refocusing pulse. The 180 degree pulse cancels fixed field inhomogeneity, so contrast reflects true T2. The images are clean but the scan is longer.</p><p><b>Gradient echo</b> refocuses with a gradient reversal instead of a 180 degree pulse, usually with a small flip angle. It is fast and suits 3D and breath hold work, but it does not correct field inhomogeneity, so its contrast reflects T2 star and it is more prone to susceptibility artifact.</p>",
+        "keypoints": [
+          "Spin echo refocuses with a 180 degree pulse and reflects true T2.",
+          "Gradient echo refocuses with a gradient and reflects T2 star.",
+          "Gradient echo is faster but more sensitive to susceptibility."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "reference",
+      "ord": 703,
+      "body": {
+        "title": "What does an inversion recovery sequence do?",
+        "html": "<p>Inversion recovery begins with a <b>180 degree inverting pulse</b> that flips magnetisation to the negative direction. As tissues recover through zero, a chosen <b>inversion time (TI)</b> decides which tissue sits at its null point when the readout starts. A tissue at its null gives no signal and is suppressed.</p><p>Two common uses are <b>STIR</b>, with a short TI to null fat, and <b>FLAIR</b>, with a long TI to null CSF so periventricular lesions stand out.</p>",
+        "keypoints": [
+          "A 180 degree pulse inverts magnetisation, then TI selects what is nulled.",
+          "STIR uses a short TI to null fat.",
+          "FLAIR uses a long TI to null CSF."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "reference",
+      "ord": 704,
+      "body": {
+        "title": "What is k-space?",
+        "html": "<p>k-space is the raw data matrix where the scanner stores the spatial frequency information of an image before reconstruction. Each point contributes to the whole image, not to a single pixel, and a Fourier transform converts filled k-space into the final image.</p><p>The layout matters: the <b>center</b> of k-space holds low spatial frequencies that carry contrast and overall shape, while the <b>edges</b> hold high spatial frequencies that carry fine detail.</p>",
+        "keypoints": [
+          "k-space stores spatial frequencies, not pixels.",
+          "A Fourier transform turns k-space into the image.",
+          "Center gives contrast, periphery gives detail."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "reference",
+      "ord": 705,
+      "body": {
+        "title": "Why does the center of k-space matter most?",
+        "html": "<p>The central lines of k-space hold the <b>low spatial frequencies</b> that set overall brightness and contrast. Sequences can exploit this: centric ordering in contrast enhanced angiography captures the center while gadolinium is at peak.</p><p>Because the center dominates contrast, motion or error in the central lines degrades the whole image, whereas error at the periphery mostly softens fine detail.</p>",
+        "keypoints": [
+          "Central k-space sets contrast and brightness.",
+          "Centric ordering captures the center at peak enhancement.",
+          "Motion in central lines harms the whole image."
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "reference",
+      "ord": 706,
+      "body": {
+        "title": "What is signal to noise ratio and what raises it?",
+        "html": "<p>Signal to noise ratio (SNR) weighs the wanted signal against background noise, and a higher value gives a cleaner image. SNR rises with a <b>larger voxel</b> (thicker slice, larger field of view, or coarser matrix), a <b>higher field strength</b>, more <b>signal averages (NEX)</b>, and a <b>narrower receive bandwidth</b>.</p><p>Every gain has a cost: bigger voxels lose resolution, more averages take time, and a narrow bandwidth can worsen chemical shift. A protocol is always a trade among SNR, resolution, and scan time.</p>",
+        "keypoints": [
+          "SNR is wanted signal versus noise.",
+          "Bigger voxels, higher field, more NEX, and narrow bandwidth raise SNR.",
+          "Each SNR gain trades against resolution or time."
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "reference",
+      "ord": 707,
+      "body": {
+        "title": "How do slice thickness and matrix affect the image?",
+        "html": "<p><b>Slice thickness</b> and <b>matrix size</b> together set voxel size. A thicker slice or coarser matrix means larger voxels, more signal, and better SNR, but lower spatial resolution and more partial volume averaging. A thinner slice or finer matrix sharpens resolution but lowers SNR.</p><p>Partial volume averaging happens when one voxel spans more than one tissue and reports a blended value, which can hide small structures.</p>",
+        "keypoints": [
+          "Slice thickness and matrix set voxel size.",
+          "Bigger voxels raise SNR but lower resolution.",
+          "Thick slices increase partial volume averaging."
+        ]
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "reference",
+      "ord": 708,
+      "body": {
+        "title": "STIR versus chemical fat saturation: when do you use each?",
+        "html": "<p><b>STIR</b> nulls fat by its T1 using an inversion time near 150 to 170 ms at 1.5 T. Because it works on T1, it is robust where the field is uneven, such as the extremities or off center anatomy. Its drawback is that it also suppresses anything with a similar T1, including some gadolinium enhancement, so STIR is avoided after contrast.</p><p><b>Chemical fat saturation</b> applies a frequency selective pulse at the fat peak. It is fat specific and works with contrast, but it needs a very uniform field and can fail near metal or at the edge of a large field of view.</p>",
+        "keypoints": [
+          "STIR nulls fat by T1 and is robust in an uneven field.",
+          "STIR can also null enhancement, so avoid it after gadolinium.",
+          "Chemical fat sat is fat specific but needs a uniform field."
+        ]
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "reference",
+      "ord": 709,
+      "body": {
+        "title": "What is the Dixon method?",
+        "html": "<p>The Dixon technique separates fat and water using the fact that their signals drift <b>in and out of phase</b> as TE changes, because fat and water precess at slightly different frequencies. By acquiring in phase and out of phase echoes, the scanner computes separate <b>water only</b> and <b>fat only</b> images alongside the standard sets.</p><p>Dixon gives uniform fat suppression even across a large field of view and tolerates field imperfection better than a single fat saturation pulse.</p>",
+        "keypoints": [
+          "Dixon uses in phase and out of phase echoes to separate fat and water.",
+          "It yields water only and fat only images.",
+          "It gives uniform fat suppression over a large field of view."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "reference",
+      "ord": 710,
+      "body": {
+        "title": "What causes chemical shift artifact?",
+        "html": "<p>Fat and water protons resonate at slightly different frequencies. Because the scanner uses frequency to encode position, this offset places fat and water signals at slightly different pixels along the frequency direction, giving a bright or dark border where fat and water meet, seen at kidney and vertebral margins.</p><p>Chemical shift grows with higher field strength and with narrower receive bandwidth, so widening the bandwidth reduces it.</p>",
+        "keypoints": [
+          "Fat and water resonate differently and shift along the frequency axis.",
+          "It shows as a bright or dark edge at fat water borders.",
+          "Wider bandwidth and lower field reduce it."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "reference",
+      "ord": 711,
+      "body": {
+        "title": "How is patient motion artifact reduced?",
+        "html": "<p>Motion smears signal along the <b>phase encode direction</b> because phase encoding is spread across the whole scan. Useful steps include a shorter scan, <b>breath holding</b> or respiratory gating, cardiac gating, and <b>saturation bands</b> over moving tissue such as the anterior abdominal wall.</p><p>Swapping the phase and frequency directions can move the artifact off the region of interest, while averaging tends to blur rather than remove motion.</p>",
+        "keypoints": [
+          "Motion smears along the phase encode direction.",
+          "Gating, breath holding, and saturation bands reduce it.",
+          "Swapping phase and frequency can move the artifact off the anatomy."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "reference",
+      "ord": 712,
+      "body": {
+        "title": "When is a 3D acquisition preferred over 2D?",
+        "html": "<p>A <b>2D</b> acquisition excites one slice at a time. A <b>3D</b> acquisition excites a whole slab and phase encodes along the slice direction as well, producing a stack of thin contiguous slices with high SNR that can be reformatted in any plane.</p><p>3D is preferred when you need <b>thin isotropic voxels</b>, multiplanar reformats, or the best SNR, for example in brain, MR angiography, and joint imaging. The cost is a longer scan and more sensitivity to motion.</p>",
+        "keypoints": [
+          "2D excites one slice; 3D excites a slab and phase encodes through it.",
+          "3D gives thin isotropic voxels and multiplanar reformats.",
+          "3D takes longer and is more motion sensitive."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "reference",
+      "ord": 713,
+      "body": {
+        "title": "What are the three magnetic field systems in an MRI scanner?",
+        "html": "<p>An MRI system uses three fields. The <b>main magnet (B0)</b> is the strong static field, usually superconducting, that aligns the protons. The <b>gradient coils</b> add small switchable fields that vary with position to encode space and select slices. The <b>radiofrequency (RF) coils</b> transmit the excitation pulse and receive the returning signal.</p><p>The loud knocking of a scan is the gradient coils rapidly switching against the main field.</p>",
+        "keypoints": [
+          "B0 is the strong static field that aligns protons.",
+          "Gradients encode position and select slices.",
+          "RF coils transmit excitation and receive signal."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "reference",
+      "ord": 714,
+      "body": {
+        "title": "What are the four MRI safety zones?",
+        "html": "<p>The American College of Radiology defines four zones of increasing control. <b>Zone I</b> is freely accessible public space. <b>Zone II</b> is the interface where patients are screened and interviewed under supervision. <b>Zone III</b> is a restricted area such as the control room, where unscreened people and equipment are kept out. <b>Zone IV</b> is the magnet room itself, where the strong static field is always on.</p><p>Access tightens from Zone I to Zone IV, and only screened people enter Zone IV.</p>",
+        "keypoints": [
+          "Zone I is public, Zone II is patient screening.",
+          "Zone III is restricted control space, Zone IV is the magnet room.",
+          "The magnet in Zone IV is always on."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "reference",
+      "ord": 715,
+      "body": {
+        "title": "What is the difference between projectile risk and implant risk?",
+        "html": "<p><b>Projectile or missile risk</b> is the danger that a ferromagnetic object outside the body, such as scissors, an oxygen cylinder, or a wheelchair, is pulled violently into the bore. This is why loose metal is banned from Zone IV.</p><p><b>Implant risk</b> concerns devices inside the patient that can heat, move, or malfunction in the field. Each implant must be checked against its labeling, since a device may be MR safe, MR conditional, or MR unsafe.</p>",
+        "keypoints": [
+          "Projectile risk is external ferromagnetic objects pulled into the bore.",
+          "Implant risk is heating, movement, or malfunction of internal devices.",
+          "Implants are labeled MR safe, MR conditional, or MR unsafe."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "reference",
+      "ord": 716,
+      "body": {
+        "title": "How is a patient screened before an MRI?",
+        "html": "<p>Screening asks about anything dangerous in the magnet: <b>cardiac pacemakers</b> and other electronic implants, <b>aneurysm clips</b>, cochlear implants, and metal fragments, especially in the eye. Pregnancy, kidney function for contrast studies, and claustrophobia are also reviewed.</p><p>Screening is repeated and documented, and any uncertain implant is verified before the patient enters Zone IV. A careful interview and a ferromagnetic detector both play a part.</p>",
+        "keypoints": [
+          "Ask about pacemakers, aneurysm clips, cochlear implants, and metal fragments.",
+          "Review pregnancy, kidney function, and claustrophobia.",
+          "Verify any uncertain implant before entering the magnet room."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-agents",
+      "kind": "reference",
+      "ord": 717,
+      "body": {
+        "title": "How does gadolinium change the MRI signal?",
+        "html": "<p>Gadolinium based agents are <b>paramagnetic</b>. They create no signal themselves; instead they shorten the <b>T1</b> of nearby water protons, which makes those tissues brighter on T1 weighted images. That is why enhancement looks bright.</p><p>At high concentration gadolinium also shortens T2 and can cause signal loss, but at clinical doses the T1 effect dominates. Enhancement marks where the agent reaches, such as vascular tissue and areas of blood brain barrier breakdown.</p>",
+        "keypoints": [
+          "Gadolinium is paramagnetic and shortens T1 of nearby water.",
+          "Shortened T1 makes enhancing tissue bright on T1.",
+          "Enhancement marks vascularity and blood brain barrier breakdown."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-agents",
+      "kind": "reference",
+      "ord": 718,
+      "body": {
+        "title": "What is nephrogenic systemic fibrosis?",
+        "html": "<p>Nephrogenic systemic fibrosis (NSF) is a rare but serious condition linked to <b>gadolinium exposure in patients with severe kidney impairment</b>. It thickens and hardens skin and connective tissue and can be disabling.</p><p>Risk is highest with poor renal function and with older, less stable agents. Practice lowers risk by checking kidney function (often eGFR) before contrast, using the lowest effective dose, and preferring more stable macrocyclic agents in at risk patients.</p>",
+        "keypoints": [
+          "NSF links gadolinium to severe renal impairment.",
+          "It hardens skin and connective tissue.",
+          "Check eGFR and use stable agents at the lowest dose in at risk patients."
+        ]
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "reference",
+      "ord": 719,
+      "body": {
+        "title": "How does restricted diffusion appear on DWI and ADC?",
+        "html": "<p>Diffusion weighted imaging (DWI) measures how freely water moves. Where diffusion is <b>restricted</b>, as in acute stroke or a very cellular tumor, water cannot move, so signal stays high and the area looks <b>bright on DWI</b>.</p><p>The <b>ADC map</b> is calculated from the diffusion data and shows the opposite: truly restricted tissue is <b>dark on ADC</b>. Reading both together avoids T2 shine through, where a bright DWI is really just long T2 rather than true restriction.</p>",
+        "keypoints": [
+          "Restricted diffusion is bright on DWI and dark on ADC.",
+          "Acute stroke and cellular tumors restrict diffusion.",
+          "Read DWI with ADC to exclude T2 shine through."
+        ]
+      }
     }
   ]
 }

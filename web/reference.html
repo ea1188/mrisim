@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MRISim — reference library</title>
+  <meta name="description" content="A deep, searchable MRI reference: short question-and-answer entries across physics, sequences, artifacts and safety. Part of the paid course." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: #050607; color: #dfe5ec; margin: 0; height: 100%;
+      font-family: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif; }
+    .top { display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+      background: #0d1014; border-bottom: 1px solid #1b222a; position: sticky; top: 0; z-index: 10; }
+    .top img { width: 30px; height: 30px; }
+    .top h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -0.2px; }
+    .top .badge { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: #6ea7df;
+      border: 1px solid #2b3644; border-radius: 2px; padding: 1px 6px; }
+    .top .sp { flex: 1; }
+    .top a, .top button { color: #6ea7df; text-decoration: none; font: inherit; font-size: 13px;
+      background: none; border: none; cursor: pointer; }
+    .top .whoami { color: #9aa4b2; font-size: 12.5px; }
+
+    /* Gate screens (sign-in / paywall / notices) — mirrors the course page. */
+    .gate { max-width: 520px; margin: 8vh auto; padding: 0 18px; }
+    .gate .card { background: #141a21; border: 1px solid #232c36; border-radius: 3px; padding: 24px; }
+    .gate h2 { font-size: 18px; margin: 0 0 10px; }
+    .gate p { color: #9aa4b2; font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
+    .gate label { display: block; font-size: 12px; color: #9aa4b2; margin: 12px 0 5px; }
+    .gate input { width: 100%; box-sizing: border-box; background: #0b0f14; border: 1px solid #2b3644;
+      color: #dfe5ec; border-radius: 3px; padding: 9px 10px; font: inherit; font-size: 14px; }
+    .gate input:focus { outline: none; border-color: #4385cc; }
+    .btn { margin-top: 14px; background: #4385cc; color: #081019; border: none; border-radius: 3px;
+      padding: 10px 16px; font: inherit; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .btn:hover { background: #6ea7df; }
+    .msg { font-size: 13px; margin-top: 12px; } .msg.ok { color: #6bbf83; } .msg.err { color: #d98a8a; }
+    .linkout { color: #6ea7df; text-decoration: none; }
+
+    /* Reference layout: topic sidebar (with search) + entry list */
+    .ref { display: grid; grid-template-columns: 288px 1fr; min-height: calc(100vh - 52px); }
+    .rside { border-right: 1px solid #1b222a; padding: 14px 0; overflow-y: auto; }
+    .rsearch { padding: 0 14px 10px; }
+    .rsearch input { width: 100%; box-sizing: border-box; background: #0b0f14; border: 1px solid #2b3644;
+      color: #dfe5ec; border-radius: 3px; padding: 8px 10px; font: inherit; font-size: 13px; }
+    .rsearch input:focus { outline: none; border-color: #4385cc; }
+    .rtopic { display: flex; align-items: center; width: 100%; text-align: left; background: none; border: none;
+      cursor: pointer; color: #c4cad2; font: inherit; font-size: 13.5px; padding: 8px 16px; border-left: 2px solid transparent; }
+    .rtopic:hover { background: #12171d; }
+    .rtopic.on { background: #12171d; border-left-color: #4385cc; color: #fff; }
+    .rtopic .rc { margin-left: auto; font-size: 11px; color: #7c8794; font-variant-numeric: tabular-nums; }
+
+    .rmain { padding: 22px 30px 60px; max-width: 800px; }
+    .rmain h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.2px; }
+    .rmain .lede { color: #9aa4b2; font-size: 13.5px; margin: 0 0 18px; }
+    .rmain .empty { color: #838d9c; font-size: 13.5px; margin-top: 18px; }
+    .rgroup { margin: 0 0 10px; }
+    .rgroup > h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #838d9c; margin: 20px 0 8px; }
+    .entry { background: #141a21; border: 1px solid #232c36; border-radius: 3px; margin-bottom: 8px; }
+    .entry > .eh { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: none;
+      border: none; cursor: pointer; color: #e6ebf1; font: inherit; font-size: 14px; font-weight: 600; padding: 13px 16px; }
+    .entry > .eh:hover { color: #fff; }
+    .entry > .eh .car { flex: none; color: #6b7684; font-size: 10px; margin-top: 3px; transition: transform .12s; }
+    .entry.open > .eh .car { transform: rotate(90deg); }
+    .entry > .eh .et { flex: 1; }
+    .entry .ebody { padding: 0 16px 14px; color: #c4cad2; font-size: 13.5px; line-height: 1.6; }
+    .entry .ebody[hidden] { display: none; }
+    .entry .ebody p { margin: 0 0 10px; } .entry .ebody ul { margin: 6px 0 10px 18px; padding: 0; }
+    .entry .keypoints { margin-top: 10px; padding-top: 10px; border-top: 1px solid #1e262f; }
+    .entry .keypoints b { color: #9aa4b2; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 6px; }
+    .entry .keypoints li { color: #c4cad2; font-size: 13px; margin: 3px 0 3px 18px; }
+    mark { background: #3a4e1f; color: #eef4dd; border-radius: 2px; padding: 0 1px; }
+
+    @media (max-width: 780px) { .ref { grid-template-columns: 1fr; } .rside { border-right: none; border-bottom: 1px solid #1b222a; } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <img src="logo.png" alt="" /><h1>MRISim</h1><span class="badge">Reference</span>
+    <span class="sp"></span>
+    <a href="course.html">Course</a>
+    <a href="index.html">Home</a>
+    <span id="whoami" class="whoami" hidden></span>
+  </div>
+  <div id="reference-root" role="status" aria-live="polite">
+    <div class="gate"><div class="card"><p>Loading…</p></div></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="accounts.js"></script>
+  <script src="reference.js"></script>
+</body>
+</html>
