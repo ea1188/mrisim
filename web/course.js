@@ -30,6 +30,7 @@
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
+  var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
 
   // --- tiny DOM builder (textContent-safe; html: only for trusted premium bodies) --- //
   function h(tag, attrs, kids) {
@@ -98,7 +99,9 @@
     var rail = h("div", { class: "rail" });
     var main = h("div", { class: "main" });
     CTX = { curriculum: curriculum, byTitle: lessonsByTitle, byTopic: premiumByTopic,
-      rail: rail, main: main, mod: curriculum[0] };
+      rail: rail, main: main, mod: curriculum[0],
+      expanded: new Set([curriculum[0].title]),  // which modules are expanded in the TOC
+      _obs: null };                              // IntersectionObserver marking sections read
 
     buildRail();
     wrap.appendChild(rail); wrap.appendChild(main);
@@ -106,31 +109,99 @@
     renderTopic(main, curriculum[0], lessonsByTitle, premiumByTopic);
   }
 
-  // (Re)build the topic rail from current progress; highlights CTX.mod. Called on load
-  // and again after an inline lesson closes, so lesson completions tick through live.
+  function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+
+  // The subsections of a module, in reading order: its premium education pieces, its lessons,
+  // then its question set. Each carries a stable id, a rail label, and a right-pane anchor.
+  function moduleSubsections(mod) {
+    var cfg = TOPIC_CFG[mod.title] || { premium: [], quiz: [] };
+    var byTopic = CTX.byTopic, subs = [];
+    cfg.premium.forEach(function (key) {
+      (byTopic[key] || []).forEach(function (it) {
+        if (it.kind === "education") subs.push({ type: "read", id: "e:" + it.body.title, label: it.body.title, anchor: "edu-" + slug(it.body.title) });
+      });
+    });
+    mod.lessons.forEach(function (t) { subs.push({ type: "lesson", id: t, label: t, anchor: "lesson-" + slug(t) }); });
+    var hasQuiz = cfg.premium.some(function (key) { return (byTopic[key] || []).some(function (it) { return it.kind === "quiz"; }); });
+    if (hasQuiz) subs.push({ type: "read", id: "q:" + mod.title, label: "Test yourself", anchor: "quiz-" + slug(mod.title) });
+    return subs;
+  }
+  // Complete = the lesson is done, or (for education/questions) the section has been read.
+  function isSubDone(s, done, read) { return s.type === "lesson" ? !!done[s.id] : !!read[s.id]; }
+
+  // (Re)build the collapsible table of contents: each module is a header that expands to its
+  // subsections, each with a checkbox that ticks when its lesson is done or its section is read.
   function buildRail() {
-    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone();
-    var total = curriculum.reduce(function (n, m) { return n + m.lessons.length; }, 0);
-    var doneCount = curriculum.reduce(function (n, m) {
-      return n + m.lessons.filter(function (t) { return done[t]; }).length; }, 0);
+    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead();
+    var total = 0, complete = 0;
+    var perMod = curriculum.map(function (mod) {
+      var subs = moduleSubsections(mod);
+      var c = subs.filter(function (s) { return isSubDone(s, done, read); }).length;
+      total += subs.length; complete += c;
+      return { mod: mod, subs: subs, c: c };
+    });
     clear(rail);
     rail.appendChild(h("div", { class: "prog" }, [
-      document.createTextNode(doneCount + " / " + total + " lessons"),
-      h("div", { class: "bar" }, [h("i", { style: "width:" + (total ? Math.round(100 * doneCount / total) : 0) + "%" })]),
+      document.createTextNode(complete + " / " + total + " read"),
+      h("div", { class: "bar" }, [h("i", { style: "width:" + (total ? Math.round(100 * complete / total) : 0) + "%" })]),
     ]));
-    curriculum.forEach(function (mod) {
-      var modDone = mod.lessons.length && mod.lessons.every(function (t) { return done[t]; });
-      var btn = h("button", { class: "topic" + (mod === CTX.mod ? " on" : ""), onclick: function () {
-        CTX.mod = mod;
-        [].forEach.call(rail.querySelectorAll(".topic"), function (b) { b.classList.remove("on"); });
-        btn.classList.add("on");
-        renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
-      } }, [
-        h("span", { class: "tk", text: modDone ? "✓" : "" }),
+    perMod.forEach(function (pm) {
+      var mod = pm.mod, subs = pm.subs;
+      var modDone = subs.length && pm.c === subs.length;
+      var expanded = CTX.expanded.has(mod.title);
+      var subsWrap = h("div", { class: "mod-subs", hidden: !expanded });
+      subs.forEach(function (s) {
+        var d = isSubDone(s, done, read);
+        subsWrap.appendChild(h("button", { class: "sub" + (d ? " done" : ""), type: "button",
+          onclick: function () { gotoSub(mod, s); } }, [
+          h("span", { class: "box" + (d ? " on" : ""), text: d ? "✓" : "" }),
+          h("span", { class: "sl", text: s.label }),
+        ]));
+      });
+      var header = h("button", { class: "mod-h" + (mod === CTX.mod ? " on" : ""), type: "button",
+        onclick: function () {
+          var wasActive = CTX.mod === mod;
+          if (CTX.expanded.has(mod.title) && wasActive) CTX.expanded.delete(mod.title);
+          else CTX.expanded.add(mod.title);
+          if (!wasActive) renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
+          buildRail();
+        } }, [
+        h("span", { class: "caret" + (expanded ? " open" : ""), text: "▸" }),
         document.createTextNode(mod.title),
+        h("span", { class: "mtk" + (modDone ? " done" : ""), text: modDone ? "✓" : pm.c + "/" + subs.length }),
       ]);
-      rail.appendChild(btn);
+      rail.appendChild(h("div", { class: "mod" }, [header, subsWrap]));
     });
+  }
+
+  // Jump the right pane to a subsection (rendering its module first if needed) and scroll to it.
+  function gotoSub(mod, s) {
+    if (CTX.mod !== mod) {
+      CTX.expanded.add(mod.title);
+      renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
+      buildRail();
+    }
+    setTimeout(function () {
+      var el = document.getElementById(s.anchor);
+      if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 30);
+  }
+
+  // Tick education/question sections off once they scroll into view (checks them in the rail).
+  function setupReadObserver(main) {
+    if (CTX._obs) { CTX._obs.disconnect(); CTX._obs = null; }
+    if (typeof IntersectionObserver !== "function") return;
+    var obs = new IntersectionObserver(function (entries) {
+      var changed = false;
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var id = e.target.getAttribute("data-subid");
+        if (id && !loadRead()[id]) { markRead(id); obs.unobserve(e.target); changed = true; }
+      });
+      if (changed) buildRail();
+    }, { threshold: 0.2 });
+    CTX._obs = obs;
+    [].forEach.call(main.querySelectorAll("[data-subid]"), function (el) { obs.observe(el); });
   }
 
   // Re-sync the whole view with localStorage progress (after a lesson overlay closes).
@@ -155,7 +226,7 @@
     if (edu.length) {
       var esec = h("div", { class: "sec" }, [h("h3", { text: "Course material" })]);
       edu.forEach(function (b) {
-        var card = h("div", { class: "edu" }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
+        var card = h("div", { class: "edu", id: "edu-" + slug(b.title), "data-subid": "e:" + b.title }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
         if (b.keypoints && b.keypoints.length) {
           var kp = h("div", { class: "keypoints" }, [h("b", { text: "Key points" })]);
           var ul = h("ul");
@@ -174,7 +245,7 @@
     mod.lessons.forEach(function (title) {
       var L = lessonsByTitle[title] || {};
       var isDone = !!done[title];
-      lsec.appendChild(h("div", { class: "lcard" + (isDone ? " done" : "") }, [
+      lsec.appendChild(h("div", { class: "lcard" + (isDone ? " done" : ""), id: "lesson-" + slug(title) }, [
         h("div", { class: "grow" }, [
           h("div", { class: "lt" }, [
             isDone ? h("span", { class: "lk", text: "✓ " }) : document.createTextNode(""),
@@ -194,7 +265,7 @@
       (premiumByTopic[key] || []).forEach(function (it) { if (it.kind === "quiz") pq.push(it.body); });
     });
     if (pq.length) {
-      var qsec = h("div", { class: "sec" }, [h("h3", { text: "Test yourself · course questions" })]);
+      var qsec = h("div", { class: "sec", id: "quiz-" + slug(mod.title), "data-subid": "q:" + mod.title }, [h("h3", { text: "Test yourself · course questions" })]);
       pq.forEach(function (q, i) { qsec.appendChild(quizItem(mod.title, i, q)); });
       main.appendChild(qsec);
     }
@@ -206,7 +277,8 @@
       ]);
       main.appendChild(link);
     }
-    main.scrollIntoView ? window.scrollTo(0, 0) : null;
+    setupReadObserver(main);
+    window.scrollTo(0, 0);
   }
 
   // One inline premium question: shuffled options, grade on click, reveal explanation.
@@ -245,6 +317,8 @@
       var m = {}; (a || []).forEach(function (t) { m[t] = true; }); return m;
     } catch (e) { return {}; }
   }
+  function loadRead() { try { return JSON.parse(localStorage.getItem(COURSE_READ_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); } catch (e) { /* storage off */ } }
   function bumpScore(topicTitle, correct) {
     try {
       var s = JSON.parse(localStorage.getItem(COURSE_QUIZ_KEY) || "{}");
