@@ -393,6 +393,8 @@ function wireLessons() {
 // Finishing a lesson: in the curriculum, mark it done and advance to the next
 // lesson in the path (or close when the path is complete); otherwise just exit.
 function finishLesson() {
+  // Sync completion to the instructor backend when signed in (no-op otherwise).
+  if (lessonIdx >= 0 && window.Accounts) Accounts.logActivity("lesson_complete", LESSONS[lessonIdx].title);
   if (curriculumPos >= 0 && lessonIdx >= 0) {
     curriculumMarkDone(LESSONS[lessonIdx].title);
     curriculumPos++;
