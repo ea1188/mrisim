@@ -5,7 +5,8 @@
     {"id": "pathology", "label": "Pathology"},
     {"id": "perfusion", "label": "Perfusion"},
     {"id": "artifacts", "label": "Artifacts"},
-    {"id": "anatomy", "label": "Anatomy & planes"}
+    {"id": "anatomy", "label": "Anatomy & planes"},
+    {"id": "image-quality", "label": "Image quality"}
   ],
   "questions": [
     {
@@ -746,6 +747,63 @@
       "options": ["Coronal", "Axial", "Sagittal", "Oblique"],
       "answer": 0,
       "explain": "Coronal — a frontal slice; both lung fields and the heart appear side by side, the orientation closest to a frontal chest radiograph."
+    },
+    {
+      "category": "image-quality",
+      "prompt": "This brain image is heavily grained with noise. Which single change would most improve its SNR?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 12}},
+      "options": ["Average more signals (increase the NEX)", "Acquire a finer matrix (higher resolution)", "Widen the receiver bandwidth", "Shorten the repetition time (TR)"],
+      "answer": 0,
+      "explain": "SNR grows with the square root of the number of averages, so raising NEX is the direct fix. A finer matrix (smaller voxels) and a wider bandwidth both lower SNR, and a shorter TR leaves less longitudinal signal to collect."
+    },
+    {
+      "category": "image-quality",
+      "prompt": "Fine structures in this image look blocky and washed together. Which change would sharpen the detail?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 80, "snr_level": 90}},
+      "options": ["Acquire a finer matrix (more phase and frequency steps)", "Average more signals (increase the NEX)", "Increase the slice thickness", "Lengthen the echo time (TE)"],
+      "answer": 0,
+      "explain": "The blocky look is coarse spatial resolution — too few matrix steps make large voxels. A finer matrix shrinks the voxels and sharpens detail (at some SNR cost). NEX only changes noise; thicker slices and longer TE add no in-plane detail."
+    },
+    {
+      "category": "image-quality",
+      "prompt": "This high-resolution scan is noticeably noisier than a coarser one acquired in the same time. Why?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 100,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 28}},
+      "options": ["Finer voxels hold less signal, so SNR falls", "Higher resolution introduces motion artifact", "The receiver bandwidth was automatically lowered", "T2* decay is faster at high resolution"],
+      "answer": 0,
+      "explain": "SNR scales with voxel volume. A finer matrix over the same field of view makes each voxel smaller, so it collects less signal and the image gets noisier — the fundamental resolution-vs-SNR trade at a fixed scan time."
+    },
+    {
+      "category": "image-quality",
+      "prompt": "This spoiled gradient-echo image (short TR) is dim at a 5° flip. How do you raise the signal toward its maximum?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Gradient Echo", "TR": 100, "TE": 6, "flip_angle": 5, "matrix_size": 256, "snr_level": 90}},
+      "options": ["Increase the flip angle toward the Ernst angle", "Increase the flip angle all the way to 90°", "Decrease the flip angle toward 0°", "Flip angle has no effect on gradient-echo signal"],
+      "answer": 0,
+      "explain": "For a given TR and tissue T1 the GRE signal peaks at the Ernst angle (cos θ = e^(−TR/T1)); at a short TR that optimum is a modest angle. Going below it toward 0° gives little transverse signal, and 90° over-saturates at short TR — both yield less signal."
+    },
+    {
+      "category": "image-quality",
+      "prompt": "This scan was 3× faster using parallel imaging, but it's noticeably noisier — worst in the centre. What is that extra noise?",
+      "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 40, "accel_factor": 3, "accel_method": "SENSE"}},
+      "options": ["The g-factor: coil-geometry noise amplified when the aliasing is unfolded", "Chemical-shift misregistration", "Gibbs (truncation) ringing", "Partial-volume averaging"],
+      "answer": 0,
+      "explain": "Parallel imaging skips phase-encode lines for speed, then unfolds the aliasing using coil sensitivities. That unfolding amplifies noise by the coil-geometry g-factor (on top of the √R loss from fewer lines), and it's worst centrally where the coils overlap most."
+    },
+    {
+      "category": "image-quality",
+      "type": "pair",
+      "prompt": "Same slice, sequence and matrix — what changed from A to B?",
+      "setupA": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 90, "slice_thickness": 3}},
+      "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 90, "slice_thickness": 12}},
+      "options": ["Thicker slices — more partial-volume averaging", "A finer acquisition matrix", "More signal averaging (higher NEX)", "A longer echo time (TE)"],
+      "answer": 0,
+      "explain": "B uses thicker slices, so each voxel averages more tissue through-plane (the partial-volume effect) — small structures blur into their neighbours and the image looks smoother. Thinner slices reduce partial volume, at some SNR cost."
     }
   ]
 }
