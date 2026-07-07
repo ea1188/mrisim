@@ -18,13 +18,17 @@ interface SessionLike {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// `defaultCourse` covers Stripe Payment Links, whose dashboard cannot set session
+// metadata: when metadata.course is absent, fall back to it. The result is still
+// validated against the allowlist, so an unknown/omitted course never grants.
 export function parseCheckoutGrant(
   session: SessionLike,
   allowlist: readonly string[],
+  defaultCourse?: string,
 ): Grant | null {
   if (!session || session.payment_status !== "paid") return null;
   const userId = session.client_reference_id ?? "";
-  const course = session.metadata?.course ?? "";
+  const course = (session.metadata?.course ?? "") || (defaultCourse ?? "");
   const stripeRef = session.id ?? "";
   if (!UUID_RE.test(userId)) return null;
   if (!allowlist.includes(course)) return null;

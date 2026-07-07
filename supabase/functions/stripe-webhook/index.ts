@@ -6,6 +6,11 @@ import { parseCheckoutGrant } from "./validate.ts";
 // here to sell another course later — no other change needed.
 const COURSE_ALLOWLIST = ["mri-core"];
 
+// Stripe Payment Links cannot set session metadata from the dashboard, so a
+// completed session may arrive without metadata.course. With a single product we
+// default to the one course; parseCheckoutGrant still allowlist-checks it.
+const DEFAULT_COURSE = "mri-core";
+
 // Fetch-based HTTP client is required on Deno (no Node http).
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   httpClient: Stripe.createFetchHttpClient(),
@@ -43,6 +48,7 @@ Deno.serve(async (req) => {
   const grant = parseCheckoutGrant(
     event.data.object as Stripe.Checkout.Session,
     COURSE_ALLOWLIST,
+    DEFAULT_COURSE,
   );
   if (!grant) {
     // Malformed or ineligible — retrying will not help, so ack with 200.
