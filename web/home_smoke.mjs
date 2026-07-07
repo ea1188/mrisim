@@ -24,9 +24,9 @@ try {
   if (!/simulator\.html#test$/.test(target)) fail(`deep link did not redirect (final url: ${target})`);
   else console.log("deep-link redirect index.html#… → simulator.html ✓");
 
-  // The launcher (no hash) shows cards linking to the three modes.
+  // The launcher (no hash) shows tool cards linking to the three modes.
   await page.goto(base + "index.html", { waitUntil: "domcontentloaded" });
-  const hrefs = await page.$$eval("#home .card", (a) => a.map((x) => x.getAttribute("href")));
+  const hrefs = await page.$$eval("#tools a[href]", (a) => a.map((x) => x.getAttribute("href")));
   for (const h of ["simulator.html", "protocol.html", "quiz.html"]) {
     if (!hrefs.includes(h)) fail(`launcher is missing a card linking to ${h} (got ${JSON.stringify(hrefs)})`);
   }
