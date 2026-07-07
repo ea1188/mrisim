@@ -141,7 +141,7 @@
     buildRail();
     wrap.appendChild(rail); wrap.appendChild(main);
     clear(root); root.appendChild(wrap);
-    renderTopic(main, curriculum[0], lessonsByTitle, premiumByTopic);
+    renderOverview();   // open on the exam-readiness dashboard, not straight into module 1
   }
 
   function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
@@ -164,6 +164,86 @@
   // Complete = the lesson is done, or (for education/questions) the section has been read.
   function isSubDone(s, done, read) { return s.type === "lesson" ? !!done[s.id] : !!read[s.id]; }
 
+  function loadQuiz() { try { return JSON.parse(localStorage.getItem(COURSE_QUIZ_KEY) || "{}"); } catch (e) { return {}; } }
+  var STATUS_LABEL = { "not-started": "Not started", "progress": "In progress", "review": "Needs review", "solid": "Solid" };
+
+  // Exam readiness from local progress: per module (reads + quiz accuracy) and overall
+  // (reads 45% + quiz accuracy 40% + best mock exam 15%). Drives the overview dashboard
+  // and the "study next" nudge. Pure read of localStorage — nothing new stored.
+  function computeReadiness() {
+    var done = loadDone(), read = loadRead(), quiz = loadQuiz(), exam = loadExamBest();
+    var rSum = 0, rTot = 0, qRight = 0, qSeen = 0;
+    var modules = CTX.curriculum.map(function (mod) {
+      var subs = moduleSubsections(mod);
+      var c = subs.filter(function (s) { return isSubDone(s, done, read); }).length;
+      var q = quiz[mod.title] || { seen: 0, right: 0 };
+      var acc = q.seen ? q.right / q.seen : null;
+      rSum += c; rTot += subs.length; qRight += q.right; qSeen += q.seen;
+      var status;
+      if (c === 0 && !q.seen) status = "not-started";
+      else if (q.seen >= 3 && acc != null && acc < 0.7) status = "review";              // read but missing questions
+      else if (subs.length && c === subs.length && acc != null && acc >= 0.7) status = "solid";
+      else status = "progress";
+      return { mod: mod, subs: subs, c: c, total: subs.length, acc: acc, status: status };
+    });
+    var readPct = rTot ? rSum / rTot : 0, quizAcc = qSeen ? qRight / qSeen : 0;
+    var examPct = exam && exam.bestPct != null ? exam.bestPct / 100 : 0;
+    var overall = Math.round(100 * (0.45 * readPct + 0.40 * quizAcc + 0.15 * examPct));
+    var band = overall >= 80 ? "Exam-ready" : overall >= 40 ? "Building" : "Getting started";
+    var next = null;
+    for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "solid") { next = modules[i]; break; } }
+    return { modules: modules, overall: overall, band: band, next: next, exam: exam,
+      quizAcc: Math.round(100 * quizAcc), readPct: Math.round(100 * readPct) };
+  }
+
+  // The course "home": an exam-readiness dashboard over local progress. CTX.mod == null.
+  function renderOverview() {
+    stopExam();
+    if (CTX) CTX.mod = null;
+    var main = CTX.main, r = computeReadiness();
+    clear(main);
+    main.appendChild(h("p", { class: "eyebrow", text: "Exam readiness" }));
+    main.appendChild(h("h2", { text: "Your progress" }));
+    main.appendChild(h("div", { class: "ready" }, [
+      h("div", { class: "ready-num", text: r.overall + "%" }),
+      h("div", { class: "ready-band", text: r.band }),
+      h("div", { class: "bar wide" }, [h("i", { style: "width:" + r.overall + "%" })]),
+      h("div", { class: "ready-sub", text: r.readPct + "% read · " + r.quizAcc + "% quiz accuracy"
+        + (r.exam && r.exam.bestPct != null ? " · best mock " + r.exam.bestPct + "%" : "") }),
+    ]));
+    if (r.next) {
+      main.appendChild(h("button", { class: "btn study-next", type: "button",
+        onclick: function () { openModule(r.next.mod); } }, [
+        document.createTextNode("Study next: " + r.next.mod.title),
+        h("span", { class: "sn-why", text: r.next.status === "review" ? "quiz needs work"
+          : r.next.c ? "keep going" : "not started yet" }),
+      ]));
+    } else {
+      main.appendChild(h("p", { class: "lede", text: "Every module is solid — run a full practice exam to confirm you're ready." }));
+    }
+    main.appendChild(h("button", { class: "btn ghost-cta", type: "button", onclick: openExam, text: "Take a practice exam" }));
+    main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
+    var grid = h("div", { class: "ready-grid" });
+    r.modules.forEach(function (m) {
+      grid.appendChild(h("button", { class: "ready-row " + m.status, type: "button",
+        onclick: function () { openModule(m.mod); } }, [
+        h("span", { class: "rr-title", text: m.mod.title }),
+        h("span", { class: "rr-read", text: m.c + "/" + m.total + " read" }),
+        h("span", { class: "rr-quiz", text: m.acc == null ? "quiz —" : "quiz " + Math.round(100 * m.acc) + "%" }),
+        h("span", { class: "rr-chip", text: STATUS_LABEL[m.status] }),
+      ]));
+    });
+    main.appendChild(grid);
+    buildRail();
+  }
+
+  function openModule(mod) {
+    CTX.expanded.add(mod.title);
+    renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
+    buildRail();
+    if (CTX.main && CTX.main.scrollTo) CTX.main.scrollTo(0, 0);
+  }
+
   // (Re)build the collapsible table of contents: each module is a header that expands to its
   // subsections, each with a checkbox that ticks when its lesson is done or its section is read.
   function buildRail() {
@@ -180,6 +260,8 @@
       document.createTextNode(complete + " / " + total + " read"),
       h("div", { class: "bar" }, [h("i", { style: "width:" + (total ? Math.round(100 * complete / total) : 0) + "%" })]),
     ]));
+    rail.appendChild(h("button", { class: "overview-cta" + (CTX.mod == null ? " on" : ""), type: "button",
+      onclick: renderOverview, text: "Overview" }));
     rail.appendChild(h("button", { class: "exam-cta" + (EXAM ? " on" : ""), type: "button", onclick: openExam }, [
       document.createTextNode("Practice exam"),
       h("span", { class: "ec-sub", text: "Registry-style run across the whole bank" }),
@@ -247,7 +329,8 @@
   function refresh() {
     if (!CTX) return;
     buildRail();
-    renderTopic(CTX.main, CTX.mod, CTX.byTitle, CTX.byTopic);
+    if (CTX.mod == null) renderOverview();
+    else renderTopic(CTX.main, CTX.mod, CTX.byTitle, CTX.byTopic);
   }
 
   function renderTopic(main, mod, lessonsByTitle, premiumByTopic) {
