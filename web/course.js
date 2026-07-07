@@ -33,6 +33,16 @@
   var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
   var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
+  var STRIPE = window.MRISIM_STRIPE || {};
+
+  // Attach the signed-in user's id (and email) to the Payment Link so the webhook
+  // can map the payment back to this account.
+  function buildCheckoutUrl(link, uid, email) {
+    var u = new URL(link);
+    u.searchParams.set("client_reference_id", uid);
+    if (email) u.searchParams.set("prefilled_email", email);
+    return u.toString();
+  }
 
   // --- tiny DOM builder (textContent-safe; html: only for trusted premium bodies) --- //
   function h(tag, attrs, kids) {
@@ -79,11 +89,20 @@
       h("label", { text: "Email" }), email, btn, msg]);
   }
 
-  function paywallView(email) {
-    gate([h("h2", { text: "You're signed in — but not enrolled yet" }),
-      h("p", { text: "This guided curriculum is a paid course and " + (email || "your account") + " doesn't have access yet. If you've purchased or are joining a pilot, access is granted to this email — reach out and we'll enable it." }),
-      h("a", { class: "btn", href: "mailto:erolakkoc8@gmail.com?subject=MRISim%20course%20access", text: "Request access" }),
-      h("p", { class: "quiz-foot", html: "Meanwhile the <a class=\"linkout\" href=\"index.html\">free simulator, quiz and lessons</a> are open to everyone." })]);
+  function paywallView(email, uid) {
+    var kids = [
+      h("h2", { text: "Unlock the full course" }),
+      h("p", { text: "Get lifetime access to the guided curriculum: premium lessons, the full ARRT-style question bank, mock exams and the reference library." }),
+    ];
+    if (STRIPE.paymentLink && uid) {
+      kids.push(h("button", { class: "btn", text: "Get lifetime access for $49", onclick: function () {
+        location.assign(buildCheckoutUrl(STRIPE.paymentLink, uid, email));
+      } }));
+    } else {
+      kids.push(h("a", { class: "btn", href: "mailto:erolakkoc8@gmail.com?subject=MRISim%20course%20access", text: "Request access" }));
+    }
+    kids.push(h("p", { class: "quiz-foot", html: "Meanwhile the <a class=\"linkout\" href=\"index.html\">free simulator, quiz and lessons</a> are open to everyone." }));
+    gate(kids);
   }
 
   // --- signed-in chrome --------------------------------------------------- //
@@ -552,25 +571,67 @@
   document.getElementById("lesson-close").addEventListener("click", closeLesson);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLesson(); });
 
+  // Load the curriculum + premium content and render the course. Extracted so both
+  // the entitled path and the post-checkout path use one code path (DRY).
+  function loadCourse() {
+    return Promise.all([
+      fetch("lessons.json").then(function (r) { return r.json(); }),
+      Accounts.premiumContent(COURSE),
+    ]).then(function (res) {
+      var data = res[0], premium = res[1];
+      var byTitle = {}; (data.lessons || []).forEach(function (L) { byTitle[L.title] = L; });
+      var byTopic = {}; (premium || []).forEach(function (it) {
+        (byTopic[it.topic] = byTopic[it.topic] || []).push(it);
+      });
+      courseView(data.curriculum || [], byTitle, byTopic);
+    });
+  }
+
+  // After returning from Stripe, the webhook can lag the redirect by a few seconds.
+  // Show an unlocking state and poll the DB for the entitlement (never trust the
+  // URL). Resolves true once entitled, false after ~30s.
+  function waitForEntitlement() {
+    gate([h("h2", { text: "Payment received" }),
+      h("p", { text: "Unlocking your course. This can take a few seconds." })]);
+    var tries = 0;
+    return new Promise(function (resolve) {
+      (function poll() {
+        Accounts.isEntitled(COURSE).then(function (ok) {
+          if (ok) return resolve(true);
+          if (++tries >= 15) return resolve(false);
+          setTimeout(poll, 2000);
+        }).catch(function () {
+          if (++tries >= 15) return resolve(false);
+          setTimeout(poll, 2000);
+        });
+      })();
+    });
+  }
+
+  function pendingView() {
+    gate([h("h2", { text: "Almost there" }),
+      h("p", { text: "Your payment went through, but access is taking longer than usual to activate. Refresh this page in a minute. If it still does not unlock, email erolakkoc8@gmail.com and we will sort it out." }),
+      h("button", { class: "btn", text: "Refresh", onclick: function () { location.reload(); } })]);
+  }
+
   // --- boot: resolve the gate, then load the course --------------------- //
   if (!window.Accounts || !Accounts.enabled()) { notConfigured(); return; }
+  var justPaid = /[?&]checkout=success(?:&|$)/.test(location.search);
   Accounts.getSession().then(function (session) {
     if (!session) { signInView(); return; }
     var email = session.user && session.user.email;
+    var uid = session.user && session.user.id;
     chrome(email);
     return Accounts.isEntitled(COURSE).then(function (ok) {
-      if (!ok) { paywallView(email); return; }
-      return Promise.all([
-        fetch("lessons.json").then(function (r) { return r.json(); }),
-        Accounts.premiumContent(COURSE),
-      ]).then(function (res) {
-        var data = res[0], premium = res[1];
-        var byTitle = {}; (data.lessons || []).forEach(function (L) { byTitle[L.title] = L; });
-        var byTopic = {}; (premium || []).forEach(function (it) {
-          (byTopic[it.topic] = byTopic[it.topic] || []).push(it);
+      if (ok) { if (justPaid) history.replaceState(null, "", location.pathname); return loadCourse(); }
+      if (justPaid) {
+        return waitForEntitlement().then(function (granted) {
+          history.replaceState(null, "", location.pathname);
+          if (granted) return loadCourse();
+          pendingView();
         });
-        courseView(data.curriculum || [], byTitle, byTopic);
-      });
+      }
+      paywallView(email, uid);
     });
   }).catch(function (e) {
     gate([h("h2", { text: "Something went wrong" }), h("p", { text: String(e.message || e) })]);
