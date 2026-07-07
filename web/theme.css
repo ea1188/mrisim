@@ -1,0 +1,34 @@
+/* MRISim shared design system — the "A+C blend": flat graphite bones, one cyan accent,
+   a lone instrument-green reserved for live signal / done states. Imported by every page;
+   page-specific styles live in each page's own <style>. Single source of truth for tokens. */
+:root {
+  --bg: #07090c; --bg-2: #0b0f14; --panel: #10151b; --panel-2: #141b23;
+  --line: #1e262f; --line-2: #2a3441;
+  --text: #e8edf3; --muted: #8b97a6; --dim: #5f6b78;
+  --accent: #5db0ef; --accent-deep: #3f86c8; --accent-ink: #04121f;
+  --signal: #57e0a8;            /* live signal / progress accents */
+  --ok: #6bbf83;                /* semantic success (completed) */
+  --warn: #d98a8a;              /* semantic error */
+  --sans: "SF Pro Display","SF Pro Text",-apple-system,"Segoe UI",Inter,system-ui,sans-serif;
+  --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --wrap: 1120px; --pad: clamp(18px,5vw,40px);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.5; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+.wrap { max-width: var(--wrap); margin: 0 auto; padding-left: var(--pad); padding-right: var(--pad); }
+.mono { font-family: var(--mono); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* Shared button primitive (pages may override for local variants). */
+.btn { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;
+  padding: 11px 18px; border-radius: 2px; border: 1px solid transparent; cursor: pointer; transition: .16s; }
+.btn.pri { background: var(--accent); color: var(--accent-ink); }
+.btn.pri:hover { background: #7cc0f4; }
+.btn.sec { border-color: var(--line-2); color: var(--text); }
+.btn.sec:hover { border-color: var(--accent-deep); background: #12171d; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

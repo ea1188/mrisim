@@ -8,64 +8,66 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="theme.css" />
   <style>
-    /* ---- Quiz mode (read-the-scan self-test) ---- */
+    /* ---- Quiz mode (read-the-scan self-test) — flat/crisp design system (theme.css) ---- */
     #qz-root { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
     #qz-head {
-      display: flex; align-items: center; gap: 14px; padding: 8px 14px;
-      border-bottom: 1px solid #2a323c; background: #11151b;
+      display: flex; align-items: center; gap: 14px; padding: 0 clamp(12px,4vw,18px); height: 52px;
+      border-bottom: 1px solid var(--line); background: var(--bg-2);
     }
-    #qz-head h1 { font-size: 15px; margin: 0; color: #e6edf3; font-weight: 600; }
+    #qz-head h1 { font-size: 15px; margin: 0; color: var(--text); font-weight: 700; letter-spacing: -.2px; }
     #qz-head .spacer { flex: 1; }
-    #qz-head a { color: #6ea7df; text-decoration: none; font-size: 13px; margin-left: 14px; }
-    #qz-score { color: #c4ccd6; font-size: 13px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    #qz-head a { color: var(--muted); text-decoration: none; font-size: 13px; margin-left: 16px; transition: color .15s; }
+    #qz-head a:hover { color: var(--text); }
+    #qz-score { color: var(--muted); font-size: 13px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
     #qz-body { display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 18px; }
-    #qz-card { width: min(720px, 96vw); background: #141a21; border: 1px solid #232c36;
+    #qz-card { width: min(720px, 96vw); background: var(--panel); border: 1px solid var(--line);
       border-radius: 2px; padding: 16px 18px 18px; }
-    #qz-progress { color: #8b95a1; font-size: 12px; margin: 0 0 8px; }
-    #qz-imgwrap { background: #05080b; border: 1px solid #232c36; border-radius: 2px;
+    #qz-progress { color: var(--dim); font-family: var(--mono); font-size: 11px; letter-spacing: .06em; margin: 0 0 8px; }
+    #qz-imgwrap { background: #04060a; border: 1px solid var(--line); border-radius: 2px;
       display: flex; align-items: center; justify-content: center; min-height: 320px; }
     #qz-img { max-width: 100%; max-height: 52vh; image-rendering: auto; display: none; }
     #qz-pair { display: none; gap: 8px; width: 100%; justify-content: center; }
     #qz-pair figure { margin: 0; flex: 1 1 0; max-width: 50%; text-align: center; }
     #qz-pair img { max-width: 100%; max-height: 46vh; display: block; margin: 0 auto; }
-    #qz-pair figcaption { color: #9aa6b2; font-size: 12px; font-weight: 700; margin-top: 4px; letter-spacing: .04em; }
-    #qz-imgmsg { color: #7c8794; font-size: 13px; }
-    #qz-prompt { color: #e6edf3; font-size: 15px; font-weight: 600; margin: 14px 0 10px; line-height: 1.35; }
+    #qz-pair figcaption { color: var(--muted); font-family: var(--mono); font-size: 11px; font-weight: 600; margin-top: 5px; letter-spacing: .1em; }
+    #qz-imgmsg { color: var(--dim); font-size: 13px; }
+    #qz-prompt { color: var(--text); font-size: 15px; font-weight: 600; margin: 14px 0 10px; line-height: 1.4; }
     #qz-options { display: grid; gap: 8px; }
-    .qz-opt { text-align: left; background: #1b2530; color: #d7dee8; border: 1px solid #2f4358;
-      border-radius: 2px; padding: 10px 12px; font-size: 14px; cursor: pointer; }
-    .qz-opt:hover:not(:disabled) { border-color: #3f6f9c; background: #20303f; }
+    .qz-opt { position: relative; text-align: left; background: var(--bg-2); color: var(--text); border: 1px solid var(--line-2);
+      border-radius: 2px; padding: 10px 12px; font-size: 14px; cursor: pointer; transition: border-color .14s, background .14s; }
+    .qz-opt:hover:not(:disabled) { border-color: var(--accent-deep); }
     .qz-opt:disabled { cursor: default; }
-    .qz-opt { position: relative; }
     /* A text marker so correct/wrong reads without relying on border colour. */
     .qz-opt.correct, .qz-opt.wrong { padding-right: 84px; }
-    .qz-opt.correct { border-color: #3fb950; background: #16301d; color: #d7f5dd; }
-    .qz-opt.wrong { border-color: #d9534f; background: #311818; color: #f5d7d7; }
+    .qz-opt.correct { border-color: #3f8f5a; background: #14261a; color: #d7f5dd; }
+    .qz-opt.wrong { border-color: #8f3f3f; background: #261414; color: #f5d7d7; }
     .qz-opt.correct::after, .qz-opt.wrong::after {
       position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+      font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
     .qz-opt.correct::after { content: "correct"; color: #7fe0a0; }
     .qz-opt.wrong::after { content: "your pick"; color: #f0a0a0; }
-    #qz-feedback { margin-top: 12px; font-size: 13.5px; line-height: 1.4; color: #c4ccd6; display: none; }
-    #qz-feedback b.ok { color: #3fb950; } #qz-feedback b.no { color: #e5736f; }
-    #qz-next { margin-top: 14px; background: #4385cc; color: #081019; border: 0; border-radius: 2px;
+    #qz-feedback { margin-top: 12px; font-size: 13.5px; line-height: 1.5; color: #c4cad2; display: none; }
+    #qz-feedback b.ok { color: var(--ok); } #qz-feedback b.no { color: var(--warn); }
+    #qz-next { margin-top: 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 2px;
       padding: 9px 20px; font-weight: 600; cursor: pointer; display: none; }
     #qz-summary { text-align: center; display: none; }
-    #qz-summary h2 { color: #e6edf3; font-size: 22px; margin: 8px 0; }
-    #qz-summary p { color: #c4ccd6; }
-    #qz-restart, #qz-review { background: #4385cc; color: #081019; border: 0; border-radius: 2px;
+    #qz-summary h2 { color: var(--text); font-size: 22px; margin: 8px 0; letter-spacing: -.02em; }
+    #qz-summary p { color: #c4cad2; }
+    #qz-restart, #qz-review { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 2px;
       padding: 9px 22px; font-weight: 600; cursor: pointer; margin: 10px 6px 0; }
-    #qz-next:hover, #qz-restart:hover, #qz-review:hover { background: #4f93d6; }
+    #qz-next:hover, #qz-restart:hover, #qz-review:hover { background: #7cc0f4; }
     #qz-menu { text-align: center; padding: 6px 0 4px; }
-    #qz-menu h2 { color: #e6edf3; font-size: 17px; margin: 4px 0 16px; }
+    #qz-menu h2 { color: var(--text); font-size: 17px; margin: 4px 0 16px; }
     #qz-topics { display: grid; gap: 10px; max-width: 440px; margin: 0 auto; }
-    .qz-topic { background: #1b2530; color: #e6edf3; border: 1px solid #2f4358; border-radius: 2px;
-      padding: 13px 15px; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-    .qz-topic:hover { border-color: #3f6f9c; background: #20303f; }
-    .qz-topic .n { color: #8b95a1; font-size: 12px; font-variant-numeric: tabular-nums; }
-    #qz-topics-back { background: transparent; color: #c4ccd6; border: 1px solid #2f4358;
+    .qz-topic { background: var(--bg-2); color: var(--text); border: 1px solid var(--line-2); border-radius: 2px;
+      padding: 13px 15px; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color .14s, background .14s; }
+    .qz-topic:hover { border-color: var(--accent-deep); background: var(--panel-2); }
+    .qz-topic .n { color: var(--dim); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+    #qz-topics-back { background: transparent; color: #c4cad2; border: 1px solid var(--line-2);
       border-radius: 2px; padding: 9px 16px; font-weight: 600; cursor: pointer; margin: 10px 6px 0; }
+    #qz-topics-back:hover { border-color: var(--accent-deep); }
     @media (max-width: 640px) { #qz-root { height: auto; min-height: 100dvh; } }
   </style>
 </head>
@@ -94,7 +96,7 @@
     <div id="qz-body">
       <div id="qz-card">
         <div id="qz-menu">
-          <h2>MRI Quizzes — choose a topic</h2>
+          <h2>MRI Quizzes: choose a topic</h2>
           <div id="qz-topics"></div>
         </div>
         <p id="qz-progress"></p>

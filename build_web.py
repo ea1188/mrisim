@@ -79,6 +79,15 @@ def build() -> None:
         print(f"WARNING: {src_vidx} not found — SWI/MRA will build vessels in-browser "
               f"(~1 min). Run scripts/build_brain_vessels.py to generate it.")
 
+    # 2c. Copy the precomputed axial brain slice (uint8 tissue labels) that the
+    #     landing-page mini-simulator renders with the GRE model in pure JS (no Pyodide).
+    src_slice = os.path.join(ROOT, "data", "brain_slice.bin")
+    if os.path.exists(src_slice):
+        shutil.copy2(src_slice, os.path.join(WEB, "data", "brain_slice.bin"))
+        print(f"copied brain_slice.bin  ({os.path.getsize(src_slice) // 1024} KB)")
+    else:
+        print("WARNING: data/brain_slice.bin not found — the landing hero mini-sim will be blank.")
+
     # 3. Copy the app logo (shared with the desktop header).
     src_logo = os.path.join(ROOT, "data", "logo.png")
     if os.path.exists(src_logo):

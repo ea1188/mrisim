@@ -1,10 +1,10 @@
-/* MRISim browser edition — clinical near-black + medical-blue, matching the
-   desktop app palette (theme_colors.py). */
+/* MRISim browser edition — clinical near-black + medical cyan. Palette retuned to the
+   shared "A+C" design system (see theme.css); these vars drive the simulator + splash + tour. */
 :root {
-  --canvas: #050607; --panel: #171c23; --raised: #222932; --header: #0d1014;
-  --chip: #11151a; --border: #252c34; --border-hi: #323b46;
-  --text: #dfe5ec; --text-dim: #9aa4b2; --text-faint: #838d9c;
-  --accent: #4385cc; --accent-hi: #6ea7df; --accent-ink: #081019;
+  --canvas: #07090c; --panel: #10151b; --raised: #141b23; --header: #0b0f14;
+  --chip: #0b0f14; --border: #1e262f; --border-hi: #2a3441;
+  --text: #e8edf3; --text-dim: #8b97a6; --text-faint: #5f6b78;
+  --accent: #5db0ef; --accent-hi: #7cc0f4; --accent-ink: #04121f;
   /* Sans for prose/labels; a monospace for numeric readouts — scan parameters, metrics
      and timers, the way a real scanner console / DICOM overlay renders them (tabular). */
   --font-sans: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif;
@@ -133,10 +133,10 @@ input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 2
 input[type=range]::-moz-range-track { height: 5px; border-radius: 2px; background: var(--border); }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none; margin-top: -8px;
-  width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 2px solid #0b0f14;
+  width: 20px; height: 20px; border-radius: 2px; background: var(--accent); border: 2px solid #0b0f14;
 }
 input[type=range]::-moz-range-thumb {
-  width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 2px solid #0b0f14;
+  width: 20px; height: 20px; border-radius: 2px; background: var(--accent); border: 2px solid #0b0f14;
 }
 input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--accent-hi); }
 input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--accent-hi); }
@@ -324,7 +324,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .cur-module-h .cur-count { color: var(--text-faint); font-weight: 600; font-size: 11px; }
 .cur-lesson { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: none; color: #c4cad2; font-size: 12px; padding: 5px 6px; border-radius: 2px; cursor: pointer; }
 .cur-lesson:hover { background: var(--raised); color: var(--text); }
-.cur-lesson .tick { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border-hi); display: grid; place-items: center; font-size: 10px; color: var(--canvas); }
+.cur-lesson .tick { flex: none; width: 16px; height: 16px; border-radius: 2px; border: 1px solid var(--border-hi); display: grid; place-items: center; font-size: 10px; color: var(--canvas); }
 .cur-lesson.done .tick { background: var(--accent); border-color: var(--accent); }
 .cur-lesson.done { color: var(--text-faint); }
 .cur-actions { display: flex; gap: 8px; align-items: center; }
