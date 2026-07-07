@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About MRISim</title>
+  <meta name="description" content="MRISim is a browser-based MRI physics simulator and guided course for students, technologists and radiographers learning MRI." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    body { min-height: 100%; }
+    .nav { position: sticky; top: 0; z-index: 30; background: rgba(7,9,12,.78);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+    .nav .row { display: flex; align-items: center; gap: 22px; height: 58px; }
+    .nav .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.3px; font-size: 16px; }
+    .nav .logo .mark { width: 24px; height: 24px; }
+    .nav .links { display: flex; gap: 20px; margin-left: auto; font-size: 13.5px; color: var(--muted); }
+    .nav .links a { transition: color .15s; }
+    .nav .links a:hover { color: var(--text); }
+    main { padding: clamp(28px,6vw,60px) 0 40px; }
+    .doc { max-width: 760px; }
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+    h1 { font-size: clamp(28px,4.4vw,42px); font-weight: 680; line-height: 1.05; margin: 0 0 14px; }
+    .lede { color: var(--muted); font-size: 16px; line-height: 1.7; margin: 0 0 8px; max-width: 660px; }
+    h2 { font-size: 15px; font-family: var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--text); margin: 40px 0 12px; }
+    p { color: var(--muted); font-size: 15px; line-height: 1.75; margin: 0 0 14px; }
+    p strong { color: var(--text); font-weight: 600; }
+    a.inl { color: var(--accent); text-decoration: none; } a.inl:hover { text-decoration: underline; }
+    ul { color: var(--muted); font-size: 15px; line-height: 1.75; padding-left: 20px; }
+    ul li { margin: 0 0 6px; }
+    .site-links { display: flex; flex-wrap: wrap; gap: 16px; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap row">
+      <a class="logo" href="index.html"><img class="mark" src="logo.png" alt="" />MRISim</a>
+      <div class="links">
+        <a href="index.html">Home</a>
+        <a href="course.html">Guided course</a>
+        <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="wrap doc">
+      <p class="eyebrow">About</p>
+      <h1>Learn MRI by seeing the physics</h1>
+      <p class="lede">MRISim is a browser-based MRI physics simulator and a guided course. It turns the
+        equations behind an MR image into something you can watch respond, so the concepts stick.</p>
+
+      <h2>What it is</h2>
+      <p>Most MRI teaching is static: diagrams and formulas that never move. MRISim runs a real physics
+        engine in your browser. Change the sequence, TR, TE, or flip angle and the reconstructed image
+        updates the way a scanner's would, so you build intuition for how the parameters shape contrast,
+        signal, resolution and scan time. There is nothing to install and no account needed to start.</p>
+
+      <h2>Who it's for</h2>
+      <ul>
+        <li>Radiography and radiologic technology students learning MRI for the first time.</li>
+        <li>MRI technologists and radiographers preparing for registry exams.</li>
+        <li>Radiology residents, physicists and clinicians who want a feel for the parameter trade-offs.</li>
+        <li>Educators who want a live demonstration tool for the classroom.</li>
+      </ul>
+
+      <h2>How it fits together</h2>
+      <p>The <strong>simulator, protocol planner, lessons and quiz are free and open</strong> to everyone,
+        with no account. The <strong>guided course</strong> is a paid, structured path that adds premium
+        lessons, a large registry-style question bank, mock exams and a searchable reference library, with
+        your progress tracked as you go. The free tools are how you explore; the course is how you prepare.</p>
+
+      <h2>Open source and open data</h2>
+      <p>The MRISim software is open source under the MIT License. It renders real, openly licensed anatomy;
+        the datasets and their licenses are listed on the <a class="inl" href="credits.html">credits page</a>.
+        It is an educational tool, not a medical device, and is not affiliated with any registry or certifying
+        body.</p>
+
+      <h2>Get in touch</h2>
+      <p>Questions, feedback, or bug reports are welcome. See the <a class="inl" href="contact.html">contact
+        page</a>, or open an issue on <a class="inl" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub</a>.</p>
+    </div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap row site-links">
+      <a href="index.html">Home</a>
+      <a href="course.html">Guided course</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="contact.html">Contact</a>
+      <a href="credits.html">Credits</a>
+      <a href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </footer>
+</body>
+</html>
