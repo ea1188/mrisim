@@ -90,11 +90,13 @@ class RegionMixin(_Base):
             tex = self._body_phantoms.build_region_texture(name, vol)
             # The body phantoms are built patient-right on the viewer's right
             # (neurological). Mirror L/R (axis 2) so they display radiological \u2014
-            # patient-right on the viewer's left \u2014 consistent with the brain.
+            # patient-right on the viewer's left \u2014 consistent with the brain. The
+            # body atlases also carry the opposite anterior-posterior handedness from
+            # the brain, so flip A-P (axis 1) too, or their sagittals read reversed.
             if name in self._BODY_REGIONS:
-                vol = np.ascontiguousarray(np.flip(vol, axis=2))
+                vol = np.ascontiguousarray(np.flip(vol, axis=(1, 2)))
                 if tex is not None:
-                    tex = np.ascontiguousarray(np.flip(tex, axis=2))
+                    tex = np.ascontiguousarray(np.flip(tex, axis=(1, 2)))
             self._region_cache[name] = vol
             self._region_texture_cache[name] = tex
         self.phantom_3d = self._region_cache[name]

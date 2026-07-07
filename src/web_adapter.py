@@ -167,11 +167,13 @@ class WebHost(CurvesMixin):
                     vol = body_phantoms.build_region(name)
                     tex = body_phantoms.build_region_texture(name, vol)
                 # Body volumes are built neurological; mirror L/R (axis 2) to match
-                # the radiological brain — same as app_regions.on_region_change.
+                # the radiological brain. The body atlases also carry the opposite
+                # anterior-posterior handedness from the brain, so flip A-P (axis 1)
+                # too — otherwise their sagittals read front-to-back reversed.
                 if name in _BODY_REGIONS:
-                    vol = np.ascontiguousarray(np.flip(vol, axis=2))
+                    vol = np.ascontiguousarray(np.flip(vol, axis=(1, 2)))
                     if tex is not None:
-                        tex = np.ascontiguousarray(np.flip(tex, axis=2))
+                        tex = np.ascontiguousarray(np.flip(tex, axis=(1, 2)))
             self._region_cache[name] = vol
             self._region_tex_cache[name] = tex
             # fMRI activation is cheap; build it once per brain. The TOF vessel
