@@ -10,3 +10,11 @@ window.MRISIM_SUPABASE = {
   url: "",       // e.g. https://YOURREF.supabase.co
   anonKey: "",   // the anon / public key
 };
+
+/* Optional: Stripe course payments. The Payment Link is a PUBLIC URL and is safe
+   to commit. Leave it blank to hide the Buy button and keep the mailto paywall.
+   NEVER put a Stripe secret key or webhook signing secret here — those live only
+   as Supabase Edge Function secrets. */
+window.MRISIM_STRIPE = {
+  paymentLink: "",   // e.g. https://buy.stripe.com/test_xxx
+};
