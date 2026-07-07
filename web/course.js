@@ -32,8 +32,12 @@
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
   var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
   var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
+  var COURSE_MASTERY_KEY = "mrisim_course_mastery_v1"; // per-module mastery-check result
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
+  var CourseLogic = window.CourseLogic;
+  // eslint-disable-next-line no-unused-vars -- CHECK_N is consumed by the mastery-check UI (next task)
+  var PASS_PCT = CourseLogic.PASS_PCT, CHECK_N = CourseLogic.CHECK_N, MIN_POOL = CourseLogic.MIN_POOL;
 
   // Attach the signed-in user's id (and email) to the Payment Link so the webhook
   // can map the payment back to this account.
@@ -162,28 +166,29 @@
     return subs;
   }
   // Complete = the lesson is done, or (for education/questions) the section has been read.
-  function isSubDone(s, done, read) { return s.type === "lesson" ? !!done[s.id] : !!read[s.id]; }
+  function isSubDone(s, done, read, mastery) {
+    if (s.type === "lesson") return !!done[s.id];
+    if (s.type === "mastery") { var r = mastery && mastery[s.modTitle]; return !!(r && r.passed); }
+    return !!read[s.id];
+  }
 
   function loadQuiz() { try { return JSON.parse(localStorage.getItem(COURSE_QUIZ_KEY) || "{}"); } catch (e) { return {}; } }
-  var STATUS_LABEL = { "not-started": "Not started", "progress": "In progress", "review": "Needs review", "solid": "Solid" };
+  var STATUS_LABEL = { "not-started": "Not started", "progress": "In progress", "review": "Needs review", "mastered": "Mastered" };
 
   // Exam readiness from local progress: per module (reads + quiz accuracy) and overall
   // (reads 45% + quiz accuracy 40% + best mock exam 15%). Drives the overview dashboard
   // and the "study next" nudge. Pure read of localStorage — nothing new stored.
   function computeReadiness() {
-    var done = loadDone(), read = loadRead(), quiz = loadQuiz(), exam = loadExamBest();
+    var done = loadDone(), read = loadRead(), quiz = loadQuiz(), exam = loadExamBest(), mastery = loadMastery();
     var rSum = 0, rTot = 0, qRight = 0, qSeen = 0;
     var modules = CTX.curriculum.map(function (mod) {
       var subs = moduleSubsections(mod);
-      var c = subs.filter(function (s) { return isSubDone(s, done, read); }).length;
+      var c = subs.filter(function (s) { return isSubDone(s, done, read, mastery); }).length;
       var q = quiz[mod.title] || { seen: 0, right: 0 };
       var acc = q.seen ? q.right / q.seen : null;
+      var mr = mastery[mod.title] || { passed: false, attempts: 0 };
       rSum += c; rTot += subs.length; qRight += q.right; qSeen += q.seen;
-      var status;
-      if (c === 0 && !q.seen) status = "not-started";
-      else if (q.seen >= 3 && acc != null && acc < 0.7) status = "review";              // read but missing questions
-      else if (subs.length && c === subs.length && acc != null && acc >= 0.7) status = "solid";
-      else status = "progress";
+      var status = CourseLogic.deriveModuleStatus(c, subs.length, q.seen, mr.attempts, mr.passed);
       return { mod: mod, subs: subs, c: c, total: subs.length, acc: acc, status: status };
     });
     var readPct = rTot ? rSum / rTot : 0, quizAcc = qSeen ? qRight / qSeen : 0;
@@ -191,7 +196,7 @@
     var overall = Math.round(100 * (0.45 * readPct + 0.40 * quizAcc + 0.15 * examPct));
     var band = overall >= 80 ? "Exam-ready" : overall >= 40 ? "Building" : "Getting started";
     var next = null;
-    for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "solid") { next = modules[i]; break; } }
+    for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "mastered") { next = modules[i]; break; } }
     return { modules: modules, overall: overall, band: band, next: next, exam: exam,
       quizAcc: Math.round(100 * quizAcc), readPct: Math.round(100 * readPct) };
   }
@@ -231,7 +236,7 @@
           : r.next.c ? "keep going" : "not started yet" }),
       ]));
     } else {
-      main.appendChild(h("p", { class: "lede", text: "Every module is solid — run a full practice exam to confirm you're ready." }));
+      main.appendChild(h("p", { class: "lede", text: "Every module is mastered. Run a full practice exam to confirm you're ready." }));
     }
     main.appendChild(h("button", { class: "btn ghost-cta", type: "button", onclick: openExam, text: "Take a practice exam" }));
     main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
@@ -265,11 +270,11 @@
   // (Re)build the collapsible table of contents: each module is a header that expands to its
   // subsections, each with a checkbox that ticks when its lesson is done or its section is read.
   function buildRail() {
-    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead();
+    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead(), mastery = loadMastery();
     var total = 0, complete = 0;
     var perMod = curriculum.map(function (mod) {
       var subs = moduleSubsections(mod);
-      var c = subs.filter(function (s) { return isSubDone(s, done, read); }).length;
+      var c = subs.filter(function (s) { return isSubDone(s, done, read, mastery); }).length;
       total += subs.length; complete += c;
       return { mod: mod, subs: subs, c: c };
     });
@@ -290,7 +295,7 @@
       var expanded = CTX.expanded.has(mod.title);
       var subsWrap = h("div", { class: "mod-subs", hidden: !expanded });
       subs.forEach(function (s) {
-        var d = isSubDone(s, done, read);
+        var d = isSubDone(s, done, read, mastery);
         subsWrap.appendChild(h("button", { class: "sub" + (d ? " done" : ""), type: "button",
           onclick: function () { gotoSub(mod, s); } }, [
           h("span", { class: "box" + (d ? " on" : ""), text: d ? "✓" : "" }),
@@ -467,6 +472,17 @@
     });
     return pool;
   }
+  // Premium quiz bodies for one module (its TOPIC_CFG premium keys) — the mastery-check pool.
+  function modulePool(mod) {
+    var cfg = TOPIC_CFG[mod.title] || { premium: [], quiz: [] };
+    var pool = [];
+    cfg.premium.forEach(function (key) {
+      (CTX.byTopic[key] || []).forEach(function (it) { if (it.kind === "quiz") pool.push(it.body); });
+    });
+    return pool;
+  }
+  // eslint-disable-next-line no-unused-vars -- consumed by the mastery-check UI (next task)
+  function hasMastery(mod) { return modulePool(mod).length >= MIN_POOL; }
   function clearExamTimer() { if (EXAM && EXAM.timer) { clearInterval(EXAM.timer); EXAM.timer = null; } }
   function stopExam() { clearExamTimer(); EXAM = null; }
   function fmtTime(s) { var m = Math.floor(s / 60), ss = s % 60; return m + ":" + (ss < 10 ? "0" : "") + ss; }
@@ -657,6 +673,19 @@
   }
   function loadRead() { try { return JSON.parse(localStorage.getItem(COURSE_READ_KEY) || "{}") || {}; } catch (e) { return {}; } }
   function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); } catch (e) { /* storage off */ } }
+  function loadMastery() { try { return JSON.parse(localStorage.getItem(COURSE_MASTERY_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  // eslint-disable-next-line no-unused-vars -- consumed by the mastery-check UI (next task)
+  function saveMasteryResult(title, pct) {
+    try {
+      var m = loadMastery(), r = m[title] || { passed: false, bestPct: 0, attempts: 0 };
+      r.attempts += 1;
+      if (pct > r.bestPct) r.bestPct = pct;
+      if (pct >= PASS_PCT) r.passed = true;
+      r.ts = Date.now();
+      m[title] = r; localStorage.setItem(COURSE_MASTERY_KEY, JSON.stringify(m));
+      return r;
+    } catch (e) { return { passed: pct >= PASS_PCT, bestPct: pct, attempts: 1 }; }
+  }
   // Mark a lesson complete in the shared curriculum list (same array the simulator writes).
   function markDone(title) {
     try {

@@ -242,8 +242,8 @@
     .ready-row.progress .rr-chip { color: var(--accent); border-color: var(--accent-deep); }
     .ready-row.review { border-left-color: var(--warn); }
     .ready-row.review .rr-chip { color: var(--warn); border-color: var(--warn); }
-    .ready-row.solid { border-left-color: var(--ok); }
-    .ready-row.solid .rr-chip { color: var(--ok); border-color: var(--ok); }
+    .ready-row.mastered { border-left-color: var(--ok); }
+    .ready-row.mastered .rr-chip { color: var(--ok); border-color: var(--ok); }
     @media (max-width: 560px) {
       .ready-row { grid-template-columns: 1fr auto; }
       .ready-row .rr-read, .ready-row .rr-quiz { display: none; }
@@ -280,6 +280,7 @@
 
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="course_logic.js"></script>
   <script src="course.js"></script>
 </body>
 </html>
