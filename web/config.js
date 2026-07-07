@@ -11,7 +11,5 @@ window.MRISIM_SUPABASE = {
    NEVER put a Stripe secret key or webhook signing secret here — those live only
    as Supabase Edge Function secrets. */
 window.MRISIM_STRIPE = {
-  // TEMPORARY: Stripe TEST-mode link for a live end-to-end verification. Revert to
-  // "" (or the live link) after testing — a test link takes no real payments.
-  paymentLink: "https://buy.stripe.com/test_14A4gA8Yk2hk5cLehre3e00",
+  paymentLink: "",   // set to the LIVE Payment Link (https://buy.stripe.com/…) to go live
 };
