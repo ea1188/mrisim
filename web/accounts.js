@@ -64,6 +64,17 @@
     });
   }
   function signOut() { return client().then(function (c) { return c.auth.signOut(); }); }
+  // OAuth (Google): redirect to Google, then back to `redirectTo`; the client's
+  // detectSessionInUrl completes the sign-in on return. One click, no email.
+  function signInWithGoogle(opts) {
+    opts = opts || {};
+    return client().then(function (c) {
+      return c.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: opts.redirectTo || (location.origin + location.pathname) },
+      });
+    });
+  }
   function getSession() {
     return client().then(function (c) { return c.auth.getSession(); })
       .then(function (r) { return r.data.session; });
@@ -197,7 +208,7 @@
 
   window.Accounts = {
     enabled: enabled, signedIn: signedIn, cachedSession: cachedSession, client: client,
-    signIn: signIn, signOut: signOut, getSession: getSession, getUser: getUser,
+    signIn: signIn, signInWithGoogle: signInWithGoogle, signOut: signOut, getSession: getSession, getUser: getUser,
     profile: profile, onChange: onChange, logActivity: logActivity,
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
