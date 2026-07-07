@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MRISim — an interactive MRI physics simulator</title>
   <!-- Preserve old shareable deep links: index.html#<state> used to open the simulator
-       directly. The simulator now lives at simulator.html, so route the hash there. -->
-  <script>if (location.hash.length > 1) location.replace("simulator.html" + location.hash);</script>
+       directly. The simulator now lives at simulator.html, so route the hash there.
+       But NEVER hijack a Supabase auth callback hash (#access_token=…, #error=…): that
+       must stay on the page it landed on so magic-link sign-in can complete. -->
+  <script>if (location.hash.length > 1 && !/access_token=|refresh_token=|[#&]error=/.test(location.hash)) location.replace("simulator.html" + location.hash);</script>
   <meta name="description" content="MRISim — learn MRI in your browser: a real physics simulator, a scanner-console protocol planner, a guided course and a read-the-scan quiz." />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="theme.css" />
