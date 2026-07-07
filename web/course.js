@@ -36,7 +36,6 @@
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
   var CourseLogic = window.CourseLogic;
-  // eslint-disable-next-line no-unused-vars -- CHECK_N is consumed by the mastery-check UI (next task)
   var PASS_PCT = CourseLogic.PASS_PCT, CHECK_N = CourseLogic.CHECK_N, MIN_POOL = CourseLogic.MIN_POOL;
 
   // Attach the signed-in user's id (and email) to the Payment Link so the webhook
@@ -161,8 +160,7 @@
       });
     });
     mod.lessons.forEach(function (t) { subs.push({ type: "lesson", id: t, label: t, anchor: "lesson-" + slug(t) }); });
-    var hasQuiz = cfg.premium.some(function (key) { return (byTopic[key] || []).some(function (it) { return it.kind === "quiz"; }); });
-    if (hasQuiz) subs.push({ type: "read", id: "q:" + mod.title, label: "Test yourself", anchor: "quiz-" + slug(mod.title) });
+    if (hasMastery(mod)) subs.push({ type: "mastery", id: "m:" + mod.title, modTitle: mod.title, label: "Mastery check", anchor: "mastery-" + slug(mod.title) });
     return subs;
   }
   // Complete = the lesson is done, or (for education/questions) the section has been read.
@@ -423,6 +421,7 @@
       ]);
       main.appendChild(link);
     }
+    if (hasMastery(mod)) main.appendChild(masterySection(mod));
     setupReadObserver(main);
     window.scrollTo(0, 0);
   }
@@ -456,6 +455,102 @@
     return box;
   }
 
+  // --- end-of-module mastery check ---------------------------------------- //
+  // N questions from the module pool, no feedback until submit, >= PASS_PCT passes.
+  // Reuses the exam shuffle; every answer bumps the dashboard quiz score.
+  function masterySection(mod) {
+    var sec = h("div", { class: "sec mchk", id: "mastery-" + slug(mod.title), "data-subid": "m:" + mod.title },
+      [h("h3", { text: "Mastery check" })]);
+    var body = h("div", { class: "mchk-body" });
+    sec.appendChild(body);
+    renderMasteryIntro(mod, body);
+    return sec;
+  }
+  function renderMasteryIntro(mod, body) {
+    clear(body);
+    var pool = modulePool(mod), n = Math.min(CHECK_N, pool.length);
+    var m = loadMastery()[mod.title];
+    if (m && m.passed) {
+      body.appendChild(h("p", { class: "mchk-status pass", text: "Mastered · best " + m.bestPct + "%." }));
+    } else if (m && m.attempts) {
+      body.appendChild(h("p", { class: "mchk-status fail", text: "Not passed yet · best " + m.bestPct + "%. You need " + PASS_PCT + "%." }));
+    } else {
+      body.appendChild(h("p", { class: "mchk-intro", text: "Answer " + n + " questions from this module with no feedback until you submit. Score " + PASS_PCT + "% or higher to master it." }));
+    }
+    body.appendChild(h("button", { class: "btn", type: "button",
+      text: (m && (m.passed || m.attempts)) ? "Retake the mastery check" : "Take the mastery check · " + n + " questions",
+      onclick: function () { startMastery(mod, body); } }));
+  }
+  function startMastery(mod, body) {
+    var pool = modulePool(mod);
+    var order = shuffleInts(pool.length).slice(0, Math.min(CHECK_N, pool.length));
+    var questions = order.map(function (idx) { var q = pool[idx]; return { q: q, order: shuffleInts(q.options.length) }; });
+    renderMasteryRun(mod, body, questions);
+  }
+  function renderMasteryRun(mod, body, questions) {
+    clear(body);
+    var picks = questions.map(function () { return -1; });
+    questions.forEach(function (item, qi) {
+      var box = h("div", { class: "q mchk-q" }, [
+        h("p", { class: "mq-num", text: "Question " + (qi + 1) + " of " + questions.length }),
+        h("p", { class: "prompt", text: item.q.prompt }),
+      ]);
+      item.order.forEach(function (orig) {
+        var opt = h("button", { class: "opt", type: "button", onclick: function () {
+          picks[qi] = orig;
+          [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.classList.remove("sel"); });
+          opt.classList.add("sel");
+        } }, [document.createTextNode(item.q.options[orig])]);
+        box.appendChild(opt);
+      });
+      body.appendChild(box);
+    });
+    body.appendChild(h("button", { class: "btn", type: "button", text: "Submit mastery check", onclick: function () {
+      var blank = picks.filter(function (p) { return p < 0; }).length;
+      if (blank > 0 && !window.confirm(blank + " unanswered question(s) will be marked wrong. Submit now?")) return;
+      submitMastery(mod, body, questions, picks);
+    } }));
+  }
+  function submitMastery(mod, body, questions, picks) {
+    var correct = 0;
+    questions.forEach(function (item, qi) {
+      var right = picks[qi] === item.q.answer;
+      if (right) correct += 1;
+      bumpScore(mod.title, right);
+    });
+    var pct = Math.round(100 * correct / questions.length);
+    saveMasteryResult(mod.title, pct);
+    renderMasteryResult(mod, body, questions, picks, correct, pct);
+    buildRail();
+  }
+  function renderMasteryResult(mod, body, questions, picks, correct, pct) {
+    clear(body);
+    var passed = pct >= PASS_PCT;
+    body.appendChild(h("div", { class: "mchk-score " + (passed ? "pass" : "fail") }, [
+      h("div", { class: "ms-pct", text: pct + "%" }),
+      h("div", { class: "ms-line", text: correct + " of " + questions.length + (passed ? " · mastered" : " · need " + PASS_PCT + "%") }),
+    ]));
+    var missed = [];
+    questions.forEach(function (item, qi) { if (picks[qi] !== item.q.answer) missed.push({ item: item, pick: picks[qi] }); });
+    if (missed.length) {
+      body.appendChild(h("h4", { class: "mchk-rev-h", text: "Review these" }));
+      missed.forEach(function (mm) {
+        var item = mm.item;
+        var box = h("div", { class: "q reviewed miss" }, [h("p", { class: "prompt", text: item.q.prompt })]);
+        item.order.forEach(function (orig) {
+          var cls = "opt"; if (orig === item.q.answer) cls += " correct"; else if (orig === mm.pick) cls += " wrong";
+          box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
+        });
+        box.appendChild(h("div", { class: "fb", text: item.q.explain }));
+        body.appendChild(box);
+      });
+    }
+    var actions = h("div", { class: "mchk-actions" });
+    if (!passed) actions.appendChild(h("button", { class: "btn", type: "button", text: "Retry", onclick: function () { startMastery(mod, body); } }));
+    actions.appendChild(h("button", { class: "btn ghost", type: "button", text: passed ? "Done" : "Back to module", onclick: function () { renderMasteryIntro(mod, body); } }));
+    body.appendChild(actions);
+  }
+
   // --- practice exam ------------------------------------------------------ //
   // A registry-style run over the WHOLE premium question bank: pick a length, answer
   // with no feedback, then submit for a score + per-question review. Best score is
@@ -481,7 +576,6 @@
     });
     return pool;
   }
-  // eslint-disable-next-line no-unused-vars -- consumed by the mastery-check UI (next task)
   function hasMastery(mod) { return modulePool(mod).length >= MIN_POOL; }
   function clearExamTimer() { if (EXAM && EXAM.timer) { clearInterval(EXAM.timer); EXAM.timer = null; } }
   function stopExam() { clearExamTimer(); EXAM = null; }
@@ -674,7 +768,6 @@
   function loadRead() { try { return JSON.parse(localStorage.getItem(COURSE_READ_KEY) || "{}") || {}; } catch (e) { return {}; } }
   function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); } catch (e) { /* storage off */ } }
   function loadMastery() { try { return JSON.parse(localStorage.getItem(COURSE_MASTERY_KEY) || "{}") || {}; } catch (e) { return {}; } }
-  // eslint-disable-next-line no-unused-vars -- consumed by the mastery-check UI (next task)
   function saveMasteryResult(title, pct) {
     try {
       var m = loadMastery(), r = m[title] || { passed: false, bestPct: 0, attempts: 0 };
