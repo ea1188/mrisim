@@ -204,10 +204,17 @@
 
   // Reveal any element tagged .accounts-only when the layer is configured
   // (e.g. the "Sign in" link in a page footer), so it stays hidden otherwise.
+  // When the visitor is already signed in, relabel a "Sign in" entry point to
+  // "Account" so the nav reflects state (best-effort from the cached session, so
+  // it paints on first render without waiting on the network).
   function _revealLinks() {
     if (!ENABLED) return;
+    var signed = signedIn();
     var els = document.querySelectorAll(".accounts-only");
-    for (var i = 0; i < els.length; i++) els[i].hidden = false;
+    for (var i = 0; i < els.length; i++) {
+      els[i].hidden = false;
+      if (signed && /sign\s*in/i.test(els[i].textContent)) els[i].textContent = "Account";
+    }
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", _revealLinks);
