@@ -70,3 +70,6 @@ web/lessons.json
 
 # Node tooling (ESLint for the web build)
 node_modules/
+
+# Legacy PNG output of scripts/prerender_lessons.py (it now writes optimized .jpg)
+web/img/lessons/**/*.png
