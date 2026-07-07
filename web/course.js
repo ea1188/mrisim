@@ -10,7 +10,7 @@
   var root = document.getElementById("course-root");
   var whoami = document.getElementById("whoami");
   var overlay = document.getElementById("lesson-overlay");
-  var frame = document.getElementById("lesson-frame");
+  var lessonState = null;   // { title, steps, i } for the active illustrated lesson
   // Live references so we can re-render progress after an inline lesson closes.
   var CTX = null; // { curriculum, byTitle, byTopic, rail, main, mod }
 
@@ -639,6 +639,13 @@
   }
   function loadRead() { try { return JSON.parse(localStorage.getItem(COURSE_READ_KEY) || "{}") || {}; } catch (e) { return {}; } }
   function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); } catch (e) { /* storage off */ } }
+  // Mark a lesson complete in the shared curriculum list (same array the simulator writes).
+  function markDone(title) {
+    try {
+      var a = JSON.parse(localStorage.getItem(CURRICULUM_DONE_KEY) || "[]");
+      if (a.indexOf(title) < 0) { a.push(title); localStorage.setItem(CURRICULUM_DONE_KEY, JSON.stringify(a)); }
+    } catch (e) { /* storage off */ }
+  }
   function bumpScore(topicTitle, correct) {
     try {
       var s = JSON.parse(localStorage.getItem(COURSE_QUIZ_KEY) || "{}");
@@ -648,22 +655,51 @@
     } catch (e) { /* storage off */ }
   }
 
-  // --- inline lesson overlay ---------------------------------------------- //
-  // The lesson runs the real simulator in an iframe (simulator.html?lesson=…&embed=1),
-  // so the learner stays on the course page. Same origin ⇒ shared localStorage, so any
-  // completion the sim records is visible to refresh() the moment we close.
+  // --- illustrated lesson viewer ------------------------------------------ //
+  // Each step shows its pre-rendered acquired image (web/img/lessons/<slug>/<i>.png,
+  // built by scripts/prerender_lessons.py) + the step's teaching box, stepped through
+  // with no engine/Pyodide load. The live interactive simulator is one click away.
   function openLesson(title) {
+    var L = CTX.byTitle[title] || {};
+    lessonState = { title: title, steps: L.steps || [], i: 0 };
     document.getElementById("lesson-title").textContent = title;
-    frame.src = "simulator.html?lesson=" + encodeURIComponent(title) + "&embed=1";
+    document.getElementById("lesson-fullsim").href = "simulator.html?lesson=" + encodeURIComponent(title);
     overlay.hidden = false;
     document.body.style.overflow = "hidden";
+    renderLessonStep();
+  }
+  function renderLessonStep() {
+    var body = document.getElementById("lesson-body");
+    var ls = lessonState, steps = ls.steps, i = ls.i, step = steps[i] || {};
+    clear(body);
+    var wrap = h("div", { class: "lv" });
+    if (step.state) {                    // only steps with sim state have a rendered image
+      var img = h("img", { src: "img/lessons/" + slug(ls.title) + "/" + i + ".jpg", alt: "Acquired image for this step" });
+      var imgBox = h("div", { class: "lv-img" }, [img]);
+      img.addEventListener("error", function () { imgBox.remove(); textCol.classList.add("solo"); });
+      wrap.appendChild(imgBox);
+    }
+    var textCol = h("div", { class: "lv-text" + (step.state ? "" : " solo") }, [
+      h("div", { class: "lv-step", text: "Step " + (i + 1) + " of " + steps.length }),
+      h("div", { class: "lv-box", html: step.text || "" }),
+    ]);
+    var isLast = i >= steps.length - 1;
+    var back = h("button", { class: "btn ghost", type: "button", text: "← Back",
+      onclick: function () { if (ls.i > 0) { ls.i -= 1; renderLessonStep(); } } });
+    back.disabled = i === 0;
+    var next = h("button", { class: "btn", type: "button", text: isLast ? "Finish lesson" : "Next →",
+      onclick: function () { if (isLast) { markDone(ls.title); closeLesson(); } else { ls.i += 1; renderLessonStep(); } } });
+    textCol.appendChild(h("div", { class: "lv-nav" }, [back, next]));
+    wrap.appendChild(textCol);
+    body.appendChild(wrap);
+    if (body.scrollTo) body.scrollTo(0, 0);
   }
   function closeLesson() {
     if (overlay.hidden) return;
     overlay.hidden = true;
-    frame.src = "about:blank";          // tear down Pyodide / stop the worker
+    lessonState = null;
     document.body.style.overflow = "";
-    refresh();                          // pick up any completion the sim just recorded
+    refresh();                          // pick up the completion we just recorded
   }
   document.getElementById("lesson-close").addEventListener("click", closeLesson);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLesson(); });

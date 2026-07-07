@@ -182,7 +182,28 @@
     #lesson-overlay .obar button { color: #c4cad2; background: var(--panel-2); border: 1px solid var(--line-2);
       border-radius: 2px; padding: 7px 13px; font: inherit; font-size: 12.5px; cursor: pointer; transition: .15s; }
     #lesson-overlay .obar button:hover { border-color: var(--accent-deep); color: #fff; }
-    #lesson-overlay iframe { flex: 1 1 auto; width: 100%; border: 0; background: var(--bg); }
+    #lesson-overlay .obar a#lesson-fullsim { color: var(--accent); background: none; border: 1px solid var(--line-2);
+      border-radius: 2px; padding: 7px 12px; font: inherit; font-size: 12.5px; text-decoration: none; transition: .15s; }
+    #lesson-overlay .obar a#lesson-fullsim:hover { border-color: var(--accent); background: var(--panel-2); }
+    #lesson-body { flex: 1 1 auto; overflow-y: auto; padding: clamp(16px,3vw,34px); }
+    /* Lesson viewer: acquired image beside the teaching box (stacks on narrow screens) */
+    .lv { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(16px,3vw,32px);
+      max-width: 1000px; margin: 0 auto; align-items: start; }
+    .lv-img { background: #000; border: 1px solid var(--line); border-radius: 2px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; }
+    .lv-img img { display: block; width: 100%; height: auto; }
+    .lv-text { display: flex; flex-direction: column; }
+    .lv-text.solo { grid-column: 1 / -1; max-width: 680px; margin: 0 auto; }
+    .lv-step { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); margin: 0 0 12px; }
+    .lv-box { color: var(--text); font-size: 15px; line-height: 1.65; }
+    .lv-box b { color: #fff; }
+    .lv-nav { display: flex; gap: 10px; margin-top: 26px; }
+    .lv-nav .btn { margin-top: 0; }
+    .lv-nav .btn.ghost { background: none; color: var(--muted); border: 1px solid var(--line-2); }
+    .lv-nav .btn.ghost:hover:not(:disabled) { border-color: var(--accent-deep); color: var(--text); }
+    .lv-nav .btn:disabled { opacity: .4; cursor: default; }
+    @media (max-width: 720px) { .lv { grid-template-columns: 1fr; } }
 
     /* Overview rail entry */
     .overview-cta { display: block; width: calc(100% - 24px); margin: 4px 12px 8px; text-align: left;
@@ -241,18 +262,20 @@
     <div class="gate"><div class="card"><p>Loading…</p></div></div>
   </div>
 
-  <!-- Inline lesson runner: the simulator loads here (as an iframe) when a learner
-       opens a lesson, so they stay on the course page. Populated by course.js. -->
+  <!-- Inline lesson viewer: pre-rendered acquired image + the step's teaching box,
+       stepped through with no engine load. Populated by course.js. The live
+       interactive simulator is one click away via "Open in full simulator". -->
   <div id="lesson-overlay" hidden role="dialog" aria-modal="true" aria-label="Lesson">
     <div class="obar">
       <div>
         <div class="otitle" id="lesson-title"></div>
-        <div class="osub">Interactive lesson · runs the live simulator</div>
+        <div class="osub">Illustrated lesson · read-through</div>
       </div>
       <span class="sp"></span>
-      <button type="button" id="lesson-close">✕ Close lesson</button>
+      <a id="lesson-fullsim" href="#" target="_blank" rel="noopener">Open in full simulator ↗</a>
+      <button type="button" id="lesson-close">✕ Close</button>
     </div>
-    <iframe id="lesson-frame" title="Lesson" allow="fullscreen"></iframe>
+    <div id="lesson-body"></div>
   </div>
 
   <script src="config.js"></script>
