@@ -186,6 +186,13 @@
       return c.from("entitlements").select("course").eq("course", course).maybeSingle();
     }).then(function (r) { return !!(r && r.data); }).catch(function () { return false; });
   }
+  // requestRefund: ask the refund-course edge function to refund the purchase + revoke
+  // this course (the server enforces the window + that it's the caller's own purchase).
+  function requestRefund(course) {
+    return client().then(function (c) {
+      return c.functions.invoke("refund-course", { body: { course: course || "mri-core" } });
+    });
+  }
   // premiumContent: the exclusive course material — RLS serves rows only to an entitled
   // user, so a signed-out or non-entitled caller gets [].
   function premiumContent(course) {
@@ -214,6 +221,6 @@
     createClass: createClass, instructorClasses: instructorClasses,
     archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
-    isEntitled: isEntitled, premiumContent: premiumContent,
+    isEntitled: isEntitled, premiumContent: premiumContent, requestRefund: requestRefund,
   };
 })();

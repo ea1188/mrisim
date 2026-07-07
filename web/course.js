@@ -196,6 +196,18 @@
       quizAcc: Math.round(100 * quizAcc), readPct: Math.round(100 * readPct) };
   }
 
+  // Self-serve refund: confirm, ask the edge function (it enforces window + ownership),
+  // then reload on success (access is revoked server-side).
+  function doRefund() {
+    if (!confirm("Refund your course purchase and lose access? This cannot be undone.")) return;
+    Accounts.requestRefund(COURSE).then(function (r) {
+      if (r && r.error) { alert("Refund failed: " + (r.error.message || r.error)); return; }
+      var body = (r && r.data) || {};
+      if (body.ok) { alert("Refunded. Your course access has been removed."); location.reload(); }
+      else { alert(body.error || "The refund could not be processed. Please email support."); }
+    }).catch(function (e) { alert("Refund failed: " + (e.message || e)); });
+  }
+
   // The course "home": an exam-readiness dashboard over local progress. CTX.mod == null.
   function renderOverview() {
     stopExam();
@@ -234,6 +246,12 @@
       ]));
     });
     main.appendChild(grid);
+    main.appendChild(h("p", { style: "margin-top:36px;font-size:12px;color:var(--dim)" }, [
+      document.createTextNode("Bought by mistake, or it's not for you? "),
+      h("button", { type: "button", style: "background:none;border:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:0",
+        text: "Request a refund", onclick: doRefund }),
+      document.createTextNode(" within 7 days."),
+    ]));
     buildRail();
   }
 
