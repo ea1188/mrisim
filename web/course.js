@@ -72,21 +72,35 @@
   }
 
   function signInView() {
-    var email = h("input", { type: "email", placeholder: "you@school.edu", autocomplete: "email" });
     var msg = h("div", { class: "msg" });
-    var btn = h("button", { class: "btn", text: "Email me a sign-in link", onclick: function () {
+    // Primary: one-click Google (redirects to Google, returns signed in).
+    var gbtn = h("button", { class: "btn", text: "Continue with Google", onclick: function () {
+      gbtn.disabled = true; msg.className = "msg"; msg.textContent = "Redirecting to Google…";
+      Accounts.signInWithGoogle().then(function (r) {
+        if (r && r.error) { gbtn.disabled = false; msg.className = "msg err"; msg.textContent = r.error.message; }
+      }).catch(function (e) { gbtn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
+    } });
+    // Fallback: email sign-in link, revealed on demand so it stays one-click first.
+    var email = h("input", { type: "email", placeholder: "you@school.edu", autocomplete: "email" });
+    var ebtn = h("button", { class: "btn", style: "margin-top:10px", text: "Email me a sign-in link", onclick: function () {
       var addr = email.value.trim();
       if (!addr) { msg.className = "msg err"; msg.textContent = "Enter your email."; return; }
-      btn.disabled = true; msg.className = "msg"; msg.textContent = "Sending…";
+      ebtn.disabled = true; msg.className = "msg"; msg.textContent = "Sending…";
       Accounts.signIn(addr).then(function (r) {
-        btn.disabled = false;
+        ebtn.disabled = false;
         if (r && r.error) { msg.className = "msg err"; msg.textContent = r.error.message; return; }
         msg.className = "msg ok"; msg.textContent = "Check " + addr + " for a sign-in link.";
-      }).catch(function (e) { btn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
+      }).catch(function (e) { ebtn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
     } });
+    var fallback = h("div", { style: "margin-top:14px" }, [h("label", { text: "Email" }), email, ebtn]);
+    fallback.hidden = true;
+    var toggle = h("button", {
+      style: "display:block;margin:12px auto 0;background:none;border:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;text-decoration:underline",
+      text: "or sign in with email", onclick: function () { fallback.hidden = false; toggle.hidden = true; },
+    });
     gate([h("h2", { text: "Sign in to your course" }),
-      h("p", { text: "The guided curriculum is a paid course. Sign in with the email your access is under — we'll email you a one-time sign-in link." }),
-      h("label", { text: "Email" }), email, btn, msg]);
+      h("p", { text: "Your guided curriculum, saved progress and premium content — sign in to pick up where you left off." }),
+      gbtn, toggle, fallback, msg]);
   }
 
   function paywallView(email, uid) {

@@ -57,9 +57,18 @@
         .catch(function (e) { btn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
     } });
 
+    var gbtn = h("button", { class: "primary", text: "Continue with Google", onclick: function () {
+      gbtn.disabled = true; msg.className = "msg"; msg.textContent = "Redirecting to Google…";
+      Accounts.signInWithGoogle().then(function (r) {
+        if (r && r.error) { gbtn.disabled = false; msg.className = "msg err"; msg.textContent = r.error.message; }
+      }).catch(function (e) { gbtn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
+    } });
+
     show(card([
-      h("h2", { text: "Sign in to run a class" }),
-      h("p", { class: "sub", text: "Passwordless — we email you a one-time sign-in link. Instructors create classes and see student practice; students join a class with a code." }),
+      h("h2", { text: "Sign in" }),
+      h("p", { class: "sub", text: "One click with Google, or use email below. Instructors: choose Instructor and use email so we set up your account." }),
+      gbtn,
+      h("p", { class: "sub", style: "margin:16px 0 2px", text: "or sign in with email" }),
       h("label", { text: "Email" }), email,
       h("label", { text: "I am a…" }),
       h("div", { class: "roles" }, [
