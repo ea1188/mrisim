@@ -81,7 +81,7 @@
     /* ---- proof strip: the real product tiles ---- */
     .proof { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
     .ptile { border: 1px solid var(--line); border-radius: 2px; overflow: hidden; background: #06080b; }
-    .ptile .cv { position: relative; aspect-ratio: 16 / 11; }
+    .ptile .cv { position: relative; aspect-ratio: 1 / 1; }
     .ptile canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
     .ptile .meta { padding: 12px 14px; border-top: 1px solid var(--line); }
     .ptile .meta .t { font-size: 13.5px; font-weight: 620; }
@@ -283,30 +283,6 @@
         cv.width = Math.max(2, r.width * d); cv.height = Math.max(2, r.height * d);
         var g = cv.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0); return { g: g, w: r.width, h: r.height };
       }
-      function kspace(cv) {
-        var s = fit(cv), g = s.g, w = s.w, h = s.h, cx = w/2, cy = h/2, step = Math.max(6, w/24);
-        g.fillStyle = "#04060a"; g.fillRect(0,0,w,h);
-        for (var y = step/2; y < h; y += step) for (var x = step/2; x < w; x += step) {
-          var dx = (x-cx)/(w/2), dy = (y-cy)/(h/2), a = Math.exp(-(dx*dx+dy*dy)*3.2);
-          g.fillStyle = "rgba(93,176,239," + (0.08 + a*0.9).toFixed(3) + ")";
-          g.beginPath(); g.arc(x, y, 0.6 + a*2.2, 0, 7); g.fill();
-        }
-      }
-      function heat(cv) {
-        var s = fit(cv), g = s.g, w = s.w, h = s.h, n = 12, cw = w/n, ch = h/n;
-        var ramp = [[13,17,23],[26,40,74],[30,86,120],[40,150,140],[120,200,110],[235,220,120]];
-        for (var j=0;j<n;j++) for (var i=0;i<n;i++){
-          var dx=(i/(n-1)-.5), dy=(j/(n-1)-.5), d=Math.sqrt(dx*dx+dy*dy)*1.7;
-          var val=Math.max(0,Math.min(.999,1-d + Math.sin(i*1.3)*.06));
-          var c=ramp[Math.floor(val*(ramp.length-1))];
-          g.fillStyle="rgb("+c[0]+","+c[1]+","+c[2]+")"; g.fillRect(i*cw, j*ch, cw+1, ch+1);
-        }
-      }
-      document.querySelectorAll("canvas[data-kind]").forEach(function (cv) {
-        var k = cv.getAttribute("data-kind");
-        if (k === "kspace") kspace(cv); else if (k === "map") heat(cv);
-      });
-
       // Hero mini-simulator: the REAL brainweb axial slice (data/brain_slice.bin, uint8
       // tissue labels) rendered with the engine's own spoiled-GRE signal model, recomputed
       // in JS as the viewer drags TR / TE / flip. Tissue table = tissue_db.py (3 T);
@@ -323,6 +299,8 @@
         var mctx = mri.getContext("2d");
         var off = document.createElement("canvas"); off.width = SW; off.height = SH;
         var octx = off.getContext("2d"), imgd = octx.createImageData(SW, SH), labels = null;
+        var offK = document.createElement("canvas"); offK.width = 256; offK.height = 256;  // FFT scratch
+        var octxK = offK.getContext("2d");
         var trI = document.getElementById("s-tr"), teI = document.getElementById("s-te"), flI = document.getElementById("s-fl");
         var trV = document.getElementById("v-tr"), teV = document.getElementById("v-te"), flV = document.getElementById("v-fl");
         function gre(t, TR, TE, cosA, sinA) {                 // spoiled gradient echo
@@ -345,10 +323,13 @@
           }
           octx.putImageData(imgd, 0, 0);
         }
-        function blit(cv, cctx) {
-          cctx.imageSmoothingEnabled = true; cctx.clearRect(0, 0, cv.width, cv.height);
-          cctx.drawImage(off, 0, 0, cv.width, cv.height);
+        function drawContain(ctx, src, sw, sh) {   // draw src into ctx.canvas preserving aspect (letterboxed)
+          var cw = ctx.canvas.width, ch = ctx.canvas.height, s = Math.min(cw / sw, ch / sh);
+          var w = sw * s, h = sh * s, x = (cw - w) / 2, y = (ch - h) / 2;
+          ctx.imageSmoothingEnabled = true; ctx.fillStyle = "#04060a"; ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(src, 0, 0, sw, sh, x, y, w, h);
         }
+        function blit(cv, cctx) { drawContain(cctx, off, SW, SH); }
         function render() {
           if (!labels) return;
           var TR = +trI.value, TE = +teI.value, FL = +flI.value;
@@ -360,13 +341,93 @@
           cv.width = Math.max(2, r.width * dp); cv.height = Math.max(2, r.height * dp);
           computeInto(TR, TE, FL); blit(cv, cv.getContext("2d"));
         }
+        function sizeTo(cv) {                                  // set backing store to the tile's box
+          var r = cv.getBoundingClientRect(), dp = Math.min(devicePixelRatio || 1, 2);
+          cv.width = Math.max(2, r.width * dp); cv.height = Math.max(2, r.height * dp);
+          return cv.getContext("2d");
+        }
+        // In-place iterative radix-2 FFT (Cooley-Tukey), complex arrays re[]/im[], n a power of 2.
+        function fft(re, im, n) {
+          for (var i = 1, j = 0; i < n; i++) {
+            var bit = n >> 1;
+            for (; j & bit; bit >>= 1) j ^= bit;
+            j ^= bit;
+            if (i < j) { var a = re[i]; re[i] = re[j]; re[j] = a; a = im[i]; im[i] = im[j]; im[j] = a; }
+          }
+          for (var len = 2; len <= n; len <<= 1) {
+            var ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+            for (var s = 0; s < n; s += len) {
+              var cr = 1, ci = 0;
+              for (var k = 0; k < (len >> 1); k++) {
+                var p = s + k, q = p + (len >> 1);
+                var xr = re[q] * cr - im[q] * ci, xi = re[q] * ci + im[q] * cr;
+                re[q] = re[p] - xr; im[q] = im[p] - xi; re[p] += xr; im[p] += xi;
+                var t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t;
+              }
+            }
+          }
+        }
+        function fft2(re, im, N) {                             // separable 2-D FFT (rows then columns)
+          var tr = new Float64Array(N), ti = new Float64Array(N), x, y;
+          for (y = 0; y < N; y++) {
+            for (x = 0; x < N; x++) { tr[x] = re[y * N + x]; ti[x] = im[y * N + x]; }
+            fft(tr, ti, N);
+            for (x = 0; x < N; x++) { re[y * N + x] = tr[x]; im[y * N + x] = ti[x]; }
+          }
+          for (x = 0; x < N; x++) {
+            for (y = 0; y < N; y++) { tr[y] = re[y * N + x]; ti[y] = im[y * N + x]; }
+            fft(tr, ti, N);
+            for (y = 0; y < N; y++) { re[y * N + x] = tr[y]; im[y * N + x] = ti[y]; }
+          }
+        }
+        // k-space tile = the actual 2-D FFT (log-magnitude, centred) of the reconstructed slice.
+        function paintKspace(cv) {
+          if (!labels) return;
+          var N = 256;
+          computeInto(500, 12, 80);                           // the recon image we transform
+          var re = new Float64Array(N * N), im = new Float64Array(N * N);
+          var ox = (N - SW) >> 1, oy = (N - SH) >> 1, id = imgd.data, x, y, k;
+          for (y = 0; y < SH; y++) for (x = 0; x < SW; x++)
+            re[(y + oy) * N + (x + ox)] = id[(y * SW + x) * 4] / 255;
+          fft2(re, im, N);
+          var mag = new Float64Array(N * N), mx = 1e-9, m;
+          for (k = 0; k < N * N; k++) { m = Math.log(1 + Math.hypot(re[k], im[k])); mag[k] = m; if (m > mx) mx = m; }
+          var out = octxK.createImageData(N, N), d = out.data;
+          for (y = 0; y < N; y++) for (x = 0; x < N; x++) {   // fftshift (DC to centre) + normalise
+            var v = mag[((y + N / 2) % N) * N + ((x + N / 2) % N)] / mx, g = (v * 255) | 0, p = (y * N + x) * 4;
+            d[p] = (g * 0.72) | 0; d[p + 1] = (g * 0.85) | 0; d[p + 2] = g; d[p + 3] = 255;   // cool tint
+          }
+          octxK.putImageData(out, 0, 0);
+          drawContain(sizeTo(cv), offK, N, N);
+        }
+        function viridis(t) {                                 // compact viridis-ish ramp, interpolated
+          var r = [[13,17,23],[26,40,74],[30,86,120],[40,150,140],[120,200,110],[235,220,120]];
+          t = Math.max(0, Math.min(0.999, t)); var f = t * (r.length - 1), i = f | 0, u = f - i, a = r[i], b = r[i + 1];
+          return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+        }
+        // Quantitative map tile = every pixel coloured by its tissue's T2* (a real T2 map of the slice).
+        function paintQmap(cv) {
+          if (!labels) return;
+          var out = octx.createImageData(SW, SH), d = out.data, i, tt, c, denom = Math.log(1 + 1000);
+          for (i = 0; i < labels.length; i++) {
+            tt = TIS[labels[i]]; var p = i * 4;
+            if (!tt || tt.pd === 0) { d[p] = 6; d[p + 1] = 7; d[p + 2] = 10; d[p + 3] = 255; continue; }
+            c = viridis(Math.log(1 + tt.t2) / denom);         // T2* (ms) on a log scale, CSF ~ 1
+            d[p] = c[0] | 0; d[p + 1] = c[1] | 0; d[p + 2] = c[2] | 0; d[p + 3] = 255;
+          }
+          octx.putImageData(out, 0, 0);
+          drawContain(sizeTo(cv), off, SW, SH);
+        }
         [trI, teI, flI].forEach(function (el) { el.addEventListener("input", render); });
         fetch("data/brain_slice.bin").then(function (r) { return r.arrayBuffer(); })
           .then(function (buf) {
             labels = new Uint8Array(buf);
             render();                                         // hero (uses the sliders)
-            var pslice = document.querySelector('canvas[data-kind="slice"]');
-            if (pslice) paintTile(pslice, 500, 12, 80);       // "Reconstruction" proof tile: T1 weighted
+            var q = function (k) { return document.querySelector('canvas[data-kind="' + k + '"]'); };
+            var ps = q("slice"), pk = q("kspace"), pm = q("map");
+            if (ps) paintTile(ps, 500, 12, 80);               // Reconstruction (T1 weighted)
+            if (pk) paintKspace(pk);                          // k-space = real 2-D FFT of that image
+            if (pm) paintQmap(pm);                            // Quantitative T2 map
           })
           .catch(function () { /* asset unavailable: leave the panel blank */ });
       }
