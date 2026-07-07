@@ -148,10 +148,16 @@
       });
     });
   }
+  // Classes this user OWNS (teaches). Filtered by instructor_id, because RLS also
+  // grants read on classes the user is merely enrolled in — without this filter the
+  // account page would list a class under both "teach" and "joined".
   function instructorClasses() {
     return client().then(function (c) {
-      return c.from("classes").select("id,name,join_code,archived,created_at")
-        .order("created_at", { ascending: false });
+      return c.auth.getUser().then(function (u) {
+        return c.from("classes").select("id,name,join_code,archived,created_at")
+          .eq("instructor_id", u.data.user.id)
+          .order("created_at", { ascending: false });
+      });
     }).then(function (r) { return r.data || []; });
   }
   function archiveClass(classId, archived) {

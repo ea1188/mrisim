@@ -1,7 +1,8 @@
 /* MRISim account page controller. Uses window.Accounts (accounts.js). Renders the
- * sign-in form when signed out, and a role-adaptive view when signed in: an
- * instructor dashboard (classes, join codes, per-student practice) or a student
- * view (join a class, my classes, recent activity). */
+ * sign-in form when signed out, and one unified self-serve view when signed in:
+ * every account can create classes (and share join codes) AND join classes with a
+ * code. "Instructor" is a per-class relationship — you own the classes you create —
+ * not an account type, so there is no role fork. */
 (function () {
   "use strict";
   var root = document.getElementById("root");
@@ -39,20 +40,17 @@
     var name = h("input", { type: "text", id: "name", placeholder: "Your name (optional)" });
     var inst = h("input", { type: "text", id: "inst", placeholder: "Institution (optional)" });
     var msg = h("div", { class: "msg" });
-    var rStudent = h("input", { type: "radio", name: "role", value: "student", checked: true });
-    var rInstr = h("input", { type: "radio", name: "role", value: "instructor" });
 
     var btn = h("button", { class: "primary", text: "Email me a sign-in link", onclick: function () {
       var addr = email.value.trim();
       if (!addr) { msg.className = "msg err"; msg.textContent = "Enter your email."; return; }
-      var role = rInstr.checked ? "instructor" : "student";
       btn.disabled = true; msg.className = "msg"; msg.textContent = "Sending…";
-      Accounts.signIn(addr, { meta: { role: role, display_name: name.value.trim(), institution: inst.value.trim() } })
+      Accounts.signIn(addr, { meta: { display_name: name.value.trim(), institution: inst.value.trim() } })
         .then(function (r) {
           btn.disabled = false;
           if (r && r.error) { msg.className = "msg err"; msg.textContent = r.error.message; return; }
           msg.className = "msg ok";
-          msg.textContent = "Check " + addr + " for a sign-in link. (First time as an instructor? Your account is set up when you click it.)";
+          msg.textContent = "Check " + addr + " for a sign-in link.";
         })
         .catch(function (e) { btn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
     } });
@@ -66,15 +64,10 @@
 
     show(card([
       h("h2", { text: "Sign in" }),
-      h("p", { class: "sub", text: "One click with Google, or use email below. Instructors: choose Instructor and use email so we set up your account." }),
+      h("p", { class: "sub", text: "One click with Google, or use email below. It's the same account either way — once you're in you can create classes and join them." }),
       gbtn,
       h("p", { class: "sub", style: "margin:16px 0 2px", text: "or sign in with email" }),
       h("label", { text: "Email" }), email,
-      h("label", { text: "I am a…" }),
-      h("div", { class: "roles" }, [
-        h("label", {}, [rStudent, "Student"]),
-        h("label", {}, [rInstr, "Instructor"]),
-      ]),
       h("label", { text: "Name" }), name,
       h("label", { text: "Institution" }), inst,
       btn, msg,
@@ -85,7 +78,7 @@
   function signedInChrome(prof, email) {
     whoami.hidden = false;
     clear(whoami);
-    whoami.appendChild(document.createTextNode((prof && prof.display_name ? prof.display_name + " · " : "") + (email || "") + " · " + (prof && prof.role === "instructor" ? "Instructor" : "Student") + " "));
+    whoami.appendChild(document.createTextNode((prof && prof.display_name ? prof.display_name + " · " : "") + (email || "") + " "));
     whoami.appendChild(h("button", { text: "Sign out", onclick: function () {
       Accounts.signOut().then(function () { location.reload(); });
     } }));
@@ -93,124 +86,119 @@
 
   function pct(s, t) { return t ? Math.round((100 * s) / t) + "%" : "—"; }
   function when(iso) { try { return new Date(iso).toLocaleDateString(); } catch (e) { return ""; } }
+  function th(t) { return h("th", { text: t }); }
+  function td(t) { return h("td", { text: t }); }
+  function tdNum(t) { return h("td", { class: "num", text: String(t) }); }
 
-  // ---- instructor dashboard --------------------------------------------- //
-  function instructorView() {
+  // A class you own: join code, roster and each member's formative practice.
+  // `reload` re-fetches the owning list after archive/delete.
+  function classCard(cl, reload) {
+    var body = h("div");
+    var archiveBtn = h("button", { class: "ghost", text: cl.archived ? "Unarchive" : "Archive", onclick: function () {
+      archiveBtn.disabled = true;
+      Accounts.archiveClass(cl.id, !cl.archived).then(reload).catch(function () { archiveBtn.disabled = false; });
+    } });
+    var delBtn = h("button", { class: "ghost", text: "Delete", onclick: function () {
+      if (!window.confirm("Delete \"" + cl.name + "\"? This removes its roster and all its activity. This cannot be undone.")) return;
+      delBtn.disabled = true;
+      Accounts.deleteClass(cl.id).then(reload).catch(function () { delBtn.disabled = false; });
+    } });
+    var head = h("div", { class: "classhead" }, [
+      h("h2", { class: "grow", text: cl.name + (cl.archived ? " (archived)" : "") }),
+      h("span", { class: "muted", text: "Join code:" }),
+      h("span", { class: "code", text: cl.join_code }),
+      archiveBtn, delBtn,
+    ]);
+    var c = card([head, body]);
+    body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
+    Promise.all([Accounts.roster(cl.id), Accounts.classActivity(cl.id)]).then(function (res) {
+      clear(body);
+      var roster = res[0], acts = res[1];
+      if (!roster.length) { body.appendChild(h("p", { class: "muted", text: "No members yet. Share the join code above." })); return; }
+      // Aggregate per student.
+      var by = {};
+      acts.forEach(function (a) {
+        var s = by[a.student_id] || (by[a.student_id] = { quizzes: 0, lessons: {}, bestPct: null, last: null });
+        if (a.kind === "quiz_attempt") { s.quizzes++; if (a.total) { var p = (100 * a.score) / a.total; if (s.bestPct == null || p > s.bestPct) s.bestPct = p; } }
+        if (a.kind === "lesson_complete") s.lessons[a.ref] = true;   // distinct lessons, not repeats
+        if (!s.last || a.created_at > s.last) s.last = a.created_at;
+      });
+      var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
+        th("Member"), th("Quiz runs"), th("Best score"), th("Lessons"), th("Last active"),
+      ])])]);
+      var tb = h("tbody");
+      roster.forEach(function (r) {
+        var p = (r.profiles && r.profiles.display_name) || "(unnamed)";
+        var s = by[r.student_id] || { quizzes: 0, lessons: {}, bestPct: null, last: null };
+        tb.appendChild(h("tr", {}, [
+          td(p), tdNum(s.quizzes), tdNum(s.bestPct == null ? "—" : Math.round(s.bestPct) + "%"),
+          tdNum(Object.keys(s.lessons).length), tdNum(s.last ? when(s.last) : "—"),
+        ]));
+      });
+      tbl.appendChild(tb);
+      body.appendChild(tbl);
+      body.appendChild(h("p", { class: "muted", text: roster.length + " member" + (roster.length === 1 ? "" : "s") + " · practice scores are formative, not graded exams." }));
+    });
+    return c;
+  }
+
+  // ---- unified signed-in view (everyone can teach and join) ------------- //
+  function signedInView(uid) {
     var wrap = h("div");
+    var teachList = h("div"), joinedList = h("div"), recent = h("div");
+
+    // -- teach: create a class + the classes you own --
     var nameIn = h("input", { type: "text", placeholder: "e.g. MRI Physics — Fall 2026" });
-    var msg = h("div", { class: "msg" });
+    var cmsg = h("div", { class: "msg" });
     var create = h("button", { class: "primary", text: "Create class", onclick: function () {
       var nm = nameIn.value.trim();
-      if (!nm) { msg.className = "msg err"; msg.textContent = "Name the class."; return; }
+      if (!nm) { cmsg.className = "msg err"; cmsg.textContent = "Name the class."; return; }
       create.disabled = true;
       Accounts.createClass(nm).then(function (r) {
         create.disabled = false;
-        if (r && r.error) { msg.className = "msg err"; msg.textContent = r.error.message; return; }
-        nameIn.value = ""; msg.textContent = ""; load();
-      }).catch(function (e) { create.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
+        if (r && r.error) { cmsg.className = "msg err"; cmsg.textContent = r.error.message; return; }
+        nameIn.value = ""; cmsg.textContent = ""; loadTeach();
+      }).catch(function (e) { create.disabled = false; cmsg.className = "msg err"; cmsg.textContent = String(e.message || e); });
     } });
-
-    var list = h("div");
-    function load() {
-      clear(list);
-      list.appendChild(h("p", { class: "muted", text: "Loading classes…" }));
+    function loadTeach() {
+      clear(teachList);
+      teachList.appendChild(h("p", { class: "muted", text: "Loading…" }));
       Accounts.instructorClasses().then(function (classes) {
-        clear(list);
-        if (!classes.length) { list.appendChild(h("p", { class: "muted", text: "No classes yet — create one above, then share its join code." })); return; }
-        classes.forEach(function (cl) { list.appendChild(classCard(cl)); });
+        clear(teachList);
+        if (!classes.length) { teachList.appendChild(h("p", { class: "muted", text: "No classes yet — create one above, then share its join code." })); return; }
+        classes.forEach(function (cl) { teachList.appendChild(classCard(cl, loadTeach)); });
       });
     }
 
-    function classCard(cl) {
-      var body = h("div");
-      var archiveBtn = h("button", { class: "ghost", text: cl.archived ? "Unarchive" : "Archive", onclick: function () {
-        archiveBtn.disabled = true;
-        Accounts.archiveClass(cl.id, !cl.archived).then(function () { load(); })
-          .catch(function () { archiveBtn.disabled = false; });
-      } });
-      var delBtn = h("button", { class: "ghost", text: "Delete", onclick: function () {
-        if (!window.confirm("Delete \"" + cl.name + "\"? This removes its roster and all its activity. This cannot be undone.")) return;
-        delBtn.disabled = true;
-        Accounts.deleteClass(cl.id).then(function () { load(); })
-          .catch(function () { delBtn.disabled = false; });
-      } });
-      var head = h("div", { class: "classhead" }, [
-        h("h2", { class: "grow", text: cl.name + (cl.archived ? " (archived)" : "") }),
-        h("span", { class: "muted", text: "Join code:" }),
-        h("span", { class: "code", text: cl.join_code }),
-        archiveBtn, delBtn,
-      ]);
-      var c = card([head, body]);
-      body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
-      Promise.all([Accounts.roster(cl.id), Accounts.classActivity(cl.id)]).then(function (res) {
-        clear(body);
-        var roster = res[0], acts = res[1];
-        if (!roster.length) { body.appendChild(h("p", { class: "muted", text: "No students yet. Give them the join code above." })); return; }
-        // Aggregate per student.
-        var by = {};
-        acts.forEach(function (a) {
-          var s = by[a.student_id] || (by[a.student_id] = { quizzes: 0, lessons: {}, bestPct: null, last: null });
-          if (a.kind === "quiz_attempt") { s.quizzes++; if (a.total) { var p = (100 * a.score) / a.total; if (s.bestPct == null || p > s.bestPct) s.bestPct = p; } }
-          if (a.kind === "lesson_complete") s.lessons[a.ref] = true;   // distinct lessons, not repeats
-          if (!s.last || a.created_at > s.last) s.last = a.created_at;
-        });
-        var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
-          th("Student"), th("Quiz runs"), th("Best score"), th("Lessons"), th("Last active"),
-        ])])]);
-        var tb = h("tbody");
-        roster.forEach(function (r) {
-          var p = (r.profiles && r.profiles.display_name) || "(unnamed)";
-          var s = by[r.student_id] || { quizzes: 0, lessons: {}, bestPct: null, last: null };
-          tb.appendChild(h("tr", {}, [
-            td(p), tdNum(s.quizzes), tdNum(s.bestPct == null ? "—" : Math.round(s.bestPct) + "%"),
-            tdNum(Object.keys(s.lessons).length), tdNum(s.last ? when(s.last) : "—"),
-          ]));
-        });
-        tbl.appendChild(tb);
-        body.appendChild(tbl);
-        body.appendChild(h("p", { class: "muted", text: roster.length + " student" + (roster.length === 1 ? "" : "s") + " · practice scores are formative, not graded exams." }));
-      });
-      return c;
-    }
-    function th(t) { return h("th", { text: t }); }
-    function td(t) { return h("td", { text: t }); }
-    function tdNum(t) { return h("td", { class: "num", text: String(t) }); }
-
-    wrap.appendChild(card([
-      h("h2", { text: "Create a class" }),
-      h("p", { class: "sub", text: "Students join with the code it generates. You'll see their practice as they go." }),
-      nameIn, create, msg,
-    ]));
-    wrap.appendChild(list);
-    show(wrap);
-    load();
-  }
-
-  // ---- student view ----------------------------------------------------- //
-  function studentView() {
-    var wrap = h("div");
+    // -- join: enter a code + the classes you've joined (owned ones excluded) --
     var codeIn = h("input", { type: "text", placeholder: "e.g. A1B2C3", maxlength: "12" });
-    var msg = h("div", { class: "msg" });
+    var jmsg = h("div", { class: "msg" });
     var join = h("button", { class: "primary", text: "Join class", onclick: function () {
       var code = codeIn.value.trim();
-      if (!code) { msg.className = "msg err"; msg.textContent = "Enter the code your instructor gave you."; return; }
-      join.disabled = true; msg.className = "msg"; msg.textContent = "Joining…";
+      if (!code) { jmsg.className = "msg err"; jmsg.textContent = "Enter the code you were given."; return; }
+      join.disabled = true; jmsg.className = "msg"; jmsg.textContent = "Joining…";
       Accounts.joinClass(code).then(function (r) {
         join.disabled = false;
-        if (r && r.error) { msg.className = "msg err"; msg.textContent = r.error.message || "That code didn't work."; return; }
-        codeIn.value = ""; msg.className = "msg ok"; msg.textContent = "Joined."; load();
-      }).catch(function (e) { join.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
+        if (r && r.error) { jmsg.className = "msg err"; jmsg.textContent = r.error.message || "That code didn't work."; return; }
+        codeIn.value = ""; jmsg.className = "msg ok"; jmsg.textContent = "Joined."; loadJoined();
+      }).catch(function (e) { join.disabled = false; jmsg.className = "msg err"; jmsg.textContent = String(e.message || e); });
     } });
-
-    var classes = h("div"), recent = h("div");
-    function load() {
-      clear(classes); classes.appendChild(h("p", { class: "muted", text: "Loading…" }));
+    function loadJoined() {
+      clear(joinedList);
+      joinedList.appendChild(h("p", { class: "muted", text: "Loading…" }));
       Accounts.myClasses().then(function (cs) {
-        clear(classes);
-        classes.appendChild(h("h2", { text: "My classes" }));
-        if (!cs.length) { classes.appendChild(h("p", { class: "muted", text: "You haven't joined a class yet." })); return; }
-        cs.forEach(function (c) { classes.appendChild(h("p", {}, [document.createTextNode(c.name), document.createTextNode("  "), h("span", { class: "muted", text: "(" + c.join_code + ")" })])); });
+        clear(joinedList);
+        var joined = cs.filter(function (c) { return c.instructor_id !== uid; });  // not the ones you own
+        if (!joined.length) { joinedList.appendChild(h("p", { class: "muted", text: "You haven't joined a class yet." })); return; }
+        joined.forEach(function (c) {
+          joinedList.appendChild(h("p", {}, [document.createTextNode(c.name), document.createTextNode("  "),
+            h("span", { class: "muted", text: "(" + c.join_code + ")" })]));
+        });
       });
+    }
+
+    // -- your recent practice --
+    function loadRecent() {
       clear(recent); recent.appendChild(h("p", { class: "muted", text: "Loading…" }));
       Accounts.myActivity().then(function (as) {
         clear(recent);
@@ -233,14 +221,20 @@
     }
 
     wrap.appendChild(card([
-      h("h2", { text: "Join a class" }),
-      h("p", { class: "sub", text: "Enter the code your instructor shared. Once you're in, your quiz and lesson practice shows up for them." }),
-      codeIn, join, msg,
+      h("h2", { text: "Classes you teach" }),
+      h("p", { class: "sub", text: "Create a class and share its join code. You'll see each member's quiz and lesson practice as they go." }),
+      nameIn, create, cmsg,
+      teachList,
     ]));
-    wrap.appendChild(card([classes]));
+    wrap.appendChild(card([
+      h("h2", { text: "Classes you've joined" }),
+      h("p", { class: "sub", text: "Enter a join code to follow a class. Your practice then shows up for whoever runs it." }),
+      codeIn, join, jmsg,
+      joinedList,
+    ]));
     wrap.appendChild(card([recent]));
     show(wrap);
-    load();
+    loadTeach(); loadJoined(); loadRecent();
   }
 
   // ---- boot ------------------------------------------------------------- //
@@ -248,10 +242,10 @@
   // Creating the client (inside getSession) processes a magic-link redirect.
   Accounts.getSession().then(function (session) {
     if (!session) { signInView(); return; }
-    var email = session.user && session.user.email;
+    var user = session.user, email = user && user.email;
     Accounts.profile().then(function (prof) {
       signedInChrome(prof, email);
-      if (prof && prof.role === "instructor") instructorView(); else studentView();
+      signedInView(user.id);
     });
   }).catch(function (e) {
     show(card([h("h2", { text: "Something went wrong" }), h("p", { class: "sub", text: String(e.message || e) })]));
