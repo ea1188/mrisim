@@ -109,7 +109,7 @@
       h("p", { text: "Get lifetime access to the guided curriculum: premium lessons, the full ARRT-style question bank, mock exams and the reference library." }),
     ];
     if (STRIPE.paymentLink && uid) {
-      kids.push(h("button", { class: "btn", text: "Get lifetime access for $49", onclick: function () {
+      kids.push(h("button", { class: "btn", text: "Get lifetime access for $45", onclick: function () {
         location.assign(buildCheckoutUrl(STRIPE.paymentLink, uid, email));
       } }));
     } else {
