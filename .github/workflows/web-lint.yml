@@ -38,3 +38,6 @@ jobs:
 
       - name: ESLint
         run: npm run lint
+
+      - name: Unit test (pure course logic)
+        run: npm run test:web

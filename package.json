@@ -5,7 +5,8 @@
   "description": "Tooling for the MRISim browser build (web/): ESLint static analysis.",
   "type": "commonjs",
   "scripts": {
-    "lint": "eslint web/"
+    "lint": "eslint web/",
+    "test:web": "node --test web/course_logic.test.mjs"
   },
   "repository": {
     "type": "git",
