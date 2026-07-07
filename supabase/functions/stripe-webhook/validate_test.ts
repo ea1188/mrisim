@@ -61,3 +61,49 @@ Deno.test("missing session id -> null", () => {
     null,
   );
 });
+
+// defaultCourse: Stripe Payment Links can't set session metadata, so a paid session
+// with no metadata.course falls back to the default (still allowlist-checked).
+Deno.test("missing metadata + defaultCourse -> grant", () => {
+  assertEquals(
+    parseCheckoutGrant(
+      { id: "cs_1", payment_status: "paid", client_reference_id: UID, metadata: null },
+      ALLOW,
+      "mri-core",
+    ),
+    { userId: UID, course: "mri-core", stripeRef: "cs_1" },
+  );
+});
+
+Deno.test("empty metadata.course + defaultCourse -> grant", () => {
+  assertEquals(
+    parseCheckoutGrant(
+      { id: "cs_1", payment_status: "paid", client_reference_id: UID, metadata: { course: "" } },
+      ALLOW,
+      "mri-core",
+    ),
+    { userId: UID, course: "mri-core", stripeRef: "cs_1" },
+  );
+});
+
+Deno.test("metadata.course overrides defaultCourse", () => {
+  assertEquals(
+    parseCheckoutGrant(
+      { id: "cs_1", payment_status: "paid", client_reference_id: UID, metadata: { course: "mri-core" } },
+      ALLOW,
+      "something-else",
+    ),
+    { userId: UID, course: "mri-core", stripeRef: "cs_1" },
+  );
+});
+
+Deno.test("defaultCourse not in allowlist -> null", () => {
+  assertEquals(
+    parseCheckoutGrant(
+      { id: "cs_1", payment_status: "paid", client_reference_id: UID, metadata: null },
+      ALLOW,
+      "evil",
+    ),
+    null,
+  );
+});
