@@ -11,5 +11,5 @@ window.MRISIM_SUPABASE = {
    NEVER put a Stripe secret key or webhook signing secret here — those live only
    as Supabase Edge Function secrets. */
 window.MRISIM_STRIPE = {
-  paymentLink: "",   // set to the LIVE Payment Link (https://buy.stripe.com/…) to go live
+  paymentLink: "https://buy.stripe.com/14A4gA8Yk2hk5cLehre3e00",   // LIVE Payment Link
 };
