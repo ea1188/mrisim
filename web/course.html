@@ -183,6 +183,50 @@
       border-radius: 2px; padding: 7px 13px; font: inherit; font-size: 12.5px; cursor: pointer; transition: .15s; }
     #lesson-overlay .obar button:hover { border-color: var(--accent-deep); color: #fff; }
     #lesson-overlay iframe { flex: 1 1 auto; width: 100%; border: 0; background: var(--bg); }
+
+    /* Overview rail entry */
+    .overview-cta { display: block; width: calc(100% - 24px); margin: 4px 12px 8px; text-align: left;
+      background: var(--panel); border: 1px solid var(--line-2); border-radius: 2px; color: var(--muted);
+      font: inherit; font-size: 13px; font-weight: 600; padding: 9px 12px; cursor: pointer; transition: .15s; }
+    .overview-cta:hover { border-color: var(--accent-deep); background: var(--panel-2); color: var(--text); }
+    .overview-cta.on { background: #12212f; border-color: var(--accent); color: #dbe9fa; }
+
+    /* Exam-readiness dashboard (course home) */
+    .main .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--accent); margin: 0 0 8px; }
+    .ready { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 20px; margin: 6px 0 16px; }
+    .ready .ready-num { font-size: 40px; font-weight: 680; line-height: 1; letter-spacing: -1px; }
+    .ready .ready-band { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
+    .bar.wide { height: 8px; background: var(--line); border-radius: 2px; overflow: hidden; }
+    .bar.wide > i { display: block; height: 100%; background: var(--accent); }
+    .ready .ready-sub { font-family: var(--mono); font-size: 11.5px; color: var(--dim); margin-top: 10px; letter-spacing: .03em; }
+    .study-next { display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      width: 100%; box-sizing: border-box; margin: 0 0 10px; }
+    .study-next .sn-why { font-weight: 400; font-size: 11.5px; color: var(--accent-ink); opacity: .85; }
+    .ghost-cta { background: none; color: var(--accent); border: 1px solid var(--line-2); margin: 0 0 8px; }
+    .ghost-cta:hover { background: var(--panel-2); border-color: var(--accent-deep); }
+    .ready-h { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+      color: var(--dim); margin: 26px 0 10px; }
+    .ready-grid { display: flex; flex-direction: column; gap: 6px; }
+    .ready-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 12px;
+      text-align: left; background: var(--panel); border: 1px solid var(--line); border-left-width: 3px;
+      border-radius: 2px; padding: 11px 14px; cursor: pointer; font: inherit; color: var(--text); transition: background .12s; }
+    .ready-row:hover { background: var(--panel-2); }
+    .ready-row .rr-title { font-size: 13.5px; font-weight: 550; }
+    .ready-row .rr-read, .ready-row .rr-quiz { font-family: var(--mono); font-size: 11px; color: var(--dim);
+      font-variant-numeric: tabular-nums; }
+    .ready-row .rr-chip { font-size: 10px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px; border: 1px solid var(--line-2); color: var(--muted); white-space: nowrap; }
+    .ready-row.progress { border-left-color: var(--accent); }
+    .ready-row.progress .rr-chip { color: var(--accent); border-color: var(--accent-deep); }
+    .ready-row.review { border-left-color: var(--warn); }
+    .ready-row.review .rr-chip { color: var(--warn); border-color: var(--warn); }
+    .ready-row.solid { border-left-color: var(--ok); }
+    .ready-row.solid .rr-chip { color: var(--ok); border-color: var(--ok); }
+    @media (max-width: 560px) {
+      .ready-row { grid-template-columns: 1fr auto; }
+      .ready-row .rr-read, .ready-row .rr-quiz { display: none; }
+    }
   </style>
 </head>
 <body>
