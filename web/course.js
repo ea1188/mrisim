@@ -138,8 +138,7 @@
     var main = h("div", { class: "main" });
     CTX = { curriculum: curriculum, byTitle: lessonsByTitle, byTopic: premiumByTopic,
       rail: rail, main: main, mod: curriculum[0],
-      expanded: new Set([curriculum[0].title]),  // which modules are expanded in the TOC
-      _obs: null };                              // IntersectionObserver marking sections read
+      expanded: new Set([curriculum[0].title]) };  // which modules are expanded in the TOC
 
     buildRail();
     wrap.appendChild(rail); wrap.appendChild(main);
@@ -329,23 +328,6 @@
     }, 30);
   }
 
-  // Tick education/question sections off once they scroll into view (checks them in the rail).
-  function setupReadObserver(main) {
-    if (CTX._obs) { CTX._obs.disconnect(); CTX._obs = null; }
-    if (typeof IntersectionObserver !== "function") return;
-    var obs = new IntersectionObserver(function (entries) {
-      var changed = false;
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        var id = e.target.getAttribute("data-subid");
-        if (id && !loadRead()[id]) { markRead(id); obs.unobserve(e.target); changed = true; }
-      });
-      if (changed) buildRail();
-    }, { threshold: 0.2 });
-    CTX._obs = obs;
-    [].forEach.call(main.querySelectorAll("[data-subid]"), function (el) { obs.observe(el); });
-  }
-
   // Re-sync the whole view with localStorage progress (after a lesson overlay closes).
   function refresh() {
     if (!CTX) return;
@@ -368,15 +350,29 @@
       (premiumByTopic[key] || []).forEach(function (it) { if (it.kind === "education") edu.push(it.body); });
     });
     if (edu.length) {
+      var readState = loadRead();
       var esec = h("div", { class: "sec" }, [h("h3", { text: "Course material" })]);
       edu.forEach(function (b) {
-        var card = h("div", { class: "edu", id: "edu-" + slug(b.title), "data-subid": "e:" + b.title }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
+        var rid = "e:" + b.title, isRead = !!readState[rid];
+        var card = h("div", { class: "edu" + (isRead ? " read" : ""), id: "edu-" + slug(b.title), "data-subid": rid }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
         if (b.keypoints && b.keypoints.length) {
           var kp = h("div", { class: "keypoints" }, [h("b", { text: "Key points" })]);
           var ul = h("ul");
           b.keypoints.forEach(function (p) { ul.appendChild(h("li", { text: p })); });
           kp.appendChild(ul); card.appendChild(kp);
         }
+        var foot = h("div", { class: "edu-foot" });
+        if (isRead) {
+          foot.appendChild(h("span", { class: "edu-read-tag", text: "✓ Read" }));
+        } else {
+          foot.appendChild(h("button", { class: "mark-read", type: "button", text: "Mark as read", onclick: function () {
+            markRead(rid);
+            card.classList.add("read");
+            clear(foot); foot.appendChild(h("span", { class: "edu-read-tag", text: "✓ Read" }));
+            buildRail();
+          } }));
+        }
+        card.appendChild(foot);
         esec.appendChild(card);
       });
       main.appendChild(esec);
@@ -422,7 +418,6 @@
       main.appendChild(link);
     }
     if (hasMastery(mod)) main.appendChild(masterySection(mod));
-    setupReadObserver(main);
     window.scrollTo(0, 0);
   }
 
