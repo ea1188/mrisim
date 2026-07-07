@@ -7,7 +7,7 @@
       "beginner": true,
       "steps": [
         {
-          "text": "This is a single <b>slice</b> through the head, a thin slab of tissue, seen from above. Every pixel is a <b>brightness</b>: how much signal that bit of tissue gave back. <b>Bright = lots of signal, dark = little.</b> MRI doesn't measure 'density' like a CT, it measures how the tissue's water responds to the scan. Nothing to do yet; just look.",
+          "text": "This is a single <b>slice</b> through the head, a thin slab of tissue, seen from above. Every pixel is a <b>brightness</b>: how much signal that bit of tissue gave back. <b>Bright = lots of signal, dark = little.</b> MRI doesn't measure 'density' like a CT; it measures how the tissue's water responds to the scan.",
           "state": {
             "region": "Brain",
             "seq": "Spin Echo",
@@ -60,7 +60,7 @@
           }
         },
         {
-          "text": "That's the whole trick for reading a scan at a glance: <b>find the fluid (the ventricles, or the eyeballs).</b> Dark fluid → T1. Bright fluid → T2. Flip back and forth with <b>Back</b> / <b>Next</b> until it sticks, it's the single most useful habit in MRI.",
+          "text": "That's the whole trick for reading a scan at a glance: <b>find the fluid (the ventricles, or the eyeballs).</b> Dark fluid → T1. Bright fluid → T2. It's the single most useful habit in MRI.",
           "state": {
             "tr": 500,
             "te": 12
@@ -110,7 +110,7 @@
       "beginner": true,
       "steps": [
         {
-          "text": "I've added a small <b>lesion</b> to the white matter (choose one any time under <b>Pathology</b>). This is a <b>T1-weighted</b> scan, and the lesion is <b>nearly invisible</b>: its T1 is close to normal white matter, so it barely stands out. Stare at the white matter; you might just make out a faint patch. This is why T1 alone can miss disease.",
+          "text": "This is a <b>T1-weighted</b> scan with a small <b>lesion</b> in the white matter, and the lesion is <b>nearly invisible</b>: its T1 is close to normal white matter, so it barely stands out. Look closely at the white matter and you might just make out a faint patch. This is why T1 alone can miss disease.",
           "state": {
             "region": "Brain",
             "seq": "Spin Echo",
@@ -214,7 +214,7 @@
       "blurb": "The fundamental tradeoff, averaging, matrix, bandwidth.",
       "steps": [
         {
-          "text": "The <b>SNR</b> and <b>scan time</b> readouts on the right show the baseline: one average, 256 matrix.",
+          "text": "The baseline: one average (NEX 1) and a 256 matrix. The next two steps each change one setting and weigh the result against these <b>SNR</b> and <b>scan time</b> numbers.",
           "state": {
             "region": "Brain",
             "seq": "Spin Echo",
@@ -234,7 +234,7 @@
           }
         },
         {
-          "text": "<b>Resolution.</b> Back to NEX 1, matrix 128: faster and higher SNR per (larger) voxel, but coarser detail. Resolution, SNR and time are always in tension.",
+          "text": "<b>Resolution.</b> At NEX 1 with a coarser 128 matrix: faster and higher SNR per (larger) voxel, but less detail. Resolution, SNR and time are always in tension.",
           "state": {
             "nex": 1,
             "matrix": 128
@@ -290,7 +290,7 @@
           }
         },
         {
-          "text": "<b>Chemical shift.</b> Fat and water resonate at slightly different frequencies, so <b>fat is mis-mapped along the readout</b>. A bright and dark edge appears where the fatty scalp meets brain. It worsens at <b>low bandwidth</b> and high field. The fix: raise the receiver <b>bandwidth</b> or use fat-sat.",
+          "text": "<b>Chemical shift.</b> Fat and water resonate at slightly different frequencies, so <b>fat is mis-mapped along the readout</b>. A bright and dark edge appears where the fatty scalp meets brain. It worsens at <b>low bandwidth</b> and high field. The fix: a higher receiver <b>bandwidth</b>, or fat suppression.",
           "state": {
             "motion": false,
             "chemshift": true,
@@ -313,7 +313,7 @@
       "blurb": "Acquire a slab once, then view any plane.",
       "steps": [
         {
-          "text": "This is a <b>3D slab acquisition</b> on a gradient echo. The slab is phase-encoded through-plane (kz) and acquired <b>once</b>; note the <code>3D SLAB</code> badge.",
+          "text": "This is a <b>3D slab acquisition</b> on a gradient echo. The whole slab is phase-encoded through-plane (kz) and acquired in <b>one</b> pass.",
           "state": {
             "region": "Brain",
             "seq": "Gradient Echo",
@@ -324,14 +324,14 @@
           }
         },
         {
-          "text": "This is the same acquired slab shown in <b>coronal</b>: reformatted from the same acquisition, no re-scan (see the <code>REFORMAT</code> tag). That's the headline of 3D imaging.",
+          "text": "The same acquired slab, now shown in <b>coronal</b>: reformatted from that one acquisition, with no re-scan. That is the headline of 3D imaging.",
           "state": {
             "orient": "coronal",
             "slice": 110
           }
         },
         {
-          "text": "And <b>sagittal</b>, still from the one acquisition. The <b>slab readout</b> below shows thin <b>isotropic</b> partitions, the total slab coverage, and a <b>√Nz SNR</b> gain over a single 2D slice, that's what phase-encoding the slice direction buys.",
+          "text": "And <b>sagittal</b>, still from the one acquisition. The partitions are thin and <b>isotropic</b> and cover the whole slab, and phase-encoding the slice direction buys a <b>√Nz SNR</b> gain over a single 2D slice.",
           "state": {
             "orient": "sagittal",
             "slice": 90
@@ -389,7 +389,7 @@
       "blurb": "Why packing slices tight costs SNR, and the gap that fixes it.",
       "steps": [
         {
-          "text": "This is the <b>FOV planning</b> view, showing the <b>SNR</b> readout for one slice, the baseline. The localizer shows a single band of the slice thickness.",
+          "text": "This is the planning view for a <b>single slice</b>, the baseline. The localizer shows one band at the slice thickness.",
           "state": {
             "region": "Brain",
             "seq": "Spin Echo",
@@ -423,7 +423,7 @@
       "blurb": "Why we run DWI, SWI and post-contrast: each catches a different lesion.",
       "steps": [
         {
-          "text": "Under <b>Pathology</b> I've added an <b>acute stroke</b>. It restricts water diffusion, so on <b>DWI</b> (high b-value) it lights up <b>bright</b> while normal brain darkens, the earliest, most sensitive sign of infarction, often positive within minutes. On routine T1/T2 it can be subtle; DWI makes it obvious.",
+          "text": "This is an <b>acute stroke</b>. It restricts water diffusion, so on <b>DWI</b> (high b-value) it lights up <b>bright</b> while normal brain darkens, the earliest and most sensitive sign of infarction, often positive within minutes. On routine T1/T2 it can be subtle; DWI makes it obvious.",
           "state": {
             "region": "Brain",
             "seq": "Diffusion (DWI)",
@@ -495,7 +495,7 @@
           }
         },
         {
-          "text": "<b>DWI splits them.</b> Same lesion on the left and right, now on diffusion. <b>Left. Abscess:</b> the pus restricts diffusion, so the <b>core is bright</b>. <b>Right, necrotic tumour:</b> the core diffuses freely, so it stays <b>dark</b>. That one difference, a bright DWI core. Is what calls it an abscess. (Each panel is labelled with what it is.)",
+          "text": "<b>DWI splits them.</b> The same lesion is shown two ways. <b>Left, abscess:</b> the pus restricts diffusion, so the <b>core is bright</b>. <b>Right, necrotic tumour:</b> the core diffuses freely, so it stays <b>dark</b>. That one difference, a bright DWI core, is what calls it an abscess.",
           "state": {
             "seq": "Diffusion (DWI)",
             "bval": 1000,
@@ -559,7 +559,7 @@
       "blurb": "On a gradient echo there's an optimal flip, and it isn't 90°.",
       "steps": [
         {
-          "text": "On a <b>gradient echo</b> at short TR, a small flip leaves most of the magnetization unused. Start at <b>10°</b> and note the WM <b>SNR</b> on the right.",
+          "text": "On a <b>gradient echo</b> at short TR, a small flip leaves most of the magnetization unused, so at <b>10°</b> the white-matter signal is low.",
           "state": {
             "region": "Brain",
             "seq": "Gradient Echo",
@@ -571,13 +571,13 @@
           }
         },
         {
-          "text": "Raise the flip to <b>~35°</b>, the signal climbs to a peak. This is the <b>Ernst angle</b>: cos α = e<sup>−TR/T1</sup>, the flip that maximises steady-state signal for a given TR and T1.",
+          "text": "At <b>~35°</b> the signal climbs to a peak. This is the <b>Ernst angle</b>: cos α = e<sup>−TR/T1</sup>, the flip that maximises steady-state signal for a given TR and T1.",
           "state": {
             "fa": 35
           }
         },
         {
-          "text": "Push to <b>90°</b> and the signal <b>drops</b>. A big flip tips more magnetization but saturates it, at short TR there's no time to recover, so steady-state signal falls. The sweet spot is the Ernst angle, not 90°.",
+          "text": "At <b>90°</b> the signal <b>drops</b>. A big flip tips more magnetization but saturates it: at short TR there's no time to recover, so steady-state signal falls. The sweet spot is the Ernst angle, not 90°.",
           "state": {
             "fa": 90
           }
@@ -589,7 +589,7 @@
       "blurb": "Finer voxels are sharper, but noisier and slower.",
       "steps": [
         {
-          "text": "Baseline: a <b>256</b> matrix. Note the <b>resolution</b>, <b>SNR</b> and <b>scan time</b> readouts on the right.",
+          "text": "Baseline: a <b>256</b> matrix. The next two steps change only the matrix and weigh its <b>resolution</b>, <b>SNR</b> and <b>scan time</b> against this.",
           "state": {
             "region": "Brain",
             "seq": "Spin Echo",
@@ -619,7 +619,7 @@
       "blurb": "Two ways to darken fat, and why you'd pick each.",
       "steps": [
         {
-          "text": "Real <b>knee</b>, T1 spin echo. <B>fat is bright</b> (subcutaneous fat, marrow). Bright fat can mask oedema and enhancement.",
+          "text": "Real <b>knee</b>, T1 spin echo. <b>Fat is bright</b> (subcutaneous fat, marrow). Bright fat can mask oedema and enhancement.",
           "state": {
             "region": "Knee",
             "seq": "Spin Echo",
@@ -655,7 +655,7 @@
       "blurb": "Fat and water beating in and out of phase, the India-ink sign.",
       "steps": [
         {
-          "text": "Real <b>abdomen</b> at 1.5 T, gradient echo. At an <b>in-phase</b> TE (4 ms) fat and water in the same voxel <b>add</b>, and the <b>Fat-water phase</b> readout reports <i>In-phase</i>.",
+          "text": "Real <b>abdomen</b> at 1.5 T, gradient echo. At an <b>in-phase</b> TE (4 ms), fat and water in the same voxel <b>add</b>, so their signals reinforce.",
           "state": {
             "region": "Abdomen",
             "seq": "Gradient Echo",
@@ -772,13 +772,13 @@
           }
         },
         {
-          "text": "The <b>edges</b> of k-space hold high spatial frequencies, fine detail and sharp edges. With the <b>matrix</b> dropped to 96, less of k-space's periphery is sampled, so the image blurs (and the readouts show higher SNR, shorter scan).",
+          "text": "The <b>edges</b> of k-space hold high spatial frequencies, fine detail and sharp edges. With the <b>matrix</b> dropped to 96, less of k-space's periphery is sampled, so the image blurs (with higher SNR and a shorter scan).",
           "state": {
             "matrix": 96
           }
         },
         {
-          "text": "Back to a full matrix, now with a <b>pulse-sequence diagram</b> shown alongside, connecting the timing, RF, gradients and the echo, to the data each TR writes into k-space.",
+          "text": "At a full matrix again, now with a <b>pulse-sequence diagram</b> alongside, connecting the timing, RF, gradients and the echo to the data each TR writes into k-space.",
           "state": {
             "matrix": 256,
             "psdshow": true
@@ -847,7 +847,7 @@
       "blurb": "One acquisition, reformatted and projected any way you like.",
       "steps": [
         {
-          "text": "This is a <b>3D slab</b> acquired on a gradient echo with plenty of partitions. The <b>Reconstruction view</b> (under the 3D controls) becomes available once a slab like this exists.",
+          "text": "This is a <b>3D slab</b> acquired on a gradient echo with plenty of partitions. A <b>reconstruction view</b> becomes available once a slab like this exists.",
           "state": {
             "region": "Brain",
             "seq": "Gradient Echo",
@@ -871,7 +871,7 @@
       "blurb": "Three ways to flatten a slab, and what each is good for.",
       "steps": [
         {
-          "text": "Acquire a <b>3D slab</b> (gradient echo, plenty of partitions) and open the <b>Reconstruction view</b>, then choose <b>Thick-slab MIP</b>. A projection collapses a slab of partitions onto one image. Three ways, set by the <b>Projection</b> picker.",
+          "text": "From a <b>3D slab</b> (gradient echo, plenty of partitions), a <b>projection</b> collapses a slab of partitions onto one image. There are three ways to do it.",
           "state": {
             "region": "Brain",
             "seq": "Gradient Echo",
@@ -1023,7 +1023,7 @@
           }
         },
         {
-          "text": "Add a <b>microhaemorrhage</b> (Pathology → microhaemorrhage). On SWI it <b>'blooms'</b> into a dark spot <i>much larger</i> than the actual bleed, the field disturbance spreads beyond the iron itself. That sensitivity is the whole point.",
+          "text": "Now a <b>microhaemorrhage</b>. On SWI it <b>'blooms'</b> into a dark spot <i>much larger</i> than the actual bleed: the field disturbance spreads beyond the iron itself. That sensitivity is the whole point.",
           "state": {
             "pathology": "hemorrhage"
           }
@@ -1070,7 +1070,7 @@
       "blurb": "Thick = bright but blurry, thin = sharp but noisy.",
       "steps": [
         {
-          "text": "<b>Slice thickness</b> sets how thick a slab of tissue each pixel represents. Start <b>thin</b> (2 mm): small structures stay sharp and distinct, but each pixel collects signal from less tissue, so it's <b>noisier</b> (lower SNR). <i>(Slice thickness is in the Acquisition section.)</i>",
+          "text": "<b>Slice thickness</b> sets how thick a slab of tissue each pixel represents. When it is <b>thin</b> (2 mm), small structures stay sharp and distinct, but each pixel collects signal from less tissue, so it is <b>noisier</b> (lower SNR).",
           "state": {
             "region": "Brain",
             "seq": "Spin Echo",
@@ -1090,7 +1090,7 @@
           }
         },
         {
-          "text": "The <b>Partial volume</b> control exaggerates that sub-voxel mixing so you can see it directly, boundaries soften as it rises. The trade is always the same: <b>thin</b> for small lesions and fine anatomy (accept the noise), <b>thick</b> for a quick survey or low-SNR sequences. There's no free lunch. Only the right pick for the question.",
+          "text": "Exaggerating that sub-voxel mixing makes it plain: boundaries soften as more tissue blends into each voxel. The trade is always the same: <b>thin</b> for small lesions and fine anatomy (accept the noise), <b>thick</b> for a quick survey or low-SNR sequences. There is no free lunch, only the right pick for the question.",
           "state": {
             "thick": 8,
             "pv": 24
@@ -1148,7 +1148,7 @@
           }
         },
         {
-          "text": "<b>?MS lesion load</b>: small periventricular lesions hide in bright CSF, so null the CSF. <B>FLAIR</b>, read in the plane that shows the most lesions. Long TR, long TE, TI≈2550 ms at 3 T.",
+          "text": "<b>?MS lesion load</b>: small periventricular lesions hide in bright CSF, so null the CSF. <b>FLAIR</b>, read in the plane that shows the most lesions. Long TR, long TE, TI ≈ 2550 ms at 3 T.",
           "state": {
             "seq": "Inversion Recovery",
             "tr": 9000,
@@ -1158,7 +1158,7 @@
           }
         },
         {
-          "text": "<b>?Vascular anatomy</b>: flowing blood, no contrast. <B>TOF MRA</b>, then a thick-slab <b>MIP</b> to show the whole tree. The pattern is always the same: name the contrast that makes the finding obvious, pick the plane that shows it, then add the options (fat-sat, Gd, 3D, projection) that sharpen it.",
+          "text": "<b>?Vascular anatomy</b>: flowing blood, no contrast. <b>TOF MRA</b>, then a thick-slab <b>MIP</b> to show the whole tree. The pattern is always the same: name the contrast that makes the finding obvious, pick the plane that shows it, then add the options (fat-sat, Gd, 3D, projection) that sharpen it.",
           "state": {
             "seq": "MR Angiography",
             "angiotype": "TOF",
@@ -1188,7 +1188,7 @@
           }
         },
         {
-          "text": "<b>Coverage.</b> One slice won't cover an organ, so you prescribe a <b>stack</b>. Here <b>20 slices</b> are set: the bands fill the brain on the cross panels, and the <b>scan time</b> climbs on the right. More coverage costs time, and that's the first planning trade.",
+          "text": "<b>Coverage.</b> One slice won't cover an organ, so you prescribe a <b>stack</b>. Here <b>20 slices</b> fill the brain on the cross panels, and the <b>scan time</b> climbs with them. More coverage costs time, and that is the first planning trade.",
           "state": {
             "nslices": 20,
             "sgap": 1,
@@ -1200,7 +1200,7 @@
           "state": {}
         },
         {
-          "text": "A real <b>study is many such scans</b>. Each prescribed, then acquired in turn. That's what the dedicated <b>Protocol Planning</b> workspace is for: in the browser open it from the <b>toolbar link</b>; on the desktop it's the <b>Protocol panel on the left</b>. Pick an <b>exam</b> (Brain, Spine or Knee), a <b>queue</b> of sequences loads, and you prescribe each on the three scouts and hit <b>Acquire</b>. Scan time and SNR are tallied as the series builds. Same prescription skills you just used, end to end.",
+          "text": "A real <b>study is many such scans</b>, each prescribed, then acquired in turn. That is what the dedicated <b>Protocol Planning</b> workspace is for: pick an <b>exam</b> (Brain, Spine or Knee) and a <b>queue</b> of sequences loads, then you prescribe each one on the three scouts and acquire it while scan time and SNR are tallied as the series builds. The same prescription skills you just used, end to end.",
           "state": {}
         }
       ]
