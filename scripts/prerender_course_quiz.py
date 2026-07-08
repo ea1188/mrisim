@@ -65,6 +65,9 @@ def main():
             continue
         try:
             ensure_region(host, setup.get("region", "Brain"))
+            # Render clean (like the free read-the-scan quiz's SNR 120) unless the question
+            # sets its own snr_level, so the anatomy/pathology reads clearly instead of grainy.
+            setup.setdefault("params", {}).setdefault("snr_level", 120)
             res = host.render(setup)
             png = base64.b64decode(res["image"].split(",")[-1])
         except Exception as e:            # never fail the whole build on one image
