@@ -48,10 +48,37 @@
     return null;
   }
 
+  var DAY_MS = 86400000;
+  var REVIEW_INTERVALS_DAYS = [1, 3, 7];   // days added at box 1, 2, 3
+
+  // A missed question: reset to box 0, due immediately, misses incremented.
+  function reviewOnMiss(entry, now) {
+    return { box: 0, due: now, misses: (entry && entry.misses ? entry.misses : 0) + 1, lastSeen: now };
+  }
+
+  // A correct answer during a review session: advance the box and widen the due date;
+  // return null once it graduates past the last interval (remove it from the queue).
+  function reviewOnCorrect(entry, now) {
+    var box = (entry && entry.box ? entry.box : 0) + 1;
+    if (box > REVIEW_INTERVALS_DAYS.length) return null;
+    return { box: box, due: now + REVIEW_INTERVALS_DAYS[box - 1] * DAY_MS,
+      misses: (entry && entry.misses ? entry.misses : 0), lastSeen: now };
+  }
+
+  // How many entries in the review map are due now.
+  function dueCount(map, now) {
+    var n = 0, k;
+    for (k in map) { if (Object.prototype.hasOwnProperty.call(map, k) && map[k] && map[k].due <= now) n += 1; }
+    return n;
+  }
+
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
     deriveModuleStatus: deriveModuleStatus,
     rankModulesByDiagnostic: rankModulesByDiagnostic,
     diagnosticStudyNext: diagnosticStudyNext,
+    reviewOnMiss: reviewOnMiss,
+    reviewOnCorrect: reviewOnCorrect,
+    dueCount: dueCount,
   };
 });

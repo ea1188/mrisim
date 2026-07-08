@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount } = CourseLogic;
 
 test("constants match the spec", () => {
   assert.equal(PASS_PCT, 80);
@@ -55,4 +55,22 @@ test("diagnosticStudyNext returns null when all mastered", () => {
 
 test("diagnosticStudyNext returns null for empty order", () => {
   assert.equal(diagnosticStudyNext([], {}), null);
+});
+
+test("reviewOnMiss resets to box 0 due-now and increments misses", () => {
+  assert.deepEqual(reviewOnMiss(undefined, 1000), { box: 0, due: 1000, misses: 1, lastSeen: 1000 });
+  assert.deepEqual(reviewOnMiss({ box: 2, misses: 1 }, 5000), { box: 0, due: 5000, misses: 2, lastSeen: 5000 });
+});
+
+test("reviewOnCorrect advances box, widens due (1/3/7 days), then graduates", () => {
+  const D = 86400000;
+  assert.deepEqual(reviewOnCorrect(undefined, 0), { box: 1, due: 1 * D, misses: 0, lastSeen: 0 });
+  assert.deepEqual(reviewOnCorrect({ box: 1, misses: 2 }, 0), { box: 2, due: 3 * D, misses: 2, lastSeen: 0 });
+  assert.deepEqual(reviewOnCorrect({ box: 2, misses: 2 }, 0), { box: 3, due: 7 * D, misses: 2, lastSeen: 0 });
+  assert.equal(reviewOnCorrect({ box: 3, misses: 2 }, 0), null);
+});
+
+test("dueCount counts only entries with due <= now", () => {
+  assert.equal(dueCount({ a: { due: 100 }, b: { due: 300 }, c: { due: 200 } }, 200), 2);
+  assert.equal(dueCount({}, 999), 0);
 });
