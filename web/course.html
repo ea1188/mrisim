@@ -299,6 +299,10 @@
       .ready-row { grid-template-columns: 1fr auto; }
       .ready-row .rr-read, .ready-row .rr-quiz { display: none; }
     }
+    .abadge { display: inline-block; margin-left: 8px; padding: 1px 6px; border-radius: 2px;
+      background: var(--accent, #1f6feb); color: var(--accent-ink, #fff); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.04em; vertical-align: middle; }
+    .abadge .due { text-transform: none; letter-spacing: 0; opacity: 0.85; margin-left: 4px; }
   </style>
 </head>
 <body>
@@ -332,6 +336,7 @@
   <script src="config.js"></script>
   <script src="accounts.js"></script>
   <script src="course_logic.js"></script>
+  <script src="assignments.js"></script>
   <script src="course.js"></script>
 </body>
 </html>
