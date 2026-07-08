@@ -36,6 +36,7 @@
   var COURSE_DIAG_KEY = "mrisim_course_diagnostic_v1"; // placement-test snapshot (separate from progress)
   var COURSE_REVIEW_KEY = "mrisim_course_review_v1"; // spaced-review queue of missed questions
   var COURSE_COMPLETE_KEY = "mrisim_course_completed_v1"; // first course-completion record (synced)
+  var COURSE_TARGET_KEY = "mrisim_course_target_v1"; // study-plan target date (local-only, not synced)
   var DIAG_PER_MODULE = 2;                              // questions sampled per module in the placement test
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
@@ -285,6 +286,36 @@
       revCard.appendChild(h("p", { text: "No items due for review. Questions you miss show up here on a spaced schedule." }));
     }
     main.appendChild(revCard);
+    var planOrder = CourseLogic.remainingStudyOrder(
+      r.modules.map(function (m) { return { title: m.mod.title, status: m.status }; }),
+      r.diagnostic && r.diagnostic.order);
+    if (planOrder.length) {
+      var modByTitle = {};
+      r.modules.forEach(function (m) { modByTitle[m.mod.title] = m; });
+      var NEXT_ACTION = { "not-started": "Start the material", "progress": "Keep going", "review": "Retake the mastery check" };
+      var plan = h("div", { class: "diag-card" }, [h("h3", { text: "Your study plan" })]);
+      var plist = h("div", { class: "plan-list" });
+      planOrder.forEach(function (t) {
+        var m = modByTitle[t];
+        plist.appendChild(h("button", { class: "plan-row", type: "button", onclick: function () { openModule(m.mod); } }, [
+          h("span", { class: "pr-title", text: t }),
+          h("span", { class: "pr-act", text: NEXT_ACTION[m.status] || "Continue" }),
+        ]));
+      });
+      plan.appendChild(plist);
+      var target = loadTarget();
+      var tstr = target && target.date ? target.date : "";
+      var dinput = h("input", { type: "date", class: "plan-date", value: tstr,
+        onchange: function () { saveTarget(dinput.value); renderOverview(); } });
+      plan.appendChild(h("div", { class: "plan-target" }, [h("label", { text: "Target date:" }), dinput]));
+      var pace = tstr ? CourseLogic.pacePerWeek(planOrder.length, Date.parse(tstr + "T00:00:00"), Date.now()) : null;
+      var paceText;
+      if (pace) paceText = planOrder.length + " module" + (planOrder.length === 1 ? "" : "s") + " left. To finish by " + tstr + ", cover about " + pace.perWeek + " per week.";
+      else if (tstr) paceText = "That date has passed, pick a new one.";
+      else paceText = planOrder.length + " module" + (planOrder.length === 1 ? "" : "s") + " left. Pick a target date to see a weekly pace.";
+      plan.appendChild(h("p", { class: "plan-pace", text: paceText }));
+      main.appendChild(plan);
+    }
     main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
     var grid = h("div", { class: "ready-grid" });
     r.modules.forEach(function (m) {
@@ -850,6 +881,8 @@
       queueSync();
     } catch (e) { /* storage off */ }
   }
+  function loadTarget() { try { return JSON.parse(localStorage.getItem(COURSE_TARGET_KEY) || "null"); } catch (e) { return null; } }
+  function saveTarget(dateStr) { try { localStorage.setItem(COURSE_TARGET_KEY, JSON.stringify({ date: dateStr })); } catch (e) { /* storage off */ } }
   function loadCompleted() { try { return JSON.parse(localStorage.getItem(COURSE_COMPLETE_KEY) || "null"); } catch (e) { return null; } }
   function saveCompleted(rec) { try { localStorage.setItem(COURSE_COMPLETE_KEY, JSON.stringify(rec)); } catch (e) { /* storage off */ } }
 
