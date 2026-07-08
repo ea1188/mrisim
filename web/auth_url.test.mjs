@@ -40,10 +40,16 @@ test("looksLikeCode accepts a 6-digit code and rejects anything else", () => {
   assert.equal(looksLikeCode(null), false);
 });
 
-test("friendlyAuthError explains an expired/consumed link in terms of the code", () => {
+test("friendlyAuthError gives an actionable message for a cancelled OAuth sign-in", () => {
+  const msg = friendlyAuthError("access_denied", "Access denied");
+  assert.match(msg, /again/i);
+  // Should be actionable, not just the raw provider error.
+  assert.notEqual(msg, "Access denied");
+});
+
+test("friendlyAuthError rewrites an expired link into a sign-in-again prompt", () => {
   const msg = friendlyAuthError("otp_expired", "Email link is invalid or has expired");
-  assert.match(msg, /code/i);
-  // The consumed-link case should point the user at the code, not just repeat the raw error.
+  assert.match(msg, /sign in again/i);
   assert.notEqual(msg, "Email link is invalid or has expired");
 });
 
