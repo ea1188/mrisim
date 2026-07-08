@@ -196,7 +196,16 @@
     var band = overall >= 80 ? "Exam-ready" : overall >= 40 ? "Building" : "Getting started";
     var next = null;
     for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "mastered") { next = modules[i]; break; } }
-    return { modules: modules, overall: overall, band: band, next: next, exam: exam,
+    var diag = loadDiagnostic();
+    if (diag && diag.order) {
+      var statusByTitle = {};
+      modules.forEach(function (m) { statusByTitle[m.mod.title] = m.status; });
+      var t = CourseLogic.diagnosticStudyNext(diag.order, statusByTitle);
+      if (t) {
+        for (var k = 0; k < modules.length; k++) { if (modules[k].mod.title === t) { next = modules[k]; break; } }
+      }
+    }
+    return { modules: modules, overall: overall, band: band, next: next, exam: exam, diagnostic: diag,
       quizAcc: Math.round(100 * quizAcc), readPct: Math.round(100 * readPct) };
   }
 
@@ -296,9 +305,13 @@
     ]));
     rail.appendChild(h("button", { class: "overview-cta" + (CTX.mod == null ? " on" : ""), type: "button",
       onclick: renderOverview, text: "Overview" }));
-    rail.appendChild(h("button", { class: "exam-cta" + (EXAM ? " on" : ""), type: "button", onclick: openExam }, [
+    rail.appendChild(h("button", { class: "exam-cta" + (EXAM && !EXAM.diagnostic ? " on" : ""), type: "button", onclick: openExam }, [
       document.createTextNode("Practice exam"),
       h("span", { class: "ec-sub", text: "Registry-style run across the whole bank" }),
+    ]));
+    rail.appendChild(h("button", { class: "exam-cta" + (EXAM && EXAM.diagnostic ? " on" : ""), type: "button", onclick: startDiagnostic }, [
+      document.createTextNode("Placement test"),
+      h("span", { class: "ec-sub", text: "Find your weakest areas first" }),
     ]));
     perMod.forEach(function (pm) {
       var mod = pm.mod, subs = pm.subs;
