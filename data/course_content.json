@@ -6129,6 +6129,382 @@
         "answer": 0,
         "explain": "The shoulder coronal is angled perpendicular to the glenohumeral joint, while the sagittal is angled parallel to it, so the cuff and labrum are seen in profile."
       }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "education",
+      "ord": 1015,
+      "body": {
+        "title": "Body MRI protocols: liver, MRCP, and abdomen/pelvis coverage",
+        "html": "<p>Dedicated liver MRI is ordered for suspected hepatocellular carcinoma, cirrhosis surveillance, hemangioma characterization, fatty liver, and hepatitis. The patient lies supine with the liver positioned over the posterior spine coil elements and an anterior phased-array body coil placed on top. Whatever the indication, the prescribed slices must cover the <strong>entire liver</strong>, from the dome down past the inferior tip. A lesion you cannot see is a lesion you cannot report.</p><p>MRCP targets the biliary tree and pancreatic duct in patients with gallstones, pancreatitis, a pancreatic mass, or biliary obstruction. Axial coverage runs from the <strong>dome of the liver to below the ampulla of Vater</strong>, so a distal common bile duct stone at the ampulla is never cut off the bottom of the stack. The patient is NPO for 4 to 6 hours so the gallbladder is distended and the stomach is empty.</p><p>Coverage landmarks separate the abdominal exams on the boards. A screening abdomen and pelvis runs from the <em>top of the liver to below the pubic symphysis</em>, usually as two overlapping packages. A renal mass or screening pelvis protocol runs from the <em>top of the adrenal gland to the pubic symphysis</em>. MR enterography for Crohn disease covers the <em>dome of the liver through the anus</em>, because small bowel and perianal disease can coexist.</p><p>Female pelvis MRI evaluates fibroids, endometriosis, adnexal masses and ovarian cysts, cervical pathology, and congenital uterine anomalies. The patient is head first and supine with an anterior phased-array coil over the pelvis, after a fast of about 4 hours. Packages are straight by default; only the small field-of-view high-resolution T2 package is angled, and only when a specific organ is the target.</p>",
+        "keypoints": [
+          "Liver MRI covers the entire liver; core indications are HCC, cirrhosis, hemangioma, fatty liver, and hepatitis",
+          "Position the liver over the posterior spine elements with the anterior phased-array body coil on top",
+          "MRCP axial coverage: dome of the liver to below the ampulla of Vater, NPO 4 to 6 hours",
+          "Screening abdomen/pelvis: top of the liver to below the pubic symphysis, often two overlapping packages; renal mass: top of the adrenal to the symphysis",
+          "Enterography covers the dome of the liver through the anus",
+          "Female pelvis: head-first supine, anterior phased-array coil, roughly a 4-hour fast; packages are straight by default"
+        ],
+        "worked_example": "You are setting up an MRCP on a patient with suspected choledocholithiasis. You confirm the patient has been NPO for at least 4 hours so bile fills a distended gallbladder. You place the anterior body coil so the phased-array elements span from above the liver dome to the lower abdomen. Prescribing the axial stack, you start above the dome of the liver and extend below the ampulla of Vater, because the stone you are hunting is most likely impacted in the distal duct. Stopping at the pancreatic head would risk missing exactly the finding the exam was ordered for.",
+        "memory_hooks": [
+          "MRCP goes Dome to Duodenum: the ducts drain down to the ampulla, so cover below it",
+          "Screening abdomen/pelvis is Liver to Landing: top of the liver down to the pubic symphysis",
+          "Enterography eats everything: dome of the liver all the way through the anus"
+        ],
+        "exam_traps": [
+          "Stopping MRCP coverage at the pancreatic head instead of extending below the ampulla of Vater",
+          "Mixing up renal-mass coverage (top of adrenal to symphysis) with screening abdomen/pelvis (top of liver to symphysis)",
+          "Angling female pelvis packages by default; they stay straight unless the small-FOV T2 package is targeting the uterus or cervix"
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "education",
+      "ord": 1016,
+      "body": {
+        "title": "Body MRI technique: contrast agents, breath-hold vs navigator, MRCP, and orientation",
+        "html": "<p>Weight-based extracellular gadolinium is the default agent for contrast-enhanced body MRI. Switch to a <strong>hepatobiliary contrast agent</strong> for focal nodular hyperplasia (FNH) and for the living-liver-donor protocol: functioning hepatocytes take the agent up and excrete it into bile, which produces delayed hepatobiliary-phase images. FNH contains functioning hepatocytes, so it retains the agent while most other lesions wash out to darkness.</p><p>Respiratory strategy is a protocol decision, not an afterthought. A cooperative patient can breath-hold a 3D T1 gradient echo. A poor breath-holder gets respiratory-triggered or navigator-gated sequences plus single-shot fast spin echo and free-breathing radial 3D T1 gradient echo acquisitions instead of long breath-holds. Quantitative sequences have their own rules: proton density fat fraction (PDFF) quantifies hepatic fat and supports iron and hemochromatosis workups, and it must run <em>before</em> contrast. MR elastography maps liver stiffness; elastography and donor patients fast about 4 hours to reduce bowel motion.</p><p>MRCP is heavily T2 weighted, so static bile and pancreatic-duct fluid stay bright while flowing blood and solid tissue go dark. Before the scan the patient swallows a dilute oral agent, water mixed with a small amount of gadolinium, which shortens the T2 of bowel fluid and darkens it so it does not overlie the ducts. This is not IV contrast. Secretin transiently dilates the pancreatic duct and stimulates exocrine output, improving duct visualization and allowing dynamic assessment for chronic pancreatitis, strictures, and obstructing duct stones.</p><p>Timing and orientation round out the technique. Routine post-contrast abdominal imaging uses an empiric scan delay of about 30 seconds, but enterography and hematuria or bladder work use a free-breathing dynamic contrast-enhanced (DCE) acquisition with a short inject delay. In the female pelvis, angle the small field-of-view high-resolution T2 package to the <strong>uterus</strong> for endometrial cancer and congenital uterine anomalies, and to the <strong>cervix</strong> for cervical cancer. An antispasmodic (anti-peristaltic) agent can be given to quiet bowel motion.</p>",
+        "keypoints": [
+          "Weight-based extracellular gadolinium is the default; use a hepatobiliary agent for FNH and the living-donor protocol",
+          "Poor breath-holder: respiratory-triggered or navigator-gated sequences plus single-shot and free-breathing radial acquisitions",
+          "PDFF quantifies fat and supports iron/hemochromatosis workups; it must be acquired pre-contrast. MR elastography maps stiffness",
+          "MRCP is heavily T2 weighted; the dilute oral gadolinium drink darkens bowel fluid and is not IV contrast",
+          "Routine post-contrast uses an empiric 30 second delay; enterography and hematuria/bladder work use free-breathing DCE with a short inject delay",
+          "Angle the small-FOV T2 package to the uterus for endometrial cancer and anomalies, to the cervix for cervical cancer"
+        ],
+        "worked_example": "A patient arrives for lesion characterization and the report question is whether a 3 cm mass is FNH. You select a hepatobiliary contrast agent rather than the routine extracellular agent, because hepatocyte uptake and biliary excretion give you a delayed hepatobiliary phase. FNH keeps functioning hepatocytes, so it should retain contrast and stay bright on that phase while most other masses go dark. You also confirm the PDFF map is scheduled before injection, since gadolinium would corrupt the fat quantification. The whole protocol hinges on picking the right agent before the needle goes in.",
+        "memory_hooks": [
+          "FNH = Functioning hepatocytes, Needs Hepatobiliary agent",
+          "PDFF: Pre-contrast, and Fat fraction is what it measures; the same multi-echo scan supports iron assessment",
+          "Uterus for uterine (endometrial) cancer, Cervix for cervical cancer: angle to the organ that has the disease"
+        ],
+        "exam_traps": [
+          "Crediting IV gadolinium for dark bowel fluid on MRCP; the swallowed dilute oral agent does that by shortening bowel-fluid T2",
+          "Choosing routine extracellular gadolinium for an FNH workup; only a hepatobiliary agent gives the delayed hepatobiliary phase",
+          "Running PDFF after injection; gadolinium changes the signal, so fat and iron quantification must come pre-contrast"
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1017,
+      "body": {
+        "prompt": "Which clinical scenario is a standard indication for dedicated liver MRI?",
+        "options": [
+          "Surveillance for hepatocellular carcinoma in a patient with cirrhosis",
+          "Staging of cervical carcinoma before definitive surgical management",
+          "Assessment of active small bowel inflammation in Crohn disease",
+          "Evaluation of a suspected congenital anomaly of the uterine cavity"
+        ],
+        "answer": 0,
+        "explain": "HCC surveillance in cirrhosis is a core liver MRI indication, along with hemangioma, fatty liver, and hepatitis. The other scenarios call for pelvic MRI or MR enterography instead."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1018,
+      "body": {
+        "prompt": "When prescribing slices for a dedicated liver MRI, the imaging volume must:",
+        "options": [
+          "Include the entire liver from the dome to the inferior tip",
+          "Cover only the lobe that contains the suspected pathology",
+          "Extend from the diaphragm to the pubic symphysis every time",
+          "Match the coverage used on the localizer without adjustment"
+        ],
+        "answer": 0,
+        "explain": "Whatever the indication, liver protocols cover the whole organ so no lesion falls outside the stack. Restricting coverage to one lobe risks missing synchronous disease, and extending to the symphysis is a screening abdomen/pelvis, not a liver exam."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1019,
+      "body": {
+        "prompt": "For liver MRI with a phased-array body coil, correct patient setup places:",
+        "options": [
+          "The liver over the posterior spine elements with the anterior coil on top",
+          "The anterior coil alone in use, since posterior elements add ghosting",
+          "The patient prone so the liver falls toward the anterior coil elements",
+          "The posterior elements switched off to limit respiratory motion artifact"
+        ],
+        "answer": 0,
+        "explain": "Signal comes from both sides: the patient lies over the posterior spine elements while the anterior phased-array coil covers the abdomen from above. Posterior elements contribute signal, not ghosting, and routine liver imaging is done supine."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1020,
+      "body": {
+        "prompt": "Axial coverage for MRCP should extend:",
+        "options": [
+          "From the dome of the liver to below the ampulla of Vater",
+          "From the top of the adrenal glands to the pubic symphysis",
+          "From the gastroesophageal junction to the aortic bifurcation",
+          "From the pancreatic tail to the lower pole of the right kidney"
+        ],
+        "answer": 0,
+        "explain": "MRCP must include the entire biliary tree, so the stack runs from above the liver dome to below the ampulla of Vater where a distal duct stone would sit. Adrenal-to-symphysis coverage belongs to the renal mass protocol."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1021,
+      "body": {
+        "prompt": "A screening abdomen and pelvis MRI is typically prescribed as:",
+        "options": [
+          "Two overlapping packages from the top of the liver to below the pubic symphysis",
+          "A single package from the diaphragm to the iliac crest with no overlap permitted",
+          "Two separate packages from the xiphoid to the umbilicus and umbilicus to the groin",
+          "One thick-slab package from the top of the kidneys down to the femoral neck level"
+        ],
+        "answer": 0,
+        "explain": "The screening exam covers the top of the liver to below the pubic symphysis, usually split into two overlapping axial packages so nothing is skipped at the junction. Coverage stopping at the iliac crest omits the pelvis entirely."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1022,
+      "body": {
+        "prompt": "Coverage for a renal mass MRI protocol extends:",
+        "options": [
+          "From the top of the adrenal gland to the pubic symphysis",
+          "From the dome of the liver through the anus in one package",
+          "From the renal hila to the aortic bifurcation with overlap",
+          "From the diaphragm to the iliac crest in two thin packages"
+        ],
+        "answer": 0,
+        "explain": "Renal mass and screening pelvis protocols run from the top of the adrenal gland to the pubic symphysis, capturing the adrenal, both kidneys, the ureters, and the bladder. Dome-of-liver-through-anus is the enterography prescription."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1023,
+      "body": {
+        "prompt": "MR enterography for Crohn disease should cover:",
+        "options": [
+          "The dome of the liver through the anus",
+          "The pylorus to the ileocecal valve only",
+          "The top of the kidneys to the symphysis",
+          "The stomach through the sigmoid colon"
+        ],
+        "answer": 0,
+        "explain": "Enterography covers the dome of the liver through the anus because Crohn disease can involve any bowel segment and perianal fistulas are common. Stopping at the ileocecal valve or sigmoid would miss perianal disease."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1024,
+      "body": {
+        "prompt": "A dedicated female pelvis MRI would most appropriately be ordered for:",
+        "options": [
+          "Characterizing an adnexal mass found on ultrasound",
+          "Quantifying hepatic fat fraction and iron deposition",
+          "Grading a pancreatic duct stricture after pancreatitis",
+          "Following small bowel disease activity in Crohn disease"
+        ],
+        "answer": 0,
+        "explain": "Adnexal masses and ovarian cysts are standard female pelvis indications, together with fibroids, endometriosis, cervical pathology, and congenital uterine anomalies. Fat quantification, duct strictures, and Crohn disease are liver, MRCP, and enterography territory."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1025,
+      "body": {
+        "prompt": "Standard positioning for female pelvis MRI is:",
+        "options": [
+          "Head first and supine with an anterior phased-array coil over the pelvis",
+          "Feet first and prone with the spine coil alone covering the sacral region",
+          "Head first and prone with an endocavitary coil required for every study",
+          "Feet first and supine using only the built-in body coil for reception"
+        ],
+        "answer": 0,
+        "explain": "The patient goes in head first and supine with an anterior phased-array coil centered over the pelvis for surface-coil signal. Endocavitary coils are not routine, and the built-in body coil alone sacrifices signal-to-noise."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1026,
+      "body": {
+        "prompt": "Before MR elastography of the liver, the patient should:",
+        "options": [
+          "Fast for about 4 hours to reduce bowel motion",
+          "Drink a liter of water during the prior hour",
+          "Complete a laxative bowel prep the night before",
+          "Remain NPO for a full 24 hours before arrival"
+        ],
+        "answer": 0,
+        "explain": "Elastography and living-donor patients fast roughly 4 hours, which quiets bowel motion during the exam. A 24 hour fast is excessive and water loading or laxative preps are not part of the preparation."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1027,
+      "body": {
+        "prompt": "For a routine contrast-enhanced liver MRI with no request for hepatobiliary-phase imaging, the standard agent is:",
+        "options": [
+          "Weight-based extracellular gadolinium",
+          "A fixed-dose hepatobiliary contrast agent",
+          "Dilute oral gadolinium mixed with water",
+          "Superparamagnetic iron oxide particles"
+        ],
+        "answer": 0,
+        "explain": "Extracellular gadolinium dosed by patient weight is the default for body MRI. Hepatobiliary agents are reserved for specific indications such as FNH and the living-donor protocol, and the dilute oral mixture is a bowel-darkening drink, not an IV agent."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1028,
+      "body": {
+        "prompt": "A liver MRI is ordered to confirm suspected focal nodular hyperplasia. Which contrast choice is most appropriate, and why?",
+        "options": [
+          "A hepatobiliary agent, because hepatocytes take it up and excrete it into bile",
+          "Extracellular gadolinium, because FNH never enhances on delayed phase images",
+          "No intravenous contrast, because FNH is fully characterized on T2 imaging",
+          "An oral dilute gadolinium agent, because it outlines the adjacent bowel loops"
+        ],
+        "answer": 0,
+        "explain": "FNH contains functioning hepatocytes, so a hepatobiliary agent is retained on delayed hepatobiliary-phase images while most other lesions wash out. The same agent choice applies to the living-liver-donor protocol."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1029,
+      "body": {
+        "prompt": "A patient cannot sustain a 20 second breath-hold for liver imaging. The best protocol adjustment is to:",
+        "options": [
+          "Use respiratory-triggered or navigator-gated sequences with single-shot and radial acquisitions",
+          "Add more signal averages to the breath-hold sequences so ghosting cancels across excitations",
+          "Schedule the patient for general anesthesia, since free-breathing imaging is nondiagnostic",
+          "Apply cardiac gating to every sequence so acquisition avoids diaphragmatic motion windows"
+        ],
+        "answer": 0,
+        "explain": "Respiratory-triggered or navigator-gated sequences, single-shot fast spin echo, and free-breathing radial 3D T1 gradient echo acquisitions all tolerate free breathing. Averaging within a failed breath-hold does not fix motion, and free-breathing techniques make anesthesia unnecessary."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1030,
+      "body": {
+        "prompt": "Proton density fat fraction (PDFF) mapping of the liver should be acquired:",
+        "options": [
+          "Before contrast, to quantify steatosis and support iron assessment",
+          "During the arterial phase, when hepatic fat signal peaks transiently",
+          "In the hepatobiliary phase, once hepatocyte uptake is fully complete",
+          "Only after a positive elastography result has confirmed the fibrosis"
+        ],
+        "answer": 0,
+        "explain": "PDFF is a pre-contrast quantitative sequence used for steatosis and for iron and hemochromatosis workups. Gadolinium alters the signal and would corrupt the measurement, so it never runs after injection."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1031,
+      "body": {
+        "prompt": "MR elastography of the liver is performed in order to:",
+        "options": [
+          "Map liver stiffness as a marker of fibrosis",
+          "Quantify hepatic fat and iron simultaneously",
+          "Time the arterial phase of contrast arrival",
+          "Suppress respiratory motion during imaging"
+        ],
+        "answer": 0,
+        "explain": "Elastography propagates mechanical waves through the liver and maps tissue stiffness, which tracks fibrosis. Fat and iron quantification is the job of PDFF, a separate pre-contrast sequence."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1032,
+      "body": {
+        "prompt": "Why does MRCP display the biliary tree so conspicuously?",
+        "options": [
+          "Heavy T2 weighting keeps static duct fluid bright while background tissue goes dark",
+          "Heavy T1 weighting makes concentrated bile bright before any contrast is injected",
+          "Gadolinium excreted into bile raises duct signal on the delayed phase acquisitions",
+          "Fat suppression nulls the liver so any remaining signal must come from the ducts"
+        ],
+        "answer": 0,
+        "explain": "MRCP is heavily T2 weighted, so stationary fluid in the bile and pancreatic ducts stays bright while flowing blood and solid tissue lose signal. No IV contrast is needed to make the ducts visible."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1033,
+      "body": {
+        "prompt": "Before MRCP the patient swallows water mixed with a small amount of gadolinium. The purpose of this oral agent is to:",
+        "options": [
+          "Shorten the T2 of bowel fluid so it darkens and stops obscuring the ducts",
+          "Brighten the stomach and duodenum so the ampulla is easier to identify",
+          "Provide enhancement equivalent to IV injection without using a cannula",
+          "Distend the small bowel loops so wall thickening can be judged reliably"
+        ],
+        "answer": 0,
+        "explain": "The dilute oral gadolinium shortens the T2 of overlapping bowel fluid, nulling it on the heavily T2-weighted MRCP images so the ducts stand out. It is a negative oral agent, not a substitute for IV contrast."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1034,
+      "body": {
+        "prompt": "Secretin is administered during MRCP primarily because it:",
+        "options": [
+          "Transiently dilates the pancreatic duct and improves its visualization",
+          "Paralyzes bowel peristalsis for the duration of the whole acquisition",
+          "Contracts the gallbladder so cystic duct patency can be demonstrated",
+          "Reduces gastric fluid signal that would otherwise overlie the ducts"
+        ],
+        "answer": 0,
+        "explain": "Secretin stimulates pancreatic exocrine output and transiently dilates the pancreatic duct, sharpening duct visualization and allowing dynamic assessment for chronic pancreatitis, strictures, and obstructing stones. Quieting peristalsis is the role of an antispasmodic agent."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1035,
+      "body": {
+        "prompt": "Routine post-contrast abdominal imaging begins after an empiric delay of about 30 seconds. Which exam instead uses a free-breathing dynamic (DCE) acquisition with a short inject delay?",
+        "options": [
+          "MR enterography for Crohn disease",
+          "MRCP for suspected biliary stones",
+          "Screening liver MRI for hemangioma",
+          "PDFF mapping for hepatic steatosis"
+        ],
+        "answer": 0,
+        "explain": "Enterography, like hematuria and bladder work, replaces the empiric 30 second delay with a free-breathing DCE injection started shortly after contrast. Liver hemangioma uses breath-hold multiphase empiric-delay imaging, not free-breathing DCE, while MRCP and PDFF are non-contrast techniques."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1036,
+      "body": {
+        "prompt": "When setting up a pelvis MRI for known cervical carcinoma, the small field-of-view high-resolution T2 package should be:",
+        "options": [
+          "Obliqued to the axis of the cervix",
+          "Obliqued to the endometrial cavity",
+          "Left straight axial with no angling",
+          "Aligned to the long axis of the vagina"
+        ],
+        "answer": 0,
+        "explain": "The small-FOV T2 package is angled to the cervix for cervical cancer and to the uterus for endometrial cancer and congenital uterine anomalies. All other pelvic packages stay straight by default."
+      }
     }
   ]
 }
