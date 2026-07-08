@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "lint": "eslint web/",
-    "test:web": "node --test web/course_logic.test.mjs"
+    "test:web": "node --test web/course_logic.test.mjs web/auth_url.test.mjs"
   },
   "repository": {
     "type": "git",

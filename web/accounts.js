@@ -63,6 +63,19 @@
       });
     });
   }
+  // Verify a 6-digit code the user typed from the sign-in email (verifyOtp). This is
+  // the scanner-proof path: corporate mail systems (Microsoft Safe Links, prefetchers)
+  // open the one-time magic-link before the human, spending the token; a typed code
+  // can't be consumed that way. type "email" covers new and returning users alike.
+  function verifyCode(email, code) {
+    return client().then(function (c) {
+      return c.auth.verifyOtp({
+        email: email,
+        token: String(code == null ? "" : code).trim(),
+        type: "email",
+      });
+    });
+  }
   function signOut() { return client().then(function (c) { return c.auth.signOut(); }); }
   // OAuth (Google): redirect to Google, then back to `redirectTo`; the client's
   // detectSessionInUrl completes the sign-in on return. One click, no email.
@@ -254,7 +267,7 @@
 
   window.Accounts = {
     enabled: enabled, signedIn: signedIn, cachedSession: cachedSession, client: client,
-    signIn: signIn, signInWithGoogle: signInWithGoogle, signOut: signOut, getSession: getSession, getUser: getUser,
+    signIn: signIn, verifyCode: verifyCode, signInWithGoogle: signInWithGoogle, signOut: signOut, getSession: getSession, getUser: getUser,
     profile: profile, onChange: onChange, logActivity: logActivity,
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
