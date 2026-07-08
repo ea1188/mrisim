@@ -5077,6 +5077,346 @@
         "answer": 0,
         "explain": "The variant evaluates CN VII for facial pain or Bell's palsy, alongside trigeminal assessment. The optic, hypoglossal, and accessory nerves are not the focus of this protocol."
       }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "education",
+      "ord": 953,
+      "body": {
+        "title": "Spine MRI protocols: cervical, thoracic, and lumbar",
+        "html": "<p>The <strong>cervical spine</strong> is imaged with a combined head and neck coil for indications such as neck pain, herniated disc (HNP), degenerative disc disease (DDD), radiculopathy, stenosis, cord compression, MS, tumor, Chiari malformation, syrinx, and radiating arm pain. Sagittal coverage runs from the pons and fourth ventricle down to about T2 to T3, pedicle to pedicle, and axials extend from C2 to C3 through C7 to T1, angled to each disc space. Core sequences are <strong>Sag T2</strong> and <strong>Sag T1</strong> for herniation, DDD, lesions, tumor, and syrinx, plus <strong>Sag STIR</strong> for MS, metastases, fracture, and infection. Axial GRE displays the nerve roots and osteophytes, and Ax T2 shows cord lesions and syrinx. An <em>anterior saturation band</em> placed in front of the vertebral bodies suppresses swallowing, cardiac, and breathing motion and also reduces CSF pulsation artifact.</p><p>The <strong>thoracic spine</strong> covers roughly C7 to L1 for mid back pain and the same degenerative and cord indications. Because the thoracic levels are hard to count, a vitamin E capsule (a common skin or table marker) is placed to help <strong>count vertebral bodies</strong> so the correct level is localized. Sag STIR is the best sequence for MS, infection, fracture, and bony metastases. Add Cor T2 for scoliosis and Cor STIR when neurofibromatosis (NF1 or NF2) is suspected. Axials may use right to left phase encoding to push breathing motion artifact away from the cord.</p><p>The <strong>lumbar spine</strong> covers about T12 to S2 with axials from L1 to S1 for low back pain, HNP, DDD, radiculopathy, stenosis, tumor, radiating leg pain, prior surgery, and tethered cord. Use an <em>odd number of slices per disc</em> (for example 5) so one slice runs through the disc center. <strong>Contrast</strong> is required for infection, post-operative scarring, and tumor. After back surgery, contrast separates enhancing scar (fibrosis) from non-enhancing recurrent disc. Tethered cord studies extend coverage down to the coccyx.</p>",
+        "keypoints": [
+          "Cervical uses a head and neck coil; sagittals run from the pons and fourth ventricle to about T2 to T3.",
+          "Sag STIR is best for MS, metastases, fracture, and infection in every region of the spine.",
+          "Axial GRE shows nerve roots and osteophytes but blooms near metal, so avoid it there.",
+          "An anterior saturation band suppresses swallowing, cardiac, and breathing motion plus CSF pulsation.",
+          "A vitamin E capsule marker counts thoracic levels; lumbar covers about T12 to S2 with odd slices per disc."
+        ],
+        "worked_example": "A patient returns with recurrent leg pain one year after an L4 to L5 discectomy. A plain non-contrast study cannot tell whether the epidural soft tissue is scar or a new disc fragment. Contrast is given, and the tissue enhances uniformly, which identifies fibrosis rather than recurrent disc. Because scar enhances while recurrent disc does not, the post-operative lumbar spine is protocoled with contrast from the start.",
+        "memory_hooks": [
+          "STIR lights up the bad marrow: MS, mets, fracture, infection.",
+          "Vitamin E dot lets you count the vertebral bodies and find the level.",
+          "Post-op scar glows, recurrent disc stays dark."
+        ],
+        "exam_traps": [
+          "Do not run GRE near spinal hardware, because metal blooms and hides the anatomy.",
+          "The post-operative lumbar spine gets contrast because scar enhances while recurrent disc does not."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "education",
+      "ord": 954,
+      "body": {
+        "title": "Total spine and technique: bone versus neuro, drop metastases, and metal reduction",
+        "html": "<p>A <strong>total spine</strong> is assembled from two sagittal packages, an upper and a lower set, that <strong>overlap by about two disc spaces</strong> at 3 mm with no gap. The upper package uses a smaller field of view than the lower one. Always use the smallest field of view that still covers the anatomy, and adjust resolution whenever the FOV changes. Remember the counts: the spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae. Routing depends on the order. A <em>cervical, thoracic, and lumbar BONE order</em> is run as three separate studies, while a <em>NEURO order</em> is run as a single total spine.</p><p>Metastatic disease splits into two patterns. <strong>Drop metastases</strong> seed down the CSF from a primary brain tumor, so the study images the whole thecal sac including the entire sacrum and typically omits the pre-contrast axials. <strong>Bony metastases</strong> arise from primary cancers such as lung, colon, or breast, usually need no contrast, and an in and out of phase sequence can help characterize marrow. Cor STIR is added when neurofibromatosis is suspected. For post-contrast technique, use a <strong>fat-saturated T1</strong> to improve differentiation of enhancing tissue, and do not simply append a pre-contrast inversion recovery T1 as the post series.</p><p>Near hardware, a <strong>metal reduction</strong> toolkit recovers the image. Use TSE (turbo spin echo) rather than gradient echo, increase the receive bandwidth, and raise the turbo or echo train factor. Decrease the slice thickness, switch fat-saturated T2 to <strong>STIR</strong> for more uniform fat suppression, and decrease the TE. Raise the resolution, change the phase encode direction, and increase the number of signal averages to recover lost signal.</p>",
+        "keypoints": [
+          "A C, T, and L BONE order runs as three separate studies; a NEURO order runs as one total spine.",
+          "Total spine sagittals use two packages overlapping by about two disc spaces at 3 mm with no gap.",
+          "Drop mets seed from a brain tumor and require imaging the whole thecal sac including the entire sacrum.",
+          "Bony mets from lung, colon, or breast usually need no contrast; in and out of phase can help.",
+          "Near metal, use TSE not gradient echo, raise bandwidth, and switch fat-sat T2 to STIR."
+        ],
+        "worked_example": "A patient with a known posterior fossa primary is sent for spine imaging to look for CSF seeding. Because drop metastases fall through the CSF and collect at the bottom of the thecal sac, the coverage is extended to include the entire sacrum, and the pre-contrast axials are omitted so the post-contrast series does the work. A patient with lung cancer and back pain, by contrast, is worked up for bony metastases, usually without contrast, and an in and out of phase sequence helps confirm marrow replacement.",
+        "memory_hooks": [
+          "Bone order splits into three, neuro order joins into one.",
+          "Drop mets fall to the floor, so scan all the way to the sacrum.",
+          "Fight metal with TSE, wide bandwidth, and STIR."
+        ],
+        "exam_traps": [
+          "A C, T, and L BONE order is run as separate studies, while a NEURO order is run as one total spine.",
+          "Near metal, prefer STIR over fat-saturated T2 and use TSE rather than gradient echo."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 955,
+      "body": {
+        "prompt": "Which coil is standard for imaging the cervical spine?",
+        "options": [
+          "A combined head and neck coil covering the cervical region",
+          "A dedicated extremity coil wrapped around the lower neck",
+          "A single small loop surface coil taped over the throat",
+          "The transmit body coil alone with no surface coil added"
+        ],
+        "answer": 0,
+        "explain": "The cervical spine is imaged with a head and neck coil, which places receive elements over the whole cervical region for adequate signal and coverage."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 956,
+      "body": {
+        "prompt": "On a cervical spine study, how far superiorly should the sagittal coverage extend?",
+        "options": [
+          "To the pons and fourth ventricle, then down to about T2 to T3",
+          "To the vertex of the skull, then down to the mid lumbar spine",
+          "To the hard palate only, then down to the level of the carina",
+          "To the frontal sinus region, then down to the top of the sacrum"
+        ],
+        "answer": 0,
+        "explain": "Cervical sagittals cover from the pons and fourth ventricle down to about T2 to T3, pedicle to pedicle, so the cervicomedullary junction and cervicothoracic junction are included."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 957,
+      "body": {
+        "prompt": "Which sagittal sequence is best for showing MS plaques, metastases, fracture, and infection?",
+        "options": [
+          "Sagittal STIR, which brightens cord edema and marrow lesions",
+          "Sagittal T1 gradient echo tuned with a very long echo time",
+          "Axial gradient echo optimized only to display the nerve roots",
+          "A low resolution localizer acquired with wide slice gaps only"
+        ],
+        "answer": 0,
+        "explain": "STIR suppresses fat and makes edema conspicuous, so it is the best sequence for MS, metastases, fracture, and infection where marrow or cord signal is abnormal."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 958,
+      "body": {
+        "prompt": "Axial GRE shows nerve roots and osteophytes well, but should be avoided when what is present?",
+        "options": [
+          "Metallic hardware, because susceptibility causes signal blooming",
+          "A simple midline disc bulge without any associated bony change",
+          "Cerebrospinal fluid pulsation moving along the cervical cord",
+          "Mild degenerative scoliosis of the lower thoracic spinal column"
+        ],
+        "answer": 0,
+        "explain": "Gradient echo is very sensitive to susceptibility, so metal blooms and obscures the anatomy. Near hardware a TSE based sequence is used instead."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 959,
+      "body": {
+        "prompt": "An anterior saturation band placed in front of the vertebral bodies primarily reduces what?",
+        "options": [
+          "Swallowing, breathing, and cardiac motion, plus CSF pulsation",
+          "Chemical shift misregistration at the fat and water boundaries",
+          "Magnetic susceptibility blooming caused by dental restorations",
+          "Gibbs truncation ringing seen at sharp high contrast interfaces"
+        ],
+        "answer": 0,
+        "explain": "A saturation band in front of the spine nulls signal from the moving throat, heart, and chest, which suppresses swallowing, cardiac, and breathing motion and also reduces CSF pulsation artifact."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 960,
+      "body": {
+        "prompt": "On a thoracic spine study, why is a vitamin E capsule marker placed on the patient?",
+        "options": [
+          "To count vertebral bodies so the correct level is localized",
+          "To suppress fat signal along the anterior chest wall region",
+          "To trigger the acquisition to the patient breathing cycle",
+          "To calibrate the transmit gain before the scan is started"
+        ],
+        "answer": 0,
+        "explain": "The thoracic levels are hard to count, so a bright vitamin E marker gives a fixed reference on the images that lets the reader count vertebral bodies and localize the correct level."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 961,
+      "body": {
+        "prompt": "What is the usual sagittal coverage range for a lumbar spine study?",
+        "options": [
+          "About T12 down to S2, covering the conus and the thecal sac",
+          "About C7 down to L1, covering the mid spinal column segments",
+          "About L3 down to the coccyx, a narrow and focused lower block",
+          "About the pons down to L1, matching a cervical spine package"
+        ],
+        "answer": 0,
+        "explain": "Lumbar sagittals span about T12 to S2 so the conus medullaris and the lower thecal sac are both included, with axials typically from L1 to S1."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 962,
+      "body": {
+        "prompt": "Why does the post-operative lumbar spine require contrast?",
+        "options": [
+          "Scar tissue enhances while recurrent disc material does not",
+          "Contrast shortens the total scan time for the whole examination",
+          "Contrast removes all of the motion artifact from axial images",
+          "Recurrent disc enhances brightly while scar tissue stays dark"
+        ],
+        "answer": 0,
+        "explain": "After back surgery, enhancing fibrosis and non-enhancing recurrent disc look similar without contrast. Because scar enhances and recurrent disc does not, contrast separates the two."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 963,
+      "body": {
+        "prompt": "A herniated disc or a syrinx is best demonstrated on which weighting?",
+        "options": [
+          "T2, where bright fluid makes a syrinx and disc herniation stand out",
+          "T1 without contrast, where fluid appears uniformly dark instead",
+          "Gradient echo alone, which is reserved mainly for metallic clips",
+          "A proton density map optimized purely for marrow fat contrast"
+        ],
+        "answer": 0,
+        "explain": "T2 makes fluid bright, so a syrinx and a herniated disc against dark structures stand out clearly, which is why Sag and Ax T2 are core to spine protocols."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 964,
+      "body": {
+        "prompt": "How should a cervical, thoracic, and lumbar BONE order be performed?",
+        "options": [
+          "As three separate studies, one for each region of the spine",
+          "As a single total spine using one continuous sagittal package",
+          "As a limited single sagittal localizer of the whole spinal axis",
+          "As a combined brain and whole spine screening survey protocol"
+        ],
+        "answer": 0,
+        "explain": "A BONE order for cervical, thoracic, and lumbar is run as three separate studies, whereas a NEURO order is run as one total spine."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 965,
+      "body": {
+        "prompt": "How are the sagittal packages of a total spine study assembled?",
+        "options": [
+          "Two packages that overlap by about two disc spaces, no gap",
+          "Two packages that abut with a wide gap between the two sets",
+          "Two packages that overlap by about half the entire spinal column",
+          "One single package for the whole spine, so overlap never applies"
+        ],
+        "answer": 0,
+        "explain": "The upper and lower sagittal packages overlap by about two disc spaces at 3 mm with no gap, so no level is missed at the junction between them."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 966,
+      "body": {
+        "prompt": "What field of view guidance applies to spine sagittal imaging?",
+        "options": [
+          "Use the smallest FOV that still covers the target anatomy",
+          "Use the largest FOV available to capture nearby structures",
+          "Match the FOV to the bore size regardless of the anatomy",
+          "Keep the FOV fixed at 40 cm for every spine examination"
+        ],
+        "answer": 0,
+        "explain": "The smallest field of view that still covers the anatomy gives the best spatial resolution. When the FOV changes, resolution is adjusted to keep image quality consistent."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 967,
+      "body": {
+        "prompt": "Drop metastases seed down the CSF from a primary brain tumor, so the study must do what?",
+        "options": [
+          "Image the whole thecal sac including the entire sacrum",
+          "Image only the cervical cord where the seeding begins first",
+          "Stop coverage at L1 since the cord ends around that level",
+          "Cover the brain alone because the sacrum stays unaffected"
+        ],
+        "answer": 0,
+        "explain": "Drop metastases fall through the CSF and can collect anywhere in the thecal sac, so coverage extends to include the entire sacrum, and pre-contrast axials are typically omitted."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 968,
+      "body": {
+        "prompt": "Bony metastases from lung, colon, or breast primaries usually require what?",
+        "options": [
+          "No contrast, often with an in and out of phase sequence added",
+          "A double dose of contrast with delayed post-contrast imaging",
+          "Intrathecal contrast injected before the sagittal series runs",
+          "Oral contrast timed to the start of the axial image acquisition"
+        ],
+        "answer": 0,
+        "explain": "Bony metastases from primaries such as lung, colon, or breast usually need no contrast, and an in and out of phase sequence helps show marrow replacement."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 969,
+      "body": {
+        "prompt": "Which change reduces metal artifact near spinal hardware?",
+        "options": [
+          "Increase the receive bandwidth to tighten the readout window",
+          "Decrease the receive bandwidth to widen each frequency voxel",
+          "Lower the echo train factor toward a single spin echo readout",
+          "Increase the slice thickness to average the artifact together"
+        ],
+        "answer": 0,
+        "explain": "A higher receive bandwidth shortens the readout and reduces the spatial spread of susceptibility, which cuts metal artifact. Raising the echo train factor and thinner slices also help."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 970,
+      "body": {
+        "prompt": "Near metallic hardware, fat-saturated T2 should be switched to what?",
+        "options": [
+          "STIR, which suppresses fat more uniformly around the metal",
+          "A spectral fat-sat T1 acquired with a very short echo time",
+          "Gradient echo, which handles the susceptibility more cleanly",
+          "A plain T2 with no fat control and a very long echo time set"
+        ],
+        "answer": 0,
+        "explain": "Spectral fat saturation fails near metal because the field is distorted. STIR uses an inversion time to null fat and gives more uniform suppression around hardware."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 971,
+      "body": {
+        "prompt": "Which sequence family is preferred over gradient echo near hardware?",
+        "options": [
+          "TSE, because its refocusing pulses limit susceptibility loss",
+          "GRE, because its single pulse shortens the readout echo time",
+          "Echo planar imaging, because it fills k space very rapidly",
+          "Balanced steady state, because it maximizes the fluid signal"
+        ],
+        "answer": 0,
+        "explain": "TSE (turbo spin echo) applies refocusing pulses that recover signal lost to susceptibility, so it is preferred over gradient echo near metal."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 972,
+      "body": {
+        "prompt": "How many vertebrae are in the cervical, thoracic, and lumbar regions?",
+        "options": [
+          "Seven cervical, twelve thoracic, and five lumbar vertebrae",
+          "Five cervical, seven thoracic, and twelve lumbar vertebrae",
+          "Twelve cervical, five thoracic, and seven lumbar vertebrae",
+          "Eight cervical, ten thoracic, and six lumbar vertebrae total"
+        ],
+        "answer": 0,
+        "explain": "The spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae, a count used constantly when localizing levels and planning coverage."
+      }
     }
   ]
 }
