@@ -9,6 +9,7 @@
   var whoami = document.getElementById("whoami");
   var AuthUrl = window.AuthUrl;   // pure URL/code helpers (auth_url.js), loaded before this
   var JoinLink = window.JoinLink;   // pure ?join=CODE parser (join_link.js), loaded before this
+  var ClassInsight = window.ClassInsight;   // pure class-activity aggregation (class_insight.js), loaded before this
 
   // Tiny DOM builder. Children may be nodes or strings (set as textContent-safe).
   function h(tag, attrs, kids) {
@@ -73,6 +74,40 @@
   function td(t) { return h("td", { text: t }); }
   function tdNum(t) { return h("td", { class: "num", text: String(t) }); }
 
+  // Curriculum totals ({ lessons, topics }) for the practice-coverage denominator:
+  // the same lessons.json the learner app loads and the quiz.json category list.
+  // Fetched once per page (cached promise), best-effort — on any failure it resolves
+  // with whatever loaded (0 for the rest) so the insight table still renders.
+  var totalsPromise = null;
+  function curriculumTotals() {
+    if (!totalsPromise) {
+      var lessons = fetch("lessons.json").then(function (r) { return r.json(); })
+        .then(function (d) { return (d.lessons || []).length; }).catch(function () { return 0; });
+      var topics = fetch("quiz.json").then(function (r) { return r.json(); })
+        .then(function (d) { return (d.categories || []).length; }).catch(function () { return 0; });
+      totalsPromise = Promise.all([lessons, topics]).then(function (v) {
+        return { lessons: v[0], topics: v[1] };
+      });
+    }
+    return totalsPromise;
+  }
+
+  // Drill-down body for one member: per-topic best/latest/attempts + lessons done.
+  function drillDown(row) {
+    var box = h("div");
+    var keys = Object.keys(row.topics);
+    if (!keys.length) box.appendChild(h("p", { class: "muted", text: "No quiz practice yet." }));
+    keys.forEach(function (k) {
+      var t = row.topics[k];
+      box.appendChild(h("p", { class: "muted", text:
+        k + " — best " + (t.best == null ? "—" : Math.round(t.best) + "%") +
+        " · latest " + (t.latest == null ? "—" : Math.round(t.latest) + "%") +
+        " · " + t.attempts + " attempt" + (t.attempts === 1 ? "" : "s") }));
+    });
+    box.appendChild(h("p", { class: "muted", text: row.lessonsDone + " lesson" + (row.lessonsDone === 1 ? "" : "s") + " completed." }));
+    return box;
+  }
+
   // A class you own: join code, roster and each member's formative practice.
   // `reload` re-fetches the owning list after archive/delete.
   function classCard(cl, reload) {
@@ -120,42 +155,66 @@
     ]);
     var c = card([head, body]);
     body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
-    Promise.all([Accounts.roster(cl.id), Accounts.classActivity(cl.id)]).then(function (res) {
+    Promise.all([Accounts.roster(cl.id), Accounts.classActivity(cl.id), curriculumTotals()]).then(function (res) {
       clear(body);
-      var roster = res[0], acts = res[1];
+      var roster = res[0], acts = res[1], totals = res[2];
       if (!roster.length) { body.appendChild(h("p", { class: "muted", text: "No members yet. Share the join code above." })); return; }
-      // Aggregate per student.
-      var by = {};
-      acts.forEach(function (a) {
-        var s = by[a.student_id] || (by[a.student_id] = { quizzes: 0, lessons: {}, bestPct: null, last: null });
-        if (a.kind === "quiz_attempt") { s.quizzes++; if (a.total) { var p = (100 * a.score) / a.total; if (s.bestPct == null || p > s.bestPct) s.bestPct = p; } }
-        if (a.kind === "lesson_complete") s.lessons[a.ref] = true;   // distinct lessons, not repeats
-        if (!s.last || a.created_at > s.last) s.last = a.created_at;
-      });
+      var rows = ClassInsight.perStudent(roster, acts);
+      var byId = {};
+      rows.forEach(function (r) { byId[r.studentId] = r; });
+      var covTh = th("Coverage");
+      covTh.title = "practice coverage — formative, not graded completion";
       var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
-        th("Member"), th("Quiz runs"), th("Best score"), th("Lessons"), th("Last active"), th(""),
+        th("Member"), covTh, th("Best"), th("Weakest topic"), th("Last active"), th(""),
       ])])]);
       var tb = h("tbody");
       roster.forEach(function (r) {
-        var p = (r.profiles && r.profiles.display_name) || "(unnamed)";
-        var s = by[r.student_id] || { quizzes: 0, lessons: {}, bestPct: null, last: null };
-        var rm = h("button", { class: "ghost", text: "Remove", onclick: function () {
-          if (!window.confirm("Remove " + p + " from \"" + cl.name + "\"? They keep their own progress and can rejoin with the code.")) return;
+        var row = byId[r.student_id];
+        var rm = h("button", { class: "ghost", text: "Remove", onclick: function (ev) {
+          ev.stopPropagation();   // don't also toggle the drill-down
+          if (!window.confirm("Remove " + row.name + " from \"" + cl.name + "\"? They keep their own progress and can rejoin with the code.")) return;
           rm.disabled = true;
           Accounts.removeMember(cl.id, r.student_id).then(function (res) {
             if (res && res.error) { rm.disabled = false; return; }
             reload();
           }).catch(function () { rm.disabled = false; });
         } });
-        tb.appendChild(h("tr", {}, [
-          td(p), tdNum(s.quizzes), tdNum(s.bestPct == null ? "—" : Math.round(s.bestPct) + "%"),
-          tdNum(Object.keys(s.lessons).length), tdNum(s.last ? when(s.last) : "—"),
+        var nameCell = h("td", {}, [document.createTextNode(row.name)]);
+        if (row.struggling) nameCell.appendChild(h("span", { class: "chip", text: "struggling" }));
+        var detail = null;   // the inline drill-down <tr>, present while expanded
+        var tr = h("tr", { style: "cursor:pointer", onclick: function () {
+          if (detail) { tb.removeChild(detail); detail = null; return; }
+          detail = h("tr", {}, [h("td", { colspan: "6" }, [drillDown(row)])]);
+          tb.insertBefore(detail, tr.nextSibling);
+        } }, [
+          nameCell,
+          tdNum(ClassInsight.coverage(row, totals) + "%"),
+          tdNum(row.bestPct == null ? "—" : Math.round(row.bestPct) + "%"),
+          td(row.weakestTopic || "—"),
+          tdNum(row.lastActive ? when(row.lastActive) : "—"),
           h("td", {}, [rm]),
-        ]));
+        ]);
+        tb.appendChild(tr);
       });
       tbl.appendChild(tb);
       body.appendChild(tbl);
-      body.appendChild(h("p", { class: "muted", text: roster.length + " member" + (roster.length === 1 ? "" : "s") + " · practice scores are formative, not graded exams." }));
+      var st = ClassInsight.classStats(rows, totals);
+      var weak = st.weakestTopics.map(function (w) { return w.topic; }).join(", ");
+      body.appendChild(h("p", { class: "muted", text:
+        st.members + " member" + (st.members === 1 ? "" : "s") +
+        " · class avg best " + (st.avgBestPct == null ? "—" : st.avgBestPct + "%") +
+        " · avg coverage " + st.avgCoverage + "%" +
+        (weak ? " · weakest topics: " + weak : "") }));
+      body.appendChild(h("p", { class: "muted", text: "Practice scores are formative, not graded exams." }));
+      body.appendChild(h("button", { class: "ghost", text: "Download CSV", onclick: function () {
+        var csv = ClassInsight.toCSV(rows, totals);
+        var url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        var a = h("a", { href: url, download: cl.name + "-insight.csv" });
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } }));
     });
     return c;
   }
