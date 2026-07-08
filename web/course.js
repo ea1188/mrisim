@@ -260,6 +260,15 @@
         h("button", { type: "button", class: "diag-retake", text: "Retake", onclick: startDiagnostic }),
       ]));
     }
+    var reviewDue = CourseLogic.dueCount(loadReview(), Date.now());
+    var revCard = h("div", { class: "diag-card" }, [h("h3", { text: "Spaced review" })]);
+    if (reviewDue > 0) {
+      revCard.appendChild(h("p", { text: reviewDue + " question" + (reviewDue === 1 ? "" : "s") + " you missed " + (reviewDue === 1 ? "is" : "are") + " due for review." }));
+      revCard.appendChild(h("button", { class: "btn", type: "button", text: "Start review", onclick: startReview }));
+    } else {
+      revCard.appendChild(h("p", { text: "No items due for review. Questions you miss show up here on a spaced schedule." }));
+    }
+    main.appendChild(revCard);
     main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
     var grid = h("div", { class: "ready-grid" });
     r.modules.forEach(function (m) {
@@ -313,6 +322,11 @@
     rail.appendChild(h("button", { class: "exam-cta" + (EXAM && EXAM.diagnostic ? " on" : ""), type: "button", onclick: startDiagnostic }, [
       document.createTextNode("Placement test"),
       h("span", { class: "ec-sub", text: "Find your weakest areas first" }),
+    ]));
+    var railDue = CourseLogic.dueCount(loadReview(), Date.now());
+    rail.appendChild(h("button", { class: "exam-cta", type: "button", onclick: startReview }, [
+      document.createTextNode("Review" + (railDue ? " (" + railDue + ")" : "")),
+      h("span", { class: "ec-sub", text: "Missed items, spaced" }),
     ]));
     perMod.forEach(function (pm) {
       var mod = pm.mod, subs = pm.subs;
@@ -839,6 +853,66 @@
       return;
     }
     saveReview(map);
+  }
+
+  // prompt -> full quiz body, from the loaded premium bank.
+  function reviewPool() {
+    var idx = {};
+    Object.keys(CTX.byTopic).forEach(function (key) {
+      (CTX.byTopic[key] || []).forEach(function (it) { if (it.kind === "quiz") idx[it.body.prompt] = it.body; });
+    });
+    return idx;
+  }
+  // Due question bodies (due <= now), skipping prompts no longer in the bank.
+  function dueReviewItems() {
+    var map = loadReview(), pool = reviewPool(), now = Date.now(), out = [];
+    Object.keys(map).forEach(function (p) { if (map[p] && map[p].due <= now && pool[p]) out.push(pool[p]); });
+    return out;
+  }
+
+  function startReview() {
+    stopExam();
+    CTX.mod = null;
+    var main = CTX.main; clear(main);
+    main.appendChild(h("h2", { text: "Review" }));
+    var items = dueReviewItems();
+    if (!items.length) {
+      main.appendChild(h("p", { class: "lede", text: "Nothing is due for review right now. Questions you miss in the quizzes, mastery checks, exams and placement test show up here on a spaced schedule." }));
+      main.appendChild(h("button", { class: "btn ghost", type: "button", text: "Back to overview", onclick: renderOverview }));
+      buildRail(); window.scrollTo(0, 0); return;
+    }
+    main.appendChild(h("p", { class: "lede", text: items.length + " item" + (items.length === 1 ? "" : "s") + " due. Answer each to reschedule it. Get it right a few times and it graduates out of review." }));
+    var order = shuffleInts(items.length);
+    order.forEach(function (idx) { main.appendChild(reviewCard(items[idx])); });
+    main.appendChild(h("button", { class: "btn ghost", type: "button", text: "Done", onclick: renderOverview }));
+    buildRail(); window.scrollTo(0, 0);
+  }
+
+  // One review question: shuffled options, immediate feedback, and reschedule on answer.
+  // Mirrors quizItem's feedback pattern, but reschedules via recordAnswer(inReview=true) and
+  // does not touch the per-module quiz score.
+  function reviewCard(q) {
+    var order = shuffleInts(q.options.length);
+    var answered = false;
+    var fb = h("div", { class: "fb", hidden: true });
+    var box = h("div", { class: "q" }, [h("p", { class: "prompt", text: q.prompt })]);
+    addQImg(box, q);
+    order.forEach(function (orig) {
+      var b = h("button", { class: "opt", text: q.options[orig], onclick: function () {
+        if (answered) return; answered = true;
+        var correct = orig === q.answer;
+        b.classList.add(correct ? "correct" : "wrong");
+        if (!correct) {
+          [].forEach.call(box.querySelectorAll(".opt"), function (o, k) { if (order[k] === q.answer) o.classList.add("correct"); });
+        }
+        [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
+        fb.hidden = false; fb.textContent = (correct ? "Correct. " : "Not quite. ") + q.explain;
+        recordAnswer(q, correct, true);
+      } });
+      box.appendChild(b);
+    });
+    box.appendChild(fb);
+    return box;
   }
 
   // --- diagnostic placement test ------------------------------------------ //
