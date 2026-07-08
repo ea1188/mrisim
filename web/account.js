@@ -85,11 +85,37 @@
       delBtn.disabled = true;
       Accounts.deleteClass(cl.id).then(reload).catch(function () { delBtn.disabled = false; });
     } });
+    var title = h("h2", { class: "grow", text: cl.name + (cl.archived ? " (archived)" : "") });
+    var rename = h("button", { class: "ghost", text: "Rename", onclick: function () {
+      var input = h("input", { type: "text", value: cl.name });
+      var save = h("button", { class: "ghost", text: "Save", onclick: function () {
+        var nm = input.value.trim();
+        if (nm.length < 1 || nm.length > 120) { input.focus(); return; }
+        save.disabled = true;
+        Accounts.renameClass(cl.id, nm).then(function (res) {
+          if (res && res.error) { save.disabled = false; return; }
+          reload();
+        }).catch(function () { save.disabled = false; });
+      } });
+      var cancel = h("button", { class: "ghost", text: "Cancel", onclick: reload });
+      clear(head);
+      [input, save, cancel].forEach(function (n) { head.appendChild(n); });
+      input.focus();
+    } });
+    var regen = h("button", { class: "ghost", text: "Regenerate", onclick: function () {
+      if (!window.confirm("Generate a new join code for \"" + cl.name + "\"? The current code stops working immediately. Members already in the class stay enrolled.")) return;
+      regen.disabled = true;
+      Accounts.rotateJoinCode(cl.id).then(function (res) {
+        regen.disabled = false;
+        if (res && res.error) return;
+        reload();
+      }).catch(function () { regen.disabled = false; });
+    } });
     var head = h("div", { class: "classhead" }, [
-      h("h2", { class: "grow", text: cl.name + (cl.archived ? " (archived)" : "") }),
+      title,
       h("span", { class: "muted", text: "Join code:" }),
       h("span", { class: "code", text: cl.join_code }),
-      archiveBtn, delBtn,
+      regen, rename, archiveBtn, delBtn,
     ]);
     var c = card([head, body]);
     body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
@@ -106,15 +132,24 @@
         if (!s.last || a.created_at > s.last) s.last = a.created_at;
       });
       var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
-        th("Member"), th("Quiz runs"), th("Best score"), th("Lessons"), th("Last active"),
+        th("Member"), th("Quiz runs"), th("Best score"), th("Lessons"), th("Last active"), th(""),
       ])])]);
       var tb = h("tbody");
       roster.forEach(function (r) {
         var p = (r.profiles && r.profiles.display_name) || "(unnamed)";
         var s = by[r.student_id] || { quizzes: 0, lessons: {}, bestPct: null, last: null };
+        var rm = h("button", { class: "ghost", text: "Remove", onclick: function () {
+          if (!window.confirm("Remove " + p + " from \"" + cl.name + "\"? They keep their own progress and can rejoin with the code.")) return;
+          rm.disabled = true;
+          Accounts.removeMember(cl.id, r.student_id).then(function (res) {
+            if (res && res.error) { rm.disabled = false; return; }
+            reload();
+          }).catch(function () { rm.disabled = false; });
+        } });
         tb.appendChild(h("tr", {}, [
           td(p), tdNum(s.quizzes), tdNum(s.bestPct == null ? "—" : Math.round(s.bestPct) + "%"),
           tdNum(Object.keys(s.lessons).length), tdNum(s.last ? when(s.last) : "—"),
+          h("td", {}, [rm]),
         ]));
       });
       tbl.appendChild(tb);
