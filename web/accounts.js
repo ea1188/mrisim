@@ -187,6 +187,24 @@
       });
     });
   }
+  // Rename a class you own. RLS (classes_owner_all) scopes this to the owner.
+  function renameClass(id, name) {
+    return client().then(function (c) {
+      return c.from("classes").update({ name: name }).eq("id", id);
+    });
+  }
+  // Rotate the join code of a class you own (server-side, owner-checked RPC). Resolves
+  // to { data: <new code>, error }.
+  function rotateJoinCode(id) {
+    return client().then(function (c) { return c.rpc("rotate_join_code", { p_class: id }); });
+  }
+  // Remove a member from a class you own (un-enroll only; their activity is untouched).
+  // RLS (enroll_instructor_delete) scopes this to the owning instructor.
+  function removeMember(classId, studentId) {
+    return client().then(function (c) {
+      return c.from("enrollments").delete().eq("class_id", classId).eq("student_id", studentId);
+    });
+  }
   // Classes this user OWNS (teaches). Filtered by instructor_id, because RLS also
   // grants read on classes the user is merely enrolled in — without this filter the
   // account page would list a class under both "teach" and "joined".
@@ -271,6 +289,7 @@
     profile: profile, onChange: onChange, logActivity: logActivity,
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
+    renameClass: renameClass, rotateJoinCode: rotateJoinCode, removeMember: removeMember,
     archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
     isEntitled: isEntitled, premiumContent: premiumContent, requestRefund: requestRefund,
