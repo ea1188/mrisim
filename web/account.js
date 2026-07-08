@@ -8,6 +8,7 @@
   var root = document.getElementById("root");
   var whoami = document.getElementById("whoami");
   var AuthUrl = window.AuthUrl;   // pure URL/code helpers (auth_url.js), loaded before this
+  var JoinLink = window.JoinLink;   // pure ?join=CODE parser (join_link.js), loaded before this
 
   // Tiny DOM builder. Children may be nodes or strings (set as textContent-safe).
   function h(tag, attrs, kids) {
@@ -38,7 +39,7 @@
   // ---- sign-in (signed out) --------------------------------------------- //
   // preErrMsg: an optional message to show on entry (e.g. an OAuth callback error
   // read from the URL by the boot handler; see auth_url.js).
-  function signInView(preErrMsg) {
+  function signInView(preErrMsg, invited) {
     var msg = h("div", { class: "msg" });
     if (preErrMsg) { msg.className = "msg err"; msg.textContent = preErrMsg; }
 
@@ -51,7 +52,7 @@
 
     show(card([
       h("h2", { text: "Sign in" }),
-      h("p", { class: "sub", text: "Sign in with your Google account to create classes, join them, and keep your course progress synced across your devices." }),
+      invited ? h("p", { class: "sub", text: "You've been invited to join a class. Sign in with Google to join it." }) : h("p", { class: "sub", text: "Sign in with your Google account to create classes, join them, and keep your course progress synced across your devices." }),
       gbtn, msg,
     ]));
   }
@@ -160,8 +161,9 @@
   }
 
   // ---- unified signed-in view (everyone can teach and join) ------------- //
-  function signedInView(uid) {
+  function signedInView(uid, note) {
     var wrap = h("div");
+    if (note) wrap.appendChild(h("p", { class: "msg ok", text: note }));
     var teachList = h("div"), joinedList = h("div"), recent = h("div");
 
     // -- teach: create a class + the classes you own --
@@ -254,6 +256,11 @@
     loadTeach(); loadJoined(); loadRecent();
   }
 
+  var PENDING_JOIN_KEY = "mrisim_pending_join";
+  function loadPendingJoin() { try { return localStorage.getItem(PENDING_JOIN_KEY) || null; } catch (e) { return null; } }
+  function savePendingJoin(code) { try { localStorage.setItem(PENDING_JOIN_KEY, code); } catch (e) { /* storage off */ } }
+  function clearPendingJoin() { try { localStorage.removeItem(PENDING_JOIN_KEY); } catch (e) { /* storage off */ } }
+
   // ---- boot ------------------------------------------------------------- //
   if (!window.Accounts || !Accounts.enabled()) { notConfigured(); return; }
   // A mail scanner (Microsoft Safe Links, prefetchers) can open the one-time magic
@@ -263,14 +270,32 @@
   var urlErr = AuthUrl ? AuthUrl.parseAuthError(location.hash, location.search) : null;
   var errMsg = urlErr ? AuthUrl.friendlyAuthError(urlErr.code, urlErr.message) : null;
   if (urlErr) { try { history.replaceState(null, "", location.pathname); } catch (e) { /* best-effort */ } }
+  // Invite link: stash ?join=CODE so it survives the Google OAuth round-trip (which drops the
+  // query string) and a refresh, then strip it from the URL (keep any hash for the auth callback).
+  var joinCode = JoinLink ? JoinLink.parseJoinCode(location.search) : null;
+  if (joinCode) {
+    savePendingJoin(joinCode);
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* best-effort */ }
+  }
   // Creating the client (inside getSession) processes a magic-link redirect.
   Accounts.getSession().then(function (session) {
-    if (!session) { signInView(errMsg); return; }
+    if (!session) { signInView(errMsg, !!loadPendingJoin()); return; }
     var user = session.user, email = user && user.email;
-    Accounts.profile().then(function (prof) {
-      signedInChrome(prof, email);
-      signedInView(user.id);
-    });
+    var proceed = function (note) {
+      Accounts.profile().then(function (prof) {
+        signedInChrome(prof, email);
+        signedInView(user.id, note);
+      });
+    };
+    var pending = loadPendingJoin();
+    if (pending) {
+      Accounts.joinClass(pending).then(function (res) {
+        clearPendingJoin();
+        proceed(res && res.error ? null : "You've joined the class. It is listed below.");
+      }).catch(function () { clearPendingJoin(); proceed(null); });
+    } else {
+      proceed(null);
+    }
   }).catch(function (e) {
     signInView(errMsg || ("Something went wrong: " + String(e.message || e)));
   });
