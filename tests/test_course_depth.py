@@ -29,7 +29,9 @@ def test_all_education_modules_have_depth_fields():
         assert all(isinstance(x, str) and x.strip() for x in traps), title
 
 
-def test_depth_fields_have_no_em_dashes():
+def test_education_bodies_have_no_em_dashes():
+    """Covers the depth fields and the existing html/keypoints, per the plan."""
     for b in _edu_bodies():
-        blob = " ".join([b.get("worked_example", "")] + b.get("memory_hooks", []) + b.get("exam_traps", []))
-        assert not DASH.search(blob), b.get("title")
+        parts = [b.get("worked_example", ""), b.get("html", "")]
+        parts += b.get("memory_hooks", []) + b.get("exam_traps", []) + b.get("keypoints", [])
+        assert not DASH.search(" ".join(parts)), b.get("title")
