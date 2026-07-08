@@ -24,8 +24,34 @@
     return "progress";
   }
 
+  // Rank all module titles weakest-first by diagnostic accuracy (right/asked). A module absent
+  // from perModule or with asked===0 counts as accuracy 1.0 so it does not jump ahead of
+  // genuinely weak modules. Ties keep original curriculum order (stable).
+  function rankModulesByDiagnostic(perModule, curriculumTitles) {
+    perModule = perModule || {};
+    var rows = curriculumTitles.map(function (t, i) {
+      var rec = perModule[t];
+      var acc = (rec && rec.asked) ? rec.right / rec.asked : 1;
+      return { title: t, acc: acc, i: i };
+    });
+    rows.sort(function (a, b) { return a.acc - b.acc || a.i - b.i; });
+    return rows.map(function (x) { return x.title; });
+  }
+
+  // First title in `order` whose status is not "mastered"; null if none (or order empty).
+  function diagnosticStudyNext(order, statusByTitle) {
+    order = order || [];
+    statusByTitle = statusByTitle || {};
+    for (var i = 0; i < order.length; i++) {
+      if (statusByTitle[order[i]] !== "mastered") return order[i];
+    }
+    return null;
+  }
+
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
     deriveModuleStatus: deriveModuleStatus,
+    rankModulesByDiagnostic: rankModulesByDiagnostic,
+    diagnosticStudyNext: diagnosticStudyNext,
   };
 });
