@@ -5417,6 +5417,346 @@
         "answer": 0,
         "explain": "The spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae, a count used constantly when localizing levels and planning coverage."
       }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "education",
+      "ord": 973,
+      "body": {
+        "title": "Brain MRA and MRV: time-of-flight, coverage, and reconstructions",
+        "html": "<p>Brain MRA is usually a <strong>non-contrast time-of-flight (TOF)</strong> study. The bright vessel signal comes from fresh, unsaturated blood flowing into the imaging slab, while the stationary background tissue is repeatedly saturated by the rapid pulses and stays dark. No gadolinium is needed for this contrast. A TOF angiogram can be added to a routine brain study or run on its own, and typical indications include <strong>aneurysm</strong>, brain hemorrhage, and arteriovenous malformation (AVM), which may need extra coverage to include the feeding and draining vessels.</p><p>Coverage for the arterial study runs from about the top of the corpus callosum down to the skull base, and the TOF acquisition should be kept <strong>isotropic</strong> so reformats are clean in any plane. To extend coverage, do <em>not</em> raise the number of slices per slab much above 40, because too many slices per slab causes the <strong>Venetian blind artifact</strong>, a stripe of signal drop at the slab boundaries. Instead, add more slabs. Reconstructions include rotating maximum intensity projections (MIPs) of the <strong>Circle of Willis</strong> plus targeted MIPs of the bilateral and individual carotid arteries. An aneurysm is best shown on TOF MRA, while an AVM or a cavernoma is better characterized on SWI or diffusion.</p><p>Brain MRV is the venous half of the vascular study and evaluates <strong>dural venous sinus thrombosis</strong> and central sinus obstruction. Venous coverage runs from the top of the skull down to below the foramen magnum. A non-contrast venogram uses a straight sagittal and a straight coronal 2D TOF acquisition, while a contrast venogram uses an axial fast 3D T1 gradient echo planned along the AC-PC line. For a contrast MRV, the pre and post series must <strong>match exactly</strong> so a MIP subtraction removes the background tissue, and the nose is cropped out of the reconstruction.</p>",
+        "keypoints": [
+          "TOF is bright because inflowing blood is unsaturated while background tissue is saturated dark, with no contrast used.",
+          "Arterial brain MRA coverage runs from the top of the corpus callosum down to the skull base and is kept isotropic.",
+          "Extend TOF coverage by adding more slabs, not more slices per slab, to avoid the Venetian blind artifact.",
+          "Aneurysm is best shown on TOF MRA, while AVM or cavernoma is better shown on SWI or diffusion.",
+          "Brain MRV evaluates dural sinus thrombosis; contrast MRV needs matched pre and post series for MIP subtraction."
+        ],
+        "worked_example": "A technologist needs to extend a TOF brain MRA superiorly to capture the upper branches of an AVM. Rather than increasing the slices per slab to 60, which would leave dark horizontal bands where the slabs meet, the technologist keeps each slab near 40 slices and adds a second and third slab to reach the added coverage. The Circle of Willis and the malformation are then reconstructed as rotating MIPs without slab-boundary signal loss.",
+        "memory_hooks": [
+          "TOF glows because inflowing blood is fresh and unsaturated, not because of dye.",
+          "More coverage means more slabs, not more slices.",
+          "Aneurysm on TOF, AVM and cavernoma on SWI."
+        ],
+        "exam_traps": [
+          "To extend TOF coverage, add more slabs rather than more slices per slab, because too many slices per slab causes the Venetian blind artifact at the slab boundaries.",
+          "TOF vessels are bright because inflowing blood is unsaturated, not because contrast was given."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "education",
+      "ord": 974,
+      "body": {
+        "title": "Neck MRA and carotid technique: contrast timing, saturation bands, and dissection",
+        "html": "<p>Neck MRA indications include prior stroke or CVA, carotid stenosis or occlusion, and <strong>carotid dissection</strong>. A limited non-contrast TOF of the neck can cover just above and below the carotid bifurcation, while a full non-contrast neck MRA covers from the skull base down to the aortic arch. As with brain MRA, coverage is extended by adding slabs rather than slices per slab. Contrast-enhanced neck MRA uses a thin coronal 3D gradient echo, on the order of 1.5 mm, covering from the top of the Circle of Willis down to the aortic arch and including both carotids. Gadolinium is <strong>weight-based</strong>, and the acquisition is <strong>timed to the arterial bolus</strong> using a test bolus or a bolus-tracking method so the arteries are captured before venous contamination.</p><p><strong>Saturation band direction</strong> sets which vessels are displayed. A saturation band placed superior to the slab, a \"sat up,\" suppresses inflow from above and displays <strong>arterial</strong> flow, while a band placed inferior to the slab, a \"sat down,\" displays <strong>venous</strong> flow. This is how <strong>subclavian steal</strong> is demonstrated, a condition where vertebral artery flow reverses because of a compromised subclavian artery, so the vertebral fills from the wrong direction.</p><p><strong>Carotid dissection</strong> is a tear that lets blood track into the vessel wall. It is best shown on a <strong>pre-contrast fat-saturated T1</strong>, typically a coronal 3D T1, or an axial T1 fat-sat if the coronal fails, covering the carotids and the entire aortic arch. The classic sign is a normally dark flowing vessel with a <em>crescent of bright signal in the wall</em>, the intramural hematoma, at the site of the dissection. Because the finding lives in the wall and not the lumen, it is imaged before contrast is given.</p>",
+        "keypoints": [
+          "Neck MRA indications include prior stroke, carotid stenosis or occlusion, and carotid dissection.",
+          "Full non-contrast neck MRA covers from the skull base to the aortic arch, extended by adding slabs.",
+          "Contrast neck MRA is weight-based and timed to the arterial bolus so arteries fill before veins.",
+          "A superior saturation band (sat up) shows arterial flow, an inferior band (sat down) shows venous flow.",
+          "Carotid dissection is best shown on pre-contrast fat-sat T1 as a bright crescent of intramural hematoma."
+        ],
+        "worked_example": "A patient presents with neck pain and stroke symptoms after a fall, and the radiologist suspects a carotid dissection. Before any gadolinium is given, the technologist runs a coronal 3D fat-saturated T1 covering the carotids from the skull base through the aortic arch. On the images the normally dark carotid shows a bright crescent along its wall, the intramural hematoma, confirming the dissection while the lumen still appears patent.",
+        "memory_hooks": [
+          "Sat up sees arteries, sat down sees veins.",
+          "Steal means the vertebral runs backward from a bad subclavian.",
+          "Dissection is a bright crescent in the wall on fat-sat T1, done before dye."
+        ],
+        "exam_traps": [
+          "A superior saturation band (sat up) shows arterial flow, while an inferior saturation band (sat down) shows venous flow.",
+          "Carotid dissection shows a bright crescent of intramural hematoma on fat-saturated T1 and is imaged before contrast."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 975,
+      "body": {
+        "prompt": "In a non-contrast time-of-flight brain MRA, why do the arteries appear bright?",
+        "options": [
+          "Inflowing blood is unsaturated while stationary background tissue is saturated dark",
+          "Gadolinium contrast shortens the T1 of blood within the imaged arteries",
+          "Flowing blood loses signal so vessels are darker than the tissue",
+          "Fat saturation removes marrow signal so vessels stand out brightly"
+        ],
+        "answer": 0,
+        "explain": "TOF relies on flow-related enhancement. Fresh, unsaturated blood flows into the slab and gives high signal, while repeatedly excited stationary tissue stays saturated and dark. No contrast is used."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 976,
+      "body": {
+        "prompt": "What is the standard superior-to-inferior coverage for the arterial brain MRA?",
+        "options": [
+          "From about the top of the corpus callosum down to the skull base",
+          "From the top of the skull down to below the foramen magnum",
+          "From the skull base down to the aortic arch and carotids",
+          "From above and below the carotid bifurcation only"
+        ],
+        "answer": 0,
+        "explain": "The arterial TOF study for the Circle of Willis runs roughly from the top of the corpus callosum to the skull base. The wider top-of-skull to below-foramen-magnum range belongs to the venous MRV study."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 977,
+      "body": {
+        "prompt": "To extend TOF MRA coverage without causing the Venetian blind artifact, the technologist should do what?",
+        "options": [
+          "Add more slabs while keeping the slices per slab near 40 or fewer",
+          "Increase the slices per slab well above 40 within a single slab",
+          "Remove fat saturation and widen each individual slice thickness",
+          "Switch to a single thick two-dimensional slab covering everything"
+        ],
+        "answer": 0,
+        "explain": "Too many slices per slab causes saturation toward the slab exit and produces the Venetian blind artifact, a signal drop at slab boundaries. Adding more slabs extends coverage while avoiding it."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 978,
+      "body": {
+        "prompt": "The Venetian blind artifact in TOF MRA appears as what?",
+        "options": [
+          "Bands of signal drop at the boundaries between adjacent slabs",
+          "A bright crescent of signal within the wall of a vessel",
+          "Complete loss of all arterial signal across the whole slab",
+          "Ghosting repeated along the phase-encoding direction only"
+        ],
+        "answer": 0,
+        "explain": "When too many slices are packed into one slab, spins saturate near the slab exit, so signal drops where slabs meet. This produces horizontal stripes resembling a Venetian blind."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 979,
+      "body": {
+        "prompt": "How should the TOF acquisition voxel be set for high-quality reconstructions?",
+        "options": [
+          "Isotropic, so reformats and MIPs are clean in any plane",
+          "Highly anisotropic, with thick slices and thin in-plane pixels",
+          "Two-dimensional only, with wide gaps between the slices",
+          "Weighted toward the phase direction to shorten the scan time"
+        ],
+        "answer": 0,
+        "explain": "Keeping the TOF voxel isotropic lets the volume be reformatted and projected in any orientation without stair-step blurring, which is essential for rotating MIPs of the Circle of Willis."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 980,
+      "body": {
+        "prompt": "Which vascular lesion is best demonstrated on a TOF MRA?",
+        "options": [
+          "An intracranial aneurysm arising from a Circle of Willis vessel",
+          "A cavernoma with its typical blood-product susceptibility signal",
+          "An acute infarct showing restricted diffusion of water",
+          "A chronic microbleed scattered through the white matter"
+        ],
+        "answer": 0,
+        "explain": "Aneurysms are luminal outpouchings well shown by the flow signal of TOF MRA. Cavernomas and microbleeds are better characterized on SWI, and infarcts on diffusion."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 981,
+      "body": {
+        "prompt": "An AVM or a cavernoma is generally better characterized on which sequence?",
+        "options": [
+          "SWI or diffusion, which show blood products and susceptibility",
+          "TOF MRA, which shows only the bright flowing arterial lumen",
+          "A weight-based contrast MRV with matched subtraction images",
+          "A plain sagittal two-dimensional TOF venogram of the sinuses"
+        ],
+        "answer": 0,
+        "explain": "SWI is sensitive to blood products and the susceptibility of a cavernoma, and diffusion adds tissue information. TOF shows flowing lumen but characterizes these lesions less well."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 982,
+      "body": {
+        "prompt": "Which reconstructions are routinely produced from a brain TOF MRA?",
+        "options": [
+          "Rotating MIPs of the Circle of Willis and targeted carotid MIPs",
+          "Subtraction images built from matched pre and post venous series",
+          "Fat-saturated T1 crescent views of the carotid vessel walls",
+          "Bolus-timing test images tracked at the level of the arch"
+        ],
+        "answer": 0,
+        "explain": "The TOF volume is reconstructed as rotating maximum intensity projections of the Circle of Willis plus targeted MIPs of the bilateral and individual carotid arteries."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 983,
+      "body": {
+        "prompt": "A brain MRV is primarily performed to evaluate what?",
+        "options": [
+          "Dural venous sinus thrombosis and central sinus obstruction",
+          "Carotid bifurcation stenosis and downstream arterial occlusion",
+          "A saccular aneurysm arising along the Circle of Willis",
+          "Reversed vertebral artery flow caused by subclavian steal"
+        ],
+        "answer": 0,
+        "explain": "The MRV evaluates the venous system, chiefly dural venous sinus thrombosis and central sinus obstruction. Stenosis, aneurysm, and subclavian steal are arterial questions."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 984,
+      "body": {
+        "prompt": "For a contrast-enhanced brain MRV, why must the pre and post series match exactly?",
+        "options": [
+          "So a MIP subtraction can remove the background and isolate the veins",
+          "So the arterial bolus can be timed with a tracking test scan",
+          "So the saturation band can be flipped to display arterial flow",
+          "So the slices per slab can be raised safely well above 40"
+        ],
+        "answer": 0,
+        "explain": "Matched geometry lets the pre series be subtracted from the post series, removing stationary background so a clean venous MIP remains. The nose is also cropped from the reconstruction."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 985,
+      "body": {
+        "prompt": "Which of the following is a recognized indication for a neck MRA?",
+        "options": [
+          "Carotid stenosis or dissection in a patient with prior stroke",
+          "Dural venous sinus thrombosis presenting with a headache",
+          "A microadenoma suspected on a rising serum prolactin level",
+          "An acute lacunar infarct showing bright diffusion restriction"
+        ],
+        "answer": 0,
+        "explain": "Neck MRA is ordered for prior stroke or CVA, carotid stenosis or occlusion, and carotid dissection. Sinus thrombosis is an MRV question, and the others are unrelated."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 986,
+      "body": {
+        "prompt": "A full non-contrast neck MRA covers which superior-to-inferior range?",
+        "options": [
+          "From the skull base down to the aortic arch",
+          "From the top of the corpus callosum to the skull base",
+          "From the top of the skull to below the foramen magnum",
+          "From just above to just below the carotid bifurcation"
+        ],
+        "answer": 0,
+        "explain": "A full neck MRA extends from the skull base to the aortic arch. A limited TOF may cover only around the bifurcation, and the other ranges describe brain arterial or venous studies."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 987,
+      "body": {
+        "prompt": "How is gadolinium dosed and timed for a contrast-enhanced neck MRA?",
+        "options": [
+          "Weight-based dose timed to the arterial bolus before venous filling",
+          "Fixed volume for every patient injected after the venous phase",
+          "Weight-based dose delayed until the veins have fully enhanced",
+          "Fixed volume timed to the late equilibrium washout phase"
+        ],
+        "answer": 0,
+        "explain": "Contrast neck MRA uses a weight-based gadolinium dose and times the thin 3D acquisition to the arterial bolus with a test bolus or bolus tracking, capturing arteries before venous contamination."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 988,
+      "body": {
+        "prompt": "A saturation band placed superior to the slab (a sat up) will display which flow?",
+        "options": [
+          "Arterial flow, by suppressing venous inflow coming from above",
+          "Venous flow, by suppressing arterial inflow coming from above",
+          "Both arterial and venous flow with equal signal intensity",
+          "Neither vessel, because all inflowing signal is nulled out"
+        ],
+        "answer": 0,
+        "explain": "A superior band saturates blood entering from above (venous return), leaving upward arterial inflow to appear bright. A sat up therefore displays arterial flow."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 989,
+      "body": {
+        "prompt": "A saturation band placed inferior to the slab (a sat down) will display which flow?",
+        "options": [
+          "Venous flow, by suppressing arterial inflow coming from below",
+          "Arterial flow, by suppressing venous inflow coming from below",
+          "Both venous and arterial flow at the same brightness level",
+          "Neither vessel, since inferior bands cannot affect any flow"
+        ],
+        "answer": 0,
+        "explain": "An inferior band saturates blood entering from below (upward arterial flow), leaving descending venous flow bright. A sat down therefore displays venous flow."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 990,
+      "body": {
+        "prompt": "Subclavian steal is best described as what?",
+        "options": [
+          "Reversed vertebral artery flow from a compromised subclavian artery",
+          "A tear allowing blood to track into the carotid vessel wall",
+          "Thrombosis blocking a central dural venous sinus of the brain",
+          "A saccular outpouching along a Circle of Willis artery branch"
+        ],
+        "answer": 0,
+        "explain": "In subclavian steal, a proximal subclavian narrowing causes vertebral artery flow to reverse and supply the arm, robbing the posterior circulation. Saturation band direction demonstrates the reversed flow."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 991,
+      "body": {
+        "prompt": "Which sequence best demonstrates a suspected carotid dissection?",
+        "options": [
+          "A pre-contrast fat-saturated T1 covering the carotids and the arch",
+          "A post-contrast subtracted MIP of the dural venous sinuses",
+          "A high b-value diffusion image paired with its ADC map",
+          "A rotating TOF MIP of the Circle of Willis arteries"
+        ],
+        "answer": 0,
+        "explain": "Dissection lives in the vessel wall, so a pre-contrast fat-saturated T1 (coronal 3D, or axial if coronal fails) covering the carotids and entire aortic arch shows the mural hematoma best."
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "quiz",
+      "ord": 992,
+      "body": {
+        "prompt": "On fat-saturated T1, the classic sign of a carotid dissection is what?",
+        "options": [
+          "A crescent of bright intramural hematoma in the vessel wall",
+          "A band of signal drop where two adjacent slabs meet",
+          "A bright lumen from inflowing unsaturated arterial blood",
+          "A dark filling defect within an enhancing dural sinus"
+        ],
+        "answer": 0,
+        "explain": "The dissection tear lets blood into the wall, forming an intramural hematoma that appears as a bright crescent around a normally dark flowing lumen on fat-saturated T1, imaged before contrast."
+      }
     }
   ]
 }
