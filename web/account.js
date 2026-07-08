@@ -10,6 +10,7 @@
   var AuthUrl = window.AuthUrl;   // pure URL/code helpers (auth_url.js), loaded before this
   var JoinLink = window.JoinLink;   // pure ?join=CODE parser (join_link.js), loaded before this
   var ClassInsight = window.ClassInsight;   // pure class-activity aggregation (class_insight.js), loaded before this
+  var Assignments = window.Assignments;   // pure assignment catalog + completion (assignments.js)
 
   // Tiny DOM builder. Children may be nodes or strings (set as textContent-safe).
   function h(tag, attrs, kids) {
@@ -92,6 +93,19 @@
     return totalsPromise;
   }
 
+  // The assignable catalog ({ modules, lessons, quizzes }) from the same lessons.json
+  // and quiz.json the learner loads. Fetched once per page (cached), best-effort — an
+  // empty catalog just yields empty pickers.
+  var catalogPromise = null;
+  function assignableCatalog() {
+    if (!catalogPromise) {
+      var lessons = fetch("lessons.json").then(function (r) { return r.json(); }).catch(function () { return {}; });
+      var quiz = fetch("quiz.json").then(function (r) { return r.json(); }).catch(function () { return {}; });
+      catalogPromise = Promise.all([lessons, quiz]).then(function (v) { return Assignments.catalog(v[0], v[1]); });
+    }
+    return catalogPromise;
+  }
+
   // Drill-down body for one member: per-topic best/latest/attempts + lessons done.
   function drillDown(row) {
     var box = h("div");
@@ -105,6 +119,67 @@
         " · " + t.attempts + " attempt" + (t.attempts === 1 ? "" : "s") }));
     });
     box.appendChild(h("p", { class: "muted", text: row.lessonsDone + " lesson" + (row.lessonsDone === 1 ? "" : "s") + " completed." }));
+    return box;
+  }
+
+  var KIND_LABEL = { lesson: "Lesson", quiz: "Quiz topic", module: "Module" };
+
+  // Owner: the "Assignments" block for one class — an add form + a list with X/N done.
+  function assignmentsSection(cl, roster, acts, cat, assignments, reload) {
+    var box = h("div", { class: "assign" }, [h("h3", { text: "Assignments" })]);
+
+    var kindSel = h("select", {}, [
+      h("option", { value: "lesson" }, ["Lesson"]),
+      h("option", { value: "quiz" }, ["Quiz topic"]),
+      h("option", { value: "module" }, ["Module"]),
+    ]);
+    var itemSel = h("select");
+    function fillItems() {
+      clear(itemSel);
+      var list = kindSel.value === "module" ? cat.modules : kindSel.value === "quiz" ? cat.quizzes : cat.lessons;
+      (list || []).forEach(function (it) { itemSel.appendChild(h("option", { value: it.ref }, [it.label])); });
+    }
+    kindSel.addEventListener("change", fillItems);
+    fillItems();
+    var dueIn = h("input", { type: "date" });
+    var amsg = h("div", { class: "msg" });
+    var add = h("button", { class: "ghost", text: "Assign", onclick: function () {
+      if (!itemSel.value) return;
+      add.disabled = true; amsg.className = "msg"; amsg.textContent = "";
+      var dueAt = dueIn.value ? new Date(dueIn.value + "T23:59:59").toISOString() : null;
+      Accounts.createAssignment(cl.id, kindSel.value, itemSel.value, dueAt).then(function (res) {
+        add.disabled = false;
+        if (res && res.error) { amsg.className = "msg err"; amsg.textContent = res.error.message; return; }
+        reload();
+      }).catch(function () { add.disabled = false; });
+    } });
+    box.appendChild(h("div", { class: "assign-form" }, [kindSel, itemSel, dueIn, add]));
+    box.appendChild(amsg);
+
+    var comp = Assignments.classCompletion(assignments, roster, acts, cat);
+    if (!comp.length) { box.appendChild(h("p", { class: "muted", text: "No assignments yet." })); return box; }
+    var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
+      th("Assigned"), th("Type"), th("Due"), th("Done"), th(""),
+    ])])]);
+    var tb = h("tbody");
+    comp.forEach(function (a) {
+      var due = Assignments.dueLabel(a.dueAt);
+      var dueCell = h("td", {}, [document.createTextNode(due ? due.text : "—")]);
+      if (due && due.overdue) dueCell.appendChild(h("span", { class: "chip", text: "overdue" }));
+      var rm = h("button", { class: "ghost", text: "Remove", onclick: function () {
+        rm.disabled = true;
+        Accounts.deleteAssignment(a.id).then(function (res) {
+          if (res && res.error) { rm.disabled = false; return; }
+          reload();
+        }).catch(function () { rm.disabled = false; });
+      } });
+      tb.appendChild(h("tr", {}, [
+        td(a.label), td(KIND_LABEL[a.kind] || a.kind), dueCell,
+        tdNum(a.doneCount + "/" + a.total), h("td", {}, [rm]),
+      ]));
+    });
+    tbl.appendChild(tb);
+    box.appendChild(tbl);
     return box;
   }
 
@@ -155,10 +230,16 @@
     ]);
     var c = card([head, body]);
     body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
-    Promise.all([Accounts.roster(cl.id), Accounts.classActivity(cl.id), curriculumTotals()]).then(function (res) {
+    Promise.all([Accounts.roster(cl.id), Accounts.classActivity(cl.id), curriculumTotals(),
+      Accounts.classAssignments(cl.id), assignableCatalog()]).then(function (res) {
       clear(body);
       var roster = res[0], acts = res[1], totals = res[2];
-      if (!roster.length) { body.appendChild(h("p", { class: "muted", text: "No members yet. Share the join code above." })); return; }
+      var assignments = res[3], cat = res[4];
+      if (!roster.length) {
+        body.appendChild(h("p", { class: "muted", text: "No members yet. Share the join code above." }));
+        body.appendChild(assignmentsSection(cl, roster, acts, cat, assignments, reload));
+        return;
+      }
       var rows = ClassInsight.perStudent(roster, acts);
       var byId = {};
       rows.forEach(function (r) { byId[r.studentId] = r; });
@@ -215,6 +296,7 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       } }));
+      body.appendChild(assignmentsSection(cl, roster, acts, cat, assignments, reload));
     });
     return c;
   }
