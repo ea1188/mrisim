@@ -305,7 +305,7 @@
   function signedInView(uid, note) {
     var wrap = h("div");
     if (note) wrap.appendChild(h("p", { class: note.ok ? "msg ok" : "msg err", text: note.text }));
-    var teachList = h("div"), joinedList = h("div"), recent = h("div");
+    var teachList = h("div"), joinedList = h("div"), assigned = h("div"), recent = h("div");
 
     // -- teach: create a class + the classes you own --
     var nameIn = h("input", { type: "text", placeholder: "e.g. MRI Physics — Fall 2026" });
@@ -380,6 +380,38 @@
       });
     }
 
+    // -- work assigned to you (across the classes you've joined) --
+    function loadAssigned() {
+      clear(assigned); assigned.appendChild(h("p", { class: "muted", text: "Loading…" }));
+      Promise.all([Accounts.myAssignments(), Accounts.myActivityRefs(), assignableCatalog()]).then(function (res) {
+        clear(assigned);
+        var rows = Assignments.studentStatus(res[0], res[1], res[2]);
+        assigned.appendChild(h("h2", { text: "Assigned to you" }));
+        if (!rows.length) {
+          assigned.appendChild(h("p", { class: "muted", text: "No assignments yet. When a class you've joined assigns work, it shows up here." }));
+          return;
+        }
+        var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
+          th("Done"), th("Assigned"), th("Type"), th("Due"), th(""),
+        ])])]);
+        var tb = h("tbody");
+        rows.forEach(function (a) {
+          var due = Assignments.dueLabel(a.dueAt);
+          var dueCell = h("td", {}, [document.createTextNode(due ? due.text : "—")]);
+          if (due && due.overdue && !a.done) dueCell.appendChild(h("span", { class: "chip", text: "overdue" }));
+          var link = a.kind === "lesson" ? "index.html?lesson=" + encodeURIComponent(a.ref)
+            : a.kind === "quiz" ? "course.html?topic=" + encodeURIComponent(a.ref)
+              : "course.html";
+          var doneCell = h("td", {}, [a.done ? h("span", { class: "chip", text: "done" }) : document.createTextNode("—")]);
+          tb.appendChild(h("tr", {}, [
+            doneCell, td(a.label), td(KIND_LABEL[a.kind] || a.kind), dueCell,
+            h("td", {}, [h("a", { class: "linkout", href: link, text: "open" })]),
+          ]));
+        });
+        tbl.appendChild(tb); assigned.appendChild(tbl);
+      });
+    }
+
     wrap.appendChild(card([
       h("h2", { text: "Classes you teach" }),
       h("p", { class: "sub", text: "Create a class and share its join code. You'll see each member's quiz and lesson practice as they go." }),
@@ -392,9 +424,10 @@
       codeIn, join, jmsg,
       joinedList,
     ]));
+    wrap.appendChild(card([assigned]));
     wrap.appendChild(card([recent]));
     show(wrap);
-    loadTeach(); loadJoined(); loadRecent();
+    loadTeach(); loadJoined(); loadAssigned(); loadRecent();
   }
 
   var PENDING_JOIN_KEY = "mrisim_pending_join";
