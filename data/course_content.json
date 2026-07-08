@@ -335,6 +335,17 @@
           "GRE has no 180, so it is T2* weighted; spoiled gives T1/T2*, balanced SSFP gives bright fluid.",
           "EPI fills k-space in one shot: fast (DWI and fMRI) but prone to geometric distortion.",
           "DWI: restricted diffusion is bright on DWI and dark on the ADC map."
+        ],
+        "worked_example": "<p>A patient has a hip replacement and you must choose between a fast spin echo and a gradient echo proton density sequence to evaluate the bone next to the hardware. Gradient echo has no 180 degree refocusing pulse, so the local field distortion the metal creates around it is never cancelled, and the image shows a large signal void with visible geometric warping near the implant. Fast spin echo runs a whole train of 180 degree pulses, and each one refocuses the dephasing that metal induced since the last pulse, so the artifact shrinks dramatically. The right choice for periprosthetic imaging is fast spin echo, or a dedicated metal artifact reduction sequence built on it, because the refocusing pulse train is what tames the T2 star dephasing that a gradient echo sequence cannot correct.</p>",
+        "memory_hooks": [
+          "Spin echo and fast spin echo both refocus with a 180, so both read out true T2. Gradient echo skips the 180, so it reads out T2 star instead.",
+          "EPI is the one shot sequence: one excitation fills most or all of k-space, which is why it is fast for diffusion and functional imaging but also the most distortion prone sequence.",
+          "Effective TE in fast spin echo is set by whichever echo fills the center of k-space, not by the first echo in the train."
+        ],
+        "exam_traps": [
+          "Do not confuse T2 with T2 star. T2 star is always shorter than T2 because it includes magnet inhomogeneity dephasing that the 180 degree pulse in spin echo and fast spin echo cancels out; gradient echo has no way to cancel it.",
+          "A longer echo train shortens fast spin echo scan time, but it also blurs detail and lets fat stay bright even at a long effective TE, which is different from conventional spin echo where fat is dark at long TE.",
+          "Diffusion weighted imaging and the ADC map read oppositely: restricted diffusion, such as acute stroke, is bright on the DWI image but dark on the ADC map. Mixing those two up reverses the clinical read."
         ]
       }
     },
@@ -3423,6 +3434,17 @@
           "The phase matrix drives scan time; the frequency matrix is essentially free.",
           "k-space centre = contrast and signal; periphery = resolution and edges.",
           "Partial Fourier, parallel imaging and centric ordering all manipulate how k-space is filled."
+        ],
+        "worked_example": "<p>You are running a 2D sequence with a TR of 500 ms, a phase matrix of 192, and 1 excitation (NEX). Scan time is TR multiplied by the number of phase encoding steps multiplied by NEX, so 500 ms times 192 times 1 comes out to about 96 seconds. If you drop the phase matrix to 128 and keep TR and NEX the same, scan time falls to about 64 seconds because you are now filling fewer k-space lines. If instead you had reduced the frequency matrix from 256 to 192, scan time would not change at all, since frequency encoding is sampled entirely within a single readout window during each TR. This is exactly why the phase matrix, not the frequency matrix, is the lever technologists pull to cut acquisition time.</p>",
+        "memory_hooks": [
+          "Frequency encoding is essentially free: it all happens inside one readout window per TR. Phase encoding is the expensive one: every step needs its own TR.",
+          "The center of k-space carries signal and contrast, the edges carry resolution and fine detail, so losing central lines hurts contrast and losing peripheral lines hurts sharpness.",
+          "k-space is a map of spatial frequencies, not a map of anatomy. The Fourier transform is what turns that spatial frequency data into the picture you actually read."
+        ],
+        "exam_traps": [
+          "Do not confuse which encoding drives scan time. It is the phase encoding matrix, not the frequency encoding matrix, because phase encoding needs a fresh TR for every step while frequency encoding is captured entirely within a single readout.",
+          "Zero filling, sometimes called a zip, interpolates the image onto a finer display matrix and can look sharper, but it adds no true spatial resolution because no new spatial frequencies were actually acquired.",
+          "Partial Fourier uses k-space's conjugate symmetry to skip roughly half the phase encoding steps, saving time or shortening TE, but it comes at some SNR cost since fewer real lines are averaged into the final image."
         ]
       }
     },
@@ -3439,6 +3461,17 @@
           "The RF transmit coil excites spins; receive (phased-array) coils detect signal.",
           "The Faraday shield blocks external RF (zipper); the 5-gauss line bounds the fringe field.",
           "Higher field raises SNR but also SAR, chemical shift and susceptibility."
+        ],
+        "worked_example": "<p>During a scan the technologist sees a bright, repeating linear band of noise crossing the image that has nothing to do with the patient's anatomy, and traces the cause to the scan room door being left open. The room's copper Faraday shield only blocks stray radiofrequency energy from entering or leaving the room when the enclosure is completely sealed. With the door ajar, ambient radiofrequency signals leak in and beat against the scanner's own frequency, producing the classic zipper artifact. Once the door is closed the shield is intact again and the artifact disappears, which confirms the room shielding, not the scanner hardware, was the cause.</p>",
+        "memory_hooks": [
+          "Superconducting magnets stay at field with liquid helium cooling, because once resistance drops to zero the current keeps circulating without any power input.",
+          "Gradient coils do the spatial encoding and make the loud switching noise. RF coils do the exciting (transmit) and the listening (receive).",
+          "Higher field strength buys more SNR, but it also raises SAR and widens the chemical shift artifact. Nothing about going up in tesla is free."
+        ],
+        "exam_traps": [
+          "Do not confuse the transmit coil's job, exciting spins with the B1 field, with the receive coil's job, detecting the tiny returning signal. Phased array coils are about receive sensitivity and enabling parallel imaging, not about excitation.",
+          "A quench is a sudden, uncontrolled loss of superconductivity that rapidly boils off the helium, not a routine event. It is why the magnet room has an oxygen monitor and a quench pipe vented outside.",
+          "Do not confuse the 5 gauss line, the fringe field safety boundary around the magnet, with the Faraday shield, the room enclosure that blocks external radiofrequency interference. One concerns the static magnetic field, the other concerns RF noise."
         ]
       }
     },
@@ -3535,6 +3568,15 @@
           "Gradient echo uses a smaller flip; the Ernst angle maximises signal for a given TR and T1.",
           "Larger flip leans to T1 weighting; smaller flip leans to proton density and T2*.",
           "Flip angle scales with RF power, so a larger flip raises SAR."
+        ],
+        "worked_example": "<p>You are running a T1-weighted spoiled gradient echo of the brain with a short TR of 8 ms. At a 90 degree flip the longitudinal magnetization barely recovers between pulses, so the signal is weak. Lowering the flip toward the Ernst angle for white matter, roughly 12 to 15 degrees at that TR, restores signal. The Ernst angle is the flip that maximizes steady-state signal for a given TR and T1, where cos(Ernst) equals exp(-TR/T1). A short TR pushes the Ernst angle small, which is why fast gradient echo uses low flip angles.</p>",
+        "memory_hooks": [
+          "Short TR wants a small flip. As TR drops, the Ernst angle drops with it.",
+          "cos of the Ernst angle equals E1, and E1 is exp(-TR over T1)."
+        ],
+        "exam_traps": [
+          "SAR scales with the square of the flip angle and with the square of field strength, so trimming the flip angle is the fastest way to cut SAR.",
+          "The Ernst angle maximizes signal, not contrast. A higher flip can give stronger T1 weighting even though total signal is lower."
         ]
       }
     },
