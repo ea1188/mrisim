@@ -5757,6 +5757,378 @@
         "answer": 0,
         "explain": "The dissection tear lets blood into the wall, forming an intramural hematoma that appears as a bright crescent around a normally dark flowing lumen on fat-saturated T1, imaged before contrast."
       }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "education",
+      "ord": 993,
+      "body": {
+        "title": "MSK MRI protocols: shoulder, knee, hip, wrist, and foot",
+        "html": "<p>The <strong>shoulder</strong> is imaged for rotator cuff tear, bursitis, and arthritis. Position the arm at the side, palm up, in external rotation supported by a sandbag, which gives a cleaner profile of the labrum without the bicipital groove overlapping. The arm should lie parallel to the chest without sagging, and if the patient cannot externally rotate, image in neutral. Coverage runs from above the sternoclavicular joint to below the glenoid. The coronal is angled perpendicular to the glenohumeral joint and the sagittal is parallel to it. The four rotator cuff muscles are <strong>Supraspinatus, Infraspinatus, Teres minor, and Subscapularis</strong> (SITS).</p><p>The <strong>knee</strong> is imaged for pain, ACL or PCL tear, meniscal tear, torn cartilage, arthritis, and internal derangement. Center the laser at the <em>inferior border of the patella</em> (the apex), not the joint center. Coverage runs from the quadriceps femoris attachment above to the patellar tendon and fat pad below. The <strong>hip</strong> is imaged for pain, bursitis, avascular necrosis (AVN), and labral tear. Place the phased-array coil with its top at the iliac crest and the hip joint over a posterior coil element, and locate the hip midway between the ASIS and the greater trochanter. Tie the feet together with toes in and heels apart to hold gentle internal rotation. Axial coverage runs from a few inches above the hip joint to below the lesser trochanter.</p><p>The <strong>wrist</strong> is imaged for triangular fibrocartilage complex (TFCC) tear, carpal fracture, carpal tunnel syndrome, ganglion cyst, and ligament tear. Position with the hand overhead (the superman position) or head-first supine, and cover all the carpal bones from the carpometacarpal joints to the wrist joint. The <strong>foot and ankle</strong> protocols are forefoot or midfoot, ankle or hindfoot, and whole foot, using a foot and ankle coil, feet-first supine. Indications include pain, fracture, ligament tear, Morton neuroma, bone infection, edema, Lisfranc injury, and Achilles tendon tear.</p>",
+        "keypoints": [
+          "Shoulder: arm at the side, palm up in external rotation on a sandbag for a clean labral profile.",
+          "The four rotator cuff muscles are supraspinatus, infraspinatus, teres minor, and subscapularis (SITS).",
+          "Knee laser centers on the inferior border of the patella (the apex), not the joint center.",
+          "Hip coil top sits at the iliac crest; feet are tied for gentle internal rotation.",
+          "Wrist uses the superman position covering all carpals; foot and ankle coil runs feet-first supine."
+        ],
+        "worked_example": "A patient with shoulder pain and suspected rotator cuff tear is positioned with the arm at the side, palm turned up so the shoulder sits in external rotation, and a sandbag holds the position. Because external rotation swings the bicipital groove out of the way, the labrum is profiled cleanly and the supraspinatus tendon is seen along its length. If the patient cannot tolerate external rotation, the arm is left neutral rather than forced. Coverage extends from above the sternoclavicular joint to below the glenoid.",
+        "memory_hooks": [
+          "SITS spells the four rotator cuff muscles: supraspinatus, infraspinatus, teres minor, subscapularis.",
+          "Palm up opens the labrum by turning the biceps groove out of the way.",
+          "Knee laser sits on the point of the patella, its inferior apex."
+        ],
+        "exam_traps": [
+          "The knee laser is centered at the inferior border of the patella (the apex), not the joint center.",
+          "The four rotator cuff muscles are supraspinatus, infraspinatus, teres minor, and subscapularis."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "education",
+      "ord": 994,
+      "body": {
+        "title": "MSK technique: fat suppression, metal reduction, and arthrograms",
+        "html": "<p><strong>Fat suppression choice</strong> matters when the field is inhomogeneous. Spectral fat-saturated T2 fails in a distorted field, so use <strong>STIR</strong> instead of fat-saturated T2 when there is metal near the area of interest, when the fat suppression looks inhomogeneous, or when unsuspected metal is causing inhomogeneity. STIR nulls fat by inversion time and is far more uniform in a distorted field.</p><p><strong>Metal reduction</strong> escalates with the amount of metal. A small amount such as a single screw can be handled with a routine metal-reduction protocol, often at <strong>1.5T</strong> because susceptibility artifact is smaller at lower field. A large metal implant such as a joint replacement (hip or knee) needs <strong>a dedicated metal-artifact-reduction sequence (a SEMAC or MAVRIC type)</strong> that corrects through-plane and in-plane distortion. An <em>in and out of phase</em> sequence is added when a bone tumor or marrow replacement is the question.</p><p>An <strong>MR arthrogram</strong> is a two-part procedure. First, contrast is injected directly <em>into the joint</em> (an intra-articular injection), then the joint is imaged. Distending the joint with fluid outlines the cartilage, labrum, and ligaments so tears and degeneration are seen. Arthrograms are performed on the shoulder, elbow, wrist, hip, knee, and ankle, and they help decide whether arthroscopy, surgery, or joint replacement is needed.</p>",
+        "keypoints": [
+          "Switch fat-saturated T2 to STIR when metal or inhomogeneous fat suppression is present.",
+          "STIR nulls fat by inversion time and stays uniform even in a distorted field.",
+          "A single screw needs routine metal reduction, often done at 1.5T for smaller susceptibility.",
+          "A joint replacement needs a dedicated metal-artifact-reduction sequence (a SEMAC or MAVRIC type).",
+          "An MR arthrogram injects contrast directly into the joint, then images the distended joint."
+        ],
+        "worked_example": "A patient with a prior hip screw is scanned and the fat-saturated T2 images show patchy, uneven fat suppression around the metal. The technologist switches to STIR, which nulls fat by inversion time rather than by frequency, so the suppression becomes uniform despite the field distortion. If the same patient had a full hip replacement instead of a single screw, the routine metal-reduction protocol would not be enough, and a dedicated metal-artifact-reduction sequence (a SEMAC or MAVRIC type) would be used to correct the larger distortion.",
+        "memory_hooks": [
+          "Metal or messy fat-sat, reach for STIR every time.",
+          "One screw is routine; a whole joint replacement needs SEMAC or MAVRIC.",
+          "Arthrogram means inject into the joint first, then image."
+        ],
+        "exam_traps": [
+          "Switch from fat-saturated T2 to STIR when metal or inhomogeneous fat suppression is present.",
+          "An MR arthrogram injects contrast directly into the joint (intra-articular), not into a vein."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 995,
+      "body": {
+        "prompt": "Which set of indications best fits a routine shoulder MRI?",
+        "options": [
+          "Rotator cuff tear, bursitis, and arthritis of the shoulder",
+          "Tethered cord, syrinx, and cervical radiculopathy findings",
+          "Morton neuroma, Lisfranc injury, and an Achilles tendon tear",
+          "Carpal tunnel syndrome, a ganglion cyst, and a TFCC tear"
+        ],
+        "answer": 0,
+        "explain": "The shoulder is imaged for rotator cuff tear, bursitis, and arthritis. The other lists belong to spine, foot, and wrist protocols."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 996,
+      "body": {
+        "prompt": "How is the arm positioned for a standard shoulder MRI, and why?",
+        "options": [
+          "Palm up in external rotation, to profile the labrum cleanly",
+          "Palm down in internal rotation, to open the acromial arch",
+          "Elbow flexed across the chest, to relax the deltoid muscle",
+          "Arm raised overhead, to stretch the supraspinatus tendon"
+        ],
+        "answer": 0,
+        "explain": "The arm lies at the side, palm up in external rotation on a sandbag. External rotation swings the bicipital groove out of the way, giving a cleaner profile of the labrum."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 997,
+      "body": {
+        "prompt": "What is the standard superior to inferior coverage for a shoulder MRI?",
+        "options": [
+          "From above the sternoclavicular joint to below the glenoid",
+          "From the mid clavicle down to the mid shaft of the humerus",
+          "From the top of the acromion down to the deltoid insertion",
+          "From the cervical spine down to the level of the axillary fold"
+        ],
+        "answer": 0,
+        "explain": "Shoulder coverage runs from above the sternoclavicular joint to below the glenoid so the whole glenohumeral joint and cuff are included."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 998,
+      "body": {
+        "prompt": "Which four muscles make up the rotator cuff?",
+        "options": [
+          "Supraspinatus, infraspinatus, teres minor, and subscapularis",
+          "Supraspinatus, teres major, deltoid, and the coracobrachialis",
+          "Infraspinatus, teres major, pectoralis minor, and subscapularis",
+          "Deltoid, biceps brachii, teres minor, and the latissimus dorsi"
+        ],
+        "answer": 0,
+        "explain": "The rotator cuff is the SITS group: supraspinatus, infraspinatus, teres minor, and subscapularis. Teres major and deltoid are not part of the cuff."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 999,
+      "body": {
+        "prompt": "Where is the laser centered for a routine knee MRI?",
+        "options": [
+          "At the inferior border of the patella, which is the apex",
+          "At the center of the joint line between the femur and tibia",
+          "At the superior pole of the patella near the quadriceps",
+          "At the tibial tuberosity where the patellar tendon inserts"
+        ],
+        "answer": 0,
+        "explain": "The knee laser is centered at the inferior border of the patella, the apex, not the joint center, so coverage captures from the quadriceps attachment to the fat pad."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1000,
+      "body": {
+        "prompt": "Which indications are typical reasons to order a knee MRI?",
+        "options": [
+          "ACL or PCL tear, meniscal tear, and internal derangement",
+          "TFCC tear, carpal fracture, and carpal tunnel syndrome pain",
+          "Rotator cuff tear, subacromial bursitis, and biceps groove pain",
+          "Labral tear, avascular necrosis, and trochanteric bursitis pain"
+        ],
+        "answer": 0,
+        "explain": "The knee is imaged for pain, ACL or PCL tear, meniscal tear, torn cartilage, arthritis, and internal derangement. The other lists are wrist, shoulder, and hip indications."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1001,
+      "body": {
+        "prompt": "How is the hip coil placed and the leg held for a hip MRI?",
+        "options": [
+          "Coil top at the iliac crest, feet tied for internal rotation",
+          "Coil top at the greater trochanter, feet left free in neutral",
+          "Coil centered on the knee, feet tied for external rotation",
+          "Coil low over the thigh, feet crossed to abduct the joint"
+        ],
+        "answer": 0,
+        "explain": "The phased-array coil top sits at the iliac crest with the joint over a posterior element, and the feet are tied with toes in and heels apart to hold gentle internal rotation."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1002,
+      "body": {
+        "prompt": "What is the usual axial coverage range for a hip MRI?",
+        "options": [
+          "From a few inches above the joint to below the lesser trochanter",
+          "From the iliac crest down only to the top of the femoral head",
+          "From the mid femoral shaft up only to the acetabular roof",
+          "From the sacroiliac joints down to the mid femoral condyles"
+        ],
+        "answer": 0,
+        "explain": "Axial hip coverage runs from a few inches above the hip joint to below the lesser trochanter so the joint and proximal femur are fully included."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1003,
+      "body": {
+        "prompt": "What is the superman position used for in a wrist MRI?",
+        "options": [
+          "Hand overhead to cover the carpals from the CMC to the wrist",
+          "Hand at the side to cover the elbow and the distal humerus",
+          "Hand on the abdomen to shorten the distance to the coil",
+          "Hand behind the head to extend the fingers away from bone"
+        ],
+        "answer": 0,
+        "explain": "In the superman position the hand is placed overhead (or head-first supine), and coverage includes all the carpal bones from the carpometacarpal joints to the wrist joint."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 1004,
+      "body": {
+        "prompt": "How is a foot and ankle study set up, and what does it evaluate?",
+        "options": [
+          "Feet-first supine in a foot coil for Morton neuroma or Lisfranc injury",
+          "Head-first supine in a knee coil for a meniscal tear or ACL injury",
+          "Feet-first prone in a body coil for a labral tear or AVN of the hip",
+          "Head-first prone in a wrist coil for a TFCC tear or carpal fracture"
+        ],
+        "answer": 0,
+        "explain": "Foot and ankle protocols use a dedicated foot and ankle coil, feet-first supine, for indications such as Morton neuroma, Lisfranc injury, fracture, ligament tear, and Achilles tendon tear."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1005,
+      "body": {
+        "prompt": "When metal is near the area of interest, fat-saturated T2 should be replaced by what?",
+        "options": [
+          "STIR, which nulls fat by inversion time and stays uniform",
+          "A spectral fat-sat T1 tuned with a very short echo time set",
+          "A gradient echo T2 star, which tolerates the distortion better",
+          "A plain T2 with no fat control and a long echo time selected"
+        ],
+        "answer": 0,
+        "explain": "Spectral fat saturation fails when metal distorts the field. STIR nulls fat by inversion time rather than frequency, so it stays uniform near metal."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1006,
+      "body": {
+        "prompt": "The fat suppression on a fat-saturated T2 looks patchy and uneven. What is the fix?",
+        "options": [
+          "Switch to STIR for more uniform suppression across the field",
+          "Raise the flip angle on the same fat-saturated T2 sequence",
+          "Add a second spectral fat-sat pulse before each readout train",
+          "Lengthen the repetition time and keep the spectral fat-sat on"
+        ],
+        "answer": 0,
+        "explain": "Inhomogeneous fat suppression signals a distorted or non-uniform field. STIR uses an inversion time to null fat and gives far more uniform suppression than spectral fat-sat."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1007,
+      "body": {
+        "prompt": "A patient has a single small screw in the area of interest. What protocol fits?",
+        "options": [
+          "A routine metal-reduction protocol, often performed at 1.5T",
+          "A dedicated metal-artifact-reduction sequence for large implants",
+          "A standard gradient echo protocol with no metal adjustments made",
+          "An intra-articular arthrogram before any metal-reduction imaging"
+        ],
+        "answer": 0,
+        "explain": "A small amount of metal such as a single screw is handled with a routine metal-reduction protocol. A dedicated sequence is reserved for large implants."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1008,
+      "body": {
+        "prompt": "A patient has a full joint replacement. Which approach is needed?",
+        "options": [
+          "A dedicated metal-artifact-reduction sequence, a SEMAC or MAVRIC type",
+          "A routine metal-reduction protocol run at a slightly higher field",
+          "A plain fat-saturated T2 with the receive bandwidth turned down",
+          "A gradient echo sequence chosen to bloom and mark the implant"
+        ],
+        "answer": 0,
+        "explain": "A large implant such as a hip or knee replacement needs a dedicated metal-artifact-reduction sequence (a SEMAC or MAVRIC type) that corrects through-plane and in-plane distortion."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1009,
+      "body": {
+        "prompt": "Why is a metal-reduction study often performed at 1.5T rather than a higher field?",
+        "options": [
+          "Susceptibility artifact is smaller at the lower field strength",
+          "Signal to noise is always far higher at the lower field strength",
+          "Fat and water separate more widely at the lower field strength",
+          "Scan times are much shorter at the lower field strength setting"
+        ],
+        "answer": 0,
+        "explain": "Susceptibility artifact scales with field strength, so it is smaller at 1.5T. That is why metal-reduction imaging is often done at the lower field."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1010,
+      "body": {
+        "prompt": "When a bone tumor or marrow replacement is the question, which sequence is added?",
+        "options": [
+          "An in and out of phase sequence to characterize the marrow",
+          "A time of flight angiogram to map the feeding tumor vessels",
+          "A diffusion tensor sequence to trace the marrow fiber tracts",
+          "A phase contrast flow study to quantify the marrow perfusion"
+        ],
+        "answer": 0,
+        "explain": "An in and out of phase sequence is added when a bone tumor or marrow replacement is the question, because it helps show replacement of normal marrow fat."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1011,
+      "body": {
+        "prompt": "In an MR arthrogram, where is the contrast placed?",
+        "options": [
+          "Directly into the joint, which is an intra-articular injection",
+          "Into a peripheral vein, which is a standard venous injection",
+          "Into the joint space by way of the arterial blood supply first",
+          "Into the muscle beside the joint, which is an intramuscular route"
+        ],
+        "answer": 0,
+        "explain": "An MR arthrogram injects contrast directly into the joint, an intra-articular injection, not into a vein. The distended joint outlines cartilage, labrum, and ligaments."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1012,
+      "body": {
+        "prompt": "What are the two parts of an MR arthrogram procedure?",
+        "options": [
+          "Inject contrast into the joint first, then image the joint",
+          "Image the joint first, then inject contrast into a vein after",
+          "Inject contrast into a vein first, then aspirate the joint fluid",
+          "Image the joint twice, once before and once after oral contrast"
+        ],
+        "answer": 0,
+        "explain": "An MR arthrogram is a two-part procedure. Contrast is injected directly into the joint first, and then the distended joint is imaged."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1013,
+      "body": {
+        "prompt": "What kind of injuries does an MR arthrogram best demonstrate?",
+        "options": [
+          "Labral, TFCC, or cartilage tears outlined by the joint fluid",
+          "Bony metastases spreading through the vertebral marrow spaces",
+          "Cerebrospinal fluid leaks tracking along the nerve root sleeves",
+          "Muscle strains and deep hematomas within the soft tissue planes"
+        ],
+        "answer": 0,
+        "explain": "Distending the joint with contrast outlines the cartilage, labrum, and ligaments, so labral, TFCC, and cartilage tears and degeneration are clearly demonstrated."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 1014,
+      "body": {
+        "prompt": "How is the coronal plane oriented on a shoulder MRI?",
+        "options": [
+          "Angled perpendicular to the glenohumeral joint for the labrum",
+          "Angled parallel to the glenohumeral joint along the scapula",
+          "Held straight in the true body coronal without any joint angle",
+          "Angled parallel to the acromion to profile the deltoid muscle"
+        ],
+        "answer": 0,
+        "explain": "The shoulder coronal is angled perpendicular to the glenohumeral joint, while the sagittal is angled parallel to it, so the cuff and labrum are seen in profile."
+      }
     }
   ]
 }
