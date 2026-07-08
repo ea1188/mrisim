@@ -34,6 +34,7 @@
   var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
   var COURSE_MASTERY_KEY = "mrisim_course_mastery_v1"; // per-module mastery-check result
   var COURSE_DIAG_KEY = "mrisim_course_diagnostic_v1"; // placement-test snapshot (separate from progress)
+  var COURSE_REVIEW_KEY = "mrisim_course_review_v1"; // spaced-review queue of missed questions
   var DIAG_PER_MODULE = 2;                              // questions sampled per module in the placement test
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
@@ -497,6 +498,7 @@
         [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
         fb.hidden = false; fb.textContent = (correct ? "Correct. " : "Not quite. ") + q.explain;
         bumpScore(topicTitle, correct);
+        recordAnswer(q, correct, false);
       } });
       box.appendChild(b);
     });
@@ -567,6 +569,7 @@
       var right = picks[qi] === item.q.answer;
       if (right) correct += 1;
       bumpScore(mod.title, right);
+      recordAnswer(item.q, right, false);
     });
     var pct = Math.round(100 * correct / questions.length);
     saveMasteryResult(mod.title, pct);
@@ -761,7 +764,11 @@
     clearExamTimer();
     if (EXAM.diagnostic) { submitDiagnostic(); return; }
     var correct = 0;
-    EXAM.questions.forEach(function (item, qi) { if (EXAM.picks[qi] === item.q.answer) correct += 1; });
+    EXAM.questions.forEach(function (item, qi) {
+      var right = EXAM.picks[qi] === item.q.answer;
+      if (right) correct += 1;
+      recordAnswer(item.q, right, false);
+    });
     var total = EXAM.questions.length, pct = Math.round(100 * correct / total);
     saveExamBest(correct, total, pct);
     renderExamReview(correct, total, pct);
@@ -813,6 +820,27 @@
     } catch (e) { /* storage off */ }
   }
 
+  // --- spaced review of missed items -------------------------------------- //
+  function loadReview() { try { return JSON.parse(localStorage.getItem(COURSE_REVIEW_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function saveReview(map) { try { localStorage.setItem(COURSE_REVIEW_KEY, JSON.stringify(map)); } catch (e) { /* storage off */ } }
+
+  // Record a graded answer into the spaced-review queue, keyed by the (unique) question prompt.
+  // A miss enqueues/resets the question (due now). A correct answer during a review session
+  // advances or graduates it. A correct answer anywhere else leaves the queue unchanged.
+  function recordAnswer(q, correct, inReview) {
+    if (!q || !q.prompt) return;
+    var map = loadReview(), now = Date.now(), p = q.prompt;
+    if (!correct) {
+      map[p] = CourseLogic.reviewOnMiss(map[p], now);
+    } else if (inReview) {
+      var e = CourseLogic.reviewOnCorrect(map[p], now);
+      if (e) map[p] = e; else delete map[p];
+    } else {
+      return;
+    }
+    saveReview(map);
+  }
+
   // --- diagnostic placement test ------------------------------------------ //
   // Samples DIAG_PER_MODULE questions from each module (tagged with its title), runs them with no
   // feedback until submit (reusing the exam machine), scores per module, and stores a snapshot that
@@ -841,7 +869,9 @@
       var t = EXAM.modTitles[qi];
       var rec = per[t] || (per[t] = { asked: 0, right: 0 });
       rec.asked += 1;
-      if (EXAM.picks[qi] === item.q.answer) { rec.right += 1; correct += 1; }
+      var right = EXAM.picks[qi] === item.q.answer;
+      if (right) { rec.right += 1; correct += 1; }
+      recordAnswer(item.q, right, false);
     });
     var titles = CTX.curriculum.map(function (m) { return m.title; });
     var order = CourseLogic.rankModulesByDiagnostic(per, titles);
