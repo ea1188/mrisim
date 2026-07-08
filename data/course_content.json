@@ -7836,6 +7836,315 @@
         "answer": 0,
         "explain": "Gradient echo forms its echo with gradient reversal alone, which cannot undo dephasing from static field errors, so the signal decays with T2*. Spin echo's 180 pulse refocuses exactly those losses."
       }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "education",
+      "ord": 1114,
+      "body": {
+        "title": "Spatial encoding: slice, phase, and frequency gradients into k-space",
+        "html": "<p>An MR signal on its own carries no address. Three gradients, switched on at three different moments of each TR, stamp position onto the signal. The <strong>slice-select gradient</strong> runs at the same time as the RF pulse. It makes the Larmor frequency vary along its axis, so only the plane of tissue whose local frequency matches the RF pulse gets excited. Slice thickness follows from two things: the RF bandwidth and the steepness of the gradient. A steeper gradient, or a narrower bandwidth, gives a thinner slice.</p><p>After excitation, the <strong>phase-encode gradient</strong> switches on briefly. Spins at different positions along its axis precess at different rates while it is on, and when it switches off they keep a <em>position-dependent phase shift</em>. The gradient is stepped to a different amplitude every TR, and each step writes one line of the raw data matrix. Finally the <strong>frequency-encode (readout) gradient</strong> runs during the echo itself, so that signal frequency encodes position along the third axis while the echo is digitised.</p><p>That raw data matrix is <strong>k-space</strong>. It is a map of spatial frequencies, not a picture. The central lines hold the low spatial frequencies: bulk signal, overall brightness, and contrast. The peripheral lines hold the high spatial frequencies: edges and fine detail. Every point in k-space contains signal from the entire slice.</p><p>Once every planned line is filled, a <strong>two-dimensional Fourier transform</strong> converts k-space into the image, turning spatial frequencies into pixel intensities. Excite, encode, sample, repeat per TR, transform: that is how every 2D image is built.</p>",
+        "keypoints": [
+          "The slice-select gradient is on during the RF pulse; only spins whose local Larmor frequency matches the RF are excited.",
+          "Slice thickness is set by the RF bandwidth and the steepness of the slice-select gradient.",
+          "The phase-encode gradient is a brief pulse after excitation, stepped to a new amplitude every TR; each step fills one line of k-space.",
+          "The frequency-encode (readout) gradient is on during the echo, so frequency encodes position while the echo is sampled.",
+          "k-space center holds contrast and bulk signal (low spatial frequencies); the periphery holds edges and fine detail; a 2D Fourier transform reconstructs the image."
+        ],
+        "worked_example": "You run an axial brain series with 192 phase-encode steps. Each TR, the z gradient switches on with the RF pulse to excite the chosen slice, a phase-encode blip along right-left takes a new amplitude, and the readout gradient along anterior-posterior runs while the echo is sampled. After 192 TRs the 192 lines of k-space are full and the scanner Fourier transforms them into the image. The patient coughs halfway through, right when the central lines are being acquired. Because those lines carry the low spatial frequencies for the whole slice, the result is not a smudge at one spot but degraded contrast and ghosting across the entire image.",
+        "memory_hooks": [
+          "Slice with the RF, phase in between, frequency while you listen.",
+          "Center of k-space = contrast; corners = crisp edges.",
+          "One TR, one phase step, one line."
+        ],
+        "exam_traps": [
+          "The slice-select gradient is on during the RF pulse and the readout gradient is on during the echo; swapping the two is the classic error.",
+          "k-space center = contrast and signal, periphery = fine detail. Exams love to reverse them.",
+          "k-space is raw spatial-frequency data, not a scrambled photo: no single k-space point maps to a single pixel."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "education",
+      "ord": 1115,
+      "body": {
+        "title": "The image-formation pipeline: excite, encode, sample, reconstruct",
+        "html": "<p>Every MR image, whatever the sequence name on the console, is built by the same loop. <strong>Excite</strong> the chosen slice with an RF pulse while the slice-select gradient is on. <strong>Encode</strong> the signal spatially: a phase-encode step, then frequency encoding during the readout. <strong>Sample</strong> the echo into one line of k-space. Repeat every TR with a new phase-encode amplitude until k-space is full, then <strong>reconstruct</strong> with the Fourier transform. Sequences differ mainly in how they form the echo that gets sampled.</p><p>A <strong>gradient echo</strong> sequence forms its echo by reversing the polarity of the readout gradient: the first lobe dephases the spins, the flipped lobe rephases them. There is no 180 degree pulse, so the signal decays with T2*, and the excitation typically uses a flip angle under 90 degrees, which leaves longitudinal magnetization in reserve and allows a very short TR.</p><p>A <strong>spin echo</strong> sequence forms its echo with a 180 degree refocusing pulse applied after the excitation. <strong>Inversion recovery</strong> adds a different 180: a <em>preparatory</em> inversion pulse placed before the excitation. After the inversion, the sequence waits a chosen time so that one tissue's longitudinal magnetization is crossing zero at the moment of excitation, and that tissue gives no signal. STIR uses this to null fat, FLAIR to null CSF.</p><p>Keep the two 180s apart: the inversion 180 prepares the magnetization before excitation, while the spin-echo 180 refocuses it afterward. And whatever the echo mechanism, they all end the same way: fill k-space, then reconstruct with a Fourier transform. A conventional scan fills one phase-encode line per TR; a fast or turbo scan fills several lines per TR (an echo train), which is how it saves time.</p>",
+        "keypoints": [
+          "Pipeline: excite the slice, phase then frequency encode, sample the echo into k-space, repeat per TR, Fourier transform to reconstruct.",
+          "Gradient echo forms its echo by reversing the readout gradient: no 180 degree pulse, T2* decay, flip angle usually under 90 degrees.",
+          "Spin echo forms its echo with a 180 degree refocusing pulse applied after the excitation.",
+          "Inversion recovery adds a preparatory 180 degree inversion before the excitation; the nulled tissue is excited at its zero crossing (STIR nulls fat, FLAIR nulls CSF).",
+          "Whatever the echo mechanism, the filled k-space is reconstructed with a Fourier transform; a conventional scan fills one phase-encode line per TR, a fast or turbo scan several (an echo train)."
+        ],
+        "worked_example": "You start a brain exam with a gradient-echo localizer: no refocusing pulse and a small flip angle let the TR drop to a few milliseconds, so the scout finishes in seconds, though the patient's dental work blooms because nothing refocuses the local field errors. Next comes a spin echo series, where a 180 degree pulse after each excitation forms the echo. Then the FLAIR: now a 180 degree inversion goes in before each excitation, with the wait time chosen so CSF is at its zero crossing and comes out black. Three different echo mechanisms, yet all three fill the same k-space matrix line by line and hand the filled matrix to the Fourier transform.",
+        "memory_hooks": [
+          "GRE flips gradients, SE flips spins, IR flips first.",
+          "Excite, encode, sample, repeat, transform."
+        ],
+        "exam_traps": [
+          "Gradient echo forms its echo by gradient reversal; there is no refocusing pulse in it to remove.",
+          "The inversion 180 comes before the excitation as preparation; the spin-echo 180 comes after it to refocus. Two different pulses, two different jobs.",
+          "One phase-encode line per TR is only the conventional case: a fast or turbo spin echo fills several lines per TR (an echo train), which is how it shortens the scan."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1116,
+      "body": {
+        "prompt": "Which gradient is switched on at the same time as the RF excitation pulse?",
+        "options": [
+          "The slice-select gradient",
+          "The phase-encode gradient",
+          "The frequency-encode gradient",
+          "The rewinder gradient"
+        ],
+        "answer": 0,
+        "explain": "The slice-select gradient runs with the RF pulse so that only one plane of tissue is on resonance. The phase and frequency gradients come later, after the slice is already excited."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1117,
+      "body": {
+        "prompt": "An RF pulse applied while the slice-select gradient is on excites only one slice because:",
+        "options": [
+          "only spins at that location precess at the RF frequency",
+          "only spins at that location align with the main field",
+          "the gradient shields the other slices from the RF energy",
+          "the receive coil is sensitive to that location alone"
+        ],
+        "answer": 0,
+        "explain": "With the gradient on, Larmor frequency varies along the patient, and the RF pulse tips only the spins whose frequency matches its own. Field alignment and coil sensitivity are the same for every slice, so neither can select one."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1118,
+      "body": {
+        "prompt": "With the RF bandwidth unchanged, making the slice-select gradient steeper produces:",
+        "options": [
+          "a thinner slice",
+          "a thicker slice",
+          "a noisier image",
+          "a brighter image"
+        ],
+        "answer": 0,
+        "explain": "A steeper gradient spreads Larmor frequencies over a shorter distance, so the fixed RF bandwidth maps onto a thinner band of tissue. A thicker slice would need a flatter gradient or a wider bandwidth."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1119,
+      "body": {
+        "prompt": "The brief phase-encode gradient pulse leaves spins along its axis with:",
+        "options": [
+          "a position-dependent phase shift",
+          "a position-dependent flip angle",
+          "a position-dependent T1 change",
+          "a position-dependent coil gain"
+        ],
+        "answer": 0,
+        "explain": "While the gradient is on, spins at different positions precess at different rates; when it switches off they keep a phase shift that tags their position. An encoding gradient changes neither flip angle nor T1."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1120,
+      "body": {
+        "prompt": "In a standard 2D acquisition, each TR period fills how much of k-space?",
+        "options": [
+          "One line",
+          "One pixel",
+          "One quadrant",
+          "The whole matrix"
+        ],
+        "answer": 0,
+        "explain": "Each TR acquires one echo under one phase-encode setting, which writes exactly one k-space line. Filling the whole matrix takes as many TRs as there are phase-encode steps."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1121,
+      "body": {
+        "prompt": "A patient moves during the TRs that sample the central lines of k-space. The damage mainly appears in:",
+        "options": [
+          "overall image contrast",
+          "fine edge detail only",
+          "the number of slices",
+          "the receiver bandwidth"
+        ],
+        "answer": 0,
+        "explain": "The central lines carry the low spatial frequencies that set overall contrast and brightness, so corrupting them degrades the whole image. Fine edges live in the periphery and would suffer if motion hit the outer lines instead."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1122,
+      "body": {
+        "prompt": "A single data point in k-space represents:",
+        "options": [
+          "one spatial frequency summed from the whole slice",
+          "one pixel at the same position in the final image",
+          "one slice location along the selection gradient",
+          "one coil element's share of the total signal"
+        ],
+        "answer": 0,
+        "explain": "Every k-space point stores the strength of one spatial frequency contributed by the entire slice, which is why k-space looks nothing like the picture. There is no one-to-one link between a k-space point and an image pixel."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1123,
+      "body": {
+        "prompt": "Within one TR of a 2D sequence, the correct order of gradient events is:",
+        "options": [
+          "slice-select, then phase-encode, then frequency-encode",
+          "phase-encode, then slice-select, then frequency-encode",
+          "frequency-encode, then phase-encode, then slice-select",
+          "phase-encode, then frequency-encode, then slice-select"
+        ],
+        "answer": 0,
+        "explain": "The slice-select gradient runs with the RF pulse, the phase-encode blip follows the excitation, and the frequency-encode gradient runs during the echo. This timing repeats every TR."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1124,
+      "body": {
+        "prompt": "Which order matches the image-formation pipeline for one slice?",
+        "options": [
+          "Excite, encode, sample the echo, reconstruct",
+          "Encode, excite, sample the echo, reconstruct",
+          "Reconstruct, excite, encode, sample the echo",
+          "Sample the echo, encode, excite, reconstruct"
+        ],
+        "answer": 0,
+        "explain": "The slice is excited first, spatial encoding is applied to the excited signal, the echo is sampled into k-space, and reconstruction happens last. There is no signal to encode or sample before the excitation."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1125,
+      "body": {
+        "prompt": "The Fourier transform can reconstruct the image only after:",
+        "options": [
+          "every planned k-space line has been sampled",
+          "the longitudinal magnetization fully recovers",
+          "the transverse magnetization fully decays",
+          "the gradients have returned to their baseline"
+        ],
+        "answer": 0,
+        "explain": "Reconstruction needs the complete set of spatial frequencies, so the transform waits until every planned line is in k-space. Relaxation happens every TR and is not what gates reconstruction."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1126,
+      "body": {
+        "prompt": "During the readout period, the scanner's receiver digitises:",
+        "options": [
+          "the echo, stored as one line of k-space",
+          "the RF excitation pulse as it is applied",
+          "the full image, one pixel at a time",
+          "the gradient waveform for that TR"
+        ],
+        "answer": 0,
+        "explain": "The receiver samples the echo while the readout gradient runs, and those samples become one k-space line. The scanner never digitises the image directly; the image exists only after the Fourier transform."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1127,
+      "body": {
+        "prompt": "A gradient-echo sequence forms its echo by:",
+        "options": [
+          "reversing the polarity of the readout gradient",
+          "applying a second RF pulse at half the TE",
+          "waiting for T1 recovery to rebuild the signal",
+          "stepping the phase-encode gradient amplitude"
+        ],
+        "answer": 0,
+        "explain": "Gradient echo dephases the spins with one readout lobe and rephases them with the flipped lobe, so no second RF pulse is needed. An RF pulse at half the TE describes spin echo, not gradient echo."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1128,
+      "body": {
+        "prompt": "Compared with the 90 degree excitation of spin echo, gradient-echo sequences typically use:",
+        "options": [
+          "a flip angle below 90 degrees",
+          "a flip angle above 90 degrees",
+          "a pair of 180 degree pulses",
+          "no excitation pulse at all"
+        ],
+        "answer": 0,
+        "explain": "Gradient echo usually excites with less than 90 degrees, which leaves longitudinal magnetization in reserve and allows a very short TR. Larger flip angles or paired 180s belong to other sequence types."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1129,
+      "body": {
+        "prompt": "Which sequence family forms its echo with an RF refocusing pulse rather than a gradient reversal?",
+        "options": [
+          "Spin echo",
+          "Gradient echo",
+          "Spoiled gradient echo",
+          "Balanced gradient echo"
+        ],
+        "answer": 0,
+        "explain": "Spin echo refocuses the signal with a 180 degree RF pulse. All the gradient-echo variants listed form their echoes by reversing the readout gradient instead."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1130,
+      "body": {
+        "prompt": "In inversion recovery, the 180 degree pulse placed before the excitation serves to:",
+        "options": [
+          "invert magnetization so a chosen tissue can be nulled",
+          "refocus dephasing so the echo forms exactly at TE",
+          "double the transverse signal before the readout",
+          "excite two slices at once to halve the scan time"
+        ],
+        "answer": 0,
+        "explain": "The inversion pulse flips magnetization negative before the excitation, and waiting the right time lets one tissue reach zero so it gives no signal. Refocusing at TE is the job of the spin-echo 180, a separate pulse with a different purpose."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1131,
+      "body": {
+        "prompt": "STIR and FLAIR make their target tissue dark by timing the excitation:",
+        "options": [
+          "when the tissue's longitudinal magnetization is zero",
+          "when the tissue's longitudinal recovery is complete",
+          "when the tissue's transverse magnetization peaks",
+          "when the tissue's resonant frequency is suppressed"
+        ],
+        "answer": 0,
+        "explain": "A tissue excited at the moment its inverted longitudinal magnetization crosses zero has nothing to tip into the transverse plane, so it appears black. If recovery were complete the tissue would be bright, not dark."
+      }
     }
   ]
 }
