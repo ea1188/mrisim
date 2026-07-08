@@ -32,8 +32,11 @@
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
   var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
   var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
+  var COURSE_MASTERY_KEY = "mrisim_course_mastery_v1"; // per-module mastery-check result
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
+  var CourseLogic = window.CourseLogic;
+  var PASS_PCT = CourseLogic.PASS_PCT, CHECK_N = CourseLogic.CHECK_N, MIN_POOL = CourseLogic.MIN_POOL;
 
   // Attach the signed-in user's id (and email) to the Payment Link so the webhook
   // can map the payment back to this account.
@@ -135,8 +138,7 @@
     var main = h("div", { class: "main" });
     CTX = { curriculum: curriculum, byTitle: lessonsByTitle, byTopic: premiumByTopic,
       rail: rail, main: main, mod: curriculum[0],
-      expanded: new Set([curriculum[0].title]),  // which modules are expanded in the TOC
-      _obs: null };                              // IntersectionObserver marking sections read
+      expanded: new Set([curriculum[0].title]) };  // which modules are expanded in the TOC
 
     buildRail();
     wrap.appendChild(rail); wrap.appendChild(main);
@@ -157,33 +159,33 @@
       });
     });
     mod.lessons.forEach(function (t) { subs.push({ type: "lesson", id: t, label: t, anchor: "lesson-" + slug(t) }); });
-    var hasQuiz = cfg.premium.some(function (key) { return (byTopic[key] || []).some(function (it) { return it.kind === "quiz"; }); });
-    if (hasQuiz) subs.push({ type: "read", id: "q:" + mod.title, label: "Test yourself", anchor: "quiz-" + slug(mod.title) });
+    if (hasMastery(mod)) subs.push({ type: "mastery", id: "m:" + mod.title, modTitle: mod.title, label: "Mastery check", anchor: "mastery-" + slug(mod.title) });
     return subs;
   }
   // Complete = the lesson is done, or (for education/questions) the section has been read.
-  function isSubDone(s, done, read) { return s.type === "lesson" ? !!done[s.id] : !!read[s.id]; }
+  function isSubDone(s, done, read, mastery) {
+    if (s.type === "lesson") return !!done[s.id];
+    if (s.type === "mastery") { var r = mastery && mastery[s.modTitle]; return !!(r && r.passed); }
+    return !!read[s.id];
+  }
 
   function loadQuiz() { try { return JSON.parse(localStorage.getItem(COURSE_QUIZ_KEY) || "{}"); } catch (e) { return {}; } }
-  var STATUS_LABEL = { "not-started": "Not started", "progress": "In progress", "review": "Needs review", "solid": "Solid" };
+  var STATUS_LABEL = { "not-started": "Not started", "progress": "In progress", "review": "Needs review", "mastered": "Mastered" };
 
   // Exam readiness from local progress: per module (reads + quiz accuracy) and overall
   // (reads 45% + quiz accuracy 40% + best mock exam 15%). Drives the overview dashboard
   // and the "study next" nudge. Pure read of localStorage — nothing new stored.
   function computeReadiness() {
-    var done = loadDone(), read = loadRead(), quiz = loadQuiz(), exam = loadExamBest();
+    var done = loadDone(), read = loadRead(), quiz = loadQuiz(), exam = loadExamBest(), mastery = loadMastery();
     var rSum = 0, rTot = 0, qRight = 0, qSeen = 0;
     var modules = CTX.curriculum.map(function (mod) {
       var subs = moduleSubsections(mod);
-      var c = subs.filter(function (s) { return isSubDone(s, done, read); }).length;
+      var c = subs.filter(function (s) { return isSubDone(s, done, read, mastery); }).length;
       var q = quiz[mod.title] || { seen: 0, right: 0 };
       var acc = q.seen ? q.right / q.seen : null;
+      var mr = mastery[mod.title] || { passed: false, attempts: 0 };
       rSum += c; rTot += subs.length; qRight += q.right; qSeen += q.seen;
-      var status;
-      if (c === 0 && !q.seen) status = "not-started";
-      else if (q.seen >= 3 && acc != null && acc < 0.7) status = "review";              // read but missing questions
-      else if (subs.length && c === subs.length && acc != null && acc >= 0.7) status = "solid";
-      else status = "progress";
+      var status = CourseLogic.deriveModuleStatus(c, subs.length, q.seen, mr.attempts, mr.passed);
       return { mod: mod, subs: subs, c: c, total: subs.length, acc: acc, status: status };
     });
     var readPct = rTot ? rSum / rTot : 0, quizAcc = qSeen ? qRight / qSeen : 0;
@@ -191,7 +193,7 @@
     var overall = Math.round(100 * (0.45 * readPct + 0.40 * quizAcc + 0.15 * examPct));
     var band = overall >= 80 ? "Exam-ready" : overall >= 40 ? "Building" : "Getting started";
     var next = null;
-    for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "solid") { next = modules[i]; break; } }
+    for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "mastered") { next = modules[i]; break; } }
     return { modules: modules, overall: overall, band: band, next: next, exam: exam,
       quizAcc: Math.round(100 * quizAcc), readPct: Math.round(100 * readPct) };
   }
@@ -231,7 +233,7 @@
           : r.next.c ? "keep going" : "not started yet" }),
       ]));
     } else {
-      main.appendChild(h("p", { class: "lede", text: "Every module is solid — run a full practice exam to confirm you're ready." }));
+      main.appendChild(h("p", { class: "lede", text: "Every module is mastered. Run a full practice exam to confirm you're ready." }));
     }
     main.appendChild(h("button", { class: "btn ghost-cta", type: "button", onclick: openExam, text: "Take a practice exam" }));
     main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
@@ -265,11 +267,11 @@
   // (Re)build the collapsible table of contents: each module is a header that expands to its
   // subsections, each with a checkbox that ticks when its lesson is done or its section is read.
   function buildRail() {
-    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead();
+    var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead(), mastery = loadMastery();
     var total = 0, complete = 0;
     var perMod = curriculum.map(function (mod) {
       var subs = moduleSubsections(mod);
-      var c = subs.filter(function (s) { return isSubDone(s, done, read); }).length;
+      var c = subs.filter(function (s) { return isSubDone(s, done, read, mastery); }).length;
       total += subs.length; complete += c;
       return { mod: mod, subs: subs, c: c };
     });
@@ -290,7 +292,7 @@
       var expanded = CTX.expanded.has(mod.title);
       var subsWrap = h("div", { class: "mod-subs", hidden: !expanded });
       subs.forEach(function (s) {
-        var d = isSubDone(s, done, read);
+        var d = isSubDone(s, done, read, mastery);
         subsWrap.appendChild(h("button", { class: "sub" + (d ? " done" : ""), type: "button",
           onclick: function () { gotoSub(mod, s); } }, [
           h("span", { class: "box" + (d ? " on" : ""), text: d ? "✓" : "" }),
@@ -326,23 +328,6 @@
     }, 30);
   }
 
-  // Tick education/question sections off once they scroll into view (checks them in the rail).
-  function setupReadObserver(main) {
-    if (CTX._obs) { CTX._obs.disconnect(); CTX._obs = null; }
-    if (typeof IntersectionObserver !== "function") return;
-    var obs = new IntersectionObserver(function (entries) {
-      var changed = false;
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        var id = e.target.getAttribute("data-subid");
-        if (id && !loadRead()[id]) { markRead(id); obs.unobserve(e.target); changed = true; }
-      });
-      if (changed) buildRail();
-    }, { threshold: 0.2 });
-    CTX._obs = obs;
-    [].forEach.call(main.querySelectorAll("[data-subid]"), function (el) { obs.observe(el); });
-  }
-
   // Re-sync the whole view with localStorage progress (after a lesson overlay closes).
   function refresh() {
     if (!CTX) return;
@@ -365,15 +350,29 @@
       (premiumByTopic[key] || []).forEach(function (it) { if (it.kind === "education") edu.push(it.body); });
     });
     if (edu.length) {
+      var readState = loadRead();
       var esec = h("div", { class: "sec" }, [h("h3", { text: "Course material" })]);
       edu.forEach(function (b) {
-        var card = h("div", { class: "edu", id: "edu-" + slug(b.title), "data-subid": "e:" + b.title }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
+        var rid = "e:" + b.title, isRead = !!readState[rid];
+        var card = h("div", { class: "edu" + (isRead ? " read" : ""), id: "edu-" + slug(b.title), "data-subid": rid }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
         if (b.keypoints && b.keypoints.length) {
           var kp = h("div", { class: "keypoints" }, [h("b", { text: "Key points" })]);
           var ul = h("ul");
           b.keypoints.forEach(function (p) { ul.appendChild(h("li", { text: p })); });
           kp.appendChild(ul); card.appendChild(kp);
         }
+        var foot = h("div", { class: "edu-foot" });
+        if (isRead) {
+          foot.appendChild(h("span", { class: "edu-read-tag", text: "✓ Read" }));
+        } else {
+          foot.appendChild(h("button", { class: "mark-read", type: "button", text: "Mark as read", onclick: function () {
+            markRead(rid);
+            card.classList.add("read");
+            clear(foot); foot.appendChild(h("span", { class: "edu-read-tag", text: "✓ Read" }));
+            buildRail();
+          } }));
+        }
+        card.appendChild(foot);
         esec.appendChild(card);
       });
       main.appendChild(esec);
@@ -418,7 +417,7 @@
       ]);
       main.appendChild(link);
     }
-    setupReadObserver(main);
+    if (hasMastery(mod)) main.appendChild(masterySection(mod));
     window.scrollTo(0, 0);
   }
 
@@ -451,6 +450,102 @@
     return box;
   }
 
+  // --- end-of-module mastery check ---------------------------------------- //
+  // N questions from the module pool, no feedback until submit, >= PASS_PCT passes.
+  // Reuses the exam shuffle; every answer bumps the dashboard quiz score.
+  function masterySection(mod) {
+    var sec = h("div", { class: "sec mchk", id: "mastery-" + slug(mod.title), "data-subid": "m:" + mod.title },
+      [h("h3", { text: "Mastery check" })]);
+    var body = h("div", { class: "mchk-body" });
+    sec.appendChild(body);
+    renderMasteryIntro(mod, body);
+    return sec;
+  }
+  function renderMasteryIntro(mod, body) {
+    clear(body);
+    var pool = modulePool(mod), n = Math.min(CHECK_N, pool.length);
+    var m = loadMastery()[mod.title];
+    if (m && m.passed) {
+      body.appendChild(h("p", { class: "mchk-status pass", text: "Mastered · best " + m.bestPct + "%." }));
+    } else if (m && m.attempts) {
+      body.appendChild(h("p", { class: "mchk-status fail", text: "Not passed yet · best " + m.bestPct + "%. You need " + PASS_PCT + "%." }));
+    } else {
+      body.appendChild(h("p", { class: "mchk-intro", text: "Answer " + n + " questions from this module with no feedback until you submit. Score " + PASS_PCT + "% or higher to master it." }));
+    }
+    body.appendChild(h("button", { class: "btn", type: "button",
+      text: (m && (m.passed || m.attempts)) ? "Retake the mastery check" : "Take the mastery check · " + n + " questions",
+      onclick: function () { startMastery(mod, body); } }));
+  }
+  function startMastery(mod, body) {
+    var pool = modulePool(mod);
+    var order = shuffleInts(pool.length).slice(0, Math.min(CHECK_N, pool.length));
+    var questions = order.map(function (idx) { var q = pool[idx]; return { q: q, order: shuffleInts(q.options.length) }; });
+    renderMasteryRun(mod, body, questions);
+  }
+  function renderMasteryRun(mod, body, questions) {
+    clear(body);
+    var picks = questions.map(function () { return -1; });
+    questions.forEach(function (item, qi) {
+      var box = h("div", { class: "q mchk-q" }, [
+        h("p", { class: "mq-num", text: "Question " + (qi + 1) + " of " + questions.length }),
+        h("p", { class: "prompt", text: item.q.prompt }),
+      ]);
+      item.order.forEach(function (orig) {
+        var opt = h("button", { class: "opt", type: "button", onclick: function () {
+          picks[qi] = orig;
+          [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.classList.remove("sel"); });
+          opt.classList.add("sel");
+        } }, [document.createTextNode(item.q.options[orig])]);
+        box.appendChild(opt);
+      });
+      body.appendChild(box);
+    });
+    body.appendChild(h("button", { class: "btn", type: "button", text: "Submit mastery check", onclick: function () {
+      var blank = picks.filter(function (p) { return p < 0; }).length;
+      if (blank > 0 && !window.confirm(blank + " unanswered question(s) will be marked wrong. Submit now?")) return;
+      submitMastery(mod, body, questions, picks);
+    } }));
+  }
+  function submitMastery(mod, body, questions, picks) {
+    var correct = 0;
+    questions.forEach(function (item, qi) {
+      var right = picks[qi] === item.q.answer;
+      if (right) correct += 1;
+      bumpScore(mod.title, right);
+    });
+    var pct = Math.round(100 * correct / questions.length);
+    saveMasteryResult(mod.title, pct);
+    renderMasteryResult(mod, body, questions, picks, correct, pct);
+    buildRail();
+  }
+  function renderMasteryResult(mod, body, questions, picks, correct, pct) {
+    clear(body);
+    var passed = pct >= PASS_PCT;
+    body.appendChild(h("div", { class: "mchk-score " + (passed ? "pass" : "fail") }, [
+      h("div", { class: "ms-pct", text: pct + "%" }),
+      h("div", { class: "ms-line", text: correct + " of " + questions.length + (passed ? " · mastered" : " · need " + PASS_PCT + "%") }),
+    ]));
+    var missed = [];
+    questions.forEach(function (item, qi) { if (picks[qi] !== item.q.answer) missed.push({ item: item, pick: picks[qi] }); });
+    if (missed.length) {
+      body.appendChild(h("h4", { class: "mchk-rev-h", text: "Review these" }));
+      missed.forEach(function (mm) {
+        var item = mm.item;
+        var box = h("div", { class: "q reviewed miss" }, [h("p", { class: "prompt", text: item.q.prompt })]);
+        item.order.forEach(function (orig) {
+          var cls = "opt"; if (orig === item.q.answer) cls += " correct"; else if (orig === mm.pick) cls += " wrong";
+          box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
+        });
+        box.appendChild(h("div", { class: "fb", text: item.q.explain }));
+        body.appendChild(box);
+      });
+    }
+    var actions = h("div", { class: "mchk-actions" });
+    if (!passed) actions.appendChild(h("button", { class: "btn", type: "button", text: "Retry", onclick: function () { startMastery(mod, body); } }));
+    actions.appendChild(h("button", { class: "btn ghost", type: "button", text: passed ? "Done" : "Back to module", onclick: function () { renderMasteryIntro(mod, body); } }));
+    body.appendChild(actions);
+  }
+
   // --- practice exam ------------------------------------------------------ //
   // A registry-style run over the WHOLE premium question bank: pick a length, answer
   // with no feedback, then submit for a score + per-question review. Best score is
@@ -467,6 +562,16 @@
     });
     return pool;
   }
+  // Premium quiz bodies for one module (its TOPIC_CFG premium keys) — the mastery-check pool.
+  function modulePool(mod) {
+    var cfg = TOPIC_CFG[mod.title] || { premium: [], quiz: [] };
+    var pool = [];
+    cfg.premium.forEach(function (key) {
+      (CTX.byTopic[key] || []).forEach(function (it) { if (it.kind === "quiz") pool.push(it.body); });
+    });
+    return pool;
+  }
+  function hasMastery(mod) { return modulePool(mod).length >= MIN_POOL; }
   function clearExamTimer() { if (EXAM && EXAM.timer) { clearInterval(EXAM.timer); EXAM.timer = null; } }
   function stopExam() { clearExamTimer(); EXAM = null; }
   function fmtTime(s) { var m = Math.floor(s / 60), ss = s % 60; return m + ":" + (ss < 10 ? "0" : "") + ss; }
@@ -657,6 +762,18 @@
   }
   function loadRead() { try { return JSON.parse(localStorage.getItem(COURSE_READ_KEY) || "{}") || {}; } catch (e) { return {}; } }
   function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); } catch (e) { /* storage off */ } }
+  function loadMastery() { try { return JSON.parse(localStorage.getItem(COURSE_MASTERY_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function saveMasteryResult(title, pct) {
+    try {
+      var m = loadMastery(), r = m[title] || { passed: false, bestPct: 0, attempts: 0 };
+      r.attempts += 1;
+      if (pct > r.bestPct) r.bestPct = pct;
+      if (pct >= PASS_PCT) r.passed = true;
+      r.ts = Date.now();
+      m[title] = r; localStorage.setItem(COURSE_MASTERY_KEY, JSON.stringify(m));
+      return r;
+    } catch (e) { return { passed: pct >= PASS_PCT, bestPct: pct, attempts: 1 }; }
+  }
   // Mark a lesson complete in the shared curriculum list (same array the simulator writes).
   function markDone(title) {
     try {

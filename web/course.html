@@ -93,6 +93,12 @@
     .keypoints { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
     .keypoints b { color: var(--muted); font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; display: block; margin-bottom: 7px; }
     .keypoints li { color: #c4cad2; font-size: 13px; margin: 3px 0 3px 18px; }
+    .edu-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .edu.read { border-color: #2a4a37; }
+    .edu .edu-read-tag { color: var(--ok); font-size: 12px; font-family: var(--mono); letter-spacing: .04em; }
+    .edu .mark-read { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--accent); font: inherit;
+      font-size: 12.5px; padding: 6px 12px; border-radius: 2px; cursor: pointer; }
+    .edu .mark-read:hover { border-color: var(--accent-deep); }
     .lcard { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line);
       border-radius: 2px; padding: 13px 15px; margin-bottom: 8px; transition: border-color .15s, background .15s; }
     .lcard:hover { border-color: var(--accent-deep); background: var(--panel-2); }
@@ -109,6 +115,18 @@
     .q .opt.correct { border-color: #3f8f5a; background: #14261a; }
     .q .opt.wrong { border-color: #8f3f3f; background: #261414; }
     .q .fb { font-size: 13px; color: #c4cad2; margin-top: 10px; line-height: 1.55; }
+    .mchk .mchk-intro, .mchk .mchk-status { font-size: 13px; color: #c4cad2; line-height: 1.6; margin: 0 0 12px; }
+    .mchk .mchk-status.pass { color: var(--ok); }
+    .mchk .mchk-status.fail { color: var(--warn); }
+    .mchk .mq-num { font-family: var(--mono); font-size: 11px; color: var(--dim); margin: 0 0 8px; letter-spacing: .04em; }
+    .mchk .opt.sel { border-color: var(--accent-deep); background: var(--panel-2); }
+    .mchk-score { display: flex; align-items: baseline; gap: 12px; padding: 14px 0 8px; }
+    .mchk-score .ms-pct { font-size: 32px; font-weight: 680; line-height: 1; letter-spacing: -1px; }
+    .mchk-score.pass .ms-pct { color: var(--ok); }
+    .mchk-score.fail .ms-pct { color: var(--warn); }
+    .mchk-score .ms-line { font-size: 13px; color: var(--muted); }
+    .mchk-rev-h { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); margin: 18px 0 10px; }
+    .mchk-actions { display: flex; gap: 10px; margin-top: 14px; }
     .quiz-foot { color: var(--dim); font-size: 12.5px; margin-top: 6px; }
     .linkout { color: var(--accent); text-decoration: none; font-size: 13px; }
     .lcard.done { border-color: #2a4a37; }
@@ -242,8 +260,8 @@
     .ready-row.progress .rr-chip { color: var(--accent); border-color: var(--accent-deep); }
     .ready-row.review { border-left-color: var(--warn); }
     .ready-row.review .rr-chip { color: var(--warn); border-color: var(--warn); }
-    .ready-row.solid { border-left-color: var(--ok); }
-    .ready-row.solid .rr-chip { color: var(--ok); border-color: var(--ok); }
+    .ready-row.mastered { border-left-color: var(--ok); }
+    .ready-row.mastered .rr-chip { color: var(--ok); border-color: var(--ok); }
     @media (max-width: 560px) {
       .ready-row { grid-template-columns: 1fr auto; }
       .ready-row .rr-read, .ready-row .rr-quiz { display: none; }
@@ -280,6 +298,7 @@
 
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="course_logic.js"></script>
   <script src="course.js"></script>
 </body>
 </html>
