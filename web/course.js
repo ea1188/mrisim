@@ -558,8 +558,16 @@
   // Premium image questions carry an `img` (a pre-rendered scan in web/img/course-quiz/).
   // Show it above the prompt; text-only questions have no img and are unaffected.
   function addQImg(box, q) {
-    if (q && q.img) {
-      box.insertBefore(h("img", { class: "q-img", src: "img/course-quiz/" + q.img, alt: "Scan for this question" }), box.firstChild);
+    if (!q || !q.img) return;
+    var img = h("img", { class: "q-img", src: "img/course-quiz/" + q.img, alt: "Scan for this question" });
+    box.insertBefore(img, box.firstChild);
+    if (q.credit) {
+      var c = q.credit;
+      var cap = h("p", { class: "q-credit" }, [
+        document.createTextNode("Image: " + c.author + " · " + c.license + " · "),
+        h("a", { class: "linkout", href: c.source_url, target: "_blank", rel: "noopener", text: "source" }),
+      ]);
+      box.insertBefore(cap, img.nextSibling);   // caption directly under the image
     }
   }
 
