@@ -146,8 +146,8 @@ classes render), a panel built from `Promise.all([myAssignments(), <the student'
 the shared `catalog`, passed through `Assignments.studentStatus`. Each row: a done checkbox glyph
 (derived, read-only), the label, due (via `dueLabel`, overdue muted on incomplete rows), and an "open"
 link. Open targets use the existing deep-links:
-  - lesson -> `index.html?lesson=<title>` (app.js `?lesson=` support),
-  - quiz -> `course.html?topic=<id>` (course threading `?topic=`, commit a342f26),
+  - lesson -> `simulator.html?lesson=<title>` (parsed by app.js, which loads on simulator.html),
+  - quiz -> `quiz.html?topic=<id>` (parsed by quiz.js, which loads on quiz.html),
   - module -> `course.html` (opens the course; module context is the whole page).
 The student's own activity: the existing `Accounts.myActivity()` caps at the 50 most recent rows, which
 could drop an older completion and read as "not done" for a very active student. To keep completion
