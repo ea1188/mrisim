@@ -15,6 +15,17 @@
           "STIR nulls fat (TI ≈ 0.69·T1 fat); FLAIR nulls CSF (long TI).",
           "Gradient echo → flip angle, T2* sensitive.",
           "Gadolinium shortens T1 → bright on T1 at BBB breakdown."
+        ],
+        "worked_example": "<p>You pull up a lumbar spine protocol and see a sagittal sequence with TR 500 ms and TE 20 ms alongside a second sagittal sequence with TR 3500 ms and TE 110 ms. The first is T1-weighted: the short TR gives longitudinal magnetization little time to recover between excitations, so tissue with a short T1, like fat and marrow, regrows the most magnetization and looks bright, while CSF, with its long T1, stays dark. The second is T2-weighted: the long TR lets essentially every tissue fully recover before the next pulse, which erases T1 differences, and the long TE then lets transverse magnetization decay, so tissue with a long T2, like CSF and edema, still has signal left and looks bright. A disc herniation with surrounding edema can be easy to miss on the T1 image, where fat dominates the contrast, but it stands out against the dark disc and cord on the T2 image. If a third sequence paired a long TR with a short TE, both T1 and T2 weighting would be minimized and the image would instead track proton density, the raw concentration of mobile hydrogen in each tissue.</p>",
+        "memory_hooks": [
+          "Short TR and short TE favor fat, long TR and long TE favor fluid. Find the CSF: dark is T1, bright is T2.",
+          "TR controls how much T1 shows through and TE controls how much T2 shows through. Cancel both (long TR, short TE) and what's left is proton density.",
+          "A nulling TI is about 0.69 times the T1 of the tissue being suppressed, which is why STIR (short TI, nulls fat) and FLAIR (long TI, nulls CSF) use such different TI values."
+        ],
+        "exam_traps": [
+          "STIR nulls anything with fat's short T1, not just fat. Gadolinium shortens T1 into that same range, so STIR will null enhancement too, which is why STIR is not paired with contrast.",
+          "Long TR alone does not make a sequence T2-weighted. Long TR with a short TE removes T1 weighting but adds proton density weighting instead, not T2.",
+          "A gradient echo image looks T2-like but its dark-blood and susceptibility artifact come from T2 star, which includes local field inhomogeneity on top of true T2 decay, not T2 alone."
         ]
       }
     },
@@ -31,6 +42,17 @@
           "Scan time (2D SE) = TR × phase steps × NEX.",
           "CNR (not raw SNR) determines lesion conspicuity.",
           "Parallel imaging costs SNR by g·√R (g-factor)."
+        ],
+        "worked_example": "<p>You are imaging a small joint with a 3 mm slice, a 256 phase-encode matrix, 1 NEX, and the images are noisy. Thinning the slice to 2 mm to reduce partial-volume blur cuts voxel volume by a third, and since SNR is proportional to voxel volume, SNR falls by roughly that same fraction. To claw some signal back you average twice, going to 2 NEX. Because SNR improves only with the square root of the number of averages, that recovers about the square root of 2, not a full doubling, and it doubles scan time, since 2D spin echo scan time equals TR times phase-encode steps times NEX. If instead you had doubled the phase matrix to 512 steps to gain in-plane resolution, you would halve the phase-encode pixel dimension, taking another SNR hit from the smaller voxel, while also doubling scan time directly, because phase steps multiply straight into the scan-time formula. Resolution, SNR, and time are locked together: buying back one always costs one of the other two.</p>",
+        "memory_hooks": [
+          "SNR scales directly with voxel volume but only with the square root of NEX. Halve the voxel and you lose a full factor of SNR; you need four times the averages to win it back.",
+          "For 2D spin echo, scan time equals TR times phase-encode steps times NEX. Only the phase direction adds time; more frequency-encode samples sharpen resolution for free.",
+          "CNR, not raw SNR, is what makes a lesion visible. A high-SNR image with poor tissue contrast can still hide pathology that a noisier, higher-contrast image shows clearly."
+        ],
+        "exam_traps": [
+          "Increasing the frequency-encode matrix does not add scan time, but increasing the phase-encode matrix does, directly and linearly. Don't confuse the two directions.",
+          "Parallel imaging (SENSE or GRAPPA) buys speed by skipping phase-encode lines, but the SNR cost is the g-factor times the square root of the acceleration R, and the g-factor penalty is worst at the center of the FOV, not spread evenly.",
+          "Raising receiver bandwidth shortens scan time and reduces chemical-shift artifact, but it lowers SNR because a wider bandwidth admits more noise per sample. It is not a free efficiency gain."
         ]
       }
     },
@@ -47,6 +69,17 @@
           "MR-conditional = safe ONLY under the stated conditions.",
           "Quench → helium boil-off → possible oxygen displacement.",
           "Gadolinium + severe renal impairment → NSF risk."
+        ],
+        "worked_example": "<p>A patient in a wheelchair with a small pocketknife left in a jacket pocket is brought toward the scanner room by a family member who was never screened. The knife is drawn toward the bore and becomes a projectile, the classic ferromagnetic missile effect from the always-on static field. The correct workflow is that everyone entering Zone III or IV, staff, patients, and visitors alike, is screened with a metal detector and a verbal/written questionnaire before crossing into Zone IV, and only MR-trained, screened staff supervise anyone in Zone IV. The static field is never off, even during a power outage, so screening has to happen at the zone boundary every single time, not just once at intake.</p>",
+        "memory_hooks": [
+          "Four zones, increasing restriction: Zone I public access, Zone II screening/reception, Zone III controlled (screened persons only), Zone IV the magnet room itself.",
+          "Three fields, three hazards: static field causes the projectile effect (always on), gradients cause peripheral nerve stimulation and loud acoustic noise (dB/dt, switching fast), RF deposits heat measured as SAR and can burn from loops or skin contact.",
+          "MR Safe, MR Conditional, MR Unsafe are the only three labels; MR Conditional is safe only under the specific field strength, SAR, and gradient slew-rate conditions on its label, so you verify the label and the scanner parameters every time, never assume from a similar device."
+        ],
+        "exam_traps": [
+          "A quench vents helium outside the building by design; the danger is a failed or blocked vent path leading to oxygen displacement (asphyxiation risk) and cold burns in the magnet room, so a quench is a planned safety response, not a routine event and not itself the hazard.",
+          "SAR-related burns most often come from looped cables or skin-to-skin contact points completing a conductive loop, not from the implant itself; padding cables away from skin and preventing loops is basic technologist practice on every patient.",
+          "Nephrogenic systemic fibrosis is a gadolinium contrast risk tied to severe renal impairment, not a static-field or RF hazard; it belongs with screening for renal function, not with zone or projectile safety."
         ]
       }
     },
@@ -63,6 +96,17 @@
           "Contrast: check eGFR, consent, know reaction management (epinephrine for anaphylaxis).",
           "Avoid gadolinium in pregnancy unless essential.",
           "Monitor continuously; MR-safe equipment only."
+        ],
+        "worked_example": "<p>A patient scheduled for a contrast-enhanced lumbar spine MRI reports a history of working with a metal grinder years ago and has never had an orbital X-ray to clear metal fragments. Screening also turns up reduced kidney function on a recent lab result. The correct sequence is to hold the contrast-enhanced order and first obtain orbital radiographs to rule out a retained intra-orbital metallic fragment, since an occult fragment near the globe can move or heat during scanning; separately, the technologist checks the patient's eGFR against facility policy for gadolinium and discusses the finding with the ordering provider, because severe renal impairment raises the risk of nephrogenic systemic fibrosis. Screening is not a one-time chart review, it is repeated before this specific scan because implant and health status can change between visits.</p>",
+        "memory_hooks": [
+          "Screen every single time, not just once: implants, devices, pregnancy status, renal function, and metal exposure history can all change visit to visit.",
+          "Metalworking or grinding history plus no prior orbital imaging means get orbital radiographs before scanning, to rule out an intra-orbital metallic fragment.",
+          "For a contrast reaction, start with the basics: stop the injection, get help, support airway-breathing-circulation, and give epinephrine for anaphylaxis; know this sequence cold, it is the first-line response."
+        ],
+        "exam_traps": [
+          "Claustrophobia management (reassurance, call/squeeze device, open or wide-bore magnet, sedation when needed) is a comfort and completion issue, not a contraindication to scanning by itself.",
+          "Gadolinium is avoided in pregnancy unless the information is essential to care and cannot wait, because it crosses the placenta; this is a risk-benefit decision with the ordering provider, not an absolute rule against ever scanning a pregnant patient.",
+          "Only MR-safe or MR-conditional monitoring equipment, matched to the specific scanner conditions, may enter the magnet room for a sedated or unstable patient; standard ward monitors and infusion pumps are not substitutes."
         ]
       }
     },
@@ -335,6 +379,17 @@
           "GRE has no 180, so it is T2* weighted; spoiled gives T1/T2*, balanced SSFP gives bright fluid.",
           "EPI fills k-space in one shot: fast (DWI and fMRI) but prone to geometric distortion.",
           "DWI: restricted diffusion is bright on DWI and dark on the ADC map."
+        ],
+        "worked_example": "<p>A patient has a hip replacement and you must choose between a fast spin echo and a gradient echo proton density sequence to evaluate the bone next to the hardware. Gradient echo has no 180 degree refocusing pulse, so the local field distortion the metal creates around it is never cancelled, and the image shows a large signal void with visible geometric warping near the implant. Fast spin echo runs a whole train of 180 degree pulses, and each one refocuses the dephasing that metal induced since the last pulse, so the artifact shrinks dramatically. The right choice for periprosthetic imaging is fast spin echo, or a dedicated metal artifact reduction sequence built on it, because the refocusing pulse train is what tames the T2 star dephasing that a gradient echo sequence cannot correct.</p>",
+        "memory_hooks": [
+          "Spin echo and fast spin echo both refocus with a 180, so both read out true T2. Gradient echo skips the 180, so it reads out T2 star instead.",
+          "EPI is the one shot sequence: one excitation fills most or all of k-space, which is why it is fast for diffusion and functional imaging but also the most distortion prone sequence.",
+          "Effective TE in fast spin echo is set by whichever echo fills the center of k-space, not by the first echo in the train."
+        ],
+        "exam_traps": [
+          "Do not confuse T2 with T2 star. T2 star is always shorter than T2 because it includes magnet inhomogeneity dephasing that the 180 degree pulse in spin echo and fast spin echo cancels out; gradient echo has no way to cancel it.",
+          "A longer echo train shortens fast spin echo scan time, but it also blurs detail and lets fat stay bright even at a long effective TE, which is different from conventional spin echo where fat is dark at long TE.",
+          "Diffusion weighted imaging and the ADC map read oppositely: restricted diffusion, such as acute stroke, is bright on the DWI image but dark on the ADC map. Mixing those two up reverses the clinical read."
         ]
       }
     },
@@ -415,6 +470,17 @@
           "Post-gadolinium enhancement marks blood-brain-barrier breakdown.",
           "GRE and SWI blooming reveals blood, calcium and iron.",
           "Intrinsically T1-bright: fat, subacute blood, melanin, proteinaceous fluid."
+        ],
+        "worked_example": "<p>A 68-year-old presents with sudden left-sided weakness three hours from symptom onset. The right MCA territory shows a focal area that is bright on DWI and dark on ADC, confirming true restricted diffusion rather than T2 shine-through, which is the signature of acute infarct. The FLAIR sequence in the same region is still nearly normal, because vasogenic edema and FLAIR hyperintensity typically lag several hours behind the diffusion abnormality, so a DWI-FLAIR mismatch supports that the stroke is still within an early treatment window. A GRE or SWI sequence is added to exclude hemorrhage before any decision about thrombolysis, since blooming susceptibility artifact there would mean a bleed rather than a candidate for lytic therapy. No enhancement is expected yet on post-gadolinium T1, because blood-brain-barrier breakdown from infarct typically takes a few days to appear.</p>",
+        "memory_hooks": [
+          "Bright on DWI and dark on ADC is true restriction. Bright on DWI with a normal or bright ADC is T2 shine-through, not a true acute infarct.",
+          "DWI lights up within minutes of stroke onset, but FLAIR takes hours to catch up, so a DWI-FLAIR mismatch is a clue to how fresh the stroke is.",
+          "Blooming on GRE or SWI means blood, calcium, or iron, and the dark spot on the image is always bigger than the true lesion."
+        ],
+        "exam_traps": [
+          "T2 shine-through: a chronic lesion can look bright on DWI simply because it is bright on T2, not because diffusion is restricted. Always confirm with the ADC map, which should be dark for a true acute infarct.",
+          "A ring-enhancing lesion is not specific to one diagnosis. Abscess, glioblastoma, and metastasis can all show this pattern, so additional clues such as restricted diffusion in the abscess cavity are needed to tell them apart.",
+          "T1 brightness without contrast, from fat, subacute blood, melanin, or concentrated proteinaceous fluid, can be mistaken for enhancement. Always compare to the pre-contrast T1 or use fat saturation to confirm true enhancement."
         ]
       }
     },
@@ -495,6 +561,17 @@
           "Motion and pulsatile-flow ghosts propagate along the PHASE-encode direction.",
           "Chemical shift is in the FREQUENCY direction; worse at high field or low bandwidth.",
           "Gibbs or truncation is ringing at sharp borders; reduce it with a higher matrix."
+        ],
+        "worked_example": "<p>An axial T2-weighted image of the abdomen shows a bright band of ghosting running across the whole image in the anterior to posterior direction, overlapping the aorta and repeating at regular intervals. The phase-encode direction for this acquisition is anterior to posterior, and the pattern repeats with a spacing tied to the cardiac cycle, so this is pulsatile flow ghosting from the aorta: the periodic motion of arterial inflow between phase-encode steps mismaps signal along phase, not frequency. The fix is a saturation band placed over the vessel proximal to the imaging slab, or gating the acquisition to the cardiac cycle, not a bandwidth change, because bandwidth only helps chemical shift and noise, which sit along the frequency axis.</p>",
+        "memory_hooks": [
+          "Motion and pulsatile flow ghost along PHASE. Chemical shift is strictly along FREQUENCY. Gibbs truncation ringing is usually worst along PHASE, because that axis often has fewer encoding steps, so raise the phase matrix to reduce it.",
+          "TOF is bright because it is unsaturated inflow; the same physics means TOF goes dark whenever flow lies in-plane long enough to get repeatedly hit by RF and saturate.",
+          "A traveling or walking saturation band sits on one side of the slab to null the vessel you do not want: proximal placement suppresses arterial signal for a venogram, distal placement suppresses venous signal for an arteriogram."
+        ],
+        "exam_traps": [
+          "Aliasing (wraparound) comes from an FOV smaller than the anatomy in the phase direction; it is fixed by enlarging phase FOV or using phase oversampling, not by changing bandwidth.",
+          "Susceptibility artifact is worst on GRE and EPI (no 180 degree refocusing pulse to correct field inhomogeneity) and mildest on spin echo.",
+          "The zipper artifact runs across the image from stray RF (a door left open, a light left on) and is unrelated to flow or motion."
         ]
       }
     },
@@ -3407,6 +3484,17 @@
           "Dixon uses in-phase and opposed-phase echoes for robust water-only and fat-only images.",
           "Water excitation tips only water, used in high-resolution cartilage imaging.",
           "Suppressing bright fat raises conspicuity of enhancement, oedema and marrow disease."
+        ],
+        "worked_example": "<p>You are protocoling a shoulder MRI and the coil placement puts the joint off isocenter, near the edge of the magnet's homogeneous volume, close to surgical hardware. You want fat suppression so labral fluid and marrow edema stand out. A frequency-selective spectral fat-sat pulse depends on a clean, uniform separation between the fat and water resonance peaks; off isocenter, and worse near metal, the local field varies enough that the pulse partly saturates water in some spots and misses fat in others, giving patchy, unreliable suppression. Switching to STIR solves the uniformity problem because it nulls tissue by T1 relaxation rather than by resonance frequency, so it does not care how homogeneous the local field is. The trade-off shows up later in the same exam: if a contrast-enhanced sequence is planned, STIR cannot be used for that part, because gadolinium shortens the T1 of enhancing tissue down near fat's T1, and STIR would null the enhancement right along with the fat. For that portion of the exam, spectral fat-sat closer to isocenter, or Dixon, is used instead.</p>",
+        "memory_hooks": [
+          "STIR nulls by T1, so it is field-uniform but not contrast-safe. Spectral fat-sat is frequency-selective, so it is contrast-safe but field-sensitive.",
+          "Off isocenter, near metal, or at low field where the fat-water frequency gap is small: reach for STIR, not spectral fat-sat.",
+          "Dixon separates water and fat by acquiring in-phase and opposed-phase echoes and solving for both signals, which keeps it reliable and quantitative where a single saturation pulse would fail."
+        ],
+        "exam_traps": [
+          "STIR contrast is not purely a fat-null overlay. TE still contributes T2 weighting underneath, so fluid can be bright from T2 on a STIR image, which is easy to misread as pure T1 behavior.",
+          "Spectral fat-sat depends on field strength: the fat-water chemical shift is a fixed 3.5 ppm, but that translates to a wider frequency gap at higher field, so it is easier at 3T and harder at 1.5T or below, especially over a large FOV.",
+          "Water excitation is not the same technique as fat saturation. It selectively excites water protons at the outset rather than suppressing fat afterward, which is why it suits very short TR, high-resolution cartilage sequences."
         ]
       }
     },
@@ -3423,6 +3511,17 @@
           "The phase matrix drives scan time; the frequency matrix is essentially free.",
           "k-space centre = contrast and signal; periphery = resolution and edges.",
           "Partial Fourier, parallel imaging and centric ordering all manipulate how k-space is filled."
+        ],
+        "worked_example": "<p>You are running a 2D sequence with a TR of 500 ms, a phase matrix of 192, and 1 excitation (NEX). Scan time is TR multiplied by the number of phase encoding steps multiplied by NEX, so 500 ms times 192 times 1 comes out to about 96 seconds. If you drop the phase matrix to 128 and keep TR and NEX the same, scan time falls to about 64 seconds because you are now filling fewer k-space lines. If instead you had reduced the frequency matrix from 256 to 192, scan time would not change at all, since frequency encoding is sampled entirely within a single readout window during each TR. This is exactly why the phase matrix, not the frequency matrix, is the lever technologists pull to cut acquisition time.</p>",
+        "memory_hooks": [
+          "Frequency encoding is essentially free: it all happens inside one readout window per TR. Phase encoding is the expensive one: every step needs its own TR.",
+          "The center of k-space carries signal and contrast, the edges carry resolution and fine detail, so losing central lines hurts contrast and losing peripheral lines hurts sharpness.",
+          "k-space is a map of spatial frequencies, not a map of anatomy. The Fourier transform is what turns that spatial frequency data into the picture you actually read."
+        ],
+        "exam_traps": [
+          "Do not confuse which encoding drives scan time. It is the phase encoding matrix, not the frequency encoding matrix, because phase encoding needs a fresh TR for every step while frequency encoding is captured entirely within a single readout.",
+          "Zero filling, sometimes called a zip, interpolates the image onto a finer display matrix and can look sharper, but it adds no true spatial resolution because no new spatial frequencies were actually acquired.",
+          "Partial Fourier uses k-space's conjugate symmetry to skip roughly half the phase encoding steps, saving time or shortening TE, but it comes at some SNR cost since fewer real lines are averaged into the final image."
         ]
       }
     },
@@ -3439,6 +3538,17 @@
           "The RF transmit coil excites spins; receive (phased-array) coils detect signal.",
           "The Faraday shield blocks external RF (zipper); the 5-gauss line bounds the fringe field.",
           "Higher field raises SNR but also SAR, chemical shift and susceptibility."
+        ],
+        "worked_example": "<p>During a scan the technologist sees a bright, repeating linear band of noise crossing the image that has nothing to do with the patient's anatomy, and traces the cause to the scan room door being left open. The room's copper Faraday shield only blocks stray radiofrequency energy from entering or leaving the room when the enclosure is completely sealed. With the door ajar, ambient radiofrequency signals leak in and beat against the scanner's own frequency, producing the classic zipper artifact. Once the door is closed the shield is intact again and the artifact disappears, which confirms the room shielding, not the scanner hardware, was the cause.</p>",
+        "memory_hooks": [
+          "Superconducting magnets stay at field with liquid helium cooling, because once resistance drops to zero the current keeps circulating without any power input.",
+          "Gradient coils do the spatial encoding and make the loud switching noise. RF coils do the exciting (transmit) and the listening (receive).",
+          "Higher field strength buys more SNR, but it also raises SAR and widens the chemical shift artifact. Nothing about going up in tesla is free."
+        ],
+        "exam_traps": [
+          "Do not confuse the transmit coil's job, exciting spins with the B1 field, with the receive coil's job, detecting the tiny returning signal. Phased array coils are about receive sensitivity and enabling parallel imaging, not about excitation.",
+          "A quench is a sudden, uncontrolled loss of superconductivity that rapidly boils off the helium, not a routine event. It is why the magnet room has an oxygen monitor and a quench pipe vented outside.",
+          "Do not confuse the 5 gauss line, the fringe field safety boundary around the magnet, with the Faraday shield, the room enclosure that blocks external radiofrequency interference. One concerns the static magnetic field, the other concerns RF noise."
         ]
       }
     },
@@ -3455,6 +3565,17 @@
           "MIP displays bright vessels; MinIP displays dark veins or air.",
           "Thick 2D slices are fast but blur small findings (partial volume).",
           "Slice cross-talk is reduced with an interslice gap or interleaving."
+        ],
+        "worked_example": "<p>A 3D time-of-flight MR angiogram of the circle of Willis is acquired as a thin slab with isotropic voxels, and a maximum-intensity projection is generated by casting rays through the volume and keeping only the brightest voxel along each ray, producing a single angiogram-like image. Because a MIP collapses a 3D volume into a 2D projection, an overlapping vessel or an adjacent bright structure such as fat or a draining vein can project onto the artery of interest and mimic a stenosis or obscure a real one, so the thin source partitions must always be reviewed to confirm any narrowing seen only on the MIP. Because the acquisition used isotropic voxels, the same volume can also be reformatted with MPR into a coronal or oblique plane that follows the vessel's course, without reacquiring any data.</p>",
+        "memory_hooks": [
+          "MIP keeps the brightest voxel along each ray, and MinIP keeps the darkest. MIP shows arteries, MinIP shows veins or air.",
+          "Isotropic voxels are the ticket to free reformats: one acquisition, any plane, no loss of resolution.",
+          "A finding seen only on the MIP is not confirmed until it is checked against the thin source images."
+        ],
+        "exam_traps": [
+          "A MIP can hide a true stenosis or mimic a false one, because overlapping vessels and venous contamination project onto the same pixels. Always correlate with the source images before calling a stenosis.",
+          "Time-of-flight MRA signal is contaminated by anything with a short T1 or fast in-plane inflow, such as fat, subacute blood, or slow venous flow, which can masquerade as vessel signal on the MIP. Fat suppression or saturation bands help control this.",
+          "Thin contiguous 3D slices give high SNR per unit volume, but at the cost of longer scan time and greater motion sensitivity than thick 2D slices, so 3D is not automatically the better choice for every exam."
         ]
       }
     },
@@ -3471,6 +3592,17 @@
           "MSK: oblique coronal for the cuff, sagittal for the ACL, short-TE for menisci.",
           "Body: MRCP is heavily T2; liver, prostate and breast rely on dynamic contrast.",
           "Match the contrast (fluid-sensitive, fat-sat, dynamic) to the pathology sought."
+        ],
+        "worked_example": "<p>A referral requests MRI of the shoulder to evaluate a suspected rotator cuff tear. The technologist plans oblique coronal images angled parallel to the supraspinatus tendon rather than a true anatomic coronal, because a plane that cuts across the tendon obliquely can create the illusion of a tear or underestimate a real one. Oblique sagittal images, angled perpendicular to the cuff, are added to assess tendon retraction and muscle atrophy. A fat-saturated proton-density or T2 sequence is chosen over plain T1, because fluid within a tear needs to appear bright against suppressed fat, so a full-thickness tear shows as a fluid-bright gap through the tendon. The same logic explains why the knee is imaged with short-TE sequences angled along the meniscal anatomy, rather than a single generic axial scan.</p>",
+        "memory_hooks": [
+          "Plane follows the structure: oblique coronal for the cuff, oblique sagittal for the ACL. A plain anatomic plane will not do.",
+          "Fat-saturated fluid-sensitive sequences catch the tear because fluid is bright and fat is dark; plain T1 alone can hide it.",
+          "MRCP is heavily T2-weighted because static fluid such as bile and pancreatic juice stays bright while everything else fades."
+        ],
+        "exam_traps": [
+          "An anatomic, non-oblique coronal through the shoulder can mimic or obscure a cuff tear. The oblique plane parallel to the supraspinatus is required for accurate assessment.",
+          "Dynamic post-contrast timing matters as much as plane for the pituitary. A microadenoma enhances less avidly and later than the normal gland, so it shows up as a relatively dark focus against the brightly enhancing gland only on the early dynamic images.",
+          "Tendons and menisci oriented near 55 degrees to the main field can show artifactual increased signal on short-TE sequences, the magic angle effect, which can mimic tendinosis or a tear. A longer-TE sequence helps confirm whether the finding is real."
         ]
       }
     },
@@ -3487,6 +3619,17 @@
           "Stroke leans on DWI; MS on FLAIR; tumour adds perfusion.",
           "Angiography uses TOF, phase contrast or timed contrast.",
           "Protocols build in artifact control (gating, sat bands, metal-reduction)."
+        ],
+        "worked_example": "<p>Ordering a routine brain protocol for suspected multiple sclerosis, the technologist starts with a three-plane localizer to plan slice angles, then sagittal FLAIR to screen the corpus callosum, where MS plaques classically radiate outward from the ventricles. Axial FLAIR and T2 survey the rest of the brain, since plaques are bright on both, and post-gadolinium T1 separates active demyelination, which enhances, from old inactive plaques, which do not. DWI is included as a routine safety net for a silent acute infarct, even though MS plaques themselves do not typically restrict diffusion. Each sequence answers one question: T1 for anatomy, T2 and FLAIR for the fluid-sensitive lesion burden, and post-contrast T1 for activity, so no sequence is present without a reason and none of the reasons duplicate each other.</p>",
+        "memory_hooks": [
+          "Every sequence in a protocol answers a different question. If two sequences answer the same question, one of them may not be needed.",
+          "Localizer sets the angles, T1 shows anatomy, T2 and FLAIR show fluid-sensitive pathology, and post-contrast T1 shows activity or blood-brain-barrier breakdown.",
+          "Disease tunes the base protocol: stroke leans on DWI, MS leans on FLAIR plus post-contrast T1, and tumour adds perfusion."
+        ],
+        "exam_traps": [
+          "Adding a post-contrast sequence does not remove the need for a pre-contrast T1. Without it, intrinsically T1-bright material such as fat, blood, or melanin cannot be told apart from true enhancement.",
+          "Flow compensation, gating, and saturation bands are artifact-control choices added to existing sequences, not sequences of their own, and they are built in specifically to suppress pulsatility and flow artifact.",
+          "Metal-artifact-reduction choices favor spin echo over gradient echo and a higher receiver bandwidth, since gradient echo and low bandwidth both increase susceptibility artifact around hardware."
         ]
       }
     },
@@ -3503,6 +3646,17 @@
           "CE-MRA is fast and flow-independent but depends on arterial bolus timing.",
           "MR venography uses TOF, PC or post-contrast to assess sinuses and deep veins.",
           "Non-contrast MRA (TOF, PC, fresh-blood) serves patients who cannot have gadolinium."
+        ],
+        "worked_example": "<p>You are planning a phase-contrast MRA of the carotids and need to pick a VENC. Peak systolic velocity in a normal carotid is roughly 60 to 100 cm per second. If you set VENC at 20 cm per second, velocities above that wrap around and alias, showing as artifactually reversed or wrong-magnitude flow in the vessel center. If you set VENC at 150 cm per second to be safe, you avoid aliasing but the phase signal for the actual flow is now a small fraction of the encode range, so the velocity measurement is noisy and less sensitive. The right move is to set VENC just above the expected peak velocity for that vessel, around 80 to 100 cm per second here, so you get maximum phase sensitivity without wrapping.</p>",
+        "memory_hooks": [
+          "VENC is a ceiling: set it just above the expected peak velocity. Too low wraps (aliases), too high wastes sensitivity.",
+          "TOF is qualitative and anatomic; PC is quantitative, giving both velocity and direction because it literally encodes phase to speed.",
+          "CE-MRA trades flow-dependence for T1-shortening: it is fast and not affected by in-plane flow or saturation, but only as good as bolus timing."
+        ],
+        "exam_traps": [
+          "TOF fails for slow or in-plane flow because those spins sit in the slab long enough to become saturated like stationary tissue; thinner slabs, or multiple overlapping thin slabs (MOTSA), limit this saturation.",
+          "For patients who cannot receive gadolinium (severe renal impairment, prior reaction), non-contrast options exist: TOF, PC, and ECG-gated fresh-blood or quiescent-interval single-shot techniques for venography and lower-extremity angiography.",
+          "Time-resolved contrast-enhanced MRA trades spatial resolution for temporal resolution to catch the arterial phase before venous contamination; a single mistimed acquisition can overlap arterial and venous signal."
         ]
       }
     },
@@ -3519,6 +3673,17 @@
           "Check eGFR: NSF links less-stable linear agents to severe renal failure.",
           "Prefer stable macrocyclic agents at the lowest effective dose; avoid in pregnancy unless essential.",
           "Mild reactions get antihistamines; anaphylaxis is treated first with epinephrine."
+        ],
+        "worked_example": "<p>A patient is scheduled for a contrast-enhanced brain MRI and the eGFR comes back at 25 mL per minute per 1.73 square meters, in the range associated with nephrogenic systemic fibrosis risk from gadolinium exposure. Gadolinium itself is the toxic part once it is released from its chelate, so agents are engineered to hold it tightly. Linear chelates bind gadolinium less securely than macrocyclic chelates, so more free gadolinium can be released and deposited in tissue, including skin, and in patients with poor renal clearance this is the mechanism behind NSF. Because gadolinium is cleared through the kidneys, poor renal function means the agent, and any gadolinium it releases, stays in the body far longer, raising both exposure and risk. The response is not to skip a clinically indicated scan but to use a stable macrocyclic agent at the lowest dose that answers the clinical question, with the decision documented. If the goal instead were biliary imaging to look for a bile leak, a hepatobiliary agent, partly excreted through the liver into bile rather than only through the kidneys, would be chosen over a standard extracellular agent.</p>",
+        "memory_hooks": [
+          "Gadolinium is the toxic part; the chelate is what makes it safe to inject. Macrocyclic chelates cage it more tightly than linear ones, which is why NSF risk concentrates in linear agents.",
+          "Renal clearance is why eGFR is checked before contrast: poor kidney function means gadolinium lingers longer, raising both tissue retention and NSF risk.",
+          "Special-purpose agents to keep straight: hepatobiliary agents for liver and bile, iron-based agents for blood-pool vascular imaging, negative oral agents to darken bowel fluid for MRCP."
+        ],
+        "exam_traps": [
+          "NSF risk depends on chelate stability and renal function together. Group II macrocyclic agents are very low risk, and current ACR guidance no longer requires routine eGFR screening before them, though many facilities still confirm renal function before any gadolinium and no agent is truly risk-free.",
+          "A prior allergic-type reaction to iodinated CT contrast or a shellfish allergy does not predict a gadolinium reaction; that cross-reactivity belief is a myth even for iodinated contrast, though any prior contrast reaction of any kind raises general risk.",
+          "Anaphylaxis is treated first with epinephrine, not antihistamines or steroids. Antihistamines are for milder urticarial reactions, not the airway and cardiovascular compromise of true anaphylaxis."
         ]
       }
     },
@@ -3535,6 +3700,15 @@
           "Gradient echo uses a smaller flip; the Ernst angle maximises signal for a given TR and T1.",
           "Larger flip leans to T1 weighting; smaller flip leans to proton density and T2*.",
           "Flip angle scales with RF power, so a larger flip raises SAR."
+        ],
+        "worked_example": "<p>You are running a T1-weighted spoiled gradient echo of the brain with a short TR of 8 ms. At a 90 degree flip the longitudinal magnetization barely recovers between pulses, so the signal is weak. Lowering the flip toward the Ernst angle for white matter, roughly 12 to 15 degrees at that TR, restores signal. The Ernst angle is the flip that maximizes steady-state signal for a given TR and T1, where cos(Ernst) equals exp(-TR/T1). A short TR pushes the Ernst angle small, which is why fast gradient echo uses low flip angles.</p>",
+        "memory_hooks": [
+          "Short TR wants a small flip. As TR drops, the Ernst angle drops with it.",
+          "cos of the Ernst angle equals E1, and E1 is exp(-TR over T1)."
+        ],
+        "exam_traps": [
+          "SAR scales with the square of the flip angle and with the square of field strength, so trimming the flip angle is the fastest way to cut SAR.",
+          "The Ernst angle maximizes signal, not contrast. A higher flip can give stronger T1 weighting even though total signal is lower."
         ]
       }
     },

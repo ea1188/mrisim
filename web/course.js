@@ -361,6 +361,24 @@
           b.keypoints.forEach(function (p) { ul.appendChild(h("li", { text: p })); });
           kp.appendChild(ul); card.appendChild(kp);
         }
+        if (b.worked_example) {
+          card.appendChild(h("div", { class: "edu-worked" }, [
+            h("h5", { text: "Worked example" }),
+            h("div", { class: "body", html: b.worked_example }),
+          ]));
+        }
+        if (b.memory_hooks && b.memory_hooks.length) {
+          var hk = h("div", { class: "edu-hooks" }, [h("h5", { text: "Memory hooks" })]);
+          var hul = h("ul");
+          b.memory_hooks.forEach(function (p) { hul.appendChild(h("li", { text: p })); });
+          hk.appendChild(hul); card.appendChild(hk);
+        }
+        if (b.exam_traps && b.exam_traps.length) {
+          var tp = h("div", { class: "edu-traps" }, [h("h5", { text: "Exam traps" })]);
+          var tul = h("ul");
+          b.exam_traps.forEach(function (p) { tul.appendChild(h("li", { text: p })); });
+          tp.appendChild(tul); card.appendChild(tp);
+        }
         var foot = h("div", { class: "edu-foot" });
         if (isRead) {
           foot.appendChild(h("span", { class: "edu-read-tag", text: "✓ Read" }));
