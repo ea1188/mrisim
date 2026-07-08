@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek } = CourseLogic;
 
 test("constants match the spec", () => {
   assert.equal(PASS_PCT, 80);
@@ -120,4 +120,22 @@ test("mergeProgress completed record keeps the earlier at", () => {
     { mrisim_course_completed_v1: { at: 100, examPct: 82 } });
   assert.deepEqual(m.mrisim_course_completed_v1, { at: 100, examPct: 82 });
   assert.deepEqual(mergeProgress({ mrisim_course_completed_v1: { at: 5 } }, {}).mrisim_course_completed_v1, { at: 5 });
+});
+
+test("remainingStudyOrder: diagnostic weakest-first, mastered dropped, rest appended in module order", () => {
+  const modules = [{ title: "A", status: "mastered" }, { title: "B", status: "progress" }, { title: "C", status: "not-started" }, { title: "D", status: "review" }];
+  assert.deepEqual(remainingStudyOrder(modules, ["A", "C", "B"]), ["C", "B", "D"]);
+});
+
+test("remainingStudyOrder: no diagnostic falls back to module order; all mastered gives []", () => {
+  assert.deepEqual(remainingStudyOrder([{ title: "A", status: "progress" }, { title: "B", status: "not-started" }], null), ["A", "B"]);
+  assert.deepEqual(remainingStudyOrder([{ title: "A", status: "mastered" }], ["A"]), []);
+});
+
+test("pacePerWeek: math, past date null, zero remaining null, sub-week rounds to 1 week", () => {
+  const now = 0, D = 86400000;
+  assert.deepEqual(pacePerWeek(8, 28 * D, now), { weeks: 4, perWeek: 2 });
+  assert.equal(pacePerWeek(4, -D, now), null);
+  assert.equal(pacePerWeek(0, 28 * D, now), null);
+  assert.deepEqual(pacePerWeek(3, 2 * D, now), { weeks: 1, perWeek: 3 });
 });
