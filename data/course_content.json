@@ -564,7 +564,7 @@
         ],
         "worked_example": "<p>An axial T2-weighted image of the abdomen shows a bright band of ghosting running across the whole image in the anterior to posterior direction, overlapping the aorta and repeating at regular intervals. The phase-encode direction for this acquisition is anterior to posterior, and the pattern repeats with a spacing tied to the cardiac cycle, so this is pulsatile flow ghosting from the aorta: the periodic motion of arterial inflow between phase-encode steps mismaps signal along phase, not frequency. The fix is a saturation band placed over the vessel proximal to the imaging slab, or gating the acquisition to the cardiac cycle, not a bandwidth change, because bandwidth only helps chemical shift and noise, which sit along the frequency axis.</p>",
         "memory_hooks": [
-          "Motion and pulsatile flow ghost along PHASE. Chemical shift and Gibbs ringing show up along FREQUENCY (well, Gibbs shows at any sharp edge, but think of chemical shift as strictly frequency-axis).",
+          "Motion and pulsatile flow ghost along PHASE. Chemical shift is strictly along FREQUENCY. Gibbs truncation ringing is usually worst along PHASE, because that axis often has fewer encoding steps, so raise the phase matrix to reduce it.",
           "TOF is bright because it is unsaturated inflow; the same physics means TOF goes dark whenever flow lies in-plane long enough to get repeatedly hit by RF and saturate.",
           "A traveling or walking saturation band sits on one side of the slab to null the vessel you do not want: proximal placement suppresses arterial signal for a venogram, distal placement suppresses venous signal for an arteriogram."
         ],
@@ -3654,7 +3654,7 @@
           "CE-MRA trades flow-dependence for T1-shortening: it is fast and not affected by in-plane flow or saturation, but only as good as bolus timing."
         ],
         "exam_traps": [
-          "TOF fails for slow or in-plane flow because those spins sit in the slab long enough to become saturated like stationary tissue; thin slabs perpendicular to the vessel and short TE limit this.",
+          "TOF fails for slow or in-plane flow because those spins sit in the slab long enough to become saturated like stationary tissue; thinner slabs, or multiple overlapping thin slabs (MOTSA), limit this saturation.",
           "For patients who cannot receive gadolinium (severe renal impairment, prior reaction), non-contrast options exist: TOF, PC, and ECG-gated fresh-blood or quiescent-interval single-shot techniques for venography and lower-extremity angiography.",
           "Time-resolved contrast-enhanced MRA trades spatial resolution for temporal resolution to catch the arterial phase before venous contamination; a single mistimed acquisition can overlap arterial and venous signal."
         ]
