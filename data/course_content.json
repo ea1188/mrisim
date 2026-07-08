@@ -69,6 +69,17 @@
           "MR-conditional = safe ONLY under the stated conditions.",
           "Quench → helium boil-off → possible oxygen displacement.",
           "Gadolinium + severe renal impairment → NSF risk."
+        ],
+        "worked_example": "<p>A patient in a wheelchair with a small pocketknife left in a jacket pocket is brought toward the scanner room by a family member who was never screened. The knife is drawn toward the bore and becomes a projectile, the classic ferromagnetic missile effect from the always-on static field. The correct workflow is that everyone entering Zone III or IV, staff, patients, and visitors alike, is screened with a metal detector and a verbal/written questionnaire before crossing into Zone IV, and only MR-trained, screened staff supervise anyone in Zone IV. The static field is never off, even during a power outage, so screening has to happen at the zone boundary every single time, not just once at intake.</p>",
+        "memory_hooks": [
+          "Four zones, increasing restriction: Zone I public access, Zone II screening/reception, Zone III controlled (screened persons only), Zone IV the magnet room itself.",
+          "Three fields, three hazards: static field causes the projectile effect (always on), gradients cause peripheral nerve stimulation and loud acoustic noise (dB/dt, switching fast), RF deposits heat measured as SAR and can burn from loops or skin contact.",
+          "MR Safe, MR Conditional, MR Unsafe are the only three labels; MR Conditional is safe only under the specific field strength, SAR, and gradient slew-rate conditions on its label, so you verify the label and the scanner parameters every time, never assume from a similar device."
+        ],
+        "exam_traps": [
+          "A quench vents helium outside the building by design; the danger is a failed or blocked vent path leading to oxygen displacement (asphyxiation risk) and cold burns in the magnet room, so a quench is a planned safety response, not a routine event and not itself the hazard.",
+          "SAR-related burns most often come from looped cables or skin-to-skin contact points completing a conductive loop, not from the implant itself; padding cables away from skin and preventing loops is basic technologist practice on every patient.",
+          "Nephrogenic systemic fibrosis is a gadolinium contrast risk tied to severe renal impairment, not a static-field or RF hazard; it belongs with screening for renal function, not with zone or projectile safety."
         ]
       }
     },
@@ -85,6 +96,17 @@
           "Contrast: check eGFR, consent, know reaction management (epinephrine for anaphylaxis).",
           "Avoid gadolinium in pregnancy unless essential.",
           "Monitor continuously; MR-safe equipment only."
+        ],
+        "worked_example": "<p>A patient scheduled for a contrast-enhanced lumbar spine MRI reports a history of working with a metal grinder years ago and has never had an orbital X-ray to clear metal fragments. Screening also turns up reduced kidney function on a recent lab result. The correct sequence is to hold the contrast-enhanced order and first obtain orbital radiographs to rule out a retained intra-orbital metallic fragment, since an occult fragment near the globe can move or heat during scanning; separately, the technologist checks the patient's eGFR against facility policy for gadolinium and discusses the finding with the ordering provider, because severe renal impairment raises the risk of nephrogenic systemic fibrosis. Screening is not a one-time chart review, it is repeated before this specific scan because implant and health status can change between visits.</p>",
+        "memory_hooks": [
+          "Screen every single time, not just once: implants, devices, pregnancy status, renal function, and metal exposure history can all change visit to visit.",
+          "Metalworking or grinding history plus no prior orbital imaging means get orbital radiographs before scanning, to rule out an intra-orbital metallic fragment.",
+          "For a contrast reaction, start with the basics: stop the injection, get help, support airway-breathing-circulation, and give epinephrine for anaphylaxis; know this sequence cold, it is the first-line response."
+        ],
+        "exam_traps": [
+          "Claustrophobia management (reassurance, call/squeeze device, open or wide-bore magnet, sedation when needed) is a comfort and completion issue, not a contraindication to scanning by itself.",
+          "Gadolinium is avoided in pregnancy unless the information is essential to care and cannot wait, because it crosses the placenta; this is a risk-benefit decision with the ordering provider, not an absolute rule against ever scanning a pregnant patient.",
+          "Only MR-safe or MR-conditional monitoring equipment, matched to the specific scanner conditions, may enter the magnet room for a sedated or unstable patient; standard ward monitors and infusion pumps are not substitutes."
         ]
       }
     },
@@ -539,6 +561,17 @@
           "Motion and pulsatile-flow ghosts propagate along the PHASE-encode direction.",
           "Chemical shift is in the FREQUENCY direction; worse at high field or low bandwidth.",
           "Gibbs or truncation is ringing at sharp borders; reduce it with a higher matrix."
+        ],
+        "worked_example": "<p>An axial T2-weighted image of the abdomen shows a bright band of ghosting running across the whole image in the anterior to posterior direction, overlapping the aorta and repeating at regular intervals. The phase-encode direction for this acquisition is anterior to posterior, and the pattern repeats with a spacing tied to the cardiac cycle, so this is pulsatile flow ghosting from the aorta: the periodic motion of arterial inflow between phase-encode steps mismaps signal along phase, not frequency. The fix is a saturation band placed over the vessel proximal to the imaging slab, or gating the acquisition to the cardiac cycle, not a bandwidth change, because bandwidth only helps chemical shift and noise, which sit along the frequency axis.</p>",
+        "memory_hooks": [
+          "Motion and pulsatile flow ghost along PHASE. Chemical shift and Gibbs ringing show up along FREQUENCY (well, Gibbs shows at any sharp edge, but think of chemical shift as strictly frequency-axis).",
+          "TOF is bright because it is unsaturated inflow; the same physics means TOF goes dark whenever flow lies in-plane long enough to get repeatedly hit by RF and saturate.",
+          "A traveling or walking saturation band sits on one side of the slab to null the vessel you do not want: proximal placement suppresses arterial signal for a venogram, distal placement suppresses venous signal for an arteriogram."
+        ],
+        "exam_traps": [
+          "Aliasing (wraparound) comes from an FOV smaller than the anatomy in the phase direction; it is fixed by enlarging phase FOV or using phase oversampling, not by changing bandwidth.",
+          "Susceptibility artifact is worst on GRE and EPI (no 180 degree refocusing pulse to correct field inhomogeneity) and mildest on spin echo.",
+          "The zipper artifact runs across the image from stray RF (a door left open, a light left on) and is unrelated to flow or motion."
         ]
       }
     },
@@ -3613,6 +3646,17 @@
           "CE-MRA is fast and flow-independent but depends on arterial bolus timing.",
           "MR venography uses TOF, PC or post-contrast to assess sinuses and deep veins.",
           "Non-contrast MRA (TOF, PC, fresh-blood) serves patients who cannot have gadolinium."
+        ],
+        "worked_example": "<p>You are planning a phase-contrast MRA of the carotids and need to pick a VENC. Peak systolic velocity in a normal carotid is roughly 60 to 100 cm per second. If you set VENC at 20 cm per second, velocities above that wrap around and alias, showing as artifactually reversed or wrong-magnitude flow in the vessel center. If you set VENC at 150 cm per second to be safe, you avoid aliasing but the phase signal for the actual flow is now a small fraction of the encode range, so the velocity measurement is noisy and less sensitive. The right move is to set VENC just above the expected peak velocity for that vessel, around 80 to 100 cm per second here, so you get maximum phase sensitivity without wrapping.</p>",
+        "memory_hooks": [
+          "VENC is a ceiling: set it just above the expected peak velocity. Too low wraps (aliases), too high wastes sensitivity.",
+          "TOF is qualitative and anatomic; PC is quantitative, giving both velocity and direction because it literally encodes phase to speed.",
+          "CE-MRA trades flow-dependence for T1-shortening: it is fast and not affected by in-plane flow or saturation, but only as good as bolus timing."
+        ],
+        "exam_traps": [
+          "TOF fails for slow or in-plane flow because those spins sit in the slab long enough to become saturated like stationary tissue; thin slabs perpendicular to the vessel and short TE limit this.",
+          "For patients who cannot receive gadolinium (severe renal impairment, prior reaction), non-contrast options exist: TOF, PC, and ECG-gated fresh-blood or quiescent-interval single-shot techniques for venography and lower-extremity angiography.",
+          "Time-resolved contrast-enhanced MRA trades spatial resolution for temporal resolution to catch the arterial phase before venous contamination; a single mistimed acquisition can overlap arterial and venous signal."
         ]
       }
     },
