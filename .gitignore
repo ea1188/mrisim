@@ -76,3 +76,6 @@ web/img/lessons/**/*.png
 
 # scratch: quiz rebalance option-patch files (applied via scripts/apply_quiz_patch.py)
 patches/
+
+# Source PDFs for course content (local only; mined into data/course_content.json, not app assets)
+pdf education/
