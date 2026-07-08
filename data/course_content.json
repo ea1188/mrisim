@@ -15,6 +15,17 @@
           "STIR nulls fat (TI ≈ 0.69·T1 fat); FLAIR nulls CSF (long TI).",
           "Gradient echo → flip angle, T2* sensitive.",
           "Gadolinium shortens T1 → bright on T1 at BBB breakdown."
+        ],
+        "worked_example": "<p>You pull up a lumbar spine protocol and see a sagittal sequence with TR 500 ms and TE 20 ms alongside a second sagittal sequence with TR 3500 ms and TE 110 ms. The first is T1-weighted: the short TR gives longitudinal magnetization little time to recover between excitations, so tissue with a short T1, like fat and marrow, regrows the most magnetization and looks bright, while CSF, with its long T1, stays dark. The second is T2-weighted: the long TR lets essentially every tissue fully recover before the next pulse, which erases T1 differences, and the long TE then lets transverse magnetization decay, so tissue with a long T2, like CSF and edema, still has signal left and looks bright. A disc herniation with surrounding edema can be easy to miss on the T1 image, where fat dominates the contrast, but it stands out against the dark disc and cord on the T2 image. If a third sequence paired a long TR with a short TE, both T1 and T2 weighting would be minimized and the image would instead track proton density, the raw concentration of mobile hydrogen in each tissue.</p>",
+        "memory_hooks": [
+          "Short TR and short TE favor fat, long TR and long TE favor fluid. Find the CSF: dark is T1, bright is T2.",
+          "TR controls how much T1 shows through and TE controls how much T2 shows through. Cancel both (long TR, short TE) and what's left is proton density.",
+          "A nulling TI is about 0.69 times the T1 of the tissue being suppressed, which is why STIR (short TI, nulls fat) and FLAIR (long TI, nulls CSF) use such different TI values."
+        ],
+        "exam_traps": [
+          "STIR nulls anything with fat's short T1, not just fat. Gadolinium shortens T1 into that same range, so STIR will null enhancement too, which is why STIR is not paired with contrast.",
+          "Long TR alone does not make a sequence T2-weighted. Long TR with a short TE removes T1 weighting but adds proton density weighting instead, not T2.",
+          "A gradient echo image looks T2-like but its dark-blood and susceptibility artifact come from T2 star, which includes local field inhomogeneity on top of true T2 decay, not T2 alone."
         ]
       }
     },
@@ -31,6 +42,17 @@
           "Scan time (2D SE) = TR × phase steps × NEX.",
           "CNR (not raw SNR) determines lesion conspicuity.",
           "Parallel imaging costs SNR by g·√R (g-factor)."
+        ],
+        "worked_example": "<p>You are imaging a small joint with a 3 mm slice, a 256 phase-encode matrix, 1 NEX, and the images are noisy. Thinning the slice to 2 mm to reduce partial-volume blur cuts voxel volume by a third, and since SNR is proportional to voxel volume, SNR falls by roughly that same fraction. To claw some signal back you average twice, going to 2 NEX. Because SNR improves only with the square root of the number of averages, that recovers about the square root of 2, not a full doubling, and it doubles scan time, since 2D spin echo scan time equals TR times phase-encode steps times NEX. If instead you had doubled the phase matrix to 512 steps to gain in-plane resolution, you would halve the phase-encode pixel dimension, taking another SNR hit from the smaller voxel, while also doubling scan time directly, because phase steps multiply straight into the scan-time formula. Resolution, SNR, and time are locked together: buying back one always costs one of the other two.</p>",
+        "memory_hooks": [
+          "SNR scales directly with voxel volume but only with the square root of NEX. Halve the voxel and you lose a full factor of SNR; you need four times the averages to win it back.",
+          "For 2D spin echo, scan time equals TR times phase-encode steps times NEX. Only the phase direction adds time; more frequency-encode samples sharpen resolution for free.",
+          "CNR, not raw SNR, is what makes a lesion visible. A high-SNR image with poor tissue contrast can still hide pathology that a noisier, higher-contrast image shows clearly."
+        ],
+        "exam_traps": [
+          "Increasing the frequency-encode matrix does not add scan time, but increasing the phase-encode matrix does, directly and linearly. Don't confuse the two directions.",
+          "Parallel imaging (SENSE or GRAPPA) buys speed by skipping phase-encode lines, but the SNR cost is the g-factor times the square root of the acceleration R, and the g-factor penalty is worst at the center of the FOV, not spread evenly.",
+          "Raising receiver bandwidth shortens scan time and reduces chemical-shift artifact, but it lowers SNR because a wider bandwidth admits more noise per sample. It is not a free efficiency gain."
         ]
       }
     },
@@ -3418,6 +3440,17 @@
           "Dixon uses in-phase and opposed-phase echoes for robust water-only and fat-only images.",
           "Water excitation tips only water, used in high-resolution cartilage imaging.",
           "Suppressing bright fat raises conspicuity of enhancement, oedema and marrow disease."
+        ],
+        "worked_example": "<p>You are protocoling a shoulder MRI and the coil placement puts the joint off isocenter, near the edge of the magnet's homogeneous volume, close to surgical hardware. You want fat suppression so labral fluid and marrow edema stand out. A frequency-selective spectral fat-sat pulse depends on a clean, uniform separation between the fat and water resonance peaks; off isocenter, and worse near metal, the local field varies enough that the pulse partly saturates water in some spots and misses fat in others, giving patchy, unreliable suppression. Switching to STIR solves the uniformity problem because it nulls tissue by T1 relaxation rather than by resonance frequency, so it does not care how homogeneous the local field is. The trade-off shows up later in the same exam: if a contrast-enhanced sequence is planned, STIR cannot be used for that part, because gadolinium shortens the T1 of enhancing tissue down near fat's T1, and STIR would null the enhancement right along with the fat. For that portion of the exam, spectral fat-sat closer to isocenter, or Dixon, is used instead.</p>",
+        "memory_hooks": [
+          "STIR nulls by T1, so it is field-uniform but not contrast-safe. Spectral fat-sat is frequency-selective, so it is contrast-safe but field-sensitive.",
+          "Off isocenter, near metal, or at low field where the fat-water frequency gap is small: reach for STIR, not spectral fat-sat.",
+          "Dixon separates water and fat by acquiring in-phase and opposed-phase echoes and solving for both signals, which keeps it reliable and quantitative where a single saturation pulse would fail."
+        ],
+        "exam_traps": [
+          "STIR contrast is not purely a fat-null overlay. TE still contributes T2 weighting underneath, so fluid can be bright from T2 on a STIR image, which is easy to misread as pure T1 behavior.",
+          "Spectral fat-sat depends on field strength: the fat-water chemical shift is a fixed 3.5 ppm, but that translates to a wider frequency gap at higher field, so it is easier at 3T and harder at 1.5T or below, especially over a large FOV.",
+          "Water excitation is not the same technique as fat saturation. It selectively excites water protons at the outset rather than suppressing fat afterward, which is why it suits very short TR, high-resolution cartilage sequences."
         ]
       }
     },
@@ -3552,6 +3585,17 @@
           "Check eGFR: NSF links less-stable linear agents to severe renal failure.",
           "Prefer stable macrocyclic agents at the lowest effective dose; avoid in pregnancy unless essential.",
           "Mild reactions get antihistamines; anaphylaxis is treated first with epinephrine."
+        ],
+        "worked_example": "<p>A patient is scheduled for a contrast-enhanced brain MRI and the eGFR comes back at 25 mL per minute per 1.73 square meters, in the range associated with nephrogenic systemic fibrosis risk from gadolinium exposure. Gadolinium itself is the toxic part once it is released from its chelate, so agents are engineered to hold it tightly. Linear chelates bind gadolinium less securely than macrocyclic chelates, so more free gadolinium can be released and deposited in tissue, including skin, and in patients with poor renal clearance this is the mechanism behind NSF. Because gadolinium is cleared through the kidneys, poor renal function means the agent, and any gadolinium it releases, stays in the body far longer, raising both exposure and risk. The response is not to skip a clinically indicated scan but to use a stable macrocyclic agent at the lowest dose that answers the clinical question, with the decision documented. If the goal instead were biliary imaging to look for a bile leak, a hepatobiliary agent, partly excreted through the liver into bile rather than only through the kidneys, would be chosen over a standard extracellular agent.</p>",
+        "memory_hooks": [
+          "Gadolinium is the toxic part; the chelate is what makes it safe to inject. Macrocyclic chelates cage it more tightly than linear ones, which is why NSF risk concentrates in linear agents.",
+          "Renal clearance is why eGFR is checked before contrast: poor kidney function means gadolinium lingers longer, raising both tissue retention and NSF risk.",
+          "Special-purpose agents to keep straight: hepatobiliary agents for liver and bile, iron-based agents for blood-pool vascular imaging, negative oral agents to darken bowel fluid for MRCP."
+        ],
+        "exam_traps": [
+          "NSF risk depends on chelate stability and renal function together. A stable macrocyclic agent is lower risk in severe renal failure, not risk-free, so eGFR screening still applies.",
+          "A prior allergic-type reaction to iodinated CT contrast or a shellfish allergy does not predict a gadolinium reaction; that cross-reactivity belief is a myth even for iodinated contrast, though any prior contrast reaction of any kind raises general risk.",
+          "Anaphylaxis is treated first with epinephrine, not antihistamines or steroids. Antihistamines are for milder urticarial reactions, not the airway and cardiovascular compromise of true anaphylaxis."
         ]
       }
     },
