@@ -163,7 +163,7 @@
   // ---- unified signed-in view (everyone can teach and join) ------------- //
   function signedInView(uid, note) {
     var wrap = h("div");
-    if (note) wrap.appendChild(h("p", { class: "msg ok", text: note }));
+    if (note) wrap.appendChild(h("p", { class: note.ok ? "msg ok" : "msg err", text: note.text }));
     var teachList = h("div"), joinedList = h("div"), recent = h("div");
 
     // -- teach: create a class + the classes you own --
@@ -269,10 +269,11 @@
   // the params in the error case — a valid callback carries an access_token we must keep.
   var urlErr = AuthUrl ? AuthUrl.parseAuthError(location.hash, location.search) : null;
   var errMsg = urlErr ? AuthUrl.friendlyAuthError(urlErr.code, urlErr.message) : null;
+  // Read the invite code before the urlErr strip below can clear location.search.
+  var joinCode = JoinLink ? JoinLink.parseJoinCode(location.search) : null;
   if (urlErr) { try { history.replaceState(null, "", location.pathname); } catch (e) { /* best-effort */ } }
   // Invite link: stash ?join=CODE so it survives the Google OAuth round-trip (which drops the
   // query string) and a refresh, then strip it from the URL (keep any hash for the auth callback).
-  var joinCode = JoinLink ? JoinLink.parseJoinCode(location.search) : null;
   if (joinCode) {
     savePendingJoin(joinCode);
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* best-effort */ }
@@ -291,8 +292,13 @@
     if (pending) {
       Accounts.joinClass(pending).then(function (res) {
         clearPendingJoin();
-        proceed(res && res.error ? null : "You've joined the class. It is listed below.");
-      }).catch(function () { clearPendingJoin(); proceed(null); });
+        proceed(res && res.error
+          ? { text: "That invite code did not work. Ask for a new one.", ok: false }
+          : { text: "You've joined the class. It is listed below.", ok: true });
+      }).catch(function () {
+        clearPendingJoin();
+        proceed({ text: "Could not join the class. Please try the code again.", ok: false });
+      });
     } else {
       proceed(null);
     }
