@@ -73,3 +73,6 @@ node_modules/
 
 # Legacy PNG output of scripts/prerender_lessons.py (it now writes optimized .jpg)
 web/img/lessons/**/*.png
+
+# scratch: quiz rebalance option-patch files (applied via scripts/apply_quiz_patch.py)
+patches/
