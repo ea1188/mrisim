@@ -55,14 +55,16 @@
 
   // Turn a raw Supabase auth error into a message that tells the user what to do.
   // The consumed/expired-link case (the Safe-Links prefetch race) is the whole
-  // reason this fix exists, so it points them at the 6-digit code path.
+  // makes it actionable. Sign-in is Google-only, so callbacks that fail come back as
+  // an OAuth error (a cancelled/denied consent, or a stale link); tell the user to try again.
   function friendlyAuthError(code, message) {
     var c = String(code || "").toLowerCase();
     var m = String(message || "");
-    if (c === "otp_expired" || c === "access_denied" || /invalid or has expired/i.test(m)) {
-      return "That sign-in link was already used or has expired. Some email systems open " +
-        "the link automatically before you do. Enter the 6-digit code from the same email " +
-        "instead, or request a new link.";
+    if (c === "access_denied") {
+      return "Sign-in was cancelled or not permitted. Please try Continue with Google again.";
+    }
+    if (c === "otp_expired" || /invalid or has expired/i.test(m)) {
+      return "That sign-in link has expired or was already used. Please sign in again.";
     }
     return m || "Sign-in failed. Please try again.";
   }

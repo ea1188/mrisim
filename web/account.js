@@ -36,48 +36,11 @@
   }
 
   // ---- sign-in (signed out) --------------------------------------------- //
-  // preErrMsg: an optional message to show on entry (e.g. a magic link that a mail
-  // scanner already consumed — see the boot handler and auth_url.js).
+  // preErrMsg: an optional message to show on entry (e.g. an OAuth callback error
+  // read from the URL by the boot handler; see auth_url.js).
   function signInView(preErrMsg) {
-    var email = h("input", { type: "email", id: "email", placeholder: "you@school.edu", autocomplete: "email" });
-    var name = h("input", { type: "text", id: "name", placeholder: "Your name (optional)" });
-    var inst = h("input", { type: "text", id: "inst", placeholder: "Institution (optional)" });
     var msg = h("div", { class: "msg" });
     if (preErrMsg) { msg.className = "msg err"; msg.textContent = preErrMsg; }
-    var sentAddr = "";
-
-    // Code entry: the reliable path when a mail system opens the link before the user.
-    // Hidden until an email is sent, then revealed so they can paste the 6-digit code.
-    var code = h("input", { type: "text", id: "code", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "6", placeholder: "123456" });
-    var verify = h("button", { class: "primary", text: "Verify code", onclick: function () {
-      var c = code.value.trim();
-      if (!AuthUrl || !AuthUrl.looksLikeCode(c)) { msg.className = "msg err"; msg.textContent = "Enter the 6-digit code from the email."; return; }
-      verify.disabled = true; msg.className = "msg"; msg.textContent = "Verifying…";
-      Accounts.verifyCode(sentAddr || email.value.trim(), c).then(function (r) {
-        if (r && r.error) { verify.disabled = false; msg.className = "msg err"; msg.textContent = r.error.message; return; }
-        location.reload();   // boot re-runs, finds the fresh session, renders the signed-in view
-      }).catch(function (e) { verify.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
-    } });
-    var codeRow = h("div", { hidden: true, style: "margin-top:14px" }, [
-      h("label", { text: "6-digit code from the email" }), code, verify,
-    ]);
-
-    var btn = h("button", { class: "primary", text: "Email me a sign-in link", onclick: function () {
-      var addr = email.value.trim();
-      if (!addr) { msg.className = "msg err"; msg.textContent = "Enter your email."; return; }
-      btn.disabled = true; msg.className = "msg"; msg.textContent = "Sending…";
-      Accounts.signIn(addr, { meta: { display_name: name.value.trim(), institution: inst.value.trim() } })
-        .then(function (r) {
-          btn.disabled = false;
-          if (r && r.error) { msg.className = "msg err"; msg.textContent = r.error.message; return; }
-          sentAddr = addr;
-          codeRow.hidden = false;
-          msg.className = "msg ok";
-          msg.textContent = "Check " + addr + " for the sign-in email. Click its link, or if that does not work, paste the 6-digit code below.";
-          try { code.focus(); } catch (e) { /* focus is best-effort */ }
-        })
-        .catch(function (e) { btn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
-    } });
 
     var gbtn = h("button", { class: "primary", text: "Continue with Google", onclick: function () {
       gbtn.disabled = true; msg.className = "msg"; msg.textContent = "Redirecting to Google…";
@@ -88,13 +51,8 @@
 
     show(card([
       h("h2", { text: "Sign in" }),
-      h("p", { class: "sub", text: "One click with Google, or use email below. It's the same account either way — once you're in you can create classes and join them." }),
-      gbtn,
-      h("p", { class: "sub", style: "margin:16px 0 2px", text: "or sign in with email" }),
-      h("label", { text: "Email" }), email,
-      h("label", { text: "Name" }), name,
-      h("label", { text: "Institution" }), inst,
-      btn, codeRow, msg,
+      h("p", { class: "sub", text: "Sign in with your Google account to create classes, join them, and keep your course progress synced across your devices." }),
+      gbtn, msg,
     ]));
   }
 
