@@ -241,6 +241,50 @@
     }).then(function (r) { return r.data || []; });
   }
 
+  // --- assignments (owner sub-project C) ----------------------------------- //
+  // Owner: assignments for a class you own (owner RLS scopes to your classes).
+  function classAssignments(classId) {
+    return client().then(function (c) {
+      return c.from("assignments").select("id,kind,ref,due_at,created_at")
+        .eq("class_id", classId).order("created_at", { ascending: false });
+    }).then(function (r) { return r.data || []; }).catch(function () { return []; });
+  }
+  // Owner: create or re-date an assignment. Upsert on (class_id, kind, ref) so
+  // re-assigning the same item updates its due date instead of duplicating.
+  function createAssignment(classId, kind, ref, dueAt) {
+    return client().then(function (c) {
+      return c.from("assignments").upsert(
+        { class_id: classId, kind: kind, ref: String(ref), due_at: dueAt || null },
+        { onConflict: "class_id,kind,ref" });
+    });
+  }
+  // Owner: remove an assignment you own (owner RLS).
+  function deleteAssignment(id) {
+    return client().then(function (c) { return c.from("assignments").delete().eq("id", id); });
+  }
+  // Learner: assignments across every class you're enrolled in (enrolled-read RLS
+  // returns exactly those). Best-effort; [] when off / signed out / on error.
+  function myAssignments() {
+    if (!ENABLED || !signedIn()) return Promise.resolve([]);
+    return client().then(function (c) {
+      return c.from("assignments").select("id,class_id,kind,ref,due_at,created_at")
+        .order("created_at", { ascending: false });
+    }).then(function (r) { return r.data || []; }).catch(function () { return []; });
+  }
+  // Learner: your OWN activity refs, uncapped (RLS scopes to you), for deriving
+  // assignment completion regardless of history size. Best-effort; [] otherwise.
+  function myActivityRefs() {
+    if (!ENABLED || !signedIn()) return Promise.resolve([]);
+    return client().then(function (c) {
+      return c.auth.getUser().then(function (r) {
+        var u = r.data.user;
+        if (!u) return [];
+        return c.from("activity").select("kind,ref,created_at").eq("student_id", u.id)
+          .then(function (res) { return res.data || []; });
+      });
+    }).catch(function () { return []; });
+  }
+
   // --- paid course: entitlement + exclusive premium content ---------------- //
   // isEntitled: does the signed-in user hold this course? (RLS returns only own rows.)
   function isEntitled(course) {
@@ -292,6 +336,8 @@
     renameClass: renameClass, rotateJoinCode: rotateJoinCode, removeMember: removeMember,
     archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
+    classAssignments: classAssignments, createAssignment: createAssignment,
+    deleteAssignment: deleteAssignment, myAssignments: myAssignments, myActivityRefs: myActivityRefs,
     isEntitled: isEntitled, premiumContent: premiumContent, requestRefund: requestRefund,
     loadProgress: loadProgress, saveProgress: saveProgress,
   };

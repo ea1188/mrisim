@@ -137,12 +137,13 @@
   }
 
   // --- the course --------------------------------------------------------- //
-  function courseView(curriculum, lessonsByTitle, premiumByTopic) {
+  function courseView(curriculum, lessonsByTitle, premiumByTopic, assignments) {
     var wrap = h("div", { class: "course" });
     var rail = h("div", { class: "rail" });
     var main = h("div", { class: "main" });
     CTX = { curriculum: curriculum, byTitle: lessonsByTitle, byTopic: premiumByTopic,
       rail: rail, main: main, mod: curriculum[0],
+      assign: assignIndex(assignments),
       expanded: new Set([curriculum[0].title]) };  // which modules are expanded in the TOC
 
     buildRail();
@@ -152,6 +153,24 @@
   }
 
   function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+
+  // Index the learner's assignments by "kind ref" -> the assignment row, for O(1)
+  // badge lookup during render. Best-effort: absent/[] means no badges.
+  function assignIndex(assignments) {
+    var idx = {};
+    (assignments || []).forEach(function (a) { idx[a.kind + " " + a.ref] = a; });
+    return idx;
+  }
+  // A small "ASSIGNED" badge (+ due) if this (kind, ref) is assigned to the learner,
+  // else null. Uses the pure dueLabel for the date text.
+  function assignBadge(kind, ref) {
+    var a = CTX && CTX.assign && CTX.assign[kind + " " + ref];
+    if (!a) return null;
+    var badge = h("span", { class: "abadge", text: "Assigned" });
+    var due = window.Assignments ? window.Assignments.dueLabel(a.due_at) : null;
+    if (due) badge.appendChild(h("span", { class: "due", text: due.text }));
+    return badge;
+  }
 
   // The subsections of a module, in reading order: its premium education pieces, its lessons,
   // then its question set. Each carries a stable id, a rail label, and a right-pane anchor.
@@ -430,7 +449,10 @@
     if (CTX) CTX.mod = mod;
     var cfg = TOPIC_CFG[mod.title] || { premium: [], quiz: [] };
     clear(main);
-    main.appendChild(h("h2", { text: mod.title }));
+    var modH = h("h2", { text: mod.title });
+    var modBadge = assignBadge("module", mod.title);
+    if (modBadge) modH.appendChild(modBadge);
+    main.appendChild(modH);
     main.appendChild(h("p", { class: "lede", text: mod.lessons.length + " lesson" + (mod.lessons.length === 1 ? "" : "s") + " in this topic" }));
 
     // 1) Premium education (exclusive; only present because RLS let us fetch it).
@@ -497,6 +519,7 @@
           h("div", { class: "lt" }, [
             isDone ? h("span", { class: "lk", text: "✓ " }) : document.createTextNode(""),
             document.createTextNode(title),
+            assignBadge("lesson", title) || document.createTextNode(""),
           ]),
           L.blurb ? h("div", { class: "lb", text: L.blurb }) : document.createTextNode(""),
         ]),
@@ -522,6 +545,10 @@
         h("a", { class: "linkout", href: "quiz.html?topic=" + encodeURIComponent(cfg.quiz[0]), text: "free interactive " + cfg.quiz[0] + " quiz" }),
         document.createTextNode(" (read-the-scan)."),
       ]);
+      cfg.quiz.forEach(function (topic) {
+        var qb = assignBadge("quiz", topic);
+        if (qb) link.appendChild(qb);
+      });
       main.appendChild(link);
     }
     if (hasMastery(mod)) main.appendChild(masterySection(mod));
@@ -1176,14 +1203,15 @@
     return Promise.all([
       fetch("lessons.json").then(function (r) { return r.json(); }),
       Accounts.premiumContent(COURSE),
+      Accounts.myAssignments ? Accounts.myAssignments() : Promise.resolve([]),
     ]).then(function (res) {
-      var data = res[0], premium = res[1];
+      var data = res[0], premium = res[1], assignments = res[2];
       var byTitle = {}; (data.lessons || []).forEach(function (L) { byTitle[L.title] = L; });
       var byTopic = {}; (premium || []).forEach(function (it) {
         (byTopic[it.topic] = byTopic[it.topic] || []).push(it);
       });
       return bootSync().then(function () {
-        courseView(data.curriculum || [], byTitle, byTopic);
+        courseView(data.curriculum || [], byTitle, byTopic, assignments);
       });
     });
   }
