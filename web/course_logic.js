@@ -72,6 +72,75 @@
     return n;
   }
 
+  function _num(x) { return typeof x === "number" && !isNaN(x) ? x : 0; }
+  function _has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function _keysUnion(a, b) {
+    var keys = {}, k; a = a || {}; b = b || {};
+    for (k in a) { if (_has(a, k)) keys[k] = 1; }
+    for (k in b) { if (_has(b, k)) keys[k] = 1; }
+    return keys;
+  }
+  function _arrUnion(a, b) {
+    var out = (a || []).slice(), seen = {};
+    out.forEach(function (x) { seen[x] = 1; });
+    (b || []).forEach(function (x) { if (!seen[x]) { seen[x] = 1; out.push(x); } });
+    return out;
+  }
+  function _mapUnion(a, b) {
+    var out = {}, k; a = a || {}; b = b || {};
+    for (k in a) { if (_has(a, k)) out[k] = a[k]; }
+    for (k in b) { if (_has(b, k) && !(k in out)) out[k] = b[k]; }
+    return out;
+  }
+  function _mergeQuiz(a, b) {
+    var out = {}, keys = _keysUnion(a, b), k; a = a || {}; b = b || {};
+    for (k in keys) {
+      var ra = a[k], rb = b[k];
+      out[k] = (!rb) ? ra : (!ra) ? rb : (_num(rb.seen) > _num(ra.seen) ? rb : ra);
+    }
+    return out;
+  }
+  function _mergeMastery(a, b) {
+    var out = {}, keys = _keysUnion(a, b), k; a = a || {}; b = b || {};
+    for (k in keys) {
+      var ra = a[k] || {}, rb = b[k] || {};
+      out[k] = { passed: !!(ra.passed || rb.passed),
+        bestPct: Math.max(_num(ra.bestPct), _num(rb.bestPct)),
+        attempts: Math.max(_num(ra.attempts), _num(rb.attempts)),
+        ts: Math.max(_num(ra.ts), _num(rb.ts)) };
+    }
+    return out;
+  }
+  function _mergeReview(a, b) {
+    var out = {}, keys = _keysUnion(a, b), k; a = a || {}; b = b || {};
+    for (k in keys) {
+      var ra = a[k], rb = b[k];
+      out[k] = (!rb) ? ra : (!ra) ? rb : (_num(rb.lastSeen) > _num(ra.lastSeen) ? rb : ra);
+    }
+    return out;
+  }
+  function _higher(a, b, field) {
+    if (!a) return b; if (!b) return a;
+    return _num(b[field]) > _num(a[field]) ? b : a;
+  }
+
+  // Merge two course-progress states (each keyed by the seven storage keys) so that
+  // progress only ever increases. Keys present on one side pass through unchanged.
+  function mergeProgress(local, remote) {
+    local = local || {}; remote = remote || {};
+    var out = {}, k;
+    for (k in local) { if (_has(local, k)) out[k] = local[k]; }
+    for (k in remote) { if (_has(remote, k) && !(k in out)) out[k] = remote[k]; }
+    if ("mrisim_curriculum" in out) out.mrisim_curriculum = _arrUnion(local.mrisim_curriculum, remote.mrisim_curriculum);
+    if ("mrisim_course_read_v1" in out) out.mrisim_course_read_v1 = _mapUnion(local.mrisim_course_read_v1, remote.mrisim_course_read_v1);
+    if ("mrisim_course_quiz_v1" in out) out.mrisim_course_quiz_v1 = _mergeQuiz(local.mrisim_course_quiz_v1, remote.mrisim_course_quiz_v1);
+    if ("mrisim_course_exam_v1" in out) out.mrisim_course_exam_v1 = _higher(local.mrisim_course_exam_v1, remote.mrisim_course_exam_v1, "bestPct");
+    if ("mrisim_course_mastery_v1" in out) out.mrisim_course_mastery_v1 = _mergeMastery(local.mrisim_course_mastery_v1, remote.mrisim_course_mastery_v1);
+    if ("mrisim_course_diagnostic_v1" in out) out.mrisim_course_diagnostic_v1 = _higher(local.mrisim_course_diagnostic_v1, remote.mrisim_course_diagnostic_v1, "ts");
+    if ("mrisim_course_review_v1" in out) out.mrisim_course_review_v1 = _mergeReview(local.mrisim_course_review_v1, remote.mrisim_course_review_v1);
+    return out;
+  }
+
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
     deriveModuleStatus: deriveModuleStatus,
@@ -80,5 +149,6 @@
     reviewOnMiss: reviewOnMiss,
     reviewOnCorrect: reviewOnCorrect,
     dueCount: dueCount,
+    mergeProgress: mergeProgress,
   };
 });

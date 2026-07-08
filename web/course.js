@@ -831,12 +831,58 @@
       if (b.bestPct == null || pct > b.bestPct) { b.bestPct = pct; b.bestScore = score; b.bestTotal = total; b.at = Date.now(); }
       b.lastPct = pct; b.lastAt = Date.now();
       localStorage.setItem(COURSE_EXAM_KEY, JSON.stringify(b));
+      queueSync();
     } catch (e) { /* storage off */ }
+  }
+
+  // --- cross-device progress sync (best-effort, local-first) --------------- //
+  var PROGRESS_KEYS = [CURRICULUM_DONE_KEY, COURSE_QUIZ_KEY, COURSE_READ_KEY, COURSE_EXAM_KEY, COURSE_MASTERY_KEY, COURSE_DIAG_KEY, COURSE_REVIEW_KEY];
+  var _syncTimer = null;
+
+  function readAllProgress() {
+    var out = {};
+    PROGRESS_KEYS.forEach(function (k) {
+      try { var v = localStorage.getItem(k); if (v != null) out[k] = JSON.parse(v); } catch (e) { /* skip */ }
+    });
+    return out;
+  }
+  function writeAllProgress(state) {
+    if (!state) return;
+    PROGRESS_KEYS.forEach(function (k) {
+      if (state[k] == null) return;
+      try { localStorage.setItem(k, JSON.stringify(state[k])); } catch (e) { /* storage off */ }
+    });
+  }
+  function syncOn() { return !!(window.Accounts && Accounts.enabled() && Accounts.signedIn()); }
+  // Debounced push of local progress to the server.
+  function queueSync() {
+    if (!syncOn()) return;
+    if (_syncTimer) clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(flushSync, 2000);
+  }
+  function flushSync() {
+    if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    if (!syncOn()) return;
+    Accounts.saveProgress(readAllProgress());
+  }
+  // Pull the server copy, merge monotonically into local, write back, and push.
+  function bootSync() {
+    if (!syncOn()) return Promise.resolve();
+    return Accounts.loadProgress().then(function (remote) {
+      if (!remote) { flushSync(); return; }
+      var merged = CourseLogic.mergeProgress(readAllProgress(), remote);
+      writeAllProgress(merged);
+      Accounts.saveProgress(merged);
+    }).catch(function () { /* best-effort */ });
+  }
+  if (window.addEventListener) {
+    window.addEventListener("pagehide", flushSync);
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flushSync(); });
   }
 
   // --- spaced review of missed items -------------------------------------- //
   function loadReview() { try { return JSON.parse(localStorage.getItem(COURSE_REVIEW_KEY) || "{}") || {}; } catch (e) { return {}; } }
-  function saveReview(map) { try { localStorage.setItem(COURSE_REVIEW_KEY, JSON.stringify(map)); } catch (e) { /* storage off */ } }
+  function saveReview(map) { try { localStorage.setItem(COURSE_REVIEW_KEY, JSON.stringify(map)); queueSync(); } catch (e) { /* storage off */ } }
 
   // Record a graded answer into the spaced-review queue, keyed by the (unique) question prompt.
   // A miss enqueues/resets the question (due now). A correct answer during a review session
@@ -920,7 +966,7 @@
   // feedback until submit (reusing the exam machine), scores per module, and stores a snapshot that
   // reorders "Study next". Does NOT bump quiz score or change readiness/mastery.
   function loadDiagnostic() { try { return JSON.parse(localStorage.getItem(COURSE_DIAG_KEY) || "null"); } catch (e) { return null; } }
-  function saveDiagnostic(d) { try { localStorage.setItem(COURSE_DIAG_KEY, JSON.stringify(d)); } catch (e) { /* storage off */ } }
+  function saveDiagnostic(d) { try { localStorage.setItem(COURSE_DIAG_KEY, JSON.stringify(d)); queueSync(); } catch (e) { /* storage off */ } }
 
   function startDiagnostic() {
     var questions = [], modTitles = [];
@@ -993,7 +1039,7 @@
     } catch (e) { return {}; }
   }
   function loadRead() { try { return JSON.parse(localStorage.getItem(COURSE_READ_KEY) || "{}") || {}; } catch (e) { return {}; } }
-  function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); } catch (e) { /* storage off */ } }
+  function markRead(id) { try { var r = loadRead(); r[id] = true; localStorage.setItem(COURSE_READ_KEY, JSON.stringify(r)); queueSync(); } catch (e) { /* storage off */ } }
   function loadMastery() { try { return JSON.parse(localStorage.getItem(COURSE_MASTERY_KEY) || "{}") || {}; } catch (e) { return {}; } }
   function saveMasteryResult(title, pct) {
     try {
@@ -1003,6 +1049,7 @@
       if (pct >= PASS_PCT) r.passed = true;
       r.ts = Date.now();
       m[title] = r; localStorage.setItem(COURSE_MASTERY_KEY, JSON.stringify(m));
+      queueSync();
       return r;
     } catch (e) { return { passed: pct >= PASS_PCT, bestPct: pct, attempts: 1 }; }
   }
@@ -1010,7 +1057,7 @@
   function markDone(title) {
     try {
       var a = JSON.parse(localStorage.getItem(CURRICULUM_DONE_KEY) || "[]");
-      if (a.indexOf(title) < 0) { a.push(title); localStorage.setItem(CURRICULUM_DONE_KEY, JSON.stringify(a)); }
+      if (a.indexOf(title) < 0) { a.push(title); localStorage.setItem(CURRICULUM_DONE_KEY, JSON.stringify(a)); queueSync(); }
     } catch (e) { /* storage off */ }
   }
   function bumpScore(topicTitle, correct) {
@@ -1019,6 +1066,7 @@
       var r = s[topicTitle] || { right: 0, seen: 0 };
       r.seen += 1; if (correct) r.right += 1; s[topicTitle] = r;
       localStorage.setItem(COURSE_QUIZ_KEY, JSON.stringify(s));
+      queueSync();
     } catch (e) { /* storage off */ }
   }
 
@@ -1083,7 +1131,9 @@
       var byTopic = {}; (premium || []).forEach(function (it) {
         (byTopic[it.topic] = byTopic[it.topic] || []).push(it);
       });
-      courseView(data.curriculum || [], byTitle, byTopic);
+      return bootSync().then(function () {
+        courseView(data.curriculum || [], byTitle, byTopic);
+      });
     });
   }
 

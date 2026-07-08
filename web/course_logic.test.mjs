@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress } = CourseLogic;
 
 test("constants match the spec", () => {
   assert.equal(PASS_PCT, 80);
@@ -73,4 +73,35 @@ test("reviewOnCorrect advances box, widens due (1/3/7 days), then graduates", ()
 test("dueCount counts only entries with due <= now", () => {
   assert.equal(dueCount({ a: { due: 100 }, b: { due: 300 }, c: { due: 200 } }, 200), 2);
   assert.equal(dueCount({}, 999), 0);
+});
+
+test("mergeProgress unions curriculum + read, keeps higher quiz seen", () => {
+  const local = { mrisim_curriculum: ["a", "b"], mrisim_course_read_v1: { x: true }, mrisim_course_quiz_v1: { M: { seen: 5, right: 3 } } };
+  const remote = { mrisim_curriculum: ["b", "c"], mrisim_course_read_v1: { y: true }, mrisim_course_quiz_v1: { M: { seen: 8, right: 2 } } };
+  const m = mergeProgress(local, remote);
+  assert.deepEqual(m.mrisim_curriculum.slice().sort(), ["a", "b", "c"]);
+  assert.deepEqual(Object.keys(m.mrisim_course_read_v1).sort(), ["x", "y"]);
+  assert.deepEqual(m.mrisim_course_quiz_v1.M, { seen: 8, right: 2 });
+});
+
+test("mergeProgress mastery: passed OR, max bestPct/attempts/ts", () => {
+  const m = mergeProgress(
+    { mrisim_course_mastery_v1: { M: { passed: false, bestPct: 60, attempts: 1, ts: 10 } } },
+    { mrisim_course_mastery_v1: { M: { passed: true, bestPct: 90, attempts: 3, ts: 5 } } });
+  assert.deepEqual(m.mrisim_course_mastery_v1.M, { passed: true, bestPct: 90, attempts: 3, ts: 10 });
+});
+
+test("mergeProgress exam higher bestPct; diagnostic later ts; review later lastSeen", () => {
+  const m = mergeProgress(
+    { mrisim_course_exam_v1: { bestPct: 70 }, mrisim_course_diagnostic_v1: { ts: 100, order: ["a"] }, mrisim_course_review_v1: { q: { box: 1, lastSeen: 50 } } },
+    { mrisim_course_exam_v1: { bestPct: 85 }, mrisim_course_diagnostic_v1: { ts: 200, order: ["b"] }, mrisim_course_review_v1: { q: { box: 0, lastSeen: 80 } } });
+  assert.equal(m.mrisim_course_exam_v1.bestPct, 85);
+  assert.deepEqual(m.mrisim_course_diagnostic_v1.order, ["b"]);
+  assert.deepEqual(m.mrisim_course_review_v1.q, { box: 0, lastSeen: 80 });
+});
+
+test("mergeProgress passes through one-sided keys and handles empties", () => {
+  assert.deepEqual(mergeProgress({}, {}), {});
+  assert.deepEqual(mergeProgress({ mrisim_curriculum: ["a"] }, {}), { mrisim_curriculum: ["a"] });
+  assert.deepEqual(mergeProgress({}, { mrisim_course_exam_v1: { bestPct: 50 } }).mrisim_course_exam_v1, { bestPct: 50 });
 });

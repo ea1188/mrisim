@@ -121,6 +121,32 @@
     }).catch(function () { /* formative sync is best-effort */ });
   }
 
+  // --- learner: cross-device course progress sync -------------------------- //
+  // Best-effort mirror of the course's localStorage state. Never block or error the learner.
+  function loadProgress() {
+    if (!ENABLED || !signedIn()) return Promise.resolve(null);
+    return client().then(function (c) {
+      return c.auth.getUser().then(function (r) {
+        var u = r.data.user;
+        if (!u) return null;
+        return c.from("course_progress").select("state").eq("user_id", u.id).maybeSingle()
+          .then(function (p) { return p.data ? p.data.state : null; });
+      });
+    }).catch(function () { return null; });
+  }
+  function saveProgress(state) {
+    if (!ENABLED || !signedIn()) return Promise.resolve();
+    return client().then(function (c) {
+      return c.auth.getUser().then(function (r) {
+        var u = r.data.user;
+        if (!u) return null;
+        return c.from("course_progress").upsert(
+          { user_id: u.id, state: state, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" });
+      });
+    }).catch(function () { /* progress sync is best-effort */ });
+  }
+
   // --- student ------------------------------------------------------------- //
   function joinClass(code) {
     return client().then(function (c) {
@@ -235,5 +261,6 @@
     archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
     isEntitled: isEntitled, premiumContent: premiumContent, requestRefund: requestRefund,
+    loadProgress: loadProgress, saveProgress: saveProgress,
   };
 })();
