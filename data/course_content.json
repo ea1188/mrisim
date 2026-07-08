@@ -4737,6 +4737,346 @@
         "answer": 0,
         "explain": "Transient warmth and flushing are expected sensations, not true reactions. Reassurance is usually all that is needed, and calming anxious patients before injection can prevent escalation."
       }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "education",
+      "ord": 933,
+      "body": {
+        "title": "Brain MRI: routine protocol and when to enhance",
+        "html": "<p>A routine brain study uses the <strong>head coil</strong> and covers from the skull base to the vertex, roughly one slice above the top of the skull. Axial slices are angled along the <strong>AC-PC line</strong>, drawn through the anterior and posterior commissures, so that anatomy is displayed in a reproducible plane. Many departments now acquire 3D sagittal volumes (T1 or MPR, FLAIR, and T2) and reformat them into axial and coronal planes, which reduces repeat scanning and gives isotropic detail.</p><p>The non-contrast set is built around a signal triad. <strong>Diffusion</strong> detects acute infarct: true restriction is bright on the high b-value image (for example b1000) and <em>dark on the ADC map</em>. <strong>SWI</strong> (susceptibility-weighted imaging) shows hemorrhage and cerebral microbleeds in trauma and microhemorrhage. <strong>FLAIR</strong> is a fluid-attenuated inversion recovery sequence that nulls CSF so CSF appears dark, and it highlights multiple sclerosis and other white-matter disease. The spine equivalent for demyelination is STIR.</p><p>Gadolinium is dosed by <strong>body weight</strong> per department protocol. Structures that normally enhance confirm that contrast was delivered: the pituitary gland and infundibulum, choroid plexus, nasal mucosa and turbinates, dural venous sinuses, and vessels. Contrast is added by indication, such as routine with and without for headache or infection, tumor follow-up, pre-operative and immediate post-operative studies, metastatic or meningioma work-up in a patient with a cancer history, and demyelinating disease. Isolated memory loss usually does not receive contrast.</p>",
+        "keypoints": [
+          "Head coil, coverage skull base to vertex, axial slices angled on the AC-PC line.",
+          "Diffusion restriction means bright on high b-value AND dark on ADC.",
+          "SWI shows hemorrhage and microbleeds; FLAIR nulls CSF and shows MS.",
+          "3D sagittal volumes are reformatted into axial and coronal planes.",
+          "Gadolinium is weight-based; pituitary, choroid plexus, mucosa, sinuses, and vessels normally enhance."
+        ],
+        "worked_example": "A patient arrives with sudden left-sided weakness. On the high b-value diffusion image a right frontal region is bright, and the same region is dark on the ADC map. That combination confirms an acute infarct with true restricted diffusion, so the finding is reported as acute stroke rather than dismissed as an artifact.",
+        "memory_hooks": [
+          "Diffusion for stroke, SWI for blood, FLAIR for plaques.",
+          "True restriction is bright high-b, dark ADC.",
+          "AC to PC keeps every brain in the same plane."
+        ],
+        "exam_traps": [
+          "FLAIR nulls CSF so CSF is dark, unlike T2 where CSF is bright.",
+          "High b-value brightness alone is not restriction without a dark ADC; bright high-b with bright ADC is T2 shine-through."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "education",
+      "ord": 934,
+      "body": {
+        "title": "Specialized neuro studies: pituitary, IAC, and stereotactic planning",
+        "html": "<p>The <strong>dynamic pituitary</strong> study uses the head coil and full-dose contrast. A microadenoma is smaller than 10 mm and a macroadenoma is 10 mm or larger. A dynamic contrast-enhanced sequence acquires rapid repeated images just after injection to catch <strong>microadenomas</strong>, which enhance later than the normal gland. On early dynamic frames the lesion therefore looks relatively dark against the briskly enhancing normal pituitary. Do not alter the dynamic sequence parameters. The gland has an anterior lobe (adenohypophysis) and a posterior lobe (neurohypophysis), the posterior lobe is often intrinsically T1-bright, and the gland sits in the sella turcica.</p><p>The <strong>internal auditory canal</strong> study also uses the head coil and full-dose contrast. The IAC carries cranial nerves VII (facial) and VIII (vestibulocochlear). Indications include sensorineural hearing loss, vertigo or balance problems, tinnitus, and acoustic neuroma (vestibular schwannoma). Technique combines thin-section heavily T2-weighted cisternal imaging, a steady-state CISS or FIESTA type sequence that outlines the nerves within bright CSF, plus thin post-contrast T1 with fat saturation. A related variant targets trigeminal neuralgia or facial-nerve problems such as facial pain or Bell's palsy involving CN VII.</p><p><strong>Stereotactic or neuronavigation</strong> planning is a pre-surgical study. Keep the head straight and do <em>not</em> angle the slice packages, and acquire an isotropic 3D volume with full coverage. Do not clip the nose, ears, or back of the head, because the surgical navigation system registers the whole head surface. Sub-variants add perfusion for tumor grading or a dynamic sequence for metastases and meningioma, and a seizure pre-operative study angles coronals perpendicular to the hippocampus.</p>",
+        "keypoints": [
+          "Microadenoma is under 10 mm, macroadenoma is 10 mm or larger.",
+          "Dynamic pituitary catches microadenomas by their delayed enhancement, dark early against the normal gland.",
+          "IAC carries CN VII and VIII; indications include hearing loss and acoustic neuroma.",
+          "IAC uses thin-section CISS or FIESTA cisternal imaging plus post-contrast T1 fat-sat.",
+          "Stereotactic studies keep the head straight, do not angle packages, and never clip nose, ears, or occiput."
+        ],
+        "worked_example": "A patient with a rising prolactin level has a normal-looking sella on routine images. The dynamic pituitary sequence is run, and on the earliest post-injection frames a small 6 mm region stays dark while the rest of the gland enhances briskly. That delayed enhancement pattern identifies a microadenoma that a single delayed image would have missed.",
+        "memory_hooks": [
+          "Micro is under 10, macro is ten or more.",
+          "Seven and Eight run through the IAC gate.",
+          "Straight head, full head for navigation."
+        ],
+        "exam_traps": [
+          "A microadenoma enhances later than the gland, so it looks dark early, not bright early.",
+          "Do not angle or crop the stereotactic packages; clipping the nose, ears, or occiput breaks surface registration."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 935,
+      "body": {
+        "prompt": "Which coil and coverage are standard for a routine brain MRI?",
+        "options": [
+          "Head coil, covering from the skull base to the vertex",
+          "Neck coil, covering from the orbits down to the carina",
+          "Body coil, covering from the vertex to the mandible only",
+          "Surface coil, covering the occiput and upper cervical spine"
+        ],
+        "answer": 0,
+        "explain": "Routine brain imaging uses a dedicated head coil and covers the skull base up to the vertex, about one slice above the top of the skull. The other coils and coverages do not include the whole brain."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 936,
+      "body": {
+        "prompt": "Axial slices in a routine brain study are typically angled along which reference line?",
+        "options": [
+          "The AC-PC line from the anterior to the posterior commissure",
+          "The orbitomeatal line from the outer canthus to the ear canal",
+          "The hard palate line drawn parallel to the maxillary teeth",
+          "The interhemispheric line drawn through the falx midline"
+        ],
+        "answer": 0,
+        "explain": "Axials are prescribed along the AC-PC line, drawn through the anterior and posterior commissures, giving a reproducible plane. The other lines are used for different purposes or planning steps."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 937,
+      "body": {
+        "prompt": "On MRI, what confirms true acute restricted diffusion in a suspected stroke?",
+        "options": [
+          "Bright signal on high b-value with dark signal on the ADC map",
+          "Bright signal on high b-value with bright signal on the ADC map",
+          "Dark signal on high b-value with dark signal on the ADC map",
+          "Dark signal on high b-value with bright signal on the ADC map"
+        ],
+        "answer": 0,
+        "explain": "True restriction is bright on the high b-value image and dark on the ADC map. Bright on both high-b and ADC is T2 shine-through, not restriction, and the dark-on-high-b patterns do not indicate acute infarct."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 938,
+      "body": {
+        "prompt": "Which sequence is most sensitive for cerebral microbleeds and hemorrhage?",
+        "options": [
+          "SWI, a susceptibility-weighted gradient technique",
+          "FLAIR, a fluid-attenuated inversion recovery technique",
+          "DWI, a diffusion-weighted echo-planar technique",
+          "STIR, a short tau inversion recovery fat-suppression technique"
+        ],
+        "answer": 0,
+        "explain": "SWI is highly sensitive to blood products and detects hemorrhage and microbleeds. FLAIR targets white-matter disease, DWI targets infarct, and STIR is used for fat-suppressed edema and cord imaging."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 939,
+      "body": {
+        "prompt": "On a FLAIR image, how does normal CSF appear and what does FLAIR highlight?",
+        "options": [
+          "CSF appears dark because it is nulled, highlighting MS plaques",
+          "CSF appears bright because it is enhanced, highlighting fresh blood",
+          "CSF appears gray because it is partly nulled, highlighting fat",
+          "CSF appears dark because it is saturated, highlighting cortical bone"
+        ],
+        "answer": 0,
+        "explain": "FLAIR nulls CSF so it appears dark, which makes periventricular MS plaques and white-matter disease stand out. FLAIR does not enhance CSF or specifically target blood, fat, or bone."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 940,
+      "body": {
+        "prompt": "Many brain protocols acquire 3D sagittal volumes and then do what with them?",
+        "options": [
+          "Reformat them into axial and coronal planes after acquisition",
+          "Discard them once the axial two-dimensional scans are complete",
+          "Send them only to the technologist workstation for archiving",
+          "Convert them into diffusion maps for stroke quantification only"
+        ],
+        "answer": 0,
+        "explain": "Isotropic 3D sagittal volumes such as T1, FLAIR, and T2 are reformatted into axial and coronal planes, giving multiplanar review from one acquisition. They are not discarded, merely archived, or turned into diffusion maps."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 941,
+      "body": {
+        "prompt": "How is the gadolinium contrast dose for a brain MRI determined?",
+        "options": [
+          "By the patient body weight, per the department protocol",
+          "By the patient age, using a fixed pediatric adult split",
+          "By the patient height, using a standard body surface chart",
+          "By a single fixed volume given to every patient equally"
+        ],
+        "answer": 0,
+        "explain": "Gadolinium is dosed on body weight following department protocol. It is not set by age, height, or a single fixed volume for all patients."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 942,
+      "body": {
+        "prompt": "Which structure normally enhances and can confirm that gadolinium was given?",
+        "options": [
+          "The pituitary gland and infundibulum, which enhance normally",
+          "The cerebral cortex, which enhances briskly in every patient",
+          "The normal white matter tracts, which enhance after injection",
+          "The lateral ventricle CSF, which enhances soon after injection"
+        ],
+        "answer": 0,
+        "explain": "The pituitary and infundibulum lack a blood-brain barrier and enhance normally, along with choroid plexus, nasal mucosa, dural sinuses, and vessels. Normal cortex, white matter, and CSF do not enhance."
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "quiz",
+      "ord": 943,
+      "body": {
+        "prompt": "Which clinical situation typically does NOT warrant contrast on a brain MRI?",
+        "options": [
+          "Isolated memory loss without other concerning history",
+          "Follow-up of a known brain tumor after prior treatment",
+          "Work-up for metastatic disease in a known cancer patient",
+          "Immediate post-operative imaging after a tumor resection"
+        ],
+        "answer": 0,
+        "explain": "Isolated memory loss is usually imaged without contrast. Tumor follow-up, metastatic work-up, and immediate post-operative studies all routinely use gadolinium."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 944,
+      "body": {
+        "prompt": "What size threshold separates a pituitary microadenoma from a macroadenoma?",
+        "options": [
+          "10 mm, with micro under 10 and macro 10 or larger",
+          "20 mm, with micro under 20 and macro 20 or larger",
+          "5 mm, with micro under 5 and macro 5 or larger",
+          "15 mm, with micro under 15 and macro 15 or larger"
+        ],
+        "answer": 0,
+        "explain": "A microadenoma is smaller than 10 mm and a macroadenoma is 10 mm or larger. The 20, 5, and 15 mm figures are not the accepted threshold."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 945,
+      "body": {
+        "prompt": "On an early dynamic pituitary frame, how does a microadenoma usually appear?",
+        "options": [
+          "Relatively dark, because it enhances later than the normal gland",
+          "Brightly enhancing, because it fills with contrast before the gland",
+          "Isointense, because it enhances exactly with the normal gland",
+          "Completely absent, because it never takes up any contrast agent"
+        ],
+        "answer": 0,
+        "explain": "A microadenoma shows delayed enhancement, so on early dynamic frames it looks relatively dark against the briskly enhancing normal gland. It does not enhance first, match the gland, or fail to enhance entirely."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 946,
+      "body": {
+        "prompt": "Which statement about the normal pituitary gland is correct?",
+        "options": [
+          "The posterior lobe is often T1-bright and the gland sits in the sella turcica",
+          "The anterior lobe is always T1-dark and the gland sits in the cavernous sinus",
+          "The posterior lobe is always T2-bright and the gland sits above the clivus",
+          "The anterior lobe is often T1-bright and the gland sits in the frontal sinus"
+        ],
+        "answer": 0,
+        "explain": "The posterior lobe (neurohypophysis) is frequently intrinsically T1-bright, and the gland lies within the sella turcica. The other pairings misplace the gland or misassign the bright signal."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 947,
+      "body": {
+        "prompt": "Which cranial nerves run through the internal auditory canal?",
+        "options": [
+          "The facial nerve VII and the vestibulocochlear nerve VIII",
+          "The trigeminal nerve V and the abducens nerve VI together",
+          "The glossopharyngeal nerve IX and the vagus nerve X together",
+          "The optic nerve II and the oculomotor nerve III together"
+        ],
+        "answer": 0,
+        "explain": "The IAC carries CN VII (facial) and CN VIII (vestibulocochlear). The other pairs travel through different skull base routes, not the internal auditory canal."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 948,
+      "body": {
+        "prompt": "Which finding is a classic indication for an internal auditory canal study?",
+        "options": [
+          "Sensorineural hearing loss with suspected acoustic neuroma",
+          "Sudden thunderclap headache with suspected aneurysm rupture",
+          "Progressive memory loss with suspected early dementia change",
+          "New focal seizures with suspected cortical developmental lesion"
+        ],
+        "answer": 0,
+        "explain": "The IAC protocol targets sensorineural hearing loss, vertigo, tinnitus, and acoustic neuroma (vestibular schwannoma). Aneurysm, dementia, and seizure work-ups use other protocols."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 949,
+      "body": {
+        "prompt": "Which technique best displays the CN VII and VIII within the IAC?",
+        "options": [
+          "Thin-section heavily T2-weighted CISS or FIESTA steady-state imaging",
+          "Thick-slab T1-weighted spin echo imaging without any fat saturation",
+          "Standard axial gradient echo imaging matched to the routine brain",
+          "Low-resolution single-shot diffusion imaging through the posterior fossa"
+        ],
+        "answer": 0,
+        "explain": "Thin-section heavily T2-weighted steady-state imaging (CISS or FIESTA) outlines the nerves against bright CSF, and thin post-contrast T1 fat-sat is added. Thick T1, routine gradient echo, and diffusion do not resolve the nerves."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 950,
+      "body": {
+        "prompt": "When planning a stereotactic neuronavigation study, how should slices be prescribed?",
+        "options": [
+          "Keep the head straight and do not angle the slice packages at all",
+          "Angle the axial package along the AC-PC line as in routine brain",
+          "Angle the coronal package perpendicular to the hippocampal body",
+          "Tilt the whole package toward the side of the suspected lesion"
+        ],
+        "answer": 0,
+        "explain": "Navigation studies require the head straight with unangled packages so the volume registers cleanly to the surgical system. AC-PC angling and hippocampal angling belong to other protocols, and lesion tilting is not done."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 951,
+      "body": {
+        "prompt": "Why must a stereotactic planning volume include the entire head surface?",
+        "options": [
+          "The navigation system registers the whole head surface for guidance",
+          "The radiologist needs the neck vessels included for perfusion mapping",
+          "The scanner requires full coverage to correct for gradient nonlinearity",
+          "The surgeon uses the sinuses alone to align the operative approach"
+        ],
+        "answer": 0,
+        "explain": "The surgical navigation system registers the full head surface, so the nose, ears, and occiput must not be clipped. The other reasons do not drive the full-coverage rule for planning volumes."
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "quiz",
+      "ord": 952,
+      "body": {
+        "prompt": "The trigeminal-neuralgia and facial-nerve variant of the IAC study targets which nerve?",
+        "options": [
+          "The facial nerve CN VII in patients with facial pain or Bell's palsy",
+          "The optic nerve CN II in patients with sudden painless vision loss",
+          "The hypoglossal nerve CN XII in patients with tongue deviation signs",
+          "The accessory nerve CN XI in patients with shoulder droop weakness"
+        ],
+        "answer": 0,
+        "explain": "The variant evaluates CN VII for facial pain or Bell's palsy, alongside trigeminal assessment. The optic, hypoglossal, and accessory nerves are not the focus of this protocol."
+      }
     }
   ]
 }
