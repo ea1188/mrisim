@@ -439,6 +439,14 @@
     window.scrollTo(0, 0);
   }
 
+  // Premium image questions carry an `img` (a pre-rendered scan in web/img/course-quiz/).
+  // Show it above the prompt; text-only questions have no img and are unaffected.
+  function addQImg(box, q) {
+    if (q && q.img) {
+      box.insertBefore(h("img", { class: "q-img", src: "img/course-quiz/" + q.img, alt: "Scan for this question" }), box.firstChild);
+    }
+  }
+
   // One inline premium question: shuffled options, grade on click, reveal explanation.
   function quizItem(topicTitle, idx, q) {
     var order = q.options.map(function (_o, i) { return i; });
@@ -448,6 +456,7 @@
     var answered = false;
     var fb = h("div", { class: "fb", hidden: true });
     var box = h("div", { class: "q" }, [h("p", { class: "prompt", text: q.prompt })]);
+    addQImg(box, q);
     order.forEach(function (orig) {
       var b = h("button", { class: "opt", text: q.options[orig], onclick: function () {
         if (answered) return; answered = true;
@@ -508,6 +517,7 @@
         h("p", { class: "mq-num", text: "Question " + (qi + 1) + " of " + questions.length }),
         h("p", { class: "prompt", text: item.q.prompt }),
       ]);
+      addQImg(box, item.q);
       item.order.forEach(function (orig) {
         var opt = h("button", { class: "opt", type: "button", onclick: function () {
           picks[qi] = orig;
@@ -550,6 +560,7 @@
       missed.forEach(function (mm) {
         var item = mm.item;
         var box = h("div", { class: "q reviewed miss" }, [h("p", { class: "prompt", text: item.q.prompt })]);
+        addQImg(box, item.q);
         item.order.forEach(function (orig) {
           var cls = "opt"; if (orig === item.q.answer) cls += " correct"; else if (orig === mm.pick) cls += " wrong";
           box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
@@ -685,6 +696,7 @@
         h("p", { class: "eq-num", text: "Question " + (qi + 1) + " of " + EXAM.questions.length }),
         h("p", { class: "prompt", text: item.q.prompt }),
       ]);
+      addQImg(box, item.q);
       item.order.forEach(function (orig) {
         var opt = h("button", { class: "exam-opt", type: "button", onclick: function () { selectOpt(qi, orig, box, opt); } },
           [document.createTextNode(item.q.options[orig])]);
@@ -749,6 +761,7 @@
       var num = h("p", { class: "eq-num" }, [document.createTextNode("Question " + (qi + 1))]);
       if (!right) num.appendChild(h("span", { class: "miss-tag", text: "Missed" }));
       var box = h("div", { class: "exam-q reviewed" + (right ? "" : " miss") }, [num, h("p", { class: "prompt", text: item.q.prompt })]);
+      addQImg(box, item.q);
       item.order.forEach(function (orig) {
         var cls = "exam-opt";
         if (orig === item.q.answer) cls += " correct";
