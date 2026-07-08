@@ -156,6 +156,30 @@
     return _num(a[field]) <= _num(b[field]) ? a : b;
   }
 
+  // Non-mastered module titles in recommended study order: diagnostic weakest-first where available
+  // (order = the diagnostic order array or null), then any remaining non-mastered in module order.
+  // modules = [{ title, status }].
+  function remainingStudyOrder(modules, order) {
+    modules = modules || [];
+    var statusByTitle = {}, remaining = [];
+    modules.forEach(function (m) { statusByTitle[m.title] = m.status; if (m.status !== "mastered") remaining.push(m.title); });
+    if (!order || !order.length) return remaining;
+    var out = [], seen = {};
+    order.forEach(function (t) { if (statusByTitle[t] && statusByTitle[t] !== "mastered") { out.push(t); seen[t] = 1; } });
+    remaining.forEach(function (t) { if (!seen[t]) out.push(t); });
+    return out;
+  }
+
+  // Weeks until target and modules/week needed to finish `remaining` modules by targetMs.
+  // Returns null when nothing remains or the target is not in the future.
+  function pacePerWeek(remaining, targetMs, nowMs) {
+    if (!remaining || remaining <= 0) return null;
+    var ms = targetMs - nowMs;
+    if (!(ms > 0)) return null;
+    var weeks = Math.max(1, Math.ceil(ms / (7 * 86400000)));
+    return { weeks: weeks, perWeek: Math.ceil(remaining / weeks) };
+  }
+
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
     deriveModuleStatus: deriveModuleStatus,
@@ -166,5 +190,6 @@
     dueCount: dueCount,
     mergeProgress: mergeProgress,
     isCourseComplete: isCourseComplete,
+    remainingStudyOrder: remainingStudyOrder, pacePerWeek: pacePerWeek,
   };
 });
