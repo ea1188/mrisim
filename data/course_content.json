@@ -7371,6 +7371,471 @@
         "answer": 0,
         "explain": "Gradient echo uses partial flip angles so its short TRs still leave usable longitudinal magnetization. Spin echo families use 90 and 180 degree pulses, and inversion recovery opens with a 180 followed by a 90."
       }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "education",
+      "ord": 1087,
+      "body": {
+        "title": "Making an MR signal: protons, B0, Larmor, and resonance",
+        "html": "<p>Clinical MRI images the hydrogen nucleus (1H), a single proton found in abundance in water and fat. A proton is a spinning charged particle, and a moving charge creates a magnetic field, so each proton behaves like a tiny bar magnet. Outside the scanner these tiny magnets point in random directions and cancel out.</p><p>Inside the bore, the static field <strong>B0</strong> forces each proton into one of two states: <strong>parallel</strong> (low energy) or <strong>anti-parallel</strong> (high energy). A slight majority sits in the low-energy parallel state, and that small excess adds up to the <strong>net magnetization vector (NMV)</strong> pointing along B0, the z axis. This longitudinal magnetization cannot be measured directly; it has to be tipped into the transverse plane before it can give a signal.</p><p>The protons do not sit still. Each one <strong>precesses</strong> about B0 like a wobbling top, at the <strong>Larmor frequency</strong>: fo = gamma x B0. Gamma, the gyromagnetic ratio, is <strong>42.58 MHz/T</strong> for hydrogen, so protons precess at about 63.9 MHz at 1.5T and about 127.7 MHz at 3T. Higher field means faster precession.</p><p>To tip the NMV, a radiofrequency pulse (<strong>B1</strong>) is applied <em>perpendicular</em> to B0 at (or very near) the Larmor frequency. Because the RF matches the protons' own precession rate, energy transfers by <strong>resonance</strong> and the NMV rotates toward the transverse plane. RF at the wrong frequency transfers almost no energy. Once the pulse ends, the rotating transverse magnetization sweeps past the receive coil and induces a small current in it (Faraday induction): that current is the MR signal.</p>",
+        "keypoints": [
+          "Hydrogen (1H) is the imaged nucleus: a spinning charged proton acts like a tiny magnet.",
+          "In B0, a slight excess of protons aligns parallel (low energy); the excess sums to the NMV along the z axis.",
+          "Protons precess at the Larmor frequency: fo = gamma x B0, with gamma = 42.58 MHz/T for hydrogen (about 63.9 MHz at 1.5T, 127.7 MHz at 3T).",
+          "The RF pulse (B1) must be perpendicular to B0 and at the Larmor frequency; resonance is what lets energy transfer and tip the NMV.",
+          "Only rotating transverse magnetization induces a current in the receive coil; longitudinal magnetization gives no measurable signal."
+        ],
+        "worked_example": "During prescan on a 3T system the scanner searches for the center frequency and settles near 127.7 MHz. The same patient scanned last week on the department's 1.5T magnet ran near 63.9 MHz. Nothing about the patient changed: fo = gamma x B0, so doubling the field doubles the precession frequency, and the transmitter must follow it exactly or the excitation pulse will not resonate with the spins.",
+        "memory_hooks": [
+          "Larmor ladder: 42.58 per tesla, so roughly 64 at 1.5T and 128 at 3T.",
+          "No resonance, no signal: the RF must match the spins' own precession frequency.",
+          "The coil is deaf to the z axis: signal only comes from magnetization rotating in the transverse plane."
+        ],
+        "exam_traps": [
+          "Gamma for hydrogen is 42.58 MHz/T, so the Larmor frequency scales with field strength: 63.9 MHz at 1.5T and 127.7 MHz at 3T.",
+          "B1 must be applied perpendicular to B0 and at (near) the Larmor frequency; off-resonance RF does not transfer energy.",
+          "Longitudinal magnetization along B0 cannot be measured directly; it must be tipped into the transverse plane first."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "education",
+      "ord": 1088,
+      "body": {
+        "title": "Relaxation: T1 spin-lattice and T2 spin-spin",
+        "html": "<p>After the RF pulse ends, the tipped magnetization returns to equilibrium by two separate processes that run at the same time. <strong>T1 relaxation</strong> is the recovery of longitudinal magnetization along B0. It is called <strong>spin-lattice</strong> relaxation because the protons hand their absorbed RF energy back to the surrounding molecular environment, the lattice, as heat. T1 is defined as the time for a tissue to recover <strong>63%</strong> of its longitudinal magnetization.</p><p>How fast that hand-off works depends on how the lattice molecules move. Energy transfers efficiently only when the molecular tumbling rate is close to the Larmor frequency. Free water is made of small molecules that tumble far too fast, so the transfer is poor and free water has a <strong>long T1</strong>. Fat's carbon-bond structure tumbles near the proton's Larmor frequency, transfers energy efficiently, and so has a <strong>short T1</strong>.</p><p><strong>T2 relaxation</strong> is the decay of transverse magnetization. It is called <strong>spin-spin</strong> relaxation because each proton sits in a slightly different local field created by its neighbours, so the spins precess at slightly different rates and drift out of phase. As phase coherence is lost, the net transverse magnetization shrinks. T2 is the time for the transverse magnetization to fall to <strong>37%</strong> of its starting value.</p><p>For any given tissue <strong>T1 is always longer than T2</strong>: typical soft-tissue T1 values run about 300 to 2000 ms while T2 values run about 30 to 150 ms, and free water such as CSF runs longer than both. Water, and most pathology because of its raised water content, has a long T1 and a long T2. Fat has a short T1 and a short T2.</p>",
+        "keypoints": [
+          "T1 = longitudinal (spin-lattice) relaxation: energy is released as heat to the lattice; T1 is the time to recover 63% of longitudinal magnetization.",
+          "T1 efficiency depends on molecular motion near the Larmor frequency: free water tumbles too fast (long T1), fat tumbles near it (short T1).",
+          "T2 = transverse (spin-spin) relaxation: neighbouring spins' local fields cause dephasing; T2 is the time to fall to 37% of the initial transverse magnetization.",
+          "T1 is always longer than T2 in a given tissue (typical soft tissue T1 about 300-2000 ms, T2 about 30-150 ms; free water runs longer).",
+          "Water and most pathology: long T1 and long T2. Fat: short T1 and short T2."
+        ],
+        "worked_example": "Right after an excitation pulse, think about CSF and scalp fat in the same head. The fat protons hand their energy to a lattice that tumbles near the Larmor frequency, so fat's longitudinal magnetization is largely back within a few hundred milliseconds. CSF is nearly pure free water: its tiny fast molecules accept energy poorly, so its recovery drags on for seconds. That difference in energy hand-off, not any scanner setting, is why the two tissues recover at such different rates.",
+        "memory_hooks": [
+          "1 lattice, 2 spins: T1 is spin-LATTICE (longitudinal), T2 is spin-SPIN (transverse).",
+          "63 up, 37 left: T1 marks 63% recovered, T2 marks 37% remaining.",
+          "Water is a bad listener: it tumbles too fast to catch the Larmor beat, so its T1 is long."
+        ],
+        "exam_traps": [
+          "T1 is the time to 63% recovery, not full recovery; T2 is the time to 37% remaining, not zero.",
+          "T1 is always longer than T2 for a given tissue; they never swap order.",
+          "Free water has a LONG T1: its small fast molecules transfer energy poorly at the Larmor frequency."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "education",
+      "ord": 1089,
+      "body": {
+        "title": "Dephasing, T2 vs T2*, and the spin-echo refocusing pulse",
+        "html": "<p>Once the RF pulse switches off, the spins in the transverse plane start to fan out. Two things drive this dephasing. The first is the true tissue process: <strong>spin-spin interactions</strong>, where each proton feels slightly different local fields from its neighbours. That alone would make the signal decay with the tissue's <strong>T2</strong>. The second is the magnet itself: no main field is perfectly uniform, so spins in slightly stronger regions precess faster than spins in slightly weaker ones.</p><p>Add the two together and the free induction decay dies away faster than true T2. This combined, faster decay is <strong>T2*</strong>. T2* is always shorter than T2 because it includes everything T2 does <em>plus</em> the external field inhomogeneity. Left alone, the signal would be gone before a useful echo could be sampled.</p><p>The spin-echo sequence rescues it with a <strong>180 degree refocusing pulse</strong>. Picture runners on a track: after the 90 degree pulse they all start together, then the fast ones pull ahead. The 180 flips everyone over, so the fast spins now sit behind and the slow spins sit ahead. Precessing at their same rates, the fast ones catch up and all the spins come back into phase, forming an <strong>echo</strong> at the echo time TE. For the rephasing to land exactly at TE, the 180 must be applied at <strong>TE/2</strong>.</p><p>This trick only repairs the dephasing caused by the <em>static</em> field inhomogeneity, because that error is the same before and after the flip. The random spin-spin dephasing is not reversible, so the echo amplitude still decays with true T2. A gradient-echo sequence has no 180 pulse, so it cannot recover the inhomogeneity losses and its signal decays with T2*.</p>",
+        "keypoints": [
+          "Transverse dephasing has two sources: true spin-spin interactions (T2) and main field inhomogeneity.",
+          "T2* combines both sources, so T2* decay is always faster (shorter) than T2 decay.",
+          "The spin-echo 180 degree pulse flips the spins so fast ones fall behind and catch up, rephasing into an echo at TE.",
+          "The 180 degree refocusing pulse is applied at TE/2 so the echo forms exactly at TE.",
+          "Spin echo recovers the static field inhomogeneity dephasing (the part that makes T2* shorter than T2); true T2 decay remains, and gradient echo recovers neither."
+        ],
+        "worked_example": "A patient with fixed dental braces needs a brain scan. On the gradient-echo localizer the frontal region shows large signal voids: the metal distorts the local field, spins dephase rapidly, and with no refocusing pulse the signal decays at the very short local T2*. The fast spin-echo series looks far cleaner through the same region, because each 180 degree pulse rephases the dephasing caused by that static distortion. The braces did not change; the sequence's ability to refocus static inhomogeneity did.",
+        "memory_hooks": [
+          "The star burns out faster: T2* is always shorter than T2.",
+          "Turn the runners around at half time: the 180 sits at TE/2 so everyone finishes together at TE.",
+          "Spin echo forgives the magnet's flaws; gradient echo has to live with them."
+        ],
+        "exam_traps": [
+          "T2* is shorter than T2 because it adds external field inhomogeneity on top of spin-spin dephasing.",
+          "The refocusing pulse is 180 degrees and sits at TE/2, not at TE.",
+          "Spin echo recovers the static field inhomogeneity dephasing (not true T2); gradient echo does not."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1090,
+      "body": {
+        "prompt": "Which nucleus is the source of the signal in routine clinical MRI?",
+        "options": [
+          "Hydrogen-1",
+          "Carbon-13",
+          "Sodium-23",
+          "Phosphorus-31"
+        ],
+        "answer": 0,
+        "explain": "Clinical MRI images hydrogen (1H) because it is a single proton present in huge quantities in water and fat. The other nuclei are MR-active but far too scarce for routine imaging."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1091,
+      "body": {
+        "prompt": "Why does a hydrogen proton behave like a tiny bar magnet?",
+        "options": [
+          "It is a spinning electric charge",
+          "It carries a net negative charge",
+          "It absorbs the static field energy",
+          "It is heavier than other nuclei"
+        ],
+        "answer": 0,
+        "explain": "A moving charge creates a magnetic field, so the spinning positively charged proton has a magnetic moment. Mass and energy absorption have nothing to do with it, and the proton's charge is positive, not negative."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1092,
+      "body": {
+        "prompt": "The net magnetization vector (NMV) forms along B0 because:",
+        "options": [
+          "A small excess of protons occupies the parallel state",
+          "All protons align parallel to the main magnetic field",
+          "Half the protons stop precessing inside the magnet bore",
+          "Anti-parallel protons outnumber the parallel population"
+        ],
+        "answer": 0,
+        "explain": "Only a slight majority of protons takes the low-energy parallel state; that small excess sums to the NMV. If all protons aligned parallel the NMV would be enormous, and the anti-parallel state is the less populated one."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1093,
+      "body": {
+        "prompt": "In a magnetic field, the parallel and anti-parallel proton states differ in that:",
+        "options": [
+          "Parallel is lower energy and slightly more populated",
+          "Parallel is higher energy and slightly more populated",
+          "Anti-parallel is lower energy and holds most protons",
+          "Both states are equal in energy and in population"
+        ],
+        "answer": 0,
+        "explain": "Alignment with B0 is the low-energy state and a slight majority of protons occupies it. If the two populations were equal there would be no net magnetization at all."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1094,
+      "body": {
+        "prompt": "According to the Larmor equation, the precession frequency of a proton equals:",
+        "options": [
+          "Gyromagnetic ratio multiplied by field strength",
+          "Field strength divided by gyromagnetic ratio",
+          "Gyromagnetic ratio divided by field strength",
+          "Field strength squared times a fixed constant"
+        ],
+        "answer": 0,
+        "explain": "The Larmor equation is fo = gamma x B0, a simple product, so frequency rises in direct proportion to field strength. The divided and squared forms would not give the observed linear scaling."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1095,
+      "body": {
+        "prompt": "The gyromagnetic ratio of hydrogen is:",
+        "options": [
+          "42.58 MHz/T",
+          "21.29 MHz/T",
+          "63.87 MHz/T",
+          "127.7 MHz/T"
+        ],
+        "answer": 0,
+        "explain": "Gamma for hydrogen is 42.58 MHz per tesla. 63.87 and 127.7 MHz are the Larmor frequencies at 1.5T and 3T, not the gyromagnetic ratio itself."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1096,
+      "body": {
+        "prompt": "For an RF pulse to tip the net magnetization away from B0, it must be:",
+        "options": [
+          "At the Larmor frequency, applied perpendicular to B0",
+          "At any frequency, as long as its amplitude is large",
+          "At half the Larmor frequency, applied parallel to B0",
+          "At twice the Larmor frequency, applied along the z axis"
+        ],
+        "answer": 0,
+        "explain": "Energy transfers by resonance only when B1 matches the spins' precession frequency and is applied perpendicular to B0. Off-resonance RF transfers almost no energy no matter how strong it is."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1097,
+      "body": {
+        "prompt": "What actually induces the MR signal in the receive coil?",
+        "options": [
+          "Transverse magnetization rotating past the coil",
+          "Longitudinal magnetization resting along the z axis",
+          "Heat released to the lattice during T1 recovery",
+          "Static gradient fields applied during the readout"
+        ],
+        "answer": 0,
+        "explain": "A changing magnetic field induces a current (Faraday induction), and only the rotating transverse magnetization provides one at the coil. Magnetization sitting still along B0 induces nothing."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1098,
+      "body": {
+        "prompt": "T1 relaxation is also known as:",
+        "options": [
+          "Spin-lattice relaxation",
+          "Spin-spin relaxation",
+          "Free induction decay",
+          "Susceptibility decay"
+        ],
+        "answer": 0,
+        "explain": "T1 is spin-lattice relaxation: protons return energy to the surrounding molecular lattice as longitudinal magnetization recovers. Spin-spin relaxation is T2, the transverse process."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1099,
+      "body": {
+        "prompt": "During T1 relaxation, the energy the protons absorbed from the RF pulse is:",
+        "options": [
+          "Released as heat to the surrounding lattice",
+          "Exchanged only between neighbouring protons",
+          "Stored permanently in the transverse plane",
+          "Returned to the main static field windings"
+        ],
+        "answer": 0,
+        "explain": "Spin-lattice relaxation means the energy leaves the spin system as heat given to the molecular environment. Energy swapped only between neighbouring spins describes T2, which changes phase, not longitudinal recovery."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1100,
+      "body": {
+        "prompt": "T1 is defined as the time for a tissue to:",
+        "options": [
+          "Recover 63% of its longitudinal magnetization",
+          "Recover all of its longitudinal magnetization",
+          "Lose 63% of its transverse phase coherence",
+          "Recover half of its longitudinal magnetization"
+        ],
+        "answer": 0,
+        "explain": "T1 marks 63% recovery of longitudinal magnetization, not complete recovery. Full recovery takes roughly five T1 periods."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1101,
+      "body": {
+        "prompt": "T2 is defined as the time for the transverse magnetization to:",
+        "options": [
+          "Decay to 37% of its initial value",
+          "Decay completely to zero signal",
+          "Decay to 63% of its initial value",
+          "Recover 37% of its initial value"
+        ],
+        "answer": 0,
+        "explain": "T2 is the time constant at which 37% of the transverse magnetization remains. It is a decay toward zero, not a recovery, and it does not mean the signal has fully disappeared."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1102,
+      "body": {
+        "prompt": "Free water has a long T1 because its molecules:",
+        "options": [
+          "Are small and tumble too fast to transfer energy well",
+          "Are large and tumble too slowly to absorb any energy",
+          "Are bound so tightly that they cannot move or rotate",
+          "Are charged and repel the energy of the excited spins"
+        ],
+        "answer": 0,
+        "explain": "Energy transfer to the lattice is efficient only when molecular motion is near the Larmor frequency. Free water's small molecules tumble far faster than that, so the hand-off is poor and T1 is long."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1103,
+      "body": {
+        "prompt": "For any single tissue, how do T1 and T2 compare?",
+        "options": [
+          "T1 is always longer than T2",
+          "T2 is always longer than T1",
+          "T1 and T2 are always equal",
+          "Either one can be the longer"
+        ],
+        "answer": 0,
+        "explain": "Transverse coherence is always lost faster than longitudinal magnetization recovers, so T1 (about 300-2000 ms) always exceeds T2 (about 30-150 ms) in the same tissue."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1104,
+      "body": {
+        "prompt": "Which pairing of relaxation times is correct?",
+        "options": [
+          "Water: long T1, long T2; fat: short T1, short T2",
+          "Water: short T1, short T2; fat: long T1, long T2",
+          "Water: long T1, short T2; fat: short T1, long T2",
+          "Water: short T1, long T2; fat: long T1, short T2"
+        ],
+        "answer": 0,
+        "explain": "Water relaxes slowly by both mechanisms, so both its times are long; fat transfers energy efficiently and dephases quickly, so both its times are short. The times travel together for these tissues, they do not split."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1105,
+      "body": {
+        "prompt": "Most pathology tends to show a long T2 because diseased tissue usually has:",
+        "options": [
+          "More free water content",
+          "More fat cell content",
+          "Fewer hydrogen protons",
+          "Denser bound proteins"
+        ],
+        "answer": 0,
+        "explain": "Edema and most lesions raise the free water content of tissue, and water carries long relaxation times, so pathology inherits a long T2. Extra fat or dense protein binding would shorten the times instead."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1106,
+      "body": {
+        "prompt": "After the RF pulse ends, the transverse magnetization dephases because of:",
+        "options": [
+          "Spin-spin interactions plus main field inhomogeneity",
+          "Lattice energy transfer plus receive coil resistance",
+          "Gradient coil heating plus chemical fat saturation",
+          "Proton density variation plus transmit gain drift"
+        ],
+        "answer": 0,
+        "explain": "Dephasing comes from the local fields of neighbouring spins (true T2) plus the imperfect uniformity of the main field. Lattice energy transfer is the T1 mechanism and does not describe loss of phase coherence."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1107,
+      "body": {
+        "prompt": "How does T2* compare with T2?",
+        "options": [
+          "T2* is shorter, since it adds field inhomogeneity",
+          "T2* is longer, since inhomogeneity slows the decay",
+          "T2 is shorter, since it adds field inhomogeneity",
+          "T2 and T2* are equal whenever a spin echo is used"
+        ],
+        "answer": 0,
+        "explain": "T2* includes everything that drives T2 plus dephasing from the magnet's static inhomogeneity, so the combined decay is faster and T2* is shorter. Adding a dephasing source can never lengthen the decay."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1108,
+      "body": {
+        "prompt": "What does T2* decay include that pure T2 decay does not?",
+        "options": [
+          "Dephasing from static main field inhomogeneity",
+          "Dephasing from neighbouring spin interactions",
+          "Energy loss from protons heating the lattice",
+          "Signal loss from the receive coil's bandwidth"
+        ],
+        "answer": 0,
+        "explain": "T2* adds the dephasing caused by the magnet's own field non-uniformity on top of true spin-spin dephasing. Neighbouring spin interactions are already what T2 measures."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1109,
+      "body": {
+        "prompt": "The refocusing pulse in a spin-echo sequence has a flip angle of:",
+        "options": [
+          "180 degrees",
+          "90 degrees",
+          "45 degrees",
+          "270 degrees"
+        ],
+        "answer": 0,
+        "explain": "The spin echo uses a 180 degree pulse to flip the fanned-out spins so they rephase into an echo. The 90 degree pulse is the initial excitation, not the refocusing pulse."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1110,
+      "body": {
+        "prompt": "For the echo to form exactly at TE, the 180 degree pulse must be applied at:",
+        "options": [
+          "Half the echo time",
+          "The full echo time",
+          "Half the repetition time",
+          "Twice the echo time"
+        ],
+        "answer": 0,
+        "explain": "Rephasing takes exactly as long as the dephasing that preceded the flip, so the 180 sits at TE/2 and the spins come back into phase at TE. Placing it at TE would be after the echo was needed."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1111,
+      "body": {
+        "prompt": "How does the 180 degree pulse produce an echo?",
+        "options": [
+          "It flips the spins so fast ones trail, then catch up in phase",
+          "It halts all precession until every spin points the same way",
+          "It doubles the precession speed of the slower spins only",
+          "It tips the magnetization back along B0 to protect the signal"
+        ],
+        "answer": 0,
+        "explain": "The flip puts the spins that had gained phase behind the ones that had lagged; precessing at unchanged rates, the fast spins catch up and coherence returns at TE. The pulse never stops precession or changes any spin's rate."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1112,
+      "body": {
+        "prompt": "Which signal loss does the spin-echo 180 degree pulse recover?",
+        "options": [
+          "Dephasing caused by main field inhomogeneity",
+          "Dephasing caused by spin-spin interactions",
+          "Signal loss caused by incomplete T1 recovery",
+          "Signal loss caused by proton density variation"
+        ],
+        "answer": 0,
+        "explain": "The static field errors are the same before and after the flip, so their dephasing rewinds exactly; that is the T2* component. Random spin-spin dephasing is irreversible, so true T2 decay remains in the echo."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1113,
+      "body": {
+        "prompt": "Why is a gradient-echo image more affected by field inhomogeneity than a spin-echo image?",
+        "options": [
+          "It has no 180 pulse, so T2* dephasing is never refocused",
+          "It has no 90 pulse, so magnetization is never fully tipped",
+          "It uses a longer TE, so far more true T2 decay accumulates",
+          "It uses two 180 pulses, which cancel out the true T2 decay"
+        ],
+        "answer": 0,
+        "explain": "Gradient echo forms its echo with gradient reversal alone, which cannot undo dephasing from static field errors, so the signal decays with T2*. Spin echo's 180 pulse refocuses exactly those losses."
+      }
     }
   ]
 }
