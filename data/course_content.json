@@ -4218,7 +4218,7 @@
       "kind": "quiz",
       "ord": 908,
       "body": {
-        "prompt": "Compare this clean, motion-free T1-weighted axial brain image to a scan degraded by patient movement. Which best describes why this image is diagnostically preferable?",
+        "prompt": "This axial T1-weighted brain image was acquired without patient motion. Which statement best describes why a motion-free acquisition like this one is diagnostically preferable to a motion-degraded scan?",
         "options": [
           "It shows sharp anatomic borders without ghosting, so subtle structures are not obscured",
           "It has a shorter TE, which always eliminates motion artifact",
@@ -4358,7 +4358,7 @@
       "kind": "quiz",
       "ord": 913,
       "body": {
-        "prompt": "This axial brain image is the same T1-weighted spin echo acquisition as before, but now with a fat-saturation pulse enabled. What change should be visible in the subcutaneous fat?",
+        "prompt": "This axial T1-weighted spin echo brain image was acquired with a fat-saturation pulse enabled. What is the expected appearance of the subcutaneous fat?",
         "options": [
           "The subcutaneous fat signal is suppressed and appears dark",
           "The subcutaneous fat becomes brighter than before",
