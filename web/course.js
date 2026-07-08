@@ -33,6 +33,8 @@
   var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
   var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
   var COURSE_MASTERY_KEY = "mrisim_course_mastery_v1"; // per-module mastery-check result
+  var COURSE_DIAG_KEY = "mrisim_course_diagnostic_v1"; // placement-test snapshot (separate from progress)
+  var DIAG_PER_MODULE = 2;                              // questions sampled per module in the placement test
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
   var CourseLogic = window.CourseLogic;
@@ -194,7 +196,16 @@
     var band = overall >= 80 ? "Exam-ready" : overall >= 40 ? "Building" : "Getting started";
     var next = null;
     for (var i = 0; i < modules.length; i++) { if (modules[i].status !== "mastered") { next = modules[i]; break; } }
-    return { modules: modules, overall: overall, band: band, next: next, exam: exam,
+    var diag = loadDiagnostic();
+    if (diag && diag.order) {
+      var statusByTitle = {};
+      modules.forEach(function (m) { statusByTitle[m.mod.title] = m.status; });
+      var t = CourseLogic.diagnosticStudyNext(diag.order, statusByTitle);
+      if (t) {
+        for (var k = 0; k < modules.length; k++) { if (modules[k].mod.title === t) { next = modules[k]; break; } }
+      }
+    }
+    return { modules: modules, overall: overall, band: band, next: next, exam: exam, diagnostic: diag,
       quizAcc: Math.round(100 * quizAcc), readPct: Math.round(100 * readPct) };
   }
 
@@ -236,6 +247,18 @@
       main.appendChild(h("p", { class: "lede", text: "Every module is mastered. Run a full practice exam to confirm you're ready." }));
     }
     main.appendChild(h("button", { class: "btn ghost-cta", type: "button", onclick: openExam, text: "Take a practice exam" }));
+    if (!loadDiagnostic()) {
+      main.appendChild(h("div", { class: "diag-card" }, [
+        h("h3", { text: "New here? Take the placement test" }),
+        h("p", { text: "20 questions across every topic, about 10 minutes. It finds your weakest areas and points you where to start. It does not affect your progress." }),
+        h("button", { class: "btn", type: "button", text: "Start the placement test", onclick: startDiagnostic }),
+      ]));
+    } else {
+      main.appendChild(h("p", { class: "diag-note" }, [
+        document.createTextNode("Placement test taken. "),
+        h("button", { type: "button", class: "diag-retake", text: "Retake", onclick: startDiagnostic }),
+      ]));
+    }
     main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
     var grid = h("div", { class: "ready-grid" });
     r.modules.forEach(function (m) {
@@ -282,9 +305,13 @@
     ]));
     rail.appendChild(h("button", { class: "overview-cta" + (CTX.mod == null ? " on" : ""), type: "button",
       onclick: renderOverview, text: "Overview" }));
-    rail.appendChild(h("button", { class: "exam-cta" + (EXAM ? " on" : ""), type: "button", onclick: openExam }, [
+    rail.appendChild(h("button", { class: "exam-cta" + (EXAM && !EXAM.diagnostic ? " on" : ""), type: "button", onclick: openExam }, [
       document.createTextNode("Practice exam"),
       h("span", { class: "ec-sub", text: "Registry-style run across the whole bank" }),
+    ]));
+    rail.appendChild(h("button", { class: "exam-cta" + (EXAM && EXAM.diagnostic ? " on" : ""), type: "button", onclick: startDiagnostic }, [
+      document.createTextNode("Placement test"),
+      h("span", { class: "ec-sub", text: "Find your weakest areas first" }),
     ]));
     perMod.forEach(function (pm) {
       var mod = pm.mod, subs = pm.subs;
@@ -662,12 +689,13 @@
   function retryMissed(missed) {
     beginExam(missed.map(function (q) { return { q: q, order: shuffleInts(q.options.length) }; }), false);
   }
-  function beginExam(questions, timed) {
+  function beginExam(questions, timed, diag) {
     stopExam();
     EXAM = {
       questions: questions, picks: questions.map(function () { return -1; }),
       timed: timed, remaining: timed ? questions.length * 60 : 0, elapsed: 0,
       reviewing: false, timer: null,
+      diagnostic: !!diag, modTitles: diag ? diag.modTitles : null,
     };
     CTX.mod = null;
     buildRail();
@@ -688,9 +716,9 @@
     EXAM.barTimer = h("span", { class: "eb-timer" });
     main.appendChild(h("div", { class: "exam-bar" }, [
       EXAM.barCount, h("span", { class: "sp" }), EXAM.barTimer,
-      h("button", { class: "btn eb-submit", text: "Submit exam", onclick: confirmSubmit }),
+      h("button", { class: "btn eb-submit", text: EXAM.diagnostic ? "Submit placement test" : "Submit exam", onclick: confirmSubmit }),
     ]));
-    main.appendChild(h("h2", { text: "Practice exam" }));
+    main.appendChild(h("h2", { text: EXAM.diagnostic ? "Placement test" : "Practice exam" }));
     EXAM.questions.forEach(function (item, qi) {
       var box = h("div", { class: "exam-q" }, [
         h("p", { class: "eq-num", text: "Question " + (qi + 1) + " of " + EXAM.questions.length }),
@@ -731,6 +759,7 @@
     if (!EXAM || EXAM.reviewing) return;
     EXAM.reviewing = true;
     clearExamTimer();
+    if (EXAM.diagnostic) { submitDiagnostic(); return; }
     var correct = 0;
     EXAM.questions.forEach(function (item, qi) { if (EXAM.picks[qi] === item.q.answer) correct += 1; });
     var total = EXAM.questions.length, pct = Math.round(100 * correct / total);
@@ -782,6 +811,74 @@
       b.lastPct = pct; b.lastAt = Date.now();
       localStorage.setItem(COURSE_EXAM_KEY, JSON.stringify(b));
     } catch (e) { /* storage off */ }
+  }
+
+  // --- diagnostic placement test ------------------------------------------ //
+  // Samples DIAG_PER_MODULE questions from each module (tagged with its title), runs them with no
+  // feedback until submit (reusing the exam machine), scores per module, and stores a snapshot that
+  // reorders "Study next". Does NOT bump quiz score or change readiness/mastery.
+  function loadDiagnostic() { try { return JSON.parse(localStorage.getItem(COURSE_DIAG_KEY) || "null"); } catch (e) { return null; } }
+  function saveDiagnostic(d) { try { localStorage.setItem(COURSE_DIAG_KEY, JSON.stringify(d)); } catch (e) { /* storage off */ } }
+
+  function startDiagnostic() {
+    var questions = [], modTitles = [];
+    CTX.curriculum.forEach(function (mod) {
+      var pool = modulePool(mod);
+      var pick = shuffleInts(pool.length).slice(0, Math.min(DIAG_PER_MODULE, pool.length));
+      pick.forEach(function (idx) {
+        var q = pool[idx];
+        questions.push({ q: q, order: shuffleInts(q.options.length) });
+        modTitles.push(mod.title);
+      });
+    });
+    if (!questions.length) { renderOverview(); return; }
+    beginExam(questions, false, { modTitles: modTitles });
+  }
+
+  function submitDiagnostic() {
+    var per = {}, correct = 0;
+    EXAM.questions.forEach(function (item, qi) {
+      var t = EXAM.modTitles[qi];
+      var rec = per[t] || (per[t] = { asked: 0, right: 0 });
+      rec.asked += 1;
+      if (EXAM.picks[qi] === item.q.answer) { rec.right += 1; correct += 1; }
+    });
+    var titles = CTX.curriculum.map(function (m) { return m.title; });
+    var order = CourseLogic.rankModulesByDiagnostic(per, titles);
+    saveDiagnostic({ taken: true, ts: Date.now(), perModule: per, order: order });
+    renderDiagnosticResult(per, order, correct, EXAM.questions.length);
+    buildRail();
+  }
+
+  function renderDiagnosticResult(per, order, correct, total) {
+    var main = CTX.main; clear(main);
+    var pct = Math.round(100 * correct / total);
+    main.appendChild(h("h2", { text: "Placement results" }));
+    main.appendChild(h("div", { class: "exam-result" }, [
+      h("div", { class: "er-score", text: correct + " / " + total }),
+      h("div", { class: "er-pct", text: pct + "%" }),
+      h("div", { class: "er-meta", text: "A snapshot to plan your studying. It does not change your progress." }),
+    ]));
+    main.appendChild(h("h3", { class: "ready-h", text: "By module, weakest first" }));
+    var grid = h("div", { class: "diag-grid" });
+    order.forEach(function (t) {
+      var rec = per[t] || { asked: 0, right: 0 };
+      var a = rec.asked ? Math.round(100 * rec.right / rec.asked) : null;
+      grid.appendChild(h("div", { class: "diag-row" }, [
+        h("span", { class: "dr-title", text: t }),
+        h("span", { class: "dr-acc", text: a == null ? "not tested" : a + "%" }),
+        h("div", { class: "bar" }, [h("i", { style: "width:" + (a == null ? 0 : a) + "%" })]),
+      ]));
+    });
+    main.appendChild(grid);
+    var startMod = null;
+    for (var i = 0; i < CTX.curriculum.length; i++) { if (CTX.curriculum[i].title === order[0]) { startMod = CTX.curriculum[i]; break; } }
+    var actions = h("div", { class: "er-actions" });
+    if (startMod) actions.appendChild(h("button", { class: "btn", type: "button", text: "Start with " + order[0], onclick: function () { openModule(startMod); } }));
+    actions.appendChild(h("button", { class: "btn ghost", type: "button", text: "Retake", onclick: startDiagnostic }));
+    actions.appendChild(h("button", { class: "btn ghost", type: "button", text: "Back to overview", onclick: renderOverview }));
+    main.appendChild(actions);
+    window.scrollTo(0, 0);
   }
 
   // --- progress persistence (local, best-effort) -------------------------- //
