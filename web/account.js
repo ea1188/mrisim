@@ -7,6 +7,7 @@
   "use strict";
   var root = document.getElementById("root");
   var whoami = document.getElementById("whoami");
+  var AuthUrl = window.AuthUrl;   // pure URL/code helpers (auth_url.js), loaded before this
 
   // Tiny DOM builder. Children may be nodes or strings (set as textContent-safe).
   function h(tag, attrs, kids) {
@@ -35,11 +36,31 @@
   }
 
   // ---- sign-in (signed out) --------------------------------------------- //
-  function signInView() {
+  // preErrMsg: an optional message to show on entry (e.g. a magic link that a mail
+  // scanner already consumed — see the boot handler and auth_url.js).
+  function signInView(preErrMsg) {
     var email = h("input", { type: "email", id: "email", placeholder: "you@school.edu", autocomplete: "email" });
     var name = h("input", { type: "text", id: "name", placeholder: "Your name (optional)" });
     var inst = h("input", { type: "text", id: "inst", placeholder: "Institution (optional)" });
     var msg = h("div", { class: "msg" });
+    if (preErrMsg) { msg.className = "msg err"; msg.textContent = preErrMsg; }
+    var sentAddr = "";
+
+    // Code entry: the reliable path when a mail system opens the link before the user.
+    // Hidden until an email is sent, then revealed so they can paste the 6-digit code.
+    var code = h("input", { type: "text", id: "code", inputmode: "numeric", autocomplete: "one-time-code", maxlength: "6", placeholder: "123456" });
+    var verify = h("button", { class: "primary", text: "Verify code", onclick: function () {
+      var c = code.value.trim();
+      if (!AuthUrl || !AuthUrl.looksLikeCode(c)) { msg.className = "msg err"; msg.textContent = "Enter the 6-digit code from the email."; return; }
+      verify.disabled = true; msg.className = "msg"; msg.textContent = "Verifying…";
+      Accounts.verifyCode(sentAddr || email.value.trim(), c).then(function (r) {
+        if (r && r.error) { verify.disabled = false; msg.className = "msg err"; msg.textContent = r.error.message; return; }
+        location.reload();   // boot re-runs, finds the fresh session, renders the signed-in view
+      }).catch(function (e) { verify.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
+    } });
+    var codeRow = h("div", { hidden: true, style: "margin-top:14px" }, [
+      h("label", { text: "6-digit code from the email" }), code, verify,
+    ]);
 
     var btn = h("button", { class: "primary", text: "Email me a sign-in link", onclick: function () {
       var addr = email.value.trim();
@@ -49,8 +70,11 @@
         .then(function (r) {
           btn.disabled = false;
           if (r && r.error) { msg.className = "msg err"; msg.textContent = r.error.message; return; }
+          sentAddr = addr;
+          codeRow.hidden = false;
           msg.className = "msg ok";
-          msg.textContent = "Check " + addr + " for a sign-in link.";
+          msg.textContent = "Check " + addr + " for the sign-in email. Click its link, or if that does not work, paste the 6-digit code below.";
+          try { code.focus(); } catch (e) { /* focus is best-effort */ }
         })
         .catch(function (e) { btn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
     } });
@@ -70,7 +94,7 @@
       h("label", { text: "Email" }), email,
       h("label", { text: "Name" }), name,
       h("label", { text: "Institution" }), inst,
-      btn, msg,
+      btn, codeRow, msg,
     ]));
   }
 
@@ -239,15 +263,22 @@
 
   // ---- boot ------------------------------------------------------------- //
   if (!window.Accounts || !Accounts.enabled()) { notConfigured(); return; }
+  // A mail scanner (Microsoft Safe Links, prefetchers) can open the one-time magic
+  // link before the user, so Supabase hands us back an error in the URL instead of a
+  // session. Read it and explain, rather than silently re-showing the form. Only strip
+  // the params in the error case — a valid callback carries an access_token we must keep.
+  var urlErr = AuthUrl ? AuthUrl.parseAuthError(location.hash, location.search) : null;
+  var errMsg = urlErr ? AuthUrl.friendlyAuthError(urlErr.code, urlErr.message) : null;
+  if (urlErr) { try { history.replaceState(null, "", location.pathname); } catch (e) { /* best-effort */ } }
   // Creating the client (inside getSession) processes a magic-link redirect.
   Accounts.getSession().then(function (session) {
-    if (!session) { signInView(); return; }
+    if (!session) { signInView(errMsg); return; }
     var user = session.user, email = user && user.email;
     Accounts.profile().then(function (prof) {
       signedInChrome(prof, email);
       signedInView(user.id);
     });
   }).catch(function (e) {
-    show(card([h("h2", { text: "Something went wrong" }), h("p", { class: "sub", text: String(e.message || e) })]));
+    signInView(errMsg || ("Something went wrong: " + String(e.message || e)));
   });
 })();
