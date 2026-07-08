@@ -6906,6 +6906,471 @@
         "answer": 0,
         "explain": "Skin-to-skin contact, such as crossed hands or touching thighs, can complete a conductive loop and cause a burn, so pad those points with a pad or pillowcase. Cables must never be looped or trapped under the patient, and the patient must not touch the bore."
       }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "education",
+      "ord": 1060,
+      "body": {
+        "title": "MR image quality: SNR, scan time, and spatial resolution tradeoffs",
+        "html": "<p>Every protocol is a negotiation between three things: signal-to-noise ratio (SNR), scan time, and spatial resolution. SNR is the <strong>mean signal intensity divided by the standard deviation of the noise</strong>. Some of its drivers are fixed once the patient is on the table: field strength, the sequence design, and the tissue itself. The rest are yours at the console: voxel size, TR and TE, the number of signal averages (NEX), receiver bandwidth, and the coil.</p><p>Voxel size is the central lever. Signal comes from tissue, so a bigger voxel holds more of it. A larger FOV, a smaller matrix, or a thicker slice all enlarge the voxel and raise SNR; the price is coarser detail. Shrink the voxel for sharper images and the noise floor rises to meet you.</p><p>The master tradeoff directions are worth committing to memory:</p><ul><li>TR up: SNR up, scan time up</li><li>TE up: SNR down (larger at long TE)</li><li>Flip angle up (toward the optimum): SNR up</li><li>NEX up: SNR up, scan time up</li><li>FOV up: SNR up, resolution down</li><li>Matrix up: resolution up, SNR down, scan time up</li><li>Slice thickness up: SNR up, fewer slices needed, resolution down</li><li>Bandwidth up: SNR down, shorter minimum TE and TR, less chemical shift</li><li>Parallel imaging: scan time down, SNR down</li></ul><p>Receiver bandwidth deserves a second look because it moves in the opposite direction from intuition. Opening the bandwidth samples more noise, so SNR falls, but the readout finishes sooner, which permits shorter TE and TR, and the fat-water chemical shift spans fewer pixels, so that artifact shrinks along with susceptibility effects near metal. Nothing on this list is free: every gain in signal, speed, or sharpness is paid for somewhere else.</p>",
+        "keypoints": [
+          "SNR is the mean signal divided by the standard deviation of the noise",
+          "Fixed factors: field strength, sequence design, tissue. Operator factors: voxel size, TR and TE, NEX, receiver bandwidth, coil choice",
+          "Bigger voxels (larger FOV, smaller matrix, thicker slices) raise SNR at the cost of resolution",
+          "Raising the matrix sharpens the image but lowers SNR and lengthens the scan",
+          "Higher receiver bandwidth lowers SNR but reduces chemical shift and allows a shorter minimum TE and TR"
+        ],
+        "worked_example": "A lumbar spine T2 at 3 mm slices with a 512 matrix comes back grainy. Dropping the matrix to 384 enlarges each pixel and buys back signal, and moving to 4 mm slices adds more. If the radiologist wants the fine detail kept, you add an average instead: same voxel, more signal, and a longer scan is the price you quote before you commit.",
+        "memory_hooks": [
+          "Signal lives in tissue: bigger voxel, brighter image",
+          "Bandwidth wider, noise louder, fat shift smaller",
+          "Nothing is free: every SNR gain is paid in time or detail"
+        ],
+        "exam_traps": [
+          "Raising the matrix improves resolution but lowers SNR and lengthens the scan; it never raises SNR",
+          "Higher bandwidth lowers SNR, yet it reduces chemical shift and shortens the minimum TE and TR",
+          "SNR is defined with the standard deviation of the noise, not the mean of the noise"
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "education",
+      "ord": 1061,
+      "body": {
+        "title": "Acquisition parameters and k-space: matrix, FOV, NEX, and acceleration",
+        "html": "<p>Each echo fills one phase-encoding line of k-space, and the scan ends when every line has been collected. That is why, for a conventional non-echo-train sequence, 2D scan time is a simple product: <strong>TR times NEX times the number of phase-encoding steps</strong>, and a turbo or fast spin echo divides that by its echo train length. Geometry comes from the same parameters. In-plane voxel size is FOV divided by matrix in each direction, and slice thickness supplies the third dimension. The distance factor, the slice gap set as a percent of thickness, trims cross-talk and the number of slices needed, but a generous gap can skip small pathology.</p><p>NEX repeats each line and averages the copies. Because the noise is re-sampled along with the signal, doubling NEX raises SNR by only about 40 percent (the square root of two) while the scan time fully doubles; the bonus is smoother motion and pulsatile-flow artifact. Phase resolution shortens a scan differently, by acquiring a reduced percentage of the phase lines and accepting rectangular voxels. FOV phase adjusts coverage in the phase direction without touching resolution, since the line count scales in proportion.</p><p>Three techniques change how k-space itself is filled. <em>Partial Fourier</em> acquires part of k-space and calculates the rest from symmetry: faster, with some SNR loss and possible blurring. <em>Oversampling</em> collects data beyond the prescribed FOV so anatomy outside the edge cannot wrap into the image; it adds a little SNR and adds time. <em>Parallel imaging</em> undersamples k-space and unfolds the result using the sensitivity maps of multiple coil elements, cutting scan time by the acceleration factor while lowering SNR by roughly its square root; run it with too small an FOV and an aliasing band can appear in the center of the image.</p>",
+        "keypoints": [
+          "2D scan time = TR x NEX x number of phase-encoding steps",
+          "Doubling NEX gives about 40 percent more SNR (square root of 2) and doubles the scan time",
+          "Voxel = FOV/matrix in plane by slice thickness; the distance factor is the slice gap as a percent of thickness",
+          "Partial Fourier acquires part of k-space and estimates the rest: faster, lower SNR, possible blurring",
+          "Oversampling samples beyond the FOV to prevent wrap; parallel imaging undersamples k-space to save time at an SNR cost"
+        ],
+        "worked_example": "An abdominal breath-hold sequence runs 24 seconds and the patient cannot manage it. Applying parallel imaging with a factor of two brings it near 12 seconds at a known SNR cost. If that is still too long, reducing phase resolution or narrowing the phase FOV drops more lines, and you check that the smaller FOV still clears the flanks so no wrap folds into the liver.",
+        "memory_hooks": [
+          "Time = TR x NEX x phase steps: only three knobs stretch a 2D scan",
+          "NEX pays double for a 40 percent raise",
+          "Oversample to stop wrap; undersample (parallel imaging) to save time"
+        ],
+        "exam_traps": [
+          "Doubling NEX raises SNR about 40 percent (square root of 2), not 100 percent, and it doubles the scan time",
+          "Parallel imaging cuts time at the cost of SNR and can leave aliasing in the center of the image if the FOV is too small",
+          "FOV phase changes coverage in the phase direction, not resolution"
+        ]
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "education",
+      "ord": 1062,
+      "body": {
+        "title": "TR, TE, TI, and flip angle: setting image contrast",
+        "html": "<p>Two clocks set the contrast of a spin echo image. <strong>TR</strong> is the time between excitation pulses: it decides how much longitudinal recovery happens before the next pulse, how many slices fit in the acquisition, and how long the scan runs. <strong>TE</strong> is the time from excitation to the echo, when the data for one phase-encoding line is collected: it decides how much T2 decay is allowed to separate the tissues.</p><p>The classic weighting table follows from those two clocks. T1 weighting uses a short TR and a short TE, catching tissues mid-recovery. T2 weighting uses a long TR and a long TE, letting recovery finish and decay do the talking. Proton density uses a long TR with a <strong>short</strong> TE, silencing both relaxation effects so proton content carries the contrast. Inversion recovery adds a third clock, <strong>TI</strong>: FLAIR pairs a long TR and long TE with a long TI so CSF crosses its null at excitation, while STIR uses a short TI to catch fat at its null.</p><p>The <strong>flip angle</strong> is the excitation angle that tips magnetization away from B0. For any given TR and tissue there is one angle that yields the most steady-state signal, the <em>Ernst angle</em>. Sequence families keep to characteristic ranges: spin echo and turbo spin echo use a 90 degree excitation with 180 degree refocusing pulses, gradient echo excites below 90 degrees so its short TRs still leave usable longitudinal magnetization, and inversion recovery opens with a 180 degree inversion followed by a 90.</p>",
+        "keypoints": [
+          "T1: short TR, short TE. T2: long TR, long TE. PD: long TR, short TE",
+          "FLAIR: long TR and TE with a long TI to null CSF. STIR: short TI to null fat",
+          "TR sets slice count and scan time; TE sets how much T2 decay shapes the contrast",
+          "The Ernst angle is the flip angle that gives maximum SNR for a given TR",
+          "Spin and turbo spin echo use 90 then 180 degree pulses; gradient echo stays under 90; inversion recovery starts with a 180 then a 90"
+        ],
+        "worked_example": "A brain FLAIR comes back with CSF that is not fully dark and the periventricular lesions are hard to separate from the ventricles. Checking the protocol, the TI was left near the short value used for fat nulling. Restoring the long TI appropriate for CSF at that field strength nulls the fluid, and the lesions stand out against dark ventricles again.",
+        "memory_hooks": [
+          "T1 short and short, T2 long and long, PD long TR with short TE",
+          "TI targets: short TI kills fat (STIR), long TI kills CSF (FLAIR)",
+          "TR grows slices and time; TE grows T2 contrast"
+        ],
+        "exam_traps": [
+          "PD pairs a long TR with a short TE; choosing a long TE turns the image into T2 weighting",
+          "FLAIR and STIR both null a tissue with TI, but FLAIR uses a long TI for CSF and STIR uses a short TI for fat",
+          "Gradient echo excites below 90 degrees; spin echo families use 90 and 180 degree pulses"
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1063,
+      "body": {
+        "prompt": "How is the signal-to-noise ratio of an MR image defined?",
+        "options": [
+          "Mean signal intensity divided by the standard deviation of the noise",
+          "Peak signal intensity divided by the mean intensity of the background",
+          "Mean signal intensity multiplied by the standard deviation of the noise",
+          "Total signal in the image divided by the number of background pixels"
+        ],
+        "answer": 0,
+        "explain": "SNR compares the average signal to the spread of the noise, measured as its standard deviation. Dividing by a pixel count or a mean background value is not how noise is quantified."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1064,
+      "body": {
+        "prompt": "Which factor affecting SNR is fixed for a given scanner and cannot be adjusted at the console?",
+        "options": [
+          "The static field strength of the magnet",
+          "The number of signal averages acquired",
+          "The receiver bandwidth of the readout",
+          "The slice thickness of the acquisition"
+        ],
+        "answer": 0,
+        "explain": "Field strength, sequence design, and the tissue itself are fixed. Averages, bandwidth, slice thickness, and the rest of the voxel geometry are operator choices."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1065,
+      "body": {
+        "prompt": "With all other parameters unchanged, increasing TR has what effect?",
+        "options": [
+          "SNR rises and scan time gets longer",
+          "SNR rises and scan time gets shorter",
+          "SNR falls and scan time gets longer",
+          "SNR falls and scan time gets shorter"
+        ],
+        "answer": 0,
+        "explain": "A longer TR allows more longitudinal recovery before each excitation, so signal rises, and since 2D scan time is TR times NEX times phase steps, the scan lengthens with it."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1066,
+      "body": {
+        "prompt": "The matrix is raised from 256 to 512 with the FOV held constant. What happens?",
+        "options": [
+          "Resolution improves, SNR drops, scan lengthens",
+          "Resolution improves, SNR rises, scan lengthens",
+          "Resolution worsens, SNR rises, scan shortens",
+          "Resolution improves, SNR drops, scan shortens"
+        ],
+        "answer": 0,
+        "explain": "Smaller in-plane pixels sharpen detail but each holds less signal, and the extra phase-encoding steps add time. A higher matrix never raises SNR at a fixed FOV."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1067,
+      "body": {
+        "prompt": "Raising the receiver bandwidth has what effect on the image?",
+        "options": [
+          "Lower SNR with less chemical shift artifact",
+          "Higher SNR with less chemical shift artifact",
+          "Lower SNR with more chemical shift artifact",
+          "Higher SNR with more chemical shift artifact"
+        ],
+        "answer": 0,
+        "explain": "A wider bandwidth samples more noise, so SNR falls, but the fat-water shift spans fewer pixels, so chemical shift artifact shrinks. It also permits a shorter minimum TE and TR."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1068,
+      "body": {
+        "prompt": "Which change enlarges the voxels and therefore raises SNR?",
+        "options": [
+          "Making the slices thicker at a fixed FOV and matrix",
+          "Raising the matrix while the FOV stays the same",
+          "Shrinking the FOV while the matrix stays the same",
+          "Making the slices thinner at a fixed FOV and matrix"
+        ],
+        "answer": 0,
+        "explain": "Voxel volume is FOV over matrix in plane times slice thickness, so a thicker slice means more tissue per voxel and more signal. A higher matrix or a smaller FOV shrinks the voxel and costs SNR."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1069,
+      "body": {
+        "prompt": "What tradeoff comes with choosing thicker slices?",
+        "options": [
+          "More signal but less detail through the slice",
+          "More signal and more detail through the slice",
+          "Less signal but more detail through the slice",
+          "Less signal and less detail through the slice"
+        ],
+        "answer": 0,
+        "explain": "Thick slices average more tissue, raising SNR and covering the anatomy with fewer slices, but small structures within the slice blur together through partial volume."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1070,
+      "body": {
+        "prompt": "Besides reducing chemical shift, what does a higher receiver bandwidth make possible?",
+        "options": [
+          "A shorter minimum TE and TR",
+          "A higher SNR per acquisition",
+          "A smaller acquisition matrix",
+          "A wider fat-water pixel shift"
+        ],
+        "answer": 0,
+        "explain": "Faster sampling shortens the readout, so echoes can be placed earlier and TR can come down. SNR falls, not rises, when the bandwidth is widened."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1071,
+      "body": {
+        "prompt": "For a standard 2D spin echo acquisition, scan time equals which product?",
+        "options": [
+          "TR times NEX times the number of phase-encoding steps",
+          "TE times NEX times the number of phase-encoding steps",
+          "TR times NEX times the number of frequency-encode steps",
+          "TR times TE times the number of slices in the stack"
+        ],
+        "answer": 0,
+        "explain": "One phase-encoding line is filled per TR per average, so time scales with TR, NEX, and the phase steps. Frequency-encoding points are all sampled within a single readout and add no time."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1072,
+      "body": {
+        "prompt": "Doubling the number of signal averages (NEX) produces which result?",
+        "options": [
+          "About 40 percent more SNR and twice the scan time",
+          "Twice the SNR and twice the scan time in return",
+          "About 40 percent more SNR at the same scan time",
+          "Twice the SNR with only a small scan time penalty"
+        ],
+        "answer": 0,
+        "explain": "Averaging re-samples the noise along with the signal, so SNR grows only with the square root of NEX, about 1.4 times for a doubling, while the time cost is the full factor of two. Extra averages also smooth motion and flow artifact."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1073,
+      "body": {
+        "prompt": "What sets the in-plane dimensions of a voxel?",
+        "options": [
+          "The FOV divided by the matrix in each direction",
+          "The TR and TE chosen for the pulse sequence",
+          "The receiver bandwidth and number of averages",
+          "The slice gap as a percentage of the thickness"
+        ],
+        "answer": 0,
+        "explain": "Pixel size is FOV over matrix along frequency and phase, and slice thickness supplies the third dimension. TR, TE, bandwidth, and averages change signal and time, not geometry."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1074,
+      "body": {
+        "prompt": "Setting phase resolution to 70 percent has what effect?",
+        "options": [
+          "The scan shortens and the voxels become rectangular",
+          "The scan shortens and the voxels become smaller",
+          "The scan lengthens and the voxels become rectangular",
+          "The scan shortens and every slice becomes thicker"
+        ],
+        "answer": 0,
+        "explain": "Fewer phase-encoding lines are acquired, which cuts time, and the phase pixel dimension grows, giving rectangular voxels with mildly reduced sharpness in that direction."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1075,
+      "body": {
+        "prompt": "How does partial Fourier shorten an acquisition?",
+        "options": [
+          "It samples only part of k-space and estimates the rest",
+          "It samples all of k-space twice and averages the copies",
+          "It samples extra lines of k-space beyond the chosen FOV",
+          "It skips the center of k-space where contrast is encoded"
+        ],
+        "answer": 0,
+        "explain": "Partial Fourier exploits k-space symmetry, acquiring a bit more than half the lines and calculating the remainder, at the cost of some SNR and possible blurring. The center is always kept because it carries the contrast."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1076,
+      "body": {
+        "prompt": "What is the purpose of phase oversampling?",
+        "options": [
+          "To stop wraparound by sampling beyond the FOV",
+          "To shorten the scan by sampling fewer phase lines",
+          "To sharpen the image by sampling finer detail",
+          "To lessen chemical shift by widening the bandwidth"
+        ],
+        "answer": 0,
+        "explain": "Extra data collected outside the prescribed FOV keeps anatomy beyond the edge from folding into the image. It adds a little SNR but lengthens the scan."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1077,
+      "body": {
+        "prompt": "A parallel imaging factor of two has which combined effect?",
+        "options": [
+          "Scan time is about halved and SNR is reduced",
+          "Scan time is about halved and SNR is increased",
+          "Scan time is doubled and SNR is reduced too",
+          "Scan time is about halved and SNR is unchanged"
+        ],
+        "answer": 0,
+        "explain": "Skipping k-space lines and unfolding with coil sensitivities cuts the time, but SNR falls by roughly the square root of the factor, and a too-small FOV can leave an aliasing band in the center of the image."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1078,
+      "body": {
+        "prompt": "Increasing the phase FOV changes the image how?",
+        "options": [
+          "More coverage along phase with resolution unchanged",
+          "More coverage along phase with coarser resolution",
+          "Shorter scan time with the coverage left unchanged",
+          "Finer resolution with the coverage left unchanged"
+        ],
+        "answer": 0,
+        "explain": "Phase FOV adds or trims coverage in the phase direction while pixel size stays the same, because the line count scales in proportion. Scan time and SNR rise when it grows."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1079,
+      "body": {
+        "prompt": "Which statement correctly pairs TR and TE with their roles?",
+        "options": [
+          "TR is the time between excitations; TE is the time to the echo",
+          "TR is the time to the echo; TE is the time between excitations",
+          "TR is the readout duration; TE is the delay after inversion",
+          "TR is the delay after inversion; TE is the readout duration"
+        ],
+        "answer": 0,
+        "explain": "TR spaces the excitation pulses and governs slice count and scan time; TE is when the echo is collected and strongly shapes the contrast."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1080,
+      "body": {
+        "prompt": "Which TR and TE combination produces T1 weighting on spin echo?",
+        "options": [
+          "Short TR with a short TE",
+          "Long TR with a long TE",
+          "Long TR with a short TE",
+          "Short TR with a long TE"
+        ],
+        "answer": 0,
+        "explain": "A short TR catches tissues at different points of longitudinal recovery, and a short TE reads out before much T2 decay mixes in. Long TR with long TE gives T2 weighting instead."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1081,
+      "body": {
+        "prompt": "A sequence uses a long TR and a long TE, and fluid appears bright. The weighting is:",
+        "options": [
+          "T2 weighting",
+          "T1 weighting",
+          "Proton density",
+          "T2 star weighting"
+        ],
+        "answer": 0,
+        "explain": "The long TR removes T1 differences and the long TE lets T2 decay separate the tissues, so slow-decaying fluid stays bright. PD would pair the long TR with a short TE."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1082,
+      "body": {
+        "prompt": "Proton density weighting calls for which parameter pair?",
+        "options": [
+          "Long TR with a short TE",
+          "Long TR with a long TE",
+          "Short TR with a short TE",
+          "Short TR with a long TE"
+        ],
+        "answer": 0,
+        "explain": "The long TR removes T1 effects and the short TE cuts off T2 effects, leaving proton content as the main source of contrast. The classic trap is picking a long TE, which pushes the image toward T2."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1083,
+      "body": {
+        "prompt": "In a FLAIR sequence, the long inversion time is chosen to:",
+        "options": [
+          "Null the signal from CSF",
+          "Null the signal from fat",
+          "Boost the signal from CSF",
+          "Boost the signal from fat"
+        ],
+        "answer": 0,
+        "explain": "The 180 degree inversion is timed so CSF crosses its null at excitation, which makes periventricular lesions easier to see. Fat nulling uses the short TI of STIR."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1084,
+      "body": {
+        "prompt": "How does a STIR sequence remove the fat signal?",
+        "options": [
+          "With a short TI timed to the recovery of fat",
+          "With a long TI timed to the recovery of fat",
+          "With a saturation pulse at the fat frequency",
+          "With a wider receiver bandwidth at readout"
+        ],
+        "answer": 0,
+        "explain": "Fat has a short T1, so a short inversion time catches it at its null point. A frequency-selective saturation pulse is a different fat suppression method, not STIR."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1085,
+      "body": {
+        "prompt": "The Ernst angle is best described as:",
+        "options": [
+          "The flip angle giving the most signal for a given TR",
+          "The flip angle giving the most T2 weighting at any TR",
+          "The refocusing angle used in every spin echo train",
+          "The angle at which fat and water signals cancel out"
+        ],
+        "answer": 0,
+        "explain": "For a chosen TR and tissue T1 there is one excitation angle that maximizes the steady-state signal, and that is the Ernst angle. It matters most in short-TR gradient echo imaging."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1086,
+      "body": {
+        "prompt": "Which sequence family runs its excitation flip angle below 90 degrees?",
+        "options": [
+          "Gradient echo",
+          "Conventional spin echo",
+          "Turbo spin echo",
+          "Inversion recovery"
+        ],
+        "answer": 0,
+        "explain": "Gradient echo uses partial flip angles so its short TRs still leave usable longitudinal magnetization. Spin echo families use 90 and 180 degree pulses, and inversion recovery opens with a 180 followed by a 90."
+      }
     }
   ]
 }
