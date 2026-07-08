@@ -138,7 +138,22 @@
     if ("mrisim_course_mastery_v1" in out) out.mrisim_course_mastery_v1 = _mergeMastery(local.mrisim_course_mastery_v1, remote.mrisim_course_mastery_v1);
     if ("mrisim_course_diagnostic_v1" in out) out.mrisim_course_diagnostic_v1 = _higher(local.mrisim_course_diagnostic_v1, remote.mrisim_course_diagnostic_v1, "ts");
     if ("mrisim_course_review_v1" in out) out.mrisim_course_review_v1 = _mergeReview(local.mrisim_course_review_v1, remote.mrisim_course_review_v1);
+    if ("mrisim_course_completed_v1" in out) out.mrisim_course_completed_v1 = _earlier(local.mrisim_course_completed_v1, remote.mrisim_course_completed_v1, "at");
     return out;
+  }
+
+  var COMPLETE_EXAM_PCT = 80;  // best-mock threshold for course completion
+
+  // Complete = every module status is "mastered" AND the best practice exam >= COMPLETE_EXAM_PCT.
+  function isCourseComplete(statuses, bestExamPct) {
+    if (!statuses || !statuses.length) return false;
+    for (var i = 0; i < statuses.length; i++) { if (statuses[i] !== "mastered") return false; }
+    return typeof bestExamPct === "number" && bestExamPct >= COMPLETE_EXAM_PCT;
+  }
+  // Keep the object with the smaller field value (null-safe; one-sided returns the present one).
+  function _earlier(a, b, field) {
+    if (!a) return b; if (!b) return a;
+    return _num(a[field]) <= _num(b[field]) ? a : b;
   }
 
   return {
@@ -150,5 +165,6 @@
     reviewOnCorrect: reviewOnCorrect,
     dueCount: dueCount,
     mergeProgress: mergeProgress,
+    isCourseComplete: isCourseComplete,
   };
 });

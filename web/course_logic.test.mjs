@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete } = CourseLogic;
 
 test("constants match the spec", () => {
   assert.equal(PASS_PCT, 80);
@@ -104,4 +104,20 @@ test("mergeProgress passes through one-sided keys and handles empties", () => {
   assert.deepEqual(mergeProgress({}, {}), {});
   assert.deepEqual(mergeProgress({ mrisim_curriculum: ["a"] }, {}), { mrisim_curriculum: ["a"] });
   assert.deepEqual(mergeProgress({}, { mrisim_course_exam_v1: { bestPct: 50 } }).mrisim_course_exam_v1, { bestPct: 50 });
+});
+
+test("isCourseComplete requires all mastered and exam >= 80", () => {
+  assert.equal(isCourseComplete(["mastered", "mastered"], 80), true);
+  assert.equal(isCourseComplete(["mastered", "mastered"], 79), false);
+  assert.equal(isCourseComplete(["mastered", "progress"], 95), false);
+  assert.equal(isCourseComplete([], 100), false);
+  assert.equal(isCourseComplete(["mastered"], null), false);
+});
+
+test("mergeProgress completed record keeps the earlier at", () => {
+  const m = mergeProgress(
+    { mrisim_course_completed_v1: { at: 200, examPct: 90 } },
+    { mrisim_course_completed_v1: { at: 100, examPct: 82 } });
+  assert.deepEqual(m.mrisim_course_completed_v1, { at: 100, examPct: 82 });
+  assert.deepEqual(mergeProgress({ mrisim_course_completed_v1: { at: 5 } }, {}).mrisim_course_completed_v1, { at: 5 });
 });
