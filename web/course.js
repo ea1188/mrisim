@@ -35,6 +35,7 @@
   var COURSE_MASTERY_KEY = "mrisim_course_mastery_v1"; // per-module mastery-check result
   var COURSE_DIAG_KEY = "mrisim_course_diagnostic_v1"; // placement-test snapshot (separate from progress)
   var COURSE_REVIEW_KEY = "mrisim_course_review_v1"; // spaced-review queue of missed questions
+  var COURSE_COMPLETE_KEY = "mrisim_course_completed_v1"; // first course-completion record (synced)
   var DIAG_PER_MODULE = 2;                              // questions sampled per module in the placement test
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
@@ -237,7 +238,22 @@
       h("div", { class: "ready-sub", text: r.readPct + "% read · " + r.quizAcc + "% quiz accuracy"
         + (r.exam && r.exam.bestPct != null ? " · best mock " + r.exam.bestPct + "%" : "") }),
     ]));
-    if (r.next) {
+    var completeRec = loadCompleted();
+    var complete = !!completeRec || CourseLogic.isCourseComplete(r.modules.map(function (m) { return m.status; }), r.exam && r.exam.bestPct);
+    if (complete && !completeRec && r.exam && r.exam.bestPct != null) {
+      completeRec = { at: Date.now(), examPct: r.exam.bestPct };
+      saveCompleted(completeRec); queueSync();
+    }
+    if (complete) {
+      var cWhen = (completeRec && completeRec.at) ? new Date(completeRec.at).toLocaleDateString() : new Date().toLocaleDateString();
+      var cPct = (completeRec && completeRec.examPct != null) ? completeRec.examPct : (r.exam && r.exam.bestPct);
+      main.appendChild(h("div", { class: "complete-panel" }, [
+        h("p", { class: "cp-eyebrow", text: "Course complete" }),
+        h("h3", { class: "cp-title", text: "You have completed the MRISim guided course" }),
+        h("p", { class: "cp-sub", text: "Every module is mastered and your best practice exam is " + cPct + "%. Completed " + cWhen + "." }),
+        h("p", { class: "cp-note", text: "Keep reviewing to stay sharp. The practice exam and every module stay open below." }),
+      ]));
+    } else if (r.next) {
       main.appendChild(h("button", { class: "btn study-next", type: "button",
         onclick: function () { openModule(r.next.mod); } }, [
         document.createTextNode("Study next: " + r.next.mod.title),
@@ -834,9 +850,11 @@
       queueSync();
     } catch (e) { /* storage off */ }
   }
+  function loadCompleted() { try { return JSON.parse(localStorage.getItem(COURSE_COMPLETE_KEY) || "null"); } catch (e) { return null; } }
+  function saveCompleted(rec) { try { localStorage.setItem(COURSE_COMPLETE_KEY, JSON.stringify(rec)); } catch (e) { /* storage off */ } }
 
   // --- cross-device progress sync (best-effort, local-first) --------------- //
-  var PROGRESS_KEYS = [CURRICULUM_DONE_KEY, COURSE_QUIZ_KEY, COURSE_READ_KEY, COURSE_EXAM_KEY, COURSE_MASTERY_KEY, COURSE_DIAG_KEY, COURSE_REVIEW_KEY];
+  var PROGRESS_KEYS = [CURRICULUM_DONE_KEY, COURSE_QUIZ_KEY, COURSE_READ_KEY, COURSE_EXAM_KEY, COURSE_MASTERY_KEY, COURSE_DIAG_KEY, COURSE_REVIEW_KEY, COURSE_COMPLETE_KEY];
   var _syncTimer = null;
 
   function readAllProgress() {

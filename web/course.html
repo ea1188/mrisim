@@ -282,6 +282,11 @@
     .ready-row.review .rr-chip { color: var(--warn); border-color: var(--warn); }
     .ready-row.mastered { border-left-color: var(--ok); }
     .ready-row.mastered .rr-chip { color: var(--ok); border-color: var(--ok); }
+    .complete-panel { background: var(--panel); border: 1px solid var(--ok); border-radius: 2px; padding: 20px 22px; margin: 14px 0; }
+    .complete-panel .cp-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ok); margin: 0 0 6px; }
+    .complete-panel .cp-title { margin: 0 0 8px; font-size: 17px; }
+    .complete-panel .cp-sub { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0 0 8px; }
+    .complete-panel .cp-note { color: var(--dim); font-size: 12.5px; margin: 0; }
     @media (max-width: 560px) {
       .ready-row { grid-template-columns: 1fr auto; }
       .ready-row .rr-read, .ready-row .rr-quiz { display: none; }
