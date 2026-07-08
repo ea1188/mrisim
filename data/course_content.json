@@ -4470,6 +4470,273 @@
         },
         "img": "cq-pathology-tumor-contrast-01.jpg"
       }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "education",
+      "ord": 917,
+      "body": {
+        "title": "Contrast reactions: recognition and management",
+        "html": "<p>Adverse reactions to a <b>gadolinium-based contrast agent</b> occur in roughly 0.07 to 2.4 percent of patients, and the vast majority are mild. True anaphylaxis is rare, on the order of 0.001 to 0.01 percent, and fatal reactions are rarer still. A transient feeling of <b>warmth or flushing</b> during injection is not a true reaction; reassurance is usually all it needs, and calming an anxious patient before the injection can prevent symptoms from escalating. Reactions are graded in three tiers. <b>Mild</b> reactions include nausea, vomiting, headache, dizziness, itching, and limited hives; the radiologist evaluates the patient, vitals are taken, and the patient is observed for up to 30 minutes. <b>Moderate</b> reactions such as diffuse erythema, bronchospasm, wheezing, hypotension, or a vasovagal episode are not immediately life threatening but can progress, so medical treatment and monitoring until resolution are required. <b>Severe</b> reactions include laryngeal edema, unresponsiveness, seizures, arrhythmia, and anaphylaxis, and demand immediate treatment.</p><p>Two low blood pressure pictures must be told apart. A <b>vasovagal reaction</b>, often triggered by anxiety around IV placement, produces hypotension with <b>bradycardia</b>, pallor, nausea, and sweating; the first maneuver is to elevate the legs or use Trendelenburg position to restore blood flow to the brain, then recheck vitals until the patient improves. <b>Anaphylaxis</b> produces hypotension with <b>tachycardia</b>, typically alongside hives, facial or laryngeal swelling, or wheezing, and it is the clear indication for epinephrine. A separate problem is <b>extravasation</b>, where contrast enters the soft tissue instead of the vein, causing swelling, redness, burning, and pain. A <b>warm compress</b> promotes reabsorption and circulation, a <b>cold compress</b> relieves pain, and a radiologist should assess the site before the patient leaves.</p><p>When a reaction occurs, follow a rapid response sequence: <b>remove</b> the patient from the scanner and assess breathing, pulse, and consciousness; <b>alert</b> the covering radiologist and, if needed, the emergency response team; <b>prepare</b> the emergency equipment and medication box in a safe zone outside the magnetic field; <b>inform</b> responders of the study type, the agent given, and when the reaction began; then <b>deliver</b> medications exactly as the physician directs. The medication box pairs each drug with an indication: albuterol for wheezing, atropine for bradycardia, diphenhydramine for mild urticaria, dextrose for hypoglycemia, furosemide for pulmonary edema, and epinephrine for anaphylaxis. Per department protocol, the <b>epinephrine auto-injector is the one drug a technologist may give decisively</b>: 0.3 mg for patients 30 kg and over, 0.15 mg for 15 to 30 kg, pressed firmly against the lateral thigh until it clicks and held for several seconds. Every patient who receives an auto-injector goes to the <b>emergency department</b> for monitoring. Patients with a prior severe reaction are premedicated, commonly prednisone 50 mg by mouth 13, 7, and 1 hour before contrast plus diphenhydramine 50 mg 1 hour before. Normal reference points while monitoring: <b>SpO2 above 95 percent</b> is normal and 92 percent or less suggests hypoxemia; normal adult blood pressure is <b>below 120 systolic and 80 diastolic</b>.</p>",
+        "keypoints": [
+          "Reactions to gadolinium-based agents are uncommon and mostly mild; anaphylaxis occurs in roughly 0.001 to 0.01 percent of patients.",
+          "Vasovagal means hypotension with bradycardia, pallor, and sweating; anaphylaxis means hypotension with tachycardia plus hives or airway involvement.",
+          "For extravasation, a warm compress promotes reabsorption, a cold compress relieves pain, and a radiologist assesses the site before discharge.",
+          "In an emergency: remove the patient from the scanner, alert the radiologist and response team, prepare equipment and the med box outside the field, inform responders, and deliver drugs as directed.",
+          "The epinephrine auto-injector is the one drug a technologist may give per department protocol: 0.3 mg at 30 kg and above, 0.15 mg for 15 to 30 kg, and every recipient goes to the emergency department."
+        ],
+        "worked_example": "Five minutes after a gadolinium-based contrast injection, a patient develops spreading hives and begins to wheeze, with a heart rate of 118. Skin and airway involvement together meet anaphylaxis criteria, so this is treated as a severe reaction rather than a mild one. The technologist removes the patient from the scanner, checks breathing and pulse, alerts the covering radiologist, and moves the patient to a safe zone outside the magnetic field with the medication box and emergency equipment ready. Because both skin and airway are involved, the radiologist directs intramuscular epinephrine into the lateral thigh without delay, with albuterol as an adjunct for the wheeze, and the patient is monitored and sent to the emergency department.",
+        "memory_hooks": [
+          "Slow and pale points vagal, fast with hives points anaphylaxis.",
+          "Compresses for extravasation: warm to clear it, cold to calm it.",
+          "The response flow spells RAPID: Remove, Alert, Prepare, Inform, Deliver."
+        ],
+        "exam_traps": [
+          "Both vasovagal reactions and anaphylaxis drop the blood pressure; the heart rate separates them, slow for vasovagal and fast for anaphylaxis.",
+          "Warmth or flushing during injection is an expected sensation, not a true reaction, so the answer is reassurance rather than medication.",
+          "Diphenhydramine treats mild urticaria only; epinephrine, not an antihistamine, is the drug for anaphylaxis, and premedication reduces but does not eliminate repeat risk."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 918,
+      "body": {
+        "prompt": "A patient develops scattered hives and itching a few minutes after a gadolinium-based contrast injection. Vital signs are normal. How is this reaction classified?",
+        "options": [
+          "Mild, observe and notify the radiologist",
+          "Moderate, needing bronchodilator therapy",
+          "Severe, needing immediate epinephrine",
+          "Not a reaction, so no observation needed"
+        ],
+        "answer": 0,
+        "explain": "Urticaria with stable vitals is a mild reaction. The radiologist should still evaluate the patient, and observation for up to 30 minutes is appropriate because hives can progress."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 919,
+      "body": {
+        "prompt": "During a contrast injection a patient develops stridor, facial swelling, and worsening difficulty breathing. Which severity category is this?",
+        "options": [
+          "A mild reaction that resolves with reassurance",
+          "A moderate reaction managed with observation",
+          "A severe reaction requiring immediate treatment",
+          "A vasovagal episode managed with leg elevation"
+        ],
+        "answer": 2,
+        "explain": "Laryngeal edema signals a severe, potentially life threatening reaction. The emergency response sequence starts at once and epinephrine is prepared without delay."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 920,
+      "body": {
+        "prompt": "Both a vasovagal reaction and anaphylaxis can drop the blood pressure. Which finding points to a vasovagal cause?",
+        "options": [
+          "Bradycardia with pallor and sweating",
+          "Tachycardia with spreading urticaria",
+          "Wheezing with new facial swelling",
+          "Stridor with a rising heart rate"
+        ],
+        "answer": 0,
+        "explain": "Vasovagal reactions cause hypotension with a slow heart rate, pallor, and diaphoresis. Anaphylaxis typically pairs hypotension with tachycardia plus hives or airway symptoms."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 921,
+      "body": {
+        "prompt": "A patient becomes pale, sweaty, and faint right after IV placement, with a slow pulse. What is the best first maneuver?",
+        "options": [
+          "Elevate the legs to restore brain blood flow",
+          "Give an epinephrine auto-injector in the thigh",
+          "Apply a warm compress at the injection site",
+          "Administer an oral antihistamine right away"
+        ],
+        "answer": 0,
+        "explain": "This is a vasovagal reaction. Raising the legs or using Trendelenburg position returns blood to the brain while help is called and vitals are rechecked until the patient improves."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 922,
+      "body": {
+        "prompt": "Contrast extravasates into the soft tissue of the forearm. What is the purpose of applying a warm compress?",
+        "options": [
+          "It promotes reabsorption and circulation",
+          "It numbs the site and relieves the pain",
+          "It prevents infection at the puncture site",
+          "It constricts vessels to limit the swelling"
+        ],
+        "answer": 0,
+        "explain": "Warm compresses aid reabsorption of extravasated contrast by improving local circulation, while cold compresses are the choice for pain relief. A radiologist should assess the site before the patient leaves."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 923,
+      "body": {
+        "prompt": "Which contrast reaction is the clearest indication for giving epinephrine?",
+        "options": [
+          "Anaphylaxis with airway compromise",
+          "Nausea shortly after the injection",
+          "Isolated hives with stable vital signs",
+          "Warm flushed feeling during injection"
+        ],
+        "answer": 0,
+        "explain": "Epinephrine is the first line drug for anaphylaxis and severe bronchospasm. Nausea, isolated hives, or flushing do not call for it."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 924,
+      "body": {
+        "prompt": "An anaphylactic reaction occurs in a child who weighs 20 kg. Which epinephrine auto-injector dose is correct?",
+        "options": [
+          "0.15 mg, the junior auto-injector dose",
+          "0.3 mg, the standard adult device dose",
+          "0.5 mg, repeated every three minutes",
+          "1 mg given slowly by intravenous push"
+        ],
+        "answer": 0,
+        "explain": "Children weighing 15 to 30 kg receive the 0.15 mg junior device. Patients at or above 30 kg, about 66 pounds, receive the 0.3 mg adult dose."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 925,
+      "body": {
+        "prompt": "Per department protocol, which emergency drug may an MRI technologist administer on their own initiative during anaphylaxis?",
+        "options": [
+          "Epinephrine by auto-injector",
+          "Diphenhydramine by IV push",
+          "Atropine from the med box",
+          "Nitroglycerin under the tongue"
+        ],
+        "answer": 0,
+        "explain": "The epinephrine auto-injector is typically the one medication a technologist may give decisively in an emergency. Every other drug in the box requires a physician to order and direct it."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 926,
+      "body": {
+        "prompt": "After a technologist gives an epinephrine auto-injector for a contrast reaction, what must happen next?",
+        "options": [
+          "The patient goes to the emergency department",
+          "The patient leaves once the hives have faded",
+          "The exam resumes when breathing feels normal",
+          "A second dose is always given ten minutes on"
+        ],
+        "answer": 0,
+        "explain": "Vital signs are watched closely and every patient who receives epinephrine goes to the emergency department, because symptoms can rebound and repeat dosing may be needed."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 927,
+      "body": {
+        "prompt": "A patient with a prior severe reaction to gadolinium-based contrast is scheduled for a contrast MRI. What is a standard pre-medication schedule?",
+        "options": [
+          "Prednisone 50 mg at 13, 7, and 1 hour before, plus diphenhydramine 1 hour before",
+          "Prednisone 50 mg as a single dose about 30 minutes before entering the scanner",
+          "Diphenhydramine 50 mg nightly for three days with no corticosteroid given at all",
+          "One epinephrine injection administered immediately before the contrast is dosed"
+        ],
+        "answer": 0,
+        "explain": "A common regimen is prednisone 50 mg by mouth 13, 7, and 1 hour before contrast, with diphenhydramine 50 mg 1 hour before. It lowers but does not eliminate the risk of a repeat reaction."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 928,
+      "body": {
+        "prompt": "A patient begins wheezing after contrast administration. Which emergency medication box drug treats this symptom?",
+        "options": [
+          "Albuterol, an inhaled bronchodilator",
+          "Atropine, which raises the heart rate",
+          "Furosemide, which clears excess fluid",
+          "Dextrose, which corrects low glucose"
+        ],
+        "answer": 0,
+        "explain": "Albuterol relieves bronchospasm and wheezing. Atropine treats bradycardia, furosemide treats pulmonary edema, and dextrose treats hypoglycemia."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 929,
+      "body": {
+        "prompt": "During a contrast reaction the heart rate falls to 38 beats per minute. Which medication box drug addresses this finding?",
+        "options": [
+          "Atropine for symptomatic bradycardia",
+          "Albuterol for airway smooth muscle",
+          "Aspirin for suspected cardiac ischemia",
+          "Nitroglycerin for severe anginal pain"
+        ],
+        "answer": 0,
+        "explain": "Atropine is the medication box drug for bradycardia. The physician directs its use; the technologist prepares the box but does not administer it."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 930,
+      "body": {
+        "prompt": "The radiologist evaluates mild hives after contrast and requests treatment. Which drug matches this indication?",
+        "options": [
+          "Oral diphenhydramine, an antihistamine",
+          "Intramuscular epinephrine at 0.3 mg dose",
+          "Nebulized albuterol to treat the rash",
+          "Sublingual nitroglycerin for comfort"
+        ],
+        "answer": 0,
+        "explain": "Mild urticaria is treated with 25 to 50 mg of oral diphenhydramine when the physician requests it. Epinephrine is reserved for severe reactions such as anaphylaxis."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 931,
+      "body": {
+        "prompt": "While monitoring a patient after a contrast injection, which reading falls outside normal adult limits?",
+        "options": [
+          "Oxygen saturation of 91 percent",
+          "Blood pressure of 118 over 76",
+          "Oxygen saturation of 97 percent",
+          "Resting pulse of 72 per minute"
+        ],
+        "answer": 0,
+        "explain": "An SpO2 above 95 percent is considered normal, and 92 percent or less suggests hypoxemia. Normal adult blood pressure is below 120 systolic and below 80 diastolic."
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "quiz",
+      "ord": 932,
+      "body": {
+        "prompt": "A patient reports feeling warm and flushed during the gadolinium-based contrast injection but has no other symptoms. What does this represent?",
+        "options": [
+          "A common sensation, not a true reaction",
+          "An early mild reaction needing medication",
+          "The first stage of anaphylactic response",
+          "A vasovagal episode needing leg raising"
+        ],
+        "answer": 0,
+        "explain": "Transient warmth and flushing are expected sensations, not true reactions. Reassurance is usually all that is needed, and calming anxious patients before injection can prevent escalation."
+      }
     }
   ]
 }
