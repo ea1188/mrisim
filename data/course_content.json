@@ -8041,6 +8041,134 @@
         "answer": 0,
         "explain": "A tissue excited at the moment its inverted longitudinal magnetization crosses zero has nothing to tip into the transverse plane, so it appears black. If recovery were complete the tissue would be bright, not dark."
       }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1140,
+      "body": {
+        "prompt": "In a 3D volumetric acquisition, wrap-around along the slice-select (partition) direction is prevented by:",
+        "options": [
+          "Oversampling in the slice-encode direction so tissue outside the slab does not fold into it",
+          "Lowering the receive bandwidth to widen the range of frequencies sampled at each partition",
+          "Shortening the echo time so that fewer partitions are needed to fill the excited slab",
+          "Raising the flip angle to saturate the signal from tissue beyond the edges of the slab"
+        ],
+        "answer": 0,
+        "explain": "A 3D acquisition phase-encodes the slice direction, so anatomy beyond the excited slab can alias onto the end partitions. Slice-direction oversampling extends encoding past the slab edges and discards the extra partitions, removing the wrap. Bandwidth, TE, and flip angle do not address slice-direction aliasing."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1141,
+      "body": {
+        "prompt": "Compared with a single 2D slice, a 3D acquisition that phase-encodes the slice direction increases scan time mainly because:",
+        "options": [
+          "Each partition adds a full set of phase-encoding steps, so the second phase axis multiplies the acquisition",
+          "The whole slab must be re-shimmed between every repetition to keep the partitions aligned",
+          "A longer echo time is forced on every partition to allow the slab to be excited fully",
+          "The receiver has to sample each frequency point several extra times to reach the same resolution"
+        ],
+        "answer": 0,
+        "explain": "3D scan time is TR times the in-plane phase-encode steps times the number of slice-encode partitions (times NEX). The extra slice phase-encode loop multiplies acquisition time, which is why 3D usually pairs with short-TR gradient echo. Re-shimming, TE, and oversampled readout are not the reason."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1142,
+      "body": {
+        "prompt": "Why can a 3D acquisition produce contiguous slices with no interslice gap, unlike a typical 2D acquisition?",
+        "options": [
+          "The slab is partitioned by phase encoding rather than by separate selective excitations, so partitions do not need a gap to avoid cross-talk",
+          "The 3D readout gradient is strong enough to prevent any overlap between neighbouring slices",
+          "3D sequences are always run with a much longer TR, which lets each adjacent slice fully recover its longitudinal magnetization before the next excitation",
+          "The Fourier transform automatically inserts blank partitions between the reconstructed slices"
+        ],
+        "answer": 0,
+        "explain": "In 3D the slab is excited once and divided into partitions by a second phase-encoding gradient, so there is no imperfect slice profile overlapping a neighbour and no gap is needed. 2D uses separate selective excitations whose profiles overlap, which is why a gap or interleaving is used. Readout strength, TR, and the transform do not create the gap-free partitions."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1143,
+      "body": {
+        "prompt": "A 3D acquisition tends to have higher SNR than an equivalent 2D acquisition mainly because:",
+        "options": [
+          "Signal is collected from the entire slab on every excitation and averaged over all the slice-encode steps",
+          "The excited slab undergoes far less T2 decay than the individual 2D slices experience during their own separate readout windows",
+          "3D imaging uses a much larger voxel, which always raises the signal it receives",
+          "Gradient spoiling is unnecessary in 3D, so no transverse signal is ever discarded"
+        ],
+        "answer": 0,
+        "explain": "Because a 3D sequence excites and samples the whole slab for every slice-encode step, signal is effectively averaged over all partitions, giving an SNR gain that scales with the square root of the number of partitions. Larger voxels would raise SNR but are not the mechanism here, and the T2 and spoiling statements are incorrect."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1144,
+      "body": {
+        "prompt": "In a contrast-enhanced 3D MR angiogram, a mask subtraction is performed by:",
+        "options": [
+          "Subtracting a precontrast 3D data set from the postcontrast set so that only enhancing vessels remain",
+          "Removing every second partition from the postcontrast set to suppress the background tissue",
+          "Inverting the k-space of the postcontrast set before the Fourier transform to cancel the fat",
+          "Applying a saturation band over the aorta so that arterial inflow is nulled on the mask"
+        ],
+        "answer": 0,
+        "explain": "Subtraction MRA acquires a precontrast mask and a postcontrast set with identical geometry, then subtracts them so stationary background cancels and only the gadolinium-filled vessels remain. Dropping partitions, inverting k-space, and saturation bands do not produce a subtraction angiogram."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1145,
+      "body": {
+        "prompt": "Reformatting a data set into an arbitrary oblique plane keeps full spatial resolution only when the source acquisition is:",
+        "options": [
+          "3D with isotropic voxels, because equal dimensions in all three axes reformat without blurring",
+          "2D with a large slice gap, because the gaps give the reformat room to interpolate cleanly",
+          "2D with thick slices, because thicker slices carry more signal into the reformatted plane",
+          "3D with a very high receive bandwidth, because bandwidth sets the through-plane resolution"
+        ],
+        "answer": 0,
+        "explain": "Isotropic 3D voxels have the same size along every axis, so a reformat in any plane preserves resolution. Thick 2D slices reformat poorly because the through-plane dimension is coarse and the oblique plane blurs. Slice gap and receive bandwidth do not give clean multiplanar reformats."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1146,
+      "body": {
+        "prompt": "A balanced steady-state free precession (bSSFP) sequence is often run as a 3D acquisition because it:",
+        "options": [
+          "Uses a very short TR with high signal, so the many partitions of a 3D slab can be collected quickly",
+          "Is immune to banding artifact, so field inhomogeneity across the slab never matters",
+          "Requires no gradient spoiling, which means it cannot be used for 2D imaging at all",
+          "Produces pure T1 weighting, which only becomes visible in a volumetric acquisition"
+        ],
+        "answer": 0,
+        "explain": "bSSFP has a very short TR and high signal efficiency, which suits the many slice-encode steps of a 3D slab and keeps total time reasonable. It is actually prone to banding from B0 inhomogeneity, can be run in 2D, and gives mixed T2/T1 contrast rather than pure T1."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1147,
+      "body": {
+        "prompt": "In a 3D data set, k-space is filled along:",
+        "options": [
+          "One frequency-encode axis and two phase-encode axes, one in-plane and one for the partitions",
+          "Three frequency-encode axes, one for each spatial dimension of the excited slab",
+          "One phase-encode axis only, with the other two directions taken from the readout",
+          "Two frequency-encode axes and a single phase-encode axis shared across all partitions"
+        ],
+        "answer": 0,
+        "explain": "A 3D acquisition frequency-encodes one axis and phase-encodes the other two, the in-plane phase direction and the slice (partition) direction, so k-space is a 3D matrix. The other options misstate how the three axes are encoded."
+      }
     }
   ]
 }
