@@ -9529,6 +9529,486 @@
         "answer": 0,
         "explain": "At 3 T the RF wavelength in tissue approaches body dimensions, so standing waves cause central B1 dropout, especially in large abdomens or with ascites. Dielectric pads or parallel-transmit RF shimming even out the B1 field."
       }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1233,
+      "body": {
+        "prompt": "Which acquisition parameter most directly controls the degree of T1 weighting?",
+        "options": [
+          "TR, because a short TR emphasizes differences in how quickly tissues recover longitudinal magnetization",
+          "TE, because a short TE emphasizes differences in how quickly tissues lose transverse magnetization",
+          "the flip angle alone, because it fixes how much signal each tissue produces regardless of TR or TE",
+          "the receiver bandwidth, because it sets how much T1 relaxation occurs during the signal readout"
+        ],
+        "answer": 0,
+        "explain": "T1 contrast develops during the recovery period between excitations, so TR governs it: a short TR does not let long-T1 tissues fully recover, exaggerating their difference from short-T1 tissues. TE controls T2 weighting."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1234,
+      "body": {
+        "prompt": "On a T1-weighted image, fat appears bright because it:",
+        "options": [
+          "has a short T1, so it recovers longitudinal magnetization quickly and gives high signal at a short TR",
+          "has a long T1, so it recovers longitudinal magnetization slowly and gives high signal at a short TR",
+          "has a long T2, so it retains transverse magnetization far longer than the surrounding tissues do",
+          "contains very little hydrogen, so it produces almost no signal and is displayed as a bright region"
+        ],
+        "answer": 0,
+        "explain": "Fat has a short T1, recovering its longitudinal magnetization quickly between pulses, so it yields high signal on T1-weighted sequences. This is why subcutaneous fat is bright on a non-fat-suppressed T1 image."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1235,
+      "body": {
+        "prompt": "As static field strength increases from 1.5 T to 3 T, tissue T1 values generally:",
+        "options": [
+          "lengthen, which slightly reduces T1 contrast and often calls for a longer TR or TI",
+          "shorten, which increases T1 contrast and allows a much shorter TR to be used safely",
+          "stay exactly the same, since T1 is an intrinsic property independent of field strength",
+          "drop to nearly zero, which is why 3 T scanners cannot produce T1-weighted images at all"
+        ],
+        "answer": 0,
+        "explain": "T1 relaxation times increase with field strength, so at 3 T tissues recover more slowly and T1 contrast is slightly reduced. Sequences are adjusted (for example a longer inversion time for FLAIR) to compensate."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1236,
+      "body": {
+        "prompt": "A superparamagnetic iron oxide (SPIO) contrast agent alters image signal by:",
+        "options": [
+          "shortening T2 and T2*, which makes tissue that takes up the agent lose signal and appear dark",
+          "shortening T1 only, which makes tissue that takes up the agent gain signal and appear bright",
+          "increasing the proton density of tissue, which raises signal on every pulse sequence equally",
+          "having no effect on relaxation times, acting purely as a mechanical marker within the vessel"
+        ],
+        "answer": 0,
+        "explain": "SPIO agents create strong local field disturbances that shorten T2 and T2*, so tissue taking up the agent (for example normal liver Kupffer cells) loses signal. They act as negative (dark) contrast agents, unlike gadolinium."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1237,
+      "body": {
+        "prompt": "Proton-density weighting is achieved by minimizing T1 and T2 effects so that contrast reflects:",
+        "options": [
+          "the concentration of mobile hydrogen protons in each tissue, using a long TR and a short TE",
+          "the T1 recovery rate of each tissue, using a short TR paired together with a short TE value",
+          "the T2 decay rate of each tissue, using a long TR paired together with a long TE value",
+          "the diffusion of water molecules in each tissue, using a pair of strong motion-probing gradients"
+        ],
+        "answer": 0,
+        "explain": "A long TR reduces T1 influence and a short TE reduces T2 influence, leaving contrast that depends mainly on how many mobile protons each tissue contains, the proton (spin) density."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1238,
+      "body": {
+        "prompt": "Fat has a short T1 (relaxes quickly) because:",
+        "options": [
+          "its molecules tumble at a rate close to the Larmor frequency, allowing efficient energy transfer to the lattice",
+          "its molecules tumble far faster than the Larmor frequency, which prevents any energy transfer to the lattice",
+          "it contains almost no hydrogen, so there is very little magnetization that needs to recover after a pulse",
+          "it is a solid at body temperature, and solids always have the shortest T1 of any tissue in the body"
+        ],
+        "answer": 0,
+        "explain": "T1 recovery is fastest when molecular tumbling frequencies match the Larmor frequency, letting protons dump absorbed energy into the surrounding lattice. Mid-sized fat molecules tumble near this rate, giving fat its short T1. Free water tumbles too fast, giving it a long T1."
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "quiz",
+      "ord": 1239,
+      "body": {
+        "prompt": "Ranked from brightest to darkest on a standard T1-weighted brain image, the correct order is:",
+        "options": [
+          "fat, then white matter, then gray matter, then cerebrospinal fluid",
+          "cerebrospinal fluid, then gray matter, then white matter, then fat",
+          "gray matter, then fat, then cerebrospinal fluid, then white matter",
+          "white matter, then cerebrospinal fluid, then fat, then gray matter"
+        ],
+        "answer": 0,
+        "explain": "On T1, signal tracks short T1 as bright: fat is brightest, white matter (more myelin lipid) is brighter than gray matter, and CSF with its very long T1 is darkest. This ordering reverses on a T2-weighted image."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1240,
+      "body": {
+        "prompt": "Contrast-to-noise ratio (CNR) is best defined as:",
+        "options": [
+          "the difference in signal between two tissues divided by the background noise level of the image",
+          "the signal of a single tissue divided by the background noise level of the surrounding image",
+          "the difference in signal between two tissues multiplied by the total scan time of the sequence",
+          "the ratio of the largest voxel to the smallest voxel achievable at the chosen field of view"
+        ],
+        "answer": 0,
+        "explain": "CNR is the signal difference between two tissues normalized by noise. Because detecting a lesion depends on how well it stands out from adjacent tissue, CNR predicts conspicuity better than raw SNR (which concerns one tissue against background)."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1241,
+      "body": {
+        "prompt": "The in-plane pixel size along one axis is equal to:",
+        "options": [
+          "the field of view divided by the matrix size along that axis",
+          "the field of view multiplied by the matrix size along that axis",
+          "the slice thickness divided by the number of signal averages used",
+          "the receiver bandwidth divided by the number of phase-encode steps"
+        ],
+        "answer": 0,
+        "explain": "Pixel size equals FOV / matrix. Shrinking the FOV or enlarging the matrix makes pixels smaller, improving spatial resolution but reducing SNR because each smaller voxel holds fewer protons."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1242,
+      "body": {
+        "prompt": "Reducing the phase matrix (for example choosing 75 percent phase resolution) will:",
+        "options": [
+          "shorten scan time but lower spatial resolution along the phase-encode direction of the image",
+          "shorten scan time while actually improving spatial resolution along the phase-encode direction",
+          "lengthen scan time but greatly improve resolution along the frequency-encode direction instead",
+          "leave both scan time and resolution unchanged, affecting only the receiver bandwidth per pixel"
+        ],
+        "answer": 0,
+        "explain": "Fewer phase-encode steps mean fewer TR periods, so scan time falls, but coarser sampling of the phase direction lowers resolution there. The scanner may interpolate to a square pixel, but true resolution is reduced."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1243,
+      "body": {
+        "prompt": "Using parallel imaging at acceleration factor R shortens the scan but:",
+        "options": [
+          "reduces SNR by roughly the square root of R, with an additional local penalty from the g-factor",
+          "increases SNR by roughly the square root of R, because fewer noisy lines are sampled overall",
+          "leaves SNR unchanged, because the missing k-space lines are recovered perfectly by the coils",
+          "reduces spatial resolution, because parallel imaging always enlarges the reconstructed voxels"
+        ],
+        "answer": 0,
+        "explain": "Undersampling collects less data, so SNR drops by about root-R, and the unfolding reconstruction adds spatially varying noise through the g-factor. Resolution is preserved; the cost is SNR and possible residual artifact."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1244,
+      "body": {
+        "prompt": "At clinical field strengths, the dominant source of image noise is:",
+        "options": [
+          "thermal (Johnson) noise from the patient's own body, which is why coil loading matters so much",
+          "quantization noise from the analog-to-digital converter, which sets a hard floor on achievable SNR",
+          "quantum shot noise from the small number of photons emitted by the excited hydrogen protons",
+          "gradient vibration noise, which couples mechanically into the receive chain during the readout"
+        ],
+        "answer": 0,
+        "explain": "Most MRI noise is thermal (Brownian) motion of charges in the conductive tissue of the patient, picked up by the receive coil. This is why a properly loaded coil and imaging the smallest necessary volume improve SNR."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1245,
+      "body": {
+        "prompt": "Overall signal-to-noise ratio in MRI is approximately proportional to:",
+        "options": [
+          "voxel volume times the square root of (phase steps x frequency steps x averages), divided by the square root of bandwidth",
+          "voxel volume divided by the square root of (phase steps x frequency steps x averages), times the square root of bandwidth",
+          "the receiver bandwidth times the matrix size, independent of the voxel volume or the number of averages",
+          "the field of view divided by the slice thickness, independent of how many signal averages are collected"
+        ],
+        "answer": 0,
+        "explain": "SNR rises with voxel volume (more protons) and with the square root of the total number of samples collected (phase steps, frequency steps, and averages), and falls with the square root of receiver bandwidth (more bandwidth admits more noise)."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1246,
+      "body": {
+        "prompt": "With all other parameters held constant, increasing TE will:",
+        "options": [
+          "lower SNR, because more of the transverse signal has decayed by the time the echo is read",
+          "raise SNR, because a longer echo time allows more signal to build up before the readout",
+          "leave SNR unchanged, because TE affects only image contrast and never the signal amplitude",
+          "raise spatial resolution, because a longer echo time samples more lines of k-space per TR"
+        ],
+        "answer": 0,
+        "explain": "Signal is read at the echo, and transverse magnetization decays with T2 (or T2*) as TE lengthens, so a longer TE means less remaining signal and lower SNR. TE also increases T2 weighting."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1247,
+      "body": {
+        "prompt": "Relative to water, the hydrogen protons in fat precess at:",
+        "options": [
+          "a lower frequency, about 3.5 parts per million below water, because they are more shielded",
+          "a higher frequency, about 3.5 parts per million above water, because they are less shielded",
+          "exactly the same frequency as water, differing only in their T1 and T2 relaxation times",
+          "a frequency that depends only on the receiver bandwidth chosen for the particular sequence"
+        ],
+        "answer": 0,
+        "explain": "Fat protons sit in a more shielded chemical environment, so they resonate about 3.5 ppm lower than water protons. Spectral fat-saturation pulses are tuned to this lower fat frequency to selectively saturate it."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1248,
+      "body": {
+        "prompt": "At 3 T, the frequency separation between fat and water is about:",
+        "options": [
+          "440 Hz, roughly double the separation at 1.5 T, which makes spectral fat saturation easier",
+          "220 Hz, the same as at 1.5 T, because the separation is independent of the field strength",
+          "110 Hz, roughly half the separation at 1.5 T, which makes spectral fat saturation harder",
+          "3.5 Hz, a fixed value set by the chemical-shift difference regardless of the field strength"
+        ],
+        "answer": 0,
+        "explain": "The 3.5 ppm chemical shift scales with field strength, so the fat-water gap is about 220 Hz at 1.5 T and about 440 Hz at 3 T. The wider separation at 3 T makes selective fat saturation more reliable."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1249,
+      "body": {
+        "prompt": "A chemically selective fat-saturation pulse works by, just before the excitation pulse:",
+        "options": [
+          "applying a narrow-band 90-degree pulse at fat's frequency, then a spoiler gradient to dephase the fat signal",
+          "applying a broad-band 180-degree pulse at water's frequency, then reading the echo without any spoiler",
+          "inverting all of the tissue in the slice, then waiting for fat to reach its longitudinal null point",
+          "switching the slice-select gradient off so that only fat within the isocenter becomes saturated"
+        ],
+        "answer": 0,
+        "explain": "A spectral fat-sat pulse tips fat's magnetization into the transverse plane with a frequency-selective 90-degree pulse, then a spoiler gradient dephases it so fat contributes no signal to the following excitation. Water, at a different frequency, is left alone."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1250,
+      "body": {
+        "prompt": "Spectral (chemical-shift) fat saturation is least reliable:",
+        "options": [
+          "at the periphery of a large field of view or near metal and air, where local B0 is inhomogeneous",
+          "at the exact center of the bore, where the static field is strongest and most perfectly uniform",
+          "on thin slices, because reducing slice thickness always widens the fat and water frequency gap",
+          "on T1-weighted sequences, because T1 weighting removes the frequency difference between fat and water"
+        ],
+        "answer": 0,
+        "explain": "Selective saturation depends on fat sitting at a predictable frequency, which requires a homogeneous B0. Near the FOV edges, metal, or air-tissue interfaces, local field shifts move fat off the saturation band and suppression fails."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1251,
+      "body": {
+        "prompt": "STIR is considered non-specific for fat because it also nulls the signal from:",
+        "options": [
+          "any tissue whose T1 resembles fat, such as subacute hemorrhage, melanin, or gadolinium-enhanced tissue",
+          "any tissue with a very long T2, such as simple cysts, cerebrospinal fluid, and joint effusions",
+          "any tissue containing calcium, because calcium and fat happen to share the same resonant frequency",
+          "only pure water, leaving fat and every other soft tissue completely unaffected by the inversion pulse"
+        ],
+        "answer": 0,
+        "explain": "STIR nulls tissue at fat's T1, so anything with a similarly short T1, methemoglobin, melanin, proteinaceous fluid, or gadolinium-enhanced tissue, is also suppressed. That is why STIR is not combined with contrast and is called non-specific."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1252,
+      "body": {
+        "prompt": "A multi-point (multi-echo / IDEAL-type) Dixon method improves on two-point Dixon mainly by:",
+        "options": [
+          "being more robust to B0 inhomogeneity and enabling accurate quantitative fat-fraction measurement",
+          "removing the need for any phase-encoding steps, which shortens the scan time by roughly half",
+          "eliminating the water-only and fat-only images so that only a single fat-saturated image remains",
+          "working only at very low field strengths, where the fat and water frequencies are far apart"
+        ],
+        "answer": 0,
+        "explain": "Acquiring more echoes lets the reconstruction separate fat and water while also solving for field-map errors, making it robust to B0 inhomogeneity and yielding a reliable proton-density fat fraction."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1253,
+      "body": {
+        "prompt": "To evaluate a suspected ruptured silicone breast implant, the technologist would use a sequence that:",
+        "options": [
+          "selectively images silicone (or suppresses water) so that silicone signal is highlighted against the breast",
+          "suppresses silicone and fat together, leaving only glandular tissue and any implant capsule visible",
+          "applies a standard STIR, since silicone and fat share an identical resonant frequency and T1 value",
+          "relies on gadolinium enhancement, because silicone only becomes visible after intravenous contrast"
+        ],
+        "answer": 0,
+        "explain": "Silicone resonates at its own frequency, distinct from fat and water. A silicone-selective (or water-suppressed) sequence makes silicone bright, revealing extracapsular silicone or the linguine sign of an intracapsular rupture."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1254,
+      "body": {
+        "prompt": "Proton-density fat fraction (PDFF), computed from Dixon images, is clinically used to:",
+        "options": [
+          "quantify hepatic steatosis as the fraction fat / (fat + water) within the liver",
+          "measure the total blood volume in the liver by comparing arterial and venous phases",
+          "estimate the patient's whole-body SAR before a long fat-suppressed abdominal protocol",
+          "calculate the receiver bandwidth needed to keep chemical shift below one pixel of shift"
+        ],
+        "answer": 0,
+        "explain": "PDFF expresses fat signal as a fraction of total (fat plus water) signal, giving a reproducible measure of liver fat. It has become a noninvasive standard for grading hepatic steatosis."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1255,
+      "body": {
+        "prompt": "Curved planar reformation (CPR) is used to:",
+        "options": [
+          "display a tortuous vessel by reformatting along its centerline onto a single flat image",
+          "project only the brightest voxel along each ray to show a bright-blood angiographic view",
+          "render a threshold-based solid surface of an organ for a three-dimensional external view",
+          "remove wrap-around in the slice direction by oversampling the edges of the imaging volume"
+        ],
+        "answer": 0,
+        "explain": "CPR traces a curved path along a vessel's centerline and flattens it into one plane, so a tortuous artery that would otherwise leave the imaging plane can be shown end to end in a single image."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1256,
+      "body": {
+        "prompt": "A surface-shaded display (SSD) reconstruction is limited because it:",
+        "options": [
+          "renders only voxels above a chosen threshold, so it is highly sensitive to that threshold and hides internal detail",
+          "projects only the single brightest voxel along each ray, so it discards all of the depth information",
+          "can be produced only from a 2D multislice acquisition and never from a true 3D volumetric data set",
+          "requires intravenous contrast, so it cannot be applied to any non-enhanced volumetric acquisition"
+        ],
+        "answer": 0,
+        "explain": "SSD picks a threshold and renders a surface of everything above it, giving a 3D external view but losing internal intensity information and exaggerating or hiding structures depending on the threshold chosen."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1257,
+      "body": {
+        "prompt": "Compared with a full-volume MIP, a thin-slab (subvolume) MIP:",
+        "options": [
+          "reduces the overlap of superimposed vessels by projecting only a limited depth of tissue",
+          "increases the overlap of superimposed vessels by projecting a much greater depth of tissue",
+          "removes the need for any source 3D data, generating the projection from a single 2D slice",
+          "always requires twice the acquisition time, because two separate projections must be computed"
+        ],
+        "answer": 0,
+        "explain": "A thin-slab MIP projects only a limited depth, so overlying bright structures are less likely to obscure the vessel of interest, at the cost of showing a smaller volume per image."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1258,
+      "body": {
+        "prompt": "3D fast-spin-echo variants (such as CUBE, SPACE, or VISTA) use variable refocusing flip angles across the echo train mainly to:",
+        "options": [
+          "limit SAR and reduce blurring while still acquiring a long echo train for an isotropic volume",
+          "increase SAR deliberately so that the images gain the heaviest possible T2 weighting available",
+          "eliminate the need for phase encoding, which is what makes these sequences inherently three-dimensional",
+          "suppress fat without any dedicated fat-saturation pulse being added to the pulse sequence at all"
+        ],
+        "answer": 0,
+        "explain": "Long echo trains in 3D FSE would otherwise deposit high SAR and blur from T2 decay. Sweeping the refocusing flip angles (low then rising) controls the signal evolution, keeping SAR manageable and reducing blurring for a high-resolution isotropic volume."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1259,
+      "body": {
+        "prompt": "A practical workflow advantage of acquiring a single isotropic 3D data set is that it:",
+        "options": [
+          "can be reformatted into axial, sagittal, and coronal planes, often replacing three separate 2D acquisitions",
+          "requires no reconstruction at all, since the raw k-space is already displayed as the final image",
+          "always has lower SNR than any 2D acquisition, which is offset only by its much shorter scan time",
+          "can only ever be viewed in the plane in which it was originally acquired, exactly like a 2D scan"
+        ],
+        "answer": 0,
+        "explain": "Isotropic voxels reformat equally well in any plane, so one 3D acquisition yields axial, sagittal, and coronal images. This can replace multiple 2D scans and often shortens overall exam time."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1260,
+      "body": {
+        "prompt": "Compared with 2D time-of-flight angiography, 3D time-of-flight:",
+        "options": [
+          "gives higher resolution and SNR but saturates slow flow more, so 2D is preferred for slow venous flow",
+          "gives lower resolution and SNR but never saturates slow flow, so it is always preferred for veins",
+          "requires intravenous gadolinium, whereas 2D time-of-flight is the only truly non-contrast technique",
+          "cannot be reformatted into other planes, whereas 2D time-of-flight produces an isotropic volume"
+        ],
+        "answer": 0,
+        "explain": "3D TOF acquires a volume with high resolution and SNR and short TE (less dephasing), ideal for fast arterial flow, but spins saturate as they traverse the slab, dimming slow flow. 2D TOF, exciting one thin slice at a time, better preserves slow venous flow."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1261,
+      "body": {
+        "prompt": "In 3D contrast-enhanced MR angiography, correct bolus timing is usually achieved by:",
+        "options": [
+          "using a test bolus or automated bolus tracking so acquisition of central k-space coincides with peak arterial enhancement",
+          "starting the acquisition at a fixed 60 seconds after injection for every patient regardless of cardiac output",
+          "acquiring continuously for several minutes and selecting the best frame after the scan has finished",
+          "injecting the gadolinium only after the central lines of k-space have already been fully acquired"
+        ],
+        "answer": 0,
+        "explain": "Because central k-space sets contrast, it must be filled at peak arterial concentration. A small test bolus or real-time bolus tracking measures transit time and triggers the scan accordingly, adapting to each patient's circulation."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1262,
+      "body": {
+        "prompt": "Reformatting an anisotropic (thick-partition) 3D data set into an orthogonal plane tends to produce:",
+        "options": [
+          "stair-step artifact and blurring, which is why isotropic voxels are preferred for multiplanar reformation",
+          "a perfectly sharp image in every plane, since 3D data can always be reformatted without any quality loss",
+          "wrap-around along the frequency-encode axis, which is corrected by increasing the receiver bandwidth",
+          "chemical-shift misregistration, which is corrected by adding a spectral fat-saturation pulse to the scan"
+        ],
+        "answer": 0,
+        "explain": "When partitions are thicker than the in-plane pixels, reformatting across them samples coarsely, giving a stair-step, blurred appearance. Acquiring isotropic voxels avoids this and preserves resolution in any reformatted plane."
+      }
     }
   ]
 }
