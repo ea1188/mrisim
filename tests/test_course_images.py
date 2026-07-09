@@ -12,7 +12,7 @@ SRC = os.path.join(HERE, "data", "course_content.json")
 IMG_DIR = os.path.join(HERE, "web", "img", "course-quiz")
 
 # Commercial-safe only: a paid product may not use -NC / -ND / "free for education".
-ALLOWED_LICENSES = {"CC0-1.0", "Public-Domain", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-2.0"}
+ALLOWED_LICENSES = {"CC0-1.0", "Public-Domain", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-2.0", "Owner-Original"}
 
 
 def validate_image_body(body):
@@ -27,8 +27,10 @@ def validate_image_body(body):
         assert s.get("region") and s.get("params"), f"{img}: setup needs region + params"
     else:
         c = body["credit"]
-        assert c.get("author") and c.get("source_url") and c.get("title"), f"{img}: credit needs author/source_url/title"
+        assert c.get("title"), f"{img}: credit needs a title"
         assert c.get("license") in ALLOWED_LICENSES, f"{img}: license {c.get('license')!r} not commercial-safe"
+        if c.get("license") != "Owner-Original":
+            assert c.get("author") and c.get("source_url"), f"{img}: external-licensed credit needs author + source_url"
 
 
 def test_validator_rejects_both_sources():
@@ -54,6 +56,20 @@ def test_validator_rejects_incomplete_credit():
 def test_validator_accepts_valid_setup_and_credit():
     validate_image_body({"img": "s.jpg", "setup": {"region": "Brain", "params": {"TR": 500}}})
     validate_image_body({"img": "c.jpg", "credit": {"author": "Dr X", "license": "CC-BY-4.0", "source_url": "https://commons.wikimedia.org/x", "title": "t"}})
+
+
+def test_validator_accepts_owner_original_without_source():
+    validate_image_body({"img": "o.jpg", "credit": {"author": "MRISim", "license": "Owner-Original", "title": "our own scan"}})
+
+
+def test_validator_owner_original_still_needs_title():
+    with pytest.raises(AssertionError):
+        validate_image_body({"img": "o.jpg", "credit": {"author": "MRISim", "license": "Owner-Original"}})
+
+
+def test_validator_external_license_still_needs_source():
+    with pytest.raises(AssertionError):
+        validate_image_body({"img": "e.jpg", "credit": {"author": "a", "license": "CC-BY-4.0", "title": "t"}})
 
 
 def _image_quiz_items():
