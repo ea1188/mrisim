@@ -1,121 +1,118 @@
-# Exam-realistic image questions — Phase B: curated commercial-safe image bank — Design
+# Exam-realistic image questions — Phase B: owner-supplied image bank + wire-in — Design
 
-**Goal:** Source real, commercial-safe clinical images (CC0 / public-domain / CC-BY / CC-BY-SA) for the
-pathology and real-world-artifact concepts the simulator cannot faithfully depict, and wire them into the
-paid course as image questions using the `credit` schema shipped in Phase A. Restores the concepts Phase A
-converted to text and adds new high-yield registry image-IDs.
+**Goal:** Build the rails so the course owner can drop in their own (or genuinely license-free) clinical
+images and have the matching image question surface immediately, with no external-license footprint. Phase B
+delivers: (1) `Owner-Original` support in the schema (owner-owned images need no attribution and show no
+caption), (2) a precise image requirements list ("shopping list") of every question that needs an image and
+exactly what it must show, and (3) the questions fully drafted so each supplied image drops into a ready
+slot. No images are sourced from outside; the course stays fully owner-controlled and trustworthy.
 
-**Status:** Approved 2026-07-08. Licensing bar: commercial-safe, now including **CC-BY-SA** under a
-no-derivatives guardrail (see below). Sourcing: I source + license-verify + resize + stage; the user
-approves each batch before it is committed/seeded. First batch = 5 concepts (below).
+**Status:** Approved 2026-07-08. Workflow pivoted from external sourcing to **owner-supplied**: I produce
+the list + wire-in support; the owner obtains each image (their own or truly public-domain); I attach it and
+surface the question. Until an image arrives, its concept stays as its clean text-only question, so the
+course is always shippable.
 
 ## Context
 
-Phase A (PR #404) shipped the rail this phase fills:
-- Quiz body schema: a `kind:"quiz"` body carries exactly one image source — `setup` (simulator) XOR
-  `credit` `{author, license, source_url, title}` (curated image). Enforced by
-  `tests/test_course_images.py` `validate_image_body` (XOR + commercial-safe license allow-list +
-  image-exists).
-- `web/course.js` `addQImg` already renders an attribution caption `Image: <author> · <license> · source`
-  beneath any image whose body has a `credit`.
-- `scripts/prerender_course_quiz.py` skips `credit` items (curated images ship as committed files).
-- Live course content is served from Supabase `course_content` (course `mri-core`), so every content edit
-  must be RESEEDED there, not just committed.
-- Phase A converted 8 questions to text-only (3 pathology, spin-echo/ghosting/susceptibility, fat-sat
-  pair); Phase B re-adds image versions where a real image genuinely helps.
+Phase A (PR #404, `main` @f2912aa) shipped the rail this fills:
+- A `kind:"quiz"` body carries exactly one image source: `setup` (simulator) XOR `credit`
+  `{author, license, source_url, title}` (curated image). Guarded by `tests/test_course_images.py`
+  `validate_image_body` (XOR + commercial-safe license allow-list + image-exists).
+- `web/course.js` `addQImg` renders an attribution caption `Image: <author> · <license> · source` beneath a
+  `credit` image; `scripts/prerender_course_quiz.py` skips `credit` items (they ship as committed files).
+- Live content is served from Supabase `course_content` (course `mri-core`); any content edit must be
+  RESEEDED there, not just committed.
+- Phase A converted 8 questions to text-only (3 pathology, spin-echo/ghosting/susceptibility, fat-sat pair);
+  Phase B re-adds image versions for the ones an image genuinely helps, plus new artifact image-IDs.
 
-**Feasibility confirmed in this environment:** the Wikimedia Commons API returns structured
-`LicenseShortName` + `Artist` + canonical `url`; `curl` downloads the image binary; PIL opens/resizes it.
-So license verification is programmatic and auditable, and the full source -> verify -> download -> resize
--> stage pipeline runs here.
+## `Owner-Original` schema support
 
-## Licensing (commercial-safe, incl. CC-BY-SA under a guardrail)
+Owner-owned images carry no third-party rights, so they need no attribution and no source link. Add an
+`Owner-Original` value handled specially:
+- **Allow-list:** `tests/test_course_images.py` `ALLOWED_LICENSES` gains `Owner-Original` (kept alongside the
+  commercial-safe set `CC0-1.0` / `Public-Domain` / `CC-BY-4.0/3.0/2.0` for a genuine public-domain image the
+  owner might find; `-NC`/`-ND` remain excluded).
+- **Relaxed validation:** for `license == "Owner-Original"`, a `source_url` is NOT required (the owner is the
+  source); `title` is still required, `author` defaults to the course owner (e.g. `"MRISim"`). For any
+  external license, `author` + `source_url` + `title` remain required, as in Phase A.
+- **Suppressed caption:** `addQImg` renders NO attribution caption when `license == "Owner-Original"` (you do
+  not cite yourself); the image shows clean. External-licensed images still get the Phase A caption.
+- **credits.html:** the "Course question images" policy line notes that clinical images are either owned by
+  the course or openly licensed, and that images are shown resized.
 
-Allow-list (extends Phase A): `CC0-1.0`, `Public-Domain`, `CC-BY-4.0/3.0/2.0`, **`CC-BY-SA-4.0/3.0/2.0`**.
-Excluded: any `-NC` (non-commercial) or `-ND` (no-derivatives), and "free for education" wording.
+## The image requirements list (the "shopping list")
 
-**CC-BY-SA guardrail** (why it is safe for a paid product): ShareAlike obligations attach only to
-*adaptations* (derivative works), not to *collections*. Placing an unaltered image next to our own quiz
-text is a collection, so our quiz/course stays under our own terms. Therefore:
-- Use images **unaltered** — resize only (a technical, non-creative change). **Never** annotate, crop
-  creatively, or overlay labels on a BY-SA image (that would make a derivative that must itself be BY-SA).
-- Attribute every curated image with author + exact license + link to source. The credits.html policy
-  line states images are shown **resized**.
+Ten slots. Each names the image type and the finding that must be clearly, unambiguously visible (get a
+clean textbook example the owner has the right to use). Items 1-6 restore Phase-A concepts; 7-10 add new
+registry image-IDs. Target filenames follow the existing `cq-*` convention.
 
-`tests/test_course_images.py` `ALLOWED_LICENSES` gains the three BY-SA entries. The license string from the
-Wikimedia API (e.g. `"CC BY-SA 4.0"`) is normalized to the allow-list form (`"CC-BY-SA-4.0"`) at intake.
+| # | Concept · topic | Image type | Must clearly show | Target file | Wiring |
+|---|---|---|---|---|---|
+| 1 | Acute infarct · pathology | Axial brain DWI (b~1000), matched ADC if available | Focal bright restricted-diffusion lesion (dark on ADC) | `cq-infarct-dwi-01.jpg` | upgrade ord 914 |
+| 2 | Enhancing tumor · pathology | Axial post-contrast T1 brain | Mass with abnormal ring/solid enhancement | `cq-tumor-postgad-01.jpg` | upgrade ord 916 |
+| 3 | Hemorrhage / microbleeds · pathology | Axial SWI or GRE brain | Focal dark blooming signal dropout from blood products | `cq-hemorrhage-swi-01.jpg` | upgrade ord 915 |
+| 4 | Multiple sclerosis · pathology | Axial/sagittal FLAIR brain | Periventricular white-matter plaques (Dawson's fingers) | `cq-ms-flair-01.jpg` | NEW question |
+| 5 | Fat suppression OFF · fat-suppression | T1/PD MSK/orbit/neck, no fat-sat | Bright subcutaneous + marrow fat | `cq-fatsat-off-01.jpg` | upgrade ord 912 |
+| 6 | Fat suppression ON · fat-suppression | Same region/sequence with fat-sat (STIR ok), matched to #5 | That fat now dark | `cq-fatsat-on-01.jpg` | upgrade ord 913 |
+| 7 | Motion / flow ghosting · flow-artifacts | Any sequence with real ghosting | Discrete repeating ghosts along the phase-encode axis | `cq-ghosting-01.jpg` | upgrade ord 910 |
+| 8 | Chemical shift artifact · image-quality | GRE / high-field at a fat-water border | Dark/bright misregistration band at a fat-water interface | `cq-chemshift-01.jpg` | NEW question |
+| 9 | Gibbs / truncation · image-quality | T2 sagittal spine (classic) or brain | Parallel ripple lines near a sharp high-contrast border | `cq-gibbs-01.jpg` | NEW question |
+| 10 | Aliasing / wrap-around · image-quality | Any image with FOV too small | Anatomy wrapped from one edge onto the other | `cq-aliasing-01.jpg` | NEW question |
 
-## Architecture — a sourcing pipeline, not new schema
+"upgrade ord N" = the concept already exists as a Phase-A text question; supplying its image adds `img` +
+`credit` to that row (no rewrite needed if the finding matches). "NEW question" = drafted here, added to
+`course_content.json` as an image question when its image arrives.
 
-No schema change. The new machinery is a repeatable per-concept pipeline:
+The four NEW-question drafts (MS FLAIR, chemical shift, Gibbs, aliasing) are written out in full (prompt, 4
+options, index-0 keyed answer, explanation), option lengths balanced for the answer-length guard, and held
+in the plan/manifest ready to drop in.
 
-1. **Find:** query the Wikimedia Commons API (`action=query&prop=imageinfo&iiprop=url|extmetadata`) for
-   candidate files matching the concept; read `url`, `LicenseShortName`, `Artist`, and the file
-   description/categories.
-2. **Verify license:** reject anything whose normalized license is not in the allow-list. Record the exact
-   license string, author, and source URL.
-3. **Download + normalize:** `curl -L` the canonical `url`; open with PIL; resize to <=600px wide (matching
-   the existing sim images); save JPEG quality 85 to `web/img/course-quiz/<file>`.
-4. **QA — two gates, both required before ship:**
-   - *License:* verified from the API (auditable), in the allow-list.
-   - *Accuracy:* the image genuinely shows the claimed finding, confirmed from the source
-     caption/categories plus my own read — the same accuracy bar as the text content. A question's answer
-     must be true of the specific image shown.
-5. **Approval gate (the user):** present each batch as a table — concept · staged thumbnail · proposed
-   question · author/license/source — and the user approves or rejects each item. Rejected items are
-   re-sourced or dropped for the round.
-6. **Wire in:** for each approved item, add (or update) the `course_content.json` quiz body with the
-   `credit` block + `img`, byte-stable via `scripts/quiz_length_tools.py`; reseed the changed Supabase
-   `course_content` rows; the Phase A caption renders attribution automatically.
+## Workflow (per supplied image)
 
-**Filename convention:** `cq-<concept>-<modality>-NN.jpg` (e.g. `cq-infarct-dwi-01.jpg`), lower-case,
-matching the existing `cq-*` set.
+1. Owner obtains an image matching a slot (their own or genuinely license-free) and provides the file.
+2. I place it at `web/img/course-quiz/<target file>` (resized to <=600px wide, JPEG q85 if needed).
+3. I set the question's `credit` (`Owner-Original` unless the owner specifies a public-domain source) and
+   `img`; for a NEW slot I add the drafted question; for an upgrade I add `img`+`credit` to the existing row.
+4. Verify: the image genuinely shows the finding the answer asserts (accuracy gate).
+5. Byte-stable `course_content.json` via `scripts/quiz_length_tools.py`; reseed the changed Supabase rows;
+   guards; the question goes live with a clean (uncaptioned) owner image.
 
-**Question design:** each curated question follows the existing quiz body shape (`prompt`, 4 `options`,
-`answer` index 0 keyed, `explain`), option lengths balanced so the answer-length guard
-(`tests/test_quiz_length.py`) passes. Where Phase A left a text-only question for the same concept, the
-curated version replaces it (drops nothing — the concept simply regains its image).
+## Scope of THIS phase (the PR)
 
-## First batch (5 concepts)
-
-1. **Acute infarct** — DWI bright lesion (restricted diffusion; pair the teaching point with ADC if a
-   matched image is available). Topic: `pathology`.
-2. **Multiple sclerosis** — periventricular FLAIR plaques / Dawson's fingers. Topic: `pathology`.
-3. **Fat suppression** — a fat-saturated (or STIR) image vs its non-suppressed counterpart, or a single
-   image where suppressed fat is unambiguous. Restores the concept Phase A pulled. Topic: `fat-suppression`.
-4. **Susceptibility / microhemorrhage** — GRE or SWI blooming. Topic: `flow-artifacts` (or `pathology`).
-5. **Enhancing tumor** — post-contrast T1 mass/ring enhancement. Topic: `pathology`.
-
-**Batch 2 (later, its own approval round):** real-world artifacts — motion ghosting, aliasing/wrap-around,
-Gibbs/truncation, chemical shift — plus any remaining Phase-A conversions worth an image.
+Phase B's committed deliverable is the **rail + the list**, not the images (which arrive later, ad hoc):
+- `Owner-Original` support (guard allow-list + relaxed validation + `addQImg` caption suppression).
+- The requirements list committed as a working manifest doc the owner can reference.
+- The four NEW-question drafts written and held ready.
+- credits.html policy line updated.
+No live curated images ship in this PR (there are none yet); each supplied image is a small follow-up
+wire-in (steps above), not a re-plan.
 
 ## Testing & guards
 
-- `tests/test_course_images.py`: allow-list gains BY-SA; every curated `credit` validates (author,
-  source_url, title present; license in the allow-list); image files exist; filenames unique.
-- `tests/test_quiz_length.py`: curated questions balanced so the keyed answer is not the sole longest
-  option.
+- `tests/test_course_images.py`: `Owner-Original` accepted; `source_url` optional for it and required for
+  external licenses; XOR + file-exists + unique filenames still hold. Add unit cases for the relaxed
+  `Owner-Original` validation and the still-strict external-license validation.
+- Any NEW drafted question, once added with an image, must pass `tests/test_quiz_length.py` (keyed answer not
+  the sole longest) — draft option lengths accordingly.
 - Full `pytest` (python3.11), `npm run test:web`, `ruff check src/ tests/`, `eslint web/` before PR.
-- Reseed Supabase and confirm the curated rows carry their `img` + `credit`.
-- Manual/Playwright smoke: an entitled learner sees the curated image with its attribution caption.
+- `addQImg` caption logic: a small check that `Owner-Original` renders no caption while an external license
+  does (course.js is not a module; verify by code review + the Phase A behavior for external credit).
 
 ## Out of scope
 
-- **Annotated / cropped / derivative images** — as-is (resize-only) use only, to keep the BY-SA guardrail
-  clean.
-- **Non-Wikimedia sources** (NLM Open-i, PMC CC-BY) — allowed by the licensing bar but deferred; Batch 1
-  sources from Wikimedia Commons, which has a clean license API. Add others only if a concept lacks a
-  Commons candidate.
-- **Expanding the simulator-rendered physics set / balancing thin topics** — Phase C.
-- Any change to entitlements, mock-exam sampling, the free quiz, or the `credit` schema itself.
+- **External image sourcing** (Wikimedia/Open-i pipeline) — dropped in favor of owner-supplied; the
+  allow-list still permits CC0/PD/CC-BY if the owner ever chooses one, but the workflow does not fetch.
+- **Annotated/derivative images** — owner supplies finished images; we resize only.
+- **Expanding the simulator-rendered physics set / thin-topic balancing** — Phase C.
+- Any change to entitlements, mock-exam sampling, the free quiz, or the `setup`/`credit` core schema.
 
 ## Edge cases
 
-- **No commercial-safe candidate for a concept:** leave that concept as its Phase A text-only question this
-  round; note it for a later batch. Do not ship a weak or wrongly-licensed image to fill the slot.
-- **License not in the allow-list (NC/ND):** reject at step 2, never downloaded into the repo.
-- **Image too small / low quality after resize:** reject; find a better candidate.
-- **A candidate's finding does not clearly match the intended answer:** reject (accuracy gate); pick a
-  clearer image or reword the question to the image actually shown.
-- **BY-SA attribution:** the caption shows author + license + source link; the credits.html policy line
-  states images are resized. No creative modification is ever made.
+- **No image supplied for a slot:** it stays as its Phase-A text-only question indefinitely; no gap, no
+  broken image.
+- **Owner-Original with no source_url:** allowed (owner is the source); external license without a
+  source_url is rejected by the guard.
+- **Supplied image does not clearly show the finding:** rejected at the accuracy gate; owner supplies a
+  clearer one or the question is reworded to what the image shows.
+- **Filename already used by a sim image:** the `cq-fatsat-off/on` names were freed in Phase A (converted to
+  text); reusing them for the owner images is fine and keeps the convention.
