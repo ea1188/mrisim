@@ -8377,6 +8377,294 @@
         "answer": 0,
         "explain": "Because motion modulates the phase-encoded views, the ghost spacing is governed by how the pulsation period relates to the TR and the number of phase-encode steps. Readout gradient strength and bandwidth act in the frequency direction, and field strength does not set the ghost spacing."
       }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1161,
+      "body": {
+        "prompt": "Under the ASTM labeling system, an item marked MR Safe is one that:",
+        "options": [
+          "Poses no known hazard in any MR environment because it is nonconducting, nonmetallic and nonmagnetic",
+          "Is safe only within the specific field strength and conditions that are printed on its label",
+          "May be taken to the bore as long as it stays outside the 5-gauss line at all times",
+          "Has been shown to be safe in a 1.5 T scanner but has not yet been tested at 3 T"
+        ],
+        "answer": 0,
+        "explain": "MR Safe (green square) means the object is nonconducting, nonmetallic and nonmagnetic and poses no known hazard in all MR environments. An item safe only under stated conditions is MR Conditional, and the field-strength and gauss-line statements describe conditional or unlabeled items."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1162,
+      "body": {
+        "prompt": "An item labeled MR Unsafe is best described as one that:",
+        "options": [
+          "Poses a known hazard in all MR environments and must be kept out of the scanner room",
+          "Is hazardous only at 3 T but may still be used safely at 1.5 T with careful monitoring",
+          "May enter the room provided that it is secured well outside the bore during scanning",
+          "Has simply not yet been tested and should therefore be treated cautiously until it is"
+        ],
+        "answer": 0,
+        "explain": "MR Unsafe (red circle with a bar) means the item is known to pose a hazard in all MR environments, such as a ferromagnetic oxygen cylinder, and it must never enter the scanner room. An untested item is unlabeled, not MR Unsafe, and the field-strength and bore statements are wrong."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1163,
+      "body": {
+        "prompt": "The specific conditions printed on an MR Conditional implant label typically include all of the following EXCEPT the:",
+        "options": [
+          "Ambient room temperature that must be maintained throughout the entire examination",
+          "Maximum static field strength, such as 1.5 T or 3 T, at which it was demonstrated safe",
+          "Maximum spatial field gradient that the device may be exposed to in the fringe field",
+          "Limit on RF power (SAR) and sometimes a restriction on the total scanning time"
+        ],
+        "answer": 0,
+        "explain": "MR Conditional labeling specifies the static field strength, the maximum spatial field gradient, and RF (SAR) and timing limits that must all be met. Room temperature for the patient is not one of the stated implant conditions, so it is the exception."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1164,
+      "body": {
+        "prompt": "A worker who grinds metal reports possible metal fragments in the eye. Before an MRI, the appropriate screening step is:",
+        "options": [
+          "Obtain orbital radiographs to exclude a ferromagnetic foreign body before entering the magnet",
+          "Proceed directly to scanning because a fragment that small simply cannot move inside the eye",
+          "Flush the eyes with saline, which will safely remove any metal before the examination begins",
+          "Use a handheld magnet near the face to confirm whether any fragment present is ferromagnetic"
+        ],
+        "answer": 0,
+        "explain": "A history of metal grinding raises the risk of an intraocular ferromagnetic foreign body, which can move and damage the eye in the magnet. Orbital radiographs are the standard screen. Saline flushing does not remove an embedded fragment, and a handheld magnet near a possible ocular fragment is dangerous."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1165,
+      "body": {
+        "prompt": "Level 2 MR personnel differ from Level 1 personnel in that they have:",
+        "options": [
+          "More extensive safety training, allowing them to make decisions about screening and Zone III and IV access",
+          "Completed only a basic safety orientation and must always be escorted while inside the scanner room",
+          "Authorization to enter the room only after every patient examination has been finished for the day",
+          "Clearance limited strictly to the control room that never extends into the magnet room itself at all"
+        ],
+        "answer": 0,
+        "explain": "Level 2 personnel have broader MR safety training and can take responsibility for screening and for controlling access to the restricted Zones III and IV. Basic orientation with supervision describes Level 1 personnel, and the other options misstate their access."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1166,
+      "body": {
+        "prompt": "The translational (attractive) force that pulls a ferromagnetic object toward the bore is driven mainly by the:",
+        "options": [
+          "Spatial gradient of the static fringe field, which is steepest around the mouth of the bore",
+          "Uniform static field at isocenter, where the field is strongest and the most homogeneous",
+          "Switching of the imaging gradients that are used for spatial encoding during the scan",
+          "Radiofrequency field transmitted by the body coil during each excitation pulse of the scan"
+        ],
+        "answer": 0,
+        "explain": "Translational force depends on the spatial gradient of the static field (how fast the field changes with position), which is greatest in the fringe field near the bore opening, not on the uniform field at isocenter. Imaging gradients and the RF field do not produce the projectile effect."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1167,
+      "body": {
+        "prompt": "An elongated ferromagnetic object near isocenter experiences torque, which tends to:",
+        "options": [
+          "Rotate the object so that its long axis comes into alignment with the main magnetic field",
+          "Pull the object in a straight line toward the nearest wall of the magnet room",
+          "Heat the object very rapidly through radiofrequency currents induced within it",
+          "Push the object outward toward the low-field region that lies beyond the bore"
+        ],
+        "answer": 0,
+        "explain": "Torque rotates an elongated ferromagnetic object to align its long axis with B0 and is greatest where the field is strong and uniform, near isocenter. Translational pull toward walls is the separate projectile force, and heating and outward push are not torque effects."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1168,
+      "body": {
+        "prompt": "The elevated T wave sometimes seen on an ECG trace inside the magnet is caused by the:",
+        "options": [
+          "Magnetohydrodynamic effect, a voltage induced as conductive blood flows through the static field",
+          "Onset of a genuine cardiac arrhythmia that requires the scan to be stopped right away",
+          "Radiofrequency pulses of the running sequence directly stimulating the heart muscle",
+          "Gradient switching that induces peripheral nerve stimulation across the chest wall"
+        ],
+        "answer": 0,
+        "explain": "Blood is a conductor, so as it flows through the static field a voltage is induced (the magnetohydrodynamic effect) that augments the T wave on the ECG. It is a benign artifact, not a true arrhythmia, and it is unrelated to RF stimulation or gradient nerve stimulation."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1169,
+      "body": {
+        "prompt": "Brief flashes of light (magnetophosphenes) that a patient may notice are produced by:",
+        "options": [
+          "Rapidly switching gradients (dB/dt) stimulating the retina, and they stop when the gradients do",
+          "The static magnetic field slowly warming the vitreous of the eye during a long acquisition",
+          "Radiofrequency energy that deposits heat in the optic nerve at high SAR levels",
+          "Cryogen vapor briefly entering the bore and irritating the surface of the eye"
+        ],
+        "answer": 0,
+        "explain": "Magnetophosphenes are transient visual flashes from rapidly changing gradient fields (dB/dt) stimulating the retina; they cease when gradient activity stops and are harmless. The static field, RF heating, and cryogen vapor do not cause them."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1170,
+      "body": {
+        "prompt": "A skin-to-skin contact point, such as clasped hands or crossed calves, is a burn risk during scanning because it can:",
+        "options": [
+          "Form a closed conductive loop in which the changing fields induce a current that heats the tissue",
+          "Focus the static magnetic field down to a single point and freeze the tissue at that spot",
+          "Block the gradient fields so that the surrounding tissue then receives a much larger dose",
+          "Reflect the radiofrequency pulse back into the coil and damage the transmit hardware"
+        ],
+        "answer": 0,
+        "explain": "Skin-to-skin contact can close a conductive loop; the time-varying RF and gradient fields then induce a current in that loop that heats the tissue and can burn it. Padding to break the contact prevents it. The static-field, gradient-blocking, and RF-reflection explanations are incorrect."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1171,
+      "body": {
+        "prompt": "To reduce the risk of a burn from a surface coil or ECG lead cable, the technologist should:",
+        "options": [
+          "Keep cables straight and insulated, avoiding loops and direct contact with the patient's skin",
+          "Coil the excess cable neatly into several loops and rest them against the patient's skin",
+          "Run every one of the cables across the bare skin so that heat can dissipate more quickly",
+          "Cross the cables over one another so that any induced current is spread between them"
+        ],
+        "answer": 0,
+        "explain": "Cables should run straight, be insulated from skin, and never be looped, because loops and skin contact allow induced currents to concentrate and burn. Coiling, skin contact, and crossing cables all increase the burn risk."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1172,
+      "body": {
+        "prompt": "The most immediate life-threatening hazard when helium vents into the scanner room during a quench is:",
+        "options": [
+          "Displacement of the oxygen in the room by the expanding gas, which can cause asphyxiation",
+          "A sudden strengthening of the static field as the coil rapidly loses its liquid coolant",
+          "An electric shock delivered through the magnet housing to anyone who is touching it",
+          "Ignition of the helium gas, which becomes highly flammable at normal room temperature"
+        ],
+        "answer": 0,
+        "explain": "Liquid helium expands enormously as it boils off, and if the vent fails it displaces oxygen in the room, risking asphyxiation (evacuate immediately). A quench actually collapses the field, helium is inert and nonflammable, and electric shock is not the primary quench hazard."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1173,
+      "body": {
+        "prompt": "Pressing the magnet quench button should be reserved for situations where:",
+        "options": [
+          "A person is pinned by a ferromagnetic object and the field must be removed to free them",
+          "A routine examination is running late and the daily schedule needs to be caught up quickly",
+          "An MR Conditional implant needs to be scanned outside of its stated static field limits",
+          "The room feels warm and the static field should be lowered in order to cool it down"
+        ],
+        "answer": 0,
+        "explain": "A deliberate quench dumps the cryogen and destroys the superconducting field, is costly and hazardous, and is reserved for true emergencies such as a person trapped against the magnet by a ferromagnetic object. It is never used for scheduling, to exceed implant limits, or for comfort."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1174,
+      "body": {
+        "prompt": "If a fire starts in or near the scanner room, a key MRI-specific precaution is that:",
+        "options": [
+          "Only nonferromagnetic extinguishers and equipment may be brought anywhere near the magnet",
+          "A standard steel oxygen cylinder should be rushed in at once to support the patient",
+          "The static field will automatically shut itself off as soon as smoke is first detected",
+          "Firefighters may enter freely because the magnet poses no real risk during a fire"
+        ],
+        "answer": 0,
+        "explain": "The magnet stays energized during a fire, so only nonferromagnetic extinguishers and gear may approach; a steel cylinder or conventional extinguisher becomes a projectile. Responders must be warned and, if needed, the magnet is quenched before ferromagnetic equipment enters."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1175,
+      "body": {
+        "prompt": "Zone III of an MRI facility is best described as the area that:",
+        "options": [
+          "Has restricted, badge-controlled access and where unscreened people can be seriously harmed",
+          "Is fully open to the general public and contains the waiting room and the reception desk",
+          "Is the magnet room itself, containing the bore where the static field is at its strongest",
+          "Lies entirely outside the building, beyond the outermost fringe of the magnetic field"
+        ],
+        "answer": 0,
+        "explain": "Zone III is the controlled-access region (physically restricted to screened MR personnel and patients) that surrounds the magnet room, where unscreened individuals or ferromagnetic objects can be dangerous. The public area is Zone I, and the magnet room itself is Zone IV."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1176,
+      "body": {
+        "prompt": "Compared with the normal operating mode, first-level controlled mode:",
+        "options": [
+          "Allows higher SAR and gradient output but requires medical supervision of the patient",
+          "Removes all of the limits on RF and gradient output for any routine clinical scan",
+          "Is used only for phantom testing and may never be applied to a live patient at all",
+          "Lowers the field strength of the magnet in order to keep energy deposition very small"
+        ],
+        "answer": 0,
+        "explain": "First-level controlled mode permits higher SAR and gradient (dB/dt) output than normal mode but requires medical supervision because the physiologic stress is greater. Second-level mode (still higher) needs research approval. No mode removes all limits or changes the magnet's field strength."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1177,
+      "body": {
+        "prompt": "Hearing protection is required for patients during most sequences because the acoustic noise:",
+        "options": [
+          "From the vibrating gradient coils can exceed safe sound levels and damage the hearing",
+          "Comes from the radiofrequency coil and rises sharply with any higher SAR settings",
+          "Is produced by the cryogen pump and becomes loudest during a magnet quench event",
+          "Results from the static field and grows steadily louder as the field strength increases"
+        ],
+        "answer": 0,
+        "explain": "Acoustic noise comes from the gradient coils vibrating as they switch rapidly against the static field (Lorentz forces), and it can exceed safe levels, so earplugs or headphones are required. It is not produced by the RF coil, the cryogen pump, or the static field itself."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1178,
+      "body": {
+        "prompt": "Ancillary equipment such as a patient monitor, IV pole or wheelchair used in the scanner room must be:",
+        "options": [
+          "Labeled MR Safe or MR Conditional and kept within any conditions stated on its own label",
+          "Any standard hospital equipment, since items that are on wheels cannot become projectiles",
+          "Removed from the room only after the patient has already been positioned in the bore",
+          "Kept just outside the 5-gauss line, where ferromagnetic items are known to be safe to use"
+        ],
+        "answer": 0,
+        "explain": "Only equipment labeled MR Safe or MR Conditional (used within its stated conditions) may be taken into the scanner room; ordinary ferromagnetic equipment can become a projectile. Wheels do not make an item safe, and the 5-gauss line concerns pacemaker and device exposure, not projectile safety."
+      }
     }
   ]
 }
