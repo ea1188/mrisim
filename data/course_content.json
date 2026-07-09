@@ -8665,6 +8665,438 @@
         "answer": 0,
         "explain": "Only equipment labeled MR Safe or MR Conditional (used within its stated conditions) may be taken into the scanner room; ordinary ferromagnetic equipment can become a projectile. Wheels do not make an item safe, and the 5-gauss line concerns pacemaker and device exposure, not projectile safety."
       }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1179,
+      "body": {
+        "prompt": "Zone II of an MRI facility is best described as the area where:",
+        "options": [
+          "patients are under general supervision and are greeted, screened, and interviewed before entering the controlled zones",
+          "the scanner and magnet sit, and only screened Level 2 personnel may move about freely without an escort",
+          "the general public has free and unrestricted access with no screening, supervision, or MR staff present",
+          "the console and equipment room are located and where physical access is actively controlled by MR staff"
+        ],
+        "answer": 0,
+        "explain": "Zone II is the interface between the freely accessible Zone I and the restricted Zones III and IV. Patients are greeted, screened, and interviewed here under supervision but are not yet in a controlled area. Free public access describes Zone I, the controlled console area is Zone III, and the magnet room is Zone IV."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1180,
+      "body": {
+        "prompt": "Operation of an MRI system in the second-level controlled mode:",
+        "options": [
+          "exceeds first-level limits and is permitted only under an approved human-research (IRB or ethics board) protocol",
+          "is the routine clinical default and requires no additional supervision or physiologic monitoring of the patient",
+          "applies only to the static field strength and has no bearing on the SAR or gradient output limits used",
+          "is selected automatically whenever the whole-body SAR stays within the normal operating mode range"
+        ],
+        "answer": 0,
+        "explain": "The second-level controlled operating mode allows output above first-level limits and, because of the added risk, is restricted to approved human-subject research under IRB or ethics-board oversight. Normal mode is the routine clinical default; first-level requires medical supervision."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1181,
+      "body": {
+        "prompt": "After MRI of a patient with a programmable CSF shunt valve, the technologist should ensure that:",
+        "options": [
+          "the valve setting is checked and reprogrammed as needed, because the magnetic field can change its pressure setting",
+          "the shunt tubing is flushed with saline, because the field can introduce air into the ventricular system",
+          "the valve is replaced after every scan, because MRI permanently demagnetizes the adjustable mechanism inside",
+          "no action is taken, because programmable shunt valves are fixed devices unaffected by the static magnetic field"
+        ],
+        "answer": 0,
+        "explain": "Many programmable (adjustable) CSF shunt valves use a magnetic mechanism whose pressure setting can be altered by the scanner field. The setting must be verified and reprogrammed after the exam. The field does not introduce air, permanently demagnetize the valve, or leave adjustable valves unaffected."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1182,
+      "body": {
+        "prompt": "If a patient goes into cardiac arrest inside the scanner room, the correct response is to:",
+        "options": [
+          "move the patient out of Zone IV to a safe area and begin resuscitation there, since ferromagnetic crash carts cannot enter",
+          "bring the ferromagnetic crash cart up to the bore and begin full resuscitation without moving the patient at all",
+          "quench the magnet first and wait for the static field to fully dissipate before beginning any resuscitation efforts",
+          "call the code team into the magnet room and defibrillate the patient while still positioned inside the scanner bore"
+        ],
+        "answer": 0,
+        "explain": "Standard crash carts, defibrillators, and code equipment are ferromagnetic projectile hazards, so the patient is removed from Zone IV and resuscitated in a safe area. Quenching is slow and unnecessary, and bringing ferromagnetic gear to the bore endangers everyone."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1183,
+      "body": {
+        "prompt": "A patient has an intracranial aneurysm clip and no documentation of its composition. MRI should be:",
+        "options": [
+          "deferred until the clip is confirmed to be non-ferromagnetic, because a ferromagnetic clip can torque and cause hemorrhage",
+          "performed at 1.5 T but not at 3 T, since torque on an aneurysm clip only occurs at the higher field strength",
+          "performed after the patient signs a consent form accepting the small risk of clip movement during the scan itself",
+          "performed with SAR minimized, because heating rather than movement is the main hazard posed by an aneurysm clip"
+        ],
+        "answer": 0,
+        "explain": "An aneurysm clip of unknown ferromagnetic status is an absolute contraindication until documentation confirms it is non-ferromagnetic. A ferromagnetic clip can experience torque and tear the vessel. Torque occurs at 1.5 T as well, consent does not remove the hazard, and movement, not heating, is the primary risk."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1184,
+      "body": {
+        "prompt": "A static field strength of 1 tesla is equivalent to:",
+        "options": [
+          "10,000 gauss",
+          "1,000 gauss",
+          "100 gauss",
+          "100,000 gauss"
+        ],
+        "answer": 0,
+        "explain": "One tesla equals 10,000 gauss. This is why the 5-gauss safety line lies well outside the bore: 5 gauss is only 0.0005 T, a tiny fraction of a 1.5 T or 3 T field."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1185,
+      "body": {
+        "prompt": "At levels well above the peripheral-nerve-stimulation threshold, the dominant hazard of rapidly switched gradient fields is:",
+        "options": [
+          "cardiac stimulation, which is why gradient slew rates are capped below the level that could induce an arrhythmia",
+          "tissue heating, because rapidly switched gradient fields deposit most of their energy as radiofrequency power",
+          "a projectile effect, because fast gradient switching briefly raises the static magnetic field strength near the bore",
+          "acoustic damage alone, because gradient switching has no direct effect on excitable nerve or cardiac muscle tissue"
+        ],
+        "answer": 0,
+        "explain": "Time-varying gradient fields induce currents in tissue. The first effect is peripheral nerve stimulation; at higher dB/dt the concern is cardiac stimulation, so slew rates are limited below that threshold. Heating is an RF (SAR) effect, not a gradient effect, and gradients do not change the static field."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1186,
+      "body": {
+        "prompt": "An oxygen monitor mounted in the scanner room contributes to safety mainly by:",
+        "options": [
+          "alarming when the room oxygen level falls, giving early warning of cryogen (helium) displacing the breathable air",
+          "measuring the patient's blood oxygen saturation continuously throughout the entire duration of the examination",
+          "detecting ferromagnetic objects carried into the room before they can accelerate and become dangerous projectiles",
+          "confirming that the piped medical oxygen supply feeding the anesthesia machine remains at the correct pressure"
+        ],
+        "answer": 0,
+        "explain": "A room oxygen monitor warns of asphyxiation risk: during a quench, cold helium gas can displace air. It measures ambient oxygen, not patient SpO2, and does not detect metal or monitor piped medical gases."
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "quiz",
+      "ord": 1187,
+      "body": {
+        "prompt": "When an unconscious patient with no available history must be screened for MRI, the safest approach is to:",
+        "options": [
+          "treat implant status as unknown and obtain records or radiographs before scanning, rather than relying on any verbal history",
+          "proceed with the scan at reduced SAR, since low radiofrequency power output makes any undocumented implant safe to image",
+          "rely on a careful visual skin inspection alone, because any MRI-relevant implant will leave a visible external scar or mark",
+          "scan only at 1.5 T and skip the questionnaire, since undocumented implants are considered safe below 3 T field strength"
+        ],
+        "answer": 0,
+        "explain": "With no history, implant status is unknown and must be established from records or radiographs before scanning. Reduced SAR does not address projectile or torque hazards, not every implant leaves a visible scar, and a lower field does not make an unknown implant safe."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1188,
+      "body": {
+        "prompt": "The peripheral (outer) regions of k-space predominantly encode:",
+        "options": [
+          "fine detail and sharp edges, that is, the high-spatial-frequency information of the image",
+          "overall image brightness and gross contrast, that is, the low-spatial-frequency information",
+          "the receiver-coil sensitivity maps used for the parallel-imaging reconstruction of the image",
+          "nothing usable, because only the exact center point of k-space contributes to the final image"
+        ],
+        "answer": 0,
+        "explain": "The outer regions of k-space hold high-spatial-frequency data, which defines edges and fine detail. The center holds low-spatial-frequency data, which governs overall contrast and signal. Both are needed to reconstruct the image."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1189,
+      "body": {
+        "prompt": "The chemical-shift misregistration artifact appears along which axis, and why?",
+        "options": [
+          "the frequency-encode axis, because fat and water resonate at slightly different frequencies and are mismapped",
+          "the phase-encode axis, because fat and water accumulate different amounts of phase during each repetition",
+          "the slice-select axis, because fat and water are excited by slightly different slice-selection profiles",
+          "no particular axis, because the shift is random and spreads evenly across the entire imaging field of view"
+        ],
+        "answer": 0,
+        "explain": "Spatial position along the frequency-encode axis is derived from precessional frequency. Because fat resonates about 3.5 ppm below water, its signal is mapped to the wrong location along that axis, producing the chemical-shift (of the first kind) artifact."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1190,
+      "body": {
+        "prompt": "For a given scanner, how does signal-to-noise ratio relate to voxel volume?",
+        "options": [
+          "SNR is directly proportional to voxel volume, so larger voxels (thicker slices or a coarser matrix) raise SNR",
+          "SNR is inversely proportional to voxel volume, so smaller voxels always give a higher signal-to-noise ratio",
+          "SNR is independent of voxel volume and depends only on the receiver bandwidth chosen at the scanner console",
+          "SNR scales with the square root of voxel volume, mirroring the way that signal averaging improves the ratio"
+        ],
+        "answer": 0,
+        "explain": "More protons contribute to a larger voxel, so signal (and SNR) is directly proportional to voxel volume. Thicker slices, larger FOV, or a coarser matrix all raise SNR at the cost of spatial resolution."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1191,
+      "body": {
+        "prompt": "Compared with a large body coil, a small surface coil placed over the region of interest generally provides:",
+        "options": [
+          "higher SNR near the coil but rapidly falling signal with depth and limited anatomic coverage",
+          "higher SNR uniformly throughout the entire imaging volume regardless of the distance from the coil",
+          "lower SNR everywhere but a much larger usable field of view than the body coil is able to achieve",
+          "identical SNR to the body coil, differing only in the acoustic noise that is produced during the scan"
+        ],
+        "answer": 0,
+        "explain": "A small surface coil sits close to the anatomy and collects high SNR near its surface, but sensitivity falls off steeply with depth and its coverage is limited. The body coil gives more uniform but lower peak SNR."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1192,
+      "body": {
+        "prompt": "In a fast (turbo) spin-echo sequence, increasing the echo train length:",
+        "options": [
+          "shortens scan time but increases T2-related blurring, because the later echoes have progressively decayed signal",
+          "lengthens scan time but sharpens fine detail, because each additional echo adds true spatial resolution to the image",
+          "has no effect on scan time and only changes the number of slices that can be acquired within each repetition time",
+          "eliminates the chemical-shift artifact, because a longer echo train realigns the fat and water signals in phase"
+        ],
+        "answer": 0,
+        "explain": "A longer echo train fills more k-space lines per TR, cutting scan time, but the later echoes have lower signal due to T2 decay, which blurs fine detail (T2 blurring). It does not add resolution or remove chemical shift."
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "quiz",
+      "ord": 1193,
+      "body": {
+        "prompt": "The magic-angle artifact produces artificially high signal in a tendon or ligament when it is:",
+        "options": [
+          "oriented near 55 degrees to B0 and imaged with a short TE, which lengthens its apparent T2 relaxation time",
+          "oriented parallel to B0 and imaged with a long TE, which in turn shortens its apparent T2 relaxation time",
+          "oriented perpendicular to B0 and imaged with any TE, because collagen shows no dependence on orientation",
+          "positioned at the exact center of the bore, where the static magnetic field is strongest and most uniform"
+        ],
+        "answer": 0,
+        "explain": "When collagen fibers lie near 55 degrees to B0, dipolar interactions are minimized and the tissue's apparent T2 lengthens, so a normally dark tendon looks bright on short-TE sequences. Using a longer TE reduces the artifact."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1194,
+      "body": {
+        "prompt": "In a STIR sequence, the inversion time (TI) is chosen to:",
+        "options": [
+          "null fat by setting TI near 0.69 times the T1 of fat, which is roughly 150 to 170 ms at 1.5 T",
+          "null water by setting TI near 0.69 times the T1 of water, which is roughly 2000 ms at 1.5 T field",
+          "match the TE so that the fat and water signals are exactly opposed in phase at the chosen echo time",
+          "equal the TR so that the longitudinal magnetization is fully recovered before the next excitation pulse"
+        ],
+        "answer": 0,
+        "explain": "STIR nulls fat by placing the readout at fat's magnetization zero-crossing after inversion, TI is about 0.69 x T1(fat), roughly 150 to 170 ms at 1.5 T. It targets fat, not water, and TI is unrelated to matching TE or TR."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1195,
+      "body": {
+        "prompt": "A single two-point Dixon acquisition can be reconstructed into:",
+        "options": [
+          "in-phase, opposed-phase, water-only, and fat-only image sets computed from the same raw data",
+          "a water-only image only, with the fat information permanently discarded during reconstruction",
+          "a fat-saturated image whose quality depends entirely on the static-field shimming over the region",
+          "a single proton-density image that blends fat and water without ever separating the two signals"
+        ],
+        "answer": 0,
+        "explain": "Dixon uses the phase difference between fat and water to compute water-only and fat-only images along with the in-phase and opposed-phase images, all from one acquisition. This is why Dixon also yields robust fat suppression from a single scan."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1196,
+      "body": {
+        "prompt": "STIR is often preferred over spectral (chemical-shift) fat saturation when:",
+        "options": [
+          "B0 is inhomogeneous or the field of view is large or off-isocenter, since inversion nulling is frequency independent",
+          "the highest possible SNR is required, because STIR preserves far more signal than a spectral saturation pulse does",
+          "gadolinium has already been given, because STIR selectively suppresses fat while leaving enhancing tissue bright",
+          "scan time must be minimized, because STIR adds no inversion pulse and therefore no extra time to each repetition"
+        ],
+        "answer": 0,
+        "explain": "STIR suppresses fat by T1 nulling, which does not depend on field homogeneity, so it excels with a large or off-center FOV or a poorly shimmed field. It has lower SNR, must not be combined with gadolinium (it nulls anything with fat's T1), and adds an inversion pulse."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1197,
+      "body": {
+        "prompt": "On a 1.5 T gradient-echo sequence, fat and water signals are aligned (in phase) at an echo time near:",
+        "options": [
+          "4.4 ms, when their differing precession has realigned after one full cycle",
+          "2.2 ms, when their differing precession has just reached opposition (India ink)",
+          "0 ms only, because fat and water can never realign once the echo has begun",
+          "10 ms, matching the point where T2 decay has equalized the fat and water signal"
+        ],
+        "answer": 0,
+        "explain": "At 1.5 T the fat and water precession frequencies differ by about 220 Hz, so they oppose at roughly 2.2 ms and realign (in phase) at about 4.4 ms. Opposed-phase echoes show the India-ink boundary; in-phase echoes do not."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1198,
+      "body": {
+        "prompt": "SPAIR differs from a basic SPIR or frequency-selective fat-saturation pulse mainly in that SPAIR:",
+        "options": [
+          "uses an adiabatic inversion pulse, which makes its fat suppression more tolerant of B1 (RF) field inhomogeneity",
+          "uses a spatial saturation band, which makes its fat suppression depend on the position of the slice in the bore",
+          "requires gadolinium to be present, which makes its fat suppression effective only on post-contrast acquisitions",
+          "removes any need for a homogeneous static field, which lets it work identically at any field strength or shim"
+        ],
+        "answer": 0,
+        "explain": "SPAIR (spectral attenuated inversion recovery) uses an adiabatic, spectrally selective inversion pulse that is relatively insensitive to B1 non-uniformity, giving more uniform fat suppression than a simple SPIR or fat-sat pulse. It is not a spatial band and does not need contrast."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1199,
+      "body": {
+        "prompt": "On a gradient-echo in- and opposed-phase pair, a signal drop within a lesion on the opposed-phase image indicates:",
+        "options": [
+          "microscopic (intravoxel) fat and water sharing the same voxel, as seen in an adrenal adenoma or a fatty liver",
+          "a purely cystic lesion with no internal fat, because simple fluid loses signal only on the opposed-phase image",
+          "the presence of calcification, which cancels the signal specifically when fat and water are out of phase",
+          "magnetic susceptibility from hemorrhage, which becomes visible only on the in-phase image of the acquired pair"
+        ],
+        "answer": 0,
+        "explain": "When fat and water coexist in one voxel, their signals cancel on the opposed-phase image, producing a signal drop relative to in-phase. This is the basis for diagnosing lipid-rich adrenal adenomas and hepatic steatosis. Cysts, calcium, and hemorrhage do not behave this way."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1200,
+      "body": {
+        "prompt": "The acquisition time of a 3D volumetric sequence is proportional to:",
+        "options": [
+          "TR multiplied by the number of in-plane phase encodes, the number of partition (slice) encodes, and NEX",
+          "TR multiplied by the number of in-plane phase encodes and NEX only, exactly as for a single 2D slice",
+          "the number of slices alone, because a 3D sequence excites the entire slab in one repetition of the sequence",
+          "the receiver bandwidth multiplied by the field of view, independent of the number of phase-encoding steps"
+        ],
+        "answer": 0,
+        "explain": "A 3D acquisition phase-encodes in two directions, so scan time is TR x Ny x Nz x NEX. The extra partition-encoding loop is what makes 3D acquisitions longer than a single 2D slice for the same TR."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1201,
+      "body": {
+        "prompt": "A limitation of the maximum-intensity projection (MIP) is that:",
+        "options": [
+          "overlapping high-signal structures obscure one another and small or low-signal vessels can be lost",
+          "it can only be generated from a 2D acquisition and never from a true 3D volumetric data set",
+          "it discards all of the bright voxels and instead displays only the darkest voxel along each ray",
+          "it doubles the acquisition time, because the projection has to be recomputed for every source slice"
+        ],
+        "answer": 0,
+        "explain": "A MIP keeps only the brightest voxel along each ray, so superimposed bright structures overlap and faint or small vessels can drop out. Subtraction and editing help. A MIP keeps the brightest (not darkest) voxel and is a post-processing step that does not lengthen acquisition."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1202,
+      "body": {
+        "prompt": "Zero-fill interpolation (slice interpolation) applied to a 3D acquisition:",
+        "options": [
+          "creates apparently thinner and more numerous slices without adding any true spatial resolution or scan time",
+          "increases the true through-plane spatial resolution by acquiring additional partition-encoding steps in k-space",
+          "removes wrap-around in the slice direction by oversampling the outer edges of the imaging volume during readout",
+          "shortens the acquisition by discarding the outer high-spatial-frequency lines of the acquired k-space data set"
+        ],
+        "answer": 0,
+        "explain": "Zero-filling pads unmeasured k-space with zeros, interpolating extra thinner slices for smoother reformats. It improves apparent continuity but adds no real resolution and no scan time, unlike acquiring more partitions."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1203,
+      "body": {
+        "prompt": "In a 3D contrast-enhanced MR angiogram, centric (low-high) k-space ordering is used to:",
+        "options": [
+          "sample the center of k-space at the moment of peak arterial enhancement, maximizing the arterial signal",
+          "sample the periphery of k-space first, so that fine vessel edges are acquired before the contrast arrives",
+          "spread the acquisition evenly over time, so that the arterial and venous phases contribute signal equally",
+          "shorten the scan by skipping the center of k-space, which contributes little to the final angiographic image"
+        ],
+        "answer": 0,
+        "explain": "The center of k-space determines image contrast, so centric ordering acquires it first, timed to peak arterial gadolinium concentration. This maximizes arterial signal and minimizes venous contamination."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1204,
+      "body": {
+        "prompt": "Volume rendering (VR) differs from a maximum-intensity projection in that VR:",
+        "options": [
+          "assigns opacity and shading to voxels to preserve depth, instead of projecting only the single brightest voxel",
+          "projects only the brightest voxel along each ray, giving a flat image with no depth information whatsoever",
+          "can be produced only from a 2D multislice acquisition and never from an isotropic 3D volumetric data set",
+          "requires intravenous contrast, whereas a maximum-intensity projection is always performed without any contrast"
+        ],
+        "answer": 0,
+        "explain": "Volume rendering maps voxel intensities to opacity and color and applies shading, preserving three-dimensional depth. A MIP simply projects the brightest voxel along each ray and loses depth cues. Neither technique is limited to 2D or requires contrast."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1205,
+      "body": {
+        "prompt": "In time-of-flight MR angiography, a multiple overlapping thin-slab acquisition (MOTSA) is used to:",
+        "options": [
+          "combine the flow sensitivity of thin slabs with the coverage of a thick volume, reducing inflow saturation",
+          "acquire one very thick slab quickly, accepting the resulting saturation of the slowly flowing spins within it",
+          "replace the need for any phase encoding by projecting the whole volume onto a single flat plane at one time",
+          "suppress the stationary background tissue by injecting gadolinium before the overlapping slabs are acquired"
+        ],
+        "answer": 0,
+        "explain": "In 3D TOF, spins saturate as they travel deep into a thick slab, dimming distal vessels. MOTSA acquires several thin overlapping slabs, keeping inflow enhancement high while covering a large volume. TOF is a flow (not contrast) technique."
+      }
     }
   ]
 }
