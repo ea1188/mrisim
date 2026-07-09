@@ -34,7 +34,7 @@
       "prompt": "Long TR but short TE — what weighting is this?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 12}},
-      "options": ["Proton-density", "T1-weighted", "T2-weighted", "FLAIR"],
+      "options": ["Proton-density", "T1-weighted (short TR and short TE)", "T2-weighted (long TR and long TE)", "FLAIR (a fluid-nulled inversion recovery)"],
       "answer": 0,
       "explain": "Long TR removes T1 weighting and short TE removes T2 weighting — what's left is proton-density: signal tracks tissue water content (grey > white, CSF intermediate)."
     },
@@ -61,7 +61,7 @@
       "prompt": "A bright focus appears on this diffusion-weighted image of an acute-stroke patient. What does restricted diffusion most likely indicate here?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
-      "options": ["Acute infarct (cytotoxic oedema)", "Chronic gliosis", "Fat", "Flow artifact"],
+      "options": ["Acute infarct (cytotoxic oedema)", "Chronic gliosis from an old, established injury", "Simple fat, which shows no true diffusion restriction", "A flow-related artifact rather than real tissue"],
       "answer": 0,
       "explain": "Restricted diffusion (bright DWI / dark ADC) is the hallmark of an acute infarct — cytotoxic oedema traps water. Always confirm on the ADC map to exclude T2 shine-through."
     },
@@ -70,7 +70,7 @@
       "prompt": "Which sequence is best for detecting microhaemorrhages and iron, like the dark foci shown here?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
                 "params": {"sequence": "Susceptibility (SWI)", "TR": 28, "TE": 20, "flip_angle": 15}},
-      "options": ["Susceptibility-weighted imaging (SWI)", "T1-weighted SE", "Time-of-flight MRA", "STIR"],
+      "options": ["Susceptibility-weighted imaging (SWI)", "T1-weighted spin echo acquired before contrast", "Time-of-flight MR angiography of the vessels", "STIR fat-suppressed inversion recovery"],
       "answer": 0,
       "explain": "SWI exploits the strong susceptibility of blood products / iron / calcium — they bloom dark. It is the most sensitive sequence for microbleeds and mineralisation."
     },
@@ -79,8 +79,7 @@
       "prompt": "A mass enhances brightly on this post-gadolinium T1 scan. Why does gadolinium make it bright?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "contrast_enabled": true, "contrast_dose": 8}},
-      "options": ["Gadolinium shortens T1 where it leaks through a broken blood-brain barrier",
-                  "Gadolinium itself emits MR signal", "Gadolinium is T2-bright like fluid", "Gadolinium suppresses fat"],
+      "options": ["Gadolinium shortens T1 where it leaks through a broken blood-brain barrier", "Gadolinium itself emits a strong MR signal that the receive coil detects", "Gadolinium is intrinsically T2-bright and glows like simple fluid does", "Gadolinium works mainly by selectively suppressing the surrounding fat"],
       "answer": 0,
       "explain": "Gadolinium is paramagnetic — it shortens nearby T1, so tissue brightens on T1-weighting. It only reaches the extravascular space where the blood-brain barrier is broken, so enhancement marks BBB breakdown (tumour, active inflammation)."
     },
@@ -89,7 +88,7 @@
       "prompt": "This is a quantitative perfusion map. A mass shows markedly RAISED values here. Which map is it, and what does that suggest?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBV (DSC)"}},
-      "options": ["CBV — high CBV suggests a high-grade tumour", "MTT — prolonged transit", "Ktrans — intact barrier", "ADC — restricted diffusion"],
+      "options": ["CBV — high CBV suggests a high-grade tumour", "MTT — a prolonged mean transit time through tissue", "Ktrans — an intact, non-leaky blood-brain barrier", "ADC — restricted diffusion of water molecules"],
       "answer": 0,
       "explain": "This is the DSC cerebral blood VOLUME map. A tumour grows leaky neovasculature, so raised CBV is a marker of high tumour grade."
     },
@@ -98,7 +97,7 @@
       "prompt": "On this DCE permeability map, normal brain is dark but a lesion enhances brightly. What is being measured, and why does normal brain stay dark?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "Ktrans (DCE)"}},
-      "options": ["Ktrans — the intact blood-brain barrier blocks leakage", "CBF — normal brain has no flow", "T2* — susceptibility", "FA — anisotropy"],
+      "options": ["Ktrans — the intact blood-brain barrier blocks leakage", "CBF — normal brain tissue has essentially no blood flow", "T2* — susceptibility effects from the passing contrast", "FA — the directional anisotropy of water diffusion"],
       "answer": 0,
       "explain": "Ktrans is the volume transfer constant (permeability). An intact blood-brain barrier keeps contrast intravascular (Ktrans≈0); tumour/active-lesion vessels leak, so they light up."
     },
@@ -107,7 +106,7 @@
       "prompt": "This brain scan shows faint repeating copies of the head across the image. What artifact is this, and along which direction does it propagate?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "motion_enabled": true, "motion_type": "periodic", "motion_amplitude": 6}},
-      "options": ["Motion ghosting — along the phase-encode direction", "Chemical shift — along the readout", "Susceptibility dropout", "Aliasing / wraparound"],
+      "options": ["Motion ghosting — along the phase-encode direction", "Chemical shift — along the readout (frequency) direction", "Susceptibility dropout near air and bone interfaces", "Aliasing or wraparound from anatomy outside the FOV"],
       "answer": 0,
       "explain": "Periodic motion (respiration, pulsation) produces discrete ghosts spaced along the PHASE-ENCODE axis. Averaging (NEX), triggering, or breath-holding reduces them."
     },
@@ -116,7 +115,7 @@
       "prompt": "This long-TE gradient-echo image loses signal near the skull base and air interfaces. What causes it, and how do you reduce it?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20, "susceptibility_enabled": true, "susceptibility_strength": 7}},
-      "options": ["Susceptibility — use spin echo or a shorter TE", "Motion — average more signal", "Chemical shift — raise the bandwidth", "Low SNR — increase NEX"],
+      "options": ["Susceptibility — use spin echo or a shorter TE", "Motion artifact — average more signal to reduce it", "Chemical shift — raise the receiver bandwidth to fix it", "Low SNR — simply increase the number of averages"],
       "answer": 0,
       "explain": "Susceptibility differences at air/bone/tissue boundaries dephase spins — worst on long-TE gradient echo. A spin echo's 180° pulse refocuses the dephasing, and a shorter TE gives less time to dephase."
     },
@@ -125,7 +124,7 @@
       "prompt": "At this fat–water boundary in the knee there is a dark/bright misregistration band along the readout. What is it, and the fix?",
       "setup": {"region": "Knee", "orientation": "axial", "slice_idx": 40,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "chemical_shift_enabled": true, "bandwidth": 30}},
-      "options": ["Chemical shift — raise the receiver bandwidth (or fat-suppress)", "Susceptibility — use spin echo", "Motion ghosting — average more", "Gibbs ringing — increase the matrix"],
+      "options": ["Chemical shift — raise the receiver bandwidth (or fat-suppress)", "Susceptibility — switch to a spin echo to refocus the dephasing", "Motion ghosting — average more signals to suppress the ghosts", "Gibbs (truncation) ringing — increase the acquisition matrix"],
       "answer": 0,
       "explain": "Fat and water resonate ~3.5 ppm apart, so they map to slightly different readout positions — a shift at fat–water borders. A higher receiver bandwidth (or fat suppression) shrinks it."
     },
@@ -134,7 +133,7 @@
       "prompt": "On this knee scan the fatty marrow is suppressed (dark). Which fat-suppression technique uses an inversion pulse timed to null fat?",
       "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
                 "params": {"sequence": "Inversion Recovery", "TR": 4000, "TE": 40, "TI": 180}},
-      "options": ["STIR (Short-TI Inversion Recovery)", "Dixon", "Spectral fat-sat (CHESS)", "Spin echo"],
+      "options": ["STIR (Short-TI Inversion Recovery)", "Dixon fat-water separation imaging", "Spectral fat-sat (CHESS) at fat's frequency", "A conventional spin echo with no fat control"],
       "answer": 0,
       "explain": "STIR uses a 180° inversion with a TI (~150–200 ms at 1.5T) chosen so fat crosses zero signal. It is robust to B0 inhomogeneity, but also nulls anything with fat-like T1 — so it is avoided after gadolinium."
     },
@@ -143,7 +142,7 @@
       "prompt": "This sequence gives bright fluid and blood with T2/T1 contrast and a very fast acquisition. Which is it?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Balanced SSFP", "TR": 5, "TE": 2.5, "flip_angle": 45}},
-      "options": ["Balanced SSFP", "Spin echo", "FLAIR", "Diffusion"],
+      "options": ["Balanced SSFP", "A conventional spin echo", "FLAIR inversion recovery", "Diffusion-weighted imaging"],
       "answer": 0,
       "explain": "Balanced steady-state free precession (bSSFP / TrueFISP / FIESTA) gives high SNR with T2/T1 contrast — bright blood and fluid — used in cardiac and fetal imaging. It is prone to off-resonance banding."
     },
@@ -161,7 +160,7 @@
       "prompt": "Multiple ovoid periventricular lesions are bright on this FLAIR scan. What is the classic diagnosis?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "ms",
                 "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
-      "options": ["Multiple sclerosis plaques", "Acute infarct", "A single metastasis", "Normal brain"],
+      "options": ["Multiple sclerosis plaques", "An acute ischaemic infarct", "A single solitary metastasis", "Normal brain with no lesion"],
       "answer": 0,
       "explain": "Ovoid periventricular/callosal lesions bright on FLAIR (often perpendicular to the ventricles — 'Dawson's fingers') are the hallmark of multiple sclerosis."
     },
@@ -170,7 +169,7 @@
       "prompt": "The infarct that was bright on DWI is also DARK on this ADC map. What does the dark ADC confirm?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Diffusion (DWI)", "diff_display": "ADC Map"}},
-      "options": ["True restricted diffusion (not T2 shine-through)", "T2 shine-through", "Fat", "Motion artifact"],
+      "options": ["True restricted diffusion (not T2 shine-through)", "T2 shine-through mimicking real restriction", "Simple fat rather than any diffusion change", "Motion artifact producing the bright signal"],
       "answer": 0,
       "explain": "Always pair DWI with ADC: genuine restriction is DARK on ADC. If the lesion were bright on ADC, the DWI signal would be T2 shine-through, not true restriction."
     },
@@ -179,7 +178,7 @@
       "prompt": "This perfusion map was made with NO contrast injection — grey matter is bright, white matter dark. Which technique?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Perfusion (ASL)", "perf_display": "CBF Map"}},
-      "options": ["Arterial spin labeling (ASL)", "DSC (gadolinium bolus)", "DCE", "CT perfusion"],
+      "options": ["Arterial spin labeling (ASL)", "DSC using a gadolinium bolus", "DCE permeability imaging", "CT perfusion with iodine"],
       "answer": 0,
       "explain": "ASL magnetically labels arterial blood as an endogenous tracer — no contrast. Its CBF map shows grey matter perfused ~2–3× white matter."
     },
@@ -188,7 +187,7 @@
       "prompt": "On this MTT map a territory shows markedly PROLONGED transit time. In acute stroke, what does that region represent?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "MTT (DSC)"}},
-      "options": ["Hypoperfused tissue (core ± penumbra)", "Normal brain", "A draining vein", "Fat"],
+      "options": ["Hypoperfused tissue (core ± penumbra)", "Completely normal, well-perfused brain", "A draining cortical vein, not tissue", "Simple fat rather than perfused tissue"],
       "answer": 0,
       "explain": "Prolonged MTT marks tissue whose blood arrives slowly — hypoperfused territory. Combined with CBV it separates the infarct core (low CBV) from salvageable penumbra (preserved CBV, long MTT)."
     },
@@ -197,7 +196,7 @@
       "prompt": "On this CBF map an area is strikingly DARK. What does reduced cerebral blood flow there indicate?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBF (DSC)"}},
-      "options": ["Ischaemia (reduced perfusion)", "Hyperperfusion", "Fat", "Calcification"],
+      "options": ["Ischaemia (reduced perfusion)", "Hyperperfusion with raised flow", "Simple fat rather than tissue", "Calcification within the region"],
       "answer": 0,
       "explain": "A dark region on CBF = reduced blood flow = ischaemia. In stroke the core has the lowest CBF; a perfusion–diffusion mismatch estimates salvageable tissue."
     },
@@ -206,7 +205,7 @@
       "prompt": "A bright stripe of noise runs across this image as a fixed line. What artifact is it, and the usual cause?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "zipper_enabled": true}},
-      "options": ["Zipper — stray RF entering the scan room", "Motion ghosting", "Chemical shift", "Susceptibility dropout"],
+      "options": ["Zipper — stray RF entering the scan room", "Motion ghosting from patient movement", "Chemical-shift misregistration of fat", "Susceptibility dropout near air spaces"],
       "answer": 0,
       "explain": "A zipper is a line of alternating bright/dark pixels from stray radiofrequency (a leaky door seal, electronics) reaching the receiver. Restoring RF shielding removes it."
     },
@@ -215,7 +214,7 @@
       "prompt": "This image is geometrically warped, worse toward the edges. What causes it?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "gradient_distort": 80}},
-      "options": ["Gradient nonlinearity (geometric distortion)", "Motion", "Chemical shift", "Low SNR"],
+      "options": ["Gradient nonlinearity (geometric distortion)", "Patient motion during the acquisition", "Chemical shift between fat and water", "Low signal-to-noise ratio across the image"],
       "answer": 0,
       "explain": "Real gradients become nonlinear away from isocentre, so anatomy is spatially warped toward the periphery of the field of view. Vendor distortion correction (and keeping anatomy near isocentre) mitigates it."
     },
@@ -278,7 +277,7 @@
       "prompt": "Raising the b-value from 0 to 1000 s/mm² makes this image more sensitive to what?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
-      "options": ["Fat content", "The random motion of water molecules (diffusion)", "T1 relaxation", "Blood-flow velocity"],
+      "options": ["The overall fat content of the tissue", "The random motion of water molecules (diffusion)", "The rate of T1 longitudinal relaxation", "The velocity of flowing blood in vessels"],
       "answer": 1,
       "explain": "The b-value sets the diffusion sensitisation: higher b weights more strongly for water mobility. Tissue where water is restricted (e.g. an acute infarct) stays bright as b increases."
     },
@@ -296,7 +295,7 @@
       "prompt": "A focal white-matter lesion is obvious on FLAIR but easy to miss on plain T2 near the ventricles. Why does FLAIR help?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "lesion",
                 "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
-      "options": ["It suppresses fat", "It is T1-weighted", "It nulls CSF, so periventricular lesions are not masked by bright fluid", "It requires gadolinium"],
+      "options": ["It selectively suppresses fat around the ventricles", "It is a purely T1-weighted acquisition of the brain", "It nulls CSF, so periventricular lesions are not masked by bright fluid", "It always requires intravenous gadolinium contrast to reveal them"],
       "answer": 2,
       "explain": "FLAIR is heavily T2-weighted but nulls CSF with a long TI. Lesions sitting next to the ventricles are no longer hidden by bright CSF — the reason FLAIR is the screen for periventricular disease."
     },
@@ -305,7 +304,7 @@
       "prompt": "Around this mass, finger-like T2 hyperintensity spreads through the surrounding white matter. What is it?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
-      "options": ["Vasogenic oedema tracking along white-matter pathways", "Subcutaneous fat", "Calcification", "Flow artifact"],
+      "options": ["Vasogenic oedema tracking along white-matter pathways", "Subcutaneous fat rather than any brain oedema", "Dense calcification within the adjacent tissue", "A flow-related artifact mimicking real oedema"],
       "answer": 0,
       "explain": "A leaky tumour drives vasogenic oedema that spreads through the white matter (sparing cortex), bright on T2/FLAIR. Surrounding oedema out of proportion to a lesion is a clue to an underlying mass."
     },
@@ -314,7 +313,7 @@
       "prompt": "DSC perfusion follows a gadolinium bolus through the brain. What signal change does the passing bolus cause?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "CBV (DSC)"}},
-      "options": ["A transient T2* signal DROP from susceptibility as the bolus passes", "A steady T1 signal rise", "No signal change at all", "A chemical-shift artifact"],
+      "options": ["A transient T2* signal DROP from susceptibility as the bolus passes", "A steady, sustained T1 signal rise throughout the passage", "No measurable signal change at all as the bolus goes by", "A chemical-shift artifact appearing along the readout axis"],
       "answer": 0,
       "explain": "In Dynamic Susceptibility Contrast the concentrated bolus causes a brief T2* signal dip; the depth and timing of that dip across the passage are fitted to CBV, CBF and MTT."
     },
@@ -341,7 +340,7 @@
       "prompt": "Chemical-shift artifact at fat–water borders is worse at 3T than at 1.5T. Why?",
       "setup": {"region": "Knee", "orientation": "axial", "slice_idx": 40,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "chemical_shift_enabled": true, "bandwidth": 30}},
-      "options": ["The fat–water frequency difference (in Hz) is larger at higher field", "Gradients are weaker at 3T", "Image SNR is lower at 3T", "TE is automatically longer at 3T"],
+      "options": ["The fat–water frequency difference (in Hz) is larger at higher field", "The imaging gradients are inherently weaker at 3T than at 1.5T", "Image signal-to-noise is much lower at 3T than at 1.5T", "The echo time is automatically set longer by the scanner at 3T"],
       "answer": 0,
       "explain": "The fat–water shift is fixed at ~3.5 ppm, so in Hz it doubles from 1.5T to 3T — a larger pixel misregistration for the same receiver bandwidth. Raise the bandwidth (or fat-suppress) to shrink it."
     },
@@ -377,7 +376,7 @@
       "prompt": "Which plane best displays the corpus callosum along its whole length (genu, body and splenium)?",
       "setup": {"region": "Brain", "orientation": "sagittal", "slice_idx": 110,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
-      "options": ["Axial", "Midline sagittal", "Coronal", "Oblique"],
+      "options": ["An axial cross-section", "Midline sagittal", "A coronal front-on view", "An oblique angled plane"],
       "answer": 1,
       "explain": "The corpus callosum is a midline C-shaped band, so a midline sagittal shows it end-to-end. Axial and coronal slices only cut it in fragments."
     },
@@ -413,7 +412,7 @@
       "prompt": "Why does a gradient echo decay by T2* while a spin echo decays by the slower T2?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20}},
-      "options": ["The spin echo's 180° refocusing pulse reverses static field dephasing", "The gradient echo uses a longer TR", "The spin echo suppresses fat", "The gradient echo is T1-weighted"],
+      "options": ["The spin echo's 180° refocusing pulse reverses static field dephasing", "The gradient echo simply uses a much longer repetition time (TR)", "The spin echo actively suppresses the surrounding fat signal", "The gradient echo is inherently a T1-weighted acquisition method"],
       "answer": 0,
       "explain": "A spin echo's 180° pulse refocuses dephasing from static field inhomogeneity (T2'), leaving pure T2. A gradient echo has no such pulse, so it keeps that extra dephasing — T2* = T2 plus susceptibility/inhomogeneity. That makes GRE sensitive to blood products and iron."
     },
@@ -422,7 +421,7 @@
       "prompt": "On this T2*-weighted gradient-echo scan, small old bleeds appear as dark 'blooming' foci. Why does GRE reveal them when spin echo may not?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
                 "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20}},
-      "options": ["GRE keeps susceptibility dephasing (no 180° refocusing), so blood products bloom", "GRE injects contrast", "GRE is fat-suppressed", "GRE has higher spatial resolution"],
+      "options": ["GRE keeps susceptibility dephasing (no 180° refocusing), so blood products bloom", "GRE routinely injects intravenous contrast that the spin echo does not use", "GRE is always fat-suppressed, which is why the small bleeds become visible", "GRE simply has much higher spatial resolution than the spin echo sequence"],
       "answer": 0,
       "explain": "Without a 180° refocusing pulse, the strong susceptibility of haemosiderin/blood products dephases spins and 'blooms' dark on GRE (and even more on SWI). A spin echo refocuses that dephasing and can hide microbleeds."
     },
@@ -449,7 +448,7 @@
       "prompt": "On this ASL cerebral-blood-flow map, grey matter is brighter than white matter. Why?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Perfusion (ASL)", "perf_display": "CBF Map"}},
-      "options": ["Grey matter receives ~2–3× the blood flow of white matter", "White matter contains more fat", "ASL only labels the cortex", "It is a susceptibility artifact"],
+      "options": ["Grey matter receives ~2–3× the blood flow of white matter", "White matter simply contains a great deal more fat", "ASL only ever labels and shows the cortical surface", "It is a susceptibility artifact rather than perfusion"],
       "answer": 0,
       "explain": "Cortical grey matter is perfused about 2–3× more than white matter, so it is brighter on a CBF map. ASL measures this quantitatively using magnetically labelled blood — no contrast."
     },
@@ -458,7 +457,7 @@
       "prompt": "Which dynamic perfusion method tracks contrast leakage on T1-weighting over minutes to measure permeability (Ktrans)?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "Ktrans (DCE)"}},
-      "options": ["DSC (first-pass T2*)", "DCE (dynamic contrast-enhanced)", "ASL", "Time-of-flight"],
+      "options": ["DSC, the first-pass T2* method", "DCE (dynamic contrast-enhanced)", "ASL arterial spin labeling", "Time-of-flight angiography"],
       "answer": 1,
       "explain": "DCE acquires T1-weighted images over minutes and models contrast leaking into the extravascular space → Ktrans (permeability). DSC is the fast first-pass T2* method that yields CBV/CBF/MTT."
     },
@@ -467,7 +466,7 @@
       "prompt": "Near a metallic implant the image shows signal voids and geometric warping. Which choice REDUCES this susceptibility artifact?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Gradient Echo", "TR": 400, "TE": 25, "flip_angle": 20, "susceptibility_enabled": true, "susceptibility_strength": 8}},
-      "options": ["Spin echo with a short TE and high receiver bandwidth", "A long-TE gradient echo", "Lowering the receiver bandwidth", "Doing nothing — it cannot be reduced"],
+      "options": ["Spin echo with a short TE and high receiver bandwidth", "A long-TE gradient echo acquired through the metal", "Lowering the receiver bandwidth during the readout", "Nothing can be done — the artifact cannot be reduced"],
       "answer": 0,
       "explain": "Susceptibility near metal is worst on long-TE gradient echo. A spin echo's 180° pulse refocuses the dephasing; a short TE and high bandwidth (plus dedicated metal-artifact-reduction sequences) shrink the voids and distortion."
     },
@@ -476,7 +475,7 @@
       "prompt": "Which body region is this axial scan — liver, spleen, both kidneys and bowel loops?",
       "setup": {"region": "Abdomen", "orientation": "axial", "slice_idx": 40,
                 "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
-      "options": ["Brain", "Chest", "Abdomen", "Knee"],
+      "options": ["The brain", "The chest", "Abdomen", "The knee"],
       "answer": 2,
       "explain": "The abdomen — liver and spleen, both kidneys and bowel; the axial plane is the survey workhorse for abdominal anatomy."
     },
@@ -503,7 +502,7 @@
       "prompt": "On this knee scan the TR is long but the TE is short — high-signal, intermediate contrast that shows cartilage and menisci well. What weighting is it?",
       "setup": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
                 "params": {"sequence": "Spin Echo", "TR": 3000, "TE": 15}},
-      "options": ["Proton-density", "T1-weighted", "T2-weighted", "Diffusion"],
+      "options": ["Proton-density", "T1-weighted (short TR, short TE)", "T2-weighted (long TR, long TE)", "Diffusion-weighted imaging"],
       "answer": 0,
       "explain": "Long TR + short TE = proton-density: high SNR with intermediate contrast. With fat suppression it is the MSK workhorse for cartilage and menisci."
     },
@@ -512,7 +511,7 @@
       "prompt": "In an inversion-recovery sequence, what sets which tissue is nulled (appears darkest)?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
-      "options": ["The inversion time (TI) relative to that tissue's T1", "The repetition time (TR)", "The flip angle", "The receiver bandwidth"],
+      "options": ["The inversion time (TI) relative to that tissue's T1", "The repetition time (TR) chosen for the sequence", "The excitation flip angle used for the readout", "The receiver bandwidth set for the acquisition"],
       "answer": 0,
       "explain": "A tissue is nulled when TI ≈ 0.69 × its T1 (its longitudinal magnetisation crosses zero). A short TI (~150–200 ms) nulls fat (STIR); a long TI (~2000–2500 ms) nulls CSF (FLAIR)."
     },
@@ -539,7 +538,7 @@
       "prompt": "This infarct is bright on DWI but is still NOT visible on FLAIR. What does that DWI–FLAIR mismatch suggest about timing?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Diffusion (DWI)", "diff_display": "DWI", "b_value": 1000}},
-      "options": ["Hyperacute / early (roughly within 4.5 hours)", "Chronic (months old)", "It is not a stroke at all", "Subcutaneous fat"],
+      "options": ["Hyperacute / early (roughly within 4.5 hours)", "Chronic, likely several months old by now", "It is not a stroke or infarct at all here", "Simple subcutaneous fat rather than infarct"],
       "answer": 0,
       "explain": "DWI turns positive within minutes; FLAIR lags by hours. A DWI-positive but FLAIR-negative infarct is therefore early — a marker used to select unknown-onset strokes for thrombolysis."
     },
@@ -548,7 +547,7 @@
       "prompt": "Days after onset this infarct has become bright on FLAIR (it was already bright on DWI from the start). What changed to make it show here?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Inversion Recovery", "TR": 9000, "TE": 100, "TI": 2548}},
-      "options": ["Vasogenic oedema raised the tissue water and T2", "It started to bleed", "Fat was deposited", "It calcified"],
+      "options": ["Vasogenic oedema raised the tissue water and T2", "The infarct has started to bleed internally", "Fat was gradually deposited in the region", "The infarcted tissue has become calcified"],
       "answer": 0,
       "explain": "Over hours-to-days vasogenic oedema increases tissue water and T2, so the infarct brightens on T2/FLAIR — while DWI was positive from the first minutes (cytotoxic oedema)."
     },
@@ -557,7 +556,7 @@
       "prompt": "In acute stroke the DWI lesion is small but the MTT perfusion abnormality is much larger. What does this 'mismatch' represent?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "stroke",
                 "params": {"sequence": "Perfusion (Dynamic)", "perf_dyn_display": "MTT (DSC)"}},
-      "options": ["Salvageable penumbra (tissue at risk)", "Completed infarct core", "Normal brain", "A draining vein"],
+      "options": ["Salvageable penumbra (tissue at risk)", "The completed, irreversible infarct core", "Entirely normal, healthy brain tissue", "A draining cortical vein rather than tissue"],
       "answer": 0,
       "explain": "The diffusion lesion approximates the irreversible core; the larger perfusion deficit also includes hypoperfused-but-viable penumbra. A big diffusion–perfusion mismatch means more tissue to save with reperfusion."
     },
@@ -584,7 +583,7 @@
       "prompt": "Which body region is this axial scan — heart and great vessels centrally, lungs to the sides?",
       "setup": {"region": "Torso", "orientation": "axial", "slice_idx": 40,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
-      "options": ["Chest / thorax", "Abdomen", "Pelvis", "Brain"],
+      "options": ["Chest / thorax", "The abdomen and its organs", "The pelvic region", "The brain"],
       "answer": 0,
       "explain": "The thorax — the heart and great vessels in the mediastinum centrally, with the lungs laterally; axial is the standard survey plane."
     },
@@ -593,7 +592,7 @@
       "prompt": "Which single plane best shows the brainstem continuing into the cervical spinal cord?",
       "setup": {"region": "Brain", "orientation": "sagittal", "slice_idx": 110,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
-      "options": ["Midline sagittal", "Axial", "Coronal", "Oblique"],
+      "options": ["Midline sagittal", "An axial cross-section", "A coronal front-on view", "An oblique angled plane"],
       "answer": 0,
       "explain": "A midline sagittal lines up the midbrain, pons, medulla and the cervicomedullary junction into the cord — the survey view of the craniocervical junction."
     },
@@ -605,7 +604,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 12}},
       "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                  "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 100}},
-      "options": ["The echo time (TE) was lengthened — now T2-weighted", "The repetition time (TR) was shortened", "Gadolinium was added", "The imaging plane changed"],
+      "options": ["The echo time (TE) was lengthened — now T2-weighted", "The repetition time (TR) was shortened for the second", "Intravenous gadolinium contrast was given before B", "The imaging plane was changed between A and B"],
       "answer": 0,
       "explain": "Only TE changed (12 → 100 ms), TR stayed long. The long TE lets CSF (long T2) go bright — B is T2-weighted while A is proton-density."
     },
@@ -617,7 +616,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 12}},
       "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
-      "options": ["The repetition time (TR) was shortened — now T1-weighted", "The echo time (TE) was lengthened", "Fat was suppressed", "Contrast was injected"],
+      "options": ["The repetition time (TR) was shortened — now T1-weighted", "The echo time (TE) was lengthened for the second image", "Fat suppression was switched on between A and B", "Intravenous contrast was injected before image B"],
       "answer": 0,
       "explain": "Only TR changed (4000 → 500 ms), TE stayed short. The short TR adds T1 weighting — B is T1 (CSF dark) while A is proton-density."
     },
@@ -629,7 +628,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90}},
       "setupB": {"region": "Knee", "orientation": "sagittal", "slice_idx": 40,
                  "params": {"sequence": "Spin Echo", "TR": 4000, "TE": 90, "fatsat_enabled": true}},
-      "options": ["Fat suppression was switched on — the bright fat is now dark", "The plane changed", "The echo time was shortened", "Gadolinium was added"],
+      "options": ["Fat suppression was switched on — the bright fat is now dark", "The imaging plane was changed between the two scans", "The echo time was shortened for the second acquisition", "Intravenous gadolinium contrast was given before B"],
       "answer": 0,
       "explain": "The only change is fat suppression. The bright subcutaneous/marrow fat in A is nulled in B, so fluid and oedema (e.g. a bone bruise) stand out — the basis of fluid-sensitive MSK imaging."
     },
@@ -641,7 +640,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
       "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "tumor",
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "contrast_enabled": true, "contrast_dose": 8}},
-      "options": ["Gadolinium was given — the lesion now enhances", "The echo time was lengthened", "The imaging plane changed", "Fat suppression was added"],
+      "options": ["Gadolinium was given — the lesion now enhances", "The echo time was lengthened for the second image", "The imaging plane was changed between A and B", "Fat suppression was added to the second scan"],
       "answer": 0,
       "explain": "Same T1 sequence; gadolinium was administered for B. The newly bright (enhancing) tissue marks where the blood-brain barrier is broken."
     },
@@ -653,7 +652,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
       "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90, "pathology": "hemorrhage",
                  "params": {"sequence": "Susceptibility (SWI)", "TR": 28, "TE": 20, "flip_angle": 15}},
-      "options": ["Switched to a susceptibility sequence (SWI) — the bleeds now bloom dark", "Gadolinium was added", "The plane changed", "The repetition time was lengthened"],
+      "options": ["Switched to a susceptibility sequence (SWI) — the bleeds now bloom dark", "Intravenous gadolinium contrast was administered before image B", "The imaging plane was changed between the two acquisitions here", "The repetition time was lengthened for the second acquisition"],
       "answer": 0,
       "explain": "B is SWI: the strong susceptibility of blood products blooms into dark foci that the T1 spin echo in A barely shows. SWI/GRE are far more sensitive to microbleeds."
     },
@@ -665,7 +664,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
       "setupB": {"region": "Brain", "orientation": "coronal", "slice_idx": 90,
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12}},
-      "options": ["The imaging plane changed (axial → coronal)", "The weighting changed to T2", "Gadolinium was added", "The sequence changed"],
+      "options": ["The imaging plane changed (axial → coronal)", "The image weighting was changed to T2", "Intravenous gadolinium contrast was added", "The pulse sequence itself was changed"],
       "answer": 0,
       "explain": "Same T1 spin echo and weighting; only the slice orientation changed — A is axial (both hemispheres in cross-section), B is coronal (front-on)."
     },
@@ -764,7 +763,7 @@
       "prompt": "Fine structures in this image look blocky and washed together. Which change would sharpen the detail?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 80, "snr_level": 90}},
-      "options": ["Acquire a finer matrix (more phase and frequency steps)", "Average more signals (increase the NEX)", "Increase the slice thickness", "Lengthen the echo time (TE)"],
+      "options": ["Acquire a finer matrix (more phase and frequency steps)", "Average more signals by increasing the NEX value", "Increase the slice thickness for the acquisition", "Lengthen the echo time (TE) of the sequence used"],
       "answer": 0,
       "explain": "The blocky look is coarse spatial resolution — too few matrix steps make large voxels. A finer matrix shrinks the voxels and sharpens detail (at some SNR cost). NEX only changes noise; thicker slices and longer TE add no in-plane detail."
     },
@@ -791,7 +790,7 @@
       "prompt": "This scan was 3× faster using parallel imaging, but it's noticeably noisier — worst in the centre. What is that extra noise?",
       "setup": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                 "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 40, "accel_factor": 3, "accel_method": "SENSE"}},
-      "options": ["The g-factor: coil-geometry noise amplified when the aliasing is unfolded", "Chemical-shift misregistration", "Gibbs (truncation) ringing", "Partial-volume averaging"],
+      "options": ["The g-factor: coil-geometry noise amplified when the aliasing is unfolded", "Chemical-shift misregistration of fat along the readout direction", "Gibbs (truncation) ringing near the high-contrast tissue borders", "Partial-volume averaging of tissues within each thick voxel here"],
       "answer": 0,
       "explain": "Parallel imaging skips phase-encode lines for speed, then unfolds the aliasing using coil sensitivities. That unfolding amplifies noise by the coil-geometry g-factor (on top of the √R loss from fewer lines), and it's worst centrally where the coils overlap most."
     },
@@ -803,7 +802,7 @@
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 90, "slice_thickness": 3}},
       "setupB": {"region": "Brain", "orientation": "axial", "slice_idx": 90,
                  "params": {"sequence": "Spin Echo", "TR": 500, "TE": 12, "matrix_size": 256, "snr_level": 90, "slice_thickness": 12}},
-      "options": ["Thicker slices — more partial-volume averaging", "A finer acquisition matrix", "More signal averaging (higher NEX)", "A longer echo time (TE)"],
+      "options": ["Thicker slices — more partial-volume averaging", "A finer acquisition matrix was selected for B", "More signal averaging (a higher NEX) was used", "A longer echo time (TE) was set for image B"],
       "answer": 0,
       "explain": "B uses thicker slices, so each voxel averages more tissue through-plane (the partial-volume effect) — small structures blur into their neighbours and the image looks smoother. Thinner slices reduce partial volume, at some SNR cost."
     },
@@ -817,14 +816,14 @@
     {
       "category": "safety",
       "prompt": "A steel oxygen cylinder is wheeled too close to the bore. What is the principal static-field hazard?",
-      "options": ["The projectile (missile) effect — ferromagnetic objects are pulled into the bore with great force", "RF heating of the cylinder", "Peripheral nerve stimulation", "Acoustic damage"],
+      "options": ["The projectile (missile) effect — ferromagnetic objects are pulled into the bore with great force", "Radiofrequency heating of the steel cylinder as the imaging pulses are applied to the patient", "Peripheral nerve stimulation produced by the rapidly switching magnetic field gradients used", "Acoustic hearing damage from the very loud gradient knocking during the imaging sequence"],
       "answer": 0,
       "explain": "The static B0 field exerts a strong pull on ferromagnetic objects (the projectile/missile effect) — a leading cause of serious MRI accidents. Ferromagnetic items must never enter Zone IV; use only MR-safe equipment."
     },
     {
       "category": "safety",
       "prompt": "Why is screening for implants (pacemakers, aneurysm clips, cochlear implants) mandatory before a patient enters Zone IV?",
-      "options": ["The magnetic field and RF can displace, heat, or disrupt the device", "Implants only blur the image", "Gadolinium reacts with the metal", "The gradients harmlessly reset the device"],
+      "options": ["The magnetic field and RF can displace, heat, or disrupt the device", "Implants only ever blur the image without any real danger", "Gadolinium contrast chemically reacts with the metal device", "The gradients simply reset the device in a harmless fashion"],
       "answer": 0,
       "explain": "Ferromagnetic implants can move or torque, conductive ones can heat, and active devices (e.g. pacemakers) can malfunction. Every patient is screened and each device checked against its MR-safe / MR-conditional labelling before entry."
     },
@@ -838,70 +837,70 @@
     {
       "category": "safety",
       "prompt": "Rapidly switching gradients in a fast sequence can produce which patient sensation, limited by which parameter?",
-      "options": ["Peripheral nerve stimulation (tingling or twitching) — limited by dB/dt", "Warmth — limited by SAR", "A pull toward the bore — limited by the fringe field", "Nausea — limited by the TR"],
+      "options": ["Peripheral nerve stimulation (tingling or twitching) — limited by dB/dt", "A sensation of warmth across the body — limited chiefly by the SAR", "A pull toward the bore — limited by the strength of the fringe field", "Nausea and dizziness during the scan — limited by the repetition time"],
       "answer": 0,
       "explain": "Fast gradient switching (high dB/dt) induces currents that can stimulate peripheral nerves — tingling or muscle twitching. Scanners cap dB/dt below the stimulation threshold; this is distinct from RF heating (SAR) and from static-field effects."
     },
     {
       "category": "safety",
       "prompt": "During a magnet quench the superconducting coil suddenly goes resistive. What is the immediate hazard in the scan room?",
-      "options": ["Boil-off of cryogenic helium can displace oxygen (asphyxiation) and cause frostbite", "The RF coil overheats and burns the patient", "The gadolinium supply becomes toxic", "The gradient coils explode"],
+      "options": ["Boil-off of cryogenic helium can displace oxygen (asphyxiation) and cause frostbite", "The radiofrequency coil overheats and burns the patient inside the bore", "The gadolinium contrast supply in the room suddenly becomes toxic", "The gradient coils physically explode from the sudden loss of cooling"],
       "answer": 0,
       "explain": "A quench rapidly boils the liquid helium to gas. It should vent outside through the quench pipe; if venting fails, the cold gas displaces room oxygen (asphyxiation risk) and is extremely cold. Know the oxygen-monitor alarm and the emergency evacuation procedure."
     },
     {
       "category": "safety",
       "prompt": "Gadolinium-based contrast carries which recognised risk, particularly in patients with severe renal impairment?",
-      "options": ["Nephrogenic systemic fibrosis (NSF)", "Iodine anaphylaxis", "Lactic acidosis", "Thyroid storm"],
+      "options": ["Nephrogenic systemic fibrosis (NSF)", "Iodine-related contrast anaphylaxis", "Metformin-associated lactic acidosis", "A thyroid storm from iodine loading"],
       "answer": 0,
       "explain": "In severe renal impairment, retained gadolinium is linked to nephrogenic systemic fibrosis (fibrosis of skin and organs). Screen renal function (eGFR), use the lowest effective dose / macrocyclic agents, and note gadolinium is unrelated to iodinated CT contrast."
     },
     {
       "category": "patient-care",
       "prompt": "Why must a patient complete MRI screening before every scan, even if they were scanned safely last month?",
-      "options": ["Their implant/device status or foreign-body exposure may have changed since", "Screening is only a billing formality", "The magnet weakens between patients", "A prior screening legally expires after 24 hours"],
+      "options": ["Their implant/device status or foreign-body exposure may have changed since", "Screening is only a billing formality with no bearing on safety", "The magnet gradually weakens in strength between successive patients", "A prior screening result legally expires exactly 24 hours after it is done"],
       "answer": 0,
       "explain": "Status changes — a new pacemaker, stent, or metal fragment may have appeared since the last visit — so screening is repeated before every scan. A previous safe scan does not guarantee current safety."
     },
     {
       "category": "patient-care",
       "prompt": "A metal grinder reports a possible fragment in his eye. What should happen before he enters Zone IV?",
-      "options": ["Obtain orbital radiographs to exclude an intra-orbital metallic foreign body", "Proceed — small fragments are harmless", "Give gadolinium to outline the fragment", "Use a louder gradient to detect it"],
+      "options": ["Obtain orbital radiographs to exclude an intra-orbital metallic foreign body", "Proceed with the scan, since small metal fragments are entirely harmless", "Give intravenous gadolinium first to outline the fragment before scanning", "Use a louder gradient during the sequence to detect where the metal sits"],
       "answer": 0,
       "explain": "A ferromagnetic intra-orbital fragment can move in the field and injure the eye. Patients with a credible history (grinding, metalwork, shrapnel) are screened with orbital radiographs before scanning."
     },
     {
       "category": "patient-care",
       "prompt": "Before giving gadolinium contrast, which check is essential?",
-      "options": ["Renal function (eGFR) and any history of a prior contrast reaction", "Blood glucose", "A recent chest radiograph", "The patient's height"],
+      "options": ["Renal function (eGFR) and any history of a prior contrast reaction", "The patient's fasting blood glucose level before the injection", "A recent chest radiograph taken within the past several weeks", "The patient's exact standing height measured before the scan"],
       "answer": 0,
       "explain": "Severe renal impairment raises the risk of nephrogenic systemic fibrosis, so eGFR is screened; a prior reaction changes the agent or requires premedication. Confirm the indication and consent as well."
     },
     {
       "category": "patient-care",
       "prompt": "Minutes after gadolinium, a patient develops hives, wheezing, and low blood pressure. What is happening, and what comes first?",
-      "options": ["An acute allergic-type reaction — stop, call for help, and manage airway/breathing/circulation (epinephrine for anaphylaxis)", "Nephrogenic systemic fibrosis — reassure and continue", "A normal contrast sensation — no action needed", "A quench — evacuate the room"],
+      "options": ["An acute allergic-type reaction — stop, call for help, and manage airway/breathing/circulation (epinephrine for anaphylaxis)", "Nephrogenic systemic fibrosis is developing, so the right response is to reassure the patient and simply continue", "A completely normal and expected contrast sensation, so no action or change to the examination is needed at all", "A magnet quench is in progress, so the correct immediate response is to evacuate everyone from the scan room"],
       "answer": 0,
       "explain": "This is an acute allergic-like reaction, potentially anaphylaxis. Stop the injection, call for help, support the ABCs, and give epinephrine for anaphylaxis per protocol. Know where the emergency drugs and oxygen are kept."
     },
     {
       "category": "patient-care",
       "prompt": "Why is hearing protection given to every MRI patient?",
-      "options": ["Rapid gradient switching produces loud acoustic noise (~100–120 dB) that can damage hearing", "The RF pulses are audible and painful", "The helium pump is loud", "It muffles the technologist's instructions"],
+      "options": ["Rapid gradient switching produces loud acoustic noise (~100–120 dB) that can damage hearing", "The radiofrequency pulses themselves are audible and physically painful to the patient", "The helium circulation pump is extremely loud throughout the whole examination", "It simply muffles the technologist's spoken instructions during the acquisition"],
       "answer": 0,
       "explain": "Forces on the switching gradient coils make loud knocking and buzzing up to ~120 dB. Earplugs or headphones are standard for every patient (and for staff who remain in the room)."
     },
     {
       "category": "patient-care",
       "prompt": "A patient becomes claustrophobic and distressed partway through the scan. Appropriate management includes:",
-      "options": ["Reassurance and communication, the call/squeeze system, and considering a wide-bore magnet or sedation", "Ignoring it until the sequence finishes", "Raising the SAR to speed things up", "Removing their hearing protection so they can hear you"],
+      "options": ["Reassurance and communication, the call/squeeze system, and considering a wide-bore magnet or sedation", "Ignoring the distress and pressing on until the currently running imaging sequence has fully finished", "Raising the SAR to speed up the sequence so the patient spends noticeably less time inside the bore", "Removing the patient's hearing protection during the scan so that they are able to hear you clearly"],
       "answer": 0,
       "explain": "Talk the patient through it, remind them of the squeeze-ball/call button, and take a break if needed — then consider a wide/open-bore system, feet-first or prone entry, or sedation. Monitor the patient continuously."
     },
     {
       "category": "patient-care",
       "prompt": "For MRI in a pregnant patient, what is the standard position on gadolinium contrast?",
-      "options": ["Avoid gadolinium unless essential; unenhanced MRI is generally used when imaging is indicated", "Double the dose to cover two patients", "Gadolinium is preferred over ultrasound", "Contrast is mandatory in pregnancy"],
+      "options": ["Avoid gadolinium unless essential; unenhanced MRI is generally used when imaging is indicated", "Double the usual dose so that the contrast covers both the mother and the fetus at once", "Gadolinium contrast is actually preferred over ultrasound in the pregnant patient here", "Intravenous contrast is mandatory in pregnancy and must be given for every examination"],
       "answer": 0,
       "explain": "Gadolinium crosses the placenta and is avoided in pregnancy unless the benefit clearly outweighs the risk. MRI without contrast is considered acceptable when clinically indicated — it uses no ionising radiation."
     }
