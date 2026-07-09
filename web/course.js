@@ -561,7 +561,7 @@
     if (!q || !q.img) return;
     var img = h("img", { class: "q-img", src: "img/course-quiz/" + q.img, alt: "Scan for this question" });
     box.insertBefore(img, box.firstChild);
-    if (q.credit) {
+    if (q.credit && q.credit.license !== "Owner-Original") {
       var c = q.credit;
       var cap = h("p", { class: "q-credit" }, [
         document.createTextNode("Image: " + c.author + " · " + c.license + " · "),
