@@ -13,3 +13,11 @@ window.MRISIM_SUPABASE = {
 window.MRISIM_STRIPE = {
   paymentLink: "https://buy.stripe.com/14A4gA8Yk2hk5cLehre3e00",   // LIVE Payment Link
 };
+
+/* Course access mode. free: true opens the guided course to any signed-in user at
+   no charge — the paywall and the Buy button are skipped and no refund prompt shows.
+   To return to paid: set free: false AND restore the entitled-only RLS policy on
+   course_content (see supabase/migrations/0008_course_free_mode.sql). */
+window.MRISIM_COURSE = {
+  free: true,
+};

@@ -40,6 +40,10 @@
   var DIAG_PER_MODULE = 2;                              // questions sampled per module in the placement test
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
+  // Free mode (config.js MRISIM_COURSE.free): any signed-in user gets the full course,
+  // the paywall and Buy button are skipped, and no refund prompt shows. The RLS policy
+  // on course_content is relaxed to match (migration 0008). Reversible: flip both back.
+  var FREE = !!(window.MRISIM_COURSE && window.MRISIM_COURSE.free);
   var CourseLogic = window.CourseLogic;
   var PASS_PCT = CourseLogic.PASS_PCT, CHECK_N = CourseLogic.CHECK_N, MIN_POOL = CourseLogic.MIN_POOL;
 
@@ -389,7 +393,7 @@
       ]));
     });
     main.appendChild(grid);
-    main.appendChild(h("p", { style: "margin-top:36px;font-size:12px;color:var(--dim)" }, [
+    if (!FREE) main.appendChild(h("p", { style: "margin-top:36px;font-size:12px;color:var(--dim)" }, [
       document.createTextNode("Bought by mistake, or it's not for you? "),
       h("button", { type: "button", style: "background:none;border:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:0",
         text: "Request a refund", onclick: doRefund }),
@@ -1301,6 +1305,7 @@
     var email = session.user && session.user.email;
     var uid = session.user && session.user.id;
     chrome(email);
+    if (FREE) { if (justPaid) history.replaceState(null, "", location.pathname); return loadCourse(); }
     return Accounts.isEntitled(COURSE).then(function (ok) {
       if (ok) { if (justPaid) history.replaceState(null, "", location.pathname); return loadCourse(); }
       if (justPaid) {
