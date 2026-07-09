@@ -62,7 +62,7 @@ def main():
         body = it.get("body", {})
         setup, img = body.get("setup"), body.get("img")
         if not setup or not img:
-            continue
+            continue  # curated (credit) images have no setup -> skipped; they ship as committed files
         try:
             ensure_region(host, setup.get("region", "Brain"))
             # Render clean (like the free read-the-scan quiz's SNR 120) unless the question

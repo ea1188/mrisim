@@ -4106,26 +4106,15 @@
       "kind": "quiz",
       "ord": 904,
       "body": {
-        "prompt": "The scan shown was acquired with a spin echo sequence, TR 500 ms and TE 12 ms. Which statement about this technique is correct compared to a susceptibility-weighted gradient echo scan?",
+        "prompt": "On a spin echo sequence acquired with TR 500 ms and TE 12 ms, which statement about this technique is correct compared to a susceptibility-weighted gradient echo scan?",
         "options": [
           "Spin echo uses a 180 degree refocusing pulse, which compensates for static field inhomogeneities that a gradient echo scan would show as signal loss",
-          "Spin echo is more sensitive to susceptibility artifact than gradient echo",
+          "Spin echo is more sensitive to susceptibility artifact than gradient echo because its refocusing pulse amplifies local field distortions from blood products",
           "Spin echo cannot produce T1-weighted contrast",
           "Spin echo requires diffusion gradients to form an image"
         ],
         "answer": 0,
-        "explain": "The 180 degree refocusing pulse in spin echo corrects for fixed field inhomogeneities and susceptibility dephasing, so spin echo images show relatively little susceptibility artifact. Gradient echo and SWI sequences lack this refocusing pulse and are far more sensitive to susceptibility effects such as hemorrhage or calcification.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Spin Echo",
-            "TR": 500,
-            "TE": 12
-          }
-        },
-        "img": "cq-sequence-se-01.jpg"
+        "explain": "The 180 degree refocusing pulse in spin echo corrects for fixed field inhomogeneities and susceptibility dephasing, so spin echo images show relatively little susceptibility artifact. Gradient echo and SWI sequences lack this refocusing pulse and are far more sensitive to susceptibility effects such as hemorrhage or calcification."
       }
     },
     {
@@ -4200,7 +4189,7 @@
         "setup": {
           "region": "Brain",
           "orientation": "axial",
-          "slice_idx": 90,
+          "slice_idx": 100,
           "params": {
             "sequence": "Spin Echo",
             "TR": 500,
@@ -4230,7 +4219,7 @@
         "setup": {
           "region": "Brain",
           "orientation": "axial",
-          "slice_idx": 90,
+          "slice_idx": 100,
           "params": {
             "sequence": "Spin Echo",
             "TR": 500,
@@ -4271,7 +4260,7 @@
       "kind": "quiz",
       "ord": 910,
       "body": {
-        "prompt": "This axial brain image shows discrete repeating ghost bands spread across the phase-encoding direction from a scan affected by periodic motion. What is the most likely source of this artifact in a routine brain exam?",
+        "prompt": "A routine brain exam shows discrete repeating ghost bands spread across the phase-encoding direction. What is the most likely source of this artifact?",
         "options": [
           "Patient bulk motion or physiologic motion occurring periodically during data acquisition",
           "Susceptibility from a dental implant located far outside the field of view",
@@ -4279,21 +4268,7 @@
           "RF coil malfunction causing signal dropout"
         ],
         "answer": 0,
-        "explain": "Periodic bulk or physiologic motion (such as swallowing, pulsatile flow, or patient movement) during phase encoding creates discrete ghost copies displaced along the phase-encoding axis. Susceptibility, gradient nonlinearity, and coil malfunction produce different, non-periodic artifact patterns.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Spin Echo",
-            "TR": 500,
-            "TE": 12,
-            "motion_enabled": true,
-            "motion_type": "periodic",
-            "motion_amplitude": 6
-          }
-        },
-        "img": "cq-flow-ghosting-01.jpg"
+        "explain": "Periodic bulk or physiologic motion (such as swallowing, pulsatile flow, or patient movement) during phase encoding creates discrete ghost copies displaced along the phase-encoding axis. Susceptibility, gradient nonlinearity, and coil malfunction produce different, non-periodic artifact patterns."
       }
     },
     {
@@ -4301,29 +4276,15 @@
       "kind": "quiz",
       "ord": 911,
       "body": {
-        "prompt": "This axial brain image was acquired with a susceptibility-weighted sequence. What causes the pronounced signal loss (blooming) seen at sites of blood products on this type of image?",
+        "prompt": "On a susceptibility-weighted sequence, what causes the pronounced signal loss (blooming) seen at sites of blood products?",
         "options": [
           "Local magnetic field distortion from paramagnetic blood breakdown products causes rapid dephasing that is not refocused, since this sequence uses no 180 degree pulse",
-          "The long TR fully recovers longitudinal magnetization, which brightens hemorrhage",
+          "The long TR of this sequence fully recovers longitudinal magnetization, which brightens hemorrhage and increases the visible signal loss at the site",
           "Fat suppression pulses selectively darken blood products",
           "The short TE prevents any susceptibility effect from being visible"
         ],
         "answer": 0,
-        "explain": "SWI is a gradient echo technique without a refocusing pulse, so local field distortion from paramagnetic substances like deoxyhemoglobin or hemosiderin causes uncompensated dephasing and pronounced signal loss, exaggerated further by phase processing. This blooming effect is a hallmark of susceptibility-sensitive gradient echo imaging.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Susceptibility (SWI)",
-            "TR": 28,
-            "TE": 20,
-            "flip_angle": 15,
-            "pathology": "hemorrhage"
-          },
-          "pathology": "hemorrhage"
-        },
-        "img": "cq-flow-susceptibility-01.jpg"
+        "explain": "SWI is a gradient echo technique without a refocusing pulse, so local field distortion from paramagnetic substances like deoxyhemoglobin or hemosiderin causes uncompensated dephasing and pronounced signal loss, exaggerated further by phase processing. This blooming effect is a hallmark of susceptibility-sensitive gradient echo imaging."
       }
     },
     {
@@ -4331,7 +4292,7 @@
       "kind": "quiz",
       "ord": 912,
       "body": {
-        "prompt": "This axial brain image was acquired as a standard T1-weighted spin echo scan without any fat-suppression pulse applied. What is the expected appearance of subcutaneous fat?",
+        "prompt": "On a T1-weighted spin echo image acquired without any fat-suppression pulse, what is the expected appearance of subcutaneous fat?",
         "options": [
           "Fat remains bright since no fat-suppression technique was used",
           "Fat is dark because a fat-saturation pulse was applied",
@@ -4339,18 +4300,7 @@
           "Fat appears bright only if TE is very long"
         ],
         "answer": 0,
-        "explain": "Without a fat-saturation or other fat-suppression technique, fat retains its inherently short T1 relaxation time and appears bright on a T1-weighted spin echo image. Applying a fat-sat pulse is what would darken it.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Spin Echo",
-            "TR": 500,
-            "TE": 12
-          }
-        },
-        "img": "cq-fatsat-off-01.jpg"
+        "explain": "Without a fat-saturation or other fat-suppression technique, fat retains its inherently short T1 relaxation time and appears bright on a T1-weighted spin echo image. Applying a fat-sat pulse is what would darken it."
       }
     },
     {
@@ -4358,7 +4308,7 @@
       "kind": "quiz",
       "ord": 913,
       "body": {
-        "prompt": "This axial T1-weighted spin echo brain image was acquired with a fat-saturation pulse enabled. What is the expected appearance of the subcutaneous fat?",
+        "prompt": "On a T1-weighted spin echo image acquired with a fat-saturation pulse enabled, what is the expected appearance of subcutaneous fat?",
         "options": [
           "The subcutaneous fat signal is suppressed and appears dark",
           "The subcutaneous fat becomes brighter than before",
@@ -4366,19 +4316,7 @@
           "There is no visible change since fat-sat only affects the liver"
         ],
         "answer": 0,
-        "explain": "A fat-saturation pulse selectively excites and dephases the resonant frequency of fat protons before the imaging sequence, suppressing fat signal so it appears dark. This helps distinguish fat from enhancing tissue or hemorrhage that might otherwise be similarly bright.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Spin Echo",
-            "TR": 500,
-            "TE": 12,
-            "fatsat_enabled": true
-          }
-        },
-        "img": "cq-fatsat-on-01.jpg"
+        "explain": "A fat-saturation pulse selectively excites and dephases the resonant frequency of fat protons before the imaging sequence, suppressing fat signal so it appears dark. This helps distinguish fat from enhancing tissue or hemorrhage that might otherwise be similarly bright."
       }
     },
     {
@@ -4386,28 +4324,15 @@
       "kind": "quiz",
       "ord": 914,
       "body": {
-        "prompt": "This axial brain image is a diffusion-weighted scan (b-value 1000) obtained in a patient with acute onset neurologic symptoms. There is a focal area of markedly high signal. What does this finding most likely represent?",
+        "prompt": "A diffusion-weighted scan (b-value 1000) in a patient with acute onset neurologic symptoms shows a focal area of markedly high signal. What does this finding most likely represent?",
         "options": [
           "Acute ischemic stroke, where restricted diffusion from cytotoxic edema produces high DWI signal",
-          "A chronic old infarct, which typically shows high DWI signal as well",
+          "A chronic old infarct, which typically shows equally high DWI signal because established gliosis restricts water diffusion in the same way",
           "Normal brain parenchyma with no abnormality",
           "A simple arachnoid cyst"
         ],
         "answer": 0,
-        "explain": "In acute ischemic stroke, cellular energy failure causes cytotoxic edema and restricted water diffusion, which produces markedly high signal on DWI within minutes to hours of onset, before changes are visible on conventional T1 or T2 sequences. Chronic infarcts typically show diffusion pseudonormalization or facilitated diffusion rather than restriction, and cysts follow free water signal, not restricted diffusion.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Diffusion (DWI)",
-            "diff_display": "DWI",
-            "b_value": 1000,
-            "pathology": "stroke"
-          },
-          "pathology": "stroke"
-        },
-        "img": "cq-pathology-stroke-dwi-01.jpg"
+        "explain": "In acute ischemic stroke, cellular energy failure causes cytotoxic edema and restricted water diffusion, which produces markedly high signal on DWI within minutes to hours of onset, before changes are visible on conventional T1 or T2 sequences. Chronic infarcts typically show diffusion pseudonormalization or facilitated diffusion rather than restriction, and cysts follow free water signal, not restricted diffusion."
       }
     },
     {
@@ -4415,29 +4340,15 @@
       "kind": "quiz",
       "ord": 915,
       "body": {
-        "prompt": "This axial brain image is a susceptibility-weighted scan showing a focal area of pronounced signal dropout (blooming). In the correct clinical context, what does this finding most likely represent?",
+        "prompt": "A susceptibility-weighted scan shows a focal area of pronounced signal dropout (blooming). In the correct clinical context, what does this finding most likely represent?",
         "options": [
           "Hemorrhage, since paramagnetic blood breakdown products cause local susceptibility artifact and signal loss",
-          "A simple fluid-filled cyst, which shows the same blooming pattern",
+          "A simple fluid-filled cyst, which shows the same blooming pattern because the fluid it contains also distorts the local magnetic field",
           "Normal calcified choroid plexus with no clinical significance",
           "A fat-containing lesion such as a lipoma"
         ],
         "answer": 0,
-        "explain": "Blood breakdown products such as deoxyhemoglobin and hemosiderin are paramagnetic and create local magnetic field distortion, producing pronounced signal loss on susceptibility-weighted imaging. This blooming effect is characteristic of hemorrhage and is used clinically to detect even small amounts of blood that other sequences may miss. Simple cysts and fat do not create this susceptibility effect.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Susceptibility (SWI)",
-            "TR": 28,
-            "TE": 20,
-            "flip_angle": 15,
-            "pathology": "hemorrhage"
-          },
-          "pathology": "hemorrhage"
-        },
-        "img": "cq-pathology-hemorrhage-swi-01.jpg"
+        "explain": "Blood breakdown products such as deoxyhemoglobin and hemosiderin are paramagnetic and create local magnetic field distortion, producing pronounced signal loss on susceptibility-weighted imaging. This blooming effect is characteristic of hemorrhage and is used clinically to detect even small amounts of blood that other sequences may miss. Simple cysts and fat do not create this susceptibility effect."
       }
     },
     {
@@ -4445,30 +4356,15 @@
       "kind": "quiz",
       "ord": 916,
       "body": {
-        "prompt": "This axial brain image is a post-contrast T1-weighted spin echo scan. There is a focal area of abnormal enhancement. What does contrast enhancement in a mass lesion typically indicate?",
+        "prompt": "On a post-contrast T1-weighted spin echo scan, a focal area of abnormal enhancement is seen in a mass lesion. What does contrast enhancement typically indicate?",
         "options": [
           "Breakdown of the blood-brain barrier or increased vascularity, allowing gadolinium to accumulate and shorten T1, as seen in many tumors",
           "The lesion is definitely benign and requires no follow-up",
-          "The patient received an iodinated contrast agent that is directly visualized on MRI",
+          "The patient received an iodinated contrast agent that is directly visualized on MRI in the same way that it is seen on a CT examination",
           "Enhancement only occurs in old, chronic infarcts and never in tumors"
         ],
         "answer": 0,
-        "explain": "Gadolinium-based contrast agents shorten T1 relaxation time in tissue where they accumulate. Areas of blood-brain barrier breakdown or abnormal, leaky vascularity, common in many primary and metastatic brain tumors, allow gadolinium to accumulate and appear bright on post-contrast T1-weighted images. Enhancement pattern helps characterize a lesion but does not by itself prove it is benign, and MRI does not directly visualize iodinated CT contrast agents.",
-        "setup": {
-          "region": "Brain",
-          "orientation": "axial",
-          "slice_idx": 90,
-          "params": {
-            "sequence": "Spin Echo",
-            "TR": 500,
-            "TE": 12,
-            "contrast_enabled": true,
-            "contrast_dose": 8,
-            "pathology": "tumor"
-          },
-          "pathology": "tumor"
-        },
-        "img": "cq-pathology-tumor-contrast-01.jpg"
+        "explain": "Gadolinium-based contrast agents shorten T1 relaxation time in tissue where they accumulate. Areas of blood-brain barrier breakdown or abnormal, leaky vascularity, common in many primary and metastatic brain tumors, allow gadolinium to accumulate and appear bright on post-contrast T1-weighted images. Enhancement pattern helps characterize a lesion but does not by itself prove it is benign, and MRI does not directly visualize iodinated CT contrast agents."
       }
     },
     {
