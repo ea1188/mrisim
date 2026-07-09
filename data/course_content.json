@@ -8041,6 +8041,342 @@
         "answer": 0,
         "explain": "A tissue excited at the moment its inverted longitudinal magnetization crosses zero has nothing to tip into the transverse plane, so it appears black. If recovery were complete the tissue would be bright, not dark."
       }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1140,
+      "body": {
+        "prompt": "In a 3D volumetric acquisition, wrap-around along the slice-select (partition) direction is prevented by:",
+        "options": [
+          "Oversampling in the slice-encode direction so tissue outside the slab does not fold into it",
+          "Lowering the receive bandwidth to widen the range of frequencies sampled at each partition",
+          "Shortening the echo time so that fewer partitions are needed to fill the excited slab",
+          "Raising the flip angle to saturate the signal from tissue beyond the edges of the slab"
+        ],
+        "answer": 0,
+        "explain": "A 3D acquisition phase-encodes the slice direction, so anatomy beyond the excited slab can alias onto the end partitions. Slice-direction oversampling extends encoding past the slab edges and discards the extra partitions, removing the wrap. Bandwidth, TE, and flip angle do not address slice-direction aliasing."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1141,
+      "body": {
+        "prompt": "Compared with a single 2D slice, a 3D acquisition that phase-encodes the slice direction increases scan time mainly because:",
+        "options": [
+          "Each partition adds a full set of phase-encoding steps, so the second phase axis multiplies the acquisition",
+          "The whole slab must be re-shimmed between every repetition to keep the partitions aligned",
+          "A longer echo time is forced on every partition to allow the slab to be excited fully",
+          "The receiver has to sample each frequency point several extra times to reach the same resolution"
+        ],
+        "answer": 0,
+        "explain": "3D scan time is TR times the in-plane phase-encode steps times the number of slice-encode partitions (times NEX). The extra slice phase-encode loop multiplies acquisition time, which is why 3D usually pairs with short-TR gradient echo. Re-shimming, TE, and oversampled readout are not the reason."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1142,
+      "body": {
+        "prompt": "Why can a 3D acquisition produce contiguous slices with no interslice gap, unlike a typical 2D acquisition?",
+        "options": [
+          "The slab is partitioned by phase encoding rather than by separate selective excitations, so partitions do not need a gap to avoid cross-talk",
+          "The 3D readout gradient is strong enough to prevent any overlap between neighbouring slices",
+          "3D sequences are always run with a much longer TR, which lets each adjacent slice fully recover its longitudinal magnetization before the next excitation",
+          "The Fourier transform automatically inserts blank partitions between the reconstructed slices"
+        ],
+        "answer": 0,
+        "explain": "In 3D the slab is excited once and divided into partitions by a second phase-encoding gradient, so there is no imperfect slice profile overlapping a neighbour and no gap is needed. 2D uses separate selective excitations whose profiles overlap, which is why a gap or interleaving is used. Readout strength, TR, and the transform do not create the gap-free partitions."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1143,
+      "body": {
+        "prompt": "A 3D acquisition tends to have higher SNR than an equivalent 2D acquisition mainly because:",
+        "options": [
+          "Signal is collected from the entire slab on every excitation and averaged over all the slice-encode steps",
+          "The excited slab undergoes far less T2 decay than the individual 2D slices experience during their own separate readout windows",
+          "3D imaging uses a much larger voxel, which always raises the signal it receives",
+          "Gradient spoiling is unnecessary in 3D, so no transverse signal is ever discarded"
+        ],
+        "answer": 0,
+        "explain": "Because a 3D sequence excites and samples the whole slab for every slice-encode step, signal is effectively averaged over all partitions, giving an SNR gain that scales with the square root of the number of partitions. Larger voxels would raise SNR but are not the mechanism here, and the T2 and spoiling statements are incorrect."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1144,
+      "body": {
+        "prompt": "In a contrast-enhanced 3D MR angiogram, a mask subtraction is performed by:",
+        "options": [
+          "Subtracting a precontrast 3D data set from the postcontrast set so that only enhancing vessels remain",
+          "Removing every second partition from the postcontrast set to suppress the background tissue",
+          "Inverting the k-space of the postcontrast set before the Fourier transform to cancel the fat",
+          "Applying a saturation band over the aorta so that arterial inflow is nulled on the mask"
+        ],
+        "answer": 0,
+        "explain": "Subtraction MRA acquires a precontrast mask and a postcontrast set with identical geometry, then subtracts them so stationary background cancels and only the gadolinium-filled vessels remain. Dropping partitions, inverting k-space, and saturation bands do not produce a subtraction angiogram."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1145,
+      "body": {
+        "prompt": "Reformatting a data set into an arbitrary oblique plane keeps full spatial resolution only when the source acquisition is:",
+        "options": [
+          "3D with isotropic voxels, because equal dimensions in all three axes reformat without blurring",
+          "2D with a large slice gap, because the gaps give the reformat room to interpolate cleanly",
+          "2D with thick slices, because thicker slices carry more signal into the reformatted plane",
+          "3D with a very high receive bandwidth, because bandwidth sets the through-plane resolution"
+        ],
+        "answer": 0,
+        "explain": "Isotropic 3D voxels have the same size along every axis, so a reformat in any plane preserves resolution. Thick 2D slices reformat poorly because the through-plane dimension is coarse and the oblique plane blurs. Slice gap and receive bandwidth do not give clean multiplanar reformats."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1146,
+      "body": {
+        "prompt": "A balanced steady-state free precession (bSSFP) sequence is often run as a 3D acquisition because it:",
+        "options": [
+          "Uses a very short TR with high signal, so the many partitions of a 3D slab can be collected quickly",
+          "Is immune to banding artifact, so field inhomogeneity across the slab never matters",
+          "Requires no gradient spoiling, which means it cannot be used for 2D imaging at all",
+          "Produces pure T1 weighting, which only becomes visible in a volumetric acquisition"
+        ],
+        "answer": 0,
+        "explain": "bSSFP has a very short TR and high signal efficiency, which suits the many slice-encode steps of a 3D slab and keeps total time reasonable. It is actually prone to banding from B0 inhomogeneity, can be run in 2D, and gives mixed T2/T1 contrast rather than pure T1."
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "quiz",
+      "ord": 1147,
+      "body": {
+        "prompt": "In a 3D data set, k-space is filled along:",
+        "options": [
+          "One frequency-encode axis and two phase-encode axes, one in-plane and one for the partitions",
+          "Three frequency-encode axes, one for each spatial dimension of the excited slab",
+          "One phase-encode axis only, with the other two directions taken from the readout",
+          "Two frequency-encode axes and a single phase-encode axis shared across all partitions"
+        ],
+        "answer": 0,
+        "explain": "A 3D acquisition frequency-encodes one axis and phase-encodes the other two, the in-plane phase direction and the slice (partition) direction, so k-space is a 3D matrix. The other options misstate how the three axes are encoded."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1148,
+      "body": {
+        "prompt": "A drawback of STIR compared with spectral (chemical) fat saturation is that STIR:",
+        "options": [
+          "Suppresses any tissue whose T1 is near that of fat, so enhancing tissue and some blood products are also nulled",
+          "Depends heavily on a uniform main magnetic field and fails badly wherever the field is inhomogeneous",
+          "Cannot be used at low field strength because the fat and water peaks are then too far apart",
+          "Requires a very long echo time, which unavoidably makes the whole sequence heavily T1 weighted"
+        ],
+        "answer": 0,
+        "explain": "STIR nulls signal based on T1, not on chemical frequency, so it is not tissue-specific: anything with a T1 near fat's is also suppressed, including gadolinium-enhancing tissue and some hemorrhage. Field uniformity dependence describes spectral sat, and the low-field and echo-time statements are wrong."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1149,
+      "body": {
+        "prompt": "A practical advantage of the Dixon method over spectral fat saturation is that Dixon:",
+        "options": [
+          "Tolerates field inhomogeneity better and yields water, fat, in-phase and opposed-phase images from one acquisition",
+          "Needs no reference to the fat and water resonant frequencies at all, so it can even be applied to nonproton imaging studies",
+          "Suppresses fat using a single inversion pulse and therefore takes much less time to run",
+          "Removes chemical-shift artifact by lowering the receive bandwidth used during the readout"
+        ],
+        "answer": 0,
+        "explain": "Dixon reconstructs water and fat from in-phase and opposed-phase data, so it is more robust to B0 inhomogeneity than frequency-selective saturation and produces four image sets at once. It still relies on the fat and water frequency difference, does not use an inversion pulse, and does not work by changing bandwidth."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1150,
+      "body": {
+        "prompt": "The resonant frequency difference between fat and water protons is about 3.5 ppm, which at 1.5 T corresponds to roughly:",
+        "options": [
+          "220 Hz, and it roughly doubles to about 440 Hz at 3 T because the difference scales with field strength",
+          "70 Hz, and it stays the same at 3 T because a chemical shift in ppm is independent of the field",
+          "1000 Hz, and it falls to about 500 Hz at 3 T because higher fields narrow the separation",
+          "15 Hz, and it is far too small to be exploited by any frequency-selective saturation pulse"
+        ],
+        "answer": 0,
+        "explain": "At 1.5 T (about 64 MHz) a 3.5 ppm shift is roughly 220 Hz, and because the shift in hertz scales with field strength it roughly doubles to 440 Hz at 3 T. This larger separation is why spectral fat saturation is easier at higher field. The other values and their field dependence are incorrect."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1151,
+      "body": {
+        "prompt": "On a 1.5 T gradient echo, fat and water signals are opposed in phase (India-ink boundary) at an echo time near:",
+        "options": [
+          "2.2 ms, with the two returning in phase near 4.4 ms as they precess back together",
+          "10 ms, with the two returning in phase near 20 ms after further dephasing",
+          "0.5 ms, with the two returning in phase near 1.0 ms during the first readout",
+          "50 ms, with the two never returning in phase because T2 star decay has removed the signal"
+        ],
+        "answer": 0,
+        "explain": "Fat and water differ by about 220 Hz at 1.5 T, so they are opposed in phase near 2.2 ms and back in phase near 4.4 ms. These in and opposed phase echo times halve at 3 T. The larger echo-time values given in the distractors do not match the fat-water beat period."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1152,
+      "body": {
+        "prompt": "SPAIR and SPIR improve on a simple frequency-selective fat-saturation pulse mainly by:",
+        "options": [
+          "Using a spectrally selective inversion that is more tolerant of B1 (transmit) nonuniformity than a plain saturation pulse",
+          "Nulling fat purely by its T1, so no knowledge of the fat frequency is needed at all",
+          "Acquiring two separate echoes so that the fat and water signals can be separated arithmetically after the scan is complete",
+          "Applying the fat pulse only to the center of k-space, which halves the added scan time"
+        ],
+        "answer": 0,
+        "explain": "SPAIR (and SPIR) use a spectrally selective inversion of fat, and the adiabatic version is relatively insensitive to B1 nonuniformity, giving more uniform suppression than a plain saturation pulse. They remain frequency-selective (unlike STIR), do not separate echoes arithmetically (that is Dixon), and are not limited to the center of k-space."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1153,
+      "body": {
+        "prompt": "Fat stays relatively bright on fast (turbo) spin echo compared with conventional spin echo because:",
+        "options": [
+          "The closely spaced refocusing pulses disrupt J-coupling in fat, which slows its T2 decay and keeps it bright",
+          "The long echo train lets fat recover far more of its longitudinal magnetization in between each of the successive echoes",
+          "Fast spin echo uses a much shorter effective TE, so little fat signal is ever lost",
+          "The multiple echoes average out the fat signal, which raises its apparent brightness"
+        ],
+        "answer": 0,
+        "explain": "The train of closely spaced 180 degree pulses in fast spin echo interferes with the J-coupling that normally speeds fat's T2 decay, so fat retains signal and appears brighter than on conventional spin echo. This is a common reason fat suppression is added to FSE. The recovery, effective-TE, and averaging explanations are incorrect."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1154,
+      "body": {
+        "prompt": "First-order gradient moment nulling (flow compensation) corrects the phase of spins that are:",
+        "options": [
+          "Moving at a constant velocity, leaving higher-order motion such as acceleration uncorrected",
+          "Completely stationary, so that only the fixed background tissue is rephased at the echo",
+          "Accelerating rapidly, which is the only motion that a first-order correction can address",
+          "Moving in random directions, so that fully turbulent flow is rephased at the readout"
+        ],
+        "answer": 0,
+        "explain": "Nulling the first gradient moment rephases spins moving at constant velocity, so flow-related dephasing from steady flow is corrected while acceleration and higher-order motion are not. Stationary spins are already rephased without it, and turbulent (random) flow is not corrected by a first-order scheme."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1155,
+      "body": {
+        "prompt": "On a symmetric multi-echo spin echo sequence, even-echo rephasing describes how flowing spins:",
+        "options": [
+          "Regain phase coherence on the even-numbered echoes, so those echoes show less flow-related signal loss",
+          "Lose all coherence by the second echo, so that the even echoes are always darker than the odd ones",
+          "Are fully saturated after the first echo, so that no vascular signal remains on any of the later echoes",
+          "Shift position between echoes, so the vessel appears in a slightly different place on each even echo"
+        ],
+        "answer": 0,
+        "explain": "With symmetric echo spacing, the phase that constant-velocity spins accumulate is undone on the even echoes, so flowing blood regains coherence and shows less signal loss there. It is a rephasing, not a saturation or a spatial shift, and it makes even echoes brighter for flow, not darker."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1156,
+      "body": {
+        "prompt": "To reduce ghosting from blood flowing into the imaging volume, a spatial saturation band is best placed:",
+        "options": [
+          "On the side the unwanted blood flows in from, so it is saturated before it enters the imaged slab",
+          "Directly over the region of interest, so the pulsing vessel inside it is nulled along with the ghosts",
+          "As far away from the vessel as possible, so that the saturation pulse cannot disturb the imaged anatomy",
+          "Only along the frequency-encode direction, since that is where the flow ghosts always propagate"
+        ],
+        "answer": 0,
+        "explain": "A pre-saturation band is placed on the side from which the unwanted blood enters (for example superior to the slab for descending venous flow), so the inflowing spins are already saturated and produce no ghost. Placing it over the region would null the anatomy, distance defeats the purpose, and flow ghosts propagate along phase, not frequency."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1157,
+      "body": {
+        "prompt": "Increasing the number of signal averages (NEX) tends to reduce pulsatile flow ghosting because:",
+        "options": [
+          "Averaging repeated acquisitions lowers the ghost intensity relative to the consistent true signal",
+          "A higher NEX shortens the total scan time, giving the pulsating vessel much less time to move",
+          "The extra averages move the ghosts into the frequency-encode direction, where they are hidden",
+          "Averaging raises the effective receive bandwidth, which spreads the ghost energy out of the image"
+        ],
+        "answer": 0,
+        "explain": "Ghosts arise from view-to-view inconsistency, so averaging several acquisitions reinforces the consistent stationary signal while the variable ghost contribution partly cancels, lowering ghost intensity. Higher NEX lengthens rather than shortens the scan, and it does not change the ghost direction or the bandwidth."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1158,
+      "body": {
+        "prompt": "Respiratory compensation for body imaging can be achieved with all of the following EXCEPT:",
+        "options": [
+          "Raising the flip angle so that the moving abdominal wall tissue no longer contributes any signal",
+          "A bellows that reorders phase encoding to the respiratory cycle (respiratory-ordered phase encoding)",
+          "A navigator echo that tracks diaphragm position and accepts data only within a set gating window",
+          "A breath-hold acquisition that is fast enough to freeze respiratory motion within a single hold"
+        ],
+        "answer": 0,
+        "explain": "Respiratory-ordered phase encoding (bellows), navigator echoes, and breath-holding all reduce respiratory motion artifact. Simply raising the flip angle does not suppress moving-tissue signal or compensate for breathing, so it is the exception."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1159,
+      "body": {
+        "prompt": "Pseudogating, which can reduce pulsation ghosts without any physiologic monitor, occurs when the:",
+        "options": [
+          "Repetition time happens to fall close to a multiple of the patient's cardiac cycle length",
+          "Echo time is set exactly equal to the duration of one full cardiac cycle of the patient",
+          "Receive bandwidth is deliberately matched to the frequency of the arterial pulsation",
+          "Slice thickness is chosen to be equal to the diameter of the pulsating vessel imaged"
+        ],
+        "answer": 0,
+        "explain": "If the TR coincides with (a multiple of) the cardiac period, each phase-encode view is sampled at the same point in the pulse cycle, so flow looks consistent and ghosting drops, effectively gating by accident. TE, bandwidth, and slice thickness do not create this effect."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1160,
+      "body": {
+        "prompt": "Pulsatile flow ghosts appear as discrete repeating copies whose spacing along the phase-encode axis depends chiefly on the:",
+        "options": [
+          "Ratio of the pulsation period to the repetition time, together with the number of phase-encode steps",
+          "Strength of the frequency-encode gradient that is used during the sampling of each echo",
+          "Overall receive bandwidth, which sets how far apart the copies fall in the readout direction",
+          "Absolute field strength of the magnet, which fixes the ghost spacing regardless of timing"
+        ],
+        "answer": 0,
+        "explain": "Because motion modulates the phase-encoded views, the ghost spacing is governed by how the pulsation period relates to the TR and the number of phase-encode steps. Readout gradient strength and bandwidth act in the frequency direction, and field strength does not set the ghost spacing."
+      }
     }
   ]
 }
