@@ -8169,6 +8169,102 @@
         "answer": 0,
         "explain": "A 3D acquisition frequency-encodes one axis and phase-encodes the other two, the in-plane phase direction and the slice (partition) direction, so k-space is a 3D matrix. The other options misstate how the three axes are encoded."
       }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1148,
+      "body": {
+        "prompt": "A drawback of STIR compared with spectral (chemical) fat saturation is that STIR:",
+        "options": [
+          "Suppresses any tissue whose T1 is near that of fat, so enhancing tissue and some blood products are also nulled",
+          "Depends heavily on a uniform main magnetic field and fails badly wherever the field is inhomogeneous",
+          "Cannot be used at low field strength because the fat and water peaks are then too far apart",
+          "Requires a very long echo time, which unavoidably makes the whole sequence heavily T1 weighted"
+        ],
+        "answer": 0,
+        "explain": "STIR nulls signal based on T1, not on chemical frequency, so it is not tissue-specific: anything with a T1 near fat's is also suppressed, including gadolinium-enhancing tissue and some hemorrhage. Field uniformity dependence describes spectral sat, and the low-field and echo-time statements are wrong."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1149,
+      "body": {
+        "prompt": "A practical advantage of the Dixon method over spectral fat saturation is that Dixon:",
+        "options": [
+          "Tolerates field inhomogeneity better and yields water, fat, in-phase and opposed-phase images from one acquisition",
+          "Needs no reference to the fat and water resonant frequencies at all, so it can even be applied to nonproton imaging studies",
+          "Suppresses fat using a single inversion pulse and therefore takes much less time to run",
+          "Removes chemical-shift artifact by lowering the receive bandwidth used during the readout"
+        ],
+        "answer": 0,
+        "explain": "Dixon reconstructs water and fat from in-phase and opposed-phase data, so it is more robust to B0 inhomogeneity than frequency-selective saturation and produces four image sets at once. It still relies on the fat and water frequency difference, does not use an inversion pulse, and does not work by changing bandwidth."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1150,
+      "body": {
+        "prompt": "The resonant frequency difference between fat and water protons is about 3.5 ppm, which at 1.5 T corresponds to roughly:",
+        "options": [
+          "220 Hz, and it roughly doubles to about 440 Hz at 3 T because the difference scales with field strength",
+          "70 Hz, and it stays the same at 3 T because a chemical shift in ppm is independent of the field",
+          "1000 Hz, and it falls to about 500 Hz at 3 T because higher fields narrow the separation",
+          "15 Hz, and it is far too small to be exploited by any frequency-selective saturation pulse"
+        ],
+        "answer": 0,
+        "explain": "At 1.5 T (about 64 MHz) a 3.5 ppm shift is roughly 220 Hz, and because the shift in hertz scales with field strength it roughly doubles to 440 Hz at 3 T. This larger separation is why spectral fat saturation is easier at higher field. The other values and their field dependence are incorrect."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1151,
+      "body": {
+        "prompt": "On a 1.5 T gradient echo, fat and water signals are opposed in phase (India-ink boundary) at an echo time near:",
+        "options": [
+          "2.2 ms, with the two returning in phase near 4.4 ms as they precess back together",
+          "10 ms, with the two returning in phase near 20 ms after further dephasing",
+          "0.5 ms, with the two returning in phase near 1.0 ms during the first readout",
+          "50 ms, with the two never returning in phase because T2 star decay has removed the signal"
+        ],
+        "answer": 0,
+        "explain": "Fat and water differ by about 220 Hz at 1.5 T, so they are opposed in phase near 2.2 ms and back in phase near 4.4 ms. These in and opposed phase echo times halve at 3 T. The larger echo-time values given in the distractors do not match the fat-water beat period."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1152,
+      "body": {
+        "prompt": "SPAIR and SPIR improve on a simple frequency-selective fat-saturation pulse mainly by:",
+        "options": [
+          "Using a spectrally selective inversion that is more tolerant of B1 (transmit) nonuniformity than a plain saturation pulse",
+          "Nulling fat purely by its T1, so no knowledge of the fat frequency is needed at all",
+          "Acquiring two separate echoes so that the fat and water signals can be separated arithmetically after the scan is complete",
+          "Applying the fat pulse only to the center of k-space, which halves the added scan time"
+        ],
+        "answer": 0,
+        "explain": "SPAIR (and SPIR) use a spectrally selective inversion of fat, and the adiabatic version is relatively insensitive to B1 nonuniformity, giving more uniform suppression than a plain saturation pulse. They remain frequency-selective (unlike STIR), do not separate echoes arithmetically (that is Dixon), and are not limited to the center of k-space."
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "quiz",
+      "ord": 1153,
+      "body": {
+        "prompt": "Fat stays relatively bright on fast (turbo) spin echo compared with conventional spin echo because:",
+        "options": [
+          "The closely spaced refocusing pulses disrupt J-coupling in fat, which slows its T2 decay and keeps it bright",
+          "The long echo train lets fat recover far more of its longitudinal magnetization in between each of the successive echoes",
+          "Fast spin echo uses a much shorter effective TE, so little fat signal is ever lost",
+          "The multiple echoes average out the fat signal, which raises its apparent brightness"
+        ],
+        "answer": 0,
+        "explain": "The train of closely spaced 180 degree pulses in fast spin echo interferes with the J-coupling that normally speeds fat's T2 decay, so fat retains signal and appears brighter than on conventional spin echo. This is a common reason fat suppression is added to FSE. The recovery, effective-TE, and averaging explanations are incorrect."
+      }
     }
   ]
 }
