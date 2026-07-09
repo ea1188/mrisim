@@ -9097,6 +9097,438 @@
         "answer": 0,
         "explain": "In 3D TOF, spins saturate as they travel deep into a thick slab, dimming distal vessels. MOTSA acquires several thin overlapping slabs, keeping inflow enhancement high while covering a large volume. TOF is a flow (not contrast) technique."
       }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1206,
+      "body": {
+        "prompt": "The Larmor (resonance) frequency of hydrogen at 1.5 T is closest to:",
+        "options": [
+          "about 64 MHz, and it scales in direct proportion to the static field strength",
+          "about 128 MHz, and it scales in inverse proportion to the static field strength",
+          "about 21 MHz, and it stays fixed regardless of the static field strength used",
+          "about 300 MHz, and it depends only on the gyromagnetic ratio, not the field"
+        ],
+        "answer": 0,
+        "explain": "The Larmor frequency equals the gyromagnetic ratio (42.58 MHz/T for hydrogen) times B0, giving about 64 MHz at 1.5 T and 128 MHz at 3 T. It is directly proportional to field strength."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1207,
+      "body": {
+        "prompt": "Compared with a linearly polarized coil, a quadrature (circularly polarized) coil provides:",
+        "options": [
+          "a signal-to-noise improvement of roughly the square root of two and more uniform excitation",
+          "exactly double the signal-to-noise ratio and no change at all in the excitation uniformity",
+          "lower signal-to-noise ratio but a much wider field of view than any linear coil can cover",
+          "identical performance to a linear coil, differing only in the amount of RF power deposited"
+        ],
+        "answer": 0,
+        "explain": "A quadrature coil transmits and receives on two orthogonal channels, gaining about a factor of root-two in SNR and improving RF field uniformity compared with a single-channel linear coil."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1208,
+      "body": {
+        "prompt": "As static field strength increases from 1.5 T to 3 T, image signal-to-noise ratio tends to:",
+        "options": [
+          "increase roughly in proportion to field strength, which is a principal reason for using 3 T",
+          "decrease roughly in proportion to field strength, because noise grows faster than signal does",
+          "stay essentially constant, since signal and noise both scale identically with field strength",
+          "change only for gradient-echo sequences and not for any spin-echo based acquisition at all"
+        ],
+        "answer": 0,
+        "explain": "Baseline SNR rises approximately linearly with B0, so 3 T offers roughly twice the SNR of 1.5 T. This can be traded for higher resolution or speed, though SAR and susceptibility effects also increase."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1209,
+      "body": {
+        "prompt": "Eddy currents induced in nearby conductors by rapid gradient switching are best reduced by:",
+        "options": [
+          "actively shielded gradient coils together with waveform pre-emphasis of the gradient pulses",
+          "raising the receiver bandwidth so that the readout finishes before the eddy currents can form",
+          "increasing the number of signal averages so that the eddy-current effects average out to zero",
+          "using a lower static field strength, since eddy currents scale with the main magnetic field"
+        ],
+        "answer": 0,
+        "explain": "Switching gradients induces eddy currents in surrounding conductors, distorting the intended waveform. Actively shielded gradients confine the field, and pre-emphasis pre-distorts the drive current to compensate."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1210,
+      "body": {
+        "prompt": "The slew rate of a gradient system is defined as:",
+        "options": [
+          "the gradient amplitude divided by its rise time, expressed in tesla per meter per second",
+          "the gradient amplitude multiplied by its rise time, expressed in tesla per meter per second",
+          "the maximum gradient amplitude alone, expressed simply in millitesla per meter of length",
+          "the receiver bandwidth divided by the field of view, expressed in hertz per meter of length"
+        ],
+        "answer": 0,
+        "explain": "Slew rate is how fast a gradient reaches full amplitude, amplitude divided by rise time, in T/m/s. Higher slew rates speed up imaging but raise the risk of peripheral nerve stimulation, which caps the limit."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1211,
+      "body": {
+        "prompt": "Compared with a superconducting magnet, a resistive (electromagnet) system:",
+        "options": [
+          "requires continuous electrical power and cooling to sustain its field and is limited to lower field strengths",
+          "needs no electrical power once energized and readily reaches field strengths of 3 T and above for imaging",
+          "uses liquid helium to keep its windings cold and holds its field indefinitely without any power supplied",
+          "produces no fringe field at all and therefore needs neither active nor passive magnetic shielding around it"
+        ],
+        "answer": 0,
+        "explain": "A resistive magnet creates its field by current through ordinary (non-superconducting) windings, so it consumes power continuously and generates heat, limiting it to low field strengths. Superconducting magnets need no sustaining power once ramped."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1212,
+      "body": {
+        "prompt": "The cold head (cryocooler) on a modern superconducting magnet functions to:",
+        "options": [
+          "recondense evaporating helium so that cryogen boil-off and the need for refills are minimized",
+          "generate the static magnetic field by cooling the resistive drive coils to room temperature",
+          "switch the imaging gradients on and off rapidly during the readout portion of the sequence",
+          "shield the scan room from outside radiofrequency interference entering through the wall panels"
+        ],
+        "answer": 0,
+        "explain": "The cold head continuously recondenses helium gas back to liquid, greatly reducing boil-off. Many current 'zero-boil-off' magnets rarely need refills as long as the cold head keeps running."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1213,
+      "body": {
+        "prompt": "The difference between passive and active shimming of the static field is that:",
+        "options": [
+          "passive shimming uses ferromagnetic pieces placed at installation, while active shimming uses current in shim coils",
+          "passive shimming uses current in shim coils, while active shimming uses ferromagnetic pieces placed at installation",
+          "passive shimming corrects the gradients, while active shimming corrects the radiofrequency transmit field only",
+          "passive shimming is done for every patient, while active shimming is performed just once when the magnet is sited"
+        ],
+        "answer": 0,
+        "explain": "Passive shims are small ferromagnetic plates positioned during installation to homogenize B0. Active shims are electromagnetic coils whose currents are adjusted, often per patient, to fine-tune homogeneity over the imaging volume."
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "quiz",
+      "ord": 1214,
+      "body": {
+        "prompt": "The magnetic field homogeneity of an MRI magnet is typically specified as:",
+        "options": [
+          "parts per million measured over a defined diameter spherical volume at the magnet isocenter",
+          "tesla per meter measured along the bore axis from one end of the magnet to the other end",
+          "hertz per pixel measured across the reconstructed image at the chosen receiver bandwidth",
+          "a percentage of the maximum gradient amplitude available on the strongest gradient axis"
+        ],
+        "answer": 0,
+        "explain": "Homogeneity is quoted in parts per million of field variation over a diameter spherical volume (DSV) centered at isocenter. Tighter ppm over a larger DSV means a more uniform field for accurate imaging and fat suppression."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1215,
+      "body": {
+        "prompt": "A dual-echo spin-echo sequence acquires two echoes per TR in order to produce:",
+        "options": [
+          "proton-density and T2-weighted images together, using a short first TE and a long second TE",
+          "T1-weighted and T2-weighted images together, using a short TR paired with a single short TE",
+          "two identical T2-weighted images that are then averaged to improve the signal-to-noise ratio",
+          "in-phase and opposed-phase images for fat quantification within a single breath-hold acquisition"
+        ],
+        "answer": 0,
+        "explain": "With a long TR, a short first TE yields proton-density weighting and a long second TE yields T2 weighting, so both contrasts come from one acquisition. It is not a T1/T2 pair, and the echoes have different TEs, not identical ones."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1216,
+      "body": {
+        "prompt": "MP-RAGE (magnetization-prepared rapid gradient echo) is best described as a:",
+        "options": [
+          "3D inversion-prepared spoiled gradient echo used for high-resolution T1-weighted brain volumes",
+          "2D fast spin echo used mainly for heavily T2-weighted imaging of fluid in the spinal canal",
+          "single-shot echo-planar sequence used for diffusion-weighted imaging of acute cerebral infarct",
+          "balanced steady-state sequence used for bright-blood cardiac cine imaging across the heartbeat"
+        ],
+        "answer": 0,
+        "explain": "MP-RAGE applies an inversion preparation pulse then reads out a fast 3D spoiled gradient echo, giving isotropic high-resolution T1 contrast widely used for brain volumetrics and neuronavigation."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1217,
+      "body": {
+        "prompt": "A magnetization transfer (MT) pulse improves images by:",
+        "options": [
+          "saturating protons bound to macromolecules, which suppresses background tissue and boosts vessel or lesion conspicuity",
+          "adding a second refocusing pulse that recovers signal lost to static field inhomogeneity across the slice",
+          "nulling the signal from mobile free water so that only fat-bound protons contribute to the final image",
+          "increasing the flip angle beyond the Ernst angle to maximize the available longitudinal magnetization"
+        ],
+        "answer": 0,
+        "explain": "An off-resonance MT pulse saturates the broad pool of macromolecule-bound protons; magnetization transfer to free water lowers background signal. This improves TOF angiography background suppression and highlights tissues with MT contrast such as cartilage."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1218,
+      "body": {
+        "prompt": "A driven-equilibrium (DRIVE / fast-recovery) pulse is added to a fast spin echo mainly to:",
+        "options": [
+          "flip residual transverse magnetization back along B0 so fluid signal recovers faster and TR can be shortened",
+          "spoil any residual transverse magnetization so that the next repetition starts from a clean baseline state",
+          "invert the longitudinal magnetization before excitation so that fat is nulled at the chosen inversion time",
+          "apply diffusion-sensitizing gradients so that the sequence becomes sensitive to water molecular motion"
+        ],
+        "answer": 0,
+        "explain": "A driven-equilibrium module ends the echo train with a negative flip-back pulse that returns transverse magnetization to the longitudinal axis, speeding recovery of long-T2 fluid. This brightens CSF or joint fluid while allowing a shorter TR."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1219,
+      "body": {
+        "prompt": "Ultrashort-echo-time (UTE) sequences are designed to:",
+        "options": [
+          "capture signal from very short-T2 tissues such as cortical bone, tendon, and ligament before it decays",
+          "eliminate chemical-shift artifact by acquiring fat and water at two separate long echo times each",
+          "provide the heaviest possible T2 weighting for detecting free fluid in joints and around tendons",
+          "reduce SAR at 3 T by replacing every refocusing pulse with a low-flip-angle gradient reversal instead"
+        ],
+        "answer": 0,
+        "explain": "Tissues like cortical bone and tendon have T2 values of well under a millisecond, so conventional TEs show no signal. UTE sampling begins microseconds after excitation, capturing that fast-decaying signal for imaging."
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "quiz",
+      "ord": 1220,
+      "body": {
+        "prompt": "Which combination of parameters produces a T2-weighted image on a spin-echo sequence?",
+        "options": [
+          "a long TR and a long TE, which lets tissues with longer T2 retain more transverse signal",
+          "a short TR and a short TE, which emphasizes differences in the T1 recovery of the tissues",
+          "a long TR and a short TE, which minimizes both the T1 and the T2 contribution to contrast",
+          "a short TR and a long TE, which is generally avoided because it yields very little total signal"
+        ],
+        "answer": 0,
+        "explain": "T2 weighting needs a long TR (to reduce T1 effects) and a long TE (to let T2 differences develop). Short TR/short TE gives T1 weighting, and long TR/short TE gives proton-density weighting."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1221,
+      "body": {
+        "prompt": "SENSE and GRAPPA are two forms of parallel imaging that differ in that:",
+        "options": [
+          "SENSE unwraps aliased pixels in the image domain, while GRAPPA fills missing lines in k-space",
+          "SENSE fills missing lines in k-space, while GRAPPA unwraps aliased pixels in the image domain",
+          "SENSE requires only one receive channel, while GRAPPA requires at least sixteen receive channels",
+          "SENSE shortens the echo time, while GRAPPA instead shortens the repetition time of the sequence"
+        ],
+        "answer": 0,
+        "explain": "Both accelerate scans by undersampling phase encoding and using coil sensitivity information. SENSE reconstructs in the image domain by unfolding aliasing; GRAPPA reconstructs in k-space by synthesizing the skipped lines from calibration data."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1222,
+      "body": {
+        "prompt": "The g-factor in parallel imaging refers to:",
+        "options": [
+          "the spatially varying noise amplification introduced by the parallel-imaging reconstruction",
+          "the acceleration factor set by how many phase-encode lines are skipped during the scan",
+          "the geometric distortion produced by nonlinearity at the periphery of the gradient field",
+          "the gradient duty cycle that limits how quickly the coils can be switched before overheating"
+        ],
+        "answer": 0,
+        "explain": "Beyond the intrinsic root-R signal loss from undersampling, the g-factor captures extra, position-dependent noise amplification during unfolding. A high g-factor causes localized noisy patches, often central, at higher acceleration."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1223,
+      "body": {
+        "prompt": "A spiral k-space trajectory acquires data by:",
+        "options": [
+          "sampling outward from the center of k-space along a spiral, which is efficient but sensitive to off-resonance blurring",
+          "acquiring one straight horizontal line of k-space per repetition, exactly as a standard 2D sequence does",
+          "collecting only the outer edges of k-space, so that image contrast must be recovered from a separate scan",
+          "filling k-space in two orthogonal phase-encode directions, which is why it is used only for 3D imaging"
+        ],
+        "answer": 0,
+        "explain": "Spiral readouts trace a spiral from the k-space center outward, using gradient time very efficiently and tolerating motion. Their main weakness is sensitivity to off-resonance, which produces blurring rather than the discrete ghosts of Cartesian scans."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1224,
+      "body": {
+        "prompt": "Raising the receiver bandwidth (widening the bandwidth per pixel) has which set of effects?",
+        "options": [
+          "a shorter minimum TE and reduced chemical shift, at the cost of lower signal-to-noise ratio",
+          "a longer minimum TE and increased chemical shift, together with a higher signal-to-noise ratio",
+          "no change to TE or chemical shift, but a large increase in the total acquisition scan time",
+          "a shorter scan time and higher spatial resolution, with no penalty to the signal-to-noise ratio"
+        ],
+        "answer": 0,
+        "explain": "A higher receiver bandwidth samples the echo faster, allowing a shorter TE and reducing chemical-shift misregistration and susceptibility distortion, but it admits more noise per pixel, lowering SNR."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1225,
+      "body": {
+        "prompt": "The N/2 (Nyquist) ghost seen in echo-planar imaging arises from:",
+        "options": [
+          "inconsistencies between the odd and even echo lines collected by the alternating EPI readout",
+          "bulk patient motion occurring specifically while the central lines of k-space are being sampled",
+          "chemical-shift displacement of fat, which always shifts by exactly half of the field of view",
+          "gadolinium arriving in the arteries after the center of k-space has already been acquired"
+        ],
+        "answer": 0,
+        "explain": "EPI reads alternate k-space lines in opposite directions; slight timing or phase mismatches between odd and even lines produce a ghost displaced by half the FOV in the phase direction, the N/2 or Nyquist ghost."
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "quiz",
+      "ord": 1226,
+      "body": {
+        "prompt": "Keyhole (view-sharing) acquisition raises temporal resolution in dynamic imaging by:",
+        "options": [
+          "fully sampling central k-space each frame while sharing the peripheral lines across several time frames",
+          "fully sampling peripheral k-space each frame while sharing the central lines across several time frames",
+          "acquiring every line of k-space twice per frame and averaging the two copies to reduce image noise",
+          "skipping the readout gradient entirely so that each frame is reconstructed from phase encoding alone"
+        ],
+        "answer": 0,
+        "explain": "Since the k-space center carries most contrast information, keyhole methods update the center frequently and reuse (share) the slowly changing periphery across frames, boosting frame rate for dynamic contrast studies at some spatial-detail cost."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1227,
+      "body": {
+        "prompt": "A zipper artifact, a band of alternating bright and dark spots running across the image, most often results from:",
+        "options": [
+          "radiofrequency energy entering the scan room, such as through a door left open during the scan",
+          "patient motion occurring only while the outermost lines of k-space are being sampled by the coil",
+          "fat and water becoming misregistered along the frequency-encode axis at a low receiver bandwidth",
+          "gadolinium reaching the veins before the center of k-space has finished being acquired by the scanner"
+        ],
+        "answer": 0,
+        "explain": "A zipper is stray RF contaminating the data, classically from a broken Faraday seal or an open scan-room door. It appears as a line of alternating dots along one axis. Closing the door or fixing the RF shield resolves it."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1228,
+      "body": {
+        "prompt": "A herringbone (crisscross or corduroy) artifact spread across the whole image is caused by:",
+        "options": [
+          "a single corrupted data point (a spike) in k-space, often from electrical arcing or a static discharge",
+          "pulsatile arterial flow that produces discrete repeating ghosts along the phase-encode direction",
+          "fat and water canceling within each voxel on an opposed-phase gradient-echo acquisition of the region",
+          "a metallic implant creating a signal void with surrounding geometric distortion of the nearby anatomy"
+        ],
+        "answer": 0,
+        "explain": "One bad k-space point transforms into a regular stripe pattern across the entire image after the Fourier transform. Sources include electrostatic discharge or arcing. Finding and removing the spike (or fixing the cause) clears it."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1229,
+      "body": {
+        "prompt": "A bright dot in the exact center of the image (a DC artifact) is produced by:",
+        "options": [
+          "a constant direct-current offset in the received signal, which maps to the center point of k-space",
+          "aliasing of tissue lying outside the field of view along the phase-encode direction of the scan",
+          "chemical-shift misregistration of fat, which always concentrates its signal at the image center",
+          "a standing-wave (dielectric) effect that removes signal from the periphery of a large body part"
+        ],
+        "answer": 0,
+        "explain": "The center of k-space corresponds to the zero-frequency (DC) component. A constant offset in the receiver electronics deposits extra signal there, appearing as a bright central dot in the reconstructed image."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1230,
+      "body": {
+        "prompt": "Moire fringes (a zebra-stripe interference pattern) are most commonly seen when:",
+        "options": [
+          "aliasing combines with B0 inhomogeneity on a gradient-echo image acquired with a large field of view",
+          "cardiac pulsation produces evenly spaced ghosts along the frequency-encode direction of a spin echo",
+          "a receiver channel fails, so that half of the phased-array elements contribute no signal to the image",
+          "the slice-select gradient is too steep, so adjacent slices excite and saturate one another during scanning"
+        ],
+        "answer": 0,
+        "explain": "Moire fringes arise where aliased signal overlaps true signal and the two have differing phase because of field inhomogeneity, producing a banded interference pattern. This is typical of gradient-echo imaging with a large FOV."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1231,
+      "body": {
+        "prompt": "Geometric distortion that becomes progressively worse toward the edges of a large field of view is due to:",
+        "options": [
+          "gradient nonlinearity, and it is reduced by the vendor's gradient (distortion) correction algorithm",
+          "chemical shift, and it is reduced simply by lowering the receiver bandwidth for the acquisition",
+          "patient motion, and it is reduced by adding cardiac and respiratory gating to the pulse sequence",
+          "RF inhomogeneity, and it is reduced by placing high-permittivity dielectric pads next to the patient"
+        ],
+        "answer": 0,
+        "explain": "Gradients deviate from perfect linearity away from isocenter, warping anatomy near the FOV edges. Vendor gradient-warp (distortion) correction remaps the image to compensate; keeping anatomy near isocenter also helps."
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "quiz",
+      "ord": 1232,
+      "body": {
+        "prompt": "Central signal loss from a dielectric (standing-wave) effect, seen on large-body imaging at 3 T, can be reduced by:",
+        "options": [
+          "placing high-permittivity dielectric pads against the patient or using RF (B1) shimming with parallel transmit",
+          "lowering the receiver bandwidth so that the readout captures more signal from the center of the body",
+          "increasing the number of signal averages so that the central signal loss averages out across repetitions",
+          "switching from a gradient-echo to a spin-echo readout, which is completely immune to any B1 nonuniformity"
+        ],
+        "answer": 0,
+        "explain": "At 3 T the RF wavelength in tissue approaches body dimensions, so standing waves cause central B1 dropout, especially in large abdomens or with ascites. Dielectric pads or parallel-transmit RF shimming even out the B1 field."
+      }
     }
   ]
 }
