@@ -196,6 +196,47 @@
   function loadQuiz() { try { return JSON.parse(localStorage.getItem(COURSE_QUIZ_KEY) || "{}"); } catch (e) { return {}; } }
   var STATUS_LABEL = { "not-started": "Not started", "progress": "In progress", "review": "Needs review", "mastered": "Mastered" };
 
+  var QUIZ_PROGRESS_KEY = "mrisim_quiz_progress_v1";
+  function loadQuizProgress() {
+    try { return JSON.parse(localStorage.getItem(QUIZ_PROGRESS_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+
+  // "Registry readiness" panel: quiz accuracy mapped onto the ARRT content categories,
+  // weighted by each category's exam share. Reads the standalone quiz's local progress.
+  function appendReadiness(main) {
+    if (!window.Blueprint) return;
+    var rd = window.Blueprint.readiness(loadQuizProgress());
+    var panel = h("div", { class: "blueprint" }, [
+      h("h3", { class: "bp-h", text: "Readiness by ARRT content category" }),
+      h("div", { class: "bp-head" }, [
+        h("div", {}, [
+          h("div", { class: "bp-num", text: Math.round(rd.projected * 100) + "%" }),
+          h("div", { class: "bp-lbl", text: "projected, weighted by ARRT exam share" }),
+        ]),
+        h("div", { class: "bp-cov", text: "You have practiced " + Math.round(rd.coverage * 100)
+          + "% of the weighted blueprint" }),
+      ]),
+    ]);
+    rd.categories.forEach(function (c) {
+      var pct = c.accuracy == null ? null : Math.round(c.accuracy * 100);
+      var row = h("div", { class: "bp-row" }, [
+        h("div", { class: "bp-row-top" }, [
+          h("span", { class: "bp-name", text: c.name }),
+          h("span", { class: "bp-chip", text: Math.round(c.weight * 100) + "% of exam" }),
+          h("span", { class: "bp-acc" + (pct == null ? " none" : ""),
+            text: pct == null ? "Not started" : pct + "%" }),
+        ]),
+        h("div", { class: "bar" }, [h("i", { style: "width:" + (pct == null ? 0 : pct) + "%" })]),
+        h("div", { class: "bp-cov-line", text: c.attempted + " of " + c.memberCount
+          + " topic" + (c.memberCount === 1 ? "" : "s") + " practiced" }),
+      ]);
+      if (c.note) row.appendChild(h("div", { class: "bp-note", text: c.note }));
+      panel.appendChild(row);
+    });
+    main.appendChild(panel);
+  }
+
   // Exam readiness from local progress: per module (reads + quiz accuracy) and overall
   // (reads 45% + quiz accuracy 40% + best mock exam 15%). Drives the overview dashboard
   // and the "study next" nudge. Pure read of localStorage — nothing new stored.
@@ -335,6 +376,7 @@
       plan.appendChild(h("p", { class: "plan-pace", text: paceText }));
       main.appendChild(plan);
     }
+    appendReadiness(main);
     main.appendChild(h("h3", { class: "ready-h", text: "By module" }));
     var grid = h("div", { class: "ready-grid" });
     r.modules.forEach(function (m) {
