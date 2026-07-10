@@ -25,15 +25,50 @@
       members: ["patient-care"] },
   ];
 
-  function isAttempted(entry) {
+  // Premium quiz topic -> ARRT category key. Audited against the quiz topic-count
+  // rebalance: every premium topic maps to exactly one category. Names that also
+  // appear as free members (image-quality, pathology, safety, patient-care) are a
+  // SEPARATE question bank here, so they count as their own practiceable source.
+  var PREMIUM_MAP = {
+    "instrumentation": "image-production",
+    "pulse-sequences": "image-production",
+    "data-acquisition": "image-production",
+    "contrast-weighting": "image-production",
+    "image-quality": "image-production",
+    "flow-artifacts": "image-production",
+    "fat-suppression": "image-production",
+    "three-d-recon": "image-production",
+    "procedures-anatomy": "procedures",
+    "procedures-protocols": "procedures",
+    "procedures-vascular": "procedures",
+    "pathology": "procedures",
+    "safety": "safety",
+    "patient-care": "patient-care",
+    "contrast-agents": "patient-care",
+  };
+
+  function isAttempted(entry) {            // free store: { best, total, runs }
     return !!entry && typeof entry.total === "number" && entry.total > 0;
   }
+  function isAttemptedPremium(entry) {     // premium store: { right, seen }
+    return !!entry && typeof entry.seen === "number" && entry.seen > 0;
+  }
 
-  // progress = mrisim_quiz_progress_v1: { categoryId: { best, total, runs } }
-  function readiness(progress) {
-    var prog = progress || {};
+  // freeProgress   = mrisim_quiz_progress_v1:            { freeCategory: { best, total, runs } }
+  // premiumProgress = mrisim_premium_topic_progress_v1:  { premiumTopic: { right, seen } }
+  // Omit premiumProgress for the legacy free-only model (denominators unchanged).
+  // Supply it (even {}) to blend the premium bank into each category's accuracy and
+  // coverage, with premium topics added to the coverage denominator.
+  function readiness(freeProgress, premiumProgress) {
+    var prog = freeProgress || {};
+    var blend = premiumProgress !== undefined && premiumProgress !== null;
+    var prem = premiumProgress || {};
+    var premByCat = {};                    // category key -> [premium topics], computed once
+    Object.keys(PREMIUM_MAP).forEach(function (t) {
+      (premByCat[PREMIUM_MAP[t]] = premByCat[PREMIUM_MAP[t]] || []).push(t);
+    });
     var categories = ARRT_BLUEPRINT.map(function (c) {
-      var right = 0, asked = 0, attempted = 0;
+      var right = 0, asked = 0, attempted = 0, slots = c.members.length;
       c.members.forEach(function (m) {
         var e = prog[m];
         if (!isAttempted(e)) return;
@@ -41,11 +76,22 @@
         right += (typeof e.best === "number" ? e.best : 0);
         asked += e.total;
       });
+      if (blend) {
+        var topics = premByCat[c.key] || [];
+        slots += topics.length;
+        topics.forEach(function (t) {
+          var e = prem[t];
+          if (!isAttemptedPremium(e)) return;
+          attempted += 1;
+          right += (typeof e.right === "number" ? e.right : 0);
+          asked += e.seen;
+        });
+      }
       return {
         key: c.key, name: c.name, scored: c.scored, weight: c.weight, note: c.note || null,
         accuracy: asked > 0 ? right / asked : null,
-        coverage: c.members.length ? attempted / c.members.length : 0,
-        attempted: attempted, memberCount: c.members.length,
+        coverage: slots ? attempted / slots : 0,
+        attempted: attempted, memberCount: slots,
       };
     });
     var projected = 0, coverage = 0;
@@ -56,5 +102,5 @@
     return { categories: categories, projected: projected, coverage: coverage };
   }
 
-  return { ARRT_BLUEPRINT: ARRT_BLUEPRINT, readiness: readiness };
+  return { ARRT_BLUEPRINT: ARRT_BLUEPRINT, PREMIUM_MAP: PREMIUM_MAP, readiness: readiness };
 });

@@ -114,3 +114,51 @@ test("readiness tolerates missing/garbage progress", () => {
   const r = B.readiness({ safety: { best: 0, total: 0, runs: 2 } });
   assert.equal(r.categories.find((c) => c.key === "safety").accuracy, null);
 });
+
+test("PREMIUM_MAP: exactly the 15 audited premium topics, each mapped to a valid category", () => {
+  const EXPECTED_TOPICS = [
+    "instrumentation", "pulse-sequences", "data-acquisition", "contrast-weighting",
+    "image-quality", "flow-artifacts", "fat-suppression", "three-d-recon",
+    "procedures-anatomy", "procedures-protocols", "procedures-vascular", "pathology",
+    "safety", "patient-care", "contrast-agents",
+  ];
+  assert.deepEqual(Object.keys(B.PREMIUM_MAP).sort(), [...EXPECTED_TOPICS].sort());
+  const validKeys = new Set(B.ARRT_BLUEPRINT.map((c) => c.key));
+  for (const t of Object.keys(B.PREMIUM_MAP)) {
+    assert.ok(validKeys.has(B.PREMIUM_MAP[t]), `${t} -> unknown category ${B.PREMIUM_MAP[t]}`);
+  }
+  const counts = {};
+  for (const t of Object.keys(B.PREMIUM_MAP)) counts[B.PREMIUM_MAP[t]] = (counts[B.PREMIUM_MAP[t]] || 0) + 1;
+  assert.deepEqual(counts, { "image-production": 8, procedures: 4, safety: 1, "patient-care": 2 });
+});
+
+test("blend: premium-only progress fills a category the free pool never touched", () => {
+  // Safety free members = [safety] (unattempted); premium topics for safety = [safety] (attempted).
+  const r = B.readiness({}, { safety: { right: 9, seen: 10 } });
+  const s = r.categories.find((c) => c.key === "safety");
+  assert.ok(Math.abs(s.accuracy - 0.9) < 1e-9);   // 9/10 from the premium source
+  assert.equal(s.attempted, 1);                    // one of two sources attempted
+  assert.equal(s.memberCount, 2);                  // 1 free member + 1 premium topic
+  assert.ok(Math.abs(s.coverage - 0.5) < 1e-9);
+  assert.ok(Math.abs(r.projected - 0.9 * 0.105) < 1e-9);
+});
+
+test("blend: free + premium sum per category with the enlarged denominator", () => {
+  const free = { sequences: { best: 8, total: 10, runs: 1 }, "image-quality": { best: 6, total: 10, runs: 1 } };
+  const premium = { instrumentation: { right: 5, seen: 10 }, "three-d-recon": { right: 3, seen: 10 } };
+  const r = B.readiness(free, premium);
+  const ip = r.categories.find((c) => c.key === "image-production");
+  assert.ok(Math.abs(ip.accuracy - 0.55) < 1e-9);  // (8+6+5+3)/(10+10+10+10) = 22/40
+  assert.equal(ip.attempted, 4);                    // 2 free members + 2 premium topics
+  assert.equal(ip.memberCount, 12);                 // 4 free members + 8 premium topics
+  assert.ok(Math.abs(ip.coverage - 4 / 12) < 1e-9);
+  assert.ok(Math.abs(r.projected - 0.55 * 0.53) < 1e-9);
+});
+
+test("blend is opt-in: omitting the 2nd arg keeps legacy free-only denominators", () => {
+  const oneFree = { sequences: { best: 8, total: 10, runs: 1 } };
+  const r = B.readiness(oneFree);            // no premium arg
+  const ip = r.categories.find((c) => c.key === "image-production");
+  assert.equal(ip.memberCount, 4);           // 4 free members only, premium NOT in denominator
+  assert.equal(ip.coverage, 0.25);
+});
