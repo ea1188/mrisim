@@ -16,6 +16,27 @@ test("blueprint integrity: scored sums to 200, weights to 1.0, 8 categories mapp
   assert.deepEqual(members, [...KNOWN_CATEGORIES].sort());
 });
 
+test("blueprint pins each ARRT category's scored count and weight (guards against silent drift)", () => {
+  // From the ARRT MRI Content Specifications (Board Approved Jan 2024, impl Feb 1 2025):
+  // 200 scored items. Pinned individually so a compensating edit that keeps the sum at
+  // 200 (e.g. moving items between Safety and Image Production) still fails this test.
+  const EXPECTED = {
+    "Image Production": { scored: 106, weight: 0.53 },
+    Procedures: { scored: 57, weight: 0.285 },
+    Safety: { scored: 21, weight: 0.105 },
+    "Patient Care": { scored: 16, weight: 0.08 },
+  };
+  assert.equal(B.ARRT_BLUEPRINT.length, Object.keys(EXPECTED).length);
+  for (const cat of B.ARRT_BLUEPRINT) {
+    const exp = EXPECTED[cat.name];
+    assert.ok(exp, `unexpected category ${cat.name}`);
+    assert.equal(cat.scored, exp.scored, `${cat.name} scored`);
+    assert.ok(Math.abs(cat.weight - exp.weight) < 1e-9, `${cat.name} weight`);
+    // weight is the exam share of the 200 scored items
+    assert.ok(Math.abs(cat.weight - cat.scored / 200) < 1e-9, `${cat.name} weight matches scored/200`);
+  }
+});
+
 test("blueprint is ordered by weight descending (Image Production first)", () => {
   assert.equal(B.ARRT_BLUEPRINT[0].name, "Image Production");
   const w = B.ARRT_BLUEPRINT.map((c) => c.weight);
