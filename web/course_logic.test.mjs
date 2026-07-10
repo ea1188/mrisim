@@ -106,6 +106,14 @@ test("mergeProgress passes through one-sided keys and handles empties", () => {
   assert.deepEqual(mergeProgress({}, { mrisim_course_exam_v1: { bestPct: 50 } }).mrisim_course_exam_v1, { bestPct: 50 });
 });
 
+test("mergeProgress keeps higher premium-topic seen (monotonic)", () => {
+  const local = { mrisim_premium_topic_progress_v1: { safety: { seen: 5, right: 3 } } };
+  const remote = { mrisim_premium_topic_progress_v1: { safety: { seen: 8, right: 2 }, "image-quality": { seen: 2, right: 2 } } };
+  const m = mergeProgress(local, remote);
+  assert.deepEqual(m.mrisim_premium_topic_progress_v1.safety, { seen: 8, right: 2 });
+  assert.deepEqual(m.mrisim_premium_topic_progress_v1["image-quality"], { seen: 2, right: 2 });
+});
+
 test("isCourseComplete requires all mastered and exam >= 80", () => {
   assert.equal(isCourseComplete(["mastered", "mastered"], 80), true);
   assert.equal(isCourseComplete(["mastered", "mastered"], 79), false);
