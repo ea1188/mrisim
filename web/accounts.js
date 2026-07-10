@@ -147,17 +147,22 @@
       });
     }).catch(function () { return null; });
   }
+  // Resolves true only when the server row was actually written, false otherwise
+  // (disabled, signed out, no user, network/RLS error). Passive sync callers ignore
+  // the result (best-effort); the reset flow uses it so a failed wipe is not silently
+  // undone. Supabase upsert does not throw on RLS/DB errors — it returns { error }.
   function saveProgress(state) {
-    if (!ENABLED || !signedIn()) return Promise.resolve();
+    if (!ENABLED || !signedIn()) return Promise.resolve(false);
     return client().then(function (c) {
       return c.auth.getUser().then(function (r) {
         var u = r.data.user;
-        if (!u) return null;
+        if (!u) return false;
         return c.from("course_progress").upsert(
           { user_id: u.id, state: state, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" });
+          { onConflict: "user_id" }
+        ).then(function (res) { return !(res && res.error); });
       });
-    }).catch(function () { /* progress sync is best-effort */ });
+    }).catch(function () { return false; });
   }
 
   // --- student ------------------------------------------------------------- //

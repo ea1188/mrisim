@@ -1019,11 +1019,21 @@
   }
   // User-initiated wipe of their own progress, local and server. The empty push here is
   // intentional (unlike the boot-time guard that avoids clobbering a real row with {}).
+  // Wipe the SERVER row first and only clear locally + reload once it confirms: otherwise
+  // an offline or failed wipe would clear local but leave the row to silently restore
+  // everything on the next boot. Local-only mode (no backend / signed out) just clears.
   function resetProgress() {
     if (!window.confirm("Reset all your course progress? This clears your reading, quiz scores, mastery, and mock-exam history on every device signed in to this account. This cannot be undone.")) return;
-    clearAllProgress();
-    Promise.resolve(window.Accounts && Accounts.saveProgress ? Accounts.saveProgress({}) : null)
-      .then(function () { location.reload(); });
+    if (!syncOn()) { clearAllProgress(); location.reload(); return; }
+    // Cancel any pending debounced push and suppress further ones during the wipe, so a
+    // flush of the OLD local state can't race the {} upsert and restore the row.
+    if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    _synced = false;
+    Accounts.saveProgress({}).then(function (ok) {
+      if (!ok) { _synced = true; window.alert("Could not reach the server to reset your progress. Check your connection and try again."); return; }
+      clearAllProgress();
+      location.reload();
+    });
   }
   function syncOn() { return !!(window.Accounts && Accounts.enabled() && Accounts.signedIn()); }
   // Debounced push of local progress to the server.
