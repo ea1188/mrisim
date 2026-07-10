@@ -118,11 +118,11 @@ test("readiness tolerates missing/garbage progress", () => {
   assert.equal(r.categories.find((c) => c.key === "safety").accuracy, null);
 });
 
-test("PREMIUM_MAP: exactly the 15 audited premium topics, each mapped to a valid category", () => {
+test("PREMIUM_MAP: exactly the 16 audited premium topics, each mapped to a valid category", () => {
   const EXPECTED_TOPICS = [
     "instrumentation", "pulse-sequences", "data-acquisition", "contrast-weighting",
     "image-quality", "flow-artifacts", "fat-suppression", "three-d-recon",
-    "procedures-anatomy", "procedures-protocols", "procedures-vascular", "pathology",
+    "procedures-anatomy", "procedures-protocols", "procedures-positioning", "procedures-vascular", "pathology",
     "safety", "patient-care", "contrast-agents",
   ];
   assert.deepEqual(Object.keys(B.PREMIUM_MAP).sort(), [...EXPECTED_TOPICS].sort());
@@ -132,7 +132,7 @@ test("PREMIUM_MAP: exactly the 15 audited premium topics, each mapped to a valid
   }
   const counts = {};
   for (const t of Object.keys(B.PREMIUM_MAP)) counts[B.PREMIUM_MAP[t]] = (counts[B.PREMIUM_MAP[t]] || 0) + 1;
-  assert.deepEqual(counts, { "image-production": 8, procedures: 4, safety: 1, "patient-care": 2 });
+  assert.deepEqual(counts, { "image-production": 8, procedures: 5, safety: 1, "patient-care": 2 });
 });
 
 test("blend: premium-only progress fills a category the free pool never touched", () => {
