@@ -137,7 +137,7 @@
     whoami.hidden = false; clear(whoami);
     whoami.appendChild(document.createTextNode((email || "") + " · "));
     whoami.appendChild(h("button", { text: "Sign out", onclick: function () {
-      Accounts.signOut().then(function () { location.reload(); });
+      Accounts.signOut().then(function () { clearAllProgress(); location.reload(); });
     } }));
   }
 
@@ -979,6 +979,10 @@
 
   // --- cross-device progress sync (best-effort, local-first) --------------- //
   var PROGRESS_KEYS = [CURRICULUM_DONE_KEY, COURSE_QUIZ_KEY, COURSE_READ_KEY, COURSE_EXAM_KEY, COURSE_MASTERY_KEY, COURSE_DIAG_KEY, COURSE_REVIEW_KEY, COURSE_COMPLETE_KEY, PREMIUM_TOPIC_KEY];
+  // The user id the device's local progress currently belongs to. localStorage is
+  // device-global, so on a shared device this marker is how bootSync tells "my own
+  // progress from another device" (merge) from "a different account's" (discard).
+  var PROGRESS_OWNER_KEY = "mrisim_progress_owner_v1";
   var _syncTimer = null;
 
   function readAllProgress() {
@@ -987,6 +991,14 @@
       try { var v = localStorage.getItem(k); if (v != null) out[k] = JSON.parse(v); } catch (e) { /* skip */ }
     });
     return out;
+  }
+  function loadOwner() { try { return localStorage.getItem(PROGRESS_OWNER_KEY); } catch (e) { return null; } }
+  function saveOwner(uid) { try { localStorage.setItem(PROGRESS_OWNER_KEY, uid); } catch (e) { /* storage off */ } }
+  // Wipe every course-progress key plus the owner marker. Used when the local blob
+  // belongs to a different account, and on sign-out so the next user starts clean.
+  function clearAllProgress() {
+    PROGRESS_KEYS.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { /* storage off */ } });
+    try { localStorage.removeItem(PROGRESS_OWNER_KEY); } catch (e) { /* storage off */ }
   }
   function writeAllProgress(state) {
     if (!state) return;
@@ -1007,14 +1019,23 @@
     if (!syncOn()) return;
     Accounts.saveProgress(readAllProgress());
   }
-  // Pull the server copy, merge monotonically into local, write back, and push.
+  // Reconcile local and server progress at boot. Same owner as the local blob: merge
+  // monotonically (this user's own progress from another device). Different or unstamped
+  // owner: the local blob is a DIFFERENT account's data on a shared device, so discard it
+  // and load the server copy alone — never union it in, which would both show and push
+  // account A's progress under account B. Then stamp the current owner and push.
   function bootSync() {
     if (!syncOn()) return Promise.resolve();
-    return Accounts.loadProgress().then(function (remote) {
-      if (!remote) { flushSync(); return; }
-      var merged = CourseLogic.mergeProgress(readAllProgress(), remote);
-      writeAllProgress(merged);
-      Accounts.saveProgress(merged);
+    return Accounts.getUser().then(function (u) {
+      var uid = u && u.id;
+      if (!uid) return;
+      return Accounts.loadProgress().then(function (remote) {
+        var r = CourseLogic.reconcileBootProgress(loadOwner(), uid, readAllProgress(), remote);
+        if (!r.sameOwner) clearAllProgress();   // foreign local blob: wipe before writing this user's state
+        writeAllProgress(r.state);
+        saveOwner(uid);
+        Accounts.saveProgress(r.state);
+      });
     }).catch(function () { /* best-effort */ });
   }
   if (window.addEventListener) {
