@@ -1,5 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import B from "./blueprint.js";
 
 const KNOWN_CATEGORIES = [
@@ -161,4 +164,17 @@ test("blend is opt-in: omitting the 2nd arg keeps legacy free-only denominators"
   const ip = r.categories.find((c) => c.key === "image-production");
   assert.equal(ip.memberCount, 4);           // 4 free members only, premium NOT in denominator
   assert.equal(ip.coverage, 0.25);
+});
+
+// Guard against a premium quiz topic existing in the content bank without a PREMIUM_MAP
+// entry — its answers would be recorded but silently dropped from readiness. Keeps the
+// map in lockstep with data/course_content.json as new quiz topics are authored.
+test("every premium quiz topic in the content bank is mapped in PREMIUM_MAP", () => {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  const data = JSON.parse(fs.readFileSync(path.join(dir, "..", "data", "course_content.json"), "utf8"));
+  const topics = new Set();
+  (data.items || []).forEach((it) => { if (it.kind === "quiz" && it.topic) topics.add(it.topic); });
+  const mapped = new Set(Object.keys(B.PREMIUM_MAP));
+  const unmapped = [...topics].filter((t) => !mapped.has(t));
+  assert.deepEqual(unmapped, [], "premium quiz topics missing from PREMIUM_MAP (answers would vanish from readiness): " + unmapped.join(", "));
 });
