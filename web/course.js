@@ -30,6 +30,7 @@
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
+  var PREMIUM_TOPIC_KEY = "mrisim_premium_topic_progress_v1"; // per-premium-topic { right, seen }; feeds the ARRT readiness blend
   var COURSE_READ_KEY = "mrisim_course_read_v1";  // which education/question sections have been read
   var COURSE_EXAM_KEY = "mrisim_course_exam_v1";  // best/last practice-exam score
   var COURSE_MASTERY_KEY = "mrisim_course_mastery_v1"; // per-module mastery-check result
@@ -206,13 +207,19 @@
     catch (e) { return {}; }
   }
 
+  function loadPremiumTopicProgress() {
+    try { return JSON.parse(localStorage.getItem(PREMIUM_TOPIC_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+
   // "Registry readiness" panel: quiz accuracy mapped onto the ARRT content categories,
   // weighted by each category's exam share. Reads the standalone quiz's local progress.
   function appendReadiness(main) {
     if (!window.Blueprint) return;
-    var rd = window.Blueprint.readiness(loadQuizProgress());
+    var rd = window.Blueprint.readiness(loadQuizProgress(), loadPremiumTopicProgress());
     var panel = h("div", { class: "blueprint" }, [
       h("h3", { class: "bp-h", text: "Readiness by ARRT content category" }),
+      h("div", { class: "bp-lbl", text: "Blends your free diagnostic quiz and premium course questions." }),
       h("div", { class: "bp-head" }, [
         h("div", {}, [
           h("div", { class: "bp-num", text: Math.round(rd.projected * 100) + "%" }),
@@ -640,6 +647,7 @@
         [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
         fb.hidden = false; fb.textContent = (correct ? "Correct. " : "Not quite. ") + q.explain;
         bumpScore(topicTitle, correct);
+        bumpPremiumTopic(q._ptopic, correct);
         recordAnswer(q, correct, false);
       } });
       box.appendChild(b);
@@ -711,6 +719,7 @@
       var right = picks[qi] === item.q.answer;
       if (right) correct += 1;
       bumpScore(mod.title, right);
+      bumpPremiumTopic(item.q._ptopic, right);
       recordAnswer(item.q, right, false);
     });
     var pct = Math.round(100 * correct / questions.length);
@@ -910,6 +919,7 @@
       var right = EXAM.picks[qi] === item.q.answer;
       if (right) correct += 1;
       recordAnswer(item.q, right, false);
+      bumpPremiumTopic(item.q._ptopic, right);
     });
     var total = EXAM.questions.length, pct = Math.round(100 * correct / total);
     saveExamBest(correct, total, pct);
@@ -968,7 +978,7 @@
   function saveCompleted(rec) { try { localStorage.setItem(COURSE_COMPLETE_KEY, JSON.stringify(rec)); } catch (e) { /* storage off */ } }
 
   // --- cross-device progress sync (best-effort, local-first) --------------- //
-  var PROGRESS_KEYS = [CURRICULUM_DONE_KEY, COURSE_QUIZ_KEY, COURSE_READ_KEY, COURSE_EXAM_KEY, COURSE_MASTERY_KEY, COURSE_DIAG_KEY, COURSE_REVIEW_KEY, COURSE_COMPLETE_KEY];
+  var PROGRESS_KEYS = [CURRICULUM_DONE_KEY, COURSE_QUIZ_KEY, COURSE_READ_KEY, COURSE_EXAM_KEY, COURSE_MASTERY_KEY, COURSE_DIAG_KEY, COURSE_REVIEW_KEY, COURSE_COMPLETE_KEY, PREMIUM_TOPIC_KEY];
   var _syncTimer = null;
 
   function readAllProgress() {
@@ -1202,6 +1212,19 @@
     } catch (e) { /* storage off */ }
   }
 
+  // Record one graded premium quiz answer by its ARRT premium topic (see PREMIUM_MAP
+  // in blueprint.js). No-op when the body has no topic (e.g. free lessons).
+  function bumpPremiumTopic(topicKey, correct) {
+    if (!topicKey) return;
+    try {
+      var s = JSON.parse(localStorage.getItem(PREMIUM_TOPIC_KEY) || "{}");
+      var r = s[topicKey] || { right: 0, seen: 0 };
+      r.seen += 1; if (correct) r.right += 1; s[topicKey] = r;
+      localStorage.setItem(PREMIUM_TOPIC_KEY, JSON.stringify(s));
+      queueSync();
+    } catch (e) { /* storage off */ }
+  }
+
   // --- illustrated lesson viewer ------------------------------------------ //
   // Each step shows its pre-rendered acquired image (web/img/lessons/<slug>/<i>.png,
   // built by scripts/prerender_lessons.py) + the step's teaching box, stepped through
@@ -1262,6 +1285,7 @@
       var data = res[0], premium = res[1], assignments = res[2];
       var byTitle = {}; (data.lessons || []).forEach(function (L) { byTitle[L.title] = L; });
       var byTopic = {}; (premium || []).forEach(function (it) {
+        if (it.body) it.body._ptopic = it.topic;   // carry the premium topic onto pooled bodies for readiness
         (byTopic[it.topic] = byTopic[it.topic] || []).push(it);
       });
       return bootSync().then(function () {
