@@ -134,6 +134,7 @@
     if ("mrisim_curriculum" in out) out.mrisim_curriculum = _arrUnion(local.mrisim_curriculum, remote.mrisim_curriculum);
     if ("mrisim_course_read_v1" in out) out.mrisim_course_read_v1 = _mapUnion(local.mrisim_course_read_v1, remote.mrisim_course_read_v1);
     if ("mrisim_course_quiz_v1" in out) out.mrisim_course_quiz_v1 = _mergeQuiz(local.mrisim_course_quiz_v1, remote.mrisim_course_quiz_v1);
+    if ("mrisim_premium_topic_progress_v1" in out) out.mrisim_premium_topic_progress_v1 = _mergeQuiz(local.mrisim_premium_topic_progress_v1, remote.mrisim_premium_topic_progress_v1);
     if ("mrisim_course_exam_v1" in out) out.mrisim_course_exam_v1 = _higher(local.mrisim_course_exam_v1, remote.mrisim_course_exam_v1, "bestPct");
     if ("mrisim_course_mastery_v1" in out) out.mrisim_course_mastery_v1 = _mergeMastery(local.mrisim_course_mastery_v1, remote.mrisim_course_mastery_v1);
     if ("mrisim_course_diagnostic_v1" in out) out.mrisim_course_diagnostic_v1 = _higher(local.mrisim_course_diagnostic_v1, remote.mrisim_course_diagnostic_v1, "ts");
