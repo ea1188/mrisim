@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek, reconcileBootProgress } = CourseLogic;
 
 test("constants match the spec", () => {
   assert.equal(PASS_PCT, 80);
@@ -146,4 +146,47 @@ test("pacePerWeek: math, past date null, zero remaining null, sub-week rounds to
   assert.equal(pacePerWeek(4, -D, now), null);
   assert.equal(pacePerWeek(0, 28 * D, now), null);
   assert.deepEqual(pacePerWeek(3, 2 * D, now), { weeks: 1, perWeek: 3 });
+});
+
+// --- account isolation on a shared device -------------------------------- //
+// The local progress blob is device-global. reconcileBootProgress decides what to
+// persist at boot from WHO owns the local blob, so a second account on the same
+// device never inherits (or, via saveProgress, corrupts) the first account's data.
+test("reconcileBootProgress: same owner unions local + remote (cross-device merge)", () => {
+  const local = { mrisim_course_quiz_v1: { M: { seen: 5, right: 3 } } };
+  const remote = { mrisim_course_quiz_v1: { M: { seen: 8, right: 2 } } };
+  const r = reconcileBootProgress("user-a", "user-a", local, remote);
+  assert.equal(r.sameOwner, true);
+  assert.deepEqual(r.state.mrisim_course_quiz_v1.M, { seen: 8, right: 2 }); // higher seen wins
+});
+
+test("reconcileBootProgress: different owner discards local, loads remote only", () => {
+  const localA = { mrisim_course_quiz_v1: { M: { seen: 9, right: 9 } } }; // account A's leftovers
+  const remoteB = { mrisim_course_quiz_v1: { M: { seen: 1, right: 1 } } }; // account B's real data
+  const r = reconcileBootProgress("user-a", "user-b", localA, remoteB);
+  assert.equal(r.sameOwner, false);
+  // B must get exactly its own remote, NOT a union that keeps A's higher counters.
+  assert.deepEqual(r.state, remoteB);
+});
+
+test("reconcileBootProgress: absent owner marker is treated as foreign (discard local)", () => {
+  const localA = { mrisim_course_quiz_v1: { M: { seen: 9, right: 9 } } };
+  const remoteB = { mrisim_course_quiz_v1: { M: { seen: 1, right: 1 } } };
+  const r = reconcileBootProgress(null, "user-b", localA, remoteB);
+  assert.equal(r.sameOwner, false);
+  assert.deepEqual(r.state, remoteB);
+});
+
+test("reconcileBootProgress: same owner with no remote keeps local (first-device push)", () => {
+  const local = { mrisim_course_quiz_v1: { M: { seen: 4, right: 4 } } };
+  const r = reconcileBootProgress("user-a", "user-a", local, null);
+  assert.equal(r.sameOwner, true);
+  assert.deepEqual(r.state.mrisim_course_quiz_v1.M, { seen: 4, right: 4 });
+});
+
+test("reconcileBootProgress: different owner with no remote yields a clean slate", () => {
+  const localA = { mrisim_course_quiz_v1: { M: { seen: 9, right: 9 } } };
+  const r = reconcileBootProgress("user-a", "user-b", localA, null);
+  assert.equal(r.sameOwner, false);
+  assert.deepEqual(r.state, {}); // brand-new account B starts empty, not with A's data
 });

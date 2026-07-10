@@ -143,6 +143,20 @@
     return out;
   }
 
+  // Decide, at boot, which course-progress state to persist for the signed-in user,
+  // given who owns the device-global local blob. The local blob carries no user id of
+  // its own, so a stamped owner is passed in. Same owner => this is the user's own data
+  // from another device: union it monotonically with the server copy. Different or
+  // absent owner => the local blob belongs to someone else on a shared device (or is
+  // untrusted): DISCARD it and use the server copy alone (or an empty slate when the
+  // user has no server row yet), so account B never inherits or overwrites account A.
+  // Returns { state, sameOwner }; the caller writes `state` locally and pushes it up.
+  function reconcileBootProgress(storedOwner, currentUser, local, remote) {
+    var sameOwner = !!currentUser && storedOwner === currentUser;
+    if (sameOwner) return { state: mergeProgress(local || {}, remote || {}), sameOwner: true };
+    return { state: remote || {}, sameOwner: false };
+  }
+
   var COMPLETE_EXAM_PCT = 80;  // best-mock threshold for course completion
 
   // Complete = every module status is "mastered" AND the best practice exam >= COMPLETE_EXAM_PCT.
@@ -190,6 +204,7 @@
     reviewOnCorrect: reviewOnCorrect,
     dueCount: dueCount,
     mergeProgress: mergeProgress,
+    reconcileBootProgress: reconcileBootProgress,
     isCourseComplete: isCourseComplete,
     remainingStudyOrder: remainingStudyOrder, pacePerWeek: pacePerWeek,
   };
