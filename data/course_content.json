@@ -10009,6 +10009,294 @@
         "answer": 0,
         "explain": "When partitions are thicker than the in-plane pixels, reformatting across them samples coarsely, giving a stair-step, blurred appearance. Acquiring isotropic voxels avoids this and preserves resolution in any reformatted plane."
       }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1263,
+      "body": {
+        "prompt": "Why is a receive coil placed as close to the anatomy as possible?",
+        "options": [
+          "Signal-to-noise ratio drops as coil-to-anatomy distance grows",
+          "It increases the static magnetic field strength locally",
+          "It shortens the T1 relaxation time of the nearby tissue",
+          "It automatically widens the usable field of view"
+        ],
+        "answer": 0,
+        "explain": "SNR is highest when the coil sits close to the part and is no larger than needed."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1264,
+      "body": {
+        "prompt": "Which coil gives the best result for a small joint such as the wrist?",
+        "options": [
+          "A small dedicated extremity coil sized to the part",
+          "The whole-body transmit coil used on its own",
+          "The largest available torso phased-array coil",
+          "A head coil, chosen for its high uniformity"
+        ],
+        "answer": 0,
+        "explain": "A smaller coil matched to the part maximizes SNR over that small volume."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1265,
+      "body": {
+        "prompt": "What is the main advantage of a phased-array coil over one large coil?",
+        "options": [
+          "High SNR over a large field of view plus parallel-imaging capability",
+          "A stronger transmit pulse that allows a substantially shorter TR",
+          "Complete immunity to patient motion during the whole scan",
+          "It removes the need for gradient coils during the imaging"
+        ],
+        "answer": 0,
+        "explain": "Multiple small elements give local SNR across a wide FOV and enable SENSE/GRAPPA."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1266,
+      "body": {
+        "prompt": "Where is the centering landmark for a routine brain examination?",
+        "options": [
+          "At the nasion, with the head held straight in the coil",
+          "At the sternal notch, with the chin slightly raised",
+          "At the iliac crest, with the pelvis level",
+          "At the thyroid cartilage, with the neck extended"
+        ],
+        "answer": 0,
+        "explain": "The brain is centered near the nasion or glabella."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1267,
+      "body": {
+        "prompt": "Where is the centering landmark for a cervical spine examination?",
+        "options": [
+          "At the thyroid cartilage, roughly the C4 to C5 level",
+          "At the xiphoid process, at the lower sternum",
+          "At the umbilicus, in the midline of the abdomen",
+          "At the symphysis pubis, at the lower pelvis"
+        ],
+        "answer": 0,
+        "explain": "The thyroid cartilage centers the mid cervical spine."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1268,
+      "body": {
+        "prompt": "Where is the centering landmark for a lumbar spine examination?",
+        "options": [
+          "At the iliac crest, roughly the L4 to L5 level",
+          "At the thyroid cartilage, high in the neck",
+          "At the nasion, between the eyebrows",
+          "At the sternal notch, at the top of the sternum"
+        ],
+        "answer": 0,
+        "explain": "The iliac crest marks the lower lumbar level for centering."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1269,
+      "body": {
+        "prompt": "Why is the anatomy of interest placed at magnet isocenter?",
+        "options": [
+          "Field homogeneity and gradient linearity are best at isocenter",
+          "Only the isocenter of the bore receives any RF energy",
+          "The SNR of the image is unaffected by patient position",
+          "Receive coils are able to function only at isocenter"
+        ],
+        "answer": 0,
+        "explain": "Anatomy far off-center sees geometric distortion and poorer shimming."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1270,
+      "body": {
+        "prompt": "What is the preferred shoulder position for a routine exam?",
+        "options": [
+          "Arm at the side in neutral to slight external rotation, palm up",
+          "Arm fully abducted and raised overhead above the head",
+          "Hand tucked behind the back with the elbow flexed",
+          "Elbow flexed with the forearm resting across the chest"
+        ],
+        "answer": 0,
+        "explain": "A neutral to externally rotated arm held at the side is standard and comfortable."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1271,
+      "body": {
+        "prompt": "The knee is placed in about 15 degrees of external rotation mainly to?",
+        "options": [
+          "Unwind the ACL so it lies within a single imaging plane",
+          "Reduce the specific absorption rate seen by the patient",
+          "Shorten the T2 relaxation time of the joint cartilage",
+          "Move the patella completely out of the field of view"
+        ],
+        "answer": 0,
+        "explain": "External rotation aligns the obliquely oriented ACL for sagittal imaging."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1272,
+      "body": {
+        "prompt": "What is the standard patient position for breast MRI?",
+        "options": [
+          "Prone with the breasts pendant in a dedicated breast coil",
+          "Supine with a general-purpose body array over the chest",
+          "Lateral decubitus with the arms folded across the body",
+          "Prone with the arms at the sides inside a head coil"
+        ],
+        "answer": 0,
+        "explain": "Prone positioning with the breasts pendant in the breast coil is standard."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1273,
+      "body": {
+        "prompt": "How is the ankle positioned for a routine ankle examination?",
+        "options": [
+          "Neutral, near 90 degrees of dorsiflexion, coil around the ankle",
+          "Full plantar flexion with the toes pointed firmly well away",
+          "Everted and taped down flat against the table surface",
+          "Weight-bearing with the patient standing up in the bore"
+        ],
+        "answer": 0,
+        "explain": "A neutral, roughly 90-degree position limits magic-angle effect and keeps anatomy in plane."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1274,
+      "body": {
+        "prompt": "What describes correct positioning for a pituitary or sella exam?",
+        "options": [
+          "Small field of view with thin coronal and sagittal slices at the nasion",
+          "Large field of view axial images covering the whole head and neck",
+          "Centering at the external auditory meatus with thicker slices",
+          "A sagittal-only survey of the entire brain and the skull base"
+        ],
+        "answer": 0,
+        "explain": "Sella imaging uses a small FOV and thin slices centered near the nasion."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1275,
+      "body": {
+        "prompt": "What coil setup suits temporomandibular joint (TMJ) imaging?",
+        "options": [
+          "Bilateral small surface coils over the joints, imaged open and closed",
+          "A single large body coil used with the mouth kept closed only",
+          "A knee coil placed right around the head for extra uniformity",
+          "A spine array positioned under the neck and the shoulders"
+        ],
+        "answer": 0,
+        "explain": "Paired surface coils capture both joints, and open and closed views show the disc."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1276,
+      "body": {
+        "prompt": "What is the purpose of immobilization pads and straps?",
+        "options": [
+          "Reduce voluntary and involuntary motion and improve comfort",
+          "Increase the local magnetic field strength near the part",
+          "Raise the signal-to-noise ratio of deep-lying structures",
+          "Automatically shorten the repetition time of the scan"
+        ],
+        "answer": 0,
+        "explain": "Comfortable immobilization improves compliance and reduces motion artifact."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1277,
+      "body": {
+        "prompt": "Why is cardiac imaging synchronized to the ECG signal?",
+        "options": [
+          "To freeze cardiac motion by acquiring data at set points in the cycle",
+          "To raise the magnetic field strength during ventricular systole",
+          "To remove the need for a receive coil over the chest",
+          "To shorten the T1 relaxation time of the myocardium"
+        ],
+        "answer": 0,
+        "explain": "Gating times acquisition to consistent phases of the cardiac cycle."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1278,
+      "body": {
+        "prompt": "What is a typical way to control respiratory motion in the abdomen?",
+        "options": [
+          "Breath-holding, or respiratory navigators and triggering",
+          "Injecting an additional dose of gadolinium contrast",
+          "Increasing the slice thickness for every sequence",
+          "Removing the surface coil to lower the signal"
+        ],
+        "answer": 0,
+        "explain": "Breath-hold sequences or navigator gating limit respiratory blurring."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1279,
+      "body": {
+        "prompt": "Where is the centering landmark for a routine abdomen examination?",
+        "options": [
+          "Midway between the xiphoid and the umbilicus, with a torso array",
+          "At the pubic symphysis, near the very bottom of the pelvis",
+          "At the thyroid cartilage, high up toward the neck",
+          "At the nasion, in the midline of the upper face"
+        ],
+        "answer": 0,
+        "explain": "The midpoint between xiphoid and umbilicus centers the upper abdomen."
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "quiz",
+      "ord": 1280,
+      "body": {
+        "prompt": "What is best practice when an extremity sits off to the side of the bore?",
+        "options": [
+          "Bring it as close to isocenter as the patient can tolerate to limit distortion",
+          "Leave it out near the bore edge simply because that feels more comfortable",
+          "Ignore its position entirely, since distortion does not depend on location",
+          "Switch to the whole-body coil so that the extremity coil is not needed"
+        ],
+        "answer": 0,
+        "explain": "Off-isocenter anatomy suffers gradient nonlinearity and geometric distortion."
+      }
     }
   ]
 }

@@ -40,6 +40,7 @@
     "three-d-recon": "image-production",
     "procedures-anatomy": "procedures",
     "procedures-protocols": "procedures",
+    "procedures-positioning": "procedures",
     "procedures-vascular": "procedures",
     "pathology": "procedures",
     "safety": "safety",
