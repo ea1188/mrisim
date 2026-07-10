@@ -1025,8 +1025,12 @@
   function resetProgress() {
     if (!window.confirm("Reset all your course progress? This clears your reading, quiz scores, mastery, and mock-exam history on every device signed in to this account. This cannot be undone.")) return;
     if (!syncOn()) { clearAllProgress(); location.reload(); return; }
+    // Cancel any pending debounced push and suppress further ones during the wipe, so a
+    // flush of the OLD local state can't race the {} upsert and restore the row.
+    if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    _synced = false;
     Accounts.saveProgress({}).then(function (ok) {
-      if (!ok) { window.alert("Could not reach the server to reset your progress. Check your connection and try again."); return; }
+      if (!ok) { _synced = true; window.alert("Could not reach the server to reset your progress. Check your connection and try again."); return; }
       clearAllProgress();
       location.reload();
     });
