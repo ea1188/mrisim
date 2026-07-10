@@ -400,6 +400,12 @@
       ]));
     });
     main.appendChild(grid);
+    main.appendChild(h("p", { style: "margin-top:28px;font-size:12px;color:var(--dim)" }, [
+      document.createTextNode("Starting over? "),
+      h("button", { type: "button", style: "background:none;border:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:0",
+        text: "Reset my progress", onclick: resetProgress }),
+      document.createTextNode("."),
+    ]));
     if (!FREE) main.appendChild(h("p", { style: "margin-top:36px;font-size:12px;color:var(--dim)" }, [
       document.createTextNode("Bought by mistake, or it's not for you? "),
       h("button", { type: "button", style: "background:none;border:none;color:var(--muted);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:0",
@@ -984,6 +990,10 @@
   // progress from another device" (merge) from "a different account's" (discard).
   var PROGRESS_OWNER_KEY = "mrisim_progress_owner_v1";
   var _syncTimer = null;
+  // Local pushes stay suppressed until bootSync has reconciled ownership. Before that,
+  // the device's local blob may belong to a different account (shared device), and a
+  // pagehide/visibilitychange flush must not push it up under the current user.
+  var _synced = false;
 
   function readAllProgress() {
     var out = {};
@@ -1007,16 +1017,24 @@
       try { localStorage.setItem(k, JSON.stringify(state[k])); } catch (e) { /* storage off */ }
     });
   }
+  // User-initiated wipe of their own progress, local and server. The empty push here is
+  // intentional (unlike the boot-time guard that avoids clobbering a real row with {}).
+  function resetProgress() {
+    if (!window.confirm("Reset all your course progress? This clears your reading, quiz scores, mastery, and mock-exam history on every device signed in to this account. This cannot be undone.")) return;
+    clearAllProgress();
+    Promise.resolve(window.Accounts && Accounts.saveProgress ? Accounts.saveProgress({}) : null)
+      .then(function () { location.reload(); });
+  }
   function syncOn() { return !!(window.Accounts && Accounts.enabled() && Accounts.signedIn()); }
   // Debounced push of local progress to the server.
   function queueSync() {
-    if (!syncOn()) return;
+    if (!syncOn() || !_synced) return;
     if (_syncTimer) clearTimeout(_syncTimer);
     _syncTimer = setTimeout(flushSync, 2000);
   }
   function flushSync() {
     if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
-    if (!syncOn()) return;
+    if (!syncOn() || !_synced) return;
     Accounts.saveProgress(readAllProgress());
   }
   // Reconcile local and server progress at boot. Same owner as the local blob: merge
@@ -1034,7 +1052,12 @@
         if (!r.sameOwner) clearAllProgress();   // foreign local blob: wipe before writing this user's state
         writeAllProgress(r.state);
         saveOwner(uid);
-        Accounts.saveProgress(r.state);
+        _synced = true;                          // ownership reconciled: local is now this user's, safe to push
+        // Push the reconciled state, EXCEPT when we discarded a foreign blob and the remote
+        // came back empty. loadProgress returns null for both "no row" and a transient fetch
+        // error, so pushing {} here could overwrite this user's real server row. Skipping it
+        // is safe: queueSync recreates the row on the first real action.
+        if (r.sameOwner || remote != null) Accounts.saveProgress(r.state);
       });
     }).catch(function () { /* best-effort */ });
   }
