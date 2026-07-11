@@ -79,3 +79,6 @@ patches/
 
 # Source PDFs for course content (local only; mined into data/course_content.json, not app assets)
 pdf education/
+
+# Playwright MCP browser-session artifacts (snapshots, console logs)
+.playwright-mcp/
