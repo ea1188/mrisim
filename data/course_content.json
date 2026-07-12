@@ -10297,6 +10297,328 @@
         "answer": 0,
         "explain": "Off-isocenter anatomy suffers gradient nonlinearity and geometric distortion."
       }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "reference",
+      "ord": 720,
+      "body": {
+        "title": "How are the internal auditory canals imaged?",
+        "html": "<p>The internal auditory canals are imaged to look for an <b>acoustic neuroma</b> (vestibular schwannoma) in a patient with one sided hearing loss. The workhorse is a <b>thin section heavily T2 weighted</b> sequence such as <b>CISS</b> or <b>FIESTA</b>, acquired at high resolution with a small field of view. Cerebrospinal fluid in the canal is bright, and the tiny nerves stand out as dark structures against it.</p><p>When a mass is suspected, thin <b>post contrast T1 weighted</b> images are added, because a schwannoma enhances strongly. The small field of view and thin slices are what make a two or three millimetre lesion visible.</p>",
+        "keypoints": [
+          "Heavily T2 weighted thin sections such as CISS or FIESTA show the nerves against bright fluid.",
+          "A small field of view and thin slices resolve millimetre sized lesions.",
+          "Post contrast T1 is added because an acoustic neuroma enhances strongly."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "reference",
+      "ord": 721,
+      "body": {
+        "title": "How is the pituitary gland imaged?",
+        "html": "<p>The pituitary sits in a small space, so it is imaged with a <b>small field of view</b> and <b>thin coronal and sagittal</b> slices, usually T1 weighted. The normal gland enhances quickly and uniformly after gadolinium.</p><p>To find a <b>microadenoma</b>, a <b>dynamic</b> post contrast series is run, capturing several early phases. The adenoma enhances more slowly than the normal gland, so it appears as a relatively dark focus in the first minute before it fills in later. Coronal images best show the relationship to the optic chiasm and the cavernous sinuses.</p>",
+        "keypoints": [
+          "Use a small field of view with thin coronal and sagittal slices.",
+          "A microadenoma enhances slower than the normal gland, so dynamic imaging catches it early.",
+          "Coronal planes show the optic chiasm and cavernous sinuses."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "reference",
+      "ord": 722,
+      "body": {
+        "title": "What is MR cholangiopancreatography (MRCP)?",
+        "html": "<p><b>MRCP</b> shows the biliary tree and the pancreatic duct without contrast. It uses a <b>heavily T2 weighted</b> sequence with a very long TE, so only slow moving or static fluid stays bright. Bile and pancreatic juice are bright while the surrounding solid organs and flowing blood are dark.</p><p>It is acquired either as a <b>thick slab</b> single shot in one breath hold, or as thin sections with <b>respiratory triggering</b> that can be reconstructed into projections. No gadolinium is needed because the fluid in the ducts is the contrast.</p>",
+        "keypoints": [
+          "MRCP is heavily T2 weighted with a long TE so static fluid is bright.",
+          "Bile and pancreatic juice are bright against dark background tissue.",
+          "It needs no contrast because ductal fluid provides the signal."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "reference",
+      "ord": 723,
+      "body": {
+        "title": "How is the shoulder and rotator cuff imaged?",
+        "html": "<p>The rotator cuff is imaged in planes aligned to the scapula. The <b>oblique coronal</b> plane follows the <b>supraspinatus</b> tendon and best shows cuff tears, while the <b>oblique sagittal</b> plane displays the arch and the <b>axial</b> plane shows the labrum and biceps tendon. Fluid sensitive fat suppressed sequences make a tear bright.</p><p>For the labrum, <b>MR arthrography</b> is often added, injecting dilute gadolinium into the joint so it outlines a labral tear. The contrast distends the joint and leaks into any defect.</p>",
+        "keypoints": [
+          "Oblique coronal follows the supraspinatus and shows cuff tears.",
+          "Fluid sensitive fat suppressed images make tears bright.",
+          "MR arthrography distends the joint to reveal labral tears."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "reference",
+      "ord": 724,
+      "body": {
+        "title": "How is the knee imaged for internal derangement?",
+        "html": "<p>The knee is imaged in three planes. The <b>sagittal</b> plane shows the <b>cruciate ligaments</b> and the <b>menisci</b>, the <b>coronal</b> plane shows the collateral ligaments and the meniscal roots, and the <b>axial</b> plane shows the patellofemoral joint. The anterior cruciate ligament runs obliquely, so a slightly angled sagittal helps display it in one slice.</p><p>Fluid sensitive fat suppressed sequences highlight cartilage damage, bone marrow oedema, and joint effusion, while proton density images give the fine detail of the menisci.</p>",
+        "keypoints": [
+          "Sagittal shows the cruciate ligaments and menisci.",
+          "Coronal shows the collateral ligaments and meniscal roots.",
+          "Fat suppressed fluid sensitive images reveal marrow oedema and cartilage loss."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-anatomy",
+      "kind": "reference",
+      "ord": 725,
+      "body": {
+        "title": "How is a focal liver lesion characterised?",
+        "html": "<p>Characterising a liver lesion depends on a <b>dynamic multiphase</b> post contrast study. A fat suppressed T1 weighted sequence is repeated through <b>arterial</b>, <b>portal venous</b>, and <b>delayed</b> phases after a gadolinium bolus, so the pattern of enhancement over time points to the diagnosis. A haemangioma fills in slowly from the edge, while many malignancies wash out.</p><p>The dynamic series is combined with T2 weighted and <b>diffusion weighted</b> images. Fluid rich lesions such as cysts and haemangiomas are very bright on heavily T2 weighted images, which helps separate them from solid tumours.</p>",
+        "keypoints": [
+          "A dynamic multiphase T1 study captures arterial, portal venous, and delayed enhancement.",
+          "The timing of enhancement and washout characterises the lesion.",
+          "T2 and diffusion weighted images help separate cysts and haemangiomas from tumours."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "reference",
+      "ord": 726,
+      "body": {
+        "title": "What is in a routine brain MRI protocol?",
+        "html": "<p>A routine brain study samples several contrasts. It typically includes <b>T1 weighted</b>, <b>T2 weighted</b>, <b>FLAIR</b>, and <b>diffusion weighted</b> images, along with a gradient echo or susceptibility weighted sequence to look for blood. FLAIR nulls cerebrospinal fluid so that periventricular lesions are not hidden by bright fluid.</p><p>Contrast is added when tumour, infection, or inflammation is suspected, giving post contrast T1 weighted images. The set of contrasts lets the reader tell oedema, blood, infarction, and enhancing tissue apart.</p>",
+        "keypoints": [
+          "A routine brain protocol covers T1, T2, FLAIR, and diffusion.",
+          "FLAIR suppresses CSF so periventricular lesions show.",
+          "Post contrast T1 is added for tumour, infection, or inflammation."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "reference",
+      "ord": 727,
+      "body": {
+        "title": "Which sequence is essential for acute stroke?",
+        "html": "<p>For suspected hyperacute stroke the indispensable sequence is <b>diffusion weighted imaging</b>. Within minutes of an arterial occlusion the affected tissue develops <b>restricted diffusion</b>, appearing bright on the diffusion image and dark on the <b>ADC map</b>, well before any change is visible on T2 or FLAIR.</p><p>A stroke protocol pairs diffusion with FLAIR and a gradient echo or susceptibility sequence to exclude haemorrhage, and often a time of flight MRA to look for the occluded vessel. Speed matters, so the protocol is kept short.</p>",
+        "keypoints": [
+          "Diffusion weighted imaging is the essential sequence in acute stroke.",
+          "Infarct is bright on diffusion and dark on ADC within minutes.",
+          "A blood sensitive sequence is added to exclude haemorrhage."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "reference",
+      "ord": 728,
+      "body": {
+        "title": "What does a multiple sclerosis protocol emphasise?",
+        "html": "<p>A multiple sclerosis protocol emphasises <b>FLAIR</b>, especially in the <b>sagittal</b> plane, because it shows the ovoid periventricular plaques that lie along the deep veins. Thin sagittal FLAIR displays these lesions well, and the brainstem and spinal cord are also covered.</p><p><b>Post contrast T1</b> images separate active from old disease, because a plaque with active inflammation and a broken blood brain barrier enhances. Counting enhancing and non enhancing lesions helps stage the disease over time.</p>",
+        "keypoints": [
+          "FLAIR, particularly sagittal, best shows periventricular plaques.",
+          "Enhancing lesions on post contrast T1 indicate active inflammation.",
+          "The protocol also covers the brainstem and spinal cord."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "reference",
+      "ord": 729,
+      "body": {
+        "title": "How do you reduce artifact when imaging around metal?",
+        "html": "<p>Metal hardware distorts the field and causes signal loss and bright pile up. To reduce this a technologist uses a <b>high receive bandwidth</b>, a <b>short TE</b>, thin slices, and a smaller voxel, and favours <b>spin echo</b> over gradient echo because the 180 degree pulse recovers some of the lost signal.</p><p>For fat suppression near metal, <b>STIR</b> is preferred over chemical saturation, which fails where the field is distorted. Dedicated metal reduction sequences such as view angle tilting further limit the distortion.</p>",
+        "keypoints": [
+          "Use a high bandwidth, short TE, and thin slices to limit distortion.",
+          "Spin echo suffers less signal loss than gradient echo near metal.",
+          "Choose STIR rather than chemical fat saturation around metal."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-protocols",
+      "kind": "reference",
+      "ord": 730,
+      "body": {
+        "title": "How do you reduce CSF pulsation artifact on spine MRI?",
+        "html": "<p>Pulsating cerebrospinal fluid creates ghosting that runs along the <b>phase encoding</b> direction on spine images. A technologist can apply <b>flow compensation</b> (gradient moment nulling), place <b>saturation bands</b> above and below the imaged region, and use <b>cardiac gating</b> so data are collected at the same point in the cycle.</p><p>Swapping the phase and frequency directions can also move the ghosts away from the cord so they do not mimic disease. These steps are routine on T2 weighted spine sequences where the bright fluid pulsates most.</p>",
+        "keypoints": [
+          "CSF ghosts run along the phase encoding direction.",
+          "Flow compensation, saturation bands, and gating reduce the ghosting.",
+          "Swapping phase and frequency can move ghosts off the cord."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "reference",
+      "ord": 731,
+      "body": {
+        "title": "How does time of flight MRA make arteries bright?",
+        "html": "<p><b>Time of flight</b> MRA is a non contrast technique that relies on <b>flow related enhancement</b>. Stationary tissue in the slice is saturated by rapid repeated radiofrequency pulses and stays dark, while fresh <b>unsaturated blood</b> flowing into the slice has full signal and appears bright. No contrast is injected.</p><p>A <b>saturation band</b> placed on one side removes signal from vessels flowing the other way, so arteries can be shown without veins. Time of flight works best for flow perpendicular to the slice and can lose signal where flow is slow or in plane.</p>",
+        "keypoints": [
+          "Time of flight brightens inflowing unsaturated blood against saturated tissue.",
+          "It needs no contrast and is sensitive to through plane flow.",
+          "A saturation band suppresses veins to leave only arteries."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "reference",
+      "ord": 732,
+      "body": {
+        "title": "What is unique about phase contrast MRA?",
+        "html": "<p><b>Phase contrast</b> MRA encodes the <b>velocity</b> of moving blood into the phase of the signal using a bipolar gradient. Because it measures velocity, it can show both the vessel and the <b>direction and speed</b> of flow, and it can be made quantitative. An operator sets the <b>velocity encoding</b> value to match the expected flow.</p><p>If the velocity encoding is set too low, fast flow <b>aliases</b> and the measured velocity wraps around and reads wrongly. Phase contrast is slower than time of flight but gives flow information that time of flight cannot.</p>",
+        "keypoints": [
+          "Phase contrast encodes blood velocity into the signal phase.",
+          "It can measure the direction and speed of flow, not just show the vessel.",
+          "A velocity encoding set too low causes aliasing of fast flow."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "reference",
+      "ord": 733,
+      "body": {
+        "title": "What matters most in contrast enhanced MRA?",
+        "html": "<p><b>Contrast enhanced MRA</b> brightens the vessels by shortening the blood T1 with a <b>gadolinium bolus</b>, then imaging with a fast T1 weighted gradient echo. The single most important factor is <b>timing</b>: the centre of k space, which sets contrast, must be filled while the contrast is at peak concentration in the target arteries.</p><p>Timing is set with a small <b>test bolus</b> or with <b>bolus tracking</b> that triggers the scan when contrast reaches the vessel. Image too early and the arteries are faint, too late and the veins fill in and obscure them.</p>",
+        "keypoints": [
+          "Contrast enhanced MRA shortens blood T1 with a gadolinium bolus.",
+          "Timing the central k space to peak arterial contrast is critical.",
+          "Bolus tracking or a test bolus sets the delay."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "reference",
+      "ord": 734,
+      "body": {
+        "title": "How is MR venography performed?",
+        "html": "<p><b>MR venography</b> shows veins rather than arteries, most often to look for <b>dural sinus thrombosis</b>. It can be done with <b>time of flight</b> tuned to slow venous flow, with <b>phase contrast</b> at a low velocity encoding, or with a <b>contrast enhanced</b> acquisition timed to the venous phase.</p><p>On a time of flight venogram a <b>saturation band</b> is placed to remove arterial inflow so only veins remain. A clot appears as an absence of the normal flow signal within the sinus.</p>",
+        "keypoints": [
+          "MR venography images veins, often to find dural sinus thrombosis.",
+          "It uses time of flight, phase contrast, or contrast enhanced methods.",
+          "A thrombus shows as missing flow signal in the sinus."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "reference",
+      "ord": 735,
+      "body": {
+        "title": "Why is the anatomy centred at the magnet isocentre?",
+        "html": "<p>The <b>isocentre</b> is the middle of the magnet where the static field is most uniform and the gradients are most linear. Positioning the <b>region of interest</b> at isocentre gives the best field homogeneity, which matters most for <b>fat suppression</b> and for any technique that depends on a uniform field.</p><p>The technologist places the coil over the anatomy, sets the <b>landmark</b> at the centre of the region, and advances the table so that landmark sits at isocentre. Poor centring degrades fat saturation and can cut off the edges of the imaged volume.</p>",
+        "keypoints": [
+          "The isocentre has the most uniform field and most linear gradients.",
+          "Centring the region of interest there improves fat suppression.",
+          "The landmark is set at the middle of the anatomy and moved to isocentre."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "reference",
+      "ord": 736,
+      "body": {
+        "title": "How do you choose and place the receiver coil?",
+        "html": "<p>Signal to noise is best when the <b>receiver coil</b> is close to the anatomy and no larger than it needs to be. A small surface or dedicated coil placed right over the region collects strong signal, while an oversized coil adds noise from tissue it does not need to see.</p><p>Modern <b>phased array</b> coils combine several small elements to cover a larger area while keeping the high signal of small coils, and they enable <b>parallel imaging</b> for speed. The coil is centred over the landmark and secured so it does not move during the scan.</p>",
+        "keypoints": [
+          "A coil close to and sized for the anatomy gives the best signal to noise.",
+          "Phased array coils keep small coil signal over a larger area.",
+          "The coil is centred on the landmark and enables parallel imaging."
+        ]
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "reference",
+      "ord": 737,
+      "body": {
+        "title": "How do multiple sclerosis plaques appear on MRI?",
+        "html": "<p>Multiple sclerosis plaques are <b>bright on T2 and FLAIR</b>. They are typically ovoid and sit around the ventricles, oriented perpendicular to them along the deep veins, a pattern described as <b>Dawson's fingers</b>. The corpus callosum, brainstem, and spinal cord are also common sites.</p><p>An <b>enhancing</b> plaque on post contrast T1 indicates active inflammation with a broken blood brain barrier, while old plaques do not enhance. Seeing lesions of different ages supports the diagnosis of disease spread over time.</p>",
+        "keypoints": [
+          "Plaques are bright on T2 and FLAIR and often periventricular.",
+          "Dawson's fingers point perpendicular to the ventricles.",
+          "Enhancement on post contrast T1 marks an active plaque."
+        ]
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "reference",
+      "ord": 738,
+      "body": {
+        "title": "What does contrast enhancement tell you?",
+        "html": "<p>Gadolinium enhancement means the <b>blood brain barrier</b> has broken down or that tissue is very vascular, because contrast that normally stays inside vessels leaks into the tissue and shortens its T1. Enhancing tissue is bright on <b>post contrast T1</b> weighted images.</p><p>The <b>pattern</b> of enhancement is a clue: a smooth thin ring suggests an abscess, a thick irregular ring suggests a high grade tumour, and enhancement along the brain surface suggests infection or tumour spread. Comparing with the pre contrast T1 confirms that the brightness is truly new enhancement and not fat or blood.</p>",
+        "keypoints": [
+          "Enhancement reflects blood brain barrier breakdown or high vascularity.",
+          "The ring pattern helps separate abscess from tumour.",
+          "Compare with pre contrast T1 to confirm true enhancement."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "reference",
+      "ord": 739,
+      "body": {
+        "title": "How is a gadolinium contrast reaction managed?",
+        "html": "<p>Most reactions to gadolinium are mild, such as nausea or hives, and need only observation or an antihistamine. The team watches for the rare <b>severe reaction</b> with wheezing, throat swelling, or a fall in blood pressure, which is treated as anaphylaxis with <b>epinephrine</b>, oxygen, and emergency support.</p><p>Preparation matters: a screening interview identifies prior reactions and asthma, emergency equipment is kept ready, and staff know the escalation path. A patient with a documented prior reaction may be premedicated or imaged without contrast.</p>",
+        "keypoints": [
+          "Most gadolinium reactions are mild and need only observation or an antihistamine.",
+          "A severe reaction is treated as anaphylaxis with epinephrine and support.",
+          "Screening and ready emergency equipment prepare for the rare severe case."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "reference",
+      "ord": 740,
+      "body": {
+        "title": "How is a sedated or anxious patient monitored?",
+        "html": "<p>A claustrophobic or paediatric patient may need sedation, and a sedated patient must be <b>monitored</b> throughout with MRI safe equipment. Pulse oximetry, blood pressure, and where needed capnography use <b>non ferromagnetic</b> monitors rated for the magnet, because ordinary equipment is a projectile hazard and its readings are corrupted by the field.</p><p>Simpler measures help many anxious patients avoid sedation: a clear explanation, a prone or feet first position, mirrors, and a squeeze ball for communication. A responsible escort and a recovery period are arranged whenever sedation is used.</p>",
+        "keypoints": [
+          "Sedated patients need continuous monitoring with MRI safe equipment.",
+          "Monitors must be non ferromagnetic and rated for the magnet.",
+          "Explanation, positioning, and a call device help avoid sedation."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "reference",
+      "ord": 741,
+      "body": {
+        "title": "What are transmit and receive coils?",
+        "html": "<p>The <b>radiofrequency system</b> has two jobs. A <b>transmit</b> coil, usually the large body coil built into the bore, sends the radiofrequency pulse that tips the magnetisation. A <b>receive</b> coil, placed close to the anatomy, picks up the faint returning signal.</p><p>Because signal to noise is best when the receiver is near the tissue, dedicated <b>surface</b> and <b>phased array</b> receive coils are used for each body part. Phased array coils combine many small elements to keep high signal over a large area and to allow parallel imaging for faster scans.</p>",
+        "keypoints": [
+          "A transmit coil sends the radiofrequency pulse, a receive coil detects the signal.",
+          "Receive coils sit close to the anatomy for the best signal to noise.",
+          "Phased array coils cover a large area and enable parallel imaging."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "reference",
+      "ord": 742,
+      "body": {
+        "title": "What is a maximum intensity projection?",
+        "html": "<p>A <b>maximum intensity projection</b>, or MIP, is a way to view a three dimensional data set as a single image. A ray is cast through the volume for each pixel and only the <b>brightest voxel</b> along that ray is kept, so the bright vessels of an MRA stand out while darker background tissue is dropped.</p><p>MIP images are usually made from several angles so the vessels can be seen in the round and overlapping structures separated. Because only the brightest voxel is kept, a MIP can hide a small low signal clot, so the source images are always reviewed as well.</p>",
+        "keypoints": [
+          "A MIP keeps the brightest voxel along each ray through the volume.",
+          "It displays bright MRA vessels against suppressed background.",
+          "Source images are still reviewed because a MIP can hide low signal."
+        ]
+      }
     }
   ]
 }

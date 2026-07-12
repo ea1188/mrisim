@@ -27,6 +27,7 @@
     "procedures-anatomy": "Anatomy & procedures",
     "procedures-protocols": "Protocols",
     "procedures-vascular": "Vascular imaging",
+    "procedures-positioning": "Positioning & coils",
   };
   function label(key) { return TOPIC_LABELS[key] || key; }
 
