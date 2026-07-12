@@ -107,6 +107,13 @@
     return out;
   }
 
+  // Deep-link support: reference.html?topic=<key> opens filtered to that topic
+  // (e.g. a graded quiz question links here). Returns the key or "" if absent.
+  function paramTopic() {
+    try { return new URLSearchParams(location.search).get("topic") || ""; }
+    catch (e) { return ""; }
+  }
+
   // --- render ------------------------------------------------------------- //
   function referenceView(entries) {
     var byTopic = {}, order = [];
@@ -118,7 +125,9 @@
     var wrap = h("div", { class: "ref" });
     var side = h("div", { class: "rside" });
     var main = h("div", { class: "rmain" });
-    REF = { entries: entries, byTopic: byTopic, order: order, topic: "all", q: "", main: main, side: side };
+    var startTopic = paramTopic();
+    if (!(startTopic && byTopic[startTopic])) startTopic = "all";
+    REF = { entries: entries, byTopic: byTopic, order: order, topic: startTopic, q: "", main: main, side: side };
     wrap.appendChild(side); wrap.appendChild(main);
     clear(root); root.appendChild(wrap);
     buildSide(); renderMain();

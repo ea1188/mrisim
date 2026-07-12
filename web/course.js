@@ -630,6 +630,48 @@
     }
   }
 
+  // Human labels for premium topic keys, mirrored from reference.js TOPIC_LABELS.
+  // Used to link a graded question to its matching reference topic.
+  var REF_TOPIC_LABEL = {
+    "contrast-weighting": "Contrast & weighting",
+    "pulse-sequences": "Pulse sequences",
+    "data-acquisition": "Data acquisition & k-space",
+    "image-quality": "Image quality & speed",
+    "fat-suppression": "Fat suppression",
+    "flow-artifacts": "Flow & artifacts",
+    "three-d-recon": "3D imaging & reconstruction",
+    "pathology": "Pathology",
+    "instrumentation": "Instrumentation & hardware",
+    "safety": "Safety",
+    "patient-care": "Patient care",
+    "contrast-agents": "Contrast agents",
+    "procedures-anatomy": "Anatomy & procedures",
+    "procedures-protocols": "Protocols",
+    "procedures-vascular": "Vascular imaging",
+    "procedures-positioning": "Positioning & coils",
+  };
+
+  // True when the question's premium topic has at least one reference entry loaded
+  // (CTX.byTopic carries every premium row, including kind='reference').
+  function topicHasReference(key) {
+    var arr = key && CTX && CTX.byTopic && CTX.byTopic[key];
+    if (!arr) return false;
+    for (var i = 0; i < arr.length; i++) { if (arr[i].kind === "reference") return true; }
+    return false;
+  }
+
+  // A "Reference: <label>" deep-link for a graded question, appended to its feedback
+  // box so a miss routes the learner to the topic in the reference. No-op when the
+  // topic has no reference entries (defensive; every quiz topic currently has some).
+  function appendRefLink(fb, q) {
+    var key = q && q._ptopic;
+    if (!topicHasReference(key)) return;
+    var lbl = REF_TOPIC_LABEL[key] || key;
+    fb.appendChild(h("a", { class: "linkout reflink",
+      href: "reference.html?topic=" + encodeURIComponent(key),
+      text: "Reference: " + lbl + " →" }));
+  }
+
   // One inline premium question: shuffled options, grade on click, reveal explanation.
   function quizItem(topicTitle, idx, q) {
     var order = q.options.map(function (_o, i) { return i; });
@@ -652,6 +694,7 @@
         }
         [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
         fb.hidden = false; fb.textContent = (correct ? "Correct. " : "Not quite. ") + q.explain;
+        appendRefLink(fb, q);
         bumpScore(topicTitle, correct);
         bumpPremiumTopic(q._ptopic, correct);
         recordAnswer(q, correct, false);
@@ -752,7 +795,7 @@
           var cls = "opt"; if (orig === item.q.answer) cls += " correct"; else if (orig === mm.pick) cls += " wrong";
           box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
         });
-        box.appendChild(h("div", { class: "fb", text: item.q.explain }));
+        var fbrev = h("div", { class: "fb", text: item.q.explain }); appendRefLink(fbrev, item.q); box.appendChild(fbrev);
         body.appendChild(box);
       });
     }
@@ -1149,6 +1192,7 @@
         }
         [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
         fb.hidden = false; fb.textContent = (correct ? "Correct. " : "Not quite. ") + q.explain;
+        appendRefLink(fb, q);
         recordAnswer(q, correct, true);
       } });
       box.appendChild(b);
