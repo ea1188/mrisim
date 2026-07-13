@@ -11065,6 +11065,48 @@
           "STIR is not a substitute for correct centering; poor positioning still degrades every sequence."
         ]
       }
+    },
+    {
+      "topic": "contrast-agents",
+      "kind": "reference",
+      "ord": 1312,
+      "body": {
+        "title": "Linear vs macrocyclic gadolinium agents",
+        "html": "<p>Gadolinium is toxic as a free ion, so it is bound inside a <b>chelate</b>. The shape of that chelate sets how tightly the ion is held. <b>Macrocyclic</b> agents cage the ion in a closed ring and are the most stable. <b>Linear</b> agents hold it in an open chain and release more free gadolinium over time.</p><p>Free gadolinium can deposit in tissue, including brain, bone, and skin. Because of this, macrocyclic agents are now preferred, and several high risk linear agents have been restricted. Retention is usually seen without known symptoms, but the stability class is why one agent is chosen over another.</p>",
+        "keypoints": [
+          "Gadolinium is caged in a chelate because the free ion is toxic.",
+          "Macrocyclic agents are the most stable; linear agents release more free gadolinium.",
+          "Macrocyclic agents are preferred and reduce tissue retention risk."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-agents",
+      "kind": "reference",
+      "ord": 1313,
+      "body": {
+        "title": "Acute reactions to gadolinium contrast",
+        "html": "<p>Gadolinium reactions are far less common than iodinated contrast reactions, but they still occur. Most are mild, such as nausea, hives, or a warm feeling. Severe reactions like bronchospasm, laryngeal edema, or anaphylaxis are rare but possible.</p><p>Screening asks about prior contrast reactions and severe allergies. The room should have emergency medication and monitoring ready before any injection. Mild reactions are watched and treated symptomatically; severe reactions need epinephrine, airway support, and rapid escalation.</p>",
+        "keypoints": [
+          "Gadolinium reactions are rarer than iodinated contrast reactions.",
+          "Most are mild; severe anaphylaxis is uncommon but possible.",
+          "Emergency drugs and monitoring must be ready before injection."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-agents",
+      "kind": "reference",
+      "ord": 1314,
+      "body": {
+        "title": "How gadolinium is given and timed",
+        "html": "<p>Gadolinium is injected intravenously, usually weight based, and often followed by a saline flush to push the bolus into the central circulation. A power injector gives a reproducible rate when tight timing matters.</p><p>Timing is what turns a dose into a diagnostic study. <b>Dynamic</b> imaging captures arterial, then venous, then delayed phases as the agent washes in and out, which characterizes lesions by their enhancement pattern. A fixed <b>delayed</b> scan is used when late enhancement is the target, such as scar or slow uptake tissue.</p>",
+        "keypoints": [
+          "Dose is weight based and given intravenously, often with a saline flush.",
+          "Dynamic imaging captures arterial, venous, and delayed phases.",
+          "Delayed scans target late enhancement such as scar."
+        ]
+      }
     }
   ]
 }
