@@ -1,11 +1,14 @@
-/* MRISim reference library — the deep, searchable premium Q&A reference.
- * Same gate as the course (window.Accounts): not configured → signed out → not
- * entitled → entitled. When entitled, we fetch premium content and show every
- * course_content row of kind='reference' (RLS already limits this to entitled users;
- * the client gate is only UX). Left = search + topic filter; right = collapsible entries. */
+/* MRISim reference library — the deep, searchable Q&A reference.
+ * Same gate as the course (window.Accounts): not configured → signed out → then either
+ * free mode (any signed-in user) or the entitlement check. When access is granted we fetch
+ * the content and show every course_content row of kind='reference' (RLS already limits the
+ * rows; the client gate is only UX). Left = search + topic filter; right = collapsible entries. */
 (function () {
   "use strict";
   var COURSE = "mri-core";
+  // Free mode (config.js MRISIM_COURSE.free): any signed-in user gets the reference library,
+  // the entitlement check is skipped. Mirrors course.js. RLS still guards the rows server-side.
+  var FREE = !!(window.MRISIM_COURSE && window.MRISIM_COURSE.free);
   var root = document.getElementById("reference-root");
   var whoami = document.getElementById("whoami");
   var REF = null;  // { entries:[{topic,body}], byTopic:{}, order:[topicKey], topic:"all", q:"", main, side }
@@ -71,7 +74,7 @@
       }).catch(function (e) { btn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
     } });
     gate([h("h2", { text: "Sign in to the reference" }),
-      h("p", { text: "The reference library is part of the paid course. Sign in with the email your access is under and we'll email you a one-time sign-in link." }),
+      h("p", { text: "The reference library is part of the guided course, currently free to signed-in users. Enter your email and we'll send you a one-time sign-in link." }),
       h("label", { text: "Email" }), email, btn, msg]);
   }
   function paywallView(email) {
@@ -196,23 +199,29 @@
 
   // --- boot --------------------------------------------------------------- //
   if (!window.Accounts || !Accounts.enabled()) { notConfigured(); return; }
+  // Fetch the reference rows and render. Shared by the free path and the entitled path.
+  function loadReference() {
+    return Accounts.premiumContent(COURSE).then(function (premium) {
+      var entries = (premium || []).filter(function (it) { return it.kind === "reference"; })
+        .map(function (it) { return { topic: it.topic, body: it.body, ord: it.ord }; });
+      if (!entries.length) {
+        gate([h("h2", { text: "Reference library" }),
+          h("p", { text: "No reference entries have been published yet. Check back soon." }),
+          h("a", { class: "btn", href: "course.html", text: "Go to the course" })]);
+        return;
+      }
+      referenceView(entries);
+    });
+  }
+
   Accounts.getSession().then(function (session) {
     if (!session) { signInView(); return; }
     var email = session.user && session.user.email;
     chrome(email);
+    if (FREE) return loadReference();
     return Accounts.isEntitled(COURSE).then(function (ok) {
       if (!ok) { paywallView(email); return; }
-      return Accounts.premiumContent(COURSE).then(function (premium) {
-        var entries = (premium || []).filter(function (it) { return it.kind === "reference"; })
-          .map(function (it) { return { topic: it.topic, body: it.body, ord: it.ord }; });
-        if (!entries.length) {
-          gate([h("h2", { text: "Reference library" }),
-            h("p", { text: "No reference entries have been published yet. Check back soon." }),
-            h("a", { class: "btn", href: "course.html", text: "Go to the course" })]);
-          return;
-        }
-        referenceView(entries);
-      });
+      return loadReference();
     });
   }).catch(function (e) {
     gate([h("h2", { text: "Something went wrong" }), h("p", { text: String(e.message || e) })]);
