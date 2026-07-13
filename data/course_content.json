@@ -11107,6 +11107,220 @@
           "Delayed scans target late enhancement such as scar."
         ]
       }
+    },
+    {
+      "topic": "pathology",
+      "kind": "reference",
+      "ord": 1315,
+      "body": {
+        "title": "Why is FLAIR useful for brain lesions?",
+        "html": "<p>FLAIR is a T2 weighted sequence with an inversion pulse timed to null the signal from cerebrospinal fluid. On a plain T2 image, bright CSF sits right next to bright lesions and hides them. FLAIR removes the CSF signal, so a bright lesion beside a ventricle or in the cortex stands out.</p><p>That is why FLAIR is the workhorse for white matter disease, multiple sclerosis plaques, and cortical or periventricular lesions. The tissue contrast is still T2 based; only the fluid has been darkened.</p>",
+        "keypoints": [
+          "FLAIR is T2 weighted with the CSF signal nulled.",
+          "Darkening CSF reveals lesions that sit next to fluid.",
+          "It is the workhorse for periventricular and cortical disease."
+        ]
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "reference",
+      "ord": 1316,
+      "body": {
+        "title": "How does blood change appearance as it ages?",
+        "html": "<p>Hemorrhage does not look the same over time because the iron in blood changes chemical form. Fresh oxyhemoglobin gives way to deoxyhemoglobin, then methemoglobin, and finally hemosiderin. Each form has different magnetic properties, so the signal on T1 and T2 shifts as the clot matures.</p><p>A useful anchor: subacute blood with methemoglobin is bright on T1, which is why a bright T1 focus can mean hemorrhage rather than fat or contrast. Old blood leaves hemosiderin that is dark on T2 and blooms on gradient echo and susceptibility images.</p>",
+        "keypoints": [
+          "Blood signal changes as iron shifts from oxy to deoxy to met to hemosiderin.",
+          "Subacute methemoglobin is bright on T1.",
+          "Old hemosiderin is dark on T2 and blooms on susceptibility imaging."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "reference",
+      "ord": 1317,
+      "body": {
+        "title": "Which implants and devices are MRI concerns?",
+        "html": "<p>Screening sorts devices into three labels. <b>MR safe</b> items have no metal and pose no risk. <b>MR conditional</b> items are safe only within stated limits, such as a field strength, a gradient rate, or an SAR ceiling. <b>MR unsafe</b> items must never enter the room.</p><p>Common concerns include cardiac pacemakers and defibrillators, cochlear implants, some aneurysm clips, and metallic foreign bodies in the eye. The safe answer is never to assume; the exact device is checked against its labeling before the patient goes near the magnet.</p>",
+        "keypoints": [
+          "Devices are labeled MR safe, MR conditional, or MR unsafe.",
+          "Conditional devices are safe only within stated scan limits.",
+          "Pacemakers, cochlear implants, clips, and orbital metal need verification."
+        ]
+      }
+    },
+    {
+      "topic": "patient-care",
+      "kind": "reference",
+      "ord": 1318,
+      "body": {
+        "title": "How is comfort managed for a long scan?",
+        "html": "<p>A diagnostic scan can take many minutes, and a patient who cannot hold still ruins the images. Comfort is therefore part of image quality, not a courtesy. Padding supports the joints, warmth and blankets reduce shivering, and clear explanation of the noise and duration lowers anxiety.</p><p>Hearing protection is required because the gradients are loud. A call squeeze ball lets the patient signal at any time, and regular contact through the intercom keeps them oriented. A calm, well positioned patient moves less, which directly improves the study.</p>",
+        "keypoints": [
+          "Comfort reduces motion, so it is part of image quality.",
+          "Padding, warmth, and clear explanation lower anxiety and shivering.",
+          "Hearing protection and a call ball are required for every scan."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-vascular",
+      "kind": "reference",
+      "ord": 1319,
+      "body": {
+        "title": "What does a saturation band do for flow?",
+        "html": "<p>A saturation band is a slab of tissue that receives an extra radiofrequency pulse to suppress its signal before the main acquisition. Blood flowing out of a saturated slab carries no signal, so it appears dark when it reaches the imaging volume.</p><p>In angiography this selects flow direction. Placing a saturation band above the slice removes venous inflow from one side, leaving only the arteries bright, or the reverse. It is also used to blank moving tissue that would otherwise ghost across the image.</p>",
+        "keypoints": [
+          "A saturation band pre-suppresses signal in a chosen slab.",
+          "Blood leaving that slab arrives dark in the imaging volume.",
+          "It selects artery or vein inflow and reduces ghosting."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "education",
+      "ord": 1320,
+      "body": {
+        "title": "MR safety: the static field, zones and projectiles",
+        "html": "<p>The static magnetic field is always on, even when no scan is running, and it never turns off between patients. That single fact drives the biggest hazard in the suite: any ferromagnetic object brought too close becomes a projectile that accelerates toward the bore. Oxygen cylinders, mop buckets, scissors, and IV poles have all caused serious incidents.</p><p>Access is controlled by a four zone scheme. Zone I is public space, Zone II is the screening area, Zone III is the controlled area around the control room, and Zone IV is the magnet room itself. Only screened people and MR safe or verified conditional equipment cross into Zone IV. The field strength falls off with distance but does so steeply, so the dangerous region is close to the bore.</p><p>A quench is the sudden loss of superconductivity that boils off the cryogen and can vent helium into the room. It is rare, drops the field, and is an emergency because the room can lose oxygen. The quench button is a last resort, not a way to stop a scan.</p>",
+        "keypoints": [
+          "The static field is always on, including overnight and between patients.",
+          "Ferromagnetic objects become projectiles near the bore.",
+          "The four zone scheme controls who and what reaches the magnet.",
+          "A quench boils off cryogen and is an oxygen emergency."
+        ],
+        "worked_example": "A porter wheels a standard steel oxygen cylinder toward a patient in Zone IV. As it passes the bore opening the field grips it and pulls it into the magnet at speed. The lesson is procedural, not physical: MR safe aluminum cylinders and screened equipment are the only gas supplies allowed past Zone III, and the fix is screening at the door, not reflexes at the bore.",
+        "memory_hooks": [
+          "Always on means always dangerous: the field does not wait for a scan.",
+          "Four zones, one rule: nothing crosses into Zone IV unscreened."
+        ],
+        "exam_traps": [
+          "Thinking the field is off when no scan runs; it is superconducting and permanent.",
+          "Confusing the quench button with a scan stop; a quench is an emergency, not a pause."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "education",
+      "ord": 1321,
+      "body": {
+        "title": "MR safety: acoustic noise, nerve stimulation and monitoring",
+        "html": "<p>Beyond the static field, the changing gradients create their own hazards. Switching gradients push against the static field and vibrate the coil, which produces the loud knocking of a scan. Levels routinely exceed the threshold where hearing protection is required, so earplugs or headphones are mandatory for every patient, including the sedated and the very young.</p><p>Fast gradient switching can also cause peripheral nerve stimulation, felt as a twitch or tingle in the skin. Scanners limit the gradient slew rate to stay below this threshold, which is why very fast sequences are constrained. It is uncomfortable rather than dangerous, but it signals that the hardware is near its regulatory ceiling.</p><p>Because many patients cannot be watched directly inside the bore, monitoring matters. Sedated or unstable patients need MR conditional pulse oximetry and the means to communicate. A patient who can squeeze a call ball and hear the intercom is a patient who can report a problem before it becomes an incident.</p>",
+        "keypoints": [
+          "Gradient switching drives the acoustic noise of a scan.",
+          "Hearing protection is required for every patient, no exceptions.",
+          "Fast gradients can cause peripheral nerve stimulation, so slew rate is limited.",
+          "Sedated patients need MR conditional monitoring and a way to signal."
+        ],
+        "worked_example": "A sequence is sped up by raising the gradient slew rate. The patient reports a tingling twitch across the abdomen. That is peripheral nerve stimulation, the body reaching the gradient limit before any imaging harm occurs. The operator backs off the slew rate; the scanner would otherwise cap it automatically to stay within the regulatory bound.",
+        "memory_hooks": [
+          "Loud comes from the gradients, not the magnet.",
+          "A twitch means the gradients are at the edge; the fix is to slow the switching."
+        ],
+        "exam_traps": [
+          "Blaming acoustic noise on the static field; it comes from gradient switching.",
+          "Assuming nerve stimulation is dangerous; it is a comfort limit that flags the gradient ceiling."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "education",
+      "ord": 1322,
+      "body": {
+        "title": "Motion and flow artifacts: ghosting, wrap and the fixes",
+        "html": "<p>Most artifacts that streak an image trace back to something that moved or something that flowed. Both express themselves along the phase encoding direction, because phase is measured across many separate repetitions and any change between them is misread as position. Breathing, pulsing vessels, and swallowing all print faint copies, called ghosts, spread across that axis.</p><p>Flowing blood is a special case. Spins that move between excitation and readout can be mismapped, producing bright or dark ghosts that march across the image in step with the heartbeat. This is why a pulsing artery can smear a line right through the anatomy of interest.</p><p>The fixes follow the cause. Swapping the phase and frequency directions moves a ghost off the anatomy. Saturation bands blank the moving tissue. Flow compensation rephases moving spins, and cardiac or respiratory gating ties the acquisition to the cycle so each line is captured at the same moment. Wrap, or aliasing, is a related trap: anatomy outside a too small field of view folds back onto the image, fixed by enlarging the field or oversampling.</p>",
+        "keypoints": [
+          "Motion and flow artifacts appear along the phase encoding axis.",
+          "Pulsatile flow ghosts march across the image with the heartbeat.",
+          "Swapping phase and frequency moves a ghost off the anatomy.",
+          "Wrap folds outside anatomy back in and is fixed by a larger field or oversampling."
+        ],
+        "worked_example": "A knee scan shows a pulsing artery ghosting a bright line across the meniscus. Two independent fixes help: swap phase and frequency so the ghost lands outside the joint, and add flow compensation so the moving blood is rephased. Either can rescue the study; combining them is common when the vessel sits right over the target.",
+        "memory_hooks": [
+          "Ghosts always ride the phase axis.",
+          "If it moved or it flowed, look along phase encoding."
+        ],
+        "exam_traps": [
+          "Expecting motion ghosts along the frequency direction; they follow phase encoding.",
+          "Confusing flow ghosting with wrap; wrap is field of view too small, not motion."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "education",
+      "ord": 1323,
+      "body": {
+        "title": "3D acquisition: isotropic voxels and the sequences that make them",
+        "html": "<p>A 3D acquisition encodes a whole slab at once with a second phase encoding along the slice direction, rather than exciting one thin slice at a time. The payoff is thin, contiguous partitions with high signal and, when the voxel is equal in all three dimensions, true isotropic data. Isotropic data can be reformatted into any plane after the fact without a loss of detail.</p><p>The named sequences reflect this. A spoiled gradient echo volume such as MPRAGE gives sharp T1 brain anatomy for surgical planning and reformats. A long echo train spin echo volume, called SPACE or CUBE depending on the vendor, delivers T2 or FLAIR contrast across a whole region in one scan that can be sliced any way the reader needs.</p><p>The cost is time and a sensitivity to motion, since the whole slab is spoiled by movement rather than a single slice. That is the tradeoff behind choosing 3D: pay in scan time and motion risk, receive isotropic data that reformats freely and reconstructs cleanly into MIP and curved views.</p>",
+        "keypoints": [
+          "3D encodes a whole slab with a second phase encode along slice.",
+          "Isotropic voxels reformat into any plane without losing detail.",
+          "MPRAGE gives T1 volumes; SPACE or CUBE give T2 or FLAIR volumes.",
+          "The tradeoff is longer scans and greater motion sensitivity."
+        ],
+        "worked_example": "A surgeon needs the same brain data viewed axially, sagittally, and coronally for planning. A single isotropic MPRAGE volume is acquired once, then reformatted into all three planes from one dataset. Acquiring three separate 2D stacks would cost more time and would not align voxel for voxel the way one isotropic volume does.",
+        "memory_hooks": [
+          "Isotropic means slice it any way you like, later.",
+          "One 3D volume beats three 2D stacks when reformats are the goal."
+        ],
+        "exam_traps": [
+          "Assuming 3D is always better; it costs time and punishes motion across the whole slab.",
+          "Forgetting that only isotropic voxels reformat without a loss of resolution."
+        ]
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "education",
+      "ord": 1324,
+      "body": {
+        "title": "Choosing a fat suppression method: strengths and pitfalls",
+        "html": "<p>There is no single best way to suppress fat; each method trades robustness against precision. Spectral fat saturation targets the fat resonance directly and gives clean, selective suppression, but it depends on a uniform field. Off center and at low field it fails unevenly, leaving bright fat on one side of the image.</p><p>STIR suppresses fat by its short T1 using an inversion pulse, so it is robust where the field is imperfect, including large fields of view and the extremities. The catch is that it also suppresses anything with a fat like T1, such as some contrast enhancement, which is why STIR and gadolinium are a poor pair.</p><p>Dixon methods separate water and fat by their signal phase and produce both suppressed and combined images from one acquisition, which is robust and informative but needs the reconstruction. Water excitation only excites water in the first place. The exam relevant skill is matching the method to the situation: uniform small field favors spectral, difficult field favors STIR, and the need for reliable uniform suppression plus in and out of phase data favors Dixon.</p>",
+        "keypoints": [
+          "Spectral saturation is selective but needs a uniform field.",
+          "STIR is field robust but also nulls fat like T1, so avoid it with gadolinium.",
+          "Dixon separates water and fat and yields several image sets from one scan.",
+          "The skill is matching the method to field strength and uniformity."
+        ],
+        "worked_example": "A large field of view ankle at the edge of the magnet shows patchy failed fat saturation with spectral suppression. Switching to STIR fixes it because STIR relies on T1, not on a uniform fat resonance. If the same study needed post contrast imaging, STIR would be wrong, since it would also suppress the enhancing tissue, and Dixon would be the better robust choice.",
+        "memory_hooks": [
+          "Uniform field favors spectral; difficult field favors STIR.",
+          "STIR plus gadolinium is a trap: it nulls the enhancement too."
+        ],
+        "exam_traps": [
+          "Using STIR after contrast; it suppresses enhancing tissue along with fat.",
+          "Expecting spectral saturation to work off center or at low field."
+        ]
+      }
+    },
+    {
+      "topic": "pathology",
+      "kind": "education",
+      "ord": 1325,
+      "body": {
+        "title": "Diffusion in disease: stroke, abscess and cellular tumors",
+        "html": "<p>Diffusion weighted imaging measures how freely water moves. Where movement is hindered, the DWI image stays bright and the ADC map goes dark, the pattern called restricted diffusion. Reading the pair together is essential, because bright DWI alone can be a T2 effect rather than true restriction. Confirming a low ADC is what proves the finding.</p><p>The clinical value is in what restricts. Acute ischemic stroke restricts within minutes as the sodium pump fails and cells swell, which makes DWI the earliest and most sensitive sign of infarct. A pus filled abscess restricts because its thick contents trap water, which helps separate it from a necrotic tumor whose center usually does not. Densely cellular tumors restrict because tightly packed cells leave little room for water to move.</p><p>The exam skill is to pair the sequences and know the differential. Restricted diffusion is a strong, early, specific sign, but only when DWI bright is matched by ADC dark. The trap, called T2 shine through, is bright DWI with a normal or high ADC, which is not restriction at all.</p>",
+        "keypoints": [
+          "Restricted diffusion is DWI bright with ADC dark, read as a pair.",
+          "Acute stroke restricts within minutes, so DWI is the earliest infarct sign.",
+          "Abscess and densely cellular tumor also restrict; necrotic tumor centers usually do not.",
+          "T2 shine through is bright DWI with normal ADC, which is not restriction."
+        ],
+        "worked_example": "A ring enhancing brain lesion could be an abscess or a necrotic tumor. DWI shows a bright center; the ADC map confirms the center is dark. Restricted diffusion in the cavity favors abscess, because pus traps water, whereas a necrotic tumor center typically does not restrict. The ADC map is what settles it.",
+        "memory_hooks": [
+          "Real restriction is bright DWI and dark ADC together.",
+          "Stroke lights up on DWI first, before T2 and FLAIR catch up."
+        ],
+        "exam_traps": [
+          "Calling any bright DWI restriction; check the ADC to exclude T2 shine through.",
+          "Assuming a ring enhancing lesion is always tumor; a restricting center suggests abscess."
+        ]
+      }
     }
   ]
 }
