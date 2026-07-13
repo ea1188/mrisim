@@ -10619,6 +10619,452 @@
           "Source images are still reviewed because a MIP can hide low signal."
         ]
       }
+    },
+    {
+      "topic": "safety",
+      "kind": "reference",
+      "ord": 1281,
+      "body": {
+        "title": "What is peripheral nerve stimulation and what causes it?",
+        "html": "<p>Rapidly switching <b>gradient</b> fields induce electric currents in the body. When the rate of change of the gradient (<b>dB/dt</b>) is high enough, those currents can depolarise peripheral nerves and cause tingling or muscle twitching, usually where the body is widest inside the bore.</p><p>Scanners limit dB/dt to stay below the stimulation threshold, which is why very fast sequences such as echo planar imaging may slow their gradients or lengthen the echo spacing. The effect is uncomfortable but not dangerous at approved limits, and it resolves the moment the gradients stop.</p>",
+        "keypoints": [
+          "Fast gradient switching (high dB/dt) induces currents that can stimulate peripheral nerves.",
+          "It feels like tingling or twitching and appears first where the body is widest in the bore.",
+          "Scanners cap dB/dt below the stimulation threshold, sometimes limiting how fast a sequence can run."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "reference",
+      "ord": 1282,
+      "body": {
+        "title": "What is SAR and how does the scanner control RF heating?",
+        "html": "<p><b>Specific absorption rate</b> is the radiofrequency power deposited per kilogram of tissue, and it is the main cause of patient heating during a scan. SAR climbs with field strength, flip angle, the number of refocusing pulses, and how tightly the slices are packed in time.</p><p>When a sequence would exceed the SAR limit the scanner lengthens the <b>TR</b>, reduces the flip angle, or drops refocusing pulses, which is why a dense fast spin echo train can force a longer scan at 3 tesla. Good coil placement, no unnecessary skin to skin contact, and adequate cooling all reduce the heating risk.</p>",
+        "keypoints": [
+          "SAR is RF power deposited per kilogram and is the main source of patient heating.",
+          "It rises with field strength, flip angle, and the number of refocusing pulses.",
+          "The scanner protects the patient by lengthening TR or lowering flip angle when SAR is too high."
+        ]
+      }
+    },
+    {
+      "topic": "safety",
+      "kind": "reference",
+      "ord": 1283,
+      "body": {
+        "title": "What must be verified before scanning a patient with an implant?",
+        "html": "<p>Every implant must be identified and checked against its <b>MR labeling</b> before the patient enters the room. A device is <b>MR safe</b> if it poses no hazard, <b>MR conditional</b> if it is safe only within stated limits, and <b>MR unsafe</b> if it must never enter the field.</p><p>For a conditional device the technologist confirms the exact conditions, such as the maximum field strength, the maximum SAR, and any scan time limit, and configures the scanner to stay inside them. If the implant cannot be identified or its labeling cannot be confirmed, the scan does not proceed until a definitive source clears it.</p>",
+        "keypoints": [
+          "Implants are classified MR safe, MR conditional, or MR unsafe by their labeling.",
+          "A conditional implant is only safe within stated limits such as field strength and SAR.",
+          "An unidentified or unverified implant is a contraindication until it is positively cleared."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "reference",
+      "ord": 1284,
+      "body": {
+        "title": "What is proton density weighting?",
+        "html": "<p>A <b>proton density</b> image is made with a <b>long TR</b> and a <b>short TE</b>. The long TR lets nearly all tissues recover their longitudinal magnetisation, which removes most of the T1 difference, and the short TE reads the signal before much T2 decay, which removes most of the T2 difference.</p><p>What is left mostly reflects how many mobile hydrogen protons each tissue holds, so tissues with more protons look brighter. Proton density images give high signal and are useful in the brain and especially in joints, where they show cartilage and menisci well.</p>",
+        "keypoints": [
+          "Proton density weighting uses a long TR and a short TE to suppress both T1 and T2 contrast.",
+          "Brightness then tracks the number of mobile protons in each tissue.",
+          "It is valued in musculoskeletal imaging for cartilage and meniscal detail."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "reference",
+      "ord": 1285,
+      "body": {
+        "title": "How does gadolinium change tissue signal?",
+        "html": "<p><b>Gadolinium</b> contrast is paramagnetic and mainly <b>shortens T1</b> in the tissue where it collects. On a T1 weighted image that shortened T1 recovers more signal between pulses, so enhancing tissue turns bright.</p><p>Gadolinium marks areas where it can leak from vessels or pool, such as tumours, active inflammation, and regions where the blood brain barrier has broken down. At high local concentration it also shortens T2 and can paradoxically darken tissue, which is why enhancement is read on T1 weighted sequences.</p>",
+        "keypoints": [
+          "Gadolinium is paramagnetic and chiefly shortens T1, brightening enhancing tissue on T1 images.",
+          "It highlights tumours, inflammation, and blood brain barrier breakdown.",
+          "Enhancement is assessed on T1 weighting because high concentrations can darken T2."
+        ]
+      }
+    },
+    {
+      "topic": "contrast-weighting",
+      "kind": "reference",
+      "ord": 1286,
+      "body": {
+        "title": "What is the difference between T2 and T2 star?",
+        "html": "<p><b>T2</b> decay reflects the loss of phase coherence from random spin to spin interactions, and a spin echo uses a <b>180 degree</b> refocusing pulse to reverse the fixed part of that dephasing. <b>T2 star</b> is the faster decay seen when nothing refocuses the spins, so it also includes dephasing from fixed magnetic field non uniformity.</p><p>T2 star is always shorter than T2 and is what a gradient echo measures. That sensitivity to field distortion makes T2 star weighted imaging good for finding blood products, calcium, and iron, which all disturb the local field.</p>",
+        "keypoints": [
+          "T2 is spin to spin decay; a spin echo refocuses the fixed field-related dephasing.",
+          "T2 star adds dephasing from field non-uniformity and is always shorter than T2.",
+          "Gradient echo measures T2 star, making it sensitive to blood, calcium, and iron."
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "reference",
+      "ord": 1287,
+      "body": {
+        "title": "What sets the spatial resolution of an MR image?",
+        "html": "<p>Spatial resolution is the size of the smallest object the image can separate, and it is set by the <b>voxel</b> dimensions. In plane, the voxel shrinks with a smaller <b>field of view</b> or a larger acquisition <b>matrix</b>, and through plane it shrinks with a thinner slice.</p><p>Smaller voxels resolve finer detail but hold fewer protons, so each one gives less signal and the image gets noisier. Raising resolution therefore usually costs signal to noise or scan time, and the technologist chooses the voxel that just resolves the anatomy of interest.</p>",
+        "keypoints": [
+          "Resolution is set by voxel size: field of view and matrix in plane, slice thickness through plane.",
+          "Smaller voxels resolve more detail but contain fewer protons and give less signal.",
+          "Higher resolution is paid for in signal to noise or in scan time."
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "reference",
+      "ord": 1288,
+      "body": {
+        "title": "How do averages (NEX) affect the image?",
+        "html": "<p>The number of <b>averages</b>, also called NEX or signal averages, is how many times each line of data is collected and combined. Signal adds coherently while noise adds randomly, so averaging raises <b>signal to noise</b> in proportion to the square root of the number of averages.</p><p>Because of that square root, doubling the averages doubles the scan time but only raises signal to noise by about forty percent. Averaging also smooths out random motion, so it is often used to reduce ghosting even when the base signal is already adequate.</p>",
+        "keypoints": [
+          "Averaging combines repeated measurements; SNR rises with the square root of NEX.",
+          "Doubling NEX doubles scan time for only about a 40 percent SNR gain.",
+          "Averaging also blurs random motion, reducing ghost artifacts."
+        ]
+      }
+    },
+    {
+      "topic": "image-quality",
+      "kind": "reference",
+      "ord": 1289,
+      "body": {
+        "title": "What is the tradeoff between SNR, resolution, and scan time?",
+        "html": "<p>Signal to noise, spatial resolution, and scan time form a triangle in which improving one usually worsens another. Bigger voxels and more averaging raise <b>signal to noise</b> but cost resolution or time, while smaller voxels raise <b>resolution</b> but lower signal, and covering more phase encoding steps raises resolution at the cost of <b>scan time</b>.</p><p>No single setting is best; the technologist picks the balance that answers the clinical question. A screening study may favour speed and signal over fine detail, while a small internal ear study accepts a longer scan for very high resolution.</p>",
+        "keypoints": [
+          "SNR, resolution, and scan time trade against each other; gaining one usually costs another.",
+          "Larger voxels and more averages help SNR but hurt resolution or time.",
+          "The right balance depends on the clinical question, not a fixed recipe."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "reference",
+      "ord": 1290,
+      "body": {
+        "title": "What is fast (turbo) spin echo and why is it faster?",
+        "html": "<p>A conventional spin echo collects one line of data per <b>TR</b>. A fast or turbo spin echo applies a train of <b>180 degree</b> refocusing pulses after each excitation, producing several echoes that are each phase encoded differently, so many lines are filled per TR.</p><p>The number of echoes per TR is the <b>echo train length</b>, and it divides the scan time by roughly that factor. The tradeoff is some image blurring and, because of the many refocusing pulses, higher SAR and a tendency for fat to stay bright.</p>",
+        "keypoints": [
+          "Fast spin echo fills several k-space lines per TR using a train of 180 degree pulses.",
+          "Scan time falls by roughly the echo train length.",
+          "Costs are some blurring, higher SAR, and persistently bright fat."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "reference",
+      "ord": 1291,
+      "body": {
+        "title": "What is an echo train and how does it affect the image?",
+        "html": "<p>An <b>echo train</b> is the group of echoes collected after a single excitation in a fast spin echo or echo planar sequence. Each echo is read at a slightly different time, so the signals in the train have slightly different T2 weighting.</p><p>The echo that fills the <b>centre of k-space</b> sets the effective echo time and therefore the image contrast, while the later, weaker echoes at the edges contribute detail but also introduce blurring. A longer train is faster but blurs more, so the length is chosen to balance speed against sharpness.</p>",
+        "keypoints": [
+          "An echo train is the set of echoes read after one excitation.",
+          "The echo filling the centre of k-space sets the effective TE and the contrast.",
+          "Longer trains are faster but blur more because later echoes have decayed."
+        ]
+      }
+    },
+    {
+      "topic": "pulse-sequences",
+      "kind": "reference",
+      "ord": 1292,
+      "body": {
+        "title": "What is a single-shot sequence?",
+        "html": "<p>A <b>single-shot</b> sequence fills an entire slice of k-space after just one excitation pulse, using a very long echo train. Because the whole slice is frozen in a fraction of a second, it is highly resistant to motion.</p><p>Single-shot fast spin echo gives heavily <b>T2 weighted</b> images and is used for uncooperative patients, fetal imaging, and fluid-bright studies such as MR cholangiopancreatography. The price of that speed is lower signal to noise and more blurring than a multi-shot acquisition.</p>",
+        "keypoints": [
+          "Single-shot sequences acquire a whole slice from one excitation with a long echo train.",
+          "They are very motion resistant and give heavy T2 weighting.",
+          "They are used for uncooperative or fetal patients and fluid-bright studies like MRCP, at the cost of SNR."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "reference",
+      "ord": 1293,
+      "body": {
+        "title": "What is the difference between frequency and phase encoding?",
+        "html": "<p>After slice selection, position within the slice is encoded in two directions. A <b>frequency encoding</b> gradient is on while the echo is read, so position along that axis is coded as signal frequency and the whole axis is captured in one readout.</p><p>The other axis uses <b>phase encoding</b>: before each readout a brief gradient gives spins a position dependent phase, and the step is repeated with a different gradient strength for every line of k-space. Because phase encoding needs one repetition per line, it is what drives scan time, while frequency encoding costs almost nothing.</p>",
+        "keypoints": [
+          "Frequency encoding codes one axis during readout and captures it in a single echo.",
+          "Phase encoding codes the other axis one k-space line at a time.",
+          "Scan time scales with the number of phase encoding steps, not frequency encoding."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "reference",
+      "ord": 1294,
+      "body": {
+        "title": "What is partial Fourier imaging?",
+        "html": "<p>K-space is nearly symmetric, so in principle one half predicts the other. <b>Partial Fourier</b> imaging acquires only somewhat more than half of the phase encoding lines and mathematically synthesises the missing lines from that symmetry.</p><p>Collecting fewer lines shortens the scan or the echo time, which is useful for motion sensitive or fluid-bright imaging. The cost is lower <b>signal to noise</b>, because real data has been replaced by estimated data, and greater sensitivity to any imperfection that breaks the assumed symmetry.</p>",
+        "keypoints": [
+          "Partial Fourier acquires just over half of k-space and reconstructs the rest from its symmetry.",
+          "It shortens scan time or echo time.",
+          "The tradeoff is reduced SNR and sensitivity to anything that breaks k-space symmetry."
+        ]
+      }
+    },
+    {
+      "topic": "data-acquisition",
+      "kind": "reference",
+      "ord": 1295,
+      "body": {
+        "title": "What is parallel imaging and how does it speed acquisition?",
+        "html": "<p><b>Parallel imaging</b> uses a <b>phased array</b> coil whose several elements each see the anatomy from a different position. Because each element adds independent spatial information, the sequence can skip some phase encoding lines and still reconstruct a full image.</p><p>Skipping lines cuts scan time by an acceleration factor, or buys higher resolution in the same time. The cost is a signal to noise penalty that grows with the acceleration factor, and reconstruction artifacts if the coil calibration is imperfect.</p>",
+        "keypoints": [
+          "Parallel imaging exploits the distinct spatial views of phased array coil elements.",
+          "Skipping phase encoding lines shortens the scan by the acceleration factor.",
+          "It costs SNR that worsens with acceleration and can leave reconstruction artifacts."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "reference",
+      "ord": 1296,
+      "body": {
+        "title": "What do the gradient coils do?",
+        "html": "<p><b>Gradient coils</b> add a small, controllable slope to the main magnetic field along each axis. That slope makes the field, and therefore the resonant frequency, vary with position, which is how the scanner selects a slice and encodes location within it.</p><p>Rapidly switching these coils is what produces the loud knocking of a scan, because the current pulses make the coil vibrate against its mounts. Stronger and faster gradients allow thinner slices, higher resolution, and faster sequences, but they also raise the risk of peripheral nerve stimulation.</p>",
+        "keypoints": [
+          "Gradient coils tilt the main field so frequency varies with position.",
+          "This enables slice selection and spatial encoding, and their switching causes the scan noise.",
+          "Stronger, faster gradients improve resolution and speed but can stimulate nerves."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "reference",
+      "ord": 1297,
+      "body": {
+        "title": "What is a phased array coil and why does it help?",
+        "html": "<p>A <b>phased array</b> is a receive coil built from several small elements, each with its own receiver channel. A small element sits close to the anatomy and has a high <b>signal to noise</b> ratio but only over a small region, and the array combines many of them to cover a large field of view without losing that local sensitivity.</p><p>Because each element also views the anatomy from a distinct position, a phased array is what makes <b>parallel imaging</b> possible. The result is better signal to noise over a large area and the option to accelerate the scan.</p>",
+        "keypoints": [
+          "A phased array combines many small receive elements, each with its own channel.",
+          "It keeps the high SNR of small coils while covering a large field of view.",
+          "Its multiple viewpoints enable parallel imaging acceleration."
+        ]
+      }
+    },
+    {
+      "topic": "instrumentation",
+      "kind": "reference",
+      "ord": 1298,
+      "body": {
+        "title": "How does field strength affect imaging?",
+        "html": "<p>A higher <b>field strength</b>, such as 3 tesla compared with 1.5 tesla, gives more signal because a larger fraction of protons align with the field. That extra signal can be spent on higher resolution or faster scans.</p><p>Higher field also has costs: <b>SAR</b> rises roughly with the square of the field so heating is greater, chemical shift and susceptibility artifacts are larger, and some implants are only conditional at 1.5 tesla. The choice of field strength balances this signal gain against the added artifact and safety burden.</p>",
+        "keypoints": [
+          "Higher field strength yields more signal, which buys resolution or speed.",
+          "It also raises SAR steeply and enlarges chemical shift and susceptibility artifacts.",
+          "Some implants are conditional only at lower field, so field choice is a tradeoff."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "reference",
+      "ord": 1299,
+      "body": {
+        "title": "What causes flow-related ghosting from vessels?",
+        "html": "<p>Blood moving through the slice carries its phase with it, so from one phase encoding step to the next a vessel presents a different signal. Because <b>phase encoding</b> assumes the signal is steady between steps, that pulsatile change is mismapped and repeated copies of the vessel appear.</p><p>These <b>ghosts</b> smear along the phase encoding direction and can obscure nearby anatomy. They are reduced with <b>flow compensation</b> gradients, by placing saturation bands over incoming vessels, or by swapping the phase and frequency directions so the ghosts fall away from the region of interest.</p>",
+        "keypoints": [
+          "Pulsatile flow changes a vessel's signal between phase encoding steps, creating ghosts.",
+          "Ghosts repeat along the phase encoding direction and can cover anatomy.",
+          "Flow compensation, saturation bands, or swapping phase and frequency reduce them."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "reference",
+      "ord": 1300,
+      "body": {
+        "title": "What is aliasing (wraparound) and how is it fixed?",
+        "html": "<p><b>Aliasing</b>, or wraparound, happens when anatomy extends beyond the <b>field of view</b> in the phase encoding direction. The part outside is under sampled, so it is misread and folds back onto the opposite side of the image.</p><p>It is removed by enlarging the field of view, by <b>oversampling</b> in the phase direction so the extra anatomy is properly sampled, or by placing saturation bands on the tissue that would fold in. Frequency direction wrap is usually handled automatically by digital oversampling of the readout.</p>",
+        "keypoints": [
+          "Aliasing folds anatomy outside the field of view back onto the image.",
+          "It occurs mainly in the phase encoding direction where sampling is limited.",
+          "Enlarging the field of view, phase oversampling, or saturation bands fix it."
+        ]
+      }
+    },
+    {
+      "topic": "flow-artifacts",
+      "kind": "reference",
+      "ord": 1301,
+      "body": {
+        "title": "What causes susceptibility artifact and where is it worst?",
+        "html": "<p><b>Magnetic susceptibility</b> artifact arises where tissues of very different magnetisability meet, such as air next to bone or metal next to soft tissue. The abrupt change distorts the local field, which dephases spins and shifts their apparent position, producing signal loss and geometric warping.</p><p>It is worst on <b>gradient echo</b> and echo planar sequences because they do not refocus fixed field non-uniformity, and it grows with field strength and echo time. A spin echo, a shorter echo time, and a smaller voxel all reduce it, while the same sensitivity is deliberately used to detect blood and metal.</p>",
+        "keypoints": [
+          "Susceptibility artifact comes from field distortion at air, bone, and metal interfaces.",
+          "It causes signal loss and geometric distortion, worst on gradient echo and EPI.",
+          "Spin echo, shorter TE, and smaller voxels reduce it; it is also exploited to find blood and metal."
+        ]
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "reference",
+      "ord": 1302,
+      "body": {
+        "title": "Why does fat create chemical shift and a bright signal?",
+        "html": "<p>Hydrogen in <b>fat</b> sits in a different chemical environment than hydrogen in water, so it resonates at a slightly lower frequency, about 3.5 parts per million below water. Because the scanner turns frequency into position, that frequency offset shifts fat a few pixels along the frequency encoding axis, the classic <b>chemical shift</b> artifact.</p><p>Fat also has a very short <b>T1</b>, so it recovers signal quickly and looks bright on T1 weighted and many fast spin echo images. That brightness can hide pathology, which is why fat suppression is often applied.</p>",
+        "keypoints": [
+          "Fat protons resonate about 3.5 ppm below water, causing a chemical shift along the frequency axis.",
+          "Fat's short T1 makes it bright on T1 and fast spin echo images.",
+          "Bright fat can obscure pathology, motivating fat suppression."
+        ]
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "reference",
+      "ord": 1303,
+      "body": {
+        "title": "How does spectral fat saturation work and when does it fail?",
+        "html": "<p><b>Spectral</b> or chemical fat saturation sends a radiofrequency pulse tuned to the fat frequency just before the imaging pulse, tipping and then spoiling the fat signal so fat is dark while water is untouched. It gives clean, selective suppression when the field is uniform.</p><p>It fails where the field is inhomogeneous, such as near metal, at the edges of a large field of view, or off isocentre, because there the fat frequency drifts out from under the saturation pulse. In those situations an inversion method like <b>STIR</b>, which suppresses by T1 rather than frequency, is more reliable.</p>",
+        "keypoints": [
+          "Spectral fat saturation applies an RF pulse at the fat frequency to null fat selectively.",
+          "It needs a uniform field and fails near metal, off centre, or at large field of view edges.",
+          "STIR, which suppresses by T1, is the robust fallback in inhomogeneous fields."
+        ]
+      }
+    },
+    {
+      "topic": "fat-suppression",
+      "kind": "reference",
+      "ord": 1304,
+      "body": {
+        "title": "Why should STIR be avoided after gadolinium?",
+        "html": "<p><b>STIR</b> suppresses fat by choosing an inversion time at which fat, which has a short T1, is passing through zero signal. The problem is that this nulling is based on T1, not on any property unique to fat.</p><p><b>Gadolinium</b> shortens the T1 of enhancing tissue toward that of fat, so STIR can null the enhancement along with the fat and hide the very finding the contrast was given to show. After gadolinium, a spectral fat saturated T1 sequence is used instead, because it suppresses fat by frequency and leaves enhancement bright.</p>",
+        "keypoints": [
+          "STIR nulls tissue by T1, not by a fat-specific property.",
+          "Gadolinium shortens enhancing tissue toward fat's T1, so STIR can erase enhancement.",
+          "Post-contrast imaging uses spectral fat saturation to keep enhancement visible."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "reference",
+      "ord": 1305,
+      "body": {
+        "title": "What is isotropic imaging and multiplanar reformation?",
+        "html": "<p>An <b>isotropic</b> acquisition uses voxels that are equal in all three dimensions. Because the voxel is a cube, the data set can be reformatted into any plane without losing resolution.</p><p>This lets a single 3D acquisition be reviewed as axial, sagittal, coronal, or oblique images through <b>multiplanar reformation</b>, rather than acquiring each plane separately. It saves scan time overall and lets curved structures be followed, at the cost of a longer single acquisition and greater motion sensitivity.</p>",
+        "keypoints": [
+          "Isotropic voxels are equal in all three dimensions, so they reformat without losing resolution.",
+          "One 3D data set can be viewed in any plane by multiplanar reformation.",
+          "This replaces separate plane acquisitions but is longer and more motion sensitive."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "reference",
+      "ord": 1306,
+      "body": {
+        "title": "What is a volumetric gradient echo sequence used for?",
+        "html": "<p>A <b>volumetric</b> gradient echo excites a whole slab and phase encodes it in two directions to build a 3D data set of thin, contiguous slices. Using a gradient echo keeps the TR short so the large number of encoding steps stays feasible in time.</p><p>These sequences give high resolution isotropic T1 weighted volumes used for brain anatomy, contrast enhanced angiography, and any study that will be reformatted. Their weaknesses are sensitivity to <b>susceptibility</b> and to motion across the longer acquisition.</p>",
+        "keypoints": [
+          "Volumetric gradient echo encodes a slab in two directions for thin contiguous slices.",
+          "The short gradient echo TR keeps the many-step 3D acquisition feasible.",
+          "It yields high resolution T1 volumes for anatomy and angiography but is susceptibility and motion sensitive."
+        ]
+      }
+    },
+    {
+      "topic": "three-d-recon",
+      "kind": "reference",
+      "ord": 1307,
+      "body": {
+        "title": "What are the tradeoffs of 3D imaging versus 2D?",
+        "html": "<p>A <b>3D</b> acquisition phase encodes through the slab as well as in plane, which gives thinner contiguous slices, higher signal to noise per voxel, and isotropic data for reformatting. It is the right choice when fine, arbitrary plane detail is needed.</p><p>The costs are a longer acquisition, more <b>motion</b> sensitivity because the whole slab is spoiled by movement, and higher SAR from the added pulses. A 2D acquisition, with its thicker gapped slices, remains faster and more robust for routine survey imaging.</p>",
+        "keypoints": [
+          "3D gives thin contiguous slices, more SNR per voxel, and isotropic reformatting.",
+          "It costs scan time, motion robustness, and SAR compared with 2D.",
+          "2D stays faster and more robust for routine survey imaging."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "reference",
+      "ord": 1308,
+      "body": {
+        "title": "Why is the region of interest centred at isocentre?",
+        "html": "<p>The <b>isocentre</b> is the point where the main field is most uniform and the gradients are most linear. Placing the anatomy of interest there gives the best fat suppression, the least geometric distortion, and the highest signal.</p><p>Away from isocentre the field drifts and the gradients bend, so spectral fat saturation can fail and structures can appear warped. The technologist therefore lands the coil and table so the target anatomy, not the patient's overall centre, sits at isocentre.</p>",
+        "keypoints": [
+          "Isocentre has the most uniform field and the most linear gradients.",
+          "Centring anatomy there optimises fat suppression, geometry, and signal.",
+          "Off centre positioning causes distortion and failed spectral fat saturation."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "reference",
+      "ord": 1309,
+      "body": {
+        "title": "How does coil-to-anatomy proximity affect the scan?",
+        "html": "<p>A receive coil picks up the most signal from tissue close to its elements, and its sensitivity falls off quickly with distance. Placing the coil snugly against the region of interest therefore raises <b>signal to noise</b> and lets the technologist use higher resolution.</p><p>A coil that is too large or sits far from the anatomy wastes signal and may fold in distant tissue. The rule is to choose the smallest coil that still covers the target and to bring it as close as comfort and safety allow, keeping any conductive part off bare skin to avoid a heating loop.</p>",
+        "keypoints": [
+          "Coil sensitivity is highest near its elements and falls off rapidly with distance.",
+          "A snug, appropriately small coil maximises SNR and enables higher resolution.",
+          "Conductive coil parts must not touch bare skin, to avoid an RF heating loop."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "reference",
+      "ord": 1310,
+      "body": {
+        "title": "What positioning steps reduce motion and improve comfort?",
+        "html": "<p>Motion is the most common cause of a repeated sequence, and much of it is prevented at positioning. Supporting the part in a neutral, relaxed posture, padding pressure points, and immobilising with straps or cushions all reduce both voluntary and involuntary movement over a long scan.</p><p>Comfort measures double as safety and quality steps: hearing protection guards against the loud gradients, clear instructions and a squeeze ball reduce anxiety, and padding between the patient and the bore or coil prevents both pressure sores and conductive loops. A comfortable, well supported patient holds still, which protects image quality.</p>",
+        "keypoints": [
+          "Most repeats are from motion, much of which is prevented at positioning.",
+          "Neutral posture, padding, and immobilisation reduce movement over a long scan.",
+          "Hearing protection and padding between skin and hardware are safety and quality steps."
+        ]
+      }
+    },
+    {
+      "topic": "procedures-positioning",
+      "kind": "education",
+      "ord": 1311,
+      "body": {
+        "title": "Patient positioning and coil setup: centering, comfort, and image quality",
+        "html": "<p>Good images begin before the first pulse, at how the patient and coil are set up. The goal is to place the <b>region of interest</b> at the magnet isocentre, where the field is most uniform and the gradients most linear, because that is where fat suppression works best and geometry is truest. The technologist lands the coil and table on the target anatomy rather than on the patient's overall centre.</p><p>The receive coil should be the smallest one that still covers the anatomy, brought as close as comfort allows, because coil sensitivity and therefore <b>signal to noise</b> fall off quickly with distance. Positioning is also the main defence against motion, the commonest cause of a repeated scan: a neutral relaxed posture, padding at pressure points, and immobilisation all help the patient hold still. The same padding keeps conductive parts of the coil and cables off bare skin, which prevents an RF heating loop, and hearing protection guards against the loud gradient noise.</p>",
+        "keypoints": [
+          "Center the region of interest at isocentre for the best field uniformity, fat suppression, and geometry.",
+          "Use the smallest coil that covers the anatomy and place it close, because SNR falls off with distance.",
+          "Positioning is the main defence against motion, the commonest cause of repeats.",
+          "Padding and cable routing keep conductors off skin to prevent RF heating loops."
+        ],
+        "worked_example": "A lumbar spine study is set up by landing the coil on the L3 region so the mid lumbar spine sits at isocentre, not by centring on the patient's waist. A spine array is chosen over the body coil for its higher local signal, foam pads are placed under the knees to flatten the lordosis and ease the back, and cushions immobilise the pelvis. Ear plugs go in, the cable is routed clear of the skin, and the patient is given a squeeze ball, which together cut both motion repeats and heating risk.",
+        "memory_hooks": [
+          "Center the anatomy, not the patient, at isocentre.",
+          "Smallest covering coil, placed close, wins on signal to noise.",
+          "Pad for comfort, immobilisation, and to keep conductors off skin."
+        ],
+        "exam_traps": [
+          "Do not center on the patient's body midpoint; off-centre anatomy loses fat suppression and distorts.",
+          "A larger coil or one held away from the part wastes signal and can fold in distant tissue.",
+          "STIR is not a substitute for correct centering; poor positioning still degrades every sequence."
+        ]
+      }
     }
   ]
 }

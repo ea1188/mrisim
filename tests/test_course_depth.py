@@ -1,4 +1,4 @@
-"""All 38 premium education modules must carry well-formed, dash-free depth fields
+"""All 39 premium education modules must carry well-formed, dash-free depth fields
 (worked_example, memory_hooks, exam_traps). Source of truth: data/course_content.json."""
 import json
 import os
@@ -17,7 +17,7 @@ def _edu_bodies():
 
 def test_all_education_modules_have_depth_fields():
     bodies = _edu_bodies()
-    assert len(bodies) == 38, len(bodies)
+    assert len(bodies) == 39, len(bodies)
     for b in bodies:
         title = b.get("title")
         assert isinstance(b.get("worked_example"), str) and b["worked_example"].strip(), title
