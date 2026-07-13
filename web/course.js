@@ -80,7 +80,7 @@
   // --- gate screens ------------------------------------------------------- //
   function notConfigured() {
     gate([h("h2", { text: "Course unavailable" }),
-      h("p", { text: "This deployment has no backend configured, so the paid course can't load. The free simulator, quiz and lessons all work without an account." }),
+      h("p", { text: "This deployment has no backend configured, so the guided course can't load. The free simulator, quiz and lessons all work without an account." }),
       h("a", { class: "btn", href: "index.html", text: "Back to the free tools" })]);
   }
 
@@ -112,7 +112,7 @@
       text: "or sign in with email", onclick: function () { fallback.hidden = false; toggle.hidden = true; },
     });
     gate([h("h2", { text: "Sign in to your course" }),
-      h("p", { text: "Your guided curriculum, saved progress and premium content — sign in to pick up where you left off." }),
+      h("p", { text: "Your guided curriculum, saved progress and course content are all here. Sign in to pick up where you left off." }),
       gbtn, toggle, fallback, msg]);
   }
 
@@ -219,7 +219,7 @@
     var rd = window.Blueprint.readiness(loadQuizProgress(), loadPremiumTopicProgress());
     var panel = h("div", { class: "blueprint" }, [
       h("h3", { class: "bp-h", text: "Readiness by ARRT content category" }),
-      h("div", { class: "bp-lbl", text: "Blends your free diagnostic quiz and premium course questions." }),
+      h("div", { class: "bp-lbl", text: "Blends your free diagnostic quiz and the course question bank." }),
       h("div", { class: "bp-head" }, [
         h("div", {}, [
           h("div", { class: "bp-num", text: Math.round(rd.projected * 100) + "%" }),
