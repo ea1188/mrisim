@@ -11,7 +11,10 @@
   <style>
     /* Course app: consumes the shared design system (theme.css). Every selector here is a
        hook course.js renders into — restyled, never renamed. */
-    body { height: 100%; }
+    /* min-height (not height:100%) so body grows to the full document height. A fixed
+       viewport-height body would clamp the sticky header's containing block, releasing it
+       after one screen of scroll (header + reading bar would detach and scroll away). */
+    body { min-height: 100vh; }
 
     /* Top app bar (blurred, sticky) */
     .top { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 clamp(14px,4vw,22px);
