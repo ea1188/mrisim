@@ -159,7 +159,9 @@
       color: var(--ok); font-weight: 700; font-size: 14px; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     /* Reading-progress bar: fills as the window scrolls through the current view (sits under the app bar) */
-    #readbar { position: fixed; top: 56px; left: 0; right: 0; height: 2px; z-index: 9; pointer-events: none; }
+    /* Sits at the sticky header's bottom edge (inside .top) so it moves with the header and
+       never detaches to float over the body text. */
+    #readbar { position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; z-index: 9; pointer-events: none; }
     #readbar > i { display: block; height: 100%; width: 0; background: var(--accent); }
     @media (prefers-reduced-motion: no-preference) {
       #readbar > i { transition: width .1s linear; }
@@ -364,8 +366,8 @@
     <a href="reference.html">Reference</a>
     <a href="index.html">← Home</a>
     <span id="whoami" class="whoami" hidden></span>
+    <div id="readbar" aria-hidden="true"><i></i></div>
   </div>
-  <div id="readbar" aria-hidden="true"><i></i></div>
   <div id="course-root" role="status" aria-live="polite">
     <div class="gate"><div class="card"><p>Loading…</p></div></div>
   </div>
