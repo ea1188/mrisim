@@ -457,24 +457,42 @@
       var mod = pm.mod, subs = pm.subs;
       var modDone = subs.length && pm.c === subs.length;
       var expanded = CTX.expanded.has(mod.title);
-      var subsWrap = h("div", { class: "mod-subs", hidden: !expanded });
+      var inner = h("div", { class: "ms-inner" });
       subs.forEach(function (s) {
         var d = isSubDone(s, done, read, mastery);
-        subsWrap.appendChild(h("button", { class: "sub" + (d ? " done" : ""), type: "button",
+        inner.appendChild(h("button", { class: "sub" + (d ? " done" : ""), type: "button",
           onclick: function () { gotoSub(mod, s); } }, [
           h("span", { class: "box" + (d ? " on" : ""), text: d ? "✓" : "" }),
           h("span", { class: "sl", text: s.label }),
         ]));
       });
+      var subsWrap = h("div", { class: "mod-subs" + (expanded ? " open" : "") }, [inner]);
+      var caret = h("span", { class: "caret" + (expanded ? " open" : ""), text: "▸" });
+      // Toggle in place so the expand/collapse animates; a full buildRail() would recreate
+      // the element in its target state and skip the CSS transition. Rebuilds elsewhere
+      // (marking read, navigation) still paint the resting state instantly, which is correct.
       var header = h("button", { class: "mod-h" + (mod === CTX.mod ? " on" : ""), type: "button",
         onclick: function () {
           var wasActive = CTX.mod === mod;
-          if (CTX.expanded.has(mod.title) && wasActive) CTX.expanded.delete(mod.title);
-          else CTX.expanded.add(mod.title);
-          if (!wasActive) renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
-          buildRail();
+          if (wasActive && CTX.expanded.has(mod.title)) {
+            CTX.expanded.delete(mod.title);
+            subsWrap.classList.remove("open");
+            caret.classList.remove("open");
+            return;
+          }
+          CTX.expanded.add(mod.title);
+          subsWrap.classList.add("open");
+          caret.classList.add("open");
+          if (!wasActive) {
+            // Clear any active rail button (module header, Overview, or an exam CTA) so
+            // navigating in place leaves exactly one highlight, matching a full buildRail().
+            [].forEach.call(rail.querySelectorAll(".mod-h.on, .overview-cta.on, .exam-cta.on"),
+              function (el) { el.classList.remove("on"); });
+            header.classList.add("on");
+            renderTopic(CTX.main, mod, CTX.byTitle, CTX.byTopic);
+          }
         } }, [
-        h("span", { class: "caret" + (expanded ? " open" : ""), text: "▸" }),
+        caret,
         document.createTextNode(mod.title),
         h("span", { class: "mtk" + (modDone ? " done" : ""), text: modDone ? "✓" : pm.c + "/" + subs.length }),
       ]);
