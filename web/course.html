@@ -90,23 +90,27 @@
     .edu h4 { margin: 0 0 8px; font-size: 15.5px; }
     .edu .body { color: #c4cad2; font-size: 13.5px; line-height: 1.65; }
     .edu .body p { margin: 0 0 10px; } .edu .body ul { margin: 6px 0 10px 18px; padding: 0; }
-    .keypoints { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
-    .keypoints b { color: var(--muted); font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; display: block; margin-bottom: 7px; }
-    .keypoints li { color: #c4cad2; font-size: 13px; margin: 3px 0 3px 18px; }
-    .edu-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+    /* The four content blocks share a color-coded left accent so a module reads as a scannable structure */
+    .keypoints, .edu-worked, .edu-hooks, .edu-traps { margin-top: 16px; padding: 1px 0 1px 13px; border-left: 2px solid var(--line-2); }
+    .keypoints { border-left-color: var(--accent); }
+    .edu-worked { border-left-color: var(--ok); }
+    .edu-hooks { border-left-color: var(--muted); }
+    .edu-traps { border-left-color: var(--warn); }
+    .keypoints b, .edu-worked h5, .edu-hooks h5, .edu-traps h5 { margin: 0 0 7px; font-family: var(--mono); font-size: 10.5px;
+      text-transform: uppercase; letter-spacing: .12em; font-weight: 600; display: block; }
+    .keypoints b { color: var(--accent); }
+    .edu-worked h5 { color: var(--ok); }
+    .edu-hooks h5 { color: var(--muted); }
+    .edu-traps h5 { color: var(--warn); }
+    .keypoints ul, .edu-hooks ul, .edu-traps ul { margin: 0; padding-left: 18px; color: #c4cad2; font-size: 13px; line-height: 1.6; }
+    .keypoints li, .edu-hooks li, .edu-traps li { margin: 0 0 5px; }
+    .edu-worked .body { color: #c4cad2; font-size: 13.5px; line-height: 1.65; }
+    .edu-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
     .edu.read { border-color: #2a4a37; }
     .edu .edu-read-tag { color: var(--ok); font-size: 12px; font-family: var(--mono); letter-spacing: .04em; }
     .edu .mark-read { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--accent); font: inherit;
       font-size: 12.5px; padding: 6px 12px; border-radius: 2px; cursor: pointer; }
     .edu .mark-read:hover { border-color: var(--accent-deep); }
-    .edu-worked { margin-top: 16px; padding: 2px 0 2px 12px; border-left: 2px solid var(--accent-deep); }
-    .edu-hooks, .edu-traps { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
-    .edu-worked h5, .edu-hooks h5, .edu-traps h5 { margin: 0 0 8px; font-family: var(--mono); font-size: 11px;
-      text-transform: uppercase; letter-spacing: .12em; color: var(--dim); font-weight: 600; }
-    .edu-traps h5 { color: var(--warn); }
-    .edu-worked .body { color: #c4cad2; font-size: 13.5px; line-height: 1.65; }
-    .edu-hooks ul, .edu-traps ul { margin: 0; padding-left: 18px; color: #c4cad2; font-size: 13px; line-height: 1.6; }
-    .edu-hooks li, .edu-traps li { margin: 0 0 5px; }
     .lcard { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line);
       border-radius: 2px; padding: 13px 15px; margin-bottom: 8px; transition: border-color .15s, background .15s; }
     .lcard:hover { border-color: var(--accent-deep); background: var(--panel-2); }
@@ -145,6 +149,26 @@
     .lcard button.launch { color: var(--accent); background: none; border: none; font: inherit; font-size: 13px;
       white-space: nowrap; cursor: pointer; padding: 0; }
     .lcard button.launch:hover { color: #8fc6f5; }
+
+    /* --- interaction polish: press feedback, answer reveal, focus ring, motion system --- */
+    :root { --ease: cubic-bezier(.2,.6,.2,1); }
+    .opt { position: relative; }
+    .q .opt, .mchk .opt { padding-right: 30px; }
+    .opt.correct::after { content: "\2713"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--ok); font-weight: 700; font-size: 14px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (prefers-reduced-motion: no-preference) {
+      .btn, .opt, .exam-opt, .lcard, .topic, .sub, .mod-h, .exam-cta, .exam-len, .mark-read, .plan-row {
+        transition: border-color .15s var(--ease), background-color .15s var(--ease), color .15s var(--ease), transform .07s var(--ease); }
+      .btn:active, .opt:active:not(:disabled), .exam-opt:active:not(:disabled), .lcard:active, .topic:active,
+      .sub:active, .mod-h:active, .exam-cta:active, .exam-len:active, .mark-read:active, .plan-row:active { transform: translateY(1px); }
+      @keyframes optreveal { from { transform: scale(.985); } to { transform: none; } }
+      @keyframes checkpop { 0% { opacity: 0; transform: translateY(-50%) scale(.3); } 60% { opacity: 1; transform: translateY(-50%) scale(1.15); } 100% { transform: translateY(-50%) scale(1); } }
+      @keyframes fbin { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+      .opt.correct { animation: optreveal .26s var(--ease); }
+      .opt.correct::after { animation: checkpop .34s var(--ease); }
+      .q .fb { animation: fbin .26s var(--ease); }
+    }
     @media (max-width: 780px) { .course { grid-template-columns: 1fr; } .rail { border-right: none; border-bottom: 1px solid var(--line); } }
 
     /* Practice exam: rail entry + setup + timed run + review */
