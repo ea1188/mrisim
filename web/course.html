@@ -157,7 +157,11 @@
     .opt.correct::after { content: "\2713"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
       color: var(--ok); font-weight: 700; font-size: 14px; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* Reading-progress bar: fills as the window scrolls through the current view (sits under the app bar) */
+    #readbar { position: fixed; top: 56px; left: 0; right: 0; height: 2px; z-index: 9; pointer-events: none; }
+    #readbar > i { display: block; height: 100%; width: 0; background: var(--accent); }
     @media (prefers-reduced-motion: no-preference) {
+      #readbar > i { transition: width .1s linear; }
       .btn, .opt, .exam-opt, .lcard, .topic, .sub, .mod-h, .exam-cta, .exam-len, .mark-read, .plan-row {
         transition: border-color .15s var(--ease), background-color .15s var(--ease), color .15s var(--ease), transform .07s var(--ease); }
       .btn:active, .opt:active:not(:disabled), .exam-opt:active:not(:disabled), .lcard:active, .topic:active,
@@ -359,6 +363,7 @@
     <a href="index.html">← Home</a>
     <span id="whoami" class="whoami" hidden></span>
   </div>
+  <div id="readbar" aria-hidden="true"><i></i></div>
   <div id="course-root" role="status" aria-live="polite">
     <div class="gate"><div class="card"><p>Loading…</p></div></div>
   </div>

@@ -1372,6 +1372,24 @@
   document.getElementById("lesson-close").addEventListener("click", closeLesson);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLesson(); });
 
+  // Reading-progress bar: fill tracks how far the window is scrolled through the current view.
+  // Stays at 0 (invisible) when there is nothing meaningful to scroll, e.g. the sign-in gate.
+  (function initReadBar() {
+    var fill = document.querySelector("#readbar > i");
+    if (!fill) return;
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var pct = max > 40 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      fill.style.width = (pct * 100).toFixed(1) + "%";
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+  })();
+
   // Load the curriculum + premium content and render the course. Extracted so both
   // the entitled path and the post-checkout path use one code path (DRY).
   function loadCourse() {
