@@ -48,6 +48,7 @@
     "cardiac-advanced": "procedures",
     "mrs-advanced": "image-production",
     "fmri-advanced": "image-production",
+    "quant-advanced": "image-production",
     "pathology": "procedures",
     "safety": "safety",
     "patient-care": "patient-care",
