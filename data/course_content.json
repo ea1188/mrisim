@@ -11631,7 +11631,7 @@
         "keypoints": [
           "CE-MRA is flow-independent: gadolinium T1-shortening makes vessels bright regardless of velocity or direction.",
           "Whichever data fills the center of k-space sets overall image contrast; centric order front-loads it, sequential order places it mid-scan.",
-          "Test bolus and bolus tracking (SmartPrep) measure or detect true arrival time to trigger the diagnostic acquisition.",
+          "Test bolus and bolus tracking (SmartPrep or CareBolus) measure or detect true arrival time to trigger the diagnostic acquisition.",
           "Time-resolved MRA trades spatial resolution for temporal resolution to guarantee a pure arterial-phase frame.",
           "Mistimed acquisitions cause either ringing from a rising bolus or venous contamination from a late acquisition."
         ],
@@ -11806,9 +11806,9 @@
       "body": {
         "prompt": "A bolus-tracking technique monitors real-time signal in the target vessel and automatically triggers the diagnostic CE-MRA once a threshold is reached. This is best described as:",
         "options": [
-          "An automated triggering method, such as SmartPrep",
+          "An automated triggering method, such as SmartPrep or CareBolus",
           "A fixed empiric delay based on body weight",
-          "A test bolus requiring a separate small injection",
+          "A test bolus requiring a separate preliminary injection",
           "A time-resolved acquisition of multiple volumes"
         ],
         "answer": 0,
