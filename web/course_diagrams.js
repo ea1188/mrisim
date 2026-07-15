@@ -1017,7 +1017,112 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography };
+  // ---- Widget: LGE inversion-time nulling ---- //
+  function buildLgeNulling() {
+    var fig = figure("LGE nulling", "Late gadolinium enhancement uses an inversion pulse, with TI set to null normal myocardium so it goes dark. Scar retains gadolinium, has a shorter T1, recovers faster and stays bright. Normal myocardium grey, scar red. Post-contrast, approximate.");
+    var normalT1 = 400, scarT1 = 260;   // post-gadolinium T1 (ms), teaching approximations
+    var xMax = 800;
+    var goodTI = Math.round(M.nullTI(normalT1));
+    var state = { ti: goodTI };
+    var plot = makePlot({ xMax: xMax, yMin: -1, yMax: 1, xLabel: "TI (ms)", yLabel: "Mz",
+      xTicks: [0, 200, 400, 600, 800], yTicks: [-1, -0.5, 0, 0.5, 1],
+      title: "Inversion-recovery nulling of normal myocardium versus scar" });
+    plot.addAxes();
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, normalT1); }, xMax, 80), "pd");
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, scarT1); }, xMax, 80), "alt");
+    var marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function pct(t1) { return Math.round(Math.abs(M.irMz(state.ti, t1)) * 100); }
+    function redraw() {
+      if (marker) marker.remove();
+      marker = plot.addMarker(state.ti, "", "TI");
+      var msg;
+      if (state.ti === goodTI) msg = "Normal myocardium is nulled (dark) and scar stays bright: maximum contrast.";
+      else if (state.ti < goodTI) msg = "TI too short: normal myocardium is not yet nulled, and scar can approach its own null, so a real scar may disappear.";
+      else msg = "TI too long: normal myocardium has recovered and is no longer dark, so scar stands out less.";
+      readout.textContent = "At TI " + state.ti + " ms the displayed signal is normal myocardium " + pct(normalT1) + "%, scar " + pct(scarT1) + "%. " + msg;
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "TI:" }));
+    [["Null normal", goodTI], ["Too short", 180], ["Too long", 500]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.ti ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.ti = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: cardiac gating timeline ---- //
+  function buildCardiacGating() {
+    var fig = figure("Cardiac gating", "Data are synchronized to the ECG R-wave. Prospective triggering acquires a fixed window after each R-wave and leaves a gap at end-diastole; retrospective gating samples the whole R-R interval and sorts the data by cardiac phase afterward.");
+    var W = 320, H = 150;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "ECG-gated acquisition timeline" });
+    var RS = [25, 110, 195, 280], RR = 85, baseY = 46, spikeY = 20, barY = 78, barH = 24;
+    svg.appendChild(svgEl("line", { class: "diag-axis", x1: 10, y1: baseY, x2: 310, y2: baseY }));
+    RS.forEach(function (rx) {
+      svg.appendChild(svgEl("polyline", { class: "diag-curve", fill: "none",
+        points: (rx - 5) + "," + baseY + " " + rx + "," + spikeY + " " + (rx + 5) + "," + baseY }));
+      var t = svgEl("text", { class: "diag-axtext", x: rx, y: spikeY - 4, "text-anchor": "middle" });
+      t.textContent = "R"; svg.appendChild(t);
+    });
+    var g = svgEl("g", {});
+    svg.appendChild(g);
+    var state = { mode: "prospective" };
+    var readout = el("div", { class: "diag-readout" });
+    function draw() {
+      while (g.firstChild) g.removeChild(g.firstChild);
+      for (var i = 0; i < 3; i++) {
+        var x0 = RS[i], x1 = RS[i + 1];
+        if (state.mode === "prospective") {
+          var accW = RR * 0.72;
+          g.appendChild(svgEl("rect", { x: x0 + 2, y: barY, width: accW.toFixed(1), height: barH,
+            fill: "#5db0ef", "fill-opacity": "0.55", stroke: "#5db0ef" }));
+          g.appendChild(svgEl("rect", { x: (x0 + 2 + accW).toFixed(1), y: barY,
+            width: (x1 - x0 - 2 - accW).toFixed(1), height: barH,
+            fill: "none", stroke: "#e0554e", "stroke-dasharray": "3 2" }));
+        } else {
+          g.appendChild(svgEl("rect", { x: x0, y: barY, width: RR, height: barH,
+            fill: "#5db0ef", "fill-opacity": "0.55", stroke: "#5db0ef" }));
+        }
+      }
+      var lbl = svgEl("text", { class: "diag-axtext", x: 160, y: barY + barH + 16, "text-anchor": "middle" });
+      lbl.textContent = state.mode === "prospective"
+        ? "Blue = acquired. Red dashed = end-diastole, not sampled."
+        : "Blue = acquired: the entire cardiac cycle.";
+      g.appendChild(lbl);
+      readout.textContent = state.mode === "prospective"
+        ? "Prospective triggering fires a fixed acquisition window after each R-wave, then waits for the next trigger. The gap at end-diastole is not imaged, so it can miss true end-diastole."
+        : "Retrospective gating acquires continuously across every R-R interval and tags each line by its cardiac phase, reconstructing the full cycle including end-diastole. It also tolerates mild arrhythmia by rejecting outlier beats.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Prospective", "prospective"], ["Retrospective", "retrospective"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        draw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    draw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
