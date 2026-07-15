@@ -49,10 +49,9 @@
 
   // Diagram id(s) shown inside each premium education card, keyed by exact title.
   var DIAGRAM_MAP = {
-    "What makes an image T1 weighted?": ["t1-recovery"],
-    "Why is fluid bright on a T2 weighted image?": ["t2-decay"],
-    "How does spin echo differ from gradient echo?": ["t2-vs-t2star"],
-    "Contrast & weighting: the exam synthesis": ["tr-te-weighting"],
+    "Relaxation: T1 spin-lattice and T2 spin-spin": ["t1-recovery", "t2-decay"],
+    "Dephasing, T2 vs T2*, and the spin-echo refocusing pulse": ["t2-vs-t2star"],
+    "TR, TE, TI, and flip angle: setting image contrast": ["tr-te-weighting"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, classifyWeighting: classifyWeighting,

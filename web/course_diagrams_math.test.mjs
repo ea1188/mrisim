@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
 const { mz, mxy, t2star, classifyWeighting, sample, TISSUES, DIAGRAM_MAP } = Math2;
@@ -44,10 +47,26 @@ test("data tables are well-formed", () => {
   for (const ti of TISSUES) {
     assert.ok(ti.id && ti.label && ti.t1 > 0 && ti.t2 > 0);
   }
-  const titles = Object.keys(DIAGRAM_MAP);
-  assert.ok(titles.includes("What makes an image T1 weighted?"));
-  assert.deepEqual(DIAGRAM_MAP["What makes an image T1 weighted?"], ["t1-recovery"]);
-  assert.deepEqual(DIAGRAM_MAP["Why is fluid bright on a T2 weighted image?"], ["t2-decay"]);
-  assert.deepEqual(DIAGRAM_MAP["How does spin echo differ from gradient echo?"], ["t2-vs-t2star"]);
-  assert.deepEqual(DIAGRAM_MAP["Contrast & weighting: the exam synthesis"], ["tr-te-weighting"]);
+  assert.deepEqual(DIAGRAM_MAP["Relaxation: T1 spin-lattice and T2 spin-spin"], ["t1-recovery", "t2-decay"]);
+  assert.deepEqual(DIAGRAM_MAP["Dephasing, T2 vs T2*, and the spin-echo refocusing pulse"], ["t2-vs-t2star"]);
+  assert.deepEqual(DIAGRAM_MAP["TR, TE, TI, and flip angle: setting image contrast"], ["tr-te-weighting"]);
+  // every diagram id is wired exactly once
+  const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
+  assert.deepEqual(ids, ["t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
+});
+
+// Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real
+// education-card title means attach() (which only runs for kind:"education" cards)
+// never fires, so the diagram silently never renders. Cross-check against the
+// actual course content, mirroring blueprint.test.mjs.
+test("every DIAGRAM_MAP key is a real education-card title", () => {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  const raw = JSON.parse(fs.readFileSync(path.join(dir, "..", "data", "course_content.json"), "utf8"));
+  const items = Array.isArray(raw) ? raw : (raw.items || []);
+  const eduTitles = new Set(
+    items.filter((it) => it.kind === "education")
+      .map((it) => (it.body && it.body.title) || it.title)
+  );
+  const missing = Object.keys(DIAGRAM_MAP).filter((t) => !eduTitles.has(t));
+  assert.deepEqual(missing, [], "DIAGRAM_MAP keys are not education-card titles (diagrams would never render): " + missing.join(" | "));
 });
