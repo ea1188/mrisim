@@ -194,7 +194,45 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay };
+  // ---- Widget: T2 vs T2* ---- //
+  function buildT2vsT2star() {
+    var fig = figure("T2 vs T2*", "T2 vs T2* — field inhomogeneity speeds transverse decay; spin echo's 180 refocuses it, gradient echo does not.");
+    var T2 = 90;             // fixed representative tissue T2 (ms)
+    var xMax = 300;
+    var state = { t2prime: 40 };  // ms; smaller = worse inhomogeneity
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
+      title: "T2 versus T2-star decay envelopes" });
+    plot.addAxes();
+    // True T2 curve is static; T2* curve redraws with the slider.
+    plot.addCurve(M.sample(function (t) { return M.mxy(t, T2); }, xMax, 60), "");
+    var starCurve = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (starCurve) starCurve.remove();
+      var ts = M.t2star(T2, state.t2prime);
+      var pts = M.sample(function (t) { return M.mxy(t, ts); }, xMax, 60);
+      starCurve = plot.addCurve(pts, "alt");
+      readout.textContent = "True T2 = " + T2 + " ms (spin echo). With T2' = "
+        + state.t2prime + " ms, T2* = " + Math.round(ts) + " ms (gradient echo).";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    var lab = el("span", { class: "diag-glabel", text: "Field inhomogeneity (T2'):" });
+    var slider = el("input", { type: "range", min: "10", max: "120", value: "40",
+      class: "diag-slider", "aria-label": "Field inhomogeneity T2 prime in ms" });
+    slider.addEventListener("input", function () {
+      state.t2prime = parseInt(slider.value, 10);
+      redraw();
+    });
+    controls.appendChild(lab);
+    controls.appendChild(slider);
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
