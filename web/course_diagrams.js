@@ -115,7 +115,7 @@
 
   // ---- Widget: T1 longitudinal recovery ---- //
   function buildT1Recovery() {
-    var fig = figure("T1 recovery", "T1 recovery — Mz rebuilds along B0 (1.5 T, approximate).");
+    var fig = figure("T1 recovery", "T1 recovery: Mz rebuilds along B0 (1.5 T, approximate).");
     var state = { tissue: M.TISSUES[1], tr: null };
     var xMax = 3000;
     var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mz",
@@ -172,7 +172,7 @@
 
   // ---- Widget: T2 transverse decay ---- //
   function buildT2Decay() {
-    var fig = figure("T2 decay", "T2 decay — Mxy dephases in the transverse plane (1.5 T, approximate).");
+    var fig = figure("T2 decay", "T2 decay: Mxy dephases in the transverse plane (1.5 T, approximate).");
     var state = { tissue: M.TISSUES[1], te: null };
     var xMax = 400;
     var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
@@ -226,7 +226,7 @@
 
   // ---- Widget: T2 vs T2* (the spin-echo refocusing story) ---- //
   function buildT2vsT2star() {
-    var fig = figure("T2 vs T2*", "After the 90 pulse the signal falls fast along T2* (what a gradient echo sees). A 180 pulse at TE/2 refocuses the field-inhomogeneity dephasing, so a spin echo rebuilds at TE up to the true-T2 envelope — recovering what the gradient echo lost. Pick an echo time (1.5 T, approximate).");
+    var fig = figure("T2 vs T2*", "After the 90 pulse the signal falls fast along T2* (what a gradient echo sees). A 180 pulse at TE/2 refocuses the field-inhomogeneity dephasing, so a spin echo rebuilds at TE up to the true-T2 envelope, recovering what the gradient echo lost. Pick an echo time (1.5 T, approximate).");
     var T2 = 100, T2prime = 30;   // ms; fixed tissue T2 and field inhomogeneity
     var xMax = 200;
     var state = { te: 80 };
@@ -275,7 +275,7 @@
 
   // ---- Widget: TR/TE -> weighting ---- //
   function buildTrTeWeighting() {
-    var fig = figure("TR/TE and weighting", "TR/TE and weighting — long TR undoes T1 differences; long TE reveals T2 differences (1.5 T, approximate).");
+    var fig = figure("TR/TE and weighting", "TR/TE and weighting: long TR undoes T1 differences; long TE reveals T2 differences (1.5 T, approximate).");
     var state = { tr: 400, te: 15 };
     var trMax = 3000, teMax = 200;
     var wm = M.TISSUES[1], csf = M.TISSUES[3]; // contrast pair: white matter vs CSF
