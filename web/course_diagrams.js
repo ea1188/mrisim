@@ -121,6 +121,48 @@
     return fig;
   }
 
+  // ---- shared canvas helpers for the FFT widgets ---- //
+  // 64x64 teaching phantom: a bright disc (contrast) plus two sharp bars (detail/edges).
+  function phantom(N) {
+    var img = new Array(N * N), x, y;
+    for (y = 0; y < N; y++) {
+      for (x = 0; x < N; x++) {
+        var dx = x - N / 2, dy = y - N / 2;
+        var v = (dx * dx + dy * dy) < (N * 0.24) * (N * 0.24) ? 0.8 : 0.08;
+        if ((x > N * 0.30 && x < N * 0.34) || (y > N * 0.60 && y < N * 0.64)) v = 1.0;
+        img[y * N + x] = v;
+      }
+    }
+    return img;
+  }
+  // Forward-transform a real image to a DC-centered complex spectrum { re, im }.
+  function centeredSpectrum(img, N) {
+    var re = img.slice(), im = new Array(N * N), i;
+    for (i = 0; i < N * N; i++) im[i] = 0;
+    M.fft2d(re, im, N, false); M.fftshift2d(re, N); M.fftshift2d(im, N);
+    return { re: re, im: im };
+  }
+  // Draw log-magnitude of a centered complex spectrum (grayscale) to a 2D context.
+  function drawKMag(ctx, re, im, N) {
+    var d = ctx.createImageData(N, N), mag = new Array(N * N), mx = 0, p;
+    for (p = 0; p < N * N; p++) { mag[p] = Math.log(1 + Math.sqrt(re[p] * re[p] + im[p] * im[p])); if (mag[p] > mx) mx = mag[p]; }
+    for (p = 0; p < N * N; p++) { var g = Math.round(255 * mag[p] / (mx || 1)); d.data[p * 4] = g; d.data[p * 4 + 1] = g; d.data[p * 4 + 2] = g; d.data[p * 4 + 3] = 255; }
+    ctx.putImageData(d, 0, 0);
+  }
+  // Draw magnitude of a complex image (grayscale) to a 2D context.
+  function drawIMag(ctx, re, im, N) {
+    var d = ctx.createImageData(N, N), mag = new Array(N * N), mx = 0, p;
+    for (p = 0; p < N * N; p++) { mag[p] = Math.sqrt(re[p] * re[p] + im[p] * im[p]); if (mag[p] > mx) mx = mag[p]; }
+    for (p = 0; p < N * N; p++) { var g = Math.round(255 * mag[p] / (mx || 1)); d.data[p * 4] = g; d.data[p * 4 + 1] = g; d.data[p * 4 + 2] = g; d.data[p * 4 + 3] = 255; }
+    ctx.putImageData(d, 0, 0);
+  }
+  // Inverse-transform a centered masked spectrum (copies) and draw its magnitude image.
+  function reconMag(ctx, mre, mim, N) {
+    var sre = mre.slice(), sim = mim.slice();
+    M.fftshift2d(sre, N); M.fftshift2d(sim, N); M.fft2d(sre, sim, N, true);
+    drawIMag(ctx, sre, sim, N);
+  }
+
   // ---- Widget: T1 longitudinal recovery ---- //
   function buildT1Recovery() {
     var fig = figure("T1 recovery", "T1 recovery: Mz rebuilds along B0 (1.5 T, approximate).");
@@ -535,26 +577,14 @@
   // ---- Widget: k-space center vs periphery (real reconstruction) ---- //
   function buildKspaceRecon() {
     var fig = figure("k-space", "k-space holds the image's spatial frequencies. The center is low frequency: overall contrast and brightness. The edges are high frequency: fine detail and sharp borders. Keep only part of k-space, inverse-transform, and see what each region carries.");
-    var N = 64, img = new Array(N * N), x, y, i;
-    for (y = 0; y < N; y++) {
-      for (x = 0; x < N; x++) {
-        var dx = x - N / 2, dy = y - N / 2;
-        var v = (dx * dx + dy * dy) < (N * 0.28) * (N * 0.28) ? 0.8 : 0.08;
-        if ((x > N * 0.30 && x < N * 0.34) || (y > N * 0.62 && y < N * 0.66)) v = 1.0;
-        img[y * N + x] = v;
-      }
-    }
-    var kre = img.slice(), kim = new Array(N * N);
-    for (i = 0; i < N * N; i++) kim[i] = 0;
-    M.fft2d(kre, kim, N, false);
-    M.fftshift2d(kre, N); M.fftshift2d(kim, N);
+    var N = 64, sp = centeredSpectrum(phantom(N), N), kre = sp.re, kim = sp.im;
     var R = N * 0.12;
     var kCanvas = document.createElement("canvas"); kCanvas.width = N; kCanvas.height = N; kCanvas.className = "diag-canvas";
     var iCanvas = document.createElement("canvas"); iCanvas.width = N; iCanvas.height = N; iCanvas.className = "diag-canvas";
     var kctx = kCanvas.getContext("2d"), ictx = iCanvas.getContext("2d");
     var readout = el("div", { class: "diag-readout" });
     function render(mode) {
-      var mre = kre.slice(), mim = kim.slice(), p, gx, gy;
+      var mre = kre.slice(), mim = kim.slice(), gx, gy;
       for (gy = 0; gy < N; gy++) {
         for (gx = 0; gx < N; gx++) {
           var rx = gx - N / 2, ry = gy - N / 2, inC = (rx * rx + ry * ry) <= R * R;
@@ -562,18 +592,9 @@
           if (!keep) { mre[gy * N + gx] = 0; mim[gy * N + gx] = 0; }
         }
       }
-      var kdata = kctx.createImageData(N, N), kmag = new Array(N * N), kmax = 0;
-      for (p = 0; p < N * N; p++) { kmag[p] = Math.log(1 + Math.sqrt(mre[p] * mre[p] + mim[p] * mim[p])); if (kmag[p] > kmax) kmax = kmag[p]; }
-      for (p = 0; p < N * N; p++) { var kg = Math.round(255 * kmag[p] / (kmax || 1)); kdata.data[p * 4] = kg; kdata.data[p * 4 + 1] = kg; kdata.data[p * 4 + 2] = kg; kdata.data[p * 4 + 3] = 255; }
-      kctx.putImageData(kdata, 0, 0);
+      drawKMag(kctx, mre, mim, N);
       if (mode !== "full") { kctx.strokeStyle = "#5db0ef"; kctx.lineWidth = 1; kctx.beginPath(); kctx.arc(N / 2, N / 2, R, 0, 2 * Math.PI); kctx.stroke(); }
-      var sre = mre.slice(), sim = mim.slice();
-      M.fftshift2d(sre, N); M.fftshift2d(sim, N);
-      M.fft2d(sre, sim, N, true);
-      var idata = ictx.createImageData(N, N), mag = new Array(N * N), imax = 0;
-      for (p = 0; p < N * N; p++) { mag[p] = Math.sqrt(sre[p] * sre[p] + sim[p] * sim[p]); if (mag[p] > imax) imax = mag[p]; }
-      for (p = 0; p < N * N; p++) { var ig = Math.round(255 * mag[p] / (imax || 1)); idata.data[p * 4] = ig; idata.data[p * 4 + 1] = ig; idata.data[p * 4 + 2] = ig; idata.data[p * 4 + 3] = 255; }
-      ictx.putImageData(idata, 0, 0);
+      reconMag(ictx, mre, mim, N);
       readout.textContent = mode === "center" ? "Center only (low-pass): full contrast returns but the image is blurred, fine detail is gone."
         : mode === "edges" ? "Edges only (high-pass): only sharp borders survive, overall contrast is gone."
         : "Full k-space: the complete image.";
@@ -672,7 +693,82 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift };
+  // ---- Widget: parallel imaging (undersampling and aliasing) ---- //
+  function buildParallelImaging() {
+    var fig = figure("Parallel imaging", "Skipping k-space lines shortens the scan but shrinks the phase field of view, so the image aliases and wraps onto itself. Parallel imaging (SENSE, GRAPPA) uses several receive coils to unfold that wrap. Acceleration R is how many phase-encode lines are skipped (unfolding is not simulated here).");
+    var N = 64, sp = centeredSpectrum(phantom(N), N), kre = sp.re, kim = sp.im;
+    var kC = document.createElement("canvas"); kC.width = N; kC.height = N; kC.className = "diag-canvas";
+    var iC = document.createElement("canvas"); iC.width = N; iC.height = N; iC.className = "diag-canvas";
+    var kctx = kC.getContext("2d"), ictx = iC.getContext("2d");
+    var readout = el("div", { class: "diag-readout" });
+    function render(R) {
+      var mre = kre.slice(), mim = kim.slice(), ky, kx;
+      for (ky = 0; ky < N; ky++) {
+        if (((ky - N / 2) % R + R) % R !== 0) { for (kx = 0; kx < N; kx++) { mre[ky * N + kx] = 0; mim[ky * N + kx] = 0; } }
+      }
+      drawKMag(kctx, mre, mim, N);
+      reconMag(ictx, mre, mim, N);
+      readout.textContent = R === 1 ? "Full sampling: no acceleration, the complete image."
+        : "R = " + R + ": every " + (R === 2 ? "2nd" : "3rd") + " line kept, scan " + R + "x faster. The phase field of view drops to 1/" + R + ", so the image wraps.";
+    }
+    var stage = el("div", { class: "diag-kspace" });
+    stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [kC, el("figcaption", { class: "diag-canvas-cap", text: "k-space" })]));
+    stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [iC, el("figcaption", { class: "diag-canvas-cap", text: "image" })]));
+    fig.appendChild(stage);
+    var controls = el("div", { class: "diag-controls" });
+    [["Full", 1], ["R = 2", 2], ["R = 3", 3]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === 1 ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (z) { z.classList.remove("on"); });
+        b.classList.add("on"); render(p[1]);
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls); fig.appendChild(readout);
+    render(1);
+    return fig;
+  }
+
+  // ---- Widget: Gibbs (truncation) ringing ---- //
+  function buildGibbsRinging() {
+    var fig = figure("Gibbs ringing", "An image is built from a finite patch of k-space. Truncating the high frequencies (a smaller matrix) blurs sharp borders and adds faint ringing lines parallel to them, the Gibbs or truncation artifact.");
+    var N = 64, sp = centeredSpectrum(phantom(N), N), kre = sp.re, kim = sp.im;
+    var kC = document.createElement("canvas"); kC.width = N; kC.height = N; kC.className = "diag-canvas";
+    var iC = document.createElement("canvas"); iC.width = N; iC.height = N; iC.className = "diag-canvas";
+    var kctx = kC.getContext("2d"), ictx = iC.getContext("2d");
+    var readout = el("div", { class: "diag-readout" });
+    function render(keep) {
+      var mre = kre.slice(), mim = kim.slice(), ky, kx, half = keep / 2;
+      for (ky = 0; ky < N; ky++) {
+        for (kx = 0; kx < N; kx++) {
+          if (Math.abs(ky - N / 2) >= half || Math.abs(kx - N / 2) >= half) { mre[ky * N + kx] = 0; mim[ky * N + kx] = 0; }
+        }
+      }
+      drawKMag(kctx, mre, mim, N);
+      reconMag(ictx, mre, mim, N);
+      readout.textContent = keep === N ? "Full matrix (" + N + "): sharp edges, no ringing."
+        : "Matrix " + keep + ": only the central " + keep + "x" + keep + " of k-space is kept. Edges blur and ringing appears alongside them.";
+    }
+    var stage = el("div", { class: "diag-kspace" });
+    stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [kC, el("figcaption", { class: "diag-canvas-cap", text: "k-space" })]));
+    stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [iC, el("figcaption", { class: "diag-canvas-cap", text: "image" })]));
+    fig.appendChild(stage);
+    fig.appendChild(el("span", { class: "diag-glabel", text: "Matrix:" }));
+    var controls = el("div", { class: "diag-controls" });
+    [["64", 64], ["32", 32], ["16", 16]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === 64 ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (z) { z.classList.remove("on"); });
+        b.classList.add("on"); render(p[1]);
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls); fig.appendChild(readout);
+    render(64);
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
