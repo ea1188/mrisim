@@ -203,6 +203,8 @@
     "Myocardial tissue characterization: LGE and parametric mapping": ["lge-nulling"],
     "Metabolites and clinical interpretation": ["mrs-spectrum"],
     "Acquisition techniques: STEAM, PRESS, and echo time": ["mrs-te"],
+    "BOLD contrast: neurovascular coupling": ["bold-hrf"],
+    "Task-based fMRI: paradigms and analysis": ["fmri-design"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
