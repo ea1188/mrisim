@@ -11302,6 +11302,274 @@
           "Assuming a ring enhancing lesion is always tumor; a restricting center suggests abscess."
         ]
       }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "education",
+      "ord": 1326,
+      "body": {
+        "title": "Perfusion by DSC: first-pass bolus tracking",
+        "html": "<p>Dynamic susceptibility contrast (DSC) MRI tracks a rapid <strong>bolus of gadolinium</strong> as it first passes through brain tissue, using fast <strong>T2*-weighted (or T2-weighted) echo-planar imaging</strong> repeated every one to two seconds. Gadolinium is not being watched for its usual T1 brightening here; instead its local magnetic susceptibility disturbs the field around vessels and causes a transient, sharp <strong>drop in signal intensity</strong> as the bolus passes through the capillary bed, an effect that grows with tissue vascularity.</p><p>Plotting signal loss over time yields a <strong>concentration-time curve</strong>, whose shape drives the postprocessing. Integrating the curve gives relative <strong>cerebral blood volume (CBV)</strong>, its height and timing feed <strong>cerebral blood flow (CBF)</strong>, and dividing CBV by CBF gives <strong>mean transit time (MTT)</strong>. A second, smaller signal dip often follows as contrast recirculates through the systemic circulation, and this <strong>recirculation</strong> must be modeled out or it will bias the curve. Because the whole technique depends on catching a sharp bolus, a <strong>fast, tight power-injector bolus</strong> and rapid whole-brain coverage are essential; a slow or spread-out injection blurs the curve and degrades the maps.</p>",
+        "keypoints": [
+          "DSC uses a fast gadolinium bolus and T2*-weighted EPI, imaged every 1 to 2 seconds.",
+          "Susceptibility from the bolus causes a transient signal drop, not enhancement.",
+          "Postprocessing yields CBV, CBF, and MTT maps from the concentration-time curve.",
+          "Recirculation produces a second, smaller signal dip that must be corrected for.",
+          "Requires a tight, fast power-injector bolus for reliable curves."
+        ],
+        "worked_example": "A patient with a suspected high-grade glioma undergoes DSC perfusion as part of the brain tumor protocol. As the gadolinium bolus arrives, the tumor region shows a much deeper and faster signal drop than normal white matter, reflecting its dense, leaky neovasculature. The resulting relative CBV map shows a hot spot with values several times normal gray matter, a pattern that correlates with higher tumor grade and helps guide the biopsy target toward the most aggressive-appearing region.",
+        "memory_hooks": [
+          "DSC: Drop in Signal, Contrast bolus, on T2*. Signal goes down as gadolinium passes.",
+          "CBV from the area under the curve, CBF from how fast and how high it rises, MTT equals CBV divided by CBF.",
+          "Think stroke and tumor grade: DSC is the fast bolus-chasing sequence."
+        ],
+        "exam_traps": [
+          "DSC signal drops during the bolus (T2* susceptibility effect); do not confuse this with the signal rise seen on T1-weighted DCE enhancement curves.",
+          "CBV, CBF, and MTT are all derived from the same DSC acquisition; they are not three separate scans.",
+          "A slow or poorly timed injection ruins the first-pass curve; DSC is uniquely sensitive to bolus technique compared with DCE."
+        ]
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "education",
+      "ord": 1327,
+      "body": {
+        "title": "Perfusion by DCE: permeability and Ktrans",
+        "html": "<p>Dynamic contrast-enhanced (DCE) MRI uses repeated <strong>T1-weighted</strong> acquisitions before, during, and after a gadolinium injection to watch tissue <strong>enhance</strong> over several minutes, in contrast to the seconds-long bolus tracking of DSC. Because gadolinium shortens T1, tissue that takes up contrast brightens, and the shape of the resulting <strong>signal-time (enhancement) curve</strong>, how steeply it rises, how high it peaks, and whether it plateaus or washes out, characterizes the underlying tissue.</p><p>Pharmacokinetic modeling of this curve produces quantitative maps of capillary <strong>permeability</strong>. The key parameter is <strong>Ktrans</strong>, the transfer constant describing how quickly contrast leaks from plasma into the extravascular extracellular space; a related parameter, <strong>ve</strong>, describes the size of that extravascular extracellular space. Tumors with immature, leaky neovasculature typically show high Ktrans and rapid washout, so DCE is used for <strong>tumor characterization</strong>, distinguishing benign from malignant lesions, and for monitoring <strong>treatment response</strong>, since effective antiangiogenic therapy can lower Ktrans before a tumor visibly shrinks. Where DSC is a T2* bolus-tracking technique built around CBV, DCE is a T1 permeability technique built around Ktrans.</p>",
+        "keypoints": [
+          "DCE uses repeated T1-weighted imaging over minutes to track contrast uptake and washout.",
+          "The enhancement curve shape (rise, peak, washout) reflects tissue vascularity and permeability.",
+          "Ktrans is the transfer constant quantifying capillary permeability; ve is the extravascular extracellular space fraction.",
+          "High Ktrans and fast washout suggest aggressive, leaky tumor vasculature.",
+          "DCE (T1, permeability) is distinct from DSC (T2*, first-pass bolus)."
+        ],
+        "worked_example": "A patient with a suspicious prostate lesion undergoes multiparametric MRI including DCE. The lesion shows early, rapid enhancement followed by washout on the signal-time curve, a pattern with high Ktrans consistent with the leaky, disorganized vasculature of prostate cancer, whereas benign tissue nearby shows slow, progressive enhancement without washout. Combined with the anatomic and diffusion sequences, this DCE pattern raises suspicion and supports targeting that region for biopsy.",
+        "memory_hooks": [
+          "DCE: Dynamic Contrast Enhancement, T1-weighted, minutes-long curve, tissue signal goes up.",
+          "Ktrans equals transfer constant equals how fast contrast leaks out of the vessel into tissue.",
+          "DSC drops on T2* in seconds; DCE rises on T1 over minutes."
+        ],
+        "exam_traps": [
+          "Do not swap DCE and DSC: DCE is T1-weighted enhancement over minutes, DSC is T2*-weighted signal drop over seconds.",
+          "Ktrans measures permeability, not blood volume; CBV is a DSC parameter, not a DCE parameter.",
+          "Rapid washout on DCE suggests malignancy, but curve shape must be read alongside anatomic and diffusion findings, not in isolation."
+        ]
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "education",
+      "ord": 1328,
+      "body": {
+        "title": "Arterial spin labeling: perfusion without contrast",
+        "html": "<p>Arterial spin labeling (ASL) measures brain perfusion without any injected contrast agent. Instead, an <strong>inversion pulse</strong> is applied to arterial blood water proximal to the imaging slab, magnetically <strong>labeling</strong> it as it flows toward the brain. After a delay that lets the labeled blood reach the tissue of interest, a <strong>label image</strong> is acquired; a second <strong>control image</strong> is acquired without labeling. <strong>Subtracting</strong> control from label removes static tissue signal and leaves a small residual signal proportional to blood delivered to tissue, the <strong>perfusion-weighted image</strong>, from which quantitative <strong>cerebral blood flow (CBF)</strong> maps are calculated.</p><p>Two main labeling schemes are used: <strong>pulsed ASL (PASL)</strong>, which inverts a thick slab in a single short pulse, and <strong>pseudo-continuous ASL (pCASL)</strong>, which labels for one to two seconds using a train of rapid pulses and generally gives higher SNR and is now the more widely recommended approach. The <strong>post-label delay (PLD)</strong>, the time between labeling and image acquisition, must be long enough for labeled blood to reach the tissue but short enough that the label has not decayed; too short a PLD in a patient with slow or collateral flow can underestimate perfusion. Because the label and control difference is only a percent or two of brain signal, ASL is inherently <strong>low SNR</strong> and requires many repeated averages to build an adequate image. Its major advantages are that it needs <strong>no gadolinium</strong>, useful in renal impairment, pediatric patients, and anyone needing repeated serial follow-up, and that it is <strong>fully quantitative</strong>, yielding CBF in physical units directly rather than only relative maps.</p>",
+        "keypoints": [
+          "ASL labels arterial blood water with an inversion pulse instead of using injected contrast.",
+          "A control image is subtracted from the label image to isolate the small perfusion signal.",
+          "pCASL generally gives higher SNR than PASL and is the more widely recommended technique.",
+          "Post-label delay (PLD) must be tuned to transit time; too short a PLD underestimates flow in slow-flow states.",
+          "ASL is contrast-free and gives quantitative CBF, at the cost of inherently low SNR requiring many averages."
+        ],
+        "worked_example": "A child needs a follow-up brain MRI for a known low-grade lesion and gadolinium is best avoided given the number of anticipated repeat scans over years. An ASL sequence is added instead of DSC perfusion. The label and control images are acquired and subtracted to generate a quantitative CBF map, showing no significant increase in perfusion within the lesion compared with the prior study, which is reassuring against transformation to a more aggressive, hypervascular tumor, all without any contrast injection.",
+        "memory_hooks": [
+          "ASL: no injection, the blood itself is the contrast agent, magnetically tagged, then subtracted out.",
+          "Label minus control equals perfusion signal; pCASL beats PASL for SNR.",
+          "No gadolinium needed: think ASL for renal failure, kids, and repeat serial scans."
+        ],
+        "exam_traps": [
+          "ASL uses no injected contrast at all; do not confuse it with DSC or DCE, both of which require gadolinium.",
+          "Too short a post-label delay underestimates perfusion in slow-flow or collateral-dependent territories, it is not simply a fixed universal setting.",
+          "ASL's low intrinsic SNR is compensated by averaging many repetitions, not by increasing labeling duration indefinitely."
+        ]
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "education",
+      "ord": 1329,
+      "body": {
+        "title": "Choosing a perfusion method: DSC, DCE, or ASL",
+        "html": "<p>All three perfusion techniques answer different physiological questions, and picking the right one depends on what is being asked. <strong>DSC</strong> uses a fast gadolinium bolus imaged with <strong>T2*-weighted</strong> echo-planar sequences, tracking the first pass of contrast to generate <strong>CBV</strong>, CBF, and MTT maps; it is the workhorse for <strong>acute stroke</strong> (identifying the ischemic penumbra) and for <strong>tumor grading</strong> (high CBV correlating with higher-grade, more vascular tumors). <strong>DCE</strong> uses repeated <strong>T1-weighted</strong> imaging over several minutes to watch contrast slowly leak out of vessels, generating <strong>Ktrans</strong> and ve maps of capillary <strong>permeability</strong>; it is favored for <strong>tumor characterization</strong> and for monitoring <strong>treatment response</strong> to antiangiogenic or chemotherapy regimens.</p><p><strong>ASL</strong> needs no contrast at all, magnetically labeling arterial blood and subtracting a control image to generate quantitative <strong>CBF</strong> maps directly; it is preferred whenever gadolinium should be minimized or avoided, such as <strong>renal impairment</strong>, pediatric patients, or <strong>serial follow-up</strong> imaging, and it is increasingly used in <strong>dementia and neurodegenerative disease</strong> workups, where regional hypoperfusion patterns (for example, parietotemporal hypoperfusion in Alzheimer disease) support the diagnosis without repeated contrast exposure. In practice, stroke and tumor-grading protocols often still favor bolus contrast techniques for their higher SNR, while ASL is the default when contrast is contraindicated, undesirable, or when only a quick, quantitative CBF check is needed.</p>",
+        "keypoints": [
+          "DSC (T2*, bolus, CBV/CBF/MTT) is the classic choice for stroke and tumor grading.",
+          "DCE (T1, Ktrans, ve) targets capillary permeability for tumor characterization and treatment response.",
+          "ASL needs no contrast and is preferred for renal impairment, pediatrics, and serial follow-up.",
+          "ASL is increasingly used in dementia and neurodegenerative disease workups for regional hypoperfusion patterns.",
+          "Choice depends on the clinical question: flow and volume (DSC), permeability (DCE), or contrast-free quantitative CBF (ASL)."
+        ],
+        "worked_example": "A patient with progressive memory loss is being evaluated for possible Alzheimer disease. Rather than adding a gadolinium-based perfusion sequence, the protocol includes ASL, which shows the classic pattern of reduced perfusion in the posterior cingulate and parietotemporal cortex with relative sparing of primary sensorimotor and occipital cortex, supporting the clinical diagnosis. Because ASL requires no injection, it can be repeated at a future visit to track disease progression without any added contrast burden.",
+        "memory_hooks": [
+          "Volume and flow: DSC. Permeability: DCE. No contrast at all: ASL.",
+          "Stroke and grading lean DSC; characterization and treatment response lean DCE; renal failure, kids, and repeats lean ASL.",
+          "Three letters, three questions: DSC asks how much blood, DCE asks how leaky, ASL asks how much flow without any dye."
+        ],
+        "exam_traps": [
+          "Higher tumor grade correlates with higher CBV on DSC, not with a specific Ktrans value; do not merge the DSC and DCE parameters.",
+          "ASL being contrast-free does not make it universally superior; its lower SNR means bolus techniques are still preferred when maximum spatial detail is needed.",
+          "Dementia perfusion patterns are regional (parietotemporal in Alzheimer disease), not just globally reduced flow; the distribution pattern is diagnostically relevant."
+        ]
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1330,
+      "body": {
+        "prompt": "During the first pass of a gadolinium bolus in DSC perfusion imaging, which signal change is expected on the T2*-weighted images?",
+        "options": [
+          "A transient signal drop as the bolus passes through the vascular bed",
+          "A transient signal rise as the bolus passes through the vascular bed",
+          "No signal change until the bolus recirculates",
+          "A steady rise in signal over several minutes"
+        ],
+        "answer": 0,
+        "explain": "DSC relies on the T2*/T2 susceptibility effect of gadolinium, which transiently lowers signal as concentrated contrast passes through capillaries; a rise in signal over minutes describes DCE, not DSC."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1331,
+      "body": {
+        "prompt": "In DSC perfusion of a brain tumor, an elevated relative cerebral blood volume (CBV) most directly suggests:",
+        "options": [
+          "Low tumor vascularity, suggestive of a lower tumor grade",
+          "Greater tumor vascularity, correlating with higher grade",
+          "Impaired capillary permeability with a low Ktrans value",
+          "Complete absence of any blood-brain barrier breakdown"
+        ],
+        "answer": 1,
+        "explain": "CBV reflects vascular density; high-grade, more vascular tumors typically show elevated relative CBV compared with lower-grade tumors and normal white matter."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1332,
+      "body": {
+        "prompt": "In DSC perfusion, mean transit time (MTT) is calculated as:",
+        "options": [
+          "CBV multiplied by CBF",
+          "CBV divided by CBF",
+          "CBF divided by CBV",
+          "The time from injection to peak signal drop only"
+        ],
+        "answer": 1,
+        "explain": "MTT equals CBV divided by CBF (the central volume principle), giving the average time blood takes to transit the vascular bed."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1333,
+      "body": {
+        "prompt": "On a DSC signal-time curve, a second smaller dip in signal following the initial bolus passage is caused by:",
+        "options": [
+          "Patient motion occurring during the DSC acquisition",
+          "Recirculation of contrast through the systemic circulation",
+          "T1 shortening effects overtaking the T2* signal drop",
+          "Failure or malfunction of the power injector device"
+        ],
+        "answer": 1,
+        "explain": "As contrast recirculates through the body and returns to the brain vasculature, it produces a smaller secondary signal dip that must be modeled out (for example with gamma-variate fitting) to avoid biasing the perfusion maps."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1334,
+      "body": {
+        "prompt": "DCE perfusion imaging primarily relies on which image weighting and time scale?",
+        "options": [
+          "T2*-weighted imaging over several seconds",
+          "T1-weighted imaging over several minutes",
+          "Proton-density weighted imaging over a single acquisition",
+          "Diffusion-weighted imaging over several minutes"
+        ],
+        "answer": 1,
+        "explain": "DCE uses repeated T1-weighted acquisitions over several minutes to capture the slower uptake and washout of gadolinium as it leaks into the extravascular extracellular space."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1335,
+      "body": {
+        "prompt": "In DCE perfusion analysis, Ktrans specifically quantifies:",
+        "options": [
+          "Cerebral blood volume held within the vascular bed",
+          "The rate of contrast transfer across the capillary wall",
+          "The total dose of gadolinium contrast administered",
+          "The time delay between injection and peak enhancement"
+        ],
+        "answer": 1,
+        "explain": "Ktrans is the volume transfer constant describing how quickly contrast leaks from the plasma space across the capillary endothelium into the extravascular extracellular space, a direct measure of permeability."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1336,
+      "body": {
+        "prompt": "Arterial spin labeling (ASL) generates a perfusion-weighted image by:",
+        "options": [
+          "Injecting a rapid bolus of gadolinium contrast and tracking its first pass",
+          "Applying an inversion pulse to label arterial blood, then subtracting the control image",
+          "Measuring the diffusion restriction of water across paired b-values",
+          "Acquiring T1-weighted images before and after a slow contrast infusion"
+        ],
+        "answer": 1,
+        "explain": "ASL magnetically labels inflowing arterial blood with an inversion pulse and subtracts a control acquisition (no labeling) from the label acquisition to isolate the small perfusion signal, without any injected contrast."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1337,
+      "body": {
+        "prompt": "Compared with pulsed ASL (PASL), pseudo-continuous ASL (pCASL) is generally preferred because it:",
+        "options": [
+          "Requires no post-label delay before imaging begins",
+          "Provides higher SNR through a longer labeling duration",
+          "Eliminates the need for a separate control image scan",
+          "Uses gadolinium contrast to boost the labeling signal"
+        ],
+        "answer": 1,
+        "explain": "pCASL labels blood for roughly one to two seconds using a train of rapid pulses, generally producing higher SNR than the single short inversion pulse used in PASL, which is why it is now the more widely recommended technique."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1338,
+      "body": {
+        "prompt": "In ASL imaging, if the post-label delay (PLD) is set too short in a patient with slow or collateral arterial flow, the result is most likely:",
+        "options": [
+          "Overestimation of the true cerebral blood flow value",
+          "Underestimation of flow, since labeled blood has not yet arrived",
+          "No effect, since PLD only changes contrast, not quantification",
+          "Complete loss of the paired control image acquisition"
+        ],
+        "answer": 1,
+        "explain": "If the PLD is too short, labeled blood may not have arrived in the tissue of interest by the time imaging occurs, leading to underestimated perfusion, particularly in territories with delayed or collateral flow."
+      }
+    },
+    {
+      "topic": "perfusion",
+      "kind": "quiz",
+      "ord": 1339,
+      "body": {
+        "prompt": "A patient with stage 4 chronic kidney disease needs perfusion imaging to follow a known brain lesion over multiple future visits. Which technique best avoids added risk while still providing quantitative perfusion data?",
+        "options": [
+          "DSC perfusion with a standard extracellular gadolinium agent",
+          "DCE perfusion with a linear gadolinium chelate",
+          "Arterial spin labeling (ASL)",
+          "Contrast-enhanced MRA of the circle of Willis"
+        ],
+        "answer": 2,
+        "explain": "ASL requires no injected gadolinium at all, avoiding NSF risk in impaired renal function, and still yields quantitative CBF maps, making it well suited for patients needing repeated follow-up imaging with reduced renal clearance."
+      }
     }
   ]
 }
