@@ -753,8 +753,8 @@
     stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [kC, el("figcaption", { class: "diag-canvas-cap", text: "k-space" })]));
     stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [iC, el("figcaption", { class: "diag-canvas-cap", text: "image" })]));
     fig.appendChild(stage);
-    fig.appendChild(el("span", { class: "diag-glabel", text: "Matrix:" }));
     var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Matrix:" }));
     [["64", 64], ["32", 32], ["16", 16]].forEach(function (p) {
       var b = el("button", { type: "button", class: "diag-btn" + (p[1] === 64 ? " on" : ""), text: p[0] });
       b.addEventListener("click", function () {
