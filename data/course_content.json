@@ -5006,9 +5006,8 @@
       "ord": 954,
       "body": {
         "title": "Total spine and technique: bone versus neuro, drop metastases, and metal reduction",
-        "html": "<p>A <strong>total spine</strong> is assembled from two sagittal packages, an upper and a lower set, that <strong>overlap by about two disc spaces</strong> at 3 mm with no gap. The upper package uses a smaller field of view than the lower one. Always use the smallest field of view that still covers the anatomy, and adjust resolution whenever the FOV changes. Remember the counts: the spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae. Routing depends on the order. A <em>cervical, thoracic, and lumbar BONE order</em> is run as three separate studies, while a <em>NEURO order</em> is run as a single total spine.</p><p>Metastatic disease splits into two patterns. <strong>Drop metastases</strong> seed down the CSF from a primary brain tumor, so the study images the whole thecal sac including the entire sacrum and typically omits the pre-contrast axials. <strong>Bony metastases</strong> arise from primary cancers such as lung, colon, or breast, usually need no contrast, and an in and out of phase sequence can help characterize marrow. Cor STIR is added when neurofibromatosis is suspected. For post-contrast technique, use a <strong>fat-saturated T1</strong> to improve differentiation of enhancing tissue, and do not simply append a pre-contrast inversion recovery T1 as the post series.</p><p>Near hardware, a <strong>metal reduction</strong> toolkit recovers the image. Use TSE (turbo spin echo) rather than gradient echo, increase the receive bandwidth, and raise the turbo or echo train factor. Decrease the slice thickness, switch fat-saturated T2 to <strong>STIR</strong> for more uniform fat suppression, and decrease the TE. Raise the resolution, change the phase encode direction, and increase the number of signal averages to recover lost signal.</p>",
+        "html": "<p>A <strong>total spine</strong> is assembled from two sagittal packages, an upper and a lower set, that <strong>overlap by about two disc spaces</strong> at 3 mm with no gap. The upper package uses a smaller field of view than the lower one. Always use the smallest field of view that still covers the anatomy, and adjust resolution whenever the FOV changes. Remember the counts: the spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae.</p><p>Metastatic disease splits into two patterns. <strong>Drop metastases</strong> seed down the CSF from a primary brain tumor, so the study images the whole thecal sac including the entire sacrum and typically omits the pre-contrast axials. <strong>Bony metastases</strong> arise from primary cancers such as lung, colon, or breast, usually need no contrast, and an in and out of phase sequence can help characterize marrow. Cor STIR is added when neurofibromatosis is suspected. For post-contrast technique, use a <strong>fat-saturated T1</strong> to improve differentiation of enhancing tissue, and do not simply append a pre-contrast inversion recovery T1 as the post series.</p><p>Near hardware, a <strong>metal reduction</strong> toolkit recovers the image. Use TSE (turbo spin echo) rather than gradient echo, increase the receive bandwidth, and raise the turbo or echo train factor. Decrease the slice thickness, switch fat-saturated T2 to <strong>STIR</strong> for more uniform fat suppression, and decrease the TE. Raise the resolution, change the phase encode direction, and increase the number of signal averages to recover lost signal.</p>",
         "keypoints": [
-          "A C, T, and L BONE order runs as three separate studies; a NEURO order runs as one total spine.",
           "Total spine sagittals use two packages overlapping by about two disc spaces at 3 mm with no gap.",
           "Drop mets seed from a brain tumor and require imaging the whole thecal sac including the entire sacrum.",
           "Bony mets from lung, colon, or breast usually need no contrast; in and out of phase can help.",
@@ -5016,12 +5015,10 @@
         ],
         "worked_example": "A patient with a known posterior fossa primary is sent for spine imaging to look for CSF seeding. Because drop metastases fall through the CSF and collect at the bottom of the thecal sac, the coverage is extended to include the entire sacrum, and the pre-contrast axials are omitted so the post-contrast series does the work. A patient with lung cancer and back pain, by contrast, is worked up for bony metastases, usually without contrast, and an in and out of phase sequence helps confirm marrow replacement.",
         "memory_hooks": [
-          "Bone order splits into three, neuro order joins into one.",
           "Drop mets fall to the floor, so scan all the way to the sacrum.",
           "Fight metal with TSE, wide bandwidth, and STIR."
         ],
         "exam_traps": [
-          "A C, T, and L BONE order is run as separate studies, while a NEURO order is run as one total spine.",
           "Near metal, prefer STIR over fat-saturated T2 and use TSE rather than gradient echo."
         ]
       }
@@ -5168,22 +5165,6 @@
         ],
         "answer": 0,
         "explain": "T2 makes fluid bright, so a syrinx and a herniated disc against dark structures stand out clearly, which is why Sag and Ax T2 are core to spine protocols."
-      }
-    },
-    {
-      "topic": "procedures-protocols",
-      "kind": "quiz",
-      "ord": 964,
-      "body": {
-        "prompt": "How should a cervical, thoracic, and lumbar BONE order be performed?",
-        "options": [
-          "As three separate studies, one for each region of the spine",
-          "As a single total spine using one continuous sagittal package",
-          "As a limited single sagittal localizer of the whole spinal axis",
-          "As a combined brain and whole spine screening survey protocol"
-        ],
-        "answer": 0,
-        "explain": "A BONE order for cervical, thoracic, and lumbar is run as three separate studies, whereas a NEURO order is run as one total spine."
       }
     },
     {
