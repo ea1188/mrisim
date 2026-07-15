@@ -1122,7 +1122,120 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating };
+  // ---- shared: draw a proton spectrum (reversed ppm axis) from a peak list ---- //
+  // peaks: [{ ppm, amp (signed, ~ -0.5..1), label? }]. Returns nothing; draws into g.
+  function drawSpectrum(g, peaks, opts) {
+    while (g.firstChild) g.removeChild(g.firstChild);
+    var x0 = 30, x1 = 305, baseY = opts.baseY, hScale = opts.hScale, PMAX = 4.0, sig = 0.07;
+    function xOf(ppm) { return x0 + (x1 - x0) * ((PMAX - ppm) / PMAX); }
+    // baseline
+    g.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: baseY, x2: x1, y2: baseY }));
+    [4, 3, 2, 1, 0].forEach(function (p) {
+      var t = svgEl("text", { class: "diag-axtext", x: xOf(p), y: baseY + 13, "text-anchor": "middle" });
+      t.textContent = String(p); g.appendChild(t);
+    });
+    g.appendChild((function () {
+      var t = svgEl("text", { class: "diag-axtext", x: (x0 + x1) / 2, y: baseY + 25, "text-anchor": "middle" });
+      t.textContent = "chemical shift (ppm)"; return t;
+    })());
+    // sampled spectrum curve: sum of gaussians, amplitudes signed
+    var pts = [];
+    for (var i = 0; i <= 140; i++) {
+      var ppm = PMAX - (PMAX * i) / 140;
+      var amp = 0;
+      peaks.forEach(function (pk) {
+        var d = (ppm - pk.ppm) / sig;
+        amp += pk.amp * Math.exp(-0.5 * d * d);
+      });
+      pts.push(xOf(ppm).toFixed(1) + " " + (baseY - amp * hScale).toFixed(1));
+    }
+    g.appendChild(svgEl("path", { class: "diag-curve", fill: "none", d: "M" + pts.join(" L") }));
+    // peak labels
+    peaks.forEach(function (pk) {
+      if (!pk.label) return;
+      var y = baseY - pk.amp * hScale + (pk.amp < 0 ? 12 : -4);
+      var t = svgEl("text", { class: "diag-axtext", x: xOf(pk.ppm), y: y, "text-anchor": "middle" });
+      t.textContent = pk.label; g.appendChild(t);
+    });
+  }
+
+  // ---- Widget: MRS proton spectrum, normal vs tumor ---- //
+  function buildMrsSpectrum() {
+    var fig = figure("MR spectrum", "A proton spectrum plots signal against chemical shift in ppm, high ppm on the left. In tumor the choline peak (3.2) rises above NAA (2.0), NAA falls, and a lactate peak (1.3) can appear: the raised Cho/NAA ratio is the key sign.");
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 320 180", role: "img", "aria-label": "Normal versus tumor MR spectrum" });
+    var g = svgEl("g", {}); svg.appendChild(g);
+    var NORMAL = [
+      { ppm: 3.5, amp: 0.30 }, { ppm: 3.2, amp: 0.38, label: "Cho" }, { ppm: 3.0, amp: 0.52, label: "Cr" },
+      { ppm: 2.0, amp: 0.90, label: "NAA" },
+    ];
+    var TUMOR = [
+      { ppm: 3.5, amp: 0.35 }, { ppm: 3.2, amp: 0.90, label: "Cho" }, { ppm: 3.0, amp: 0.46, label: "Cr" },
+      { ppm: 2.0, amp: 0.32, label: "NAA" }, { ppm: 1.3, amp: 0.42, label: "Lac" },
+    ];
+    var state = { mode: "normal" };
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      drawSpectrum(g, state.mode === "normal" ? NORMAL : TUMOR, { baseY: 120, hScale: 92 });
+      readout.textContent = state.mode === "normal"
+        ? "Normal brain: NAA at 2.0 ppm is the tallest peak, with moderate creatine (3.0) and choline (3.2) and no lactate."
+        : "Tumor pattern: choline rises above NAA, NAA falls, and a lactate peak appears at 1.3 ppm. The elevated Cho/NAA ratio is the classic spectroscopic sign of neoplasm.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Normal", "normal"], ["Tumor", "tumor"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: lactate doublet inversion versus echo time ---- //
+  function buildMrsTe() {
+    var fig = figure("Lactate and TE", "The lactate doublet at 1.3 ppm is J-coupled, so its phase depends on echo time. It points up at short TE, inverts below the baseline at TE around 135 to 144 ms, and returns upright at 288 ms. This inversion confirms lactate rather than overlapping lipid.");
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 320 180", role: "img", "aria-label": "Lactate inversion with echo time" });
+    var g = svgEl("g", {}); svg.appendChild(g);
+    var FIXED = [{ ppm: 3.2, amp: 0.42, label: "Cho" }, { ppm: 3.0, amp: 0.5, label: "Cr" }, { ppm: 2.0, amp: 0.7, label: "NAA" }];
+    var LAC = { 35: 0.45, 144: -0.45, 288: 0.35 };
+    var state = { te: 144 };
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      var peaks = FIXED.concat([{ ppm: 1.3, amp: LAC[state.te], label: "Lac" }]);
+      drawSpectrum(g, peaks, { baseY: 95, hScale: 78 });
+      readout.textContent = state.te === 35
+        ? "Short TE (35 ms): the lactate doublet points up, alongside more metabolites and a rolling baseline."
+        : state.te === 144
+          ? "TE 135 to 144 ms: J-coupling inverts the lactate doublet below the baseline. A peak that inverts here is lactate, not lipid."
+          : "TE 288 ms: the lactate doublet has rephased and points up again above the baseline.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "TE:" }));
+    [["Short 35", 35], ["144 ms", 144], ["288 ms", 288]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.te ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.te = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;

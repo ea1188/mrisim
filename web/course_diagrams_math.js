@@ -201,6 +201,8 @@
     "DTI tractography: mapping white matter tracts": ["tractography"],
     "Cardiac gating and triggering: ECG, VCG, and the R-wave": ["cardiac-gating"],
     "Myocardial tissue characterization: LGE and parametric mapping": ["lge-nulling"],
+    "Metabolites and clinical interpretation": ["mrs-spectrum"],
+    "Acquisition techniques: STEAM, PRESS, and echo time": ["mrs-te"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
