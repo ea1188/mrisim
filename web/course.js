@@ -519,7 +519,15 @@
   function openFromQuery() {
     if (!CTX) return;
     var q = new URLSearchParams(location.search);
-    var lessonRef = q.get("lesson");
+    var lessonRef = q.get("lesson"), modRef = q.get("module");
+    if (!lessonRef && !modRef) return;
+    // One-shot: drop the deep-link params (keep any others) so a later reload or in-app
+    // navigation doesn't jump back to the assigned target.
+    if (history.replaceState) {
+      q.delete("lesson"); q.delete("module");
+      var rest = q.toString();
+      history.replaceState(null, "", location.pathname + (rest ? "?" + rest : ""));
+    }
     if (lessonRef) {
       for (var i = 0; i < CTX.curriculum.length; i++) {
         var m = CTX.curriculum[i];
@@ -531,7 +539,6 @@
       }
       return;
     }
-    var modRef = q.get("module");
     if (modRef) {
       for (var k = 0; k < CTX.curriculum.length; k++) {
         if (CTX.curriculum[k].title === modRef) { openModule(CTX.curriculum[k]); return; }
