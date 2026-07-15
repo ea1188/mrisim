@@ -12610,6 +12610,266 @@
         "answer": 3,
         "explain": "Fat from the skull, scalp, or marrow produces an intense signal in the 0.9 to 1.3 ppm region that can obscure or mimic the lactate doublet."
       }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "education",
+      "ord": 1396,
+      "body": {
+        "title": "BOLD contrast: neurovascular coupling",
+        "html": "<p>Functional MRI localizes brain activity using the <strong>blood-oxygen-level-dependent (BOLD)</strong> effect, an indirect marker of neuronal activity based on local blood chemistry rather than the electrical signal itself. When a region of cortex becomes active, its metabolic demand rises, and the vascular system responds with an overcompensating increase in local cerebral blood flow that exceeds the actual oxygen consumed. The result is a paradoxical local rise in the ratio of oxygenated to deoxygenated hemoglobin within and around the active tissue.</p><p><strong>Deoxyhemoglobin is paramagnetic</strong> and creates local field inhomogeneities that dephase spins, shortening T2* and, to a lesser extent, T2. <strong>Oxyhemoglobin is diamagnetic</strong> and has little effect on the surrounding field. Because active tissue ends up with relatively less deoxyhemoglobin, there is less dephasing, T2* lengthens slightly, and the T2*-weighted signal rises by a few percent in that region. This small signal increase, not a decrease, is what fMRI detects as activation.</p><p>Because the effect depends on T2* changes, fMRI is acquired with T2*-weighted gradient-echo echo-planar imaging (GRE-EPI), which is fast enough to sample the whole brain repeatedly and sensitive to the susceptibility differences the BOLD effect produces. The vascular response is sluggish compared to the neuronal event that triggers it: the hemodynamic response function typically peaks about 4 to 6 seconds after a brief stimulus and then returns toward baseline over several more seconds. BOLD is therefore an indirect, delayed, low-amplitude surrogate for neuronal activity, not a direct measurement of it.</p>",
+        "keypoints": [
+          "BOLD signal reflects local blood oxygenation, not neuronal firing directly.",
+          "Active cortex shows increased blood flow that outpaces oxygen extraction, raising the oxy to deoxy hemoglobin ratio.",
+          "Deoxyhemoglobin is paramagnetic and dephases spins; oxyhemoglobin is diamagnetic.",
+          "Less deoxyhemoglobin means less T2* dephasing, so active regions show a signal increase.",
+          "BOLD is acquired with T2*-weighted GRE-EPI; the hemodynamic response peaks 4 to 6 seconds after the stimulus."
+        ],
+        "worked_example": "A technologist runs a finger-tapping fMRI paradigm and shows the radiologist a color activation map over the precentral gyrus. The radiologist asks why the activated voxels appear brighter rather than darker on the T2*-weighted images, and the technologist explains that increased flow to the tapping-related motor cortex washes out deoxyhemoglobin faster than it is produced, so the paramagnetic dephasing effect drops and the local signal rises.",
+        "memory_hooks": [
+          "More flow, less deoxy, more signal: activation lights up on BOLD.",
+          "Deoxyhemoglobin is the villain of T2*; oxyhemoglobin is harmless."
+        ],
+        "exam_traps": [
+          "Do not assume active brain regions show a signal drop; the overcompensating blood flow makes them brighter, not darker, on T2*-weighted images.",
+          "BOLD reflects hemodynamics with a several-second lag, not the instant of neuronal firing, so it cannot resolve activity on a millisecond timescale."
+        ]
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "education",
+      "ord": 1397,
+      "body": {
+        "title": "Task-based fMRI: paradigms and analysis",
+        "html": "<p>Task-based fMRI compares brain activity during a controlled task against a baseline or control condition to identify regions engaged by that task. The two common paradigm designs are <strong>block design</strong> and <strong>event-related design</strong>. In a block design, the task and rest conditions alternate in extended epochs, for example 20 to 30 seconds of finger tapping followed by 20 to 30 seconds of rest, repeated several times. This produces a large, sustained hemodynamic response with high signal-to-noise ratio and is the more robust and common approach for clinical presurgical mapping.</p><p>In an <strong>event-related design</strong>, brief individual stimuli are presented, and the hemodynamic response to each discrete event is modeled separately, often with randomized or jittered timing. This design offers more flexibility, such as sorting trials after the fact by correct versus incorrect responses, but each individual response has lower amplitude and statistical power than a sustained block, so more repetitions and longer scan times are typically needed.</p><p>Analysis is usually performed with a <strong>general linear model (GLM)</strong>, which correlates the measured time course of each voxel against a predicted hemodynamic response derived from the task timing. Voxels whose signal fluctuations match the predicted response are flagged as statistically active. Because thousands of voxels are tested simultaneously, a correction for multiple comparisons is applied before the resulting statistical map is thresholded and overlaid on a high-resolution anatomic image. The single largest source of spurious or lost activation in task fMRI is patient <strong>head motion</strong>, since even small movements between the task and rest epochs generate signal changes that can swamp the true BOLD effect.</p>",
+        "keypoints": [
+          "Block design alternates extended task and rest epochs, giving a strong, robust signal favored clinically.",
+          "Event-related design models responses to brief individual stimuli, offering flexibility but lower power.",
+          "The general linear model (GLM) correlates each voxel time course with a predicted hemodynamic response.",
+          "Statistical activation maps require correction for multiple comparisons before thresholding.",
+          "Head motion is the dominant confounder in task-based fMRI."
+        ],
+        "worked_example": "For presurgical language mapping in a patient with a frontal glioma, the neuroradiology team chooses a block design alternating word-generation and rest blocks rather than a single-word event-related task, because the sustained block produces a stronger, more reliable activation map over Broca's area despite the patient's limited attention span.",
+        "memory_hooks": [
+          "Block design: long and strong. Event-related: short and flexible.",
+          "GLM: the model predicts the wiggle, the voxel either matches it or does not."
+        ],
+        "exam_traps": [
+          "Event-related designs are not simply better because they are more flexible; they trade signal strength and statistical power for that flexibility.",
+          "A statistically active voxel on an uncorrected map may just be noise; multiple-comparisons correction is required before a map is clinically meaningful."
+        ]
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "education",
+      "ord": 1398,
+      "body": {
+        "title": "Resting-state fMRI and functional connectivity",
+        "html": "<p><strong>Resting-state fMRI</strong> is acquired while the patient lies quietly without performing any task, typically simply told to relax with eyes open or closed and stay awake. Rather than looking for signal changes tied to a stimulus, this technique measures spontaneous, low-frequency BOLD fluctuations, generally in the range of about 0.01 to 0.1 Hz, that occur continuously across the brain even at rest.</p><p>The key finding is that distant brain regions whose spontaneous fluctuations rise and fall together over time are considered <strong>functionally connected</strong>, meaning they are part of the same working network even though they may be anatomically far apart. One well known example is the <strong>default mode network</strong>, a set of regions including the posterior cingulate and medial prefrontal cortex that are more active at rest than during an external task. Other established networks include sensorimotor, visual, and executive control networks.</p><p>Two common analysis approaches are <strong>seed-based correlation</strong>, in which the time course of a chosen reference region is correlated against every other voxel in the brain, and <strong>independent component analysis (ICA)</strong>, which decomposes the whole data set into separate spatial patterns of correlated activity without requiring a predefined seed. Resting-state fMRI is especially useful in patients who cannot reliably perform a task, such as young children, sedated patients, or patients with cognitive impairment, since no active cooperation is required beyond staying still.</p>",
+        "keypoints": [
+          "Resting-state fMRI requires no task; the patient simply rests while spontaneous BOLD fluctuations are recorded.",
+          "Relevant fluctuations occur at low frequency, roughly 0.01 to 0.1 Hz.",
+          "Regions with correlated time courses are termed functionally connected, forming networks.",
+          "The default mode network is the classic example, more active at rest than during task engagement.",
+          "Analysis uses seed-based correlation or independent component analysis (ICA)."
+        ],
+        "worked_example": "A pediatric patient who is sedated for a separate reason has resting-state fMRI added to the protocol so the team can still map sensorimotor and language networks for surgical planning, since a task-based paradigm would be impossible under sedation.",
+        "memory_hooks": [
+          "Resting-state: no task, no problem; the brain still talks to itself.",
+          "Fire together, wire together: correlated time courses define a network."
+        ],
+        "exam_traps": [
+          "Resting-state fMRI does not eliminate motion sensitivity; the patient still must stay still even though no task is performed.",
+          "The default mode network is more active at rest, not during task performance; do not reverse this relationship."
+        ]
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "education",
+      "ord": 1399,
+      "body": {
+        "title": "fMRI acquisition and pitfalls",
+        "html": "<p>Functional MRI acquisition demands speed, since the whole brain must be sampled repeatedly, typically every 1 to 3 seconds (the TR), to track the slow hemodynamic response over the course of a run. This is achieved with fast <strong>gradient-echo echo-planar imaging (GRE-EPI)</strong>, which fills an entire slice of k-space after a single excitation and provides strong T2* weighting to make the sequence sensitive to the small susceptibility changes that underlie the BOLD effect.</p><p>The same susceptibility sensitivity that makes EPI useful for BOLD also makes it vulnerable to artifact. At air-tissue interfaces, especially near the <strong>orbitofrontal and anterior temporal lobes</strong> close to the sinuses and skull base, local field distortion causes geometric warping and regions of signal dropout, sometimes obscuring true activation in those areas entirely.</p><p><strong>Patient motion</strong> is a critical technical concern because the true BOLD signal change is only a few percent; even sub-voxel head motion between frames can generate apparent signal changes of similar or greater magnitude, either mimicking activation that is not real or masking activation that is real. Motion correction (realignment) and censoring of severely corrupted frames are standard preprocessing steps. Physiological noise from cardiac pulsation and respiration also contaminates the BOLD time course and is typically modeled or filtered out.</p><p>Clinically, the leading application of task-based fMRI is <strong>presurgical mapping of eloquent cortex</strong>, such as primary motor and language areas, so the surgical team can plan a resection of a tumor or epileptic focus while minimizing damage to critical function.</p>",
+        "keypoints": [
+          "fMRI uses fast T2*-weighted GRE-EPI with a TR of about 1 to 3 seconds to sample the whole brain repeatedly.",
+          "EPI's susceptibility sensitivity causes distortion and signal dropout near air-tissue interfaces.",
+          "Orbitofrontal and anterior temporal regions are classic sites of EPI dropout.",
+          "Head motion is critical because true BOLD changes are only a few percent of signal.",
+          "Presurgical eloquent-cortex mapping (motor, language) is a major clinical application."
+        ],
+        "worked_example": "A presurgical fMRI for a left temporal lobe tumor shows unexpectedly poor activation in the anterior temporal lobe near the task region; the technologist recognizes this may reflect EPI susceptibility dropout near the skull base and temporal bone rather than a true absence of language function, and flags it for correlation with other mapping methods.",
+        "memory_hooks": [
+          "EPI is fast but touchy: great for BOLD, bad near air.",
+          "A few percent signal, a few pixels of motion: fMRI has almost no room for error."
+        ],
+        "exam_traps": [
+          "Signal dropout near the orbitofrontal or temporal lobes on fMRI is often mistaken for absent function; it may simply be a susceptibility artifact of EPI.",
+          "Do not assume a single motion-corrupted frame is harmless; because true BOLD changes are only a few percent, small motion can fully mimic or erase activation."
+        ]
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1400,
+      "body": {
+        "prompt": "Which hemoglobin species is responsible for the local field inhomogeneity that underlies the BOLD signal?",
+        "options": [
+          "Oxyhemoglobin, because it is paramagnetic",
+          "Deoxyhemoglobin, because it is paramagnetic",
+          "Oxyhemoglobin, because it is diamagnetic",
+          "Methemoglobin, because it is ferromagnetic"
+        ],
+        "answer": 1,
+        "explain": "Deoxyhemoglobin is paramagnetic and creates local field inhomogeneities that dephase spins and shorten T2*. Oxyhemoglobin is diamagnetic and has little magnetic effect."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1401,
+      "body": {
+        "prompt": "During neuronal activation, cerebral blood flow to the active region increases more than oxygen consumption does. What effect does this have on the T2*-weighted BOLD signal?",
+        "options": [
+          "Signal decreases because more oxygen is being consumed",
+          "Signal stays the same because flow and consumption balance out",
+          "Signal increases because there is relatively less deoxyhemoglobin",
+          "Signal increases because there is relatively more deoxyhemoglobin"
+        ],
+        "answer": 2,
+        "explain": "The overcompensating flow washes out deoxyhemoglobin faster than it accumulates, so less paramagnetic dephasing occurs and the T2*-weighted signal rises in the active region."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1402,
+      "body": {
+        "prompt": "Which pulse sequence is standard for acquiring BOLD fMRI data?",
+        "options": [
+          "T2*-weighted gradient-echo echo-planar imaging",
+          "T1-weighted spin-echo imaging",
+          "Proton-density-weighted fast spin-echo imaging",
+          "T2-weighted turbo spin-echo imaging"
+        ],
+        "answer": 0,
+        "explain": "BOLD contrast depends on T2* changes from local susceptibility, so fMRI uses fast T2*-weighted GRE-EPI to capture the whole brain repeatedly with the needed sensitivity."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1403,
+      "body": {
+        "prompt": "Approximately how long after a brief neuronal event does the hemodynamic response function typically peak?",
+        "options": [
+          "100 to 300 milliseconds",
+          "About 1 second",
+          "About 10 to 15 seconds",
+          "About 4 to 6 seconds"
+        ],
+        "answer": 3,
+        "explain": "The vascular response lags the neuronal event, with the hemodynamic response function typically peaking around 4 to 6 seconds before returning toward baseline."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1404,
+      "body": {
+        "prompt": "Which paradigm design alternates extended epochs of task and rest and generally produces the most robust signal for clinical mapping?",
+        "options": [
+          "Event-related design",
+          "Block design",
+          "Resting-state design",
+          "Sparse-sampling design"
+        ],
+        "answer": 1,
+        "explain": "Block design uses sustained task and rest epochs, producing a large, robust hemodynamic response favored for clinical presurgical mapping."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1405,
+      "body": {
+        "prompt": "What statistical method correlates each voxel's time course with a predicted hemodynamic response to generate an fMRI activation map?",
+        "options": [
+          "Independent component analysis",
+          "Seed-based correlation analysis",
+          "General linear model analysis",
+          "Fourier spectral analysis"
+        ],
+        "answer": 2,
+        "explain": "The general linear model (GLM) correlates each voxel's measured signal with the predicted hemodynamic response from the task timing to identify statistically active voxels."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1406,
+      "body": {
+        "prompt": "What is the single most significant confounding factor that degrades task-based fMRI activation maps?",
+        "options": [
+          "Patient head motion",
+          "Scanner gradient nonlinearity",
+          "Radiofrequency coil loading",
+          "Static magnetic field drift"
+        ],
+        "answer": 0,
+        "explain": "Because true BOLD changes are only a few percent, even small head motion between task and rest frames can mimic or obscure real activation, making motion the dominant confounder."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1407,
+      "body": {
+        "prompt": "Resting-state fMRI identifies functional networks, such as the default mode network, by analyzing what kind of signal?",
+        "options": [
+          "High-frequency BOLD changes tied to the cardiac and respiratory cycle",
+          "Signal changes precisely time-locked to a specific behavioral task",
+          "Static differences in T1-weighted anatomic signal intensity",
+          "Spontaneous low-frequency BOLD fluctuations, roughly 0.01 to 0.1 Hz"
+        ],
+        "answer": 3,
+        "explain": "Resting-state fMRI measures spontaneous low-frequency BOLD fluctuations, generally around 0.01 to 0.1 Hz; regions whose fluctuations correlate over time define functional networks such as the default mode network."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1408,
+      "body": {
+        "prompt": "EPI-based fMRI is most prone to susceptibility-related signal dropout and distortion near which of the following regions?",
+        "options": [
+          "Superior frontal and parietal cortex",
+          "Orbitofrontal and anterior temporal cortex",
+          "Posterior cingulate and precuneus cortex",
+          "Occipital and cerebellar cortex"
+        ],
+        "answer": 1,
+        "explain": "Air-tissue interfaces near the sinuses and skull base cause local field distortion, producing geometric warping and signal dropout in the orbitofrontal and anterior temporal lobes on EPI."
+      }
+    },
+    {
+      "topic": "fmri-advanced",
+      "kind": "quiz",
+      "ord": 1409,
+      "body": {
+        "prompt": "What is the leading clinical application of task-based fMRI in a patient with a brain tumor?",
+        "options": [
+          "Measuring tumor perfusion for grading",
+          "Detecting hemorrhage within the tumor",
+          "Presurgical mapping of eloquent cortex",
+          "Confirming tumor cellularity before biopsy"
+        ],
+        "answer": 2,
+        "explain": "Task-based fMRI is widely used before surgery to map eloquent cortex, such as primary motor and language areas, so the surgical team can plan resection while sparing critical function."
+      }
     }
   ]
 }
