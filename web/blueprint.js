@@ -44,6 +44,7 @@
     "procedures-positioning": "procedures",
     "procedures-vascular": "procedures",
     "vascular-advanced": "procedures",
+    "diffusion-advanced": "procedures",
     "pathology": "procedures",
     "safety": "safety",
     "patient-care": "patient-care",
