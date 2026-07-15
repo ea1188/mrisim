@@ -513,6 +513,39 @@
     }, 30);
   }
 
+  // Deep-link from an assignment "open" link: course.html?module=<title> jumps to that
+  // module; course.html?lesson=<title> jumps to (and scrolls to) that lesson inside its
+  // module. Unknown or absent targets fall through, leaving the normal overview.
+  function openFromQuery() {
+    if (!CTX) return;
+    var q = new URLSearchParams(location.search);
+    var lessonRef = q.get("lesson"), modRef = q.get("module");
+    if (!lessonRef && !modRef) return;
+    // One-shot: drop the deep-link params (keep any others) so a later reload or in-app
+    // navigation doesn't jump back to the assigned target.
+    if (history.replaceState) {
+      q.delete("lesson"); q.delete("module");
+      var rest = q.toString();
+      history.replaceState(null, "", location.pathname + (rest ? "?" + rest : ""));
+    }
+    if (lessonRef) {
+      for (var i = 0; i < CTX.curriculum.length; i++) {
+        var m = CTX.curriculum[i];
+        if ((m.lessons || []).indexOf(lessonRef) < 0) continue;
+        var subs = moduleSubsections(m);
+        for (var j = 0; j < subs.length; j++) {
+          if (subs[j].type === "lesson" && subs[j].id === lessonRef) { gotoSub(m, subs[j]); return; }
+        }
+      }
+      return;
+    }
+    if (modRef) {
+      for (var k = 0; k < CTX.curriculum.length; k++) {
+        if (CTX.curriculum[k].title === modRef) { openModule(CTX.curriculum[k]); return; }
+      }
+    }
+  }
+
   // Re-sync the whole view with localStorage progress (after a lesson overlay closes).
   function refresh() {
     if (!CTX) return;
@@ -1425,6 +1458,7 @@
       });
       return bootSync().then(function () {
         courseView(data.curriculum || [], byTitle, byTopic, assignments);
+        openFromQuery();
       });
     });
   }
