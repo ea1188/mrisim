@@ -24,7 +24,7 @@
   }
 
   // A padded plot area with axes. Returns coordinate mappers and draw helpers.
-  // opts: { xMax, yMax (default 1), xLabel, yLabel, title }
+  // opts: { xMax, yMax (default 1), yMin (default 0), xLabel, yLabel, xTicks, yTicks, title }
   function makePlot(opts) {
     var W = 320, H = 180, padL = 40, padB = 30, padT = 8, padR = 10;
     var x0 = padL, x1 = W - padR, y0 = H - padB, y1 = padT;
@@ -32,10 +32,14 @@
       role: "img", "aria-label": opts.title });
     var t = svgEl("title", {}); t.textContent = opts.title; svg.appendChild(t);
     function toX(tv) { return x0 + (x1 - x0) * (tv / opts.xMax); }
-    function toY(v) { return y0 - (y0 - y1) * (v / (opts.yMax || 1)); }
+    var yMin = opts.yMin || 0, yMax = opts.yMax || 1;
+    function toY(v) { return y0 - (y0 - y1) * ((v - yMin) / (yMax - yMin)); }
     function addAxes() {
       svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x1, y2: y0 }));
       svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x0, y2: y1 }));
+      if (yMin < 0) {
+        svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: toY(0), x2: x1, y2: toY(0) }));
+      }
       // y-axis numeric ticks (fraction of full scale)
       (opts.yTicks || [0, 0.5, 1]).forEach(function (v) {
         var y = toY(v);
@@ -91,11 +95,15 @@
       return tx;
     }
     function addMarker(tv, cls, label) {
-      var line = svgEl("line", { class: "diag-marker " + (cls || ""),
-        x1: toX(tv), y1: y0, x2: toX(tv), y2: y1 });
-      svg.appendChild(line);
-      if (label) addLabel(tv, label);
-      return line;
+      var g = svgEl("g", {});
+      g.appendChild(svgEl("line", { class: "diag-marker " + (cls || ""),
+        x1: toX(tv), y1: y0, x2: toX(tv), y2: y1 }));
+      if (label) {
+        var tx = svgEl("text", { class: "diag-axtext", x: toX(tv), y: y1 + 8, "text-anchor": "middle" });
+        tx.textContent = label; g.appendChild(tx);
+      }
+      svg.appendChild(g);
+      return g;
     }
     function addDot(tv, v, cls) {
       var c = svgEl("circle", { class: "diag-dot " + (cls || ""), cx: toX(tv), cy: toY(v), r: 3 });
@@ -332,7 +340,149 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting };
+  // ---- Widget: Ernst angle ---- //
+  function buildErnstAngle() {
+    var fig = figure("Ernst angle", "Ernst angle: for a given TR, one flip angle gives the most spoiled-GRE signal. Going higher adds SAR for little gain (1.5 T, approximate).");
+    var state = { tissue: M.TISSUES[1], tr: 500 };
+    var xMax = 90;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "flip angle (deg)", yLabel: "signal",
+      xTicks: [0, 30, 60, 90], title: "Spoiled gradient-echo signal versus flip angle" });
+    plot.addAxes();
+    var curve = null, marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw(animate) {
+      if (curve) curve.remove(); if (marker) marker.remove();
+      var pts = M.sample(function (deg) {
+        return M.spoiledGreSignal(deg * Math.PI / 180, state.tr, state.tissue.t1); }, xMax, 90);
+      curve = plot.addCurve(pts, "");
+      if (animate) plot.animateCurve(curve, pts);
+      var aeDeg = M.ernstAngle(state.tr, state.tissue.t1) * 180 / Math.PI;
+      marker = plot.addMarker(aeDeg, "", Math.round(aeDeg) + "°");
+      readout.textContent = "Ernst angle " + Math.round(aeDeg) + "° for TR " + state.tr
+        + " ms, " + state.tissue.label + " (T1 " + state.tissue.t1 + " ms). Above it, more flip angle costs SAR for little extra signal.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    var sel = el("select", { class: "diag-select", "aria-label": "Tissue" });
+    M.TISSUES.forEach(function (ti, i) {
+      var o = el("option", { value: ti.id, text: ti.label });
+      if (i === 1) o.setAttribute("selected", "selected");
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      state.tissue = M.TISSUES.filter(function (t) { return t.id === sel.value; })[0];
+      redraw(false);
+    });
+    controls.appendChild(sel);
+    [["Short", 150], ["Medium", 500], ["Long", 1500]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.tr ? " on" : ""), text: "TR " + p[0] });
+      b.addEventListener("click", function () {
+        state.tr = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw(false);
+      });
+      controls.appendChild(b);
+    });
+    if (!reduceMotion) {
+      var play = el("button", { type: "button", class: "diag-btn diag-play", text: "▸ Play" });
+      play.addEventListener("click", function () { redraw(true); });
+      controls.appendChild(play);
+    }
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw(false);
+    return fig;
+  }
+
+  // ---- Widget: inversion-recovery nulling (STIR / FLAIR) ---- //
+  function buildIrNulling() {
+    var fig = figure("Inversion recovery", "After a 180 pulse Mz starts at -1 and recovers. At a tissue's null time TI its signal crosses zero: STIR nulls fat, FLAIR nulls CSF. Fat blue, white matter grey, CSF red (1.5 T, approximate).");
+    var fat = M.TISSUES[0], wm = M.TISSUES[1], csf = M.TISSUES[3];
+    var xMax = 3000;
+    var state = { ti: Math.round(M.nullTI(fat.t1)) };
+    var plot = makePlot({ xMax: xMax, yMin: -1, yMax: 1, xLabel: "TI (ms)", yLabel: "Mz",
+      xTicks: [0, 1000, 2000, 3000], yTicks: [-1, -0.5, 0, 0.5, 1],
+      title: "Inversion-recovery curves and the null time" });
+    plot.addAxes();
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, fat.t1); }, xMax, 80), "");
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, wm.t1); }, xMax, 80), "pd");
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, csf.t1); }, xMax, 80), "alt");
+    var marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function nulled(ti) {
+      var best = null, bestAbs = Infinity;
+      [fat, wm, csf].forEach(function (t) {
+        var a = Math.abs(M.irMz(ti, t.t1));
+        if (a < bestAbs) { bestAbs = a; best = t; }
+      });
+      return best;
+    }
+    function redraw() {
+      if (marker) marker.remove();
+      marker = plot.addMarker(state.ti, "", "TI");
+      readout.textContent = "At TI " + state.ti + " ms, " + nulled(state.ti).label + " is nulled (its curve crosses zero).";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "TI:" }));
+    [["STIR (null fat)", Math.round(M.nullTI(fat.t1))], ["FLAIR (null CSF)", Math.round(M.nullTI(csf.t1))]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.ti ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.ti = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: DWI signal vs b-value ---- //
+  function buildDwiBvalue() {
+    var fig = figure("DWI and b-value", "Diffusion weighting: signal falls as e to the minus b times ADC. Restricted diffusion (low ADC, e.g. acute stroke) stays bright at high b while free water darkens. Restricted blue, normal grey, free water red (1.5 T, approximate).");
+    var xMax = 1000;
+    var state = { b: 1000 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "b-value (s/mm2)", yLabel: "signal",
+      xTicks: [0, 250, 500, 750, 1000], title: "Diffusion signal versus b-value" });
+    plot.addAxes();
+    M.ADCS.forEach(function (a, i) {
+      plot.addCurve(M.sample(function (b) { return M.dwiSignal(b, a.adc); }, xMax, 80),
+        i === 0 ? "" : (i === 1 ? "pd" : "alt"));
+    });
+    var marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (marker) marker.remove();
+      marker = plot.addMarker(state.b, "", "b");
+      var parts = M.ADCS.map(function (a) {
+        return a.label + " " + Math.round(M.dwiSignal(state.b, a.adc) * 100) + "%"; });
+      readout.textContent = "At b " + state.b + " s/mm2: " + parts.join(", ") + ". Restricted diffusion stays brightest.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "b-value:" }));
+    [0, 500, 1000].forEach(function (bv) {
+      var b = el("button", { type: "button", class: "diag-btn" + (bv === state.b ? " on" : ""), text: String(bv) });
+      b.addEventListener("click", function () {
+        state.b = bv;
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
