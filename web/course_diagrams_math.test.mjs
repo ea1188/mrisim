@@ -165,9 +165,11 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Arterial spin labeling: perfusion without contrast"], ["asl-subtraction"]);
   assert.deepEqual(DIAGRAM_MAP["Phase contrast MRA and velocity encoding (VENC)"], ["pc-venc"]);
   assert.deepEqual(DIAGRAM_MAP["Time-of-flight MRA: inflow, saturation, and pitfalls"], ["tof-inflow"]);
+  assert.deepEqual(DIAGRAM_MAP["The diffusion tensor and fractional anisotropy (FA)"], ["fa-anisotropy"]);
+  assert.deepEqual(DIAGRAM_MAP["DTI tractography: mapping white matter tracts"], ["tractography"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["asl-subtraction", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "pc-venc", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting"]);
+  assert.deepEqual(ids, ["asl-subtraction", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "pc-venc", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real

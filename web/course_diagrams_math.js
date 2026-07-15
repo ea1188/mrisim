@@ -197,6 +197,8 @@
     "Arterial spin labeling: perfusion without contrast": ["asl-subtraction"],
     "Phase contrast MRA and velocity encoding (VENC)": ["pc-venc"],
     "Time-of-flight MRA: inflow, saturation, and pitfalls": ["tof-inflow"],
+    "The diffusion tensor and fractional anisotropy (FA)": ["fa-anisotropy"],
+    "DTI tractography: mapping white matter tracts": ["tractography"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
