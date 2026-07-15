@@ -167,9 +167,11 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Time-of-flight MRA: inflow, saturation, and pitfalls"], ["tof-inflow"]);
   assert.deepEqual(DIAGRAM_MAP["The diffusion tensor and fractional anisotropy (FA)"], ["fa-anisotropy"]);
   assert.deepEqual(DIAGRAM_MAP["DTI tractography: mapping white matter tracts"], ["tractography"]);
+  assert.deepEqual(DIAGRAM_MAP["Cardiac gating and triggering: ECG, VCG, and the R-wave"], ["cardiac-gating"]);
+  assert.deepEqual(DIAGRAM_MAP["Myocardial tissue characterization: LGE and parametric mapping"], ["lge-nulling"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["asl-subtraction", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "pc-venc", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
+  assert.deepEqual(ids, ["asl-subtraction", "cardiac-gating", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "lge-nulling", "parallel-imaging", "pc-venc", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real

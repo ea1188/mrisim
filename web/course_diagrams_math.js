@@ -199,6 +199,8 @@
     "Time-of-flight MRA: inflow, saturation, and pitfalls": ["tof-inflow"],
     "The diffusion tensor and fractional anisotropy (FA)": ["fa-anisotropy"],
     "DTI tractography: mapping white matter tracts": ["tractography"],
+    "Cardiac gating and triggering: ECG, VCG, and the R-wave": ["cardiac-gating"],
+    "Myocardial tissue characterization: LGE and parametric mapping": ["lge-nulling"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
