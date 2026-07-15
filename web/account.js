@@ -301,10 +301,39 @@
     return c;
   }
 
+  // A small "Your name" card: the display name instructors see, prefilled from the Google
+  // profile on first visit (captured via the self-update RLS) and editable by the user.
+  function profileCard() {
+    var nameIn = h("input", { type: "text", placeholder: "Your name", autocomplete: "name" });
+    var msg = h("div", { class: "msg" });
+    var save = h("button", { class: "ghost", text: "Save name", onclick: function () {
+      Accounts.updateProfile({ display_name: nameIn.value.trim() }).then(function (res) {
+        msg.className = res && res.error ? "msg err" : "msg ok";
+        msg.textContent = res && res.error ? "Could not save. Try again." : "Saved.";
+      });
+    } });
+    Promise.all([Accounts.profile(), Accounts.getUser()]).then(function (r) {
+      var prof = r[0] || {}, meta = (r[1] && r[1].user_metadata) || {};
+      var googleName = meta.full_name || meta.name || "";
+      if (prof.display_name) {
+        nameIn.value = prof.display_name;
+      } else if (googleName) {
+        nameIn.value = googleName;
+        Accounts.updateProfile({ display_name: googleName });   // capture the Google name once
+      }
+    });
+    return card([
+      h("h2", { text: "Your name" }),
+      h("p", { class: "sub", text: "The name your instructors see for your work." }),
+      nameIn, save, msg,
+    ]);
+  }
+
   // ---- unified signed-in view (everyone can teach and join) ------------- //
   function signedInView(uid, note) {
     var wrap = h("div");
     if (note) wrap.appendChild(h("p", { class: note.ok ? "msg ok" : "msg err", text: note.text }));
+    wrap.appendChild(profileCard());
     var teachList = h("div"), joinedList = h("div"), assigned = h("div"), recent = h("div");
 
     // -- teach: create a class + the classes you own --

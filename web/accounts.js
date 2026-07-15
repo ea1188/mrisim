@@ -106,6 +106,17 @@
       });
     });
   }
+  // Update the signed-in user's own profile row (RLS: profiles_self_update). Fields is a
+  // subset like { display_name }. Like other writes here, returns { error } rather than throwing.
+  function updateProfile(fields) {
+    return client().then(function (c) {
+      return c.auth.getUser().then(function (r) {
+        var u = r.data.user;
+        if (!u) return { error: { message: "not signed in" } };
+        return c.from("profiles").update(fields).eq("id", u.id);
+      });
+    });
+  }
   function onChange(cb) {
     return client().then(function (c) {
       return c.auth.onAuthStateChange(function (_e, s) { cb(s); });
@@ -335,7 +346,7 @@
   window.Accounts = {
     enabled: enabled, signedIn: signedIn, cachedSession: cachedSession, client: client,
     signIn: signIn, verifyCode: verifyCode, signInWithGoogle: signInWithGoogle, signOut: signOut, getSession: getSession, getUser: getUser,
-    profile: profile, onChange: onChange, logActivity: logActivity,
+    profile: profile, updateProfile: updateProfile, onChange: onChange, logActivity: logActivity,
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
     renameClass: renameClass, rotateJoinCode: rotateJoinCode, removeMember: removeMember,
