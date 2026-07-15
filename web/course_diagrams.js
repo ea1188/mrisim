@@ -140,7 +140,61 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery };
+  // ---- Widget: T2 transverse decay ---- //
+  function buildT2Decay() {
+    var fig = figure("T2 decay", "T2 decay — Mxy dephases in the transverse plane (1.5 T, approximate).");
+    var state = { tissue: M.TISSUES[1], te: null };
+    var xMax = 400;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
+      title: "T2 transverse decay curve" });
+    plot.addAxes();
+    var curve = null, marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw(animate) {
+      if (curve) curve.remove(); if (marker) marker.remove();
+      var pts = M.sample(function (t) { return M.mxy(t, state.tissue.t2); }, xMax, 60);
+      curve = plot.addCurve(pts, "");
+      if (animate) plot.animateCurve(curve, pts);
+      readout.textContent = state.te === null ? "Pick a TE to see signal remaining at that echo time."
+        : "At TE " + state.te + " ms, " + state.tissue.label + " retains "
+          + Math.round(M.mxy(state.te, state.tissue.t2) * 100) + "% of Mxy.";
+      if (state.te !== null) marker = plot.addMarker(state.te, "");
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    var sel = el("select", { class: "diag-select", "aria-label": "Tissue" });
+    M.TISSUES.forEach(function (ti, i) {
+      var o = el("option", { value: ti.id, text: ti.label });
+      if (i === 1) o.setAttribute("selected", "selected");
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      state.tissue = M.TISSUES.filter(function (t) { return t.id === sel.value; })[0];
+      redraw(false);
+    });
+    controls.appendChild(sel);
+    [["Short", 15], ["Medium", 40], ["Long", 90]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn", text: "TE " + p[0] });
+      b.addEventListener("click", function () {
+        state.te = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw(false);
+      });
+      controls.appendChild(b);
+    });
+    if (!reduceMotion) {
+      var play = el("button", { type: "button", class: "diag-btn diag-play", text: "▸ Play" });
+      play.addEventListener("click", function () { redraw(true); });
+      controls.appendChild(play);
+    }
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw(false);
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
