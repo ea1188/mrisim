@@ -32,10 +32,14 @@
       role: "img", "aria-label": opts.title });
     var t = svgEl("title", {}); t.textContent = opts.title; svg.appendChild(t);
     function toX(tv) { return x0 + (x1 - x0) * (tv / opts.xMax); }
-    function toY(v) { return y0 - (y0 - y1) * (v / (opts.yMax || 1)); }
+    var yMin = opts.yMin || 0, yMax = opts.yMax || 1;
+    function toY(v) { return y0 - (y0 - y1) * ((v - yMin) / (yMax - yMin)); }
     function addAxes() {
       svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x1, y2: y0 }));
       svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x0, y2: y1 }));
+      if (yMin < 0) {
+        svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: toY(0), x2: x1, y2: toY(0) }));
+      }
       // y-axis numeric ticks (fraction of full scale)
       (opts.yTicks || [0, 0.5, 1]).forEach(function (v) {
         var y = toY(v);
@@ -387,7 +391,54 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle };
+  // ---- Widget: inversion-recovery nulling (STIR / FLAIR) ---- //
+  function buildIrNulling() {
+    var fig = figure("Inversion recovery", "After a 180 pulse Mz starts at -1 and recovers. At a tissue's null time TI its signal crosses zero: STIR nulls fat, FLAIR nulls CSF. Fat blue, white matter grey, CSF red (1.5 T, approximate).");
+    var fat = M.TISSUES[0], wm = M.TISSUES[1], csf = M.TISSUES[3];
+    var xMax = 3000;
+    var state = { ti: Math.round(M.nullTI(fat.t1)) };
+    var plot = makePlot({ xMax: xMax, yMin: -1, yMax: 1, xLabel: "TI (ms)", yLabel: "Mz",
+      xTicks: [0, 1000, 2000, 3000], yTicks: [-1, -0.5, 0, 0.5, 1],
+      title: "Inversion-recovery curves and the null time" });
+    plot.addAxes();
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, fat.t1); }, xMax, 80), "");
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, wm.t1); }, xMax, 80), "pd");
+    plot.addCurve(M.sample(function (t) { return M.irMz(t, csf.t1); }, xMax, 80), "alt");
+    var marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function nulled(ti) {
+      var best = null, bestAbs = Infinity;
+      [fat, wm, csf].forEach(function (t) {
+        var a = Math.abs(M.irMz(ti, t.t1));
+        if (a < bestAbs) { bestAbs = a; best = t; }
+      });
+      return best;
+    }
+    function redraw() {
+      if (marker) marker.remove();
+      marker = plot.addMarker(state.ti, "", "TI");
+      readout.textContent = "At TI " + state.ti + " ms, " + nulled(state.ti).label + " is nulled (its curve crosses zero).";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "TI:" }));
+    [["STIR (null fat)", Math.round(M.nullTI(fat.t1))], ["FLAIR (null CSF)", Math.round(M.nullTI(csf.t1))]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.ti ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.ti = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
