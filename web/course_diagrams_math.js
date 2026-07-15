@@ -17,6 +17,16 @@
   // Effective transverse decay including static field inhomogeneity (T2prime).
   function t2star(T2, T2prime) { return 1 / (1 / T2 + 1 / T2prime); }
 
+  // Spin-echo signal magnitude at time t: the irreversible T2 decay times the
+  // reversible inhomogeneity dephasing that a 180 pulse at TE/2 refocuses. Before
+  // the pulse the reversible phase grows with t; after it, it unwinds toward TE,
+  // so the echo at t=TE is fully refocused and peaks on the true-T2 envelope
+  // (exp(-TE/T2)), while at TE/2 the signal sits on the faster T2* curve.
+  function spinEchoSignal(t, T2, T2prime, TE) {
+    var rev = t <= TE / 2 ? t : Math.abs(t - TE);
+    return Math.exp(-t / T2) * Math.exp(-rev / T2prime);
+  }
+
   // TR/TE thresholds (ms), 1.5 T teaching values.
   var TR_SHORT = 700, TR_LONG = 1500, TE_SHORT = 35, TE_LONG = 80;
 
@@ -54,6 +64,7 @@
     "TR, TE, TI, and flip angle: setting image contrast": ["tr-te-weighting"],
   };
 
-  return { mz: mz, mxy: mxy, t2star: t2star, classifyWeighting: classifyWeighting,
-    sample: sample, TISSUES: TISSUES, DIAGRAM_MAP: DIAGRAM_MAP };
+  return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
+    classifyWeighting: classifyWeighting, sample: sample, TISSUES: TISSUES,
+    DIAGRAM_MAP: DIAGRAM_MAP };
 });

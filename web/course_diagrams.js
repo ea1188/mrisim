@@ -85,14 +85,25 @@
       }
       requestAnimationFrame(frame);
     }
-    function addMarker(tv, cls) {
+    function addLabel(tv, text) {
+      var tx = svgEl("text", { class: "diag-axtext", x: toX(tv), y: y1 + 8, "text-anchor": "middle" });
+      tx.textContent = text; svg.appendChild(tx);
+      return tx;
+    }
+    function addMarker(tv, cls, label) {
       var line = svgEl("line", { class: "diag-marker " + (cls || ""),
         x1: toX(tv), y1: y0, x2: toX(tv), y2: y1 });
       svg.appendChild(line);
+      if (label) addLabel(tv, label);
       return line;
     }
+    function addDot(tv, v, cls) {
+      var c = svgEl("circle", { class: "diag-dot " + (cls || ""), cx: toX(tv), cy: toY(v), r: 3 });
+      svg.appendChild(c);
+      return c;
+    }
     return { svg: svg, toX: toX, toY: toY, addAxes: addAxes, addCurve: addCurve,
-      animateCurve: animateCurve, addMarker: addMarker };
+      animateCurve: animateCurve, addMarker: addMarker, addLabel: addLabel, addDot: addDot };
   }
 
   // A labeled figure shell shared by every widget.
@@ -213,38 +224,49 @@
     return fig;
   }
 
-  // ---- Widget: T2 vs T2* ---- //
+  // ---- Widget: T2 vs T2* (the spin-echo refocusing story) ---- //
   function buildT2vsT2star() {
-    var fig = figure("T2 vs T2*", "T2 vs T2* — field inhomogeneity speeds transverse decay; spin echo's 180 refocuses it, gradient echo does not.");
-    var T2 = 90;             // fixed representative tissue T2 (ms)
-    var xMax = 300;
-    var state = { t2prime: 40 };  // ms; smaller = worse inhomogeneity
-    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
-      xTicks: [0, 100, 200, 300], title: "T2 versus T2-star decay envelopes" });
+    var fig = figure("T2 vs T2*", "After the 90 pulse the signal falls fast along T2* (what a gradient echo sees). A 180 pulse at TE/2 refocuses the field-inhomogeneity dephasing, so a spin echo rebuilds at TE up to the true-T2 envelope — recovering what the gradient echo lost. Pick an echo time (1.5 T, approximate).");
+    var T2 = 100, T2prime = 30;   // ms; fixed tissue T2 and field inhomogeneity
+    var xMax = 200;
+    var state = { te: 80 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Signal",
+      xTicks: [0, 50, 100, 150, 200], title: "Spin-echo refocusing: T2* decay and the echo at TE" });
     plot.addAxes();
-    // True T2 curve is static; T2* curve redraws with the slider.
-    plot.addCurve(M.sample(function (t) { return M.mxy(t, T2); }, xMax, 60), "");
-    var starCurve = null;
+    // True-T2 envelope: the ceiling the echo reaches (dashed). Drawn once.
+    plot.addCurve(M.sample(function (t) { return M.mxy(t, T2); }, xMax, 80), "env");
+    plot.addLabel(0, "90");
+    var sig = null, m180 = null, mTE = null, dot = null;
     var readout = el("div", { class: "diag-readout" });
     function redraw() {
-      if (starCurve) starCurve.remove();
-      var ts = M.t2star(T2, state.t2prime);
-      var pts = M.sample(function (t) { return M.mxy(t, ts); }, xMax, 60);
-      starCurve = plot.addCurve(pts, "alt");
-      readout.textContent = "True T2 = " + T2 + " ms (spin echo). With T2' = "
-        + state.t2prime + " ms, T2* = " + Math.round(ts) + " ms (gradient echo).";
+      if (sig) sig.remove();
+      if (m180) m180.remove();
+      if (mTE) mTE.remove();
+      if (dot) dot.remove();
+      sig = plot.addCurve(M.sample(function (t) {
+        return M.spinEchoSignal(t, T2, T2prime, state.te); }, xMax, 120), "");
+      m180 = plot.addMarker(state.te / 2, "", "180");
+      mTE = plot.addMarker(state.te, "", "TE");
+      dot = plot.addDot(state.te, M.mxy(state.te, T2), "");
+      var se = Math.round(M.mxy(state.te, T2) * 100);
+      var ge = Math.round(M.mxy(state.te, M.t2star(T2, T2prime)) * 100);
+      readout.textContent = "At TE " + state.te + " ms the spin echo reaches " + se
+        + "% (true T2); a gradient echo would read only " + ge + "% (T2*). The 180 recovers "
+        + (se - ge) + " points.";
     }
     fig.appendChild(plot.svg);
     var controls = el("div", { class: "diag-controls" });
-    var lab = el("span", { class: "diag-glabel", text: "Field inhomogeneity (T2'):" });
-    var slider = el("input", { type: "range", min: "10", max: "120", value: "40",
-      class: "diag-slider", "aria-label": "Field inhomogeneity T2 prime in ms" });
-    slider.addEventListener("input", function () {
-      state.t2prime = parseInt(slider.value, 10);
-      redraw();
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Echo time TE:" }));
+    [["Short", 40], ["Medium", 80], ["Long", 120]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.te ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.te = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
     });
-    controls.appendChild(lab);
-    controls.appendChild(slider);
     fig.appendChild(controls);
     fig.appendChild(readout);
     redraw();

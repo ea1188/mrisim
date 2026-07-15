@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
-const { mz, mxy, t2star, classifyWeighting, sample, TISSUES, DIAGRAM_MAP } = Math2;
+const { mz, mxy, t2star, spinEchoSignal, classifyWeighting, sample, TISSUES, DIAGRAM_MAP } = Math2;
 
 test("mz recovers from 0 toward 1", () => {
   assert.equal(mz(0, 500), 0);
@@ -33,6 +33,18 @@ test("classifyWeighting maps the four corners", () => {
 
 test("classifyWeighting treats a mid-range TR as mixed", () => {
   assert.equal(classifyWeighting(1000, 15), "mixed");
+});
+
+test("spinEchoSignal starts at 1, echoes on the true-T2 envelope, dips to T2* at TE/2", () => {
+  const T2 = 100, T2p = 30, TE = 80;
+  assert.equal(spinEchoSignal(0, T2, T2p, TE), 1);                       // 90 pulse: full signal
+  // echo at TE is fully refocused, so it peaks on the true-T2 curve
+  assert.ok(Math.abs(spinEchoSignal(TE, T2, T2p, TE) - Math.exp(-TE / T2)) < 1e-9);
+  // at TE/2 the signal has fallen along the faster T2* curve
+  const t2s = t2star(T2, T2p);
+  assert.ok(Math.abs(spinEchoSignal(TE / 2, T2, T2p, TE) - Math.exp(-(TE / 2) / t2s)) < 1e-9);
+  // the spin echo recovers signal a gradient echo (T2*) would have lost by TE
+  assert.ok(spinEchoSignal(TE, T2, T2p, TE) > Math.exp(-TE / t2s));
 });
 
 test("sample returns n+1 points spanning [0, tMax]", () => {
