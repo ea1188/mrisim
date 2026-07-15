@@ -845,7 +845,7 @@
     var stage = el("div", { class: "diag-kspace" });
     stage.appendChild(panel(imgs.label, "label"));
     stage.appendChild(panel(imgs.control, "control"));
-    stage.appendChild(panel(imgs.diff, "label - control"));
+    stage.appendChild(panel(imgs.diff, "control - label"));
     fig.appendChild(stage);
     return fig;
   }
