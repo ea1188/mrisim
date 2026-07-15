@@ -45,6 +45,14 @@
   // Diffusion-weighted signal: mono-exponential decay with b-value and ADC.
   function dwiSignal(b, ADC) { return Math.exp(-b * ADC); }
 
+  // Combined fat+water transverse signal magnitude at echo time teMs. Fat precesses deltaFHz
+  // slower than water, so the two vectors rephase (in phase) and dephase (opposed) as TE grows.
+  function fatWaterSignal(teMs, fatFrac, deltaFHz) {
+    var w = 1 - fatFrac, f = fatFrac, ph = 2 * Math.PI * deltaFHz * (teMs / 1000);
+    var re = w + f * Math.cos(ph), im = f * Math.sin(ph);
+    return Math.sqrt(re * re + im * im);
+  }
+
   // In-place radix-2 Cooley-Tukey FFT; re/im length must be a power of 2. Inverse divides by N.
   function fft1d(re, im, inverse) {
     var n = re.length, i, j, len, s, k;
@@ -154,15 +162,19 @@
     "Dephasing, T2 vs T2*, and the spin-echo refocusing pulse": ["t2-vs-t2star"],
     "TR, TE, TI, and flip angle: setting image contrast": ["tr-te-weighting"],
     "Flip angle: the Ernst angle and the SAR trade-off": ["ernst-angle"],
-    "Fat suppression: STIR, spectral, Dixon and water excitation": ["ir-nulling"],
+    "Fat suppression: STIR, spectral, Dixon and water excitation": ["ir-nulling", "chemical-shift"],
     "Diffusion in disease: stroke, abscess and cellular tumors": ["dwi-bvalue"],
     "Image quality: SNR, CNR, resolution & the trade-offs": ["snr-tradeoff"],
     "Data acquisition: k-space, encoding and the Fourier transform": ["kspace-recon"],
+    "Acquisition parameters and k-space: matrix, FOV, NEX, and acceleration": ["parallel-imaging"],
+    "Spatial encoding: slice, phase, and frequency gradients into k-space": ["kspace-trajectories"],
+    "MR image quality: SNR, scan time, and spatial resolution tradeoffs": ["gibbs-ringing"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
     ernstAngle: ernstAngle, spoiledGreSignal: spoiledGreSignal, irMz: irMz, nullTI: nullTI,
     dwiSignal: dwiSignal, classifyWeighting: classifyWeighting, sample: sample,
     fft1d: fft1d, fft2d: fft2d, fftshift2d: fftshift2d, snrScanRel: snrScanRel,
+    fatWaterSignal: fatWaterSignal,
     TISSUES: TISSUES, ADCS: ADCS, DIAGRAM_MAP: DIAGRAM_MAP };
 });

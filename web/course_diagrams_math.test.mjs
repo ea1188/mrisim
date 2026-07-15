@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
-const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
+const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, fatWaterSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
 
 test("mz recovers from 0 toward 1", () => {
   assert.equal(mz(0, 500), 0);
@@ -112,6 +112,14 @@ test("snrScanRel: baseline 1x; trade-offs move as expected", () => {
   assert.ok(Math.abs(snrScanRel({ slice: 3, matrix: 192, nex: 4, bw: 32 }).snr - 2) < 1e-9);
 });
 
+test("fatWaterSignal: in-phase at TE=0 and 1/df, opposed at 1/(2df)", () => {
+  const df = 220;
+  assert.ok(Math.abs(fatWaterSignal(0, 0.5, df) - 1) < 1e-9);
+  assert.ok(Math.abs(fatWaterSignal(1000 / df, 0.5, df) - 1) < 1e-6);          // in-phase -> add -> 1
+  assert.ok(Math.abs(fatWaterSignal(1000 / (2 * df), 0.5, df)) < 1e-6);        // opposed, equal -> 0
+  assert.ok(Math.abs(fatWaterSignal(1000 / (2 * df), 0.3, df) - 0.4) < 1e-6);  // |0.7 - 0.3|
+});
+
 test("sample returns n+1 points spanning [0, tMax]", () => {
   const pts = sample((t) => t, 100, 10);
   assert.equal(pts.length, 11);
@@ -128,13 +136,16 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Dephasing, T2 vs T2*, and the spin-echo refocusing pulse"], ["t2-vs-t2star"]);
   assert.deepEqual(DIAGRAM_MAP["TR, TE, TI, and flip angle: setting image contrast"], ["tr-te-weighting"]);
   assert.deepEqual(DIAGRAM_MAP["Flip angle: the Ernst angle and the SAR trade-off"], ["ernst-angle"]);
-  assert.deepEqual(DIAGRAM_MAP["Fat suppression: STIR, spectral, Dixon and water excitation"], ["ir-nulling"]);
+  assert.deepEqual(DIAGRAM_MAP["Fat suppression: STIR, spectral, Dixon and water excitation"], ["ir-nulling", "chemical-shift"]);
   assert.deepEqual(DIAGRAM_MAP["Diffusion in disease: stroke, abscess and cellular tumors"], ["dwi-bvalue"]);
   assert.deepEqual(DIAGRAM_MAP["Image quality: SNR, CNR, resolution & the trade-offs"], ["snr-tradeoff"]);
   assert.deepEqual(DIAGRAM_MAP["Data acquisition: k-space, encoding and the Fourier transform"], ["kspace-recon"]);
+  assert.deepEqual(DIAGRAM_MAP["Acquisition parameters and k-space: matrix, FOV, NEX, and acceleration"], ["parallel-imaging"]);
+  assert.deepEqual(DIAGRAM_MAP["Spatial encoding: slice, phase, and frequency gradients into k-space"], ["kspace-trajectories"]);
+  assert.deepEqual(DIAGRAM_MAP["MR image quality: SNR, scan time, and spatial resolution tradeoffs"], ["gibbs-ringing"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["dwi-bvalue", "ernst-angle", "ir-nulling", "kspace-recon", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
+  assert.deepEqual(ids, ["chemical-shift", "dwi-bvalue", "ernst-angle", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real
