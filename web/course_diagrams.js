@@ -929,7 +929,95 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow };
+  // ---- Widget: FA / diffusion ellipsoid ---- //
+  function buildFaAnisotropy() {
+    var fig = figure("FA anisotropy", "The diffusion tensor per voxel, summarized by fractional anisotropy (FA): the ellipsoid is round when diffusion is isotropic and stretched along the fiber when anisotropic.");
+    var W = 200, H = 160, cx = W / 2, cy = H / 2, R = 34;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "Diffusion ellipsoid cross section" });
+    svg.style.maxWidth = "240px";
+    var ellipse = null;
+    var state = { fa: 0 };
+    var readout = el("div", { class: "diag-readout" });
+    function draw() {
+      if (ellipse) ellipse.remove();
+      var rx = R * (1 + 1.4 * state.fa), ry = R * (1 - 0.7 * state.fa);
+      ellipse = svgEl("ellipse", { cx: cx, cy: cy, rx: rx.toFixed(1), ry: ry.toFixed(1),
+        fill: "#5db0ef", "fill-opacity": "0.5", stroke: "#5db0ef" });
+      svg.appendChild(ellipse);
+      var shape = state.fa === 0 ? "round: diffusion is isotropic, equal in every direction."
+        : "stretched along one axis: diffusion is anisotropic.";
+      readout.textContent = "FA " + state.fa.toFixed(1) + ": the cross section is " + shape
+        + " FA measures how directional water diffusion is: 0 is isotropic (equal in all directions, like CSF), near 1 is strongly one-directional (a dense, coherent tract).";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["CSF (FA 0)", 0], ["Gray matter (FA 0.2)", 0.2], ["White matter (FA 0.8)", 0.8]].forEach(function (p, i) {
+      var b = el("button", { type: "button", class: "diag-btn" + (i === 0 ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.fa = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        draw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    draw();
+    return fig;
+  }
+
+  // ---- Widget: DTI tractography streamlines ---- //
+  function buildTractography() {
+    var fig = figure("Tractography streamlines", "Streamlines follow the principal diffusion direction voxel to voxel; they are a model, not a photograph, and crossing fibers can mislead them.");
+    var W = 260, H = 180, bow = 36;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "Tractography streamlines" });
+    svg.style.maxWidth = "280px";
+    var g = svgEl("g", {});
+    svg.appendChild(g);
+    var SEEDS = [20, 48, 76, 104, 132, 160];
+    // Small spread of endpoint jitter for the probabilistic fan around each seed's core path.
+    var FAN_OFFSETS = [[-12, -16, -10], [-6, -8, -5], [0, 2, 1], [6, 8, 5], [12, 16, 10]];
+    var state = { mode: "deterministic" };
+    var readout = el("div", { class: "diag-readout" });
+    function pathD(y0, dyStart, dyMid, dyEnd) {
+      return "M 12 " + (y0 + dyStart) + " C 90 " + (y0 - bow + dyMid) + ", 170 " + (y0 - bow + dyMid) + ", 248 " + (y0 + dyEnd);
+    }
+    function draw() {
+      while (g.firstChild) g.removeChild(g.firstChild);
+      SEEDS.forEach(function (y0) {
+        if (state.mode === "deterministic") {
+          g.appendChild(svgEl("path", { d: pathD(y0, 0, 0, 0), fill: "none", stroke: "#5db0ef", "stroke-width": "2" }));
+        } else {
+          FAN_OFFSETS.forEach(function (o) {
+            g.appendChild(svgEl("path", { d: pathD(y0, o[0], o[1], o[2]), fill: "none",
+              stroke: "#5db0ef", "stroke-width": "1.2", "stroke-opacity": "0.35" }));
+          });
+        }
+      });
+      readout.textContent = state.mode === "deterministic"
+        ? "Deterministic tractography follows a single best direction per voxel: one path per seed."
+        : "Probabilistic tractography samples many possible directions and shows confidence as streamline density.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Deterministic", "deterministic"], ["Probabilistic", "probabilistic"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (z) { z.classList.remove("on"); });
+        b.classList.add("on");
+        draw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    draw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
