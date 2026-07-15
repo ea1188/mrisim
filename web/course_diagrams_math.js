@@ -45,6 +45,17 @@
   // Diffusion-weighted signal: mono-exponential decay with b-value and ADC.
   function dwiSignal(b, ADC) { return Math.exp(-b * ADC); }
 
+  // Gaussian bump centered at mu with width sig.
+  function gauss(t, mu, sig) { return Math.exp(-((t - mu) * (t - mu)) / (2 * sig * sig)); }
+
+  // DSC (dynamic susceptibility contrast) signal-time curve: baseline 1, a first-pass
+  // dip near t=10 s as the gadolinium bolus passes (T2* susceptibility loss), and a
+  // smaller recirculation dip near t=22 s. depth scales with blood volume (CBV):
+  // a deeper first-pass dip means more tumor blood volume (higher grade).
+  function dscSignal(t, depth) {
+    return 1 - depth * gauss(t, 10, 2.5) - 0.3 * depth * gauss(t, 22, 3);
+  }
+
   // Combined fat+water transverse signal magnitude at echo time teMs. Fat precesses deltaFHz
   // slower than water, so the two vectors rephase (in phase) and dephase (opposed) as TE grows.
   function fatWaterSignal(teMs, fatFrac, deltaFHz) {
@@ -169,12 +180,14 @@
     "Acquisition parameters and k-space: matrix, FOV, NEX, and acceleration": ["parallel-imaging"],
     "Spatial encoding: slice, phase, and frequency gradients into k-space": ["kspace-trajectories"],
     "MR image quality: SNR, scan time, and spatial resolution tradeoffs": ["gibbs-ringing"],
+    "Perfusion by DSC: first-pass bolus tracking": ["dsc-curve"],
+    "Arterial spin labeling: perfusion without contrast": ["asl-subtraction"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
     ernstAngle: ernstAngle, spoiledGreSignal: spoiledGreSignal, irMz: irMz, nullTI: nullTI,
     dwiSignal: dwiSignal, classifyWeighting: classifyWeighting, sample: sample,
     fft1d: fft1d, fft2d: fft2d, fftshift2d: fftshift2d, snrScanRel: snrScanRel,
-    fatWaterSignal: fatWaterSignal,
+    fatWaterSignal: fatWaterSignal, gauss: gauss, dscSignal: dscSignal,
     TISSUES: TISSUES, ADCS: ADCS, DIAGRAM_MAP: DIAGRAM_MAP };
 });
