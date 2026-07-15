@@ -205,6 +205,8 @@
     "Acquisition techniques: STEAM, PRESS, and echo time": ["mrs-te"],
     "BOLD contrast: neurovascular coupling": ["bold-hrf"],
     "Task-based fMRI: paradigms and analysis": ["fmri-design"],
+    "Quantitative mapping: why measure relaxation times": ["relaxometry"],
+    "T2*, R2*, and susceptibility mapping": ["r2star-iron"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
