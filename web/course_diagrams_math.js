@@ -45,6 +45,19 @@
   // Diffusion-weighted signal: mono-exponential decay with b-value and ADC.
   function dwiSignal(b, ADC) { return Math.exp(-b * ADC); }
 
+  // Phase-contrast measured velocity: true velocity wrapped into [-venc, venc]. Above
+  // venc the phase exceeds +-pi and aliases, so the measured value jumps to the
+  // opposite sign, mimicking reversed flow.
+  function aliasedVelocity(v, venc) {
+    var m = 2 * venc;
+    return ((v + venc) % m + m) % m - venc;
+  }
+
+  // Time-of-flight fresh-blood signal fraction: 0 at no flow, full (1) once flow
+  // velocity reaches vFull (slab thickness over TR), clamped so faster flow cannot
+  // exceed full replenishment.
+  function tofSignal(v, vFull) { return Math.min(1, v / vFull); }
+
   // Gaussian bump centered at mu with width sig.
   function gauss(t, mu, sig) { return Math.exp(-((t - mu) * (t - mu)) / (2 * sig * sig)); }
 
@@ -182,6 +195,8 @@
     "MR image quality: SNR, scan time, and spatial resolution tradeoffs": ["gibbs-ringing"],
     "Perfusion by DSC: first-pass bolus tracking": ["dsc-curve"],
     "Arterial spin labeling: perfusion without contrast": ["asl-subtraction"],
+    "Phase contrast MRA and velocity encoding (VENC)": ["pc-venc"],
+    "Time-of-flight MRA: inflow, saturation, and pitfalls": ["tof-inflow"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
@@ -189,5 +204,6 @@
     dwiSignal: dwiSignal, classifyWeighting: classifyWeighting, sample: sample,
     fft1d: fft1d, fft2d: fft2d, fftshift2d: fftshift2d, snrScanRel: snrScanRel,
     fatWaterSignal: fatWaterSignal, gauss: gauss, dscSignal: dscSignal,
+    aliasedVelocity: aliasedVelocity, tofSignal: tofSignal,
     TISSUES: TISSUES, ADCS: ADCS, DIAGRAM_MAP: DIAGRAM_MAP };
 });

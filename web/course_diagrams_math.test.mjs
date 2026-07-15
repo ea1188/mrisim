@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
-const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, fatWaterSignal, dscSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
+const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, fatWaterSignal, dscSignal, aliasedVelocity, tofSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
 
 test("mz recovers from 0 toward 1", () => {
   assert.equal(mz(0, 500), 0);
@@ -126,6 +126,18 @@ test("dscSignal: near-baseline at t=0, a first-pass dip at t=10, deeper for high
   assert.ok(dscSignal(10, 0.85) < dscSignal(10, 0.4));
 });
 
+test("aliasedVelocity wraps true velocity into [-venc, venc]", () => {
+  assert.equal(aliasedVelocity(50, 150), 50);     // in range: unchanged
+  assert.equal(aliasedVelocity(200, 150), -100);  // above VENC: wraps negative
+  assert.equal(aliasedVelocity(-200, 150), 100);  // below -VENC: wraps positive
+});
+
+test("tofSignal is the fresh-blood fraction, clamped at 1", () => {
+  assert.equal(tofSignal(0, 10), 0);
+  assert.equal(tofSignal(5, 10), 0.5);
+  assert.equal(tofSignal(20, 10), 1); // clamped
+});
+
 test("sample returns n+1 points spanning [0, tMax]", () => {
   const pts = sample((t) => t, 100, 10);
   assert.equal(pts.length, 11);
@@ -151,9 +163,11 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["MR image quality: SNR, scan time, and spatial resolution tradeoffs"], ["gibbs-ringing"]);
   assert.deepEqual(DIAGRAM_MAP["Perfusion by DSC: first-pass bolus tracking"], ["dsc-curve"]);
   assert.deepEqual(DIAGRAM_MAP["Arterial spin labeling: perfusion without contrast"], ["asl-subtraction"]);
+  assert.deepEqual(DIAGRAM_MAP["Phase contrast MRA and velocity encoding (VENC)"], ["pc-venc"]);
+  assert.deepEqual(DIAGRAM_MAP["Time-of-flight MRA: inflow, saturation, and pitfalls"], ["tof-inflow"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["asl-subtraction", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
+  assert.deepEqual(ids, ["asl-subtraction", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "pc-venc", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real
