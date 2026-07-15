@@ -115,6 +115,24 @@
     .edu-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
     .edu.read { border-color: #2a4a37; }
     .edu .edu-read-tag { color: var(--ok); font-size: 12px; font-family: var(--mono); letter-spacing: .04em; }
+    .diagram { margin: 14px 0 4px; padding: 12px; border: 1px solid var(--line-2); border-radius: 8px; background: rgba(255,255,255,.02); }
+    .diag-cap { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+    .diag-svg { width: 100%; max-width: 420px; height: auto; display: block; }
+    .diag-axis { stroke: var(--line-2); stroke-width: 1; }
+    .diag-axtext { fill: var(--muted); font-size: 9px; }
+    .diag-curve { fill: none; stroke: var(--accent); stroke-width: 2; }
+    .diag-curve.alt { stroke: var(--warn); }
+    .diag-curve.pd { stroke: var(--muted); }
+    .diag-marker { stroke: var(--ok); stroke-width: 1; stroke-dasharray: 3 3; }
+    .diag-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+    .diag-select { background: rgba(255,255,255,.03); color: inherit; border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 6px; font: inherit; font-size: 12px; }
+    .diag-btn { background: transparent; color: var(--muted); border: 1px solid var(--line-2); border-radius: 6px; padding: 4px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+    .diag-btn:hover { color: inherit; }
+    .diag-btn.on { color: #061018; background: var(--accent); border-color: var(--accent); }
+    .diag-readout { margin-top: 8px; font-size: 12px; color: var(--muted); min-height: 16px; }
+    @media (prefers-reduced-motion: no-preference) {
+      .diag-btn { transition: background .15s var(--ease), color .15s var(--ease); }
+    }
     .edu .mark-read { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--accent); font: inherit;
       font-size: 12.5px; padding: 6px 12px; border-radius: 2px; cursor: pointer; }
     .edu .mark-read:hover { border-color: var(--accent-deep); }
@@ -399,6 +417,8 @@
   <script src="course_logic.js"></script>
   <script src="assignments.js"></script>
   <script src="blueprint.js"></script>
+  <script src="course_diagrams_math.js"></script>
+  <script src="course_diagrams.js"></script>
   <script src="course.js"></script>
 </body>
 </html>
