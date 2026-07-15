@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
-const { mz, mxy, t2star, spinEchoSignal, classifyWeighting, sample, TISSUES, DIAGRAM_MAP } = Math2;
+const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
 
 test("mz recovers from 0 toward 1", () => {
   assert.equal(mz(0, 500), 0);
@@ -47,6 +47,29 @@ test("spinEchoSignal starts at 1, echoes on the true-T2 envelope, dips to T2* at
   assert.ok(spinEchoSignal(TE, T2, T2p, TE) > Math.exp(-TE / t2s));
 });
 
+test("ernstAngle and spoiledGreSignal: signal peaks at the Ernst angle", () => {
+  assert.ok(Math.abs(ernstAngle(500, 500) - Math.acos(1 / Math.E)) < 1e-9);
+  const TR = 500, T1 = 500;
+  const peak = spoiledGreSignal(ernstAngle(TR, T1), TR, T1);
+  for (let deg = 1; deg <= 90; deg++) {
+    assert.ok(spoiledGreSignal(deg * Math.PI / 180, TR, T1) <= peak + 1e-9);
+  }
+});
+
+test("irMz inverts then recovers, nulling at nullTI", () => {
+  const T1 = 500;
+  assert.equal(irMz(0, T1), -1);
+  assert.ok(Math.abs(irMz(nullTI(T1), T1)) < 1e-9);
+  assert.ok(irMz(5000, T1) > 0.99);
+});
+
+test("dwiSignal: 1 at b=0, faster decay for higher ADC, restricted stays brighter", () => {
+  assert.equal(dwiSignal(0, 0.001), 1);
+  assert.ok(dwiSignal(1000, 0.003) < dwiSignal(1000, 0.001));
+  assert.ok(dwiSignal(1000, 0.0006) > dwiSignal(1000, 0.001));
+  assert.ok(ADCS.length === 3 && ADCS[0].adc < ADCS[2].adc);
+});
+
 test("sample returns n+1 points spanning [0, tMax]", () => {
   const pts = sample((t) => t, 100, 10);
   assert.equal(pts.length, 11);
@@ -62,9 +85,12 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Relaxation: T1 spin-lattice and T2 spin-spin"], ["t1-recovery", "t2-decay"]);
   assert.deepEqual(DIAGRAM_MAP["Dephasing, T2 vs T2*, and the spin-echo refocusing pulse"], ["t2-vs-t2star"]);
   assert.deepEqual(DIAGRAM_MAP["TR, TE, TI, and flip angle: setting image contrast"], ["tr-te-weighting"]);
+  assert.deepEqual(DIAGRAM_MAP["Flip angle: the Ernst angle and the SAR trade-off"], ["ernst-angle"]);
+  assert.deepEqual(DIAGRAM_MAP["Fat suppression: STIR, spectral, Dixon and water excitation"], ["ir-nulling"]);
+  assert.deepEqual(DIAGRAM_MAP["Diffusion in disease: stroke, abscess and cellular tumors"], ["dwi-bvalue"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
+  assert.deepEqual(ids, ["dwi-bvalue", "ernst-angle", "ir-nulling", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real
