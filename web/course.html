@@ -142,6 +142,10 @@
     .diag-bar-fill.low { background: var(--warn); }
     .diag-bar-base { position: absolute; top: 0; bottom: 0; left: 33.33%; width: 1px; background: var(--muted); }
     .diag-bar-num { flex: none; width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+    .diag-kspace { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+    .diag-canvas-wrap { margin: 0; text-align: center; }
+    .diag-canvas { width: 140px; height: 140px; image-rendering: pixelated; border: 1px solid var(--line-2); border-radius: 4px; background: #000; display: block; }
+    .diag-canvas-cap { font-size: 11px; color: var(--muted); margin-top: 4px; }
     @media (prefers-reduced-motion: no-preference) {
       .diag-btn { transition: background .15s var(--ease), color .15s var(--ease); }
       .diag-bar-fill { transition: width .2s var(--ease); }

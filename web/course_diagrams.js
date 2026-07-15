@@ -532,7 +532,73 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff };
+  // ---- Widget: k-space center vs periphery (real reconstruction) ---- //
+  function buildKspaceRecon() {
+    var fig = figure("k-space", "k-space holds the image's spatial frequencies. The center is low frequency: overall contrast and brightness. The edges are high frequency: fine detail and sharp borders. Keep only part of k-space, inverse-transform, and see what each region carries.");
+    var N = 64, img = new Array(N * N), x, y, i;
+    for (y = 0; y < N; y++) {
+      for (x = 0; x < N; x++) {
+        var dx = x - N / 2, dy = y - N / 2;
+        var v = (dx * dx + dy * dy) < (N * 0.28) * (N * 0.28) ? 0.8 : 0.08;
+        if ((x > N * 0.30 && x < N * 0.34) || (y > N * 0.62 && y < N * 0.66)) v = 1.0;
+        img[y * N + x] = v;
+      }
+    }
+    var kre = img.slice(), kim = new Array(N * N);
+    for (i = 0; i < N * N; i++) kim[i] = 0;
+    M.fft2d(kre, kim, N, false);
+    M.fftshift2d(kre, N); M.fftshift2d(kim, N);
+    var R = N * 0.12;
+    var kCanvas = document.createElement("canvas"); kCanvas.width = N; kCanvas.height = N; kCanvas.className = "diag-canvas";
+    var iCanvas = document.createElement("canvas"); iCanvas.width = N; iCanvas.height = N; iCanvas.className = "diag-canvas";
+    var kctx = kCanvas.getContext("2d"), ictx = iCanvas.getContext("2d");
+    var readout = el("div", { class: "diag-readout" });
+    function render(mode) {
+      var mre = kre.slice(), mim = kim.slice(), p, gx, gy;
+      for (gy = 0; gy < N; gy++) {
+        for (gx = 0; gx < N; gx++) {
+          var rx = gx - N / 2, ry = gy - N / 2, inC = (rx * rx + ry * ry) <= R * R;
+          var keep = mode === "full" || (mode === "center" && inC) || (mode === "edges" && !inC);
+          if (!keep) { mre[gy * N + gx] = 0; mim[gy * N + gx] = 0; }
+        }
+      }
+      var kdata = kctx.createImageData(N, N), kmag = new Array(N * N), kmax = 0;
+      for (p = 0; p < N * N; p++) { kmag[p] = Math.log(1 + Math.sqrt(mre[p] * mre[p] + mim[p] * mim[p])); if (kmag[p] > kmax) kmax = kmag[p]; }
+      for (p = 0; p < N * N; p++) { var kg = Math.round(255 * kmag[p] / (kmax || 1)); kdata.data[p * 4] = kg; kdata.data[p * 4 + 1] = kg; kdata.data[p * 4 + 2] = kg; kdata.data[p * 4 + 3] = 255; }
+      kctx.putImageData(kdata, 0, 0);
+      if (mode !== "full") { kctx.strokeStyle = "#5db0ef"; kctx.lineWidth = 1; kctx.beginPath(); kctx.arc(N / 2, N / 2, R, 0, 2 * Math.PI); kctx.stroke(); }
+      var sre = mre.slice(), sim = mim.slice();
+      M.fftshift2d(sre, N); M.fftshift2d(sim, N);
+      M.fft2d(sre, sim, N, true);
+      var idata = ictx.createImageData(N, N), mag = new Array(N * N), imax = 0;
+      for (p = 0; p < N * N; p++) { mag[p] = Math.sqrt(sre[p] * sre[p] + sim[p] * sim[p]); if (mag[p] > imax) imax = mag[p]; }
+      for (p = 0; p < N * N; p++) { var ig = Math.round(255 * mag[p] / (imax || 1)); idata.data[p * 4] = ig; idata.data[p * 4 + 1] = ig; idata.data[p * 4 + 2] = ig; idata.data[p * 4 + 3] = 255; }
+      ictx.putImageData(idata, 0, 0);
+      readout.textContent = mode === "center" ? "Center only (low-pass): full contrast returns but the image is blurred, fine detail is gone."
+        : mode === "edges" ? "Edges only (high-pass): only sharp borders survive, overall contrast is gone."
+        : "Full k-space: the complete image.";
+    }
+    var stage = el("div", { class: "diag-kspace" });
+    stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [kCanvas, el("figcaption", { class: "diag-canvas-cap", text: "k-space" })]));
+    stage.appendChild(el("figure", { class: "diag-canvas-wrap" }, [iCanvas, el("figcaption", { class: "diag-canvas-cap", text: "image" })]));
+    fig.appendChild(stage);
+    var controls = el("div", { class: "diag-controls" });
+    [["Center (low-pass)", "center"], ["Edges (high-pass)", "edges"], ["Full", "full"]].forEach(function (pr) {
+      var b = el("button", { type: "button", class: "diag-btn" + (pr[1] === "full" ? " on" : ""), text: pr[0] });
+      b.addEventListener("click", function () {
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (z) { z.classList.remove("on"); });
+        b.classList.add("on");
+        render(pr[1]);
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    render("full");
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
