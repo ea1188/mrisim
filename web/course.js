@@ -428,6 +428,7 @@
   // subsections, each with a checkbox that ticks when its lesson is done or its section is read.
   function buildRail() {
     var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead(), mastery = loadMastery();
+    var CORE_MODULE_COUNT = 10;
     var total = 0, complete = 0;
     var perMod = curriculum.map(function (mod) {
       var subs = moduleSubsections(mod);
@@ -455,7 +456,11 @@
       document.createTextNode("Review" + (railDue ? " (" + railDue + ")" : "")),
       h("span", { class: "ec-sub", text: "Missed items, spaced" }),
     ]));
-    perMod.forEach(function (pm) {
+    perMod.forEach(function (pm, i) {
+      if (i === 0) rail.appendChild(h("div", { class: "rail-section", text: "Core curriculum" }));
+      if (i === CORE_MODULE_COUNT && curriculum.length > CORE_MODULE_COUNT) {
+        rail.appendChild(h("div", { class: "rail-section", text: "Advanced imaging" }));
+      }
       var mod = pm.mod, subs = pm.subs;
       var modDone = subs.length && pm.c === subs.length;
       var expanded = CTX.expanded.has(mod.title);
