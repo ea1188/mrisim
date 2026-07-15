@@ -639,7 +639,40 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories };
+  // ---- Widget: chemical shift and the Dixon method ---- //
+  function buildChemicalShift() {
+    var fig = figure("Chemical shift and Dixon", "Fat precesses about 220 Hz slower than water at 1.5 T, so as TE grows the two signals drift in and out of phase. Acquiring an in-phase and an opposed-phase echo is how the Dixon method separates fat from water (1.5 T, approximate).");
+    var dF = 220, xMax = 10, state = { fatFrac: 0.5 };
+    var opp = 1000 / (2 * dF), inph = 1000 / dF;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "TE (ms)", yLabel: "signal", xTicks: [0, 2.5, 5, 7.5, 10], title: "Combined fat and water signal versus echo time" });
+    plot.addAxes();
+    var curve = null, mO = null, mI = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove(); if (mO) mO.remove(); if (mI) mI.remove();
+      var pts = M.sample(function (te) { return M.fatWaterSignal(te, state.fatFrac, dF); }, xMax, 100);
+      curve = plot.addCurve(pts, "");
+      mO = plot.addMarker(opp, "", "opp"); mI = plot.addMarker(inph, "", "in");
+      readout.textContent = "Opposed-phase at " + opp.toFixed(1) + " ms (fat and water subtract), in-phase at " + inph.toFixed(1) + " ms (they add). Fat fraction " + Math.round(state.fatFrac * 100) + "%.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Fat fraction:" }));
+    [["10%", 0.1], ["30%", 0.3], ["50%", 0.5]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.fatFrac ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.fatFrac = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (z) { z.classList.remove("on"); });
+        b.classList.add("on"); redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls); fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
