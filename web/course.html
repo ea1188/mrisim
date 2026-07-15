@@ -19,7 +19,7 @@
     /* Top app bar (blurred, sticky) */
     .top { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 clamp(14px,4vw,22px);
       background: rgba(7,9,12,.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
-      position: sticky; top: 0; z-index: 10; }
+      position: fixed; top: 0; left: 0; right: 0; z-index: 10; }
     .top img { width: 26px; height: 26px; }
     .top h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
     .top .badge { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
@@ -48,6 +48,9 @@
     .msg { font-size: 13px; margin-top: 12px; } .msg.ok { color: var(--ok); } .msg.err { color: var(--warn); }
 
     /* Course layout: topic rail + content */
+    /* The header is position:fixed (out of flow), so offset the content by its 56px height.
+       .course keeps min-height:calc(100vh - 56px) → 56px offset + that = exactly 100vh. */
+    #course-root { padding-top: 56px; }
     .course { display: grid; grid-template-columns: 288px 1fr; min-height: calc(100vh - 56px); }
     .rail { border-right: 1px solid var(--line); padding: 12px 0; overflow-y: auto; }
     .rail .prog { padding: 6px 18px 14px; color: var(--dim); font-size: 11px; font-family: var(--mono); letter-spacing: .04em; }
