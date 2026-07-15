@@ -1235,7 +1235,119 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe };
+  // ---- shared: canonical double-gamma hemodynamic response + convolution ---- //
+  function hrf(t) {
+    if (t <= 0) return 0;
+    var N1 = Math.pow(5, 5) * Math.exp(-5), N2 = Math.pow(15, 15) * Math.exp(-15);
+    return Math.pow(t, 5) * Math.exp(-t) / N1 - 0.15 * Math.pow(t, 15) * Math.exp(-t) / N2;
+  }
+  // Convolve a 0/1 stimulus (stimOn(t)) with the HRF over [0, tMax]. Returns [[t, v], ...].
+  function convolveHrf(stimOn, tMax, dt) {
+    var n = Math.round(tMax / dt), s = [], i, j;
+    for (i = 0; i <= n; i++) s.push(stimOn(i * dt));
+    var pts = [];
+    for (j = 0; j <= n; j++) {
+      var v = 0;
+      for (i = 0; i <= j; i++) v += s[i] * hrf((j - i) * dt) * dt;
+      pts.push([j * dt, v]);
+    }
+    return pts;
+  }
+  function maxV(pts) { return pts.reduce(function (m, p) { return Math.max(m, p[1]); }, 0); }
+  function scalePts(pts, k) { return pts.map(function (p) { return [p[0], p[1] * k]; }); }
+
+  // ---- Widget: BOLD hemodynamic response, brief event vs sustained block ---- //
+  function buildBoldHrf() {
+    var fig = figure("Hemodynamic response", "The BOLD signal follows neuronal activity with a delay: after a brief event it rises to a peak about 4 to 6 seconds later, then dips below baseline. A sustained block holds a plateau while the task is on. Each curve is scaled to its own peak.");
+    var xMax = 30, dt = 0.5;
+    var brief = convolveHrf(function (t) { return t >= 0 && t < 1 ? 1 : 0; }, xMax, dt);
+    var block = convolveHrf(function (t) { return t >= 0 && t < 20 ? 1 : 0; }, xMax, dt);
+    var curves = { brief: scalePts(brief, 1 / maxV(brief)), block: scalePts(block, 1 / maxV(block)) };
+    var state = { mode: "brief" };
+    var plot = makePlot({ xMax: xMax, yMin: -0.3, yMax: 1, xLabel: "time (s)", yLabel: "BOLD (rel.)",
+      xTicks: [0, 5, 10, 15, 20, 25, 30], yTicks: [0, 0.5, 1], title: "Hemodynamic response versus time" });
+    plot.addAxes();
+    var curve = null, marker = null, readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove();
+      if (marker) marker.remove();
+      curve = plot.addCurve(curves[state.mode], "");
+      if (state.mode === "brief") {
+        marker = plot.addMarker(5, "", "~5 s");
+        readout.textContent = "Brief event: the response peaks about 5 seconds after the stimulus, then falls through baseline into a post-stimulus undershoot. The lag is why BOLD cannot resolve fast neural timing.";
+      } else {
+        marker = plot.addMarker(20, "", "task off");
+        readout.textContent = "Sustained block: the response rises and holds a plateau while the task is on, then decays after it ends. The larger, steadier signal is why block designs give higher SNR for clinical mapping.";
+      }
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Brief event", "brief"], ["Sustained block", "block"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: block vs event-related design (predicted BOLD) ---- //
+  function buildFmriDesign() {
+    var fig = figure("Task designs", "The predicted BOLD signal is the task timing convolved with the hemodynamic response. A block design gives large, sustained responses; an event-related design gives smaller, separate responses but allows flexible trial sorting. Both scaled to the block peak.");
+    var xMax = 60, dt = 0.5;
+    function inAny(t, epochs) { for (var i = 0; i < epochs.length; i++) if (t >= epochs[i][0] && t < epochs[i][1]) return 1; return 0; }
+    var BLOCK = [[5, 20], [35, 50]];
+    var EVENTS = [6, 14, 22, 31, 39, 47, 54].map(function (s) { return [s, s + 1]; });
+    var blockPts = convolveHrf(function (t) { return inAny(t, BLOCK); }, xMax, dt);
+    var eventPts = convolveHrf(function (t) { return inAny(t, EVENTS); }, xMax, dt);
+    var k = 1 / maxV(blockPts);
+    var curves = { block: scalePts(blockPts, k), event: scalePts(eventPts, k) };
+    var stim = { block: BLOCK, event: EVENTS };
+    var state = { mode: "block" };
+    var plot = makePlot({ xMax: xMax, yMin: -0.3, yMax: 1.1, xLabel: "time (s)", yLabel: "predicted BOLD",
+      xTicks: [0, 15, 30, 45, 60], yTicks: [0, 0.5, 1], title: "Predicted BOLD for block versus event-related design" });
+    plot.addAxes();
+    var curve = null, boxes = null, readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove();
+      if (boxes) boxes.remove();
+      boxes = svgEl("g", {});
+      stim[state.mode].forEach(function (e) {
+        boxes.appendChild(svgEl("rect", { x: plot.toX(e[0]).toFixed(1), y: plot.toY(-0.05).toFixed(1),
+          width: (plot.toX(e[1]) - plot.toX(e[0])).toFixed(1), height: 8, fill: "#8a8f98", "fill-opacity": "0.5" }));
+      });
+      plot.svg.appendChild(boxes);
+      curve = plot.addCurve(curves[state.mode], "");
+      readout.textContent = state.mode === "block"
+        ? "Block design: sustained task epochs (grey bars) produce large, well-separated BOLD responses with high statistical power, the robust choice for presurgical mapping."
+        : "Event-related design: brief scattered events give smaller, overlapping responses. Power per event is lower, but trials can be sorted after the fact, such as by correct versus incorrect.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Block", "block"], ["Event-related", "event"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
