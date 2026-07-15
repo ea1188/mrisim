@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
-const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, fatWaterSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
+const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, fatWaterSignal, dscSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
 
 test("mz recovers from 0 toward 1", () => {
   assert.equal(mz(0, 500), 0);
@@ -120,6 +120,12 @@ test("fatWaterSignal: in-phase at TE=0 and 1/df, opposed at 1/(2df)", () => {
   assert.ok(Math.abs(fatWaterSignal(1000 / (2 * df), 0.3, df) - 0.4) < 1e-6);  // |0.7 - 0.3|
 });
 
+test("dscSignal: near-baseline at t=0, a first-pass dip at t=10, deeper for higher depth", () => {
+  assert.ok(Math.abs(dscSignal(0, 0.6) - 1) < 0.05);
+  assert.ok(dscSignal(10, 0.6) < dscSignal(0, 0.6));
+  assert.ok(dscSignal(10, 0.85) < dscSignal(10, 0.4));
+});
+
 test("sample returns n+1 points spanning [0, tMax]", () => {
   const pts = sample((t) => t, 100, 10);
   assert.equal(pts.length, 11);
@@ -143,9 +149,11 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Acquisition parameters and k-space: matrix, FOV, NEX, and acceleration"], ["parallel-imaging"]);
   assert.deepEqual(DIAGRAM_MAP["Spatial encoding: slice, phase, and frequency gradients into k-space"], ["kspace-trajectories"]);
   assert.deepEqual(DIAGRAM_MAP["MR image quality: SNR, scan time, and spatial resolution tradeoffs"], ["gibbs-ringing"]);
+  assert.deepEqual(DIAGRAM_MAP["Perfusion by DSC: first-pass bolus tracking"], ["dsc-curve"]);
+  assert.deepEqual(DIAGRAM_MAP["Arterial spin labeling: perfusion without contrast"], ["asl-subtraction"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["chemical-shift", "dwi-bvalue", "ernst-angle", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
+  assert.deepEqual(ids, ["asl-subtraction", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "parallel-imaging", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real

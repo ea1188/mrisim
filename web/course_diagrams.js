@@ -149,6 +149,13 @@
     for (p = 0; p < N * N; p++) { var g = Math.round(255 * mag[p] / (mx || 1)); d.data[p * 4] = g; d.data[p * 4 + 1] = g; d.data[p * 4 + 2] = g; d.data[p * 4 + 3] = 255; }
     ctx.putImageData(d, 0, 0);
   }
+  // Draw a real-valued grayscale array (non-negative), scaled by its own max, to a 2D context.
+  function drawGray(ctx, arr, N) {
+    var d = ctx.createImageData(N, N), mx = 0, p;
+    for (p = 0; p < N * N; p++) { if (arr[p] > mx) mx = arr[p]; }
+    for (p = 0; p < N * N; p++) { var g = Math.round(255 * arr[p] / (mx || 1)); d.data[p * 4] = g; d.data[p * 4 + 1] = g; d.data[p * 4 + 2] = g; d.data[p * 4 + 3] = 255; }
+    ctx.putImageData(d, 0, 0);
+  }
   // Draw magnitude of a complex image (grayscale) to a 2D context.
   function drawIMag(ctx, re, im, N) {
     var d = ctx.createImageData(N, N), mag = new Array(N * N), mx = 0, p;
@@ -768,7 +775,82 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging };
+  // ---- Widget: DSC signal-time curve (first-pass bolus tracking) ---- //
+  function buildDscCurve() {
+    var fig = figure("DSC signal-time curve", "DSC watches signal drop as the gadolinium bolus passes (T2* susceptibility), then recover; a second smaller dip is recirculation (1.5 T, approximate).");
+    var xMax = 40;
+    var state = { depth: 0.4 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (s)", yLabel: "signal",
+      xTicks: [0, 10, 20, 30, 40], title: "DSC signal-time curve: first-pass bolus and recirculation" });
+    plot.addAxes();
+    plot.addMarker(10, "", "1st pass");
+    var curve = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove();
+      var pts = M.sample(function (t) { return M.dscSignal(t, state.depth); }, xMax, 80);
+      curve = plot.addCurve(pts, "");
+      var nadir = Math.round(M.dscSignal(10, state.depth) * 100);
+      readout.textContent = "Nadir signal at first pass: " + nadir + "% of baseline. A deeper drop means more blood volume (higher CBV), consistent with higher tumor grade.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Tissue:" }));
+    [["Normal", 0.4], ["High-grade tumor", 0.85]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.depth ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.depth = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: ASL label minus control (perfusion without contrast) ---- //
+  // Builds the three teaching images: control (base), label (base with a small
+  // perfusion-related drop in the cortical rim), and their difference (the
+  // perfusion signal that subtraction recovers).
+  function aslImages(N) {
+    var control = new Array(N * N), label = new Array(N * N), diff = new Array(N * N);
+    var cx = N / 2, cy = N / 2, discR = N * 0.34, rimInner = N * 0.26, perf = 0.06;
+    var x, y;
+    for (y = 0; y < N; y++) {
+      for (x = 0; x < N; x++) {
+        var dx = x - cx, dy = y - cy, r = Math.sqrt(dx * dx + dy * dy);
+        var inDisc = r < discR, inRim = inDisc && r >= rimInner;
+        var v = inDisc ? 0.5 : 0.05;
+        if (inRim) v = 0.6;
+        var idx = y * N + x;
+        control[idx] = v;
+        label[idx] = inRim ? v - perf : v;
+        diff[idx] = control[idx] - label[idx];
+      }
+    }
+    return { control: control, label: label, diff: diff };
+  }
+  function buildAslSubtraction() {
+    var fig = figure("ASL label minus control", "ASL subtracts a control image from a labeled image; static tissue cancels and only blood delivered to tissue (perfusion) remains, so no contrast agent is needed.");
+    var N = 64, imgs = aslImages(N);
+    function panel(arr, caption) {
+      var c = document.createElement("canvas"); c.width = N; c.height = N; c.className = "diag-canvas";
+      drawGray(c.getContext("2d"), arr, N);
+      return el("figure", { class: "diag-canvas-wrap" }, [c, el("figcaption", { class: "diag-canvas-cap", text: caption })]);
+    }
+    var stage = el("div", { class: "diag-kspace" });
+    stage.appendChild(panel(imgs.label, "label"));
+    stage.appendChild(panel(imgs.control, "control"));
+    stage.appendChild(panel(imgs.diff, "control - label"));
+    fig.appendChild(stage);
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
