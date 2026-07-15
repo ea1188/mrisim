@@ -173,9 +173,11 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Acquisition techniques: STEAM, PRESS, and echo time"], ["mrs-te"]);
   assert.deepEqual(DIAGRAM_MAP["BOLD contrast: neurovascular coupling"], ["bold-hrf"]);
   assert.deepEqual(DIAGRAM_MAP["Task-based fMRI: paradigms and analysis"], ["fmri-design"]);
+  assert.deepEqual(DIAGRAM_MAP["Quantitative mapping: why measure relaxation times"], ["relaxometry"]);
+  assert.deepEqual(DIAGRAM_MAP["T2*, R2*, and susceptibility mapping"], ["r2star-iron"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["asl-subtraction", "bold-hrf", "cardiac-gating", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "fmri-design", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "lge-nulling", "mrs-spectrum", "mrs-te", "parallel-imaging", "pc-venc", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
+  assert.deepEqual(ids, ["asl-subtraction", "bold-hrf", "cardiac-gating", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "fmri-design", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "lge-nulling", "mrs-spectrum", "mrs-te", "parallel-imaging", "pc-venc", "r2star-iron", "relaxometry", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real

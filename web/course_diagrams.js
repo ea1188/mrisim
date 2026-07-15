@@ -1347,7 +1347,86 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign };
+  // ---- Widget: T2 relaxometry (multi-echo samples fit to a T2 value) ---- //
+  function buildRelaxometry() {
+    var fig = figure("T2 relaxometry", "A quantitative T2 map fits the signal measured at several echo times to an exponential decay. The fitted time constant is the tissue's T2 in milliseconds, an absolute value stored per pixel, not a brightness.");
+    var TISSUES = [{ label: "Cartilage", t2: 40 }, { label: "Fluid / edema", t2: 200 }];
+    var TES = [20, 60, 100, 150, 200];
+    var xMax = 250, state = { i: 0 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "echo time TE (ms)", yLabel: "signal",
+      xTicks: [0, 50, 100, 150, 200, 250], title: "Multi-echo decay fit to a T2 value" });
+    plot.addAxes();
+    var curve = null, dots = null, readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove();
+      if (dots) dots.remove();
+      var t2 = TISSUES[state.i].t2;
+      curve = plot.addCurve(M.sample(function (te) { return M.mxy(te, t2); }, xMax, 80), state.i === 0 ? "" : "alt");
+      dots = svgEl("g", {});
+      TES.forEach(function (te) {
+        dots.appendChild(svgEl("circle", { class: "diag-dot", cx: plot.toX(te).toFixed(1),
+          cy: plot.toY(M.mxy(te, t2)).toFixed(1), r: 3 }));
+      });
+      plot.svg.appendChild(dots);
+      readout.textContent = "Fitting the sampled echoes (dots) to an exponential gives T2 = " + t2 + " ms for " + TISSUES[state.i].label
+        + ". That number is the map's pixel value; a healthy and a degenerating tissue differ by their measured T2, not by window settings.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Tissue:" }));
+    TISSUES.forEach(function (t, i) {
+      var b = el("button", { type: "button", class: "diag-btn" + (i === state.i ? " on" : ""), text: t.label });
+      b.addEventListener("click", function () {
+        state.i = i;
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: R2* and iron loading ---- //
+  function buildR2starIron() {
+    var fig = figure("R2* and iron", "Iron is paramagnetic, so it distorts the local field and shortens T2*. R2* (equal to 1000/T2* in units per second) rises with iron, which is the basis of noninvasive liver iron quantification. Faster decay means a higher R2*.");
+    var LEVELS = [{ label: "Normal", t2s: 25 }, { label: "Moderate iron", t2s: 12 }, { label: "Heavy iron", t2s: 5 }];
+    var xMax = 40, state = { i: 0 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "echo time TE (ms)", yLabel: "signal",
+      xTicks: [0, 10, 20, 30, 40], title: "T2* decay and R2* versus iron loading" });
+    plot.addAxes();
+    var curve = null, readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove();
+      var t2s = LEVELS[state.i].t2s;
+      curve = plot.addCurve(M.sample(function (te) { return M.mxy(te, t2s); }, xMax, 80), state.i === 0 ? "" : (state.i === 1 ? "pd" : "alt"));
+      var r2s = Math.round(1000 / t2s);
+      readout.textContent = LEVELS[state.i].label + ": T2* = " + t2s + " ms, so R2* = " + r2s
+        + " per second. More iron shortens T2* and raises R2*, so a high R2* means a heavier iron burden.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Iron:" }));
+    LEVELS.forEach(function (lv, i) {
+      var b = el("button", { type: "button", class: "diag-btn" + (i === state.i ? " on" : ""), text: lv.label });
+      b.addEventListener("click", function () {
+        state.i = i;
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign, "relaxometry": buildRelaxometry, "r2star-iron": buildR2starIron };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
