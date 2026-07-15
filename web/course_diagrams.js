@@ -332,7 +332,62 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting };
+  // ---- Widget: Ernst angle ---- //
+  function buildErnstAngle() {
+    var fig = figure("Ernst angle", "Ernst angle: for a given TR, one flip angle gives the most spoiled-GRE signal. Going higher adds SAR for little gain (1.5 T, approximate).");
+    var state = { tissue: M.TISSUES[1], tr: 500 };
+    var xMax = 90;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "flip angle (deg)", yLabel: "signal",
+      xTicks: [0, 30, 60, 90], title: "Spoiled gradient-echo signal versus flip angle" });
+    plot.addAxes();
+    var curve = null, marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw(animate) {
+      if (curve) curve.remove(); if (marker) marker.remove();
+      var pts = M.sample(function (deg) {
+        return M.spoiledGreSignal(deg * Math.PI / 180, state.tr, state.tissue.t1); }, xMax, 90);
+      curve = plot.addCurve(pts, "");
+      if (animate) plot.animateCurve(curve, pts);
+      var aeDeg = M.ernstAngle(state.tr, state.tissue.t1) * 180 / Math.PI;
+      marker = plot.addMarker(aeDeg, "", Math.round(aeDeg) + "°");
+      readout.textContent = "Ernst angle " + Math.round(aeDeg) + "° for TR " + state.tr
+        + " ms, " + state.tissue.label + " (T1 " + state.tissue.t1 + " ms). Above it, more flip angle costs SAR for little extra signal.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    var sel = el("select", { class: "diag-select", "aria-label": "Tissue" });
+    M.TISSUES.forEach(function (ti, i) {
+      var o = el("option", { value: ti.id, text: ti.label });
+      if (i === 1) o.setAttribute("selected", "selected");
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      state.tissue = M.TISSUES.filter(function (t) { return t.id === sel.value; })[0];
+      redraw(false);
+    });
+    controls.appendChild(sel);
+    [["Short", 150], ["Medium", 500], ["Long", 1500]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.tr ? " on" : ""), text: "TR " + p[0] });
+      b.addEventListener("click", function () {
+        state.tr = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw(false);
+      });
+      controls.appendChild(b);
+    });
+    if (!reduceMotion) {
+      var play = el("button", { type: "button", class: "diag-btn diag-play", text: "▸ Play" });
+      play.addEventListener("click", function () { redraw(true); });
+      controls.appendChild(play);
+    }
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw(false);
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
