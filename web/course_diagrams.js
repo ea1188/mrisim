@@ -232,7 +232,66 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star };
+  // ---- Widget: TR/TE -> weighting ---- //
+  function buildTrTeWeighting() {
+    var fig = figure("TR/TE and weighting", "TR/TE and weighting — long TR undoes T1 differences; long TE reveals T2 differences (1.5 T, approximate).");
+    var state = { tr: 400, te: 15 };
+    var trMax = 3000, teMax = 200;
+    var wm = M.TISSUES[1], csf = M.TISSUES[3]; // contrast pair: white matter vs CSF
+
+    var recov = makePlot({ xMax: trMax, yMax: 1, xLabel: "TR (ms)", yLabel: "Mz",
+      title: "Longitudinal recovery vs TR" });
+    recov.addAxes();
+    recov.addCurve(M.sample(function (t) { return M.mz(t, wm.t1); }, trMax, 60), "");
+    recov.addCurve(M.sample(function (t) { return M.mz(t, csf.t1); }, trMax, 60), "pd");
+    var trMark = null;
+
+    var decay = makePlot({ xMax: teMax, yMax: 1, xLabel: "TE (ms)", yLabel: "Mxy",
+      title: "Transverse decay vs TE" });
+    decay.addAxes();
+    decay.addCurve(M.sample(function (t) { return M.mxy(t, wm.t2); }, teMax, 60), "");
+    decay.addCurve(M.sample(function (t) { return M.mxy(t, csf.t2); }, teMax, 60), "pd");
+    var teMark = null;
+
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (trMark) trMark.remove();
+      if (teMark) teMark.remove();
+      trMark = recov.addMarker(state.tr, "");
+      teMark = decay.addMarker(state.te, "");
+      var w = M.classifyWeighting(state.tr, state.te);
+      var name = { T1: "T1-weighted", T2: "T2-weighted", PD: "proton-density", mixed: "mixed (rarely used)" }[w];
+      readout.textContent = "TR " + state.tr + " / TE " + state.te + " ms → " + name
+        + ". (Accent = white matter, gray = CSF.)";
+    }
+    var wrap = el("div", { class: "diag-dual" });
+    wrap.appendChild(recov.svg);
+    wrap.appendChild(decay.svg);
+    fig.appendChild(wrap);
+
+    var controls = el("div", { class: "diag-controls" });
+    function group(labelTxt, key, presets) {
+      controls.appendChild(el("span", { class: "diag-glabel", text: labelTxt }));
+      presets.forEach(function (p) {
+        var b = el("button", { type: "button", class: "diag-btn diag-" + key, text: p[0] });
+        b.addEventListener("click", function () {
+          state[key] = p[1];
+          [].forEach.call(controls.querySelectorAll(".diag-" + key), function (x) { x.classList.remove("on"); });
+          b.classList.add("on");
+          redraw();
+        });
+        controls.appendChild(b);
+      });
+    }
+    group("TR:", "tr", [["Short", 400], ["Long", 2500]]);
+    group("TE:", "te", [["Short", 15], ["Long", 90]]);
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
