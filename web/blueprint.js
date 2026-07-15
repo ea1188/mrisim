@@ -38,6 +38,7 @@
     "flow-artifacts": "image-production",
     "fat-suppression": "image-production",
     "three-d-recon": "image-production",
+    "perfusion": "image-production",
     "procedures-anatomy": "procedures",
     "procedures-protocols": "procedures",
     "procedures-positioning": "procedures",

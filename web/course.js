@@ -24,9 +24,10 @@
     "5 · Image quality & speed":      { premium: ["image-quality"], quiz: ["image-quality"] },
     "6 · How the image is built":     { premium: ["image-quality", "pulse-sequences", "data-acquisition"], quiz: ["image-quality"] },
     "7 · 3D imaging & reconstruction": { premium: ["three-d-recon"], quiz: [] },
-    "8 · Flow, function & artifacts": { premium: ["flow-artifacts", "procedures-vascular"], quiz: ["artifacts", "perfusion"] },
+    "8 · Flow, function & artifacts": { premium: ["flow-artifacts", "procedures-vascular"], quiz: ["artifacts"] },
     "9 · Putting it together":        { premium: ["procedures-protocols", "procedures-positioning"], quiz: [] },
     "10 · Safety & patient care":     { premium: ["safety", "patient-care", "contrast-agents"], quiz: ["safety", "patient-care"] },
+    "11 · Perfusion & advanced imaging": { premium: ["perfusion"], quiz: ["perfusion"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";

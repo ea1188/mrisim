@@ -118,10 +118,10 @@ test("readiness tolerates missing/garbage progress", () => {
   assert.equal(r.categories.find((c) => c.key === "safety").accuracy, null);
 });
 
-test("PREMIUM_MAP: exactly the 16 audited premium topics, each mapped to a valid category", () => {
+test("PREMIUM_MAP: exactly the 17 audited premium topics, each mapped to a valid category", () => {
   const EXPECTED_TOPICS = [
     "instrumentation", "pulse-sequences", "data-acquisition", "contrast-weighting",
-    "image-quality", "flow-artifacts", "fat-suppression", "three-d-recon",
+    "image-quality", "flow-artifacts", "fat-suppression", "three-d-recon", "perfusion",
     "procedures-anatomy", "procedures-protocols", "procedures-positioning", "procedures-vascular", "pathology",
     "safety", "patient-care", "contrast-agents",
   ];
@@ -132,7 +132,7 @@ test("PREMIUM_MAP: exactly the 16 audited premium topics, each mapped to a valid
   }
   const counts = {};
   for (const t of Object.keys(B.PREMIUM_MAP)) counts[B.PREMIUM_MAP[t]] = (counts[B.PREMIUM_MAP[t]] || 0) + 1;
-  assert.deepEqual(counts, { "image-production": 8, procedures: 5, safety: 1, "patient-care": 2 });
+  assert.deepEqual(counts, { "image-production": 9, procedures: 5, safety: 1, "patient-care": 2 });
 });
 
 test("blend: premium-only progress fills a category the free pool never touched", () => {
@@ -153,8 +153,8 @@ test("blend: free + premium sum per category with the enlarged denominator", () 
   const ip = r.categories.find((c) => c.key === "image-production");
   assert.ok(Math.abs(ip.accuracy - 0.55) < 1e-9);  // (8+6+5+3)/(10+10+10+10) = 22/40
   assert.equal(ip.attempted, 4);                    // 2 free members + 2 premium topics
-  assert.equal(ip.memberCount, 12);                 // 4 free members + 8 premium topics
-  assert.ok(Math.abs(ip.coverage - 4 / 12) < 1e-9);
+  assert.equal(ip.memberCount, 13);                 // 4 free members + 9 premium topics
+  assert.ok(Math.abs(ip.coverage - 4 / 13) < 1e-9);
   assert.ok(Math.abs(r.projected - 0.55 * 0.53) < 1e-9);
 });
 
