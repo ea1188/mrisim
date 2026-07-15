@@ -45,6 +45,7 @@
     "procedures-vascular": "procedures",
     "vascular-advanced": "procedures",
     "diffusion-advanced": "procedures",
+    "cardiac-advanced": "procedures",
     "pathology": "procedures",
     "safety": "safety",
     "patient-care": "patient-care",
