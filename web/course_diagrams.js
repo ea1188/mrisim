@@ -482,7 +482,57 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue };
+  // ---- Widget: SNR / scan-time trade-offs ---- //
+  function buildSnrTradeoff() {
+    var fig = figure("SNR trade-offs", "Signal-to-noise, resolution and scan time pull against each other. Change a parameter and watch relative SNR and scan time move against the baseline (1.5 T, approximate).");
+    var state = { slice: 3, matrix: 192, nex: 1, bw: 32 };
+    function bar(label) {
+      var fill = el("div", { class: "diag-bar-fill" });
+      var track = el("div", { class: "diag-bar-track" }, [fill, el("i", { class: "diag-bar-base" })]);
+      var num = el("span", { class: "diag-bar-num" });
+      var row = el("div", { class: "diag-bar-row" }, [el("span", { class: "diag-bar-label", text: label }), track, num]);
+      return { node: row, set: function (v) {
+        var cap = 3;
+        fill.style.width = (Math.min(v, cap) / cap * 100) + "%";
+        num.textContent = (Math.round(v * 100) / 100) + "x";
+        if (v < 1) fill.classList.add("low"); else fill.classList.remove("low");
+      } };
+    }
+    var snrBar = bar("Relative SNR"), timeBar = bar("Relative scan time");
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      var r = M.snrScanRel(state);
+      snrBar.set(r.snr); timeBar.set(r.time);
+      readout.textContent = "SNR " + (Math.round(r.snr * 100) / 100) + "x, scan time " + (Math.round(r.time * 100) / 100)
+        + "x versus baseline (thin slice, coarse matrix, NEX 1, low bandwidth). Bigger voxels and more averages raise SNR; a finer matrix and higher bandwidth lower it.";
+    }
+    fig.appendChild(snrBar.node);
+    fig.appendChild(timeBar.node);
+    var controls = el("div", { class: "diag-controls" });
+    function group(labelTxt, key, presets) {
+      controls.appendChild(el("span", { class: "diag-glabel", text: labelTxt }));
+      presets.forEach(function (p) {
+        var b = el("button", { type: "button", class: "diag-btn diag-" + key + (p[1] === state[key] ? " on" : ""), text: p[0] });
+        b.addEventListener("click", function () {
+          state[key] = p[1];
+          [].forEach.call(controls.querySelectorAll(".diag-" + key), function (x) { x.classList.remove("on"); });
+          b.classList.add("on");
+          redraw();
+        });
+        controls.appendChild(b);
+      });
+    }
+    group("Slice:", "slice", [["Thin", 3], ["Thick", 6]]);
+    group("Matrix:", "matrix", [["Coarse", 192], ["Fine", 384]]);
+    group("NEX:", "nex", [["1", 1], ["2", 2], ["4", 4]]);
+    group("BW:", "bw", [["Low", 32], ["High", 64]]);
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
