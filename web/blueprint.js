@@ -43,6 +43,7 @@
     "procedures-protocols": "procedures",
     "procedures-positioning": "procedures",
     "procedures-vascular": "procedures",
+    "vascular-advanced": "procedures",
     "pathology": "procedures",
     "safety": "safety",
     "patient-care": "patient-care",

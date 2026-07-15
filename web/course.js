@@ -28,6 +28,7 @@
     "9 · Putting it together":        { premium: ["procedures-protocols", "procedures-positioning"], quiz: [] },
     "10 · Safety & patient care":     { premium: ["safety", "patient-care", "contrast-agents"], quiz: ["safety", "patient-care"] },
     "11 · Perfusion & advanced imaging": { premium: ["perfusion"], quiz: ["perfusion"] },
+    "12 · Advanced vascular imaging": { premium: ["vascular-advanced"], quiz: ["vascular-advanced"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
