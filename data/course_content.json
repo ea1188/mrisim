@@ -13130,6 +13130,1046 @@
         "answer": 3,
         "explain": "T1 mapping is skewed by B1 transmit field inhomogeneity, which alters the effective flip angle, and by field strength, since T1 lengthens at higher field, so normal ranges are field-specific and B1 correction is required."
       }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "education",
+      "ord": 1424,
+      "body": {
+        "title": "Breast MRI technique and protocol",
+        "html": "<p>Breast MRI is performed with the patient <strong>prone</strong> in a dedicated bilateral breast coil, which allows the breasts to hang dependent, away from the chest wall, and minimizes respiratory motion in the field of view. The coil design permits simultaneous imaging of both breasts for direct comparison and, on many systems, allows image-guided biopsy in the same position used for diagnostic imaging.</p><p>The protocol balances <strong>high spatial resolution</strong> with <strong>high temporal resolution</strong> so that small lesions can be characterized both by shape and by how quickly they enhance. A <strong>T2-weighted sequence</strong> is obtained first to evaluate cysts, lymph nodes, and fluid-containing structures, then a <strong>dynamic T1-weighted gradient-echo series</strong> is acquired once before contrast and repeatedly after gadolinium injection to capture the enhancement pattern over time.</p><p><strong>Fat suppression</strong>, or subtraction of the precontrast series from each postcontrast series, is mandatory. Breast tissue is fat-rich, and without suppressing that signal, enhancing lesions would be obscured by bright background fat. Subtracted images isolate the tissue that took up contrast, making even small enhancing foci conspicuous.</p><p>Common indications include annual <strong>high-risk screening</strong> for women with an elevated lifetime risk of breast cancer, <strong>extent-of-disease staging</strong> in a patient with a newly diagnosed cancer to detect additional foci or multicentric disease, evaluation of <strong>silicone implant integrity</strong>, and <strong>problem-solving</strong> when mammography and ultrasound findings are inconclusive.</p>",
+        "keypoints": [
+          "Dedicated bilateral breast coil, patient positioned prone",
+          "T2-weighted series plus dynamic pre- and postcontrast T1 gradient-echo series",
+          "Fat suppression or subtraction is mandatory to reveal enhancing lesions",
+          "High spatial and temporal resolution are both required",
+          "Indications: high-risk screening, staging, implant evaluation, problem-solving"
+        ],
+        "worked_example": "A 42-year-old BRCA1 carrier presents for her annual screening breast MRI. She is positioned prone in the dedicated breast coil, and the technologist confirms fat-suppressed T2 and dynamic contrast-enhanced T1 sequences are queued, with the power injector timed to begin the first postcontrast acquisition immediately after the gadolinium bolus.",
+        "memory_hooks": [
+          "Prone in the coil, contrast tells the whole story.",
+          "No fat suppression, no lesion conspicuity."
+        ],
+        "exam_traps": [
+          "Do not confuse breast MRI positioning with mammography positioning; MRI is prone, not upright.",
+          "Fat suppression or subtraction is not optional; it is required on every postcontrast series."
+        ]
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "education",
+      "ord": 1425,
+      "body": {
+        "title": "Dynamic contrast enhancement kinetics",
+        "html": "<p>The dynamic series produces a <strong>time-signal intensity curve</strong> for each enhancing region, described in two phases. The <strong>initial phase</strong>, also called wash-in, reflects how quickly the tissue takes up contrast immediately after injection and is characterized as slow, medium, or rapid.</p><p>The <strong>delayed phase</strong> describes what happens to signal intensity after that initial peak. A <strong>Type 1 persistent curve</strong> continues to rise through the delayed phase and favors a benign process. A <strong>Type 2 plateau curve</strong> levels off after the initial rise and is considered indeterminate. A <strong>Type 3 washout curve</strong> rises rapidly and then declines, a pattern that is suspicious for malignancy.</p><p>Malignant tumors tend to show <strong>rapid wash-in followed by washout</strong> because of tumor angiogenesis, which produces immature, leaky vessels, and arteriovenous shunting, which delivers and clears contrast faster than normal tissue. This combination of rapid uptake and rapid efflux is the kinetic signature radiologists look for in a suspicious lesion.</p><p>Kinetics are never interpreted alone. <strong>Morphology</strong>, meaning the shape, margins, and internal enhancement pattern of a lesion, is combined with the kinetic curve type to reach a final assessment, since some benign lesions can show washout and some cancers can show a persistent curve.</p>",
+        "keypoints": [
+          "Wash-in phase is graded slow, medium, or rapid",
+          "Type 1 persistent favors benign, Type 2 plateau is indeterminate, Type 3 washout is suspicious",
+          "Rapid wash-in and washout reflect angiogenesis and arteriovenous shunting in malignancy",
+          "Kinetics alone are not diagnostic; morphology must be considered together",
+          "Overlap exists: benign lesions can wash out and cancers can persist"
+        ],
+        "worked_example": "A spiculated mass in the upper outer quadrant shows rapid wash-in in the first minute after contrast, followed by a decline in signal on the delayed images. The radiologist documents a Type 3 washout curve combined with irregular margins, favoring malignancy, and recommends biopsy.",
+        "memory_hooks": [
+          "Up fast, down fast: think cancer. Up and stays up: think benign.",
+          "Type 1 rises, Type 2 plateaus, Type 3 washes out, in order of rising suspicion."
+        ],
+        "exam_traps": [
+          "Do not assume a plateau curve is benign; Type 2 is indeterminate, not reassuring.",
+          "Do not read kinetics in isolation; morphology and kinetics together drive the final assessment."
+        ]
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "education",
+      "ord": 1426,
+      "body": {
+        "title": "Background parenchymal enhancement, morphology, and BI-RADS",
+        "html": "<p><strong>Background parenchymal enhancement (BPE)</strong> is the normal enhancement of fibroglandular tissue that occurs regardless of any lesion, and it is graded as minimal, mild, moderate, or marked. BPE is driven by hormonal status and fluctuates with the menstrual cycle, being lowest in the follicular phase.</p><p>Because marked BPE can obscure small lesions or mimic abnormal enhancement, screening exams are ideally timed to the <strong>second week of the menstrual cycle</strong>, when hormonal stimulation and background enhancement are at their lowest. This timing improves lesion conspicuity and reduces false-positive findings.</p><p>Enhancing findings are described as either a discrete <strong>mass</strong>, a three-dimensional lesion with a defined shape and margin, or <strong>non-mass enhancement</strong>, an area of enhancement without a corresponding mass, often following a ductal or segmental distribution. Morphology descriptors include the mass margin, such as smooth, irregular, or spiculated, and the internal enhancement pattern, such as homogeneous, heterogeneous, or rim enhancement.</p><p>Findings are ultimately assigned a <strong>BI-RADS category</strong>, the same standardized system used in mammography, ranging from BI-RADS 1 for a negative exam through BI-RADS 4 for a suspicious finding that warrants biopsy and BI-RADS 5 for a finding highly suggestive of malignancy. This shared language allows consistent communication of risk across modalities.</p>",
+        "keypoints": [
+          "BPE is graded minimal, mild, moderate, or marked, and is hormonally driven",
+          "Timing screening MRI to the second week of the cycle minimizes BPE",
+          "Enhancement is classified as mass or non-mass enhancement",
+          "Morphology descriptors include margin and internal enhancement pattern",
+          "BI-RADS categories standardize risk communication across breast imaging modalities"
+        ],
+        "worked_example": "A 35-year-old with dense breasts is scheduled for a high-risk screening MRI. The scheduler confirms her last menstrual period began 8 days ago, placing the exam in the second week of her cycle, and the resulting images show only minimal background parenchymal enhancement, allowing confident evaluation of the fibroglandular tissue.",
+        "memory_hooks": [
+          "Week two, BPE low, lesions show.",
+          "Mass has a shape, non-mass is just a smear of enhancement."
+        ],
+        "exam_traps": [
+          "Do not confuse BPE grade with the breast density categories used in mammography; they are separate scales.",
+          "Do not schedule high-risk screening MRI during the premenstrual week, when BPE peaks and false positives rise."
+        ]
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "education",
+      "ord": 1427,
+      "body": {
+        "title": "Applications and pitfalls",
+        "html": "<p>Annual breast MRI screening, added to mammography, is recommended for women at <strong>high risk</strong>, generally defined as an estimated lifetime risk of breast cancer of about 20 percent or greater, including known or suspected <strong>BRCA1 or BRCA2</strong> carriers and women with a strong family history or prior chest radiation.</p><p>For patients with <strong>silicone implants</strong>, a dedicated silicone-specific protocol using water-suppressed sequences is added so the silicone itself becomes the source of signal, independent of the fat-suppressed sequences used for parenchymal evaluation. On these images, the <strong>linguine sign</strong>, collapsed, wavy lines of implant shell floating within the silicone, indicates an <strong>intracapsular rupture</strong>, meaning the shell has failed but the silicone remains contained within the fibrous capsule.</p><p><strong>Marked BPE</strong> is one of the most common pitfalls in interpretation, since intense background enhancement can obscure a true lesion or itself be mistaken for an abnormal finding. Timing the exam to the second week of the menstrual cycle, as with screening protocols, is the primary strategy to reduce this source of error.</p><p>Breast MRI has very high <strong>sensitivity</strong> for detecting invasive cancer but comparatively limited <strong>specificity</strong>, meaning many benign findings also enhance. This tradeoff means MRI generates a meaningful number of additional biopsies for findings that ultimately prove benign, a consequence that must be weighed against its value in high-risk populations.</p>",
+        "keypoints": [
+          "High-risk screening applies to roughly 20 percent or greater lifetime risk, including BRCA carriers",
+          "Silicone-specific water-suppressed sequences are used to assess implant integrity",
+          "The linguine sign indicates intracapsular silicone implant rupture",
+          "Marked BPE can obscure or mimic lesions; timing to the cycle reduces this",
+          "High sensitivity with limited specificity means more biopsies of benign findings"
+        ],
+        "worked_example": "A 50-year-old with bilateral silicone implants and a palpable lump undergoes breast MRI with an added silicone-specific sequence. The water-suppressed images show wavy, collapsed shell lines within the silicone of the left implant, confirming the linguine sign and an intracapsular rupture, while the palpable finding itself proves to be a simple cyst.",
+        "memory_hooks": [
+          "Linguine floating in silicone means the shell inside has failed.",
+          "High sensitivity catches cancer, low specificity catches extra biopsies too."
+        ],
+        "exam_traps": [
+          "Do not call a linguine sign an extracapsular rupture; linguine means the silicone is still contained within the capsule.",
+          "Do not treat every enhancing focus as cancer; limited specificity makes some benign biopsies an expected tradeoff."
+        ]
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1428,
+      "body": {
+        "prompt": "How is the patient positioned for a dedicated breast MRI examination?",
+        "options": [
+          "Supine, arms above the head, using a dedicated coil",
+          "Lateral decubitus on the side of the lesion",
+          "Prone, breasts dependent within a dedicated bilateral coil",
+          "Supine, breasts compressed against a flat surface coil"
+        ],
+        "answer": 2,
+        "explain": "Breast MRI is performed prone in a dedicated bilateral coil so the breasts hang dependent away from the chest wall, minimizing motion and allowing simultaneous comparison of both breasts."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1429,
+      "body": {
+        "prompt": "Why is fat suppression, or subtraction, mandatory on the postcontrast dynamic series in breast MRI?",
+        "options": [
+          "It lets enhancing tissue stand out against suppressed fat",
+          "It shortens the total scan time by reducing matrix size",
+          "It removes the need for using a dedicated breast coil",
+          "It reduces motion artifact caused by cardiac pulsation"
+        ],
+        "answer": 0,
+        "explain": "Breast tissue is fat-rich, so without fat suppression or subtraction, bright fat signal would obscure the enhancing lesion, which is the key finding on the dynamic postcontrast series."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1430,
+      "body": {
+        "prompt": "Which delayed-phase kinetic curve pattern is most suspicious for malignancy?",
+        "options": [
+          "Type 1 persistent, continued signal rise through the delayed phase",
+          "Type 3 washout, an early rise followed by a decline in signal",
+          "Type 2 plateau, signal intensity stays flat after the initial rise",
+          "A wash-in phase that is described as slow rather than rapid"
+        ],
+        "answer": 1,
+        "explain": "A Type 3 washout curve shows an early rapid rise in signal followed by a decline in the delayed phase, a pattern associated with malignancy, unlike the continued rise of Type 1 or the flat plateau of Type 2."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1431,
+      "body": {
+        "prompt": "What underlying tumor physiology explains rapid wash-in and washout kinetics in malignant breast lesions?",
+        "options": [
+          "Reduced tumor vascularity slowing contrast delivery",
+          "Increased fibrous stroma limiting capillary permeability",
+          "Slower metabolic rate reducing contrast agent uptake",
+          "Angiogenesis and shunting speeding delivery and efflux"
+        ],
+        "answer": 3,
+        "explain": "Tumor angiogenesis produces immature, leaky vessels, and arteriovenous shunting speeds both the delivery and clearance of contrast, producing the rapid wash-in and washout pattern typical of malignant lesions."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1432,
+      "body": {
+        "prompt": "When in the menstrual cycle should a screening breast MRI ideally be scheduled to minimize background parenchymal enhancement?",
+        "options": [
+          "Second week of the cycle, when hormonal enhancement is lowest",
+          "The week immediately before menstruation begins again",
+          "The first few days of active menstrual bleeding",
+          "Any time during pregnancy for stable hormone levels"
+        ],
+        "answer": 0,
+        "explain": "BPE is lowest in the second week of the menstrual cycle because hormonal stimulation of fibroglandular tissue is at its minimum, which improves lesion conspicuity and reduces false positive interpretations."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1433,
+      "body": {
+        "prompt": "On breast MRI, an enhancing area that follows a ductal or segmental distribution without forming a discrete three-dimensional lesion is best described as:",
+        "options": [
+          "Non-mass enhancement in a ductal or segmental distribution",
+          "A mass with smooth, circumscribed margins",
+          "A focus of punctate enhancement only a few millimeters across",
+          "Architectural distortion without any associated enhancement"
+        ],
+        "answer": 0,
+        "explain": "Non-mass enhancement describes an enhancing area without a discrete three-dimensional shape, often following a ductal or segmental distribution, in contrast to a mass, which has a defined shape and margin."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1434,
+      "body": {
+        "prompt": "A breast MRI finding is assigned BI-RADS category 4. What does this indicate?",
+        "options": [
+          "Definitely benign finding, no follow-up needed",
+          "Negative examination with no findings",
+          "Suspicious finding warranting tissue biopsy",
+          "Highly suggestive of malignancy, biopsy strongly recommended"
+        ],
+        "answer": 2,
+        "explain": "BI-RADS 4 indicates a suspicious finding for which tissue biopsy is warranted; BI-RADS 5 indicates a finding highly suggestive of malignancy, and BI-RADS 1 or 2 indicate negative or benign findings without biopsy."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1435,
+      "body": {
+        "prompt": "Annual breast MRI screening in addition to mammography is recommended for women with an estimated lifetime breast cancer risk of at least what percentage?",
+        "options": [
+          "5 percent",
+          "10 percent",
+          "15 percent",
+          "20 percent"
+        ],
+        "answer": 3,
+        "explain": "Annual breast MRI screening in addition to mammography is recommended for women with an estimated lifetime breast cancer risk of about 20 percent or greater, a group that includes BRCA1 and BRCA2 carriers."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1436,
+      "body": {
+        "prompt": "On a silicone-specific water-suppressed sequence, the linguine sign indicates which finding?",
+        "options": [
+          "Extracapsular silicone leaking into surrounding breast tissue",
+          "Intracapsular rupture, shell fragments floating within silicone",
+          "A normal, intact implant showing no evidence of rupture",
+          "Saline implant deflation rather than a silicone rupture"
+        ],
+        "answer": 1,
+        "explain": "The linguine sign refers to collapsed, wavy lines of implant shell floating within the silicone on water-suppressed imaging, and it indicates an intracapsular rupture where the shell has failed but the silicone remains contained within the fibrous capsule."
+      }
+    },
+    {
+      "topic": "breast-advanced",
+      "kind": "quiz",
+      "ord": 1437,
+      "body": {
+        "prompt": "Because breast MRI has high sensitivity but limited specificity, what clinical consequence commonly follows?",
+        "options": [
+          "Decreased need for confirmatory biopsy",
+          "Fewer false positive findings compared to mammography",
+          "An increased rate of benign biopsies from false positives",
+          "Complete replacement of mammographic screening"
+        ],
+        "answer": 2,
+        "explain": "Because breast MRI has high sensitivity but limited specificity, many benign findings also enhance and meet criteria for biopsy, so the exam generates a meaningful number of biopsies that ultimately prove benign."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "education",
+      "ord": 1466,
+      "body": {
+        "title": "MRCP technique",
+        "html": "<p>Magnetic resonance cholangiopancreatography (MRCP) relies on a heavily <strong>T2-weighted</strong> acquisition with a very long <strong>TE</strong>, often 800 milliseconds or more, so that only slow-moving or static fluid retains signal. Bile within the gallbladder and bile ducts, along with pancreatic-duct fluid, stays bright, while solid organs, fat, and flowing blood lose signal and appear dark.</p><p>Two complementary sequence types are used together. Thin-section <strong>single-shot fast spin echo</strong> images are acquired through the biliary tree to provide detailed cross-sectional anatomy, while a <strong>thick-slab radial projection</strong> sequence collapses the fluid-filled ducts into a single cholangiogram-like image similar to a conventional ERCP view. Acquisition is performed with breath-holding or respiratory triggering to limit motion blur, since the ducts are small and easily degraded by respiratory motion.</p><p>No intravenous contrast is required for standard MRCP because the technique depends entirely on the intrinsic T2 signal of stationary fluid. When duct distention is inadequate or subtle ductal pathology is suspected, <strong>secretin</strong> can be administered intravenously to stimulate pancreatic exocrine secretion, transiently distending the pancreatic duct and improving visualization of strictures, duct disruption, or anomalous pancreaticobiliary union.</p>",
+        "keypoints": [
+          "Heavily T2-weighted with very long TE isolates static fluid signal.",
+          "Thin-section single-shot fast spin echo plus thick-slab radial projection are acquired together.",
+          "Breath-hold or respiratory triggering controls motion given the small caliber of the ducts.",
+          "No intravenous contrast is needed for standard MRCP.",
+          "Secretin transiently distends the pancreatic duct to improve stricture and leak detection."
+        ],
+        "worked_example": "A patient with intermittent right upper quadrant pain and mildly elevated liver enzymes undergoes MRCP; the thick-slab projection shows a filling defect at the distal common bile duct that persists on every radial projection, and the thin-section source images confirm a well-defined low-signal focus outlined by bright bile, consistent with choledocholithiasis rather than a transient flow artifact.",
+        "memory_hooks": [
+          "MRCP: no needle, just a long echo, since it needs no contrast, only a very long TE.",
+          "Pair thin slices with thick slab to recall the two complementary sequence types acquired together."
+        ],
+        "exam_traps": [
+          "Do not confuse standard MRCP with contrast-enhanced MR cholangiography using hepatobiliary agents; standard MRCP is a non-contrast T2 technique.",
+          "A single thick-slab image alone is insufficient for diagnosis; thin-section source images must be reviewed to exclude artifact."
+        ]
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "education",
+      "ord": 1467,
+      "body": {
+        "title": "Hepatobiliary contrast agents",
+        "html": "<p><strong>Gadoxetate disodium</strong> and <strong>gadobenate dimeglumine</strong> are gadolinium-based agents with a property beyond typical extracellular distribution: a fraction of the injected dose is taken up by functioning hepatocytes through organic anion transporters and then actively excreted into bile. This dual behavior produces a conventional dynamic extracellular phase followed by a delayed <strong>hepatobiliary phase</strong>, which occurs around 20 minutes after injection for gadoxetate and roughly one to three hours for gadobenate because of its lower hepatocyte uptake fraction.</p><p>On the hepatobiliary phase, normal liver parenchyma enhances strongly because hepatocytes concentrate the agent. Lesions that contain functioning hepatocytes with a patent biliary connection, such as <strong>focal nodular hyperplasia</strong>, retain contrast and remain bright relative to background liver. Lesions that lack functioning hepatocytes, including most <strong>metastases</strong>, hepatocellular carcinoma, and simple cysts, fail to take up the agent and appear dark against the enhancing liver, which sharpens lesion conspicuity and aids characterization.</p><p>Because the agent is excreted into bile, the hepatobiliary phase also opacifies the intrahepatic and extrahepatic ducts, allowing functional assessment of biliary anatomy and detection of a bile leak when contrast is seen extending outside the expected ductal course, such as after cholecystectomy or hepatic resection.</p>",
+        "keypoints": [
+          "Gadoxetate and gadobenate are partly excreted into bile via hepatocyte uptake.",
+          "Gadoxetate hepatobiliary phase occurs around 20 minutes; gadobenate takes one to three hours.",
+          "Focal nodular hyperplasia retains contrast and stays bright on the hepatobiliary phase.",
+          "Most metastases and hepatocellular carcinoma lack functioning hepatocytes and stay dark.",
+          "The hepatobiliary phase opacifies bile ducts and can localize a postoperative bile leak."
+        ],
+        "worked_example": "A young woman with an incidental hypervascular liver mass undergoes gadoxetate-enhanced MRI; on the 20 minute hepatobiliary phase the lesion is isointense to bright relative to surrounding liver, confirming functioning hepatocytes and a patent biliary connection, which supports focal nodular hyperplasia rather than a hepatic adenoma or metastasis.",
+        "memory_hooks": [
+          "FNH keeps the light on, since it has working hepatocytes and stays bright at 20 minutes.",
+          "Twenty minutes for gadoxetate: gadoxetate, twenty minutes to excrete."
+        ],
+        "exam_traps": [
+          "Do not assume every liver lesion washes out on delayed imaging; hepatobiliary-specific agents behave oppositely from extracellular agents for lesions such as FNH.",
+          "Scanning the hepatobiliary phase too early, before hepatocyte uptake peaks, can cause a benign lesion to be misread as non-uptaking."
+        ]
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "education",
+      "ord": 1468,
+      "body": {
+        "title": "MR enterography",
+        "html": "<p>MR enterography evaluates the small bowel, most often to assess known or suspected <strong>Crohn disease</strong>, by combining luminal distention with dynamic contrast-enhanced imaging. Patients drink a large volume of <strong>biphasic oral contrast</strong>, a solution that appears bright on T2-weighted images and dark on T1-weighted images, which distends the bowel loops and allows the wall to be assessed separately from the lumen on both sequence types.</p><p>An antiperistaltic agent, typically <strong>glucagon</strong>, is given just before imaging to suppress bowel motion and peristaltic artifact, improving image sharpness for wall assessment. After the antiperistaltic agent takes effect, dynamic post-gadolinium T1-weighted images are obtained through the abdomen and pelvis to characterize bowel wall enhancement.</p><p>Findings of active inflammation include <strong>mural thickening</strong>, increased mural enhancement relative to adjacent normal bowel, mucosal hyperenhancement, and <strong>restricted diffusion</strong> on diffusion-weighted imaging. These features help separate an actively inflamed segment, which may respond to medical therapy, from a chronic fibrotic stricture, which typically shows only mild enhancement and a thickened but less avidly enhancing wall and may instead require surgical management.</p>",
+        "keypoints": [
+          "Chiefly used for Crohn disease evaluation of the small bowel.",
+          "Large-volume biphasic oral contrast distends the lumen, bright on T2 and dark on T1.",
+          "Glucagon or another antiperistaltic agent suppresses bowel motion before imaging.",
+          "Dynamic post-gadolinium T1 imaging characterizes bowel wall enhancement.",
+          "Mural thickening, hyperenhancement, and restricted diffusion indicate active inflammation over chronic fibrosis."
+        ],
+        "worked_example": "A teenager with known Crohn disease and worsening abdominal pain undergoes MR enterography; a terminal ileal segment shows marked mural thickening, layered hyperenhancement after gadolinium, and restricted diffusion, favoring an actively inflamed segment amenable to escalated medical therapy rather than a fixed fibrotic stricture.",
+        "memory_hooks": [
+          "Glucagon calms the gut so the bowel holds still for imaging.",
+          "Bright on T2, dark on T1 for the oral contrast: biphasic flips between sequences."
+        ],
+        "exam_traps": [
+          "Do not mistake a fibrotic stricture, which enhances only mildly, for active inflammation, which enhances avidly and restricts diffusion.",
+          "Skipping the antiperistaltic agent leaves peristalsis that can mimic wall thickening or obscure true pathology."
+        ]
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "education",
+      "ord": 1469,
+      "body": {
+        "title": "Pitfalls and applications: MRCP and body MRI",
+        "html": "<p>Several pitfalls can degrade MRCP interpretation. <strong>Pneumobilia</strong>, air within the bile ducts after sphincterotomy or biliary-enteric surgery, produces a signal void that can mimic a stone or filling defect, as can flow-related signal loss from turbulent bile motion. Duct pulsation transmitted from the adjacent hepatic artery can also create a linear artifact across the common duct. Overlapping fluid-filled bowel loops adjacent to the pancreatic head or distal common bile duct can obscure the ducts on the thick-slab projection. Correlating the thick-slab images with the thin-section source images helps distinguish true filling defects, which persist and have a defined margin, from artifact, which shifts position or configuration between sequences.</p><p>Elsewhere in body MRI, <strong>susceptibility artifact</strong> from bowel gas, surgical clips, or other metallic hardware degrades image quality on gradient-echo and diffusion sequences, an important consideration in postsurgical abdominal and pelvic imaging. Respiratory motion remains a persistent challenge for upper abdominal imaging and is managed with breath-hold techniques, respiratory triggering, or navigator-based sequences.</p><p>For hepatobiliary contrast studies, correct timing of the hepatobiliary phase is essential; imaging too early, before hepatocyte uptake and biliary excretion peak, can cause a lesion with normal function to be misclassified as non-enhancing, leading to an incorrect diagnosis.</p>",
+        "keypoints": [
+          "Pneumobilia and flow-related voids can mimic a stone on MRCP; correlate thick-slab with thin-section images.",
+          "Duct pulsation artifact from the adjacent hepatic artery can cross the common bile duct.",
+          "Overlapping fluid-filled bowel can obscure the pancreaticobiliary ducts.",
+          "Susceptibility from bowel gas or surgical clips degrades gradient-echo and diffusion images.",
+          "Correct hepatobiliary phase timing is required or lesion characterization fails."
+        ],
+        "worked_example": "A postoperative patient after sphincterotomy has a rounded filling defect near the distal common bile duct on the thick-slab MRCP image, but the thin-section source images show the defect shifts position between adjacent slices and corresponds to an air bubble rather than a fixed stone, avoiding an unnecessary ERCP.",
+        "memory_hooks": [
+          "Air moves, stones stay, to separate pneumobilia from a true calculus.",
+          "Too early misses the liver, for hepatobiliary phase timing errors."
+        ],
+        "exam_traps": [
+          "Treating any filling defect on the thick-slab image alone as a stone without checking the thin-section source images.",
+          "Assuming metallic susceptibility only affects gradient-echo sequences; it also disrupts diffusion-weighted imaging."
+        ]
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1470,
+      "body": {
+        "prompt": "Which pulse sequence characteristic best describes standard MRCP imaging?",
+        "options": [
+          "T1-weighted with a short TE to suppress fluid signal",
+          "Heavily T2-weighted with a very long TE to isolate static fluid",
+          "Proton-density weighted with a moderate TE for balanced contrast",
+          "Diffusion-weighted with a high b-value to suppress background tissue"
+        ],
+        "answer": 1,
+        "explain": "MRCP depends on a heavily T2-weighted acquisition with a very long TE so that only slow or static fluid, such as bile and pancreatic-duct fluid, remains bright while solid tissue and flowing blood lose signal."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1471,
+      "body": {
+        "prompt": "Which two sequence types are combined for a standard MRCP examination?",
+        "options": [
+          "Thin-section single-shot fast spin echo and a thick-slab radial projection",
+          "Gradient-echo in-phase and opposed-phase imaging with fat suppression",
+          "Dynamic post-gadolinium T1 imaging with an antiperistaltic agent",
+          "Diffusion-weighted imaging combined with a hepatobiliary phase acquisition"
+        ],
+        "answer": 0,
+        "explain": "Standard MRCP combines thin-section single-shot fast spin echo images for detailed anatomy with a thick-slab radial projection that produces a cholangiogram-like overview image."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1472,
+      "body": {
+        "prompt": "What is the purpose of administering secretin during MRCP?",
+        "options": [
+          "To suppress bowel peristalsis for clearer imaging",
+          "To reduce flow-related artifact in the hepatic artery",
+          "To stimulate pancreatic secretion and distend the duct",
+          "To improve hepatocyte uptake of the contrast agent"
+        ],
+        "answer": 2,
+        "explain": "Secretin stimulates pancreatic exocrine secretion, transiently distending the pancreatic duct and improving detection of strictures or subtle ductal pathology."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1473,
+      "body": {
+        "prompt": "A patient undergoes standard MRCP for suspected choledocholithiasis. What intravenous contrast is required?",
+        "options": [
+          "A hepatobiliary agent such as gadoxetate",
+          "A standard extracellular gadolinium agent",
+          "An iodinated contrast agent for duct opacification",
+          "No intravenous contrast is required"
+        ],
+        "answer": 3,
+        "explain": "Standard MRCP relies entirely on the intrinsic T2 signal of static fluid and requires no intravenous contrast."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1474,
+      "body": {
+        "prompt": "Approximately how long after injection does the hepatobiliary phase occur with gadoxetate disodium?",
+        "options": [
+          "Immediately, within the first minute",
+          "Around 20 minutes after injection",
+          "Approximately 24 hours after injection",
+          "Roughly one week after injection"
+        ],
+        "answer": 1,
+        "explain": "Gadoxetate is taken up by hepatocytes and excreted into bile, producing a hepatobiliary phase at around 20 minutes after injection."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1475,
+      "body": {
+        "prompt": "On the hepatobiliary phase, why does focal nodular hyperplasia typically appear bright relative to background liver?",
+        "options": [
+          "It contains functioning hepatocytes that retain the contrast agent",
+          "It has a dense fibrous capsule that traps contrast",
+          "It shows rapid arterial washout that concentrates contrast",
+          "It lacks a biliary connection, trapping contrast within the lesion"
+        ],
+        "answer": 0,
+        "explain": "Focal nodular hyperplasia contains functioning hepatocytes with a patent biliary connection, so it takes up and retains hepatobiliary contrast, remaining bright relative to liver."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1476,
+      "body": {
+        "prompt": "Most hepatic metastases appear dark relative to liver on the hepatobiliary phase because they:",
+        "options": [
+          "Contain excess fibrous stroma that blocks contrast",
+          "Have increased blood flow that washes out contrast quickly",
+          "Lack functioning hepatocytes to take up the contrast agent",
+          "Contain calcifications that suppress T1 signal"
+        ],
+        "answer": 2,
+        "explain": "Most metastases lack functioning hepatocytes, so they do not take up hepatobiliary-specific contrast and appear dark against the enhancing background liver."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1477,
+      "body": {
+        "prompt": "In MR enterography, what is the primary purpose of the large-volume oral biphasic contrast?",
+        "options": [
+          "To suppress peristalsis throughout the small bowel",
+          "To provide a hepatobiliary-phase reference for comparison",
+          "To create susceptibility artifact for localization",
+          "To distend the bowel lumen for wall assessment"
+        ],
+        "answer": 3,
+        "explain": "Large-volume biphasic oral contrast distends the small bowel lumen, allowing the bowel wall to be assessed separately from the lumen on both T1 and T2-weighted images."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1478,
+      "body": {
+        "prompt": "Which imaging findings favor active inflammation over a chronic fibrotic stricture on MR enterography?",
+        "options": [
+          "Mild wall enhancement with a fixed luminal narrowing",
+          "Mural thickening, avid enhancement, and restricted diffusion",
+          "Normal wall thickness with brisk peristalsis",
+          "Absent enhancement with prominent susceptibility artifact"
+        ],
+        "answer": 1,
+        "explain": "Active inflammation shows mural thickening, increased wall enhancement, and restricted diffusion, distinguishing it from a chronic fibrotic stricture, which enhances only mildly."
+      }
+    },
+    {
+      "topic": "body-advanced",
+      "kind": "quiz",
+      "ord": 1479,
+      "body": {
+        "prompt": "A thick-slab MRCP image shows a rounded filling defect near the distal common bile duct in a postsurgical patient. What best distinguishes pneumobilia from a true stone?",
+        "options": [
+          "Repeating the thick-slab sequence with a longer TE",
+          "Administering secretin before repeating the projection image",
+          "Checking the thin-section source images for a fixed defect",
+          "Ordering an immediate CT scan for direct confirmation"
+        ],
+        "answer": 2,
+        "explain": "Pneumobilia and flow-related voids can mimic a stone on the thick-slab projection. Checking the thin-section source images shows whether the defect is fixed and persistent, consistent with a true calculus, or shifts and represents artifact."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "education",
+      "ord": 1438,
+      "body": {
+        "title": "Multiparametric protocol and zonal anatomy",
+        "html": "<p>Multiparametric MRI (mpMRI) of the prostate combines three sequence types into one study: high-resolution T2-weighted imaging for anatomy, diffusion-weighted imaging (DWI) with an apparent diffusion coefficient (ADC) map for cellularity, and dynamic contrast-enhanced (DCE) imaging for vascularity. The exam is typically performed at 1.5T or 3T, with or without an endorectal coil, though 3T without a coil is now the common approach at high-volume centers.</p><p>The prostate is divided into zones that behave differently on imaging and carry different cancer risk. The <strong>peripheral zone (PZ)</strong> forms the posterior and lateral gland and is where the majority of clinically significant cancers arise; on T2-weighted images it is normally bright, so a focal area of low signal stands out against that background. The <strong>transition zone (TZ)</strong> surrounds the urethra centrally and is the site of benign prostatic hyperplasia (BPH), which causes it to enlarge and develop a heterogeneous, nodular appearance with age.</p><p>High-resolution, small field-of-view T2-weighted imaging in at least two planes is the anatomic backbone of the exam. It defines zonal anatomy, the capsule, and adjacent structures such as the seminal vesicles and neurovascular bundles, and it provides the framework onto which the functional DWI and DCE findings are mapped.</p>",
+        "keypoints": [
+          "mpMRI combines T2-weighted anatomy, DWI/ADC, and DCE imaging in a single exam.",
+          "Peripheral zone (PZ) is the posterior and lateral gland, normally T2-bright, and the most common site of cancer.",
+          "Transition zone (TZ) surrounds the urethra and enlarges with benign prostatic hyperplasia.",
+          "Performed at 1.5T or 3T; an endorectal coil is optional and used less often at 3T.",
+          "Small field-of-view, high-resolution T2-weighted imaging in multiple planes anchors the anatomic interpretation."
+        ],
+        "worked_example": "A 62-year-old man with an elevated PSA undergoes a 3T mpMRI without an endorectal coil. High-resolution T2-weighted images show a normal, homogeneously bright peripheral zone on the left and a rounded area of low signal in the right posterolateral peripheral zone, prompting further evaluation with DWI/ADC and DCE at that site.",
+        "memory_hooks": [
+          "PZ is posterior, peripheral, and the usual site of prostate cancer; TZ is central and gets BPH with age.",
+          "T2 draws the map; DWI and DCE color it in."
+        ],
+        "exam_traps": [
+          "Do not assume an endorectal coil is required; many 3T exams are performed with a surface coil only.",
+          "Do not confuse the transition zone, which is BPH-prone and central, with the peripheral zone, which is cancer-prone and posterolateral; each has its own normal T2 appearance."
+        ]
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "education",
+      "ord": 1439,
+      "body": {
+        "title": "Diffusion, ADC, and sequence dominance",
+        "html": "<p>Diffusion-weighted imaging (DWI) with its accompanying apparent diffusion coefficient (ADC) map is the single most important functional sequence in prostate mpMRI. DWI is acquired at multiple b-values, and a high b-value image, typically 1400 or higher, either directly acquired or calculated from lower b-value data, is used to highlight restricted diffusion.</p><p>Clinically significant prostate cancer is densely cellular, which restricts the free movement of water molecules. Restricted diffusion appears as focal high signal on the high b-value image and as focal low signal, meaning a low ADC value, on the ADC map. A lesion that is bright on high-b DWI and correspondingly dark on ADC is the classic signature of significant disease, and the two images should always be read together rather than in isolation.</p><p>Sequence dominance differs by zone. In the peripheral zone, DWI and ADC are the <strong>dominant sequence</strong> for assessment, meaning they carry the most weight in scoring a lesion. In the transition zone, T2-weighted morphology is the dominant sequence, with DWI playing a supporting role. Knowing which sequence leads in which zone is essential for correctly applying the PI-RADS system described next.</p>",
+        "keypoints": [
+          "DWI/ADC is the most important functional sequence in prostate mpMRI.",
+          "High b-value DWI, about 1400 or greater, is acquired or calculated to emphasize restricted diffusion.",
+          "Restricted diffusion equals high signal on high-b DWI plus low signal on the ADC map.",
+          "DWI/ADC is the dominant sequence for scoring lesions in the peripheral zone.",
+          "T2-weighted imaging is the dominant sequence for scoring lesions in the transition zone."
+        ],
+        "worked_example": "On a suspicious right peripheral zone focus identified on T2, the high b-value DWI shows marked focal hyperintensity and the ADC map shows a matching focal area of low signal. Because DWI/ADC is dominant in the peripheral zone, this concordant restriction pattern is the primary driver of an elevated suspicion score, independent of the T2 appearance alone.",
+        "memory_hooks": [
+          "Bright on high-b, dark on ADC, that is restricted diffusion and that is suspicious.",
+          "DWI drives the peripheral zone; T2 drives the transition zone."
+        ],
+        "exam_traps": [
+          "Do not call restriction from the high b-value image alone; the ADC map must show a matching low value to rule out T2 shine-through.",
+          "Do not apply DWI as the dominant sequence in the transition zone; T2 morphology leads there, with DWI as a supporting feature only."
+        ]
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "education",
+      "ord": 1440,
+      "body": {
+        "title": "PI-RADS assessment",
+        "html": "<p>The Prostate Imaging Reporting and Data System, version 2.1 (PI-RADS v2.1), assigns each lesion a score from 1 to 5 that reflects the probability of clinically significant cancer, with 1 being very low probability and 5 being very high probability. The score is built from the dominant sequence for the zone in which the lesion sits, with a secondary sequence used to refine borderline cases.</p><p>In the <strong>peripheral zone</strong>, the DWI/ADC appearance sets the baseline score. Dynamic contrast-enhanced (DCE) imaging serves as a tiebreaker: a peripheral zone lesion that scores an equivocal 3 on DWI/ADC is upgraded to a 4 if there is early, focal enhancement that corresponds to the same location on DWI. Diffuse or symmetric enhancement does not qualify; the enhancement must be focal and must match the DWI finding.</p><p>In the <strong>transition zone</strong>, T2-weighted morphology sets the baseline score. A suspicious transition zone lesion is typically lenticular or non-circumscribed and homogeneously low in T2 signal, resembling an erased charcoal smudge. This contrasts with a typical BPH nodule, which is usually well-circumscribed with a visible capsule, sometimes described as looking like a walled-off marble.</p>",
+        "keypoints": [
+          "PI-RADS v2.1 scores each lesion 1 to 5 for the likelihood of clinically significant cancer.",
+          "In the peripheral zone, DWI/ADC sets the score and DCE can upgrade an equivocal 3 to a 4.",
+          "The DCE upgrade requires early, focal enhancement matching the DWI location, not diffuse enhancement.",
+          "In the transition zone, T2 morphology sets the score.",
+          "A suspicious transition zone lesion is lenticular, non-circumscribed, and homogeneously dark on T2, unlike a well-defined BPH nodule."
+        ],
+        "worked_example": "A peripheral zone lesion shows moderate restriction on DWI/ADC, earning an initial score of 3. DCE images show early focal enhancement at the same location, so the radiologist upgrades the final PI-RADS assessment to 4, triggering a recommendation for targeted biopsy.",
+        "memory_hooks": [
+          "PZ: DWI scores it, DCE can bump a 3 to a 4 if it lights up focally and early.",
+          "TZ: a charcoal smudge suggests cancer, a walled-off marble suggests BPH."
+        ],
+        "exam_traps": [
+          "Do not use DCE to upgrade a transition zone lesion; the DCE tiebreaker rule applies only to the peripheral zone.",
+          "Do not upgrade based on any enhancement; only early, focal enhancement matching the DWI abnormality moves a PZ score from 3 to 4."
+        ]
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "education",
+      "ord": 1441,
+      "body": {
+        "title": "Pitfalls and applications",
+        "html": "<p>Post-biopsy hemorrhage is bright on T1-weighted images and can obscure a true lesion or mimic one on T2 and DWI, so mpMRI is generally delayed roughly 6 to 8 weeks after a prostate biopsy to let the blood products clear. If imaging cannot be delayed, a pre-contrast T1-weighted sequence should be reviewed first to identify hemorrhage before interpreting the other sequences.</p><p>Prostatitis and BPH nodules are common mimics of cancer. Prostatitis can cause wedge-shaped or diffuse low T2 signal and mild diffusion restriction in the peripheral zone that overlaps with malignancy, while BPH nodules in the transition zone can show low ADC values that overlap with significant disease; correlating morphology, symmetry, and clinical history helps separate these from true tumor.</p><p>DWI is technically demanding and prone to susceptibility-related distortion near rectal gas, hip prostheses, or other metal, which can blur or displace the apparent lesion location. Despite these pitfalls, mpMRI has become central to prostate cancer management: it guides <strong>targeted MR-ultrasound fusion biopsy</strong> to sample suspicious areas directly, and it assesses local staging features such as extracapsular extension and seminal vesicle invasion that influence treatment planning.</p>",
+        "keypoints": [
+          "Post-biopsy hemorrhage is T1 bright and can mimic or obscure disease.",
+          "Imaging is typically delayed 6 to 8 weeks after biopsy to let hemorrhage resolve.",
+          "Prostatitis and BPH nodules both mimic cancer on T2 and DWI/ADC.",
+          "Rectal gas and metal such as hip prostheses cause susceptibility distortion on DWI.",
+          "mpMRI guides MR-ultrasound fusion biopsy and stages extracapsular extension and seminal vesicle invasion."
+        ],
+        "worked_example": "A patient scanned only 3 weeks after a prostate biopsy shows extensive T1-bright signal throughout the peripheral zone. The radiologist recommends repeating the mpMRI in 6 to 8 weeks once the hemorrhage has resolved, since the blood obscures reliable assessment of the zone.",
+        "memory_hooks": [
+          "Blood is bright on T1, so wait 6 to 8 weeks before you trust the picture.",
+          "Fusion biopsy hits what mpMRI finds; staging asks whether it broke out of the capsule."
+        ],
+        "exam_traps": [
+          "Do not interpret a recently biopsied prostate without checking pre-contrast T1 for hemorrhage first.",
+          "Do not assume every area of restricted diffusion is cancer; prostatitis and BPH nodules can restrict diffusion too."
+        ]
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1442,
+      "body": {
+        "prompt": "Which three sequence types together make up a multiparametric prostate MRI exam?",
+        "options": [
+          "T2-weighted imaging, diffusion-weighted imaging with ADC, and DCE imaging",
+          "T1-weighted imaging, diffusion-weighted imaging, and MR spectroscopy",
+          "T2-weighted imaging and DCE imaging, without any diffusion-weighted imaging",
+          "Diffusion-weighted imaging and DCE imaging, without any T2-weighted imaging"
+        ],
+        "answer": 0,
+        "explain": "mpMRI combines high-resolution T2-weighted anatomic imaging, diffusion-weighted imaging with its ADC map for cellularity, and dynamic contrast-enhanced imaging for vascularity. Dropping any one of the three is not a true multiparametric exam."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1443,
+      "body": {
+        "prompt": "In the peripheral zone, which sequence is dominant for scoring a lesion under PI-RADS v2.1?",
+        "options": [
+          "Dynamic contrast-enhanced imaging",
+          "Diffusion-weighted imaging with ADC",
+          "T2-weighted imaging by itself",
+          "T1-weighted precontrast imaging"
+        ],
+        "answer": 1,
+        "explain": "DWI and its ADC map are the dominant sequence in the peripheral zone. DCE plays only a supporting, tiebreaker role, and T2 or precontrast T1 alone do not drive the peripheral zone score."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1444,
+      "body": {
+        "prompt": "A focal lesion is bright on high b-value DWI and correspondingly dark on the ADC map. What does this pattern indicate?",
+        "options": [
+          "Free water diffusion, as seen with a benign cyst",
+          "Susceptibility artifact from nearby rectal gas",
+          "Restricted diffusion, consistent with cellular tissue",
+          "T1 hyperintensity from recent biopsy hemorrhage"
+        ],
+        "answer": 2,
+        "explain": "High signal on high b-value DWI combined with a corresponding low value on the ADC map is the classic signature of restricted diffusion, which reflects dense cellularity such as clinically significant cancer."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1445,
+      "body": {
+        "prompt": "Which sequence is dominant for scoring a lesion located in the transition zone?",
+        "options": [
+          "Dynamic contrast-enhanced imaging",
+          "High b-value diffusion-weighted imaging",
+          "The ADC map by itself",
+          "T2-weighted imaging appearance"
+        ],
+        "answer": 3,
+        "explain": "In the transition zone, T2-weighted morphology is the dominant sequence for PI-RADS scoring, while DWI plays only a supporting role and DCE has no defined upgrade rule there."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1446,
+      "body": {
+        "prompt": "A peripheral zone lesion is scored an equivocal 3 on DWI and ADC. What DCE finding allows PI-RADS to upgrade it to a 4?",
+        "options": [
+          "Diffuse enhancement spread evenly across the entire gland",
+          "Early, focal enhancement that matches the DWI finding",
+          "A well-circumscribed capsule seen on the T2-weighted images",
+          "A rising PSA value recorded at the time of the scan"
+        ],
+        "answer": 1,
+        "explain": "The PI-RADS v2.1 tiebreaker in the peripheral zone requires early, focal enhancement on DCE that corresponds to the same location as the DWI abnormality. Diffuse enhancement, T2 findings, and PSA do not trigger this upgrade."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1447,
+      "body": {
+        "prompt": "How does a suspicious lesion in the transition zone typically appear on T2-weighted imaging?",
+        "options": [
+          "Lenticular, non-circumscribed, and homogeneously low in signal",
+          "Round, well-circumscribed, and surrounded by a visible capsule",
+          "Bright and cystic with a thin, smooth outer wall",
+          "Isointense to normal gland with no distinct margin visible"
+        ],
+        "answer": 0,
+        "explain": "A suspicious transition zone lesion is classically lenticular, non-circumscribed, and homogeneously dark on T2, often described as looking like an erased charcoal smudge, unlike a well-defined, capsulated BPH nodule."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1448,
+      "body": {
+        "prompt": "Why is prostate mpMRI generally delayed about 6 to 8 weeks after a biopsy?",
+        "options": [
+          "To allow the endorectal coil balloon to be cleaned and resterilized",
+          "To let ADC values in normal tissue return to their baseline range",
+          "To allow contrast material from a prior injection to fully clear",
+          "To let post-biopsy hemorrhage, which is bright on T1, resolve"
+        ],
+        "answer": 3,
+        "explain": "Biopsy causes hemorrhage that is bright on T1-weighted images and can obscure or mimic disease on T2 and DWI. Waiting roughly 6 to 8 weeks allows the blood products to clear before the exam is interpreted."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1449,
+      "body": {
+        "prompt": "Which artifact is diffusion-weighted imaging of the prostate particularly prone to?",
+        "options": [
+          "Motion blurring caused by cardiac pulsation",
+          "Chemical shift artifact at fat-water tissue interfaces",
+          "Susceptibility distortion from nearby rectal gas or metal",
+          "Aliasing from an undersized field of view"
+        ],
+        "answer": 2,
+        "explain": "DWI is an echo planar technique and is especially sensitive to susceptibility effects, which distort or displace the apparent lesion location near rectal gas, hip prostheses, or other metal."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1450,
+      "body": {
+        "prompt": "What is the primary purpose of a targeted MR-ultrasound fusion biopsy?",
+        "options": [
+          "To measure total prostate volume for BPH treatment planning",
+          "To sample suspicious areas identified on mpMRI directly",
+          "To replace systematic biopsy in every patient regardless of findings",
+          "To evaluate seminal vesicle invasion without any tissue sampling"
+        ],
+        "answer": 1,
+        "explain": "Fusion biopsy overlays prior mpMRI findings onto real-time ultrasound so the operator can sample specific suspicious areas directly, improving detection of clinically significant cancer compared with random sampling alone."
+      }
+    },
+    {
+      "topic": "prostate-advanced",
+      "kind": "quiz",
+      "ord": 1451,
+      "body": {
+        "prompt": "On the PI-RADS v2.1 scale, what does a score of 1 indicate?",
+        "options": [
+          "Clinically significant cancer is definitely present",
+          "The finding is indeterminate and needs a DCE tiebreaker",
+          "Clinically significant cancer is highly likely to be present",
+          "Clinically significant cancer is very unlikely to be present"
+        ],
+        "answer": 3,
+        "explain": "PI-RADS v2.1 scores range from 1 to 5. A score of 1 represents the lowest end of the scale, meaning clinically significant cancer is very unlikely to be present."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "education",
+      "ord": 1452,
+      "body": {
+        "title": "Metal artifact reduction",
+        "html": "<p>Metal implants such as arthroplasty hardware, screws, and surgical clips create severe local field inhomogeneity through <strong>susceptibility artifact</strong>. This produces signal voids where the field is most disrupted, geometric distortion that displaces anatomy from its true position, and a characteristic bright rim of signal pile-up immediately adjacent to areas of signal dropout. Fat suppression is also affected: spectral, or chemical-shift, fat saturation relies on a narrow, uniform range of resonant frequencies and fails near metal, leaving unwanted fat signal or producing patchy suppression.</p><p>Basic scan parameter adjustments reduce artifact severity without specialized sequences. Increasing <strong>receiver bandwidth</strong> narrows the frequency range each pixel represents, which shrinks the frequency-encode misregistration caused by field distortion. Using a <strong>short TE</strong> limits the time available for spins to dephase before readout. <strong>Spin echo or fast spin echo</strong> sequences are preferred over gradient echo because the 180 degree refocusing pulse compensates for much of the field inhomogeneity that gradient echo cannot correct. For fat suppression near metal, <strong>STIR</strong> should replace spectral techniques because STIR suppresses fat based on T1 relaxation time rather than a narrow resonant frequency, so it remains reliable despite field inhomogeneity. Thinner slices, smaller voxels, and aligning the frequency-encode direction along the long axis of the hardware, rather than across it, further limit distortion.</p><p>When conventional adjustments are not enough, dedicated metal artifact reduction sequences correct distortion more directly. <strong>View-angle tilting (VAT)</strong> applies a compensating gradient during readout to correct in-plane distortion. <strong>SEMAC</strong>, slice-encoding for metal artifact correction, adds an extra phase-encoding step in the slice direction to correct through-plane distortion, resolving the true location of misplaced slice signal. <strong>MAVRIC</strong> acquires the volume across multiple offset frequency bins and combines them, correcting both in-plane and through-plane distortion. These techniques are standard for postoperative arthroplasty imaging, where accurate assessment of the bone-implant interface, periprosthetic fluid, and adjacent soft tissue depends on controlling metal-induced distortion.</p>",
+        "keypoints": [
+          "Susceptibility artifact near metal causes signal voids, geometric distortion, and bright pile-up next to dropout.",
+          "High bandwidth and short TE reduce metal artifact by limiting dephasing time and frequency misregistration.",
+          "Use STIR instead of spectral fat saturation near metal because STIR is not frequency-selective.",
+          "Fast spin echo is preferred over gradient echo because refocusing pulses compensate for field inhomogeneity.",
+          "VAT, SEMAC, and MAVRIC are dedicated sequences that correct in-plane and through-plane distortion for arthroplasty imaging."
+        ],
+        "worked_example": "A patient with a total hip arthroplasty is referred for MRI to evaluate suspected periprosthetic infection. The technologist selects a fast spin echo protocol with high receiver bandwidth, short TE, and STIR for fluid-sensitive fat-suppressed contrast, then adds SEMAC to control through-plane distortion so the periprosthetic collection and bone-implant interface can be evaluated with confidence, instead of relying on spectral fat saturation, which would fail adjacent to the hardware.",
+        "memory_hooks": [
+          "STIR near steel: swap spectral fat saturation for STIR whenever hardware is in the field.",
+          "SEMAC slices, MAVRIC bins, VAT tilts: three fixes for through-plane, frequency-bin, and in-plane distortion."
+        ],
+        "exam_traps": [
+          "Choosing spectral, or chemical-shift, fat suppression near metal is a common wrong answer; STIR is correct because it does not depend on a narrow resonant frequency.",
+          "Test writers may pair reducing metal artifact with gradient echo as a distractor; gradient echo worsens metal artifact and fast spin echo is the correct choice."
+        ]
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "education",
+      "ord": 1453,
+      "body": {
+        "title": "Cartilage and quantitative MSK mapping",
+        "html": "<p>Routine morphologic evaluation of articular cartilage relies on fat-suppressed <strong>proton-density</strong> or <strong>T2-weighted</strong> sequences, which depict cartilage thickness, surface contour, and focal defects such as fissures or full-thickness loss. These sequences show established structural damage well but are less sensitive to the earliest stages of cartilage degeneration, when the tissue looks morphologically intact but is already biochemically abnormal.</p><p>Quantitative mapping techniques target that earlier stage. <strong>T2 mapping</strong> generates a pixel-by-pixel map of T2 relaxation time across the cartilage; collagen matrix disorganization and increased water mobility that precede visible fibrillation raise T2 values in the affected region. <strong>T1-rho mapping</strong>, T1 in the rotating frame, is sensitive to proteoglycan content specifically, so a drop in proteoglycan concentration, an early event in osteoarthritis, is detectable as a T1-rho change before any morphologic abnormality appears. Both techniques allow regional comparison against normal reference values rather than a simple visual read.</p><p><strong>Delayed gadolinium-enhanced MRI of cartilage (dGEMRIC)</strong> takes a different approach: an intravenous gadolinium-based contrast agent is administered, and after a delay to allow equilibration, the negatively charged contrast agent distributes into cartilage inversely to the concentration of negatively charged glycosaminoglycan. Areas of glycosaminoglycan depletion accumulate more contrast and show shortened T1, so a calculated dGEMRIC index reflects glycosaminoglycan content and, indirectly, cartilage matrix health.</p>",
+        "keypoints": [
+          "Morphologic cartilage imaging uses fat-suppressed proton-density or T2 sequences and shows established structural damage.",
+          "T2 mapping detects collagen disorganization and increased water mobility as regionally elevated T2 values.",
+          "T1-rho mapping is sensitive to proteoglycan loss, an early biochemical change that precedes morphologic damage.",
+          "dGEMRIC uses delayed gadolinium distribution, inversely related to glycosaminoglycan content, to grade cartilage matrix health.",
+          "Quantitative techniques detect degeneration before morphologic sequences show visible cartilage loss."
+        ],
+        "worked_example": "A 34-year-old runner with knee pain and a morphologically normal-appearing cartilage surface on fat-suppressed proton-density imaging undergoes T2 mapping, which shows focally elevated T2 values in the weight-bearing femoral condyle, indicating early collagen matrix disorganization that would not have been detected by standard morphologic sequences alone.",
+        "memory_hooks": [
+          "T2 tells collagen, T1-rho tells proteoglycan: separate the two relaxation targets by which matrix component they sense.",
+          "dGEMRIC: more contrast where glycosaminoglycan is gone, since distribution is inverse to concentration."
+        ],
+        "exam_traps": [
+          "Do not reverse dGEMRIC's relationship; low glycosaminoglycan means high contrast uptake and shortened T1, not reduced signal.",
+          "T1-rho and T2 mapping are sometimes used interchangeably in distractors; T1-rho targets proteoglycan while T2 reflects collagen and water content."
+        ]
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "education",
+      "ord": 1454,
+      "body": {
+        "title": "Marrow and specialized sequences",
+        "html": "<p>Normal adult bone marrow is predominantly fatty and therefore bright on <strong>T1-weighted</strong> images, which makes T1 the most sensitive screening sequence for marrow disease. Any process that replaces or infiltrates fatty marrow, such as tumor, metastasis, leukemia, or lymphoma, lowers the T1 signal because it displaces fat with cellular or fibrous tissue. Marrow edema from trauma, stress reaction, or osteomyelitis similarly lowers T1 signal. Because low T1 signal alone is nonspecific, a <strong>STIR</strong> or fat-suppressed T2-weighted sequence is added to confirm that the T1 abnormality corresponds to true edema or replacement, which appears bright once background fat signal is suppressed.</p><p><strong>Chemical-shift imaging</strong>, acquired as in-phase and opposed-phase gradient echo pairs, assesses the fat content of marrow directly. Normal or benign marrow that contains a mixture of fat and water, such as red marrow or benign compression fractures, loses signal on the opposed-phase image relative to in-phase because fat and water signal cancel at the voxel level. Marrow that has been fully replaced by tumor contains little or no fat, so it fails to drop signal on opposed-phase imaging, a distinction that helps separate benign from malignant vertebral compression fractures.</p><p><strong>Gradient echo</strong> sequences serve a different specialized role in marrow and joint imaging: their sensitivity to local field inhomogeneity produces pronounced signal loss, or blooming, around hemosiderin deposits. This is exploited to identify <strong>pigmented villonodular synovitis</strong>, where hemosiderin-laden synovial proliferation blooms markedly on gradient echo, and to confirm prior intra-articular hemorrhage from trauma or hemophilic arthropathy.</p>",
+        "keypoints": [
+          "T1 is the primary screening sequence for marrow disease because normal fatty marrow is bright and replacement or edema lowers signal.",
+          "STIR or fat-suppressed T2 confirms a T1 abnormality represents true marrow edema or replacement.",
+          "In-phase and opposed-phase chemical-shift imaging assesses marrow fat content and helps distinguish benign from malignant compression fractures.",
+          "Benign marrow with mixed fat and water drops signal on opposed-phase imaging; tumor-replaced marrow does not.",
+          "Gradient echo blooming from hemosiderin identifies pigmented villonodular synovitis and prior hemorrhage."
+        ],
+        "worked_example": "An oncology patient has a compression fracture on radiographs; T1-weighted MRI shows diffusely low marrow signal at the fracture level and multiple other vertebral bodies, opposed-phase chemical-shift imaging shows no signal drop compared to in-phase, and STIR confirms diffuse marrow abnormality, together indicating tumor infiltration rather than a benign osteoporotic fracture.",
+        "memory_hooks": [
+          "Fat is bright, fat leaving is dark: T1 signal tracks fatty marrow content directly.",
+          "No drop on opposed-phase, no fat left to drop: malignant marrow replacement fails to lose signal on opposed-phase imaging."
+        ],
+        "exam_traps": [
+          "Low T1 marrow signal is nonspecific for malignancy; edema from trauma or infection produces the same finding, so STIR or clinical correlation is required.",
+          "Confusing which phase drops signal in benign marrow; benign fat-water marrow loses signal on opposed-phase, not in-phase."
+        ]
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "education",
+      "ord": 1455,
+      "body": {
+        "title": "Artifacts, applications, and pitfalls",
+        "html": "<p>The <strong>magic angle artifact</strong> arises in highly ordered collagenous tissues such as tendons, ligaments, and to a lesser extent cartilage, when a segment of the tissue is oriented at approximately <strong>55 degrees</strong> to the main magnetic field. At this angle, dipolar coupling between water molecules bound to the collagen matrix is minimized, which paradoxically increases T2 relaxation time and raises signal on short-TE sequences. The artifact mimics tendinosis or a partial tear on proton-density or T1-weighted images obtained at short TE.</p><p>The key to recognizing magic angle artifact is that it is <strong>TE-dependent</strong>: because it results from an increase in the effective T2 rather than true tissue pathology, the abnormal signal resolves or markedly diminishes on a long-TE, T2-weighted sequence. True tendon pathology, such as a tear or tendinosis with mucoid degeneration, remains bright on both short-TE and long-TE images. Confirming disappearance on a long-TE sequence is the standard way to distinguish the artifact from a real abnormality.</p><p>Near orthopedic hardware, the same principle discussed for metal artifact reduction applies clinically: spectral fat saturation fails and should be replaced with <strong>STIR</strong> to maintain reliable fat suppression around a prosthesis. Quantitative cartilage values from T2 or T1-rho mapping are not universal constants; they vary with pulse sequence design, echo spacing, and field strength, so comparisons should use consistent protocols and, ideally, site-specific reference ranges. Clinically, advanced MSK techniques are applied to assess arthroplasty complications such as periprosthetic osteolysis, component loosening, and adverse local tissue reaction, and quantitative cartilage mapping is used in early osteoarthritis research and pre-surgical cartilage assessment.</p>",
+        "keypoints": [
+          "Magic angle artifact occurs in ordered collagenous tissue near 55 degrees to the main field and raises signal on short-TE sequences.",
+          "Magic angle artifact resolves on long-TE, T2-weighted sequences, which distinguishes it from true tendon pathology.",
+          "True tendon tears or tendinosis remain bright on both short-TE and long-TE sequences, unlike the artifact.",
+          "Quantitative T2 and T1-rho cartilage values vary with sequence design and field strength, requiring consistent protocols for comparison.",
+          "Advanced MSK sequences support arthroplasty complication assessment and early osteoarthritis research."
+        ],
+        "worked_example": "A shoulder MRI shows increased signal within the distal supraspinatus tendon on a short-TE proton-density sequence at the point where the tendon curves near the humeral head; a T2-weighted fat-suppressed sequence with a longer TE is reviewed and the signal resolves, confirming magic angle artifact rather than tendinosis or a partial tear.",
+        "memory_hooks": [
+          "55 and short TE lies, long TE tells the truth: use TE dependence to unmask the magic angle artifact.",
+          "Tendons curve, signal lies at 55: the artifact appears where fibers cross the magic angle relative to the main field."
+        ],
+        "exam_traps": [
+          "Mistaking magic angle artifact for a partial tear because both present as focal increased signal on short-TE images; the long-TE sequence is the differentiator, not the short-TE appearance.",
+          "Assuming quantitative cartilage T2 or T1-rho values are directly comparable across different scanners or field strengths without accounting for protocol differences."
+        ]
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1456,
+      "body": {
+        "prompt": "A patient with bilateral hip prostheses needs MRI for suspected component loosening. Which fat suppression method should replace spectral fat saturation to avoid failure near the metal?",
+        "options": [
+          "Chemical-shift fat saturation",
+          "Water excitation",
+          "STIR",
+          "Dixon opposed-phase only"
+        ],
+        "answer": 2,
+        "explain": "STIR suppresses fat based on T1 relaxation rather than a narrow resonant frequency, so it remains reliable despite the field inhomogeneity created by metal; spectral fat saturation depends on a uniform fat frequency and fails near hardware."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1457,
+      "body": {
+        "prompt": "Which parameter change most directly reduces frequency-encode misregistration in metal artifact imaging?",
+        "options": [
+          "Increasing receiver bandwidth",
+          "Decreasing receiver bandwidth",
+          "Increasing TE",
+          "Switching to gradient echo"
+        ],
+        "answer": 0,
+        "explain": "A higher receiver bandwidth narrows the frequency range represented by each pixel, which shrinks the spatial misregistration caused by metal-induced field distortion; lowering bandwidth, lengthening TE, or using gradient echo all worsen metal artifact."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1458,
+      "body": {
+        "prompt": "Which dedicated metal artifact reduction technique corrects through-plane distortion by adding an extra phase-encoding step in the slice direction?",
+        "options": [
+          "View-angle tilting",
+          "MAVRIC",
+          "Spectral fat saturation",
+          "SEMAC"
+        ],
+        "answer": 3,
+        "explain": "SEMAC, slice-encoding for metal artifact correction, adds an additional phase-encoding step along the slice direction to resolve the true location of signal displaced through-plane by metal; view-angle tilting corrects in-plane distortion, and MAVRIC corrects distortion using multiple offset frequency bins."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1459,
+      "body": {
+        "prompt": "A T2 map of knee cartilage shows focally elevated values in the femoral condyle despite a normal-appearing surface on morphologic imaging. What does this most likely indicate?",
+        "options": [
+          "Full-thickness cartilage loss",
+          "Early collagen disorganization",
+          "Meniscal tear",
+          "Osteochondral fracture"
+        ],
+        "answer": 1,
+        "explain": "Elevated T2 values reflect increased water mobility from disorganization of the collagen matrix, an early biochemical change in cartilage degeneration that precedes visible morphologic loss; the other choices are structural findings that would typically be visible on standard morphologic sequences."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1460,
+      "body": {
+        "prompt": "Which cartilage evaluation technique uses delayed gadolinium distribution that is inversely related to glycosaminoglycan concentration?",
+        "options": [
+          "dGEMRIC",
+          "T2 mapping",
+          "T1-rho mapping",
+          "Proton-density fat-suppressed imaging"
+        ],
+        "answer": 0,
+        "explain": "dGEMRIC relies on a negatively charged gadolinium-based contrast agent distributing inversely to negatively charged glycosaminoglycan; areas of glycosaminoglycan depletion accumulate more contrast and show shortened T1. T2 and T1-rho mapping are quantitative but do not use contrast, and proton-density imaging is a morphologic technique."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1461,
+      "body": {
+        "prompt": "On in-phase and opposed-phase chemical-shift imaging of a vertebral compression fracture, absence of signal drop on the opposed-phase image compared to in-phase suggests which process?",
+        "options": [
+          "Benign osteoporotic fracture",
+          "Red marrow reconversion",
+          "Acute marrow edema only",
+          "Tumor infiltration of marrow"
+        ],
+        "answer": 3,
+        "explain": "Benign marrow contains a mixture of fat and water, which cancels signal on opposed-phase imaging. Marrow fully replaced by tumor contains little or no fat, so it fails to drop signal on opposed-phase imaging relative to in-phase, favoring malignant infiltration over a benign process."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1462,
+      "body": {
+        "prompt": "Marked signal loss, or blooming, on gradient echo imaging of a synovial mass is most characteristic of which condition?",
+        "options": [
+          "Degenerative osteoarthritis change",
+          "Pigmented villonodular synovitis",
+          "Rheumatoid synovitis inflammation",
+          "Synovial chondromatosis nodules"
+        ],
+        "answer": 1,
+        "explain": "Pigmented villonodular synovitis contains hemosiderin-laden synovial proliferation, and gradient echo sequences are highly sensitive to the local field inhomogeneity hemosiderin creates, producing pronounced blooming; the other entities do not typically show this degree of susceptibility signal loss."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1463,
+      "body": {
+        "prompt": "A tendon shows increased signal on a short-TE proton-density sequence at a point where it curves near a joint. Which finding on a long-TE T2-weighted sequence would confirm magic angle artifact rather than true pathology?",
+        "options": [
+          "Signal increases further",
+          "Signal remains unchanged",
+          "Signal resolves or decreases",
+          "Signal becomes heterogeneous"
+        ],
+        "answer": 2,
+        "explain": "Magic angle artifact results from a transient increase in effective T2 at short TE and resolves on long-TE, T2-weighted imaging because that mechanism no longer applies; true tendon pathology such as a tear or tendinosis remains bright on both short-TE and long-TE sequences."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1464,
+      "body": {
+        "prompt": "At which approximate angle to the main magnetic field does the magic angle artifact occur in tendons and ligaments?",
+        "options": [
+          "55 degrees",
+          "0 degrees",
+          "90 degrees",
+          "180 degrees"
+        ],
+        "answer": 0,
+        "explain": "At approximately 55 degrees relative to the main magnetic field, dipolar coupling in highly ordered collagen is minimized, which increases T2 and raises signal on short-TE sequences; this specific angle is why the artifact is called the magic angle."
+      }
+    },
+    {
+      "topic": "msk-advanced",
+      "kind": "quiz",
+      "ord": 1465,
+      "body": {
+        "prompt": "Which combination of sequence choices best reduces metal artifact severity near orthopedic hardware?",
+        "options": [
+          "Gradient echo, low bandwidth, long TE",
+          "Gradient echo, high bandwidth, short TE",
+          "Fast spin echo, low bandwidth, long TE",
+          "Fast spin echo, high bandwidth, short TE"
+        ],
+        "answer": 3,
+        "explain": "Fast spin echo compensates for field inhomogeneity through its refocusing pulses, high receiver bandwidth narrows frequency misregistration, and short TE limits dephasing time before readout; gradient echo and low bandwidth or long TE all increase susceptibility artifact near metal."
+      }
     }
   ]
 }

@@ -34,6 +34,10 @@
     "15 · MR spectroscopy (MRS)":     { premium: ["mrs-advanced"], quiz: ["mrs-advanced"] },
     "16 · Functional MRI (BOLD)":     { premium: ["fmri-advanced"], quiz: ["fmri-advanced"] },
     "17 · Quantitative MRI":          { premium: ["quant-advanced"], quiz: ["quant-advanced"] },
+    "18 · Breast MRI":                { premium: ["breast-advanced"], quiz: ["breast-advanced"] },
+    "19 · Prostate mpMRI":            { premium: ["prostate-advanced"], quiz: ["prostate-advanced"] },
+    "20 · Advanced MSK imaging":      { premium: ["msk-advanced"], quiz: ["msk-advanced"] },
+    "21 · Body MRI & MRCP":           { premium: ["body-advanced"], quiz: ["body-advanced"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
