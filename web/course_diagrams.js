@@ -850,7 +850,86 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction };
+  // ---- Widget: phase-contrast VENC and velocity aliasing ---- //
+  function buildPcVenc() {
+    var fig = figure("PC VENC and aliasing", "PC measures velocity by phase; above the VENC the phase wraps, so fast flow aliases and reads reversed (1.5 T, approximate).");
+    var xMax = 300, truePeak = 220;
+    var state = { venc: 150 };
+    var plot = makePlot({ xMax: xMax, yMin: -300, yMax: 300, xLabel: "true velocity (cm/s)", yLabel: "measured",
+      xTicks: [0, 100, 200, 300], yTicks: [-300, -150, 0, 150, 300], title: "PC velocity aliasing versus VENC" });
+    plot.addAxes();
+    var curve = null, marker = null, dot = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove(); if (marker) marker.remove(); if (dot) dot.remove();
+      var pts = M.sample(function (v) { return M.aliasedVelocity(v, state.venc); }, xMax, 120);
+      curve = plot.addCurve(pts, "");
+      marker = plot.addMarker(truePeak, "", "peak");
+      var measured = M.aliasedVelocity(truePeak, state.venc);
+      dot = plot.addDot(truePeak, measured, "");
+      readout.textContent = truePeak > state.venc
+        ? "True peak " + truePeak + " cm/s exceeds VENC " + state.venc + " cm/s: phase wraps, so the measured value reads " + Math.round(measured) + " cm/s, a reversed (negative) reading that mimics reversed flow. Raise the VENC to fix it."
+        : "True peak " + truePeak + " cm/s is within VENC " + state.venc + " cm/s: it reads correctly at " + Math.round(measured) + " cm/s.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "VENC:" }));
+    [["100", 100], ["150", 150], ["200", 200]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.venc ? " on" : ""), text: p[0] + " cm/s" });
+      b.addEventListener("click", function () {
+        state.venc = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: TOF inflow and saturation ---- //
+  function buildTofInflow() {
+    var fig = figure("TOF inflow and saturation", "TOF brightness comes from fresh unsaturated blood replacing saturated spins; slow flow saturates (1.5 T, approximate).");
+    var xMax = 30, slowFlow = 5;
+    var state = { vFull: 8 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "flow velocity (cm/s)", yLabel: "TOF signal",
+      xTicks: [0, 10, 20, 30], title: "Time-of-flight signal versus flow velocity" });
+    plot.addAxes();
+    var curve = null, marker = null, dot = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove(); if (marker) marker.remove(); if (dot) dot.remove();
+      var pts = M.sample(function (v) { return M.tofSignal(v, state.vFull); }, xMax, 120);
+      curve = plot.addCurve(pts, "");
+      marker = plot.addMarker(slowFlow, "", "slow");
+      var sig = M.tofSignal(slowFlow, state.vFull);
+      dot = plot.addDot(slowFlow, sig, "");
+      readout.textContent = "Slow or in-plane flow at " + slowFlow + " cm/s stays in the slab and saturates, so it reads dark ("
+        + Math.round(sig * 100) + "% signal) and can mimic stenosis. A thinner slab recovers slow flow, reaching full signal at a lower velocity.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Slab:" }));
+    [["Thin", 8], ["Thick", 20]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.vFull ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.vFull = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
