@@ -45,6 +45,72 @@
   // Diffusion-weighted signal: mono-exponential decay with b-value and ADC.
   function dwiSignal(b, ADC) { return Math.exp(-b * ADC); }
 
+  // In-place radix-2 Cooley-Tukey FFT; re/im length must be a power of 2. Inverse divides by N.
+  function fft1d(re, im, inverse) {
+    var n = re.length, i, j, len, s, k;
+    for (i = 1, j = 0; i < n; i++) {
+      var bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        var tr = re[i]; re[i] = re[j]; re[j] = tr;
+        var ti = im[i]; im[i] = im[j]; im[j] = ti;
+      }
+    }
+    for (len = 2; len <= n; len <<= 1) {
+      var ang = (inverse ? 2 : -2) * Math.PI / len;
+      var wr = Math.cos(ang), wi = Math.sin(ang);
+      for (s = 0; s < n; s += len) {
+        var cwr = 1, cwi = 0;
+        for (k = 0; k < (len >> 1); k++) {
+          var a = s + k, b = s + k + (len >> 1);
+          var vr = re[b] * cwr - im[b] * cwi, vi = re[b] * cwi + im[b] * cwr;
+          re[b] = re[a] - vr; im[b] = im[a] - vi;
+          re[a] = re[a] + vr; im[a] = im[a] + vi;
+          var ncwr = cwr * wr - cwi * wi;
+          cwi = cwr * wi + cwi * wr; cwr = ncwr;
+        }
+      }
+    }
+    if (inverse) { for (i = 0; i < n; i++) { re[i] /= n; im[i] /= n; } }
+  }
+
+  // 2D FFT of an N x N row-major complex array: transform rows then columns.
+  function fft2d(re, im, N, inverse) {
+    var rr = new Array(N), ri = new Array(N), x, y;
+    for (y = 0; y < N; y++) {
+      for (x = 0; x < N; x++) { rr[x] = re[y * N + x]; ri[x] = im[y * N + x]; }
+      fft1d(rr, ri, inverse);
+      for (x = 0; x < N; x++) { re[y * N + x] = rr[x]; im[y * N + x] = ri[x]; }
+    }
+    var cr = new Array(N), ci = new Array(N);
+    for (x = 0; x < N; x++) {
+      for (y = 0; y < N; y++) { cr[y] = re[y * N + x]; ci[y] = im[y * N + x]; }
+      fft1d(cr, ci, inverse);
+      for (y = 0; y < N; y++) { re[y * N + x] = cr[y]; im[y * N + x] = ci[y]; }
+    }
+  }
+
+  // Swap diagonal quadrants of an N x N array (DC <-> center). Self-inverse for even N.
+  function fftshift2d(a, N) {
+    var h = N >> 1, x, y, t;
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < h; x++) {
+        var i00 = y * N + x, i11 = (y + h) * N + (x + h);
+        t = a[i00]; a[i00] = a[i11]; a[i11] = t;
+        var i01 = y * N + (x + h), i10 = (y + h) * N + x;
+        t = a[i01]; a[i01] = a[i10]; a[i10] = t;
+      }
+    }
+  }
+
+  // Relative SNR and scan time vs baseline {slice:3, matrix:192, nex:1, bw:32}.
+  function snrScanRel(p) {
+    var snr = (p.slice / 3) * Math.pow(192 / p.matrix, 2) * Math.sqrt(p.nex / 1) * Math.sqrt(32 / p.bw);
+    var time = (p.matrix / 192) * (p.nex / 1);
+    return { snr: snr, time: time };
+  }
+
   // TR/TE thresholds (ms), 1.5 T teaching values.
   var TR_SHORT = 700, TR_LONG = 1500, TE_SHORT = 35, TE_LONG = 80;
 
@@ -90,10 +156,13 @@
     "Flip angle: the Ernst angle and the SAR trade-off": ["ernst-angle"],
     "Fat suppression: STIR, spectral, Dixon and water excitation": ["ir-nulling"],
     "Diffusion in disease: stroke, abscess and cellular tumors": ["dwi-bvalue"],
+    "Image quality: SNR, CNR, resolution & the trade-offs": ["snr-tradeoff"],
+    "Data acquisition: k-space, encoding and the Fourier transform": ["kspace-recon"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
     ernstAngle: ernstAngle, spoiledGreSignal: spoiledGreSignal, irMz: irMz, nullTI: nullTI,
     dwiSignal: dwiSignal, classifyWeighting: classifyWeighting, sample: sample,
+    fft1d: fft1d, fft2d: fft2d, fftshift2d: fftshift2d, snrScanRel: snrScanRel,
     TISSUES: TISSUES, ADCS: ADCS, DIAGRAM_MAP: DIAGRAM_MAP };
 });
