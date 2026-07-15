@@ -17,7 +17,7 @@ def _edu_bodies():
 
 def test_all_education_modules_have_depth_fields():
     bodies = _edu_bodies()
-    assert len(bodies) == 53, len(bodies)
+    assert len(bodies) == 57, len(bodies)
     for b in bodies:
         title = b.get("title")
         assert isinstance(b.get("worked_example"), str) and b["worked_example"].strip(), title
