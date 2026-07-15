@@ -399,9 +399,9 @@
           var due = Assignments.dueLabel(a.dueAt);
           var dueCell = h("td", {}, [document.createTextNode(due ? due.text : "—")]);
           if (due && due.overdue && !a.done) dueCell.appendChild(h("span", { class: "chip", text: "overdue" }));
-          var link = a.kind === "lesson" ? "simulator.html?lesson=" + encodeURIComponent(a.ref)
-            : a.kind === "quiz" ? "quiz.html?topic=" + encodeURIComponent(a.ref)
-              : "course.html";
+          var link = a.kind === "quiz" ? "quiz.html?topic=" + encodeURIComponent(a.ref)
+            : a.kind === "lesson" ? "course.html?lesson=" + encodeURIComponent(a.ref)
+              : "course.html?module=" + encodeURIComponent(a.ref);
           var doneCell = h("td", {}, [a.done ? h("span", { class: "chip", text: "done" }) : document.createTextNode("—")]);
           tb.appendChild(h("tr", {}, [
             doneCell, td(a.label), td(KIND_LABEL[a.kind] || a.kind), dueCell,
