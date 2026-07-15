@@ -442,7 +442,47 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling };
+  // ---- Widget: DWI signal vs b-value ---- //
+  function buildDwiBvalue() {
+    var fig = figure("DWI and b-value", "Diffusion weighting: signal falls as e to the minus b times ADC. Restricted diffusion (low ADC, e.g. acute stroke) stays bright at high b while free water darkens. Restricted blue, normal grey, free water red (1.5 T, approximate).");
+    var xMax = 1000;
+    var state = { b: 1000 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "b-value (s/mm2)", yLabel: "signal",
+      xTicks: [0, 250, 500, 750, 1000], title: "Diffusion signal versus b-value" });
+    plot.addAxes();
+    M.ADCS.forEach(function (a, i) {
+      plot.addCurve(M.sample(function (b) { return M.dwiSignal(b, a.adc); }, xMax, 80),
+        i === 0 ? "" : (i === 1 ? "pd" : "alt"));
+    });
+    var marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (marker) marker.remove();
+      marker = plot.addMarker(state.b, "", "b");
+      var parts = M.ADCS.map(function (a) {
+        return a.label + " " + Math.round(M.dwiSignal(state.b, a.adc) * 100) + "%"; });
+      readout.textContent = "At b " + state.b + " s/mm2: " + parts.join(", ") + ". Restricted diffusion stays brightest.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "b-value:" }));
+    [0, 500, 1000].forEach(function (bv) {
+      var b = el("button", { type: "button", class: "diag-btn" + (bv === state.b ? " on" : ""), text: String(bv) });
+      b.addEventListener("click", function () {
+        state.b = bv;
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
