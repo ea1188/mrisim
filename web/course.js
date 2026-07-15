@@ -30,6 +30,7 @@
     "11 · Perfusion & advanced imaging": { premium: ["perfusion"], quiz: ["perfusion"] },
     "12 · Advanced vascular imaging": { premium: ["vascular-advanced"], quiz: ["vascular-advanced"] },
     "13 · Advanced diffusion imaging": { premium: ["diffusion-advanced"], quiz: ["diffusion-advanced"] },
+    "14 · Cardiac MRI":               { premium: ["cardiac-advanced"], quiz: ["cardiac-advanced"] },
   };
   var CURRICULUM_DONE_KEY = "mrisim_curriculum";
   var COURSE_QUIZ_KEY = "mrisim_course_quiz_v1";
