@@ -26,7 +26,7 @@
   // A padded plot area with axes. Returns coordinate mappers and draw helpers.
   // opts: { xMax, yMax (default 1), xLabel, yLabel, title }
   function makePlot(opts) {
-    var W = 320, H = 180, padL = 34, padB = 26, padT = 8, padR = 10;
+    var W = 320, H = 180, padL = 40, padB = 30, padT = 8, padR = 10;
     var x0 = padL, x1 = W - padR, y0 = H - padB, y1 = padT;
     var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
       role: "img", "aria-label": opts.title });
@@ -36,9 +36,28 @@
     function addAxes() {
       svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x1, y2: y0 }));
       svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x0, y2: y1 }));
-      var yl = svgEl("text", { class: "diag-axtext", x: x0 - 6, y: y1 + 4, "text-anchor": "end" });
+      // y-axis numeric ticks (fraction of full scale)
+      (opts.yTicks || [0, 0.5, 1]).forEach(function (v) {
+        var y = toY(v);
+        svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0 - 3, y1: y, x2: x0, y2: y }));
+        var yt = svgEl("text", { class: "diag-axtext", x: x0 - 5, y: y + 3, "text-anchor": "end" });
+        yt.textContent = String(v); svg.appendChild(yt);
+      });
+      // x-axis numeric ticks (ms); edge labels anchored inward so they stay in view
+      (opts.xTicks || []).forEach(function (tv) {
+        var x = toX(tv);
+        svg.appendChild(svgEl("line", { class: "diag-axis", x1: x, y1: y0, x2: x, y2: y0 + 3 }));
+        var anc = x <= x0 + 6 ? "start" : (x >= x1 - 6 ? "end" : "middle");
+        var xt = svgEl("text", { class: "diag-axtext", x: x, y: y0 + 12, "text-anchor": anc });
+        xt.textContent = String(tv); svg.appendChild(xt);
+      });
+      // rotated y-axis unit label, clear of the tick numbers
+      var mid = (y0 + y1) / 2;
+      var yl = svgEl("text", { class: "diag-axtext", x: 10, y: mid,
+        "text-anchor": "middle", transform: "rotate(-90 10 " + mid + ")" });
       yl.textContent = opts.yLabel; svg.appendChild(yl);
-      var xl = svgEl("text", { class: "diag-axtext", x: x1, y: y0 + 18, "text-anchor": "end" });
+      // centered x-axis unit label below the tick numbers
+      var xl = svgEl("text", { class: "diag-axtext", x: (x0 + x1) / 2, y: y0 + 24, "text-anchor": "middle" });
       xl.textContent = opts.xLabel; svg.appendChild(xl);
     }
     function pathData(points) {
@@ -89,7 +108,7 @@
     var state = { tissue: M.TISSUES[1], tr: null };
     var xMax = 3000;
     var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mz",
-      title: "T1 longitudinal recovery curve" });
+      xTicks: [0, 1000, 2000, 3000], title: "T1 longitudinal recovery curve" });
     plot.addAxes();
     var curve = null, marker = null;
     var readout = el("div", { class: "diag-readout" });
@@ -146,7 +165,7 @@
     var state = { tissue: M.TISSUES[1], te: null };
     var xMax = 400;
     var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
-      title: "T2 transverse decay curve" });
+      xTicks: [0, 100, 200, 300, 400], title: "T2 transverse decay curve" });
     plot.addAxes();
     var curve = null, marker = null;
     var readout = el("div", { class: "diag-readout" });
@@ -201,7 +220,7 @@
     var xMax = 300;
     var state = { t2prime: 40 };  // ms; smaller = worse inhomogeneity
     var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
-      title: "T2 versus T2-star decay envelopes" });
+      xTicks: [0, 100, 200, 300], title: "T2 versus T2-star decay envelopes" });
     plot.addAxes();
     // True T2 curve is static; T2* curve redraws with the slider.
     plot.addCurve(M.sample(function (t) { return M.mxy(t, T2); }, xMax, 60), "");
@@ -240,14 +259,14 @@
     var wm = M.TISSUES[1], csf = M.TISSUES[3]; // contrast pair: white matter vs CSF
 
     var recov = makePlot({ xMax: trMax, yMax: 1, xLabel: "TR (ms)", yLabel: "Mz",
-      title: "Longitudinal recovery vs TR" });
+      xTicks: [0, 1000, 2000, 3000], title: "Longitudinal recovery vs TR" });
     recov.addAxes();
     recov.addCurve(M.sample(function (t) { return M.mz(t, wm.t1); }, trMax, 60), "");
     recov.addCurve(M.sample(function (t) { return M.mz(t, csf.t1); }, trMax, 60), "pd");
     var trMark = null;
 
     var decay = makePlot({ xMax: teMax, yMax: 1, xLabel: "TE (ms)", yLabel: "Mxy",
-      title: "Transverse decay vs TE" });
+      xTicks: [0, 50, 100, 150, 200], title: "Transverse decay vs TE" });
     decay.addAxes();
     decay.addCurve(M.sample(function (t) { return M.mxy(t, wm.t2); }, teMax, 60), "");
     decay.addCurve(M.sample(function (t) { return M.mxy(t, csf.t2); }, teMax, 60), "pd");

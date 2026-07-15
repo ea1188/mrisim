@@ -578,8 +578,8 @@
             buildRail();
           } }));
         }
-        card.appendChild(foot);
         if (window.CourseDiagrams) window.CourseDiagrams.attach(card, b.title);
+        card.appendChild(foot);
         esec.appendChild(card);
       });
       main.appendChild(esec);
