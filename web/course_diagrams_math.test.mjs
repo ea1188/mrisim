@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Math2 from "./course_diagrams_math.js";
 
-const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
+const { mz, mxy, t2star, spinEchoSignal, ernstAngle, spoiledGreSignal, irMz, nullTI, dwiSignal, fft1d, fft2d, fftshift2d, snrScanRel, classifyWeighting, sample, TISSUES, ADCS, DIAGRAM_MAP } = Math2;
 
 test("mz recovers from 0 toward 1", () => {
   assert.equal(mz(0, 500), 0);
@@ -70,6 +70,48 @@ test("dwiSignal: 1 at b=0, faster decay for higher ADC, restricted stays brighte
   assert.ok(ADCS.length === 3 && ADCS[0].adc < ADCS[2].adc);
 });
 
+test("fft1d: delta -> constant, inverse round-trips, constant -> DC spike", () => {
+  const re = [1, 0, 0, 0], im = [0, 0, 0, 0];
+  fft1d(re, im, false);
+  for (let i = 0; i < 4; i++) { assert.ok(Math.abs(re[i] - 1) < 1e-9); assert.ok(Math.abs(im[i]) < 1e-9); }
+  fft1d(re, im, true);
+  const exp = [1, 0, 0, 0];
+  for (let i = 0; i < 4; i++) { assert.ok(Math.abs(re[i] - exp[i]) < 1e-9); assert.ok(Math.abs(im[i]) < 1e-9); }
+  const cr = [2, 2, 2, 2], ci = [0, 0, 0, 0];
+  fft1d(cr, ci, false);
+  assert.ok(Math.abs(cr[0] - 8) < 1e-9);
+  for (let i = 1; i < 4; i++) { assert.ok(Math.abs(cr[i]) < 1e-9 && Math.abs(ci[i]) < 1e-9); }
+});
+
+test("fft2d round-trips an image", () => {
+  const N = 4, re = [], im = [];
+  for (let i = 0; i < N * N; i++) { re.push((i * 7 % 13) / 13); im.push(0); }
+  const re0 = re.slice();
+  fft2d(re, im, N, false); fft2d(re, im, N, true);
+  for (let i = 0; i < N * N; i++) { assert.ok(Math.abs(re[i] - re0[i]) < 1e-9); assert.ok(Math.abs(im[i]) < 1e-9); }
+});
+
+test("fftshift2d is self-inverse and moves DC to center", () => {
+  const N = 4, a = [];
+  for (let i = 0; i < N * N; i++) a.push(i);
+  const a0 = a.slice();
+  fftshift2d(a, N); fftshift2d(a, N);
+  assert.deepEqual(a, a0);
+  const b = [];
+  for (let i = 0; i < N * N; i++) b.push(i === 0 ? 1 : 0);
+  fftshift2d(b, N);
+  assert.equal(b[(N / 2) * N + (N / 2)], 1);
+});
+
+test("snrScanRel: baseline 1x; trade-offs move as expected", () => {
+  const base = snrScanRel({ slice: 3, matrix: 192, nex: 1, bw: 32 });
+  assert.ok(Math.abs(base.snr - 1) < 1e-9 && Math.abs(base.time - 1) < 1e-9);
+  assert.ok(Math.abs(snrScanRel({ slice: 6, matrix: 192, nex: 1, bw: 32 }).snr - 2) < 1e-9);
+  const fine = snrScanRel({ slice: 3, matrix: 384, nex: 1, bw: 32 });
+  assert.ok(Math.abs(fine.snr - 0.25) < 1e-9 && Math.abs(fine.time - 2) < 1e-9);
+  assert.ok(Math.abs(snrScanRel({ slice: 3, matrix: 192, nex: 4, bw: 32 }).snr - 2) < 1e-9);
+});
+
 test("sample returns n+1 points spanning [0, tMax]", () => {
   const pts = sample((t) => t, 100, 10);
   assert.equal(pts.length, 11);
@@ -88,9 +130,11 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Flip angle: the Ernst angle and the SAR trade-off"], ["ernst-angle"]);
   assert.deepEqual(DIAGRAM_MAP["Fat suppression: STIR, spectral, Dixon and water excitation"], ["ir-nulling"]);
   assert.deepEqual(DIAGRAM_MAP["Diffusion in disease: stroke, abscess and cellular tumors"], ["dwi-bvalue"]);
+  assert.deepEqual(DIAGRAM_MAP["Image quality: SNR, CNR, resolution & the trade-offs"], ["snr-tradeoff"]);
+  assert.deepEqual(DIAGRAM_MAP["Data acquisition: k-space, encoding and the Fourier transform"], ["kspace-recon"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["dwi-bvalue", "ernst-angle", "ir-nulling", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
+  assert.deepEqual(ids, ["dwi-bvalue", "ernst-angle", "ir-nulling", "kspace-recon", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tr-te-weighting"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real

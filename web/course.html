@@ -135,8 +135,20 @@
     .diag-dual { display: flex; flex-wrap: wrap; gap: 10px; }
     .diag-dual .diag-svg { max-width: 240px; }
     .diag-glabel { font-size: 12px; color: var(--muted); margin-right: 2px; }
+    .diag-bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; color: var(--muted); }
+    .diag-bar-label { flex: none; width: 128px; }
+    .diag-bar-track { position: relative; flex: 1; height: 10px; background: var(--line); border-radius: 3px; overflow: hidden; }
+    .diag-bar-fill { height: 100%; width: 0; background: var(--accent); }
+    .diag-bar-fill.low { background: var(--warn); }
+    .diag-bar-base { position: absolute; top: 0; bottom: 0; left: 33.33%; width: 1px; background: var(--muted); }
+    .diag-bar-num { flex: none; width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+    .diag-kspace { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+    .diag-canvas-wrap { margin: 0; text-align: center; }
+    .diag-canvas { width: 140px; height: 140px; image-rendering: pixelated; border: 1px solid var(--line-2); border-radius: 4px; background: #000; display: block; }
+    .diag-canvas-cap { font-size: 11px; color: var(--muted); margin-top: 4px; }
     @media (prefers-reduced-motion: no-preference) {
       .diag-btn { transition: background .15s var(--ease), color .15s var(--ease); }
+      .diag-bar-fill { transition: width .2s var(--ease); }
     }
     .edu .mark-read { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--accent); font: inherit;
       font-size: 12.5px; padding: 6px 12px; border-radius: 2px; cursor: pointer; }
