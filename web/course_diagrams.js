@@ -1,0 +1,350 @@
+/* Interactive SVG physics diagrams for the guided course. Classic browser script;
+ * defines window.CourseDiagrams. Pure math comes from window.CourseDiagramsMath.
+ * attach(card, eduTitle) drops the mapped widget(s) into an education card. */
+(function () {
+  "use strict";
+
+  var M = window.CourseDiagramsMath;
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function svgEl(name, attrs) {
+    var e = document.createElementNS(SVGNS, name);
+    if (attrs) for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "text") e.textContent = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+
+  // A padded plot area with axes. Returns coordinate mappers and draw helpers.
+  // opts: { xMax, yMax (default 1), xLabel, yLabel, title }
+  function makePlot(opts) {
+    var W = 320, H = 180, padL = 40, padB = 30, padT = 8, padR = 10;
+    var x0 = padL, x1 = W - padR, y0 = H - padB, y1 = padT;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": opts.title });
+    var t = svgEl("title", {}); t.textContent = opts.title; svg.appendChild(t);
+    function toX(tv) { return x0 + (x1 - x0) * (tv / opts.xMax); }
+    function toY(v) { return y0 - (y0 - y1) * (v / (opts.yMax || 1)); }
+    function addAxes() {
+      svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x1, y2: y0 }));
+      svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0, y1: y0, x2: x0, y2: y1 }));
+      // y-axis numeric ticks (fraction of full scale)
+      (opts.yTicks || [0, 0.5, 1]).forEach(function (v) {
+        var y = toY(v);
+        svg.appendChild(svgEl("line", { class: "diag-axis", x1: x0 - 3, y1: y, x2: x0, y2: y }));
+        var yt = svgEl("text", { class: "diag-axtext", x: x0 - 5, y: y + 3, "text-anchor": "end" });
+        yt.textContent = String(v); svg.appendChild(yt);
+      });
+      // x-axis numeric ticks (ms); edge labels anchored inward so they stay in view
+      (opts.xTicks || []).forEach(function (tv) {
+        var x = toX(tv);
+        svg.appendChild(svgEl("line", { class: "diag-axis", x1: x, y1: y0, x2: x, y2: y0 + 3 }));
+        var anc = x <= x0 + 6 ? "start" : (x >= x1 - 6 ? "end" : "middle");
+        var xt = svgEl("text", { class: "diag-axtext", x: x, y: y0 + 12, "text-anchor": anc });
+        xt.textContent = String(tv); svg.appendChild(xt);
+      });
+      // rotated y-axis unit label, clear of the tick numbers
+      var mid = (y0 + y1) / 2;
+      var yl = svgEl("text", { class: "diag-axtext", x: 10, y: mid,
+        "text-anchor": "middle", transform: "rotate(-90 10 " + mid + ")" });
+      yl.textContent = opts.yLabel; svg.appendChild(yl);
+      // centered x-axis unit label below the tick numbers
+      var xl = svgEl("text", { class: "diag-axtext", x: (x0 + x1) / 2, y: y0 + 24, "text-anchor": "middle" });
+      xl.textContent = opts.xLabel; svg.appendChild(xl);
+    }
+    function pathData(points) {
+      return points.map(function (p, i) {
+        return (i ? "L" : "M") + toX(p[0]).toFixed(1) + " " + toY(p[1]).toFixed(1);
+      }).join(" ");
+    }
+    // points: Array<[t,v]>. Returns the <path> so callers can animate it.
+    function addCurve(points, cls) {
+      var path = svgEl("path", { class: "diag-curve " + (cls || ""), d: pathData(points) });
+      svg.appendChild(path);
+      return path;
+    }
+    // Animate a curve drawing from left to right by growing its point set.
+    function animateCurve(path, points) {
+      if (reduceMotion) return; // final curve already drawn by addCurve
+      var start = null, dur = 650;
+      path.setAttribute("d", pathData(points.slice(0, 1)));
+      function frame(ts) {
+        if (start === null) start = ts;
+        var k = Math.min(1, (ts - start) / dur);
+        var n = Math.max(1, Math.round(k * (points.length - 1)));
+        path.setAttribute("d", pathData(points.slice(0, n + 1)));
+        if (k < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+    function addLabel(tv, text) {
+      var tx = svgEl("text", { class: "diag-axtext", x: toX(tv), y: y1 + 8, "text-anchor": "middle" });
+      tx.textContent = text; svg.appendChild(tx);
+      return tx;
+    }
+    function addMarker(tv, cls, label) {
+      var line = svgEl("line", { class: "diag-marker " + (cls || ""),
+        x1: toX(tv), y1: y0, x2: toX(tv), y2: y1 });
+      svg.appendChild(line);
+      if (label) addLabel(tv, label);
+      return line;
+    }
+    function addDot(tv, v, cls) {
+      var c = svgEl("circle", { class: "diag-dot " + (cls || ""), cx: toX(tv), cy: toY(v), r: 3 });
+      svg.appendChild(c);
+      return c;
+    }
+    return { svg: svg, toX: toX, toY: toY, addAxes: addAxes, addCurve: addCurve,
+      animateCurve: animateCurve, addMarker: addMarker, addLabel: addLabel, addDot: addDot };
+  }
+
+  // A labeled figure shell shared by every widget.
+  function figure(title, caption) {
+    var fig = el("figure", { class: "diagram", "aria-label": title });
+    fig.appendChild(el("figcaption", { class: "diag-cap", text: caption }));
+    return fig;
+  }
+
+  // ---- Widget: T1 longitudinal recovery ---- //
+  function buildT1Recovery() {
+    var fig = figure("T1 recovery", "T1 recovery: Mz rebuilds along B0 (1.5 T, approximate).");
+    var state = { tissue: M.TISSUES[1], tr: null };
+    var xMax = 3000;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mz",
+      xTicks: [0, 1000, 2000, 3000], title: "T1 longitudinal recovery curve" });
+    plot.addAxes();
+    var curve = null, marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw(animate) {
+      if (curve) curve.remove(); if (marker) marker.remove();
+      var pts = M.sample(function (t) { return M.mz(t, state.tissue.t1); }, xMax, 60);
+      curve = plot.addCurve(pts, "");
+      if (animate) plot.animateCurve(curve, pts);
+      readout.textContent = state.tr === null ? "Pick a TR to see recovery at that time."
+        : "At TR " + state.tr + " ms, " + state.tissue.label + " has recovered "
+          + Math.round(M.mz(state.tr, state.tissue.t1) * 100) + "% of Mz.";
+      if (state.tr !== null) marker = plot.addMarker(state.tr, "");
+    }
+    fig.appendChild(plot.svg);
+
+    var controls = el("div", { class: "diag-controls" });
+    var sel = el("select", { class: "diag-select", "aria-label": "Tissue" });
+    M.TISSUES.forEach(function (ti, i) {
+      var o = el("option", { value: ti.id, text: ti.label });
+      if (i === 1) o.setAttribute("selected", "selected");
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      state.tissue = M.TISSUES.filter(function (t) { return t.id === sel.value; })[0];
+      redraw(false);
+    });
+    controls.appendChild(sel);
+
+    [["Short", 400], ["Medium", 1200], ["Long", 2500]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn", text: "TR " + p[0] });
+      b.addEventListener("click", function () {
+        state.tr = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw(false);
+      });
+      controls.appendChild(b);
+    });
+    if (!reduceMotion) {
+      var play = el("button", { type: "button", class: "diag-btn diag-play", text: "▸ Play" });
+      play.addEventListener("click", function () { redraw(true); });
+      controls.appendChild(play);
+    }
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+
+    redraw(false);
+    return fig;
+  }
+
+  // ---- Widget: T2 transverse decay ---- //
+  function buildT2Decay() {
+    var fig = figure("T2 decay", "T2 decay: Mxy dephases in the transverse plane (1.5 T, approximate).");
+    var state = { tissue: M.TISSUES[1], te: null };
+    var xMax = 400;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mxy",
+      xTicks: [0, 100, 200, 300, 400], title: "T2 transverse decay curve" });
+    plot.addAxes();
+    var curve = null, marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw(animate) {
+      if (curve) curve.remove(); if (marker) marker.remove();
+      var pts = M.sample(function (t) { return M.mxy(t, state.tissue.t2); }, xMax, 60);
+      curve = plot.addCurve(pts, "");
+      if (animate) plot.animateCurve(curve, pts);
+      readout.textContent = state.te === null ? "Pick a TE to see signal remaining at that echo time."
+        : "At TE " + state.te + " ms, " + state.tissue.label + " retains "
+          + Math.round(M.mxy(state.te, state.tissue.t2) * 100) + "% of Mxy.";
+      if (state.te !== null) marker = plot.addMarker(state.te, "");
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    var sel = el("select", { class: "diag-select", "aria-label": "Tissue" });
+    M.TISSUES.forEach(function (ti, i) {
+      var o = el("option", { value: ti.id, text: ti.label });
+      if (i === 1) o.setAttribute("selected", "selected");
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      state.tissue = M.TISSUES.filter(function (t) { return t.id === sel.value; })[0];
+      redraw(false);
+    });
+    controls.appendChild(sel);
+    [["Short", 15], ["Medium", 40], ["Long", 90]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn", text: "TE " + p[0] });
+      b.addEventListener("click", function () {
+        state.te = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw(false);
+      });
+      controls.appendChild(b);
+    });
+    if (!reduceMotion) {
+      var play = el("button", { type: "button", class: "diag-btn diag-play", text: "▸ Play" });
+      play.addEventListener("click", function () { redraw(true); });
+      controls.appendChild(play);
+    }
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw(false);
+    return fig;
+  }
+
+  // ---- Widget: T2 vs T2* (the spin-echo refocusing story) ---- //
+  function buildT2vsT2star() {
+    var fig = figure("T2 vs T2*", "After the 90 pulse the signal falls fast along T2* (what a gradient echo sees). A 180 pulse at TE/2 refocuses the field-inhomogeneity dephasing, so a spin echo rebuilds at TE up to the true-T2 envelope, recovering what the gradient echo lost. Pick an echo time (1.5 T, approximate).");
+    var T2 = 100, T2prime = 30;   // ms; fixed tissue T2 and field inhomogeneity
+    var xMax = 200;
+    var state = { te: 80 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Signal",
+      xTicks: [0, 50, 100, 150, 200], title: "Spin-echo refocusing: T2* decay and the echo at TE" });
+    plot.addAxes();
+    // True-T2 envelope: the ceiling the echo reaches (dashed). Drawn once.
+    plot.addCurve(M.sample(function (t) { return M.mxy(t, T2); }, xMax, 80), "env");
+    plot.addLabel(0, "90");
+    var sig = null, m180 = null, mTE = null, dot = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (sig) sig.remove();
+      if (m180) m180.remove();
+      if (mTE) mTE.remove();
+      if (dot) dot.remove();
+      sig = plot.addCurve(M.sample(function (t) {
+        return M.spinEchoSignal(t, T2, T2prime, state.te); }, xMax, 120), "");
+      m180 = plot.addMarker(state.te / 2, "", "180");
+      mTE = plot.addMarker(state.te, "", "TE");
+      dot = plot.addDot(state.te, M.mxy(state.te, T2), "");
+      var se = Math.round(M.mxy(state.te, T2) * 100);
+      var ge = Math.round(M.mxy(state.te, M.t2star(T2, T2prime)) * 100);
+      readout.textContent = "At TE " + state.te + " ms the spin echo reaches " + se
+        + "% (true T2); a gradient echo would read only " + ge + "% (T2*). The 180 recovers "
+        + (se - ge) + " points.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "Echo time TE:" }));
+    [["Short", 40], ["Medium", 80], ["Long", 120]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.te ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.te = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: TR/TE -> weighting ---- //
+  function buildTrTeWeighting() {
+    var fig = figure("TR/TE and weighting", "TR/TE and weighting: long TR undoes T1 differences; long TE reveals T2 differences (1.5 T, approximate).");
+    var state = { tr: 400, te: 15 };
+    var trMax = 3000, teMax = 200;
+    var wm = M.TISSUES[1], csf = M.TISSUES[3]; // contrast pair: white matter vs CSF
+
+    var recov = makePlot({ xMax: trMax, yMax: 1, xLabel: "TR (ms)", yLabel: "Mz",
+      xTicks: [0, 1000, 2000, 3000], title: "Longitudinal recovery vs TR" });
+    recov.addAxes();
+    recov.addCurve(M.sample(function (t) { return M.mz(t, wm.t1); }, trMax, 60), "");
+    recov.addCurve(M.sample(function (t) { return M.mz(t, csf.t1); }, trMax, 60), "pd");
+    var trMark = null;
+
+    var decay = makePlot({ xMax: teMax, yMax: 1, xLabel: "TE (ms)", yLabel: "Mxy",
+      xTicks: [0, 50, 100, 150, 200], title: "Transverse decay vs TE" });
+    decay.addAxes();
+    decay.addCurve(M.sample(function (t) { return M.mxy(t, wm.t2); }, teMax, 60), "");
+    decay.addCurve(M.sample(function (t) { return M.mxy(t, csf.t2); }, teMax, 60), "pd");
+    var teMark = null;
+
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (trMark) trMark.remove();
+      if (teMark) teMark.remove();
+      trMark = recov.addMarker(state.tr, "");
+      teMark = decay.addMarker(state.te, "");
+      var w = M.classifyWeighting(state.tr, state.te);
+      var name = { T1: "T1-weighted", T2: "T2-weighted", PD: "proton-density", mixed: "mixed (rarely used)" }[w];
+      readout.textContent = "TR " + state.tr + " / TE " + state.te + " ms → " + name
+        + ". (Accent = white matter, gray = CSF.)";
+    }
+    var wrap = el("div", { class: "diag-dual" });
+    wrap.appendChild(recov.svg);
+    wrap.appendChild(decay.svg);
+    fig.appendChild(wrap);
+
+    var controls = el("div", { class: "diag-controls" });
+    function group(labelTxt, key, presets) {
+      controls.appendChild(el("span", { class: "diag-glabel", text: labelTxt }));
+      presets.forEach(function (p) {
+        var b = el("button", { type: "button", class: "diag-btn diag-" + key, text: p[0] });
+        b.addEventListener("click", function () {
+          state[key] = p[1];
+          [].forEach.call(controls.querySelectorAll(".diag-" + key), function (x) { x.classList.remove("on"); });
+          b.classList.add("on");
+          redraw();
+        });
+        controls.appendChild(b);
+      });
+    }
+    group("TR:", "tr", [["Short", 400], ["Long", 2500]]);
+    group("TE:", "te", [["Short", 15], ["Long", 90]]);
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting };
+
+  function attach(card, eduTitle) {
+    if (!M || !card) return;
+    var ids = M.DIAGRAM_MAP[eduTitle];
+    if (!ids) return;
+    ids.forEach(function (id) {
+      var fn = BUILDERS[id];
+      if (fn) card.appendChild(fn());
+    });
+  }
+
+  // Expose the API plus internals so later widget tasks extend BUILDERS in place.
+  window.CourseDiagrams = { attach: attach, _BUILDERS: BUILDERS,
+    _makePlot: makePlot, _figure: figure, _el: el, _reduceMotion: reduceMotion };
+})();

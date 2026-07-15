@@ -29,11 +29,11 @@ export default [
   // window.Accounts (lazy-loading supabase-js via a dynamic import); account.js
   // consumes it; config*.js just set window.MRISIM_SUPABASE.
   {
-    files: ["web/accounts.js", "web/account.js", "web/course.js", "web/config.js", "web/config.example.js"],
+    files: ["web/accounts.js", "web/account.js", "web/course.js", "web/course_diagrams.js", "web/config.js", "web/config.example.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
-      globals: { ...globals.browser, Accounts: "readonly" },
+      globals: { ...globals.browser, Accounts: "readonly", CourseDiagrams: "readonly", CourseDiagramsMath: "readonly" },
     },
     rules: {
       ...js.configs.recommended.rules,

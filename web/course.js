@@ -578,6 +578,7 @@
             buildRail();
           } }));
         }
+        if (window.CourseDiagrams) window.CourseDiagrams.attach(card, b.title);
         card.appendChild(foot);
         esec.appendChild(card);
       });
