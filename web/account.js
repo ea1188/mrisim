@@ -307,7 +307,9 @@
     var nameIn = h("input", { type: "text", placeholder: "Your name", autocomplete: "name" });
     var msg = h("div", { class: "msg" });
     var save = h("button", { class: "ghost", text: "Save name", onclick: function () {
-      Accounts.updateProfile({ display_name: nameIn.value.trim() }).then(function (res) {
+      var v = nameIn.value.trim();
+      if (!v) { msg.className = "msg err"; msg.textContent = "Enter a name."; return; }
+      Accounts.updateProfile({ display_name: v }).then(function (res) {
         msg.className = res && res.error ? "msg err" : "msg ok";
         msg.textContent = res && res.error ? "Could not save. Try again." : "Saved.";
       });
