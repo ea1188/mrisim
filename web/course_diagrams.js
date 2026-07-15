@@ -24,7 +24,7 @@
   }
 
   // A padded plot area with axes. Returns coordinate mappers and draw helpers.
-  // opts: { xMax, yMax (default 1), xLabel, yLabel, title }
+  // opts: { xMax, yMax (default 1), yMin (default 0), xLabel, yLabel, xTicks, yTicks, title }
   function makePlot(opts) {
     var W = 320, H = 180, padL = 40, padB = 30, padT = 8, padR = 10;
     var x0 = padL, x1 = W - padR, y0 = H - padB, y1 = padT;
@@ -95,11 +95,15 @@
       return tx;
     }
     function addMarker(tv, cls, label) {
-      var line = svgEl("line", { class: "diag-marker " + (cls || ""),
-        x1: toX(tv), y1: y0, x2: toX(tv), y2: y1 });
-      svg.appendChild(line);
-      if (label) addLabel(tv, label);
-      return line;
+      var g = svgEl("g", {});
+      g.appendChild(svgEl("line", { class: "diag-marker " + (cls || ""),
+        x1: toX(tv), y1: y0, x2: toX(tv), y2: y1 }));
+      if (label) {
+        var tx = svgEl("text", { class: "diag-axtext", x: toX(tv), y: y1 + 8, "text-anchor": "middle" });
+        tx.textContent = label; g.appendChild(tx);
+      }
+      svg.appendChild(g);
+      return g;
     }
     function addDot(tv, v, cls) {
       var c = svgEl("circle", { class: "diag-dot " + (cls || ""), cx: toX(tv), cy: toY(v), r: 3 });
