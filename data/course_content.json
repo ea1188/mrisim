@@ -11570,6 +11570,266 @@
         "answer": 2,
         "explain": "ASL requires no injected gadolinium at all, avoiding NSF risk in impaired renal function, and still yields quantitative CBF maps, making it well suited for patients needing repeated follow-up imaging with reduced renal clearance."
       }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "education",
+      "ord": 1340,
+      "body": {
+        "title": "Phase contrast MRA and velocity encoding (VENC)",
+        "html": "<p>Phase contrast MRA works by applying a <strong>bipolar flow-encoding gradient</strong> along one axis. Stationary spins accrue no net phase because the two lobes cancel, but spins moving along that axis accrue a phase shift <strong>proportional to their velocity</strong>. The operator sets a single parameter, <strong>VENC</strong> (velocity encoding), the velocity that produces exactly 180 degrees of phase shift. This scales the phase-to-velocity relationship for the vessel being studied.</p><p>Choosing VENC is a trade-off. If true velocity exceeds VENC, the phase shift exceeds 180 degrees and <strong>wraps (aliases)</strong>, displaying as an artifactually reversed or truncated velocity in the fastest part of the vessel, typically the center of a jet or stenosis. If VENC is set much higher than the expected peak velocity, aliasing is avoided but the true phase signal occupies only a small fraction of the encoding range, so the velocity measurement becomes noisy and less sensitive to slow flow. The correct VENC sits just above the expected peak velocity for the vessel and clinical question.</p><p>Because each spatial direction can be encoded independently, PC can measure velocity in a single through-plane direction or in all three directions for a full flow vector. Through-plane acquisitions with a region of interest drawn over the vessel allow <strong>flow quantification</strong>: multiplying mean velocity by cross-sectional area gives volumetric flow, used for shunt ratios, regurgitant fraction in valve disease, and CSF flow studies. A separate <strong>background phase</strong> correction step removes phase offsets from gradient nonlinearity and eddy currents that would otherwise bias the flow measurement.</p>",
+        "keypoints": [
+          "VENC is the velocity that produces 180 degrees of phase shift on the bipolar flow-encoding gradient.",
+          "Velocities above VENC wrap around and alias, appearing as reversed or truncated flow.",
+          "Setting VENC too high above true peak velocity reduces sensitivity to slow flow and adds noise.",
+          "Through-plane PC with an ROI over the vessel yields volumetric flow: mean velocity times cross-sectional area.",
+          "Background phase correction removes gradient and eddy-current offsets that would otherwise bias flow measurements."
+        ],
+        "worked_example": "A patient with known aortic regurgitation is referred for phase-contrast quantification of regurgitant fraction. The technologist places a through-plane PC acquisition just above the aortic valve and sets VENC at 150 cm per second. Peak systolic velocity is about 120 cm per second, well under VENC, so forward flow is captured cleanly, and 150 also leaves enough range to resolve the lower-velocity diastolic reverse flow without wrapping the systolic peak or burying the reverse-flow signal in noise. Forward and reverse flow volumes are then integrated across the cardiac cycle to calculate the regurgitant fraction.",
+        "memory_hooks": [
+          "VENC is a ceiling, not a target: set it just above the expected peak velocity to use most of the phase range without wrapping.",
+          "Aliasing in PC looks like a reversed sign or truncated value in the fastest part of the vessel, not signal dropout like TOF saturation."
+        ],
+        "exam_traps": [
+          "Aliased PC flow can mimic a jet reversal or stenosis; the fix is repeating with a higher VENC, not reinterpreting the direction as real.",
+          "A single VENC must accommodate both the fastest and slowest velocities of interest in one acquisition; too narrow a range sacrifices one or the other."
+        ]
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "education",
+      "ord": 1341,
+      "body": {
+        "title": "Time-of-flight MRA: inflow, saturation, and pitfalls",
+        "html": "<p>Time-of-flight MRA relies on <strong>flow-related enhancement</strong>: a short TR, high flip angle sequence rapidly saturates stationary tissue in the imaging slab, so it produces little signal by the time it is sampled again. Blood flowing into the slab from outside has not experienced the prior saturation pulses and enters fully magnetized, giving it much brighter signal than the saturated background, an effect strongest for blood entering perpendicular to the slab and moving quickly through it.</p><p>The same mechanism creates the main pitfall. Blood traveling <strong>in-plane</strong>, parallel to or within the imaging slab, or moving <strong>slowly</strong>, remains inside the excited volume long enough to receive repeated RF pulses and becomes saturated like stationary tissue, causing signal loss that can mimic stenosis or occlusion. Thin slabs and <strong>multiple overlapping thin-slab acquisition (MOTSA)</strong> reduce transit time through any one slab and limit this effect, though MOTSA introduces its own stair-step or venetian-blind artifact at the seams between slabs.</p><p>Because TOF depends on direction of entry rather than vessel identity, a <strong>spatial saturation band</strong> placed just outside the slab on one side nulls signal from blood entering from that direction: a band superior to the slab nulls venous inflow for an arterial-only study, while a band inferior to the slab nulls arterial inflow to isolate veins. Ramped RF excitation or <strong>TONE (tilted optimized nonsaturating excitation)</strong> pulses vary flip angle across the slab to compensate for progressive saturation as blood travels deeper into it. A separate pitfall is that any inherently <strong>T1-bright material</strong>, such as fat, subacute (methemoglobin) hemorrhage, or residual gadolinium, can mimic flow-related enhancement because the sequence cannot distinguish true inflow from any other source of T1 shortening.</p>",
+        "keypoints": [
+          "TOF signal comes from unsaturated inflowing blood entering a slab of saturated stationary tissue.",
+          "In-plane or slow flow becomes saturated like background tissue, causing pseudo-stenosis or pseudo-occlusion.",
+          "Thin slabs and MOTSA reduce saturation but MOTSA adds a stair-step artifact at slab overlaps.",
+          "A saturation band on one side of the slab nulls inflow from that direction, isolating arteries or veins.",
+          "T1-bright material (fat, subacute blood, residual gadolinium) can mimic flow on TOF."
+        ],
+        "worked_example": "A 2D TOF venogram of the lower legs is planned to evaluate for deep vein thrombosis. Because venous flow runs roughly upward toward the heart, a superior saturation band is placed above each imaging slice to null arterial inflow, so only venous flow remains bright. If the band were mistakenly placed inferior to the slice instead, arterial signal would appear bright and venous signal would be nulled, producing a study that looks falsely occluded for the veins the exam was meant to assess.",
+        "memory_hooks": [
+          "TOF signal is about direction of entry, not vessel type: the saturation band decides whether you see arteries or veins.",
+          "Slow or in-plane flow saturates like stationary tissue on TOF: it is stuck in the slab too long and loses its edge."
+        ],
+        "exam_traps": [
+          "A TOF signal void from in-plane or slow flow can be mistaken for true stenosis or occlusion; correlate with another technique before calling a lesion.",
+          "Fat, subacute hemorrhage, or residual gadolinium can produce a T1-bright false positive on TOF that mimics a vessel."
+        ]
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "education",
+      "ord": 1342,
+      "body": {
+        "title": "Contrast-enhanced MRA: bolus timing and technique",
+        "html": "<p>Contrast-enhanced MRA (CE-MRA) does not depend on inflow or velocity at all. Gadolinium shortens the T1 of blood dramatically, so a fast, heavily T1-weighted 3D gradient echo sequence makes contrast-filled vessels bright regardless of flow direction or velocity, eliminating the saturation and in-plane flow pitfalls that limit TOF. This makes the technique <strong>flow-independent</strong>, but it shifts the challenge to <strong>bolus timing</strong>.</p><p>Image contrast in a 3D acquisition is set almost entirely by which data fills the <strong>center of k-space</strong>, since that region carries overall contrast and signal while the periphery carries fine spatial detail. With <strong>centric</strong> k-space ordering, the center is acquired first, so timing needs only to get the leading edge of the bolus into the vessel at the start of the scan. With <strong>sequential (linear)</strong> ordering, the center of k-space is acquired partway through the scan, so the technologist must predict when peak arterial gadolinium concentration will coincide with that middle portion of acquisition.</p><p>Three common strategies fix the timing. A <strong>test bolus</strong> injects a small dose and times a single-slice dynamic series to measure the true transit time from injection to the artery of interest before the diagnostic bolus is given. <strong>Bolus tracking</strong> (commercially SmartPrep or CareBolus) monitors signal in the target vessel in real time and automatically triggers the diagnostic acquisition once a threshold is reached. <strong>Time-resolved</strong> techniques acquire many undersampled 3D volumes in rapid succession through the injection, trading spatial resolution for temporal resolution so at least one frame captures the pure arterial phase. If the acquisition is mistimed and the center of k-space is sampled too early, the study shows weak enhancement or ringing artifact from a still-rising bolus; if sampled too late, contrast has already reached the veins, producing <strong>venous contamination</strong> that obscures the arterial anatomy.</p>",
+        "keypoints": [
+          "CE-MRA is flow-independent: gadolinium T1-shortening makes vessels bright regardless of velocity or direction.",
+          "Whichever data fills the center of k-space sets overall image contrast; centric order front-loads it, sequential order places it mid-scan.",
+          "Test bolus and bolus tracking (SmartPrep) measure or detect true arrival time to trigger the diagnostic acquisition.",
+          "Time-resolved MRA trades spatial resolution for temporal resolution to guarantee a pure arterial-phase frame.",
+          "Mistimed acquisitions cause either ringing from a rising bolus or venous contamination from a late acquisition."
+        ],
+        "worked_example": "A CE-MRA of the runoff vessels is ordered for a patient with peripheral arterial disease. Using a test bolus, the technologist measures a 14-second transit time from the antecubital injection site to the popliteal artery. The diagnostic sequence uses centric k-space ordering, so the scan starts roughly 14 seconds after the diagnostic bolus begins, ensuring the leading edge of gadolinium is in the artery right as the center of k-space, and therefore the image contrast, is being acquired. Had the scan instead started too late, the calf veins would already be enhancing by the time distal arterial images are acquired, contaminating the study with venous signal that can obscure arterial pathology.",
+        "memory_hooks": [
+          "CE-MRA contrast is decided at the center of k-space: centric order means get there first, sequential means get there in the middle.",
+          "Test bolus measures transit time in advance; bolus tracking watches for arrival in real time; time-resolved just keeps shooting through the whole thing."
+        ],
+        "exam_traps": [
+          "A CE-MRA acquired too early shows weak or ring-like arterial signal from a still-rising bolus, not true pathology; a repeat with adjusted delay is needed.",
+          "Venous contamination from delayed acquisition can obscure an arterial stenosis or mimic shunting; recognizing the timing error is a key registry skill."
+        ]
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "education",
+      "ord": 1343,
+      "body": {
+        "title": "MR venography and flow quantification",
+        "html": "<p>MR venography adapts the same three angiographic techniques to the slower, lower-pressure venous system. <strong>2D time-of-flight MRV</strong> is well suited to slow venous flow because each thin 2D slice is refreshed with a fresh RF excitation, limiting the in-plane saturation that would otherwise null slow-moving venous spins in a thick 3D slab; a saturation band placed on the arterial side of each slice nulls arterial inflow so only venous signal remains. <strong>Phase-contrast MRV</strong> uses a low VENC appropriate to venous velocities, typically well under arterial VENC settings, and additionally provides directional and quantitative flow data. <strong>Contrast-enhanced MRV</strong> times acquisition to the venous phase, later than an arterial CE-MRA, and is flow-independent, useful when slow or complex venous flow would otherwise degrade a non-contrast study.</p><p>Non-contrast venography has a well-known pitfall: <strong>pseudo-occlusion</strong>. On 2D TOF, in-plane flow within the plane of a slice, or flow parallel to a long vessel segment, can saturate and mimic thrombosis. Separately, a subacute clot containing methemoglobin is inherently T1-bright and can mimic patent, flowing blood, the reverse problem, a T1-bright false positive for patency. Correlating with PC or contrast-enhanced venography, or with the clinical picture, resolves these pitfalls.</p><p>Phase-contrast techniques are also the workhorse for <strong>flow quantification</strong> outside pure angiography, most notably CSF flow studies, for example at the cerebral aqueduct in suspected normal-pressure hydrocephalus, and vascular flow volume measurement. In both cases, a through-plane PC acquisition perpendicular to the vessel or CSF-filled space is obtained with a VENC scaled to the expected peak velocity, a region of interest is drawn over the structure on each cardiac phase, and volumetric flow is calculated as <strong>mean velocity multiplied by cross-sectional area</strong>, integrated across the cardiac cycle.</p>",
+        "keypoints": [
+          "2D TOF MRV limits in-plane saturation of slow venous flow because each thin slice gets a fresh excitation.",
+          "A saturation band nulls arterial inflow so 2D TOF MRV isolates venous signal.",
+          "Pseudo-occlusion on TOF venography comes from in-plane saturation (false positive for clot) or T1-bright subacute clot (false positive for patency).",
+          "CE-MRV times acquisition to the venous phase and is flow-independent, useful when slow venous flow degrades non-contrast studies.",
+          "PC flow quantification (CSF or vascular) uses through-plane VENC and an ROI: flow equals mean velocity times cross-sectional area."
+        ],
+        "worked_example": "A patient with suspected dural venous sinus thrombosis undergoes 2D TOF MRV. A segment of the superior sagittal sinus shows signal loss that raises concern for thrombosis, but that segment runs largely within the imaging plane over a long course. Because in-plane flow is prone to saturation on 2D TOF, the technologist adds a phase-contrast or contrast-enhanced venogram for correlation. The follow-up study shows normal flow through the segment, confirming the TOF finding was pseudo-occlusion from in-plane saturation rather than true thrombosis.",
+        "memory_hooks": [
+          "TOF venography pseudo-occlusion has two opposite causes: in-plane saturation looks falsely clotted, T1-bright clot looks falsely patent.",
+          "Flow quantification is just geometry: velocity from phase times area from the ROI equals volume per time."
+        ],
+        "exam_traps": [
+          "A TOF venography signal void is not diagnostic of thrombosis by itself given the in-plane saturation pitfall; a second technique is expected.",
+          "PC flow quantification needs the imaging plane truly perpendicular to the vessel; an oblique plane underestimates velocity and biases the flow calculation."
+        ]
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1344,
+      "body": {
+        "prompt": "On a phase-contrast MRA, the true peak velocity in a vessel exceeds the VENC. What artifact results in the vessel signal?",
+        "options": [
+          "Phase aliasing, seen as reversed or truncated flow",
+          "Complete signal void through the vessel lumen",
+          "Chemical shift misregistration at the vessel wall",
+          "Zipper artifact along the phase-encode axis"
+        ],
+        "answer": 0,
+        "explain": "When true velocity exceeds VENC, the phase shift exceeds 180 degrees and wraps, appearing as reversed or truncated flow, usually in the fastest part of the vessel."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1345,
+      "body": {
+        "prompt": "A phase-contrast sequence is set with a VENC far above the true peak velocity of the vessel being studied. What is the main consequence?",
+        "options": [
+          "Reduced sensitivity and increased noise in velocity data",
+          "Immediate wraparound aliasing of the peak velocity",
+          "Complete and permanent loss of the magnitude image",
+          "Full elimination of background phase correction error"
+        ],
+        "answer": 0,
+        "explain": "A VENC set far above true velocity wastes most of the encoding range on unused signal, making the actual velocity measurement noisier and less sensitive to slow flow."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1346,
+      "body": {
+        "prompt": "A carotid TOF MRA shows apparent signal loss in a segment where the vessel courses within the imaging plane for a long distance. This most likely represents:",
+        "options": [
+          "Saturation of in-plane flow, not true stenosis",
+          "A true high-grade stenosis at that level",
+          "Gadolinium-related T1 shortening of the vessel",
+          "Aliasing from an undersized VENC setting"
+        ],
+        "answer": 0,
+        "explain": "Blood traveling in-plane stays within the excited slab long enough to become saturated like stationary tissue, mimicking stenosis; this is a known TOF pitfall, not necessarily true disease."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1347,
+      "body": {
+        "prompt": "On a 2D TOF neck MRA where arterial flow is caudocranial, placing the spatial saturation band inferior to each imaging slice will:",
+        "options": [
+          "Null arterial inflow and isolate venous signal",
+          "Null venous inflow and isolate arterial signal",
+          "Suppress fat signal throughout the field of view",
+          "Increase the VENC value for the acquisition"
+        ],
+        "answer": 0,
+        "explain": "A band placed inferior to the slice saturates blood before it flows upward into the slice, nulling the caudocranial arterial inflow and leaving venous flow visible."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1348,
+      "body": {
+        "prompt": "Multiple overlapping thin-slab acquisition (MOTSA) reduces flow saturation in 3D TOF MRA but is known to introduce which artifact?",
+        "options": [
+          "A stair-step or venetian-blind artifact at slab overlaps",
+          "Chemical shift artifact along the frequency axis",
+          "Motion-related ghosting across the phase axis",
+          "Aliasing from wraparound of the field of view"
+        ],
+        "answer": 0,
+        "explain": "Slight signal differences at the boundary between adjacent overlapping slabs create a periodic banding pattern, known as stair-step or venetian-blind artifact, on MOTSA acquisitions."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1349,
+      "body": {
+        "prompt": "On a brain TOF MRA, an area of bright signal is later shown to be subacute hemorrhage rather than a vessel. Why did it appear bright on TOF?",
+        "options": [
+          "Its intrinsic T1 shortening mimics flow enhancement",
+          "It flowed into the slab from outside the volume",
+          "It exceeded the VENC and aliased on the sequence",
+          "It was suppressed by the spatial saturation band"
+        ],
+        "answer": 0,
+        "explain": "TOF cannot distinguish true inflow enhancement from any other source of T1 shortening; methemoglobin in subacute blood, like fat or residual gadolinium, is intrinsically T1-bright and can mimic a vessel."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1350,
+      "body": {
+        "prompt": "In a centric-ordered 3D contrast-enhanced MRA, the center of k-space is acquired:",
+        "options": [
+          "First, so the bolus must arrive at the scan start",
+          "Last, so the bolus must arrive at the scan end",
+          "At a fixed point regardless of bolus timing",
+          "Only during the second half of acquisition"
+        ],
+        "answer": 0,
+        "explain": "Centric ordering samples the center of k-space, which sets overall image contrast, first, so the contrast bolus needs to reach the target vessel right as the scan begins."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1351,
+      "body": {
+        "prompt": "A CE-MRA of the renal arteries is acquired several seconds later than intended. The most likely resulting artifact is:",
+        "options": [
+          "Venous contamination obscuring the arterial anatomy",
+          "Complete absence of any vessel signal at all",
+          "Saturation of in-plane arterial flow in the slab",
+          "Phase aliasing of the arterial velocity signal"
+        ],
+        "answer": 0,
+        "explain": "A delayed acquisition allows gadolinium to reach and enhance the veins before or during the scan, producing venous contamination that can obscure or mimic arterial pathology."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1352,
+      "body": {
+        "prompt": "A bolus-tracking technique monitors real-time signal in the target vessel and automatically triggers the diagnostic CE-MRA once a threshold is reached. This is best described as:",
+        "options": [
+          "An automated triggering method, such as SmartPrep",
+          "A fixed empiric delay based on body weight",
+          "A test bolus requiring a separate small injection",
+          "A time-resolved acquisition of multiple volumes"
+        ],
+        "answer": 0,
+        "explain": "Automated bolus-tracking techniques, commercially SmartPrep or CareBolus, watch signal in the target vessel in real time and trigger the scan once it crosses a threshold, unlike a separate test bolus or time-resolved approach."
+      }
+    },
+    {
+      "topic": "vascular-advanced",
+      "kind": "quiz",
+      "ord": 1353,
+      "body": {
+        "prompt": "Quantitative phase-contrast flow measurement, for example CSF flow at the cerebral aqueduct, calculates volumetric flow as:",
+        "options": [
+          "Mean velocity multiplied by cross-sectional area",
+          "Peak velocity divided by the VENC value",
+          "Signal intensity multiplied by the echo time",
+          "Repetition time divided by the flip angle"
+        ],
+        "answer": 0,
+        "explain": "Volumetric flow through a vessel or CSF space equals the mean velocity within the region of interest multiplied by its cross-sectional area, integrated across the cardiac cycle."
+      }
     }
   ]
 }
