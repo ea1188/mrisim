@@ -11363,10 +11363,10 @@
       "ord": 1328,
       "body": {
         "title": "Arterial spin labeling: perfusion without contrast",
-        "html": "<p>Arterial spin labeling (ASL) measures brain perfusion without any injected contrast agent. Instead, an <strong>inversion pulse</strong> is applied to arterial blood water proximal to the imaging slab, magnetically <strong>labeling</strong> it as it flows toward the brain. After a delay that lets the labeled blood reach the tissue of interest, a <strong>label image</strong> is acquired; a second <strong>control image</strong> is acquired without labeling. <strong>Subtracting</strong> control from label removes static tissue signal and leaves a small residual signal proportional to blood delivered to tissue, the <strong>perfusion-weighted image</strong>, from which quantitative <strong>cerebral blood flow (CBF)</strong> maps are calculated.</p><p>Two main labeling schemes are used: <strong>pulsed ASL (PASL)</strong>, which inverts a thick slab in a single short pulse, and <strong>pseudo-continuous ASL (pCASL)</strong>, which labels for one to two seconds using a train of rapid pulses and generally gives higher SNR and is now the more widely recommended approach. The <strong>post-label delay (PLD)</strong>, the time between labeling and image acquisition, must be long enough for labeled blood to reach the tissue but short enough that the label has not decayed; too short a PLD in a patient with slow or collateral flow can underestimate perfusion. Because the label and control difference is only a percent or two of brain signal, ASL is inherently <strong>low SNR</strong> and requires many repeated averages to build an adequate image. Its major advantages are that it needs <strong>no gadolinium</strong>, useful in renal impairment, pediatric patients, and anyone needing repeated serial follow-up, and that it is <strong>fully quantitative</strong>, yielding CBF in physical units directly rather than only relative maps.</p>",
+        "html": "<p>Arterial spin labeling (ASL) measures brain perfusion without any injected contrast agent. Instead, an <strong>inversion pulse</strong> is applied to arterial blood water proximal to the imaging slab, magnetically <strong>labeling</strong> it as it flows toward the brain. After a delay that lets the labeled blood reach the tissue of interest, a <strong>label image</strong> is acquired; a second <strong>control image</strong> is acquired without labeling. <strong>Subtracting</strong> the label image from the control image removes static tissue signal and leaves a small residual signal proportional to blood delivered to tissue, the <strong>perfusion-weighted image</strong>, from which quantitative <strong>cerebral blood flow (CBF)</strong> maps are calculated.</p><p>Two main labeling schemes are used: <strong>pulsed ASL (PASL)</strong>, which inverts a thick slab in a single short pulse, and <strong>pseudo-continuous ASL (pCASL)</strong>, which labels for one to two seconds using a train of rapid pulses and generally gives higher SNR and is now the more widely recommended approach. The <strong>post-label delay (PLD)</strong>, the time between labeling and image acquisition, must be long enough for labeled blood to reach the tissue but short enough that the label has not decayed; too short a PLD in a patient with slow or collateral flow can underestimate perfusion. Because the label and control difference is only a percent or two of brain signal, ASL is inherently <strong>low SNR</strong> and requires many repeated averages to build an adequate image. Its major advantages are that it needs <strong>no gadolinium</strong>, useful in renal impairment, pediatric patients, and anyone needing repeated serial follow-up, and that it is <strong>fully quantitative</strong>, yielding CBF in physical units directly rather than only relative maps.</p>",
         "keypoints": [
           "ASL labels arterial blood water with an inversion pulse instead of using injected contrast.",
-          "A control image is subtracted from the label image to isolate the small perfusion signal.",
+          "The label image is subtracted from the control image to isolate the small perfusion signal.",
           "pCASL generally gives higher SNR than PASL and is the more widely recommended technique.",
           "Post-label delay (PLD) must be tuned to transit time; too short a PLD underestimates flow in slow-flow states.",
           "ASL is contrast-free and gives quantitative CBF, at the cost of inherently low SNR requiring many averages."
@@ -11374,7 +11374,7 @@
         "worked_example": "A child needs a follow-up brain MRI for a known low-grade lesion and gadolinium is best avoided given the number of anticipated repeat scans over years. An ASL sequence is added instead of DSC perfusion. The label and control images are acquired and subtracted to generate a quantitative CBF map, showing no significant increase in perfusion within the lesion compared with the prior study, which is reassuring against transformation to a more aggressive, hypervascular tumor, all without any contrast injection.",
         "memory_hooks": [
           "ASL: no injection, the blood itself is the contrast agent, magnetically tagged, then subtracted out.",
-          "Label minus control equals perfusion signal; pCASL beats PASL for SNR.",
+          "Control minus label equals perfusion signal; pCASL beats PASL for SNR.",
           "No gadolinium needed: think ASL for renal failure, kids, and repeat serial scans."
         ],
         "exam_traps": [
@@ -11390,7 +11390,7 @@
       "ord": 1329,
       "body": {
         "title": "Choosing a perfusion method: DSC, DCE, or ASL",
-        "html": "<p>All three perfusion techniques answer different physiological questions, and picking the right one depends on what is being asked. <strong>DSC</strong> uses a fast gadolinium bolus imaged with <strong>T2*-weighted</strong> echo-planar sequences, tracking the first pass of contrast to generate <strong>CBV</strong>, CBF, and MTT maps; it is the workhorse for <strong>acute stroke</strong> (identifying the ischemic penumbra) and for <strong>tumor grading</strong> (high CBV correlating with higher-grade, more vascular tumors). <strong>DCE</strong> uses repeated <strong>T1-weighted</strong> imaging over several minutes to watch contrast slowly leak out of vessels, generating <strong>Ktrans</strong> and ve maps of capillary <strong>permeability</strong>; it is favored for <strong>tumor characterization</strong> and for monitoring <strong>treatment response</strong> to antiangiogenic or chemotherapy regimens.</p><p><strong>ASL</strong> needs no contrast at all, magnetically labeling arterial blood and subtracting a control image to generate quantitative <strong>CBF</strong> maps directly; it is preferred whenever gadolinium should be minimized or avoided, such as <strong>renal impairment</strong>, pediatric patients, or <strong>serial follow-up</strong> imaging, and it is increasingly used in <strong>dementia and neurodegenerative disease</strong> workups, where regional hypoperfusion patterns (for example, parietotemporal hypoperfusion in Alzheimer disease) support the diagnosis without repeated contrast exposure. In practice, stroke and tumor-grading protocols often still favor bolus contrast techniques for their higher SNR, while ASL is the default when contrast is contraindicated, undesirable, or when only a quick, quantitative CBF check is needed.</p>",
+        "html": "<p>All three perfusion techniques answer different physiological questions, and picking the right one depends on what is being asked. <strong>DSC</strong> uses a fast gadolinium bolus imaged with <strong>T2*-weighted</strong> echo-planar sequences, tracking the first pass of contrast to generate <strong>CBV</strong>, CBF, and MTT maps; it is the workhorse for <strong>acute stroke</strong> (identifying the ischemic penumbra) and for <strong>tumor grading</strong> (high CBV correlating with higher-grade, more vascular tumors). <strong>DCE</strong> uses repeated <strong>T1-weighted</strong> imaging over several minutes to watch contrast slowly leak out of vessels, generating <strong>Ktrans</strong> and ve maps of capillary <strong>permeability</strong>; it is favored for <strong>tumor characterization</strong> and for monitoring <strong>treatment response</strong> to antiangiogenic or chemotherapy regimens.</p><p><strong>ASL</strong> needs no contrast at all, magnetically labeling arterial blood and subtracting the labeled image from a control to generate quantitative <strong>CBF</strong> maps directly; it is preferred whenever gadolinium should be minimized or avoided, such as <strong>renal impairment</strong>, pediatric patients, or <strong>serial follow-up</strong> imaging, and it is increasingly used in <strong>dementia and neurodegenerative disease</strong> workups, where regional hypoperfusion patterns (for example, parietotemporal hypoperfusion in Alzheimer disease) support the diagnosis without repeated contrast exposure. In practice, stroke and tumor-grading protocols often still favor bolus contrast techniques for their higher SNR, while ASL is the default when contrast is contraindicated, undesirable, or when only a quick, quantitative CBF check is needed.</p>",
         "keypoints": [
           "DSC (T2*, bolus, CBV/CBF/MTT) is the classic choice for stroke and tumor grading.",
           "DCE (T1, Ktrans, ve) targets capillary permeability for tumor characterization and treatment response.",
@@ -11520,7 +11520,7 @@
           "Acquiring T1-weighted images before and after a slow contrast infusion"
         ],
         "answer": 1,
-        "explain": "ASL magnetically labels inflowing arterial blood with an inversion pulse and subtracts a control acquisition (no labeling) from the label acquisition to isolate the small perfusion signal, without any injected contrast."
+        "explain": "ASL magnetically labels inflowing arterial blood with an inversion pulse and subtracts the label acquisition from a control acquisition (no labeling) to isolate the small perfusion signal, without any injected contrast."
       }
     },
     {
@@ -11678,12 +11678,12 @@
       "body": {
         "prompt": "On a phase-contrast MRA, the true peak velocity in a vessel exceeds the VENC. What artifact results in the vessel signal?",
         "options": [
-          "Phase aliasing, seen as reversed or truncated flow",
-          "Complete signal void through the vessel lumen",
           "Chemical shift misregistration at the vessel wall",
-          "Zipper artifact along the phase-encode axis"
+          "Zipper artifact along the phase-encode axis",
+          "Phase aliasing, seen as reversed or truncated flow",
+          "Complete signal void through the vessel lumen"
         ],
-        "answer": 0,
+        "answer": 2,
         "explain": "When true velocity exceeds VENC, the phase shift exceeds 180 degrees and wraps, appearing as reversed or truncated flow, usually in the fastest part of the vessel."
       }
     },
@@ -11710,12 +11710,12 @@
       "body": {
         "prompt": "A carotid TOF MRA shows apparent signal loss in a segment where the vessel courses within the imaging plane for a long distance. This most likely represents:",
         "options": [
+          "Aliasing from an undersized VENC setting",
           "Saturation of in-plane flow, not true stenosis",
           "A true high-grade stenosis at that level",
-          "Gadolinium-related T1 shortening of the vessel",
-          "Aliasing from an undersized VENC setting"
+          "Gadolinium-related T1 shortening of the vessel"
         ],
-        "answer": 0,
+        "answer": 1,
         "explain": "Blood traveling in-plane stays within the excited slab long enough to become saturated like stationary tissue, mimicking stenosis; this is a known TOF pitfall, not necessarily true disease."
       }
     },
@@ -11726,12 +11726,12 @@
       "body": {
         "prompt": "On a 2D TOF neck MRA where arterial flow is caudocranial, placing the spatial saturation band inferior to each imaging slice will:",
         "options": [
-          "Null arterial inflow and isolate venous signal",
           "Null venous inflow and isolate arterial signal",
           "Suppress fat signal throughout the field of view",
-          "Increase the VENC value for the acquisition"
+          "Increase the VENC value for the acquisition",
+          "Null arterial inflow and isolate venous signal"
         ],
-        "answer": 0,
+        "answer": 3,
         "explain": "A band placed inferior to the slice saturates blood before it flows upward into the slice, nulling the caudocranial arterial inflow and leaving venous flow visible."
       }
     },
@@ -11742,12 +11742,12 @@
       "body": {
         "prompt": "Multiple overlapping thin-slab acquisition (MOTSA) reduces flow saturation in 3D TOF MRA but is known to introduce which artifact?",
         "options": [
-          "A stair-step or venetian-blind artifact at slab overlaps",
-          "Chemical shift artifact along the frequency axis",
           "Motion-related ghosting across the phase axis",
-          "Aliasing from wraparound of the field of view"
+          "Aliasing from wraparound of the field of view",
+          "A stair-step or venetian-blind artifact at slab overlaps",
+          "Chemical shift artifact along the frequency axis"
         ],
-        "answer": 0,
+        "answer": 2,
         "explain": "Slight signal differences at the boundary between adjacent overlapping slabs create a periodic banding pattern, known as stair-step or venetian-blind artifact, on MOTSA acquisitions."
       }
     },
@@ -11774,12 +11774,12 @@
       "body": {
         "prompt": "In a centric-ordered 3D contrast-enhanced MRA, the center of k-space is acquired:",
         "options": [
+          "Only during the second half of acquisition",
           "First, so the bolus must arrive at the scan start",
           "Last, so the bolus must arrive at the scan end",
-          "At a fixed point regardless of bolus timing",
-          "Only during the second half of acquisition"
+          "At a fixed point regardless of bolus timing"
         ],
-        "answer": 0,
+        "answer": 1,
         "explain": "Centric ordering samples the center of k-space, which sets overall image contrast, first, so the contrast bolus needs to reach the target vessel right as the scan begins."
       }
     },
@@ -11790,12 +11790,12 @@
       "body": {
         "prompt": "A CE-MRA of the renal arteries is acquired several seconds later than intended. The most likely resulting artifact is:",
         "options": [
-          "Venous contamination obscuring the arterial anatomy",
           "Complete absence of any vessel signal at all",
           "Saturation of in-plane arterial flow in the slab",
-          "Phase aliasing of the arterial velocity signal"
+          "Phase aliasing of the arterial velocity signal",
+          "Venous contamination obscuring the arterial anatomy"
         ],
-        "answer": 0,
+        "answer": 3,
         "explain": "A delayed acquisition allows gadolinium to reach and enhance the veins before or during the scan, producing venous contamination that can obscure or mimic arterial pathology."
       }
     },
@@ -11806,12 +11806,12 @@
       "body": {
         "prompt": "A bolus-tracking technique monitors real-time signal in the target vessel and automatically triggers the diagnostic CE-MRA once a threshold is reached. This is best described as:",
         "options": [
-          "An automated triggering method, such as SmartPrep or CareBolus",
-          "A fixed empiric delay based on body weight",
           "A test bolus requiring a separate preliminary injection",
-          "A time-resolved acquisition of multiple volumes"
+          "A time-resolved acquisition of multiple volumes",
+          "An automated triggering method, such as SmartPrep or CareBolus",
+          "A fixed empiric delay based on body weight"
         ],
-        "answer": 0,
+        "answer": 2,
         "explain": "Automated bolus-tracking techniques, commercially SmartPrep or CareBolus, watch signal in the target vessel in real time and trigger the scan once it crosses a threshold, unlike a separate test bolus or time-resolved approach."
       }
     },
@@ -11822,12 +11822,12 @@
       "body": {
         "prompt": "Quantitative phase-contrast flow measurement, for example CSF flow at the cerebral aqueduct, calculates volumetric flow as:",
         "options": [
+          "Repetition time divided by the flip angle",
           "Mean velocity multiplied by cross-sectional area",
           "Peak velocity divided by the VENC value",
-          "Signal intensity multiplied by the echo time",
-          "Repetition time divided by the flip angle"
+          "Signal intensity multiplied by the echo time"
         ],
-        "answer": 0,
+        "answer": 1,
         "explain": "Volumetric flow through a vessel or CSF space equals the mean velocity within the region of interest multiplied by its cross-sectional area, integrated across the cardiac cycle."
       }
     },
@@ -11938,12 +11938,12 @@
       "body": {
         "prompt": "The minimum diffusion acquisition needed to solve a full diffusion tensor requires:",
         "options": [
+          "Any two diffusion weighted images at different TEs",
           "A b0 image plus at least 6 non-collinear diffusion directions",
           "A single diffusion direction acquired at two b-values",
-          "A b0 image plus exactly 3 orthogonal diffusion directions",
-          "Any two diffusion weighted images at different TEs"
+          "A b0 image plus exactly 3 orthogonal diffusion directions"
         ],
-        "answer": 0,
+        "answer": 1,
         "explain": "The diffusion tensor is a symmetric 3x3 matrix with 6 independent elements, so at least 6 non-collinear diffusion directions plus a non-diffusion-weighted b0 image are needed to solve it at each voxel."
       }
     },
@@ -11954,12 +11954,12 @@
       "body": {
         "prompt": "A fractional anisotropy (FA) value close to 0 is most consistent with which tissue?",
         "options": [
-          "CSF, where diffusion is essentially equal in all directions",
-          "The corpus callosum, a densely packed coherent tract",
           "The corticospinal tract at the level of the internal capsule",
-          "The optic radiations, a well organized fiber bundle"
+          "The optic radiations, a well organized fiber bundle",
+          "CSF, where diffusion is essentially equal in all directions",
+          "The corpus callosum, a densely packed coherent tract"
         ],
-        "answer": 0,
+        "answer": 2,
         "explain": "FA near 0 means diffusion is isotropic, equal in every direction, which describes free fluid like CSF. Dense, coherently organized white matter tracts have FA values closer to 1."
       }
     },
@@ -11970,12 +11970,12 @@
       "body": {
         "prompt": "On a standard color coded FA map, a tract colored green is oriented mainly along which axis?",
         "options": [
-          "Anterior-posterior",
           "Left-right",
           "Superior-inferior",
-          "Oblique, at roughly 45 degrees to all axes"
+          "Oblique, at roughly 45 degrees to all axes",
+          "Anterior-posterior"
         ],
-        "answer": 0,
+        "answer": 3,
         "explain": "The standard color convention codes red for left-right, green for anterior-posterior, and blue for superior-inferior, with brightness scaled to the FA magnitude."
       }
     },
@@ -12002,12 +12002,12 @@
       "body": {
         "prompt": "The major limitation of single tensor DTI tractography through a region where two fiber bundles cross is that it:",
         "options": [
+          "Cannot be performed on scanners below 3 Tesla field strength",
           "Cannot resolve two distinct fiber directions within one voxel",
           "Requires contrast injection to visualize the crossing region",
-          "Only works when the crossing angle is less than 10 degrees",
-          "Cannot be performed on scanners below 3 Tesla field strength"
+          "Only works when the crossing angle is less than 10 degrees"
         ],
-        "answer": 0,
+        "answer": 1,
         "explain": "A single tensor model produces one principal direction per voxel, so it cannot separate two genuinely distinct fiber populations crossing within that voxel, which can cause tracking to stop, drift, or misroute."
       }
     },
@@ -12018,12 +12018,12 @@
       "body": {
         "prompt": "A chronic infarct appears bright on high b-value DWI. What confirms this is T2 shine-through rather than true restriction?",
         "options": [
-          "The ADC map at the same location is bright, not dark",
-          "The lesion also enhances after gadolinium injection",
           "The lesion is hyperintense on the T1 weighted image",
-          "The lesion shows blooming on a susceptibility sequence"
+          "The lesion shows blooming on a susceptibility sequence",
+          "The ADC map at the same location is bright, not dark",
+          "The lesion also enhances after gadolinium injection"
         ],
-        "answer": 0,
+        "answer": 2,
         "explain": "T2 shine-through is bright DWI paired with a bright or normal ADC, since diffusion in the tissue is not actually hindered. True restriction requires a low, dark ADC at the same location."
       }
     },
@@ -12034,12 +12034,12 @@
       "body": {
         "prompt": "Increasing the b-value of a diffusion sequence generally has which effect?",
         "options": [
-          "Stronger diffusion contrast, but lower signal to noise ratio",
           "Weaker diffusion contrast, but improved signal to noise ratio",
           "No change in diffusion contrast or image signal to noise",
-          "Elimination of the need to acquire a matching ADC map"
+          "Elimination of the need to acquire a matching ADC map",
+          "Stronger diffusion contrast, but lower signal to noise ratio"
         ],
-        "answer": 0,
+        "answer": 3,
         "explain": "A higher b-value increases diffusion weighting and lesion conspicuity but reduces signal to noise ratio and increases susceptibility to geometric distortion, a standard tradeoff in DWI protocol design."
       }
     },
@@ -12066,12 +12066,12 @@
       "body": {
         "prompt": "Which suprasellar cystic lesion characteristically restricts diffusion, unlike a simple arachnoid cyst?",
         "options": [
+          "Dermoid cyst",
           "Epidermoid cyst",
           "Rathke cleft cyst with simple fluid content",
-          "Simple pineal cyst",
-          "Choroid plexus cyst"
+          "Craniopharyngioma cyst"
         ],
-        "answer": 0,
+        "answer": 1,
         "explain": "Epidermoid cysts restrict diffusion, bright on DWI with low ADC, because of their keratin debris content, which distinguishes them from an arachnoid cyst that simply follows CSF signal on every sequence."
       }
     },
@@ -12082,12 +12082,12 @@
       "body": {
         "prompt": "Whole-body diffusion weighted imaging with background suppression (DWIBS) is primarily used in clinical oncology for:",
         "options": [
-          "Lesion detection, staging, and monitoring treatment response",
-          "Real time guidance during percutaneous tumor biopsy",
           "Replacing contrast enhanced CT for lung nodule characterization",
-          "Measuring cardiac ejection fraction in cancer patients"
+          "Measuring cardiac ejection fraction in cancer patients",
+          "Lesion detection, staging, and monitoring treatment response",
+          "Real time guidance during percutaneous tumor biopsy"
         ],
-        "answer": 0,
+        "answer": 2,
         "explain": "DWIBS provides an unenhanced, radiation free way to detect and stage tumors and to monitor treatment response, since successfully treated tumors typically lose restriction and show rising ADC values."
       }
     },
@@ -12407,7 +12407,7 @@
       "ord": 1384,
       "body": {
         "title": "Acquisition techniques: STEAM, PRESS, and echo time",
-        "html": "<p>Localized single-voxel spectroscopy relies on one of two pulse sequence families to select signal from a single volume while suppressing signal from everywhere else. <strong>STEAM</strong> (stimulated echo acquisition mode) uses three 90 degree pulses, one along each gradient axis, to generate a stimulated echo from the intersection of the three slices. Because a stimulated echo carries only half the available signal compared with a spin echo, STEAM delivers roughly half the SNR of PRESS, but its use of only 90 degree pulses allows a shorter minimum echo time, useful when the goal is to detect short-T2 metabolites or J-coupled compounds close to the water and lipid signal.</p><p><strong>PRESS</strong> (point-resolved spectroscopy) uses one 90 degree pulse followed by two 180 degree refocusing pulses along the three orthogonal planes. Because it produces a true spin echo rather than a stimulated echo, PRESS delivers roughly twice the SNR of STEAM at a matched voxel size and TE, which is why PRESS is the more commonly used sequence in clinical practice, particularly for smaller voxels or lower field strength studies where SNR is already limited.</p><p>Echo time has a strong effect on the appearance of the spectrum. A <strong>short TE</strong> (around 30 to 35 ms) shows more metabolite peaks, including myo-inositol, glutamate, and glutamine, because these compounds have short T2 values and would otherwise decay before a longer echo time could capture them, but the tradeoff is a rolling, less flat baseline that can make quantification harder. A <strong>long TE</strong> (commonly 135 to 144 ms, or sometimes 288 ms) produces a cleaner, flatter baseline that more clearly displays NAA, creatine, choline, and lactate, at the cost of losing the shorter-T2 metabolite signals.</p><p>Long TE acquisitions have one additional diagnostic advantage: because of J-coupling between the two methyl protons in the lactate molecule, the lactate doublet at 1.3 ppm characteristically <strong>inverts below the baseline</strong> at TE values around 135 to 144 ms, then returns above the baseline at very long TE such as 288 ms. This predictable inversion is a useful confirmation that a peak at 1.3 ppm is truly lactate and not overlapping lipid, which does not invert. Regardless of technique, careful voxel placement away from bone, fat, and air, combined with high-order shimming to achieve a narrow linewidth, is essential for a spectrum that can be reliably interpreted.</p>",
+        "html": "<p>Localized single-voxel spectroscopy relies on one of two pulse sequence families to select signal from a single volume while suppressing signal from everywhere else. <strong>STEAM</strong> (stimulated echo acquisition mode) uses three 90 degree pulses, one along each gradient axis, to generate a stimulated echo from the intersection of the three slices. Because a stimulated echo carries only half the available signal compared with a spin echo, STEAM delivers roughly half the SNR of PRESS, but its use of only 90 degree pulses allows a shorter minimum echo time, useful when the goal is to detect short-T2 metabolites or J-coupled compounds close to the water and lipid signal.</p><p><strong>PRESS</strong> (point-resolved spectroscopy) uses one 90 degree pulse followed by two 180 degree refocusing pulses along the three orthogonal planes. Because it produces a true spin echo rather than a stimulated echo, PRESS delivers roughly twice the SNR of STEAM at a matched voxel size and TE, which is why PRESS is the more commonly used sequence in clinical practice, particularly for smaller voxels or lower field strength studies where SNR is already limited.</p><p>Echo time has a strong effect on the appearance of the spectrum. A <strong>short TE</strong> (around 30 to 35 ms) shows more metabolite peaks, including myo-inositol, glutamate, and glutamine, because these compounds have short T2 values and would otherwise decay before a longer echo time could capture them, but the tradeoff is a rolling, less flat baseline that can make quantification harder. A <strong>long TE</strong> (commonly 135 to 144 ms, or sometimes 288 ms) produces a cleaner, flatter baseline that more clearly displays NAA, creatine, choline, and lactate, at the cost of losing the shorter-T2 metabolite signals.</p><p>Long TE acquisitions have one additional diagnostic advantage: because of J-coupling between the lactate methyl protons and the adjacent methine (CH) proton, the lactate doublet at 1.3 ppm characteristically <strong>inverts below the baseline</strong> at TE values around 135 to 144 ms, then returns above the baseline at very long TE such as 288 ms. This predictable inversion is a useful confirmation that a peak at 1.3 ppm is truly lactate and not overlapping lipid, which does not invert. Regardless of technique, careful voxel placement away from bone, fat, and air, combined with high-order shimming to achieve a narrow linewidth, is essential for a spectrum that can be reliably interpreted.</p>",
         "keypoints": [
           "STEAM uses three 90 degree pulses (stimulated echo), giving shorter minimum TE but about half the SNR of PRESS.",
           "PRESS uses 90-180-180 (spin echo) pulses, giving higher SNR, and is the more commonly used clinical sequence.",
@@ -12528,7 +12528,7 @@
           "About 20 to 30 ms"
         ],
         "answer": 2,
-        "explain": "J-coupling between the two methyl protons in lactate causes its 1.3 ppm doublet to invert below baseline at intermediate echo times around 135 to 144 ms."
+        "explain": "J-coupling between the lactate methyl protons and the adjacent methine proton causes its 1.3 ppm doublet to invert below baseline at intermediate echo times around 135 to 144 ms."
       }
     },
     {
@@ -12913,7 +12913,7 @@
         "worked_example": "A patient with a history of multiple transfusions for thalassemia undergoes an R2* liver protocol. The measured R2* is markedly elevated, corresponding to a high estimated liver iron concentration, prompting adjustment of chelation therapy; a conventional T2-weighted image could show low signal in the liver but could not quantify the iron burden or track it reliably over time.",
         "memory_hooks": [
           "R2* is the reciprocal of T2*: more field distortion, more R2*.",
-          "Iron pulls electrons toward it, paramagnetic; calcium pushes them away, diamagnetic; QSM tells them apart."
+          "Iron has unpaired electrons, paramagnetic; calcium's electrons are all paired, diamagnetic; QSM tells them apart by susceptibility sign."
         ],
         "exam_traps": [
           "Do not say T2* mapping alone can distinguish calcium from hemorrhage; both cause signal loss on T2* but only QSM separates them by susceptibility sign.",
