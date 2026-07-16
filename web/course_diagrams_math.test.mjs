@@ -175,9 +175,17 @@ test("data tables are well-formed", () => {
   assert.deepEqual(DIAGRAM_MAP["Task-based fMRI: paradigms and analysis"], ["fmri-design"]);
   assert.deepEqual(DIAGRAM_MAP["Quantitative mapping: why measure relaxation times"], ["relaxometry"]);
   assert.deepEqual(DIAGRAM_MAP["T2*, R2*, and susceptibility mapping"], ["r2star-iron"]);
+  assert.deepEqual(DIAGRAM_MAP["Dynamic contrast enhancement kinetics"], ["dce-kinetics"]);
+  assert.deepEqual(DIAGRAM_MAP["Background parenchymal enhancement, morphology, and BI-RADS"], ["bpe-cycle"]);
+  assert.deepEqual(DIAGRAM_MAP["Multiparametric protocol and zonal anatomy"], ["prostate-zones"]);
+  assert.deepEqual(DIAGRAM_MAP["Diffusion, ADC, and sequence dominance"], ["prostate-dwi"]);
+  assert.deepEqual(DIAGRAM_MAP["Metal artifact reduction"], ["metal-bandwidth"]);
+  assert.deepEqual(DIAGRAM_MAP["Artifacts, applications, and pitfalls"], ["magic-angle"]);
+  assert.deepEqual(DIAGRAM_MAP["MRCP technique"], ["mrcp-te"]);
+  assert.deepEqual(DIAGRAM_MAP["Hepatobiliary contrast agents"], ["hepatobiliary-phase"]);
   // every diagram id is wired exactly once
   const ids = Object.values(DIAGRAM_MAP).reduce((a, v) => a.concat(v), []).sort();
-  assert.deepEqual(ids, ["asl-subtraction", "bold-hrf", "cardiac-gating", "chemical-shift", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "fmri-design", "gibbs-ringing", "ir-nulling", "kspace-recon", "kspace-trajectories", "lge-nulling", "mrs-spectrum", "mrs-te", "parallel-imaging", "pc-venc", "r2star-iron", "relaxometry", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
+  assert.deepEqual(ids, ["asl-subtraction", "bold-hrf", "bpe-cycle", "cardiac-gating", "chemical-shift", "dce-kinetics", "dsc-curve", "dwi-bvalue", "ernst-angle", "fa-anisotropy", "fmri-design", "gibbs-ringing", "hepatobiliary-phase", "ir-nulling", "kspace-recon", "kspace-trajectories", "lge-nulling", "magic-angle", "metal-bandwidth", "mrcp-te", "mrs-spectrum", "mrs-te", "parallel-imaging", "pc-venc", "prostate-dwi", "prostate-zones", "r2star-iron", "relaxometry", "snr-tradeoff", "t1-recovery", "t2-decay", "t2-vs-t2star", "tof-inflow", "tr-te-weighting", "tractography"]);
 });
 
 // Guards against the self-referential trap: a DIAGRAM_MAP key that is not a real

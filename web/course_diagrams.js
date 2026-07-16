@@ -1426,7 +1426,266 @@
     return fig;
   }
 
-  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign, "relaxometry": buildRelaxometry, "r2star-iron": buildR2starIron };
+  // ---- Widget: breast DCE kinetic curve types (BI-RADS) ---- //
+  function buildDceKinetics() {
+    var fig = figure("DCE kinetic curves", "Dynamic contrast-enhanced signal versus time after gadolinium. Type 1 (persistent) keeps climbing; type 2 (plateau) rises then flattens; type 3 (washout) rises fast then declines. Type 1 accent, type 2 grey, type 3 orange.");
+    var xMax = 8;
+    function type1(t) { return 0.1 + 0.5 * (1 - Math.exp(-t / 6)); }
+    function type2(t) { var tp = Math.min(t, 2); return 0.85 * (1 - Math.exp(-tp / 0.9)); }
+    function type3(t) { return Math.max(0.05, 0.95 * (1 - Math.exp(-t / 0.5)) - 0.09 * t); }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "time (min)", yLabel: "signal",
+      xTicks: [0, 2, 4, 6, 8], title: "Breast DCE kinetic curve types" });
+    plot.addAxes();
+    plot.addCurve(M.sample(type1, xMax, 80), "");
+    plot.addCurve(M.sample(type2, xMax, 80), "pd");
+    plot.addCurve(M.sample(type3, xMax, 80), "alt");
+    var g = svgEl("g", {});
+    [[7, type1(7), "Type 1"], [4, type2(4) + 0.06, "Type 2"], [2.6, type3(2.6) - 0.09, "Type 3"]].forEach(function (p) {
+      var t = svgEl("text", { class: "diag-axtext", x: plot.toX(p[0]).toFixed(1), y: plot.toY(p[1]).toFixed(1), "text-anchor": "middle" });
+      t.textContent = p[2]; g.appendChild(t);
+    });
+    plot.svg.appendChild(g);
+    fig.appendChild(plot.svg);
+    var readout = el("div", { class: "diag-readout",
+      text: "Type 1 (persistent, steady rise) is typically benign. Type 2 (plateau) is indeterminate and often needs biopsy. Type 3 (washout, rise then decline) is suspicious for malignancy." });
+    fig.appendChild(readout);
+    return fig;
+  }
+
+  // ---- Widget: background parenchymal enhancement across the menstrual cycle ---- //
+  function buildBpeCycle() {
+    var fig = figure("BPE across the cycle", "Background parenchymal enhancement (BPE) rises and falls with hormonal state across the menstrual cycle, lowest in the second week and highest premenstrually.");
+    var xMax = 28;
+    function bpeLevel(day) {
+      var base = 0.55;
+      var dip = 0.35 * Math.exp(-Math.pow((day - 10.5) / 5, 2));
+      var premenstrual = 0.35 * Math.exp(-Math.pow((day - 26) / 4, 2));
+      return Math.min(1, Math.max(0.1, base - dip + premenstrual));
+    }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "cycle day", yLabel: "BPE level",
+      xTicks: [0, 7, 14, 21, 28], title: "Background parenchymal enhancement versus cycle day" });
+    plot.addAxes();
+    plot.addCurve(M.sample(bpeLevel, xMax, 80), "");
+    plot.addMarker(10, "", "week 2");
+    fig.appendChild(plot.svg);
+    var readout = el("div", { class: "diag-readout",
+      text: "BPE is lowest in the second week of the cycle (about days 7 to 14) and rises again premenstrually. Screening breast MRI is best scheduled in week 2, when background enhancement is least likely to obscure or mimic a lesion." });
+    fig.appendChild(readout);
+    return fig;
+  }
+
+  // ---- Widget: prostate zonal anatomy (axial schematic) ---- //
+  function buildProstateZones() {
+    var fig = figure("Prostate zonal anatomy", "Axial schematic of prostate zonal anatomy: the peripheral zone (PZ) forms the posterior rim, the transition zone (TZ) surrounds the urethra centrally. Toggle a zone to see its extent and clinical relevance.");
+    var W = 260, H = 180, cx = 130, cy = 95;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "Axial prostate zonal anatomy schematic" });
+    svg.style.maxWidth = "280px";
+    var pz = svgEl("ellipse", { cx: cx, cy: cy, rx: 72, ry: 52, "fill-opacity": "0.25" });
+    var tz = svgEl("ellipse", { cx: cx, cy: cy - 10, rx: 34, ry: 30, "fill-opacity": "0.25" });
+    var capsule = svgEl("ellipse", { class: "diag-axis", cx: cx, cy: cy, rx: 72, ry: 52, fill: "none" });
+    var urethra = svgEl("circle", { cx: cx, cy: cy - 10, r: 3, fill: "#e6edf3" });
+    svg.appendChild(pz); svg.appendChild(tz); svg.appendChild(capsule); svg.appendChild(urethra);
+    var lblPZ = svgEl("text", { class: "diag-axtext", x: cx, y: cy + 42, "text-anchor": "middle" });
+    lblPZ.textContent = "PZ"; svg.appendChild(lblPZ);
+    var lblTZ = svgEl("text", { class: "diag-axtext", x: cx, y: cy + 6, "text-anchor": "middle" });
+    lblTZ.textContent = "TZ"; svg.appendChild(lblTZ);
+    var state = { zone: "pz" };
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      var onFill = "#5db0ef", onOp = "0.55", offFill = "#8a8f98", offOp = "0.2";
+      pz.setAttribute("fill", state.zone === "pz" ? onFill : offFill);
+      pz.setAttribute("fill-opacity", state.zone === "pz" ? onOp : offOp);
+      pz.setAttribute("stroke", state.zone === "pz" ? onFill : offFill);
+      tz.setAttribute("fill", state.zone === "tz" ? onFill : offFill);
+      tz.setAttribute("fill-opacity", state.zone === "tz" ? onOp : offOp);
+      tz.setAttribute("stroke", state.zone === "tz" ? onFill : offFill);
+      readout.textContent = state.zone === "pz"
+        ? "Peripheral zone (PZ): the posterior rim, about 70% of gland volume. Most prostate cancers arise here. It is T2-bright, and diffusion-weighted imaging is the dominant sequence for detection."
+        : "Transition zone (TZ): surrounds the urethra centrally and enlarges with benign prostatic hyperplasia (BPH). T2-weighted imaging is the dominant sequence here, since BPH nodules produce heterogeneous signal that diffusion alone cannot reliably sort out.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Peripheral zone", "pz"], ["Transition zone", "tz"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.zone ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.zone = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: prostate DWI signal by tissue/ADC ---- //
+  function buildProstateDwi() {
+    var fig = figure("Prostate DWI and ADC", "Diffusion-weighted signal versus b-value in the prostate. Restricted diffusion (low ADC) in tumor stays brightest at high b-value while free fluid darkens fastest. Tumor orange, normal peripheral zone accent, urine/cyst grey.");
+    var xMax = 1400;
+    var TISSUES = [
+      { label: "Tumor", adc: 0.0007, cls: "alt" },
+      { label: "Normal PZ", adc: 0.0015, cls: "" },
+      { label: "Urine/cyst", adc: 0.0030, cls: "pd" },
+    ];
+    var state = { b: 1400 };
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "b-value (s/mm2)", yLabel: "signal",
+      xTicks: [0, 350, 700, 1050, 1400], title: "Prostate diffusion signal versus b-value" });
+    plot.addAxes();
+    TISSUES.forEach(function (t) {
+      plot.addCurve(M.sample(function (b) { return M.dwiSignal(b, t.adc); }, xMax, 80), t.cls);
+    });
+    var marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (marker) marker.remove();
+      marker = plot.addMarker(state.b, "", "b");
+      var parts = TISSUES.map(function (t) {
+        return t.label + " " + Math.round(M.dwiSignal(state.b, t.adc) * 100) + "%"; });
+      readout.textContent = "At b " + state.b + " s/mm2: " + parts.join(", ")
+        + ". Restricted diffusion (low ADC) stays bright at high b-value, the signature of clinically significant prostate cancer.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    controls.appendChild(el("span", { class: "diag-glabel", text: "b-value:" }));
+    [0, 700, 1400].forEach(function (bv) {
+      var b = el("button", { type: "button", class: "diag-btn" + (bv === state.b ? " on" : ""), text: String(bv) });
+      b.addEventListener("click", function () {
+        state.b = bv;
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: metal artifact width versus receiver bandwidth ---- //
+  function buildMetalBandwidth() {
+    var fig = figure("Bandwidth and metal artifact", "Metal distorts the local field, which misregisters signal along the frequency-encode direction. Raising receiver bandwidth narrows the frequency range each pixel covers, shrinking that misregistration and the resulting artifact.");
+    var xMax = 600;
+    function artifactWidth(bw) { return 1 / (1 + bw / 150); }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "receiver bandwidth (Hz/px)", yLabel: "relative artifact width",
+      xTicks: [0, 150, 300, 450, 600], title: "Metal artifact width versus receiver bandwidth" });
+    plot.addAxes();
+    plot.addCurve(M.sample(artifactWidth, xMax, 80), "");
+    var state = { bw: 150 };
+    var marker = null, dot = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (marker) marker.remove(); if (dot) dot.remove();
+      marker = plot.addMarker(state.bw, "", state.bw + " Hz/px");
+      dot = plot.addDot(state.bw, artifactWidth(state.bw), "");
+      readout.textContent = state.bw === 150
+        ? "Low bandwidth spreads each metal-distorted voxel across a wider frequency range, producing more frequency misregistration and a larger geometric artifact."
+        : "Higher bandwidth narrows the frequency range per pixel, so the same field distortion shifts protons a smaller distance and the metal artifact shrinks, at some cost in SNR.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Low BW", 150], ["High BW", 500]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.bw ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.bw = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: magic angle effect versus tendon fiber angle and TE ---- //
+  function buildMagicAngle() {
+    var fig = figure("Magic angle effect", "Near 55 degrees to B0, the dipolar coupling term in tendon and ligament collagen vanishes, T2 lengthens, and normally dark fibers falsely brighten on short-TE sequences. At long TE the artifact resolves.");
+    var xMax = 90, magicDeg = 54.7;
+    var state = { te: "short" };
+    function sig(theta) {
+      var bump = M.gauss(theta, magicDeg, 10);
+      return state.te === "short" ? 0.15 + 0.75 * bump : 0.05 + 0.05 * bump;
+    }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "fiber angle to B0 (deg)", yLabel: "signal",
+      xTicks: [0, 30, 55, 90], title: "Magic angle signal versus tendon fiber angle" });
+    plot.addAxes();
+    var curve = null, marker = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove(); if (marker) marker.remove();
+      curve = plot.addCurve(M.sample(sig, xMax, 90), "");
+      marker = plot.addMarker(magicDeg, "", "55°");
+      readout.textContent = state.te === "short"
+        ? "Short TE: at the magic angle (about 55 degrees) collagen fibers falsely brighten, mimicking tendinosis or a partial tear."
+        : "Long TE: tendon signal has decayed regardless of fiber angle, so the false bright focus at 55 degrees resolves. A finding that persists at long TE is real pathology, not the magic angle artifact.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Short TE", "short"], ["Long TE", "long"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.te ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.te = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: MRCP heavily T2-weighted signal versus TE ---- //
+  function buildMrcpTe() {
+    var fig = figure("MRCP and echo time", "MRCP uses a very long TE. Bile and pancreatic-duct fluid have a long T2 and stay bright; solid liver and background tissue have a short T2 and have fully decayed, so only static fluid remains visible. Fluid accent, tissue orange.");
+    var xMax = 1000, teMrcp = 800;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "TE (ms)", yLabel: "signal",
+      xTicks: [0, 250, 500, 750, 1000], title: "MRCP signal versus echo time" });
+    plot.addAxes();
+    plot.addCurve(M.sample(function (te) { return M.mxy(te, 1200); }, xMax, 80), "");
+    plot.addCurve(M.sample(function (te) { return M.mxy(te, 45); }, xMax, 80), "alt");
+    plot.addMarker(teMrcp, "", "MRCP");
+    fig.appendChild(plot.svg);
+    var readout = el("div", { class: "diag-readout",
+      text: "At TE " + teMrcp + " ms, bile and duct fluid (T2 about 1200 ms) retain " + Math.round(M.mxy(teMrcp, 1200) * 100)
+        + "% signal while solid tissue (T2 about 45 ms) has decayed to near zero. This very long TE is why heavily T2-weighted MRCP isolates bile and pancreatic-duct fluid and suppresses everything else." });
+    fig.appendChild(readout);
+    return fig;
+  }
+
+  // ---- Widget: hepatobiliary-phase gadoxetate uptake ---- //
+  function buildHepatobiliaryPhase() {
+    var fig = figure("Hepatobiliary phase uptake", "Gadoxetate is taken up by functioning hepatocytes through the OATP transporter, so normal liver and FNH gradually brighten toward a plateau by about 20 minutes, the hepatobiliary phase. Most metastases lack that transporter and stay dark.");
+    var xMax = 25, hbpTime = 20;
+    function liverSignal(t) { var tp = Math.min(t, hbpTime); return 0.85 * (1 - Math.exp(-tp / 6)); }
+    function metSignal(t) { return 0.1 + 0.05 * (1 - Math.exp(-t / 10)); }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "time (min)", yLabel: "signal",
+      xTicks: [0, 5, 10, 15, 20, 25], title: "Hepatobiliary phase signal versus time" });
+    plot.addAxes();
+    plot.addCurve(M.sample(liverSignal, xMax, 80), "");
+    plot.addCurve(M.sample(metSignal, xMax, 80), "alt");
+    plot.addMarker(hbpTime, "", "HBP");
+    fig.appendChild(plot.svg);
+    var readout = el("div", { class: "diag-readout",
+      text: "By about 20 minutes (the hepatobiliary phase), normal liver and FNH have taken up gadoxetate and brightened toward a plateau, while most metastases stay dark, giving strong lesion-to-liver contrast." });
+    fig.appendChild(readout);
+    return fig;
+  }
+
+  var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign, "relaxometry": buildRelaxometry, "r2star-iron": buildR2starIron,
+    "dce-kinetics": buildDceKinetics, "bpe-cycle": buildBpeCycle, "prostate-zones": buildProstateZones,
+    "prostate-dwi": buildProstateDwi, "metal-bandwidth": buildMetalBandwidth, "magic-angle": buildMagicAngle,
+    "mrcp-te": buildMrcpTe, "hepatobiliary-phase": buildHepatobiliaryPhase };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
