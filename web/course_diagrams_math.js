@@ -207,6 +207,14 @@
     "Task-based fMRI: paradigms and analysis": ["fmri-design"],
     "Quantitative mapping: why measure relaxation times": ["relaxometry"],
     "T2*, R2*, and susceptibility mapping": ["r2star-iron"],
+    "Dynamic contrast enhancement kinetics": ["dce-kinetics"],
+    "Background parenchymal enhancement, morphology, and BI-RADS": ["bpe-cycle"],
+    "Multiparametric protocol and zonal anatomy": ["prostate-zones"],
+    "Diffusion, ADC, and sequence dominance": ["prostate-dwi"],
+    "Metal artifact reduction": ["metal-bandwidth"],
+    "Artifacts, applications, and pitfalls": ["magic-angle"],
+    "MRCP technique": ["mrcp-te"],
+    "Hepatobiliary contrast agents": ["hepatobiliary-phase"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
