@@ -62,7 +62,7 @@
       "ord": 30,
       "body": {
         "title": "MR safety: the exam-focused overview",
-        "html": "<p>MRI has <b>no ionizing radiation</b>, but three fields are always present. The <b>static field</b> is always on: its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness, a metallic taste, magnetophosphenes) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat (<b>SAR</b>, W/kg), risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public → IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labelling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium, which is vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
+        "html": "<p>MRI has <b>no ionizing radiation</b>, but three fields are always present. The <b>static field</b> is always on: its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness and a metallic taste) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat (<b>SAR</b>, W/kg), risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public → IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labeling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium, which is vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
         "keypoints": [
           "Three fields: static (projectile), gradient (PNS + acoustic), RF (SAR/burns).",
           "Zone IV = magnet room, most restricted; no ferromagnetic items.",
@@ -70,7 +70,7 @@
           "Quench → helium boil-off → possible oxygen displacement.",
           "Gadolinium + severe renal impairment → NSF risk."
         ],
-        "worked_example": "<p>A patient in a wheelchair with a small pocketknife left in a jacket pocket is brought toward the scanner room by a family member who was never screened. The knife is drawn toward the bore and becomes a projectile, the classic ferromagnetic missile effect from the always-on static field. The correct workflow is that everyone entering Zone III or IV, staff, patients, and visitors alike, is screened with a metal detector and a verbal/written questionnaire before crossing into Zone IV, and only MR-trained, screened staff supervise anyone in Zone IV. The static field is never off, even during a power outage, so screening has to happen at the zone boundary every single time, not just once at intake.</p>",
+        "worked_example": "<p>A patient in a wheelchair with a small pocketknife left in a jacket pocket is brought toward the scanner room by a family member who was never screened. The knife is drawn toward the bore and becomes a projectile, the classic ferromagnetic missile effect from the always-on static field. The correct workflow is that everyone entering Zone III or IV, staff, patients, and visitors alike, is screened with a ferromagnetic detection system and a verbal/written questionnaire before crossing into Zone IV, and only MR-trained, screened staff supervise anyone in Zone IV. The static field is never off, even during a power outage, so screening has to happen at the zone boundary every single time, not just once at intake.</p>",
         "memory_hooks": [
           "Four zones, increasing restriction: Zone I public access, Zone II screening/reception, Zone III controlled (screened persons only), Zone IV the magnet room itself.",
           "Three fields, three hazards: static field causes the projectile effect (always on), gradients cause peripheral nerve stimulation and loud acoustic noise (dB/dt, switching fast), RF deposits heat measured as SAR and can burn from loops or skin contact.",
@@ -123,7 +123,7 @@
           "Diffusion-weighted"
         ],
         "answer": 0,
-        "explain": "Short TR emphasises T1 recovery differences; short TE minimises T2 decay. The result is T1 weighting: fat and white matter bright, fluid dark."
+        "explain": "Short TR emphasizes T1 recovery differences; short TE minimizes T2 decay. The result is T1 weighting: fat and white matter bright, fluid dark."
       }
     },
     {
@@ -139,7 +139,7 @@
           "About half the repetition time TR"
         ],
         "answer": 0,
-        "explain": "In inversion recovery, a tissue is nulled when TI ≈ 0.69·T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal, useful where spectral fat-sat fails (off-isocentre, metal, poor shim)."
+        "explain": "In inversion recovery, a tissue is nulled when TI ≈ 0.69·T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal, useful where spectral fat-sat fails (off-isocenter, metal, poor shim)."
       }
     },
     {
@@ -171,7 +171,7 @@
           "Suppresses the surrounding fat signal"
         ],
         "answer": 0,
-        "explain": "Gadolinium is paramagnetic and shortens local T1, so tissue it reaches brightens on T1 weighting. It only crosses a broken blood-brain barrier, so enhancement marks BBB breakdown (tumour, active inflammation)."
+        "explain": "Gadolinium is paramagnetic and shortens local T1, so tissue it reaches brightens on T1 weighting. It only crosses a broken blood-brain barrier, so enhancement marks BBB breakdown (tumor, active inflammation)."
       }
     },
     {
@@ -227,7 +227,7 @@
       "kind": "quiz",
       "ord": 123,
       "body": {
-        "prompt": "The centre of k-space predominantly encodes:",
+        "prompt": "The center of k-space predominantly encodes:",
         "options": [
           "Overall image contrast and signal",
           "Fine edge detail and resolution",
@@ -235,7 +235,7 @@
           "The slice position"
         ],
         "answer": 0,
-        "explain": "Low spatial frequencies (k-space centre) carry the bulk of the signal and overall contrast; the periphery carries high spatial frequencies: edges and fine detail (resolution). This is why partial-Fourier and centric ordering behave as they do."
+        "explain": "Low spatial frequencies (k-space center) carry the bulk of the signal and overall contrast; the periphery carries high spatial frequencies: edges and fine detail (resolution). This is why partial-Fourier and centric ordering behave as they do."
       }
     },
     {
@@ -259,7 +259,7 @@
       "kind": "quiz",
       "ord": 130,
       "body": {
-        "prompt": "An implant labelled 'MR Conditional' means it is:",
+        "prompt": "An implant labeled 'MR Conditional' means it is:",
         "options": [
           "Safe to scan only within the stated conditions",
           "Considered safe in any MRI scanner at all",
@@ -315,7 +315,7 @@
           "Work only while wearing a lead apron for shielding"
         ],
         "answer": 0,
-        "explain": "Guidelines permit pregnant staff to work in and around the MRI suite; the usual precaution is not to remain inside the bore during active scanning. MRI uses no ionising radiation, so lead aprons are irrelevant."
+        "explain": "Guidelines permit pregnant staff to work in and around the MRI suite; the usual precaution is not to remain inside the bore during active scanning. MRI uses no ionizing radiation, so lead aprons are irrelevant."
       }
     },
     {
@@ -360,7 +360,7 @@
           "eGFR as a measure of renal function",
           "The fasting blood glucose level",
           "The serum potassium level",
-          "The haemoglobin A1c value"
+          "The hemoglobin A1c value"
         ],
         "answer": 0,
         "explain": "Renal function (eGFR) drives the risk of nephrogenic systemic fibrosis with gadolinium. Severe impairment prompts avoiding contrast or using the lowest dose of a macrocyclic agent. Also confirm prior reactions and consent."
@@ -416,13 +416,13 @@
       "body": {
         "prompt": "In an FSE acquisition, the effective TE that determines image contrast is set by:",
         "options": [
-          "The echo whose data fills the centre of k-space",
+          "The echo whose data fills the center of k-space",
           "The first echo that is played out in the echo train",
           "The final echo played out at the end of the train",
           "The simple average of all the echo times used"
         ],
         "answer": 0,
-        "explain": "Contrast is dominated by the low spatial frequencies at the centre of k-space. Whichever echo is played out while the centre is being filled sets the effective TE, regardless of the other echoes in the train."
+        "explain": "Contrast is dominated by the low spatial frequencies at the center of k-space. Whichever echo is played out while the center is being filled sets the effective TE, regardless of the other echoes in the train."
       }
     },
     {
@@ -497,7 +497,7 @@
           "Visible only after gadolinium is given"
         ],
         "answer": 0,
-        "explain": "Cytotoxic oedema restricts water diffusion within minutes of infarction: bright on DWI, dark on ADC. This appears well before T2 and FLAIR changes, which is why DWI is the key stroke sequence."
+        "explain": "Cytotoxic edema restricts water diffusion within minutes of infarction: bright on DWI, dark on ADC. This appears well before T2 and FLAIR changes, which is why DWI is the key stroke sequence."
       }
     },
     {
@@ -507,13 +507,13 @@
       "body": {
         "prompt": "Which lesion is intrinsically BRIGHT on a T1-weighted image WITHOUT any gadolinium?",
         "options": [
-          "Subacute haematoma with methaemoglobin",
+          "Subacute hematoma with methemoglobin",
           "A simple cyst filled with clear CSF",
-          "An area of acute cytotoxic oedema",
+          "An area of acute cytotoxic edema",
           "A purely calcified nodule with no blood"
         ],
         "answer": 0,
-        "explain": "Methaemoglobin in subacute blood shortens T1, so it is bright on unenhanced T1, as are fat, melanin and proteinaceous fluid. Simple fluid is dark on T1, and calcium is usually dark on standard sequences."
+        "explain": "Methemoglobin in subacute blood shortens T1, so it is bright on unenhanced T1, as are fat, melanin and proteinaceous fluid. Simple fluid is dark on T1, and calcium is usually dark on standard sequences."
       }
     },
     {
@@ -545,7 +545,7 @@
           "Fast-flowing arterial blood in a vessel"
         ],
         "answer": 0,
-        "explain": "Susceptibility from haemosiderin, calcium or iron dephases spins and exaggerates the dark signal on T2*-weighted GRE and SWI, called blooming. It is how microhaemorrhages and mineralisation are detected."
+        "explain": "Susceptibility from hemosiderin, calcium or iron dephases spins and exaggerates the dark signal on T2*-weighted GRE and SWI, called blooming. It is how microhemorrhages and mineralization are detected."
       }
     },
     {
@@ -620,7 +620,7 @@
           "The 180-degree pulse refocuses only moving spins"
         ],
         "answer": 0,
-        "explain": "Rapid RF saturates stationary tissue to low signal; blood flowing into the slice has not seen those pulses, so it is fully magnetised and bright, which is flow-related enhancement. In-plane flow saturates and dims, which is the main weakness of TOF."
+        "explain": "Rapid RF saturates stationary tissue to low signal; blood flowing into the slice has not seen those pulses, so it is fully magnetized and bright, which is flow-related enhancement. In-plane flow saturates and dims, which is the main weakness of TOF."
       }
     },
     {
@@ -668,7 +668,7 @@
           "Diffusion-weighted"
         ],
         "answer": 0,
-        "explain": "Long TR reduces T1 weighting and long TE emphasises T2 decay, so the image is T2-weighted with bright fluid."
+        "explain": "Long TR reduces T1 weighting and long TE emphasizes T2 decay, so the image is T2-weighted with bright fluid."
       }
     },
     {
@@ -700,7 +700,7 @@
           "Absent"
         ],
         "answer": 0,
-        "explain": "CSF has a long T1, so it recovers little longitudinal magnetisation by the next excitation and stays dark on T1."
+        "explain": "CSF has a long T1, so it recovers little longitudinal magnetization by the next excitation and stays dark on T1."
       }
     },
     {
@@ -732,7 +732,7 @@
           "Short TR and long TE"
         ],
         "answer": 0,
-        "explain": "Long TR minimises T1 weighting and short TE minimises T2 weighting, so signal tracks tissue proton density."
+        "explain": "Long TR minimizes T1 weighting and short TE minimizes T2 weighting, so signal tracks tissue proton density."
       }
     },
     {
@@ -920,7 +920,7 @@
         "options": [
           "Oxygen displacement if helium fills the room",
           "Electric shock from the magnet windings",
-          "A burst of ionising radiation exposure",
+          "A burst of ionizing radiation exposure",
           "A ferromagnetic projectile flying in"
         ],
         "answer": 0,
@@ -967,7 +967,7 @@
         "prompt": "Non-conditional cardiac pacemakers are dangerous in MRI mainly because the fields can:",
         "options": [
           "Alter device function or heat the leads",
-          "Permanently demagnetise the battery",
+          "Permanently demagnetize the battery",
           "Block the RF transmit signal entirely",
           "Erase the device's stored diagnostic logs"
         ],
@@ -1014,7 +1014,7 @@
       "body": {
         "prompt": "The best single measure to reduce motion artifact from an anxious patient is:",
         "options": [
-          "Clear communication and comfortable immobilisation",
+          "Clear communication and comfortable immobilization",
           "Raising the SAR limit to run a faster scan",
           "Applying a motion-correction filter afterward",
           "Increasing the number of averages only"
@@ -1100,7 +1100,7 @@
           "Proton density weighting alone"
         ],
         "answer": 0,
-        "explain": "Balanced SSFP preserves transverse magnetisation so contrast tracks the T2/T1 ratio, making fluid bright, useful in cardiac and MRCP imaging."
+        "explain": "Balanced SSFP preserves transverse magnetization so contrast tracks the T2/T1 ratio, making fluid bright, useful in cardiac and MRCP imaging."
       }
     },
     {
@@ -1132,7 +1132,7 @@
           "Adding more signal averages"
         ],
         "answer": 0,
-        "explain": "The b-value scales the diffusion-sensitising gradients, so a higher b-value produces heavier diffusion weighting."
+        "explain": "The b-value scales the diffusion-sensitizing gradients, so a higher b-value produces heavier diffusion weighting."
       }
     },
     {
@@ -1142,13 +1142,13 @@
       "body": {
         "prompt": "A spoiled gradient-echo sequence deliberately destroys residual:",
         "options": [
-          "Transverse magnetisation for T1 or T2* contrast",
-          "Residual longitudinal magnetisation",
+          "Transverse magnetization for T1 or T2* contrast",
+          "Residual longitudinal magnetization",
           "The transmitted RF excitation pulse",
           "The frequency-encode readout gradient waveform"
         ],
         "answer": 0,
-        "explain": "Spoiling dephases leftover transverse magnetisation between TRs so it cannot contribute steady-state signal, yielding clean T1 or T2* contrast."
+        "explain": "Spoiling dephases leftover transverse magnetization between TRs so it cannot contribute steady-state signal, yielding clean T1 or T2* contrast."
       }
     },
     {
@@ -1172,7 +1172,7 @@
       "kind": "quiz",
       "ord": 332,
       "body": {
-        "prompt": "The most sensitive sequence for hyperacute ischaemic stroke is:",
+        "prompt": "The most sensitive sequence for hyperacute ischemic stroke is:",
         "options": [
           "Diffusion-weighted imaging (DWI)",
           "Standard T1-weighted imaging",
@@ -1180,7 +1180,7 @@
           "Post-contrast T1-weighted imaging"
         ],
         "answer": 0,
-        "explain": "Cytotoxic oedema restricts diffusion within minutes, so DWI shows infarction long before T2 or FLAIR changes appear."
+        "explain": "Cytotoxic edema restricts diffusion within minutes, so DWI shows infarction long before T2 or FLAIR changes appear."
       }
     },
     {
@@ -1190,8 +1190,8 @@
       "body": {
         "prompt": "Susceptibility-weighted imaging (SWI) is especially good at detecting:",
         "options": [
-          "Microhaemorrhages, iron and calcium deposits",
-          "Vasogenic oedema around a mass lesion",
+          "Microhemorrhages, iron and calcium deposits",
+          "Vasogenic edema around a mass lesion",
           "Subcutaneous and marrow fat signal",
           "Fast-flowing blood in patent vessels"
         ],
@@ -1204,7 +1204,7 @@
       "kind": "quiz",
       "ord": 334,
       "body": {
-        "prompt": "Vasogenic oedema around a tumour is best appreciated as high signal on:",
+        "prompt": "Vasogenic edema around a tumor is best appreciated as high signal on:",
         "options": [
           "T2 or FLAIR",
           "T1-weighted",
@@ -1212,7 +1212,7 @@
           "Phase contrast"
         ],
         "answer": 0,
-        "explain": "Vasogenic oedema is extra extracellular water, which is bright on T2, and FLAIR nulls adjacent CSF to make it stand out."
+        "explain": "Vasogenic edema is extra extracellular water, which is bright on T2, and FLAIR nulls adjacent CSF to make it stand out."
       }
     },
     {
@@ -1244,7 +1244,7 @@
           "Phase-contrast imaging"
         ],
         "answer": 0,
-        "explain": "If bright T1 signal disappears with fat suppression, the source is fat, distinguishing a lipoma or dermoid from haemorrhage."
+        "explain": "If bright T1 signal disappears with fat suppression, the source is fat, distinguishing a lipoma or dermoid from hemorrhage."
       }
     },
     {
@@ -1254,13 +1254,13 @@
       "body": {
         "prompt": "A fluid-fluid level inside a lesion most suggests:",
         "options": [
-          "Haemorrhage or layering of contents by density",
+          "Hemorrhage or layering of contents by density",
           "A simple CSF-filled cyst with no debris",
           "Dense calcification within the lesion wall",
           "A vascular flow void from fast flow"
         ],
         "answer": 0,
-        "explain": "Settling of blood or proteinaceous debris produces a fluid-fluid level, seen in haemorrhagic cysts and some tumours."
+        "explain": "Settling of blood or proteinaceous debris produces a fluid-fluid level, seen in hemorrhagic cysts and some tumors."
       }
     },
     {
@@ -1340,7 +1340,7 @@
           "Any orientation equally, angle-independent"
         ],
         "answer": 0,
-        "explain": "At roughly 55 degrees, dipolar interactions are minimised so tendon T2 lengthens and it appears artefactually bright on short-TE images."
+        "explain": "At roughly 55 degrees, dipolar interactions are minimized so tendon T2 lengthens and it appears artifactually bright on short-TE images."
       }
     },
     {
@@ -1356,7 +1356,7 @@
           "Zipper artifact from stray RF signal"
         ],
         "answer": 0,
-        "explain": "Synchronising acquisition to the cardiac or respiratory cycle keeps anatomy in a consistent position, suppressing motion ghosts."
+        "explain": "Synchronizing acquisition to the cardiac or respiratory cycle keeps anatomy in a consistent position, suppressing motion ghosts."
       }
     },
     {
@@ -1382,8 +1382,8 @@
       "body": {
         "prompt": "Spectral fat saturation is most likely to fail:",
         "options": [
-          "Off-isocentre or near metal, in an uneven field",
-          "At the exact isocentre of a shimmed bore",
+          "Off-isocenter or near metal, in an uneven field",
+          "At the exact isocenter of a shimmed bore",
           "In a uniformly well-shimmed homogeneous field",
           "Only when using a very short echo time"
         ],
@@ -1478,13 +1478,13 @@
       "body": {
         "prompt": "The main reason to suppress fat before or after gadolinium is to:",
         "options": [
-          "Raise contrast of enhancement and oedema by cutting fat",
+          "Raise contrast of enhancement and edema by cutting fat",
           "Shorten the overall repetition time of the scan",
           "Reduce the specific absorption rate to the patient",
           "Prevent aliasing and wraparound in the image"
         ],
         "answer": 0,
-        "explain": "Bright fat can hide enhancing lesions and marrow or soft-tissue oedema, so removing it raises the contrast of the findings you care about."
+        "explain": "Bright fat can hide enhancing lesions and marrow or soft-tissue edema, so removing it raises the contrast of the findings you care about."
       }
     },
     {
@@ -1500,7 +1500,7 @@
           "The receiver gain and coil setting"
         ],
         "answer": 0,
-        "explain": "High spatial frequencies at the edges of k-space carry edges and fine detail, while the centre carries bulk signal and contrast."
+        "explain": "High spatial frequencies at the edges of k-space carry edges and fine detail, while the center carries bulk signal and contrast."
       }
     },
     {
@@ -1609,10 +1609,10 @@
           "Capture contrast at the moment of peak arterial enhancement",
           "Increase the acquisition matrix without extra scan time",
           "Lower the SAR deposited during long echo train sequences",
-          "Suppress fat signal by nulling it at the k-space centre"
+          "Suppress fat signal by nulling it at the k-space center"
         ],
         "answer": 0,
-        "explain": "Sampling the k-space centre first locks in contrast at that instant, valuable in dynamic contrast MRA where arterial timing matters."
+        "explain": "Sampling the k-space center first locks in contrast at that instant, valuable in dynamic contrast MRA where arterial timing matters."
       }
     },
     {
@@ -1623,7 +1623,7 @@
         "prompt": "Clinical superconducting magnets maintain their field because the windings are:",
         "options": [
           "Cooled by liquid helium to become superconducting",
-          "Built from permanently magnetised alloy blocks",
+          "Built from permanently magnetized alloy blocks",
           "Powered continuously from the mains electricity supply",
           "Cooled by liquid nitrogen alone, with no helium bath"
         ],
@@ -1676,7 +1676,7 @@
           "Shields the receiver from external RF noise"
         ],
         "answer": 0,
-        "explain": "The transmit coil delivers the B1 RF pulse that tips magnetisation; receive coils then detect the returning signal."
+        "explain": "The transmit coil delivers the B1 RF pulse that tips magnetization; receive coils then detect the returning signal."
       }
     },
     {
@@ -1801,7 +1801,7 @@
           "Dark structures such as veins on susceptibility imaging",
           "Bright arteries on a time-of-flight angiogram",
           "The bright fat signal on non-suppressed T1 images",
-          "An avidly enhancing tumour after gadolinium"
+          "An avidly enhancing tumor after gadolinium"
         ],
         "answer": 0,
         "explain": "MinIP keeps the darkest voxel along each ray, which highlights low-signal structures like veins on SWI or air in the airways."
@@ -1833,7 +1833,7 @@
           "A volumetric (3D) dataset",
           "A single 2D slice",
           "A projection radiograph",
-          "A k-space centre only"
+          "A k-space center only"
         ],
         "answer": 0,
         "explain": "Reformatting arbitrary planes needs a full volume of data; a single 2D slice cannot be re-sliced in another orientation."
@@ -1868,7 +1868,7 @@
           "Acquiring a larger number of signal averages"
         ],
         "answer": 0,
-        "explain": "Imperfect slice profiles let neighbouring slices saturate each other; a gap or interleaving separates their excitation in space or time."
+        "explain": "Imperfect slice profiles let neighboring slices saturate each other; a gap or interleaving separates their excitation in space or time."
       }
     },
     {
@@ -1972,7 +1972,7 @@
       "kind": "quiz",
       "ord": 438,
       "body": {
-        "prompt": "Characterising a focal liver lesion relies most on:",
+        "prompt": "Characterizing a focal liver lesion relies most on:",
         "options": [
           "Multiphase dynamic post-gadolinium T1 imaging",
           "A single unenhanced T2-weighted acquisition",
@@ -1980,7 +1980,7 @@
           "Time-of-flight angiography of the hepatic artery"
         ],
         "answer": 0,
-        "explain": "Arterial, portal-venous and delayed phases show the enhancement pattern that distinguishes haemangioma, FNH, HCC and metastases."
+        "explain": "Arterial, portal-venous and delayed phases show the enhancement pattern that distinguishes hemangioma, FNH, HCC and metastases."
       }
     },
     {
@@ -1996,7 +1996,7 @@
           "A thick-slab MIP reconstruction"
         ],
         "answer": 0,
-        "explain": "The ACL runs obliquely; a sagittal plane angled along the ligament shows its fibres and any tear most completely."
+        "explain": "The ACL runs obliquely; a sagittal plane angled along the ligament shows its fibers and any tear most completely."
       }
     },
     {
@@ -2012,7 +2012,7 @@
           "Diffusion-weighted imaging alone, with no other series"
         ],
         "answer": 0,
-        "explain": "This core set covers anatomy, fluid-sensitive pathology, periventricular disease and acute ischaemia, with contrast added when indicated."
+        "explain": "This core set covers anatomy, fluid-sensitive pathology, periventricular disease and acute ischemia, with contrast added when indicated."
       }
     },
     {
@@ -2028,7 +2028,7 @@
           "Time-of-flight MRA of the intracranial vessels"
         ],
         "answer": 0,
-        "explain": "DWI detects the restricted diffusion of cytotoxic oedema within minutes, well before conventional sequences change."
+        "explain": "DWI detects the restricted diffusion of cytotoxic edema within minutes, well before conventional sequences change."
       }
     },
     {
@@ -2092,7 +2092,7 @@
           "Selecting a high b-value for the diffusion gradients"
         ],
         "answer": 0,
-        "explain": "CE-MRA is flow-independent but timing-dependent: the k-space centre must be filled while contrast is in the arteries, before venous return."
+        "explain": "CE-MRA is flow-independent but timing-dependent: the k-space center must be filled while contrast is in the arteries, before venous return."
       }
     },
     {
@@ -2151,12 +2151,12 @@
         "prompt": "Which item poses the greatest projectile hazard in the scanner room?",
         "options": [
           "A steel oxygen cylinder",
-          "An aluminium walker",
+          "An aluminum walker",
           "A plastic tray",
           "A titanium hip implant"
         ],
         "answer": 0,
-        "explain": "Ferromagnetic steel is strongly attracted and can be pulled into the bore with lethal force; aluminium, plastic and titanium are not ferromagnetic."
+        "explain": "Ferromagnetic steel is strongly attracted and can be pulled into the bore with lethal force; aluminum, plastic and titanium are not ferromagnetic."
       }
     },
     {
@@ -2182,7 +2182,7 @@
       "body": {
         "prompt": "Metallic-containing tattoos or permanent makeup can occasionally cause:",
         "options": [
-          "Localised heating or skin irritation",
+          "Localized heating or skin irritation",
           "A drop in the static magnetic field",
           "A quench of the superconducting magnet",
           "Failure of the gradient coil system"
@@ -2232,7 +2232,7 @@
         "options": [
           "Forms a conductive loop (crossed skin contact or looped cable)",
           "Wears foam earplugs throughout the whole examination",
-          "Lies exactly at the isocentre of the magnet bore",
+          "Lies exactly at the isocenter of the magnet bore",
           "Holds completely still for the entire acquisition"
         ],
         "answer": 0,
@@ -2294,13 +2294,13 @@
       "body": {
         "prompt": "Young children who cannot hold still for MRI often require:",
         "options": [
-          "Sedation or general anaesthesia with full monitoring",
+          "Sedation or general anesthesia with full monitoring",
           "A move to a scanner with higher field strength",
           "No special preparation beyond standard screening",
           "Gadolinium contrast for every single examination"
         ],
         "answer": 0,
-        "explain": "Motion ruins MRI, so young or uncooperative children are frequently sedated or anaesthetised, with MR-safe monitoring throughout."
+        "explain": "Motion ruins MRI, so young or uncooperative children are frequently sedated or anesthetized, with MR-safe monitoring throughout."
       }
     },
     {
@@ -2316,7 +2316,7 @@
           "Only scanning at 3 tesla is permitted during pregnancy"
         ],
         "answer": 0,
-        "explain": "MRI uses no ionising radiation and is used in pregnancy when needed; gadolinium crosses the placenta and is reserved for essential cases."
+        "explain": "MRI uses no ionizing radiation and is used in pregnancy when needed; gadolinium crosses the placenta and is reserved for essential cases."
       }
     },
     {
@@ -2396,7 +2396,7 @@
           "The same low signal as cortical bone"
         ],
         "answer": 0,
-        "explain": "Oedema, inflammation and many tumours add water, which is bright on T2, making T2 and FLAIR the workhorses for detecting disease."
+        "explain": "Edema, inflammation and many tumors add water, which is bright on T2, making T2 and FLAIR the workhorses for detecting disease."
       }
     },
     {
@@ -2471,12 +2471,12 @@
         "prompt": "The best way to improve lesion conspicuity is often to:",
         "options": [
           "Raise contrast to noise, not just SNR",
-          "Maximise raw signal to noise alone",
+          "Maximize raw signal to noise alone",
           "Increase the field of view broadly",
           "Lower the acquisition matrix size"
         ],
         "answer": 0,
-        "explain": "A lesion is seen because its signal differs from the background; maximising CNR (through sequence and contrast choice) matters more than raw SNR."
+        "explain": "A lesion is seen because its signal differs from the background; maximizing CNR (through sequence and contrast choice) matters more than raw SNR."
       }
     },
     {
@@ -2502,13 +2502,13 @@
       "body": {
         "prompt": "Setting a gradient-echo flip angle at the Ernst angle:",
         "options": [
-          "Maximises signal for the given TR and T1",
+          "Maximizes signal for the given TR and T1",
           "Nulls the fat signal completely",
-          "Removes motion artefact from images",
+          "Removes motion artifact from images",
           "Doubles the in-plane resolution"
         ],
         "answer": 0,
-        "explain": "The Ernst angle is the flip that yields peak steady-state signal for a chosen TR and T1, optimising SNR in fast gradient-echo imaging."
+        "explain": "The Ernst angle is the flip that yields peak steady-state signal for a chosen TR and T1, optimizing SNR in fast gradient-echo imaging."
       }
     },
     {
@@ -2604,7 +2604,7 @@
           "Dense cortical bone in the region"
         ],
         "answer": 0,
-        "explain": "Unsaturated inflowing spins are fully magnetised, so the entry slices of a stack show bright vessels, the basis of time-of-flight MRA."
+        "explain": "Unsaturated inflowing spins are fully magnetized, so the entry slices of a stack show bright vessels, the basis of time-of-flight MRA."
       }
     },
     {
@@ -2612,7 +2612,7 @@
       "kind": "quiz",
       "ord": 530,
       "body": {
-        "prompt": "Cross-excitation (slice cross-talk) is minimised by:",
+        "prompt": "Cross-excitation (slice cross-talk) is minimized by:",
         "options": [
           "Interslice gaps or interleaved acquisition",
           "Delivering a higher SAR to the patient",
@@ -2660,15 +2660,15 @@
       "kind": "quiz",
       "ord": 533,
       "body": {
-        "prompt": "Central restricted diffusion within a ring-enhancing lesion favours:",
+        "prompt": "Central restricted diffusion within a ring-enhancing lesion favors:",
         "options": [
-          "A pyogenic abscess over necrotic tumour",
+          "A pyogenic abscess over necrotic tumor",
           "A simple non-enhancing fluid cyst",
           "A benign fat-containing lipoma",
           "Normal unaffected brain tissue"
         ],
         "answer": 0,
-        "explain": "Viscous pus restricts diffusion (bright DWI, dark ADC) in the cavity, whereas necrotic tumour usually does not, aiding the distinction."
+        "explain": "Viscous pus restricts diffusion (bright DWI, dark ADC) in the cavity, whereas necrotic tumor usually does not, aiding the distinction."
       }
     },
     {
@@ -2678,13 +2678,13 @@
       "body": {
         "prompt": "Multiple tiny foci of blooming on SWI after head trauma suggest:",
         "options": [
-          "Diffuse axonal injury, microhaemorrhages",
-          "An acute ischaemic territory infarct",
+          "Diffuse axonal injury, microhemorrhages",
+          "An acute ischemic territory infarct",
           "Fatty change within the brain tissue",
           "Normal age-related change only"
         ],
         "answer": 0,
-        "explain": "Shearing injury tears small vessels, leaving microhaemorrhages that bloom on susceptibility imaging at grey-white junctions and the corpus callosum."
+        "explain": "Shearing injury tears small vessels, leaving microhemorrhages that bloom on susceptibility imaging at grey-white junctions and the corpus callosum."
       }
     },
     {
@@ -2700,7 +2700,7 @@
           "Bright only on time-of-flight images"
         ],
         "answer": 0,
-        "explain": "Normal adult marrow is fatty and bright on T1; tumour or infiltration replaces that fat and stands out as low T1 signal."
+        "explain": "Normal adult marrow is fatty and bright on T1; tumor or infiltration replaces that fat and stands out as low T1 signal."
       }
     },
     {
@@ -2711,12 +2711,12 @@
         "prompt": "A T1-bright lesion whose signal drops on fat-suppressed images contains:",
         "options": [
           "Fat, as in a lipoma or dermoid",
-          "Subacute methaemoglobin blood",
+          "Subacute methemoglobin blood",
           "A focus of dense calcification",
           "Slowly flowing venous blood"
         ],
         "answer": 0,
-        "explain": "Loss of the bright T1 signal with fat suppression proves the source is fat, separating a lipoma or dermoid from haemorrhage or melanin."
+        "explain": "Loss of the bright T1 signal with fat suppression proves the source is fat, separating a lipoma or dermoid from hemorrhage or melanin."
       }
     },
     {
@@ -2764,7 +2764,7 @@
           "The transmitted radiofrequency power"
         ],
         "answer": 0,
-        "explain": "Bandwidth sets how fast the echo is digitised; higher bandwidth samples faster (shorter TE, less chemical shift) but admits more noise."
+        "explain": "Bandwidth sets how fast the echo is digitized; higher bandwidth samples faster (shorter TE, less chemical shift) but admits more noise."
       }
     },
     {
@@ -3020,7 +3020,7 @@
           "Contrast weighting in exchange for faster scanning"
         ],
         "answer": 0,
-        "explain": "Sampling the k-space centre frequently yields many time frames, revealing arterial-to-venous transit at the cost of some spatial detail."
+        "explain": "Sampling the k-space center frequently yields many time frames, revealing arterial-to-venous transit at the cost of some spatial detail."
       }
     },
     {
@@ -3079,7 +3079,7 @@
         "prompt": "MR enterography distends and images the small bowel using:",
         "options": [
           "Oral contrast to distend the bowel with post-gadolinium imaging",
-          "A single low-resolution localiser through the abdomen",
+          "A single low-resolution localizer through the abdomen",
           "Time-of-flight angiography of the mesenteric vessels",
           "STIR fat-suppressed imaging of the entire skull base"
         ],
@@ -3116,7 +3116,7 @@
           "STIR fat-suppressed imaging of the skull"
         ],
         "answer": 0,
-        "explain": "Zonal uterine and cervical anatomy is best shown on high-resolution T2, with diffusion and contrast added for characterisation."
+        "explain": "Zonal uterine and cervical anatomy is best shown on high-resolution T2, with diffusion and contrast added for characterization."
       }
     },
     {
@@ -3132,7 +3132,7 @@
           "Cardiac cine imaging of the heart chambers"
         ],
         "answer": 0,
-        "explain": "T2 and STIR reveal cord signal change, ligamentous injury and marrow oedema after trauma, complementing CT of the bones."
+        "explain": "T2 and STIR reveal cord signal change, ligamentous injury and marrow edema after trauma, complementing CT of the bones."
       }
     },
     {
@@ -3140,15 +3140,15 @@
       "kind": "quiz",
       "ord": 619,
       "body": {
-        "prompt": "Perfusion imaging is commonly added to a brain-tumour protocol to:",
+        "prompt": "Perfusion imaging is commonly added to a brain-tumor protocol to:",
         "options": [
-          "Estimate tumour vascularity and help grade it",
-          "Suppress fat signal surrounding the tumour",
+          "Estimate tumor vascularity and help grade it",
+          "Suppress fat signal surrounding the tumor",
           "Shorten the overall length of the scan",
           "Screen the patient for retained metal implants"
         ],
         "answer": 0,
-        "explain": "Dynamic susceptibility-contrast perfusion measures relative cerebral blood volume, which rises in high-grade tumours and guides biopsy."
+        "explain": "Dynamic susceptibility-contrast perfusion measures relative cerebral blood volume, which rises in high-grade tumors and guides biopsy."
       }
     },
     {
@@ -3244,7 +3244,7 @@
           "About 60 mL/min/1.73m2 always"
         ],
         "answer": 0,
-        "explain": "Severe impairment, often defined as an eGFR under 30, raises NSF risk and prompts avoiding or minimising gadolinium and preferring stable agents."
+        "explain": "Severe impairment, often defined as an eGFR under 30, raises NSF risk and prompts avoiding or minimizing gadolinium and preferring stable agents."
       }
     },
     {
@@ -3308,7 +3308,7 @@
           "A calcified nodule"
         ],
         "answer": 0,
-        "explain": "Infarcts respect vascular territories and become bright on T2/FLAIR as vasogenic oedema develops over hours to days."
+        "explain": "Infarcts respect vascular territories and become bright on T2/FLAIR as vasogenic edema develops over hours to days."
       }
     },
     {
@@ -3318,13 +3318,13 @@
       "body": {
         "prompt": "A homogeneously enhancing mass with markedly restricted diffusion (very low ADC) suggests a:",
         "options": [
-          "Hypercellular tumour such as lymphoma",
+          "Hypercellular tumor such as lymphoma",
           "A benign simple fluid-filled cyst",
           "A fatty intracranial lipoma",
           "An old chronic gliotic infarct"
         ],
         "answer": 0,
-        "explain": "Dense cellularity packs nuclei and restricts water, so lymphoma and other hypercellular tumours show low ADC and avid enhancement."
+        "explain": "Dense cellularity packs nuclei and restricts water, so lymphoma and other hypercellular tumors show low ADC and avid enhancement."
       }
     },
     {
@@ -3334,13 +3334,13 @@
       "body": {
         "prompt": "An open (incomplete) enhancing ring facing the cortex is a clue to:",
         "options": [
-          "Tumefactive demyelination over tumour or abscess",
-          "An acute ischaemic territorial infarct",
+          "Tumefactive demyelination over tumor or abscess",
+          "An acute ischemic territorial infarct",
           "A benign fatty intracranial lipoma",
           "Dense dystrophic parenchymal calcification"
         ],
         "answer": 0,
-        "explain": "Demyelinating lesions often enhance in a horseshoe pattern with the open edge toward grey matter, helping distinguish them from tumour."
+        "explain": "Demyelinating lesions often enhance in a horseshoe pattern with the open edge toward grey matter, helping distinguish them from tumor."
       }
     },
     {
@@ -3372,7 +3372,7 @@
           "Cardiac perfusion imaging exclusively"
         ],
         "answer": 0,
-        "explain": "Open designs trade field strength (and SNR) for patient access, helping claustrophobic, bariatric or paediatric patients tolerate the exam."
+        "explain": "Open designs trade field strength (and SNR) for patient access, helping claustrophobic, bariatric or pediatric patients tolerate the exam."
       }
     },
     {
@@ -3436,7 +3436,7 @@
           "Inherently fat-suppressing on all sequences"
         ],
         "answer": 0,
-        "explain": "Rotating blades repeatedly sample the k-space centre, letting the reconstruction detect and correct bulk motion between blades."
+        "explain": "Rotating blades repeatedly sample the k-space center, letting the reconstruction detect and correct bulk motion between blades."
       }
     },
     {
@@ -3452,7 +3452,7 @@
           "Suppress the surrounding fat signal"
         ],
         "answer": 0,
-        "explain": "Sampling one side of the echo and synthesising the rest lets the sequence reach a shorter minimum TE, useful for bright-blood and short-T2 imaging."
+        "explain": "Sampling one side of the echo and synthesizing the rest lets the sequence reach a shorter minimum TE, useful for bright-blood and short-T2 imaging."
       }
     },
     {
@@ -3732,7 +3732,7 @@
       "ord": 701,
       "body": {
         "title": "Why is fluid bright on a T2 weighted image?",
-        "html": "<p>T2 weighting uses a <b>long TR</b> and a <b>long TE</b>. The long TE lets transverse magnetisation decay before the echo is read, so tissues with a long T2 like water and CSF keep their signal and stay bright, while short T2 tissues lose signal and go darker.</p><p>Because many diseases raise local water content, they become bright on T2 and are easy to spot, which is why T2 is often called the sensitive sequence for pathology.</p>",
+        "html": "<p>T2 weighting uses a <b>long TR</b> and a <b>long TE</b>. The long TE lets transverse magnetization decay before the echo is read, so tissues with a long T2 like water and CSF keep their signal and stay bright, while short T2 tissues lose signal and go darker.</p><p>Because many diseases raise local water content, they become bright on T2 and are easy to spot, which is why T2 is often called the sensitive sequence for pathology.</p>",
         "keypoints": [
           "Long TR and long TE produce T2 weighting.",
           "Water and CSF are bright on T2.",
@@ -3760,9 +3760,9 @@
       "ord": 703,
       "body": {
         "title": "What does an inversion recovery sequence do?",
-        "html": "<p>Inversion recovery begins with a <b>180 degree inverting pulse</b> that flips magnetisation to the negative direction. As tissues recover through zero, a chosen <b>inversion time (TI)</b> decides which tissue sits at its null point when the readout starts. A tissue at its null gives no signal and is suppressed.</p><p>Two common uses are <b>STIR</b>, with a short TI to null fat, and <b>FLAIR</b>, with a long TI to null CSF so periventricular lesions stand out.</p>",
+        "html": "<p>Inversion recovery begins with a <b>180 degree inverting pulse</b> that flips magnetization to the negative direction. As tissues recover through zero, a chosen <b>inversion time (TI)</b> decides which tissue sits at its null point when the readout starts. A tissue at its null gives no signal and is suppressed.</p><p>Two common uses are <b>STIR</b>, with a short TI to null fat, and <b>FLAIR</b>, with a long TI to null CSF so periventricular lesions stand out.</p>",
         "keypoints": [
-          "A 180 degree pulse inverts magnetisation, then TI selects what is nulled.",
+          "A 180 degree pulse inverts magnetization, then TI selects what is nulled.",
           "STIR uses a short TI to null fat.",
           "FLAIR uses a long TI to null CSF."
         ]
@@ -4124,7 +4124,7 @@
       "body": {
         "prompt": "This axial brain image was acquired with a susceptibility-weighted sequence (TR 28 ms, TE 20 ms, flip angle 15 degrees). Why does this technique reveal small amounts of blood products or calcium that a routine spin echo scan may miss?",
         "options": [
-          "It uses a very long TE with no refocusing pulse, so local field distortions from paramagnetic substances cause pronounced signal loss",
+          "It uses a relatively long TE with no refocusing pulse, so local field distortions from paramagnetic substances cause pronounced signal loss",
           "It uses a 180 degree refocusing pulse that amplifies susceptibility effects",
           "It relies on diffusion gradients to detect iron",
           "It suppresses fat signal, which unmasks hemorrhage"
@@ -4963,7 +4963,7 @@
       "kind": "quiz",
       "ord": 952,
       "body": {
-        "prompt": "The trigeminal-neuralgia and facial-nerve variant of the IAC study targets which nerve?",
+        "prompt": "The facial-nerve variant of the IAC study targets which nerve?",
         "options": [
           "The facial nerve CN VII in patients with facial pain or Bell's palsy",
           "The optic nerve CN II in patients with sudden painless vision loss",
@@ -5006,11 +5006,11 @@
       "ord": 954,
       "body": {
         "title": "Total spine and technique: bone versus neuro, drop metastases, and metal reduction",
-        "html": "<p>A <strong>total spine</strong> is assembled from two sagittal packages, an upper and a lower set, that <strong>overlap by about two disc spaces</strong> at 3 mm with no gap. The upper package uses a smaller field of view than the lower one. Always use the smallest field of view that still covers the anatomy, and adjust resolution whenever the FOV changes. Remember the counts: the spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae.</p><p>Metastatic disease splits into two patterns. <strong>Drop metastases</strong> seed down the CSF from a primary brain tumor, so the study images the whole thecal sac including the entire sacrum and typically omits the pre-contrast axials. <strong>Bony metastases</strong> arise from primary cancers such as lung, colon, or breast, usually need no contrast, and an in and out of phase sequence can help characterize marrow. Cor STIR is added when neurofibromatosis is suspected. For post-contrast technique, use a <strong>fat-saturated T1</strong> to improve differentiation of enhancing tissue, and do not simply append a pre-contrast inversion recovery T1 as the post series.</p><p>Near hardware, a <strong>metal reduction</strong> toolkit recovers the image. Use TSE (turbo spin echo) rather than gradient echo, increase the receive bandwidth, and raise the turbo or echo train factor. Decrease the slice thickness, switch fat-saturated T2 to <strong>STIR</strong> for more uniform fat suppression, and decrease the TE. Raise the resolution, change the phase encode direction, and increase the number of signal averages to recover lost signal.</p>",
+        "html": "<p>A <strong>total spine</strong> is assembled from two sagittal packages, an upper and a lower set, that <strong>overlap by about two disc spaces</strong> at 3 mm with no gap. The upper package uses a smaller field of view than the lower one. Always use the smallest field of view that still covers the anatomy, and adjust resolution whenever the FOV changes. Remember the counts: the spine has 7 cervical, 12 thoracic, and 5 lumbar vertebrae.</p><p>Metastatic disease splits into two patterns. <strong>Drop metastases</strong> seed down the CSF from a primary brain tumor, so the study images the whole thecal sac including the entire sacrum and typically omits the pre-contrast axials. <strong>Bony metastases</strong> arise from primary cancers such as lung, prostate, or breast, usually need no contrast, and an in and out of phase sequence can help characterize marrow. Cor STIR is added when neurofibromatosis is suspected. For post-contrast technique, use a <strong>fat-saturated T1</strong> to improve differentiation of enhancing tissue, and do not simply append a pre-contrast inversion recovery T1 as the post series.</p><p>Near hardware, a <strong>metal reduction</strong> toolkit recovers the image. Use TSE (turbo spin echo) rather than gradient echo, increase the receive bandwidth, and raise the turbo or echo train factor. Decrease the slice thickness, switch fat-saturated T2 to <strong>STIR</strong> for more uniform fat suppression, and decrease the TE. Raise the resolution, change the phase encode direction, and increase the number of signal averages to recover lost signal.</p>",
         "keypoints": [
           "Total spine sagittals use two packages overlapping by about two disc spaces at 3 mm with no gap.",
           "Drop mets seed from a brain tumor and require imaging the whole thecal sac including the entire sacrum.",
-          "Bony mets from lung, colon, or breast usually need no contrast; in and out of phase can help.",
+          "Bony mets from lung, prostate, or breast usually need no contrast; in and out of phase can help.",
           "Near metal, use TSE not gradient echo, raise bandwidth, and switch fat-sat T2 to STIR."
         ],
         "worked_example": "A patient with a known posterior fossa primary is sent for spine imaging to look for CSF seeding. Because drop metastases fall through the CSF and collect at the bottom of the thecal sac, the coverage is extended to include the entire sacrum, and the pre-contrast axials are omitted so the post-contrast series does the work. A patient with lung cancer and back pain, by contrast, is worked up for bony metastases, usually without contrast, and an in and out of phase sequence helps confirm marrow replacement.",
@@ -5220,7 +5220,7 @@
       "kind": "quiz",
       "ord": 968,
       "body": {
-        "prompt": "Bony metastases from lung, colon, or breast primaries usually require what?",
+        "prompt": "Bony metastases from lung, prostate, or breast primaries usually require what?",
         "options": [
           "No contrast, often with an in and out of phase sequence added",
           "A double dose of contrast with delayed post-contrast imaging",
@@ -5228,7 +5228,7 @@
           "Oral contrast timed to the start of the axial image acquisition"
         ],
         "answer": 0,
-        "explain": "Bony metastases from primaries such as lung, colon, or breast usually need no contrast, and an in and out of phase sequence helps show marrow replacement."
+        "explain": "Bony metastases from primaries such as lung, prostate, or breast usually need no contrast, and an in and out of phase sequence helps show marrow replacement."
       }
     },
     {
@@ -6041,7 +6041,7 @@
       "ord": 1016,
       "body": {
         "title": "Body MRI technique: contrast agents, breath-hold vs navigator, MRCP, and orientation",
-        "html": "<p>Weight-based extracellular gadolinium is the default agent for contrast-enhanced body MRI. Switch to a <strong>hepatobiliary contrast agent</strong> for focal nodular hyperplasia (FNH) and for the living-liver-donor protocol: functioning hepatocytes take the agent up and excrete it into bile, which produces delayed hepatobiliary-phase images. FNH contains functioning hepatocytes, so it retains the agent while most other lesions wash out to darkness.</p><p>Respiratory strategy is a protocol decision, not an afterthought. A cooperative patient can breath-hold a 3D T1 gradient echo. A poor breath-holder gets respiratory-triggered or navigator-gated sequences plus single-shot fast spin echo and free-breathing radial 3D T1 gradient echo acquisitions instead of long breath-holds. Quantitative sequences have their own rules: proton density fat fraction (PDFF) quantifies hepatic fat and supports iron and hemochromatosis workups, and it must run <em>before</em> contrast. MR elastography maps liver stiffness; elastography and donor patients fast about 4 hours to reduce bowel motion.</p><p>MRCP is heavily T2 weighted, so static bile and pancreatic-duct fluid stay bright while flowing blood and solid tissue go dark. Before the scan the patient swallows a dilute oral agent, water mixed with a small amount of gadolinium, which shortens the T2 of bowel fluid and darkens it so it does not overlie the ducts. This is not IV contrast. Secretin transiently dilates the pancreatic duct and stimulates exocrine output, improving duct visualization and allowing dynamic assessment for chronic pancreatitis, strictures, and obstructing duct stones.</p><p>Timing and orientation round out the technique. Routine post-contrast abdominal imaging uses an empiric scan delay of about 30 seconds, but enterography and hematuria or bladder work use a free-breathing dynamic contrast-enhanced (DCE) acquisition with a short inject delay. In the female pelvis, angle the small field-of-view high-resolution T2 package to the <strong>uterus</strong> for endometrial cancer and congenital uterine anomalies, and to the <strong>cervix</strong> for cervical cancer. An antispasmodic (anti-peristaltic) agent can be given to quiet bowel motion.</p>",
+        "html": "<p>Weight-based extracellular gadolinium is the default agent for contrast-enhanced body MRI. Switch to a <strong>hepatobiliary contrast agent</strong> for focal nodular hyperplasia (FNH) and for the living-liver-donor protocol: functioning hepatocytes take the agent up and excrete it into bile, which produces delayed hepatobiliary-phase images. FNH contains functioning hepatocytes, so it retains the agent while most other lesions wash out to darkness.</p><p>Respiratory strategy is a protocol decision, not an afterthought. A cooperative patient can breath-hold a 3D T1 gradient echo. A poor breath-holder gets respiratory-triggered or navigator-gated sequences plus single-shot fast spin echo and free-breathing radial 3D T1 gradient echo acquisitions instead of long breath-holds. Quantitative sequences have their own rules: proton density fat fraction (PDFF) quantifies hepatic fat and supports iron and hemochromatosis workups, and it must run <em>before</em> contrast. MR elastography maps liver stiffness; elastography and donor patients fast about 4 hours to reduce bowel motion.</p><p>MRCP is heavily T2 weighted, so static bile and pancreatic-duct fluid stay bright while flowing blood and solid tissue go dark. Before the scan the patient swallows a dilute oral agent, such as an iron-oxide or manganese-based solution, which shortens the T2 of bowel fluid and darkens it so it does not overlie the ducts. This is not IV contrast. Secretin transiently dilates the pancreatic duct and stimulates exocrine output, improving duct visualization and allowing dynamic assessment for chronic pancreatitis, strictures, and obstructing duct stones.</p><p>Timing and orientation round out the technique. Routine post-contrast abdominal imaging uses an empiric scan delay of about 30 seconds, but enterography and hematuria or bladder work use a free-breathing dynamic contrast-enhanced (DCE) acquisition with a short inject delay. In the female pelvis, angle the small field-of-view high-resolution T2 package to the <strong>uterus</strong> for endometrial cancer and congenital uterine anomalies, and to the <strong>cervix</strong> for cervical cancer. An antispasmodic (anti-peristaltic) agent can be given to quiet bowel motion.</p>",
         "keypoints": [
           "Weight-based extracellular gadolinium is the default; use a hepatobiliary agent for FNH and the living-donor protocol",
           "Poor breath-holder: respiratory-triggered or navigator-gated sequences plus single-shot and free-breathing radial acquisitions",
@@ -6324,7 +6324,7 @@
       "kind": "quiz",
       "ord": 1033,
       "body": {
-        "prompt": "Before MRCP the patient swallows water mixed with a small amount of gadolinium. The purpose of this oral agent is to:",
+        "prompt": "Before MRCP the patient swallows such as an iron-oxide or manganese-based solution. The purpose of this oral agent is to:",
         "options": [
           "Shorten the T2 of bowel fluid so it darkens and stops obscuring the ducts",
           "Brighten the stomach and duodenum so the ampulla is easier to identify",
@@ -7282,11 +7282,11 @@
       "ord": 1088,
       "body": {
         "title": "Relaxation: T1 spin-lattice and T2 spin-spin",
-        "html": "<p>After the RF pulse ends, the tipped magnetization returns to equilibrium by two separate processes that run at the same time. <strong>T1 relaxation</strong> is the recovery of longitudinal magnetization along B0. It is called <strong>spin-lattice</strong> relaxation because the protons hand their absorbed RF energy back to the surrounding molecular environment, the lattice, as heat. T1 is defined as the time for a tissue to recover <strong>63%</strong> of its longitudinal magnetization.</p><p>How fast that hand-off works depends on how the lattice molecules move. Energy transfers efficiently only when the molecular tumbling rate is close to the Larmor frequency. Free water is made of small molecules that tumble far too fast, so the transfer is poor and free water has a <strong>long T1</strong>. Fat's carbon-bond structure tumbles near the proton's Larmor frequency, transfers energy efficiently, and so has a <strong>short T1</strong>.</p><p><strong>T2 relaxation</strong> is the decay of transverse magnetization. It is called <strong>spin-spin</strong> relaxation because each proton sits in a slightly different local field created by its neighbours, so the spins precess at slightly different rates and drift out of phase. As phase coherence is lost, the net transverse magnetization shrinks. T2 is the time for the transverse magnetization to fall to <strong>37%</strong> of its starting value.</p><p>For any given tissue <strong>T1 is always longer than T2</strong>: typical soft-tissue T1 values run about 300 to 2000 ms while T2 values run about 30 to 150 ms, and free water such as CSF runs longer than both. Water, and most pathology because of its raised water content, has a long T1 and a long T2. Fat has a short T1 and a short T2.</p>",
+        "html": "<p>After the RF pulse ends, the tipped magnetization returns to equilibrium by two separate processes that run at the same time. <strong>T1 relaxation</strong> is the recovery of longitudinal magnetization along B0. It is called <strong>spin-lattice</strong> relaxation because the protons hand their absorbed RF energy back to the surrounding molecular environment, the lattice, as heat. T1 is defined as the time for a tissue to recover <strong>63%</strong> of its longitudinal magnetization.</p><p>How fast that hand-off works depends on how the lattice molecules move. Energy transfers efficiently only when the molecular tumbling rate is close to the Larmor frequency. Free water is made of small molecules that tumble far too fast, so the transfer is poor and free water has a <strong>long T1</strong>. Fat's carbon-bond structure tumbles near the proton's Larmor frequency, transfers energy efficiently, and so has a <strong>short T1</strong>.</p><p><strong>T2 relaxation</strong> is the decay of transverse magnetization. It is called <strong>spin-spin</strong> relaxation because each proton sits in a slightly different local field created by its neighbors, so the spins precess at slightly different rates and drift out of phase. As phase coherence is lost, the net transverse magnetization shrinks. T2 is the time for the transverse magnetization to fall to <strong>37%</strong> of its starting value.</p><p>For any given tissue <strong>T1 is always longer than T2</strong>: typical soft-tissue T1 values run about 300 to 2000 ms while T2 values run about 30 to 150 ms, and free water such as CSF runs longer than both. Water, and most pathology because of its raised water content, has a long T1 and a long T2. Fat has a short T1 and a short T2.</p>",
         "keypoints": [
           "T1 = longitudinal (spin-lattice) relaxation: energy is released as heat to the lattice; T1 is the time to recover 63% of longitudinal magnetization.",
           "T1 efficiency depends on molecular motion near the Larmor frequency: free water tumbles too fast (long T1), fat tumbles near it (short T1).",
-          "T2 = transverse (spin-spin) relaxation: neighbouring spins' local fields cause dephasing; T2 is the time to fall to 37% of the initial transverse magnetization.",
+          "T2 = transverse (spin-spin) relaxation: neighboring spins' local fields cause dephasing; T2 is the time to fall to 37% of the initial transverse magnetization.",
           "T1 is always longer than T2 in a given tissue (typical soft tissue T1 about 300-2000 ms, T2 about 30-150 ms; free water runs longer).",
           "Water and most pathology: long T1 and long T2. Fat: short T1 and short T2."
         ],
@@ -7309,7 +7309,7 @@
       "ord": 1089,
       "body": {
         "title": "Dephasing, T2 vs T2*, and the spin-echo refocusing pulse",
-        "html": "<p>Once the RF pulse switches off, the spins in the transverse plane start to fan out. Two things drive this dephasing. The first is the true tissue process: <strong>spin-spin interactions</strong>, where each proton feels slightly different local fields from its neighbours. That alone would make the signal decay with the tissue's <strong>T2</strong>. The second is the magnet itself: no main field is perfectly uniform, so spins in slightly stronger regions precess faster than spins in slightly weaker ones.</p><p>Add the two together and the free induction decay dies away faster than true T2. This combined, faster decay is <strong>T2*</strong>. T2* is always shorter than T2 because it includes everything T2 does <em>plus</em> the external field inhomogeneity. Left alone, the signal would be gone before a useful echo could be sampled.</p><p>The spin-echo sequence rescues it with a <strong>180 degree refocusing pulse</strong>. Picture runners on a track: after the 90 degree pulse they all start together, then the fast ones pull ahead. The 180 flips everyone over, so the fast spins now sit behind and the slow spins sit ahead. Precessing at their same rates, the fast ones catch up and all the spins come back into phase, forming an <strong>echo</strong> at the echo time TE. For the rephasing to land exactly at TE, the 180 must be applied at <strong>TE/2</strong>.</p><p>This trick only repairs the dephasing caused by the <em>static</em> field inhomogeneity, because that error is the same before and after the flip. The random spin-spin dephasing is not reversible, so the echo amplitude still decays with true T2. A gradient-echo sequence has no 180 pulse, so it cannot recover the inhomogeneity losses and its signal decays with T2*.</p>",
+        "html": "<p>Once the RF pulse switches off, the spins in the transverse plane start to fan out. Two things drive this dephasing. The first is the true tissue process: <strong>spin-spin interactions</strong>, where each proton feels slightly different local fields from its neighbors. That alone would make the signal decay with the tissue's <strong>T2</strong>. The second is the magnet itself: no main field is perfectly uniform, so spins in slightly stronger regions precess faster than spins in slightly weaker ones.</p><p>Add the two together and the free induction decay dies away faster than true T2. This combined, faster decay is <strong>T2*</strong>. T2* is always shorter than T2 because it includes everything T2 does <em>plus</em> the external field inhomogeneity. Left alone, the signal would be gone before a useful echo could be sampled.</p><p>The spin-echo sequence rescues it with a <strong>180 degree refocusing pulse</strong>. Picture runners on a track: after the 90 degree pulse they all start together, then the fast ones pull ahead. The 180 flips everyone over, so the fast spins now sit behind and the slow spins sit ahead. Precessing at their same rates, the fast ones catch up and all the spins come back into phase, forming an <strong>echo</strong> at the echo time TE. For the rephasing to land exactly at TE, the 180 must be applied at <strong>TE/2</strong>.</p><p>This trick only repairs the dephasing caused by the <em>static</em> field inhomogeneity, because that error is the same before and after the flip. The random spin-spin dephasing is not reversible, so the echo amplitude still decays with true T2. A gradient-echo sequence has no 180 pulse, so it cannot recover the inhomogeneity losses and its signal decays with T2*.</p>",
         "keypoints": [
           "Transverse dephasing has two sources: true spin-spin interactions (T2) and main field inhomogeneity.",
           "T2* combines both sources, so T2* decay is always faster (shorter) than T2 decay.",
@@ -7482,12 +7482,12 @@
         "prompt": "During T1 relaxation, the energy the protons absorbed from the RF pulse is:",
         "options": [
           "Released as heat to the surrounding lattice",
-          "Exchanged only between neighbouring protons",
+          "Exchanged only between neighboring protons",
           "Stored permanently in the transverse plane",
           "Returned to the main static field windings"
         ],
         "answer": 0,
-        "explain": "Spin-lattice relaxation means the energy leaves the spin system as heat given to the molecular environment. Energy swapped only between neighbouring spins describes T2, which changes phase, not longitudinal recovery."
+        "explain": "Spin-lattice relaxation means the energy leaves the spin system as heat given to the molecular environment. Energy swapped only between neighboring spins describes T2, which changes phase, not longitudinal recovery."
       }
     },
     {
@@ -7599,7 +7599,7 @@
           "Proton density variation plus transmit gain drift"
         ],
         "answer": 0,
-        "explain": "Dephasing comes from the local fields of neighbouring spins (true T2) plus the imperfect uniformity of the main field. Lattice energy transfer is the T1 mechanism and does not describe loss of phase coherence."
+        "explain": "Dephasing comes from the local fields of neighboring spins (true T2) plus the imperfect uniformity of the main field. Lattice energy transfer is the T1 mechanism and does not describe loss of phase coherence."
       }
     },
     {
@@ -7626,12 +7626,12 @@
         "prompt": "What does T2* decay include that pure T2 decay does not?",
         "options": [
           "Dephasing from static main field inhomogeneity",
-          "Dephasing from neighbouring spin interactions",
+          "Dephasing from neighboring spin interactions",
           "Energy loss from protons heating the lattice",
           "Signal loss from the receive coil's bandwidth"
         ],
         "answer": 0,
-        "explain": "T2* adds the dephasing caused by the magnet's own field non-uniformity on top of true spin-spin dephasing. Neighbouring spin interactions are already what T2 measures."
+        "explain": "T2* adds the dephasing caused by the magnet's own field non-uniformity on top of true spin-spin dephasing. Neighboring spin interactions are already what T2 measures."
       }
     },
     {
@@ -7932,7 +7932,7 @@
       "kind": "quiz",
       "ord": 1126,
       "body": {
-        "prompt": "During the readout period, the scanner's receiver digitises:",
+        "prompt": "During the readout period, the scanner's receiver digitizes:",
         "options": [
           "the echo, stored as one line of k-space",
           "the RF excitation pulse as it is applied",
@@ -7940,7 +7940,7 @@
           "the gradient waveform for that TR"
         ],
         "answer": 0,
-        "explain": "The receiver samples the echo while the readout gradient runs, and those samples become one k-space line. The scanner never digitises the image directly; the image exists only after the Fourier transform."
+        "explain": "The receiver samples the echo while the readout gradient runs, and those samples become one k-space line. The scanner never digitizes the image directly; the image exists only after the Fourier transform."
       }
     },
     {
@@ -8063,12 +8063,12 @@
         "prompt": "Why can a 3D acquisition produce contiguous slices with no interslice gap, unlike a typical 2D acquisition?",
         "options": [
           "The slab is partitioned by phase encoding rather than by separate selective excitations, so partitions do not need a gap to avoid cross-talk",
-          "The 3D readout gradient is strong enough to prevent any overlap between neighbouring slices",
+          "The 3D readout gradient is strong enough to prevent any overlap between neighboring slices",
           "3D sequences are always run with a much longer TR, which lets each adjacent slice fully recover its longitudinal magnetization before the next excitation",
           "The Fourier transform automatically inserts blank partitions between the reconstructed slices"
         ],
         "answer": 0,
-        "explain": "In 3D the slab is excited once and divided into partitions by a second phase-encoding gradient, so there is no imperfect slice profile overlapping a neighbour and no gap is needed. 2D uses separate selective excitations whose profiles overlap, which is why a gap or interleaving is used. Readout strength, TR, and the transform do not create the gap-free partitions."
+        "explain": "In 3D the slab is excited once and divided into partitions by a second phase-encoding gradient, so there is no imperfect slice profile overlapping a neighbor and no gap is needed. 2D uses separate selective excitations whose profiles overlap, which is why a gap or interleaving is used. Readout strength, TR, and the transform do not create the gap-free partitions."
       }
     },
     {
@@ -10341,11 +10341,11 @@
       "ord": 724,
       "body": {
         "title": "How is the knee imaged for internal derangement?",
-        "html": "<p>The knee is imaged in three planes. The <b>sagittal</b> plane shows the <b>cruciate ligaments</b> and the <b>menisci</b>, the <b>coronal</b> plane shows the collateral ligaments and the meniscal roots, and the <b>axial</b> plane shows the patellofemoral joint. The anterior cruciate ligament runs obliquely, so a slightly angled sagittal helps display it in one slice.</p><p>Fluid sensitive fat suppressed sequences highlight cartilage damage, bone marrow oedema, and joint effusion, while proton density images give the fine detail of the menisci.</p>",
+        "html": "<p>The knee is imaged in three planes. The <b>sagittal</b> plane shows the <b>cruciate ligaments</b> and the <b>menisci</b>, the <b>coronal</b> plane shows the collateral ligaments and the meniscal roots, and the <b>axial</b> plane shows the patellofemoral joint. The anterior cruciate ligament runs obliquely, so a slightly angled sagittal helps display it in one slice.</p><p>Fluid sensitive fat suppressed sequences highlight cartilage damage, bone marrow edema, and joint effusion, while proton density images give the fine detail of the menisci.</p>",
         "keypoints": [
           "Sagittal shows the cruciate ligaments and menisci.",
           "Coronal shows the collateral ligaments and meniscal roots.",
-          "Fat suppressed fluid sensitive images reveal marrow oedema and cartilage loss."
+          "Fat suppressed fluid sensitive images reveal marrow edema and cartilage loss."
         ]
       }
     },
@@ -10354,12 +10354,12 @@
       "kind": "reference",
       "ord": 725,
       "body": {
-        "title": "How is a focal liver lesion characterised?",
-        "html": "<p>Characterising a liver lesion depends on a <b>dynamic multiphase</b> post contrast study. A fat suppressed T1 weighted sequence is repeated through <b>arterial</b>, <b>portal venous</b>, and <b>delayed</b> phases after a gadolinium bolus, so the pattern of enhancement over time points to the diagnosis. A haemangioma fills in slowly from the edge, while many malignancies wash out.</p><p>The dynamic series is combined with T2 weighted and <b>diffusion weighted</b> images. Fluid rich lesions such as cysts and haemangiomas are very bright on heavily T2 weighted images, which helps separate them from solid tumours.</p>",
+        "title": "How is a focal liver lesion characterized?",
+        "html": "<p>Characterizing a liver lesion depends on a <b>dynamic multiphase</b> post contrast study. A fat suppressed T1 weighted sequence is repeated through <b>arterial</b>, <b>portal venous</b>, and <b>delayed</b> phases after a gadolinium bolus, so the pattern of enhancement over time points to the diagnosis. A hemangioma fills in slowly from the edge, while many malignancies wash out.</p><p>The dynamic series is combined with T2 weighted and <b>diffusion weighted</b> images. Fluid rich lesions such as cysts and hemangiomas are very bright on heavily T2 weighted images, which helps separate them from solid tumors.</p>",
         "keypoints": [
           "A dynamic multiphase T1 study captures arterial, portal venous, and delayed enhancement.",
-          "The timing of enhancement and washout characterises the lesion.",
-          "T2 and diffusion weighted images help separate cysts and haemangiomas from tumours."
+          "The timing of enhancement and washout characterizes the lesion.",
+          "T2 and diffusion weighted images help separate cysts and hemangiomas from tumors."
         ]
       }
     },
@@ -10369,11 +10369,11 @@
       "ord": 726,
       "body": {
         "title": "What is in a routine brain MRI protocol?",
-        "html": "<p>A routine brain study samples several contrasts. It typically includes <b>T1 weighted</b>, <b>T2 weighted</b>, <b>FLAIR</b>, and <b>diffusion weighted</b> images, along with a gradient echo or susceptibility weighted sequence to look for blood. FLAIR nulls cerebrospinal fluid so that periventricular lesions are not hidden by bright fluid.</p><p>Contrast is added when tumour, infection, or inflammation is suspected, giving post contrast T1 weighted images. The set of contrasts lets the reader tell oedema, blood, infarction, and enhancing tissue apart.</p>",
+        "html": "<p>A routine brain study samples several contrasts. It typically includes <b>T1 weighted</b>, <b>T2 weighted</b>, <b>FLAIR</b>, and <b>diffusion weighted</b> images, along with a gradient echo or susceptibility weighted sequence to look for blood. FLAIR nulls cerebrospinal fluid so that periventricular lesions are not hidden by bright fluid.</p><p>Contrast is added when tumor, infection, or inflammation is suspected, giving post contrast T1 weighted images. The set of contrasts lets the reader tell edema, blood, infarction, and enhancing tissue apart.</p>",
         "keypoints": [
           "A routine brain protocol covers T1, T2, FLAIR, and diffusion.",
           "FLAIR suppresses CSF so periventricular lesions show.",
-          "Post contrast T1 is added for tumour, infection, or inflammation."
+          "Post contrast T1 is added for tumor, infection, or inflammation."
         ]
       }
     },
@@ -10383,11 +10383,11 @@
       "ord": 727,
       "body": {
         "title": "Which sequence is essential for acute stroke?",
-        "html": "<p>For suspected hyperacute stroke the indispensable sequence is <b>diffusion weighted imaging</b>. Within minutes of an arterial occlusion the affected tissue develops <b>restricted diffusion</b>, appearing bright on the diffusion image and dark on the <b>ADC map</b>, well before any change is visible on T2 or FLAIR.</p><p>A stroke protocol pairs diffusion with FLAIR and a gradient echo or susceptibility sequence to exclude haemorrhage, and often a time of flight MRA to look for the occluded vessel. Speed matters, so the protocol is kept short.</p>",
+        "html": "<p>For suspected hyperacute stroke the indispensable sequence is <b>diffusion weighted imaging</b>. Within minutes of an arterial occlusion the affected tissue develops <b>restricted diffusion</b>, appearing bright on the diffusion image and dark on the <b>ADC map</b>, well before any change is visible on T2 or FLAIR.</p><p>A stroke protocol pairs diffusion with FLAIR and a gradient echo or susceptibility sequence to exclude hemorrhage, and often a time of flight MRA to look for the occluded vessel. Speed matters, so the protocol is kept short.</p>",
         "keypoints": [
           "Diffusion weighted imaging is the essential sequence in acute stroke.",
           "Infarct is bright on diffusion and dark on ADC within minutes.",
-          "A blood sensitive sequence is added to exclude haemorrhage."
+          "A blood sensitive sequence is added to exclude hemorrhage."
         ]
       }
     },
@@ -10396,8 +10396,8 @@
       "kind": "reference",
       "ord": 728,
       "body": {
-        "title": "What does a multiple sclerosis protocol emphasise?",
-        "html": "<p>A multiple sclerosis protocol emphasises <b>FLAIR</b>, especially in the <b>sagittal</b> plane, because it shows the ovoid periventricular plaques that lie along the deep veins. Thin sagittal FLAIR displays these lesions well, and the brainstem and spinal cord are also covered.</p><p><b>Post contrast T1</b> images separate active from old disease, because a plaque with active inflammation and a broken blood brain barrier enhances. Counting enhancing and non enhancing lesions helps stage the disease over time.</p>",
+        "title": "What does a multiple sclerosis protocol emphasize?",
+        "html": "<p>A multiple sclerosis protocol emphasizes <b>FLAIR</b>, especially in the <b>sagittal</b> plane, because it shows the ovoid periventricular plaques that lie along the deep veins. Thin sagittal FLAIR displays these lesions well, and the brainstem and spinal cord are also covered.</p><p><b>Post contrast T1</b> images separate active from old disease, because a plaque with active inflammation and a broken blood brain barrier enhances. Counting enhancing and non enhancing lesions helps stage the disease over time.</p>",
         "keypoints": [
           "FLAIR, particularly sagittal, best shows periventricular plaques.",
           "Enhancing lesions on post contrast T1 indicate active inflammation.",
@@ -10411,7 +10411,7 @@
       "ord": 729,
       "body": {
         "title": "How do you reduce artifact when imaging around metal?",
-        "html": "<p>Metal hardware distorts the field and causes signal loss and bright pile up. To reduce this a technologist uses a <b>high receive bandwidth</b>, a <b>short TE</b>, thin slices, and a smaller voxel, and favours <b>spin echo</b> over gradient echo because the 180 degree pulse recovers some of the lost signal.</p><p>For fat suppression near metal, <b>STIR</b> is preferred over chemical saturation, which fails where the field is distorted. Dedicated metal reduction sequences such as view angle tilting further limit the distortion.</p>",
+        "html": "<p>Metal hardware distorts the field and causes signal loss and bright pile up. To reduce this a technologist uses a <b>high receive bandwidth</b>, a <b>short TE</b>, thin slices, and a smaller voxel, and favors <b>spin echo</b> over gradient echo because the 180 degree pulse recovers some of the lost signal.</p><p>For fat suppression near metal, <b>STIR</b> is preferred over chemical saturation, which fails where the field is distorted. Dedicated metal reduction sequences such as view angle tilting further limit the distortion.</p>",
         "keypoints": [
           "Use a high bandwidth, short TE, and thin slices to limit distortion.",
           "Spin echo suffers less signal loss than gradient echo near metal.",
@@ -10467,7 +10467,7 @@
       "ord": 733,
       "body": {
         "title": "What matters most in contrast enhanced MRA?",
-        "html": "<p><b>Contrast enhanced MRA</b> brightens the vessels by shortening the blood T1 with a <b>gadolinium bolus</b>, then imaging with a fast T1 weighted gradient echo. The single most important factor is <b>timing</b>: the centre of k space, which sets contrast, must be filled while the contrast is at peak concentration in the target arteries.</p><p>Timing is set with a small <b>test bolus</b> or with <b>bolus tracking</b> that triggers the scan when contrast reaches the vessel. Image too early and the arteries are faint, too late and the veins fill in and obscure them.</p>",
+        "html": "<p><b>Contrast enhanced MRA</b> brightens the vessels by shortening the blood T1 with a <b>gadolinium bolus</b>, then imaging with a fast T1 weighted gradient echo. The single most important factor is <b>timing</b>: the center of k space, which sets contrast, must be filled while the contrast is at peak concentration in the target arteries.</p><p>Timing is set with a small <b>test bolus</b> or with <b>bolus tracking</b> that triggers the scan when contrast reaches the vessel. Image too early and the arteries are faint, too late and the veins fill in and obscure them.</p>",
         "keypoints": [
           "Contrast enhanced MRA shortens blood T1 with a gadolinium bolus.",
           "Timing the central k space to peak arterial contrast is critical.",
@@ -10494,12 +10494,12 @@
       "kind": "reference",
       "ord": 735,
       "body": {
-        "title": "Why is the anatomy centred at the magnet isocentre?",
-        "html": "<p>The <b>isocentre</b> is the middle of the magnet where the static field is most uniform and the gradients are most linear. Positioning the <b>region of interest</b> at isocentre gives the best field homogeneity, which matters most for <b>fat suppression</b> and for any technique that depends on a uniform field.</p><p>The technologist places the coil over the anatomy, sets the <b>landmark</b> at the centre of the region, and advances the table so that landmark sits at isocentre. Poor centring degrades fat saturation and can cut off the edges of the imaged volume.</p>",
+        "title": "Why is the anatomy centered at the magnet isocenter?",
+        "html": "<p>The <b>isocenter</b> is the middle of the magnet where the static field is most uniform and the gradients are most linear. Positioning the <b>region of interest</b> at isocenter gives the best field homogeneity, which matters most for <b>fat suppression</b> and for any technique that depends on a uniform field.</p><p>The technologist places the coil over the anatomy, sets the <b>landmark</b> at the center of the region, and advances the table so that landmark sits at isocenter. Poor centering degrades fat saturation and can cut off the edges of the imaged volume.</p>",
         "keypoints": [
-          "The isocentre has the most uniform field and most linear gradients.",
+          "The isocenter has the most uniform field and most linear gradients.",
           "Centring the region of interest there improves fat suppression.",
-          "The landmark is set at the middle of the anatomy and moved to isocentre."
+          "The landmark is set at the middle of the anatomy and moved to isocenter."
         ]
       }
     },
@@ -10509,11 +10509,11 @@
       "ord": 736,
       "body": {
         "title": "How do you choose and place the receiver coil?",
-        "html": "<p>Signal to noise is best when the <b>receiver coil</b> is close to the anatomy and no larger than it needs to be. A small surface or dedicated coil placed right over the region collects strong signal, while an oversized coil adds noise from tissue it does not need to see.</p><p>Modern <b>phased array</b> coils combine several small elements to cover a larger area while keeping the high signal of small coils, and they enable <b>parallel imaging</b> for speed. The coil is centred over the landmark and secured so it does not move during the scan.</p>",
+        "html": "<p>Signal to noise is best when the <b>receiver coil</b> is close to the anatomy and no larger than it needs to be. A small surface or dedicated coil placed right over the region collects strong signal, while an oversized coil adds noise from tissue it does not need to see.</p><p>Modern <b>phased array</b> coils combine several small elements to cover a larger area while keeping the high signal of small coils, and they enable <b>parallel imaging</b> for speed. The coil is centered over the landmark and secured so it does not move during the scan.</p>",
         "keypoints": [
           "A coil close to and sized for the anatomy gives the best signal to noise.",
           "Phased array coils keep small coil signal over a larger area.",
-          "The coil is centred on the landmark and enables parallel imaging."
+          "The coil is centered on the landmark and enables parallel imaging."
         ]
       }
     },
@@ -10537,10 +10537,10 @@
       "ord": 738,
       "body": {
         "title": "What does contrast enhancement tell you?",
-        "html": "<p>Gadolinium enhancement means the <b>blood brain barrier</b> has broken down or that tissue is very vascular, because contrast that normally stays inside vessels leaks into the tissue and shortens its T1. Enhancing tissue is bright on <b>post contrast T1</b> weighted images.</p><p>The <b>pattern</b> of enhancement is a clue: a smooth thin ring suggests an abscess, a thick irregular ring suggests a high grade tumour, and enhancement along the brain surface suggests infection or tumour spread. Comparing with the pre contrast T1 confirms that the brightness is truly new enhancement and not fat or blood.</p>",
+        "html": "<p>Gadolinium enhancement means the <b>blood brain barrier</b> has broken down or that tissue is very vascular, because contrast that normally stays inside vessels leaks into the tissue and shortens its T1. Enhancing tissue is bright on <b>post contrast T1</b> weighted images.</p><p>The <b>pattern</b> of enhancement is a clue: a smooth thin ring suggests an abscess, a thick irregular ring suggests a high grade tumor, and enhancement along the brain surface suggests infection or tumor spread. Comparing with the pre contrast T1 confirms that the brightness is truly new enhancement and not fat or blood.</p>",
         "keypoints": [
           "Enhancement reflects blood brain barrier breakdown or high vascularity.",
-          "The ring pattern helps separate abscess from tumour.",
+          "The ring pattern helps separate abscess from tumor.",
           "Compare with pre contrast T1 to confirm true enhancement."
         ]
       }
@@ -10565,7 +10565,7 @@
       "ord": 740,
       "body": {
         "title": "How is a sedated or anxious patient monitored?",
-        "html": "<p>A claustrophobic or paediatric patient may need sedation, and a sedated patient must be <b>monitored</b> throughout with MRI safe equipment. Pulse oximetry, blood pressure, and where needed capnography use <b>non ferromagnetic</b> monitors rated for the magnet, because ordinary equipment is a projectile hazard and its readings are corrupted by the field.</p><p>Simpler measures help many anxious patients avoid sedation: a clear explanation, a prone or feet first position, mirrors, and a squeeze ball for communication. A responsible escort and a recovery period are arranged whenever sedation is used.</p>",
+        "html": "<p>A claustrophobic or pediatric patient may need sedation, and a sedated patient must be <b>monitored</b> throughout with MRI safe equipment. Pulse oximetry, blood pressure, and where needed capnography use <b>non ferromagnetic</b> monitors rated for the magnet, because ordinary equipment is a projectile hazard and its readings are corrupted by the field.</p><p>Simpler measures help many anxious patients avoid sedation: a clear explanation, a prone or feet first position, mirrors, and a squeeze ball for communication. A responsible escort and a recovery period are arranged whenever sedation is used.</p>",
         "keypoints": [
           "Sedated patients need continuous monitoring with MRI safe equipment.",
           "Monitors must be non ferromagnetic and rated for the magnet.",
@@ -10579,7 +10579,7 @@
       "ord": 741,
       "body": {
         "title": "What are transmit and receive coils?",
-        "html": "<p>The <b>radiofrequency system</b> has two jobs. A <b>transmit</b> coil, usually the large body coil built into the bore, sends the radiofrequency pulse that tips the magnetisation. A <b>receive</b> coil, placed close to the anatomy, picks up the faint returning signal.</p><p>Because signal to noise is best when the receiver is near the tissue, dedicated <b>surface</b> and <b>phased array</b> receive coils are used for each body part. Phased array coils combine many small elements to keep high signal over a large area and to allow parallel imaging for faster scans.</p>",
+        "html": "<p>The <b>radiofrequency system</b> has two jobs. A <b>transmit</b> coil, usually the large body coil built into the bore, sends the radiofrequency pulse that tips the magnetization. A <b>receive</b> coil, placed close to the anatomy, picks up the faint returning signal.</p><p>Because signal to noise is best when the receiver is near the tissue, dedicated <b>surface</b> and <b>phased array</b> receive coils are used for each body part. Phased array coils combine many small elements to keep high signal over a large area and to allow parallel imaging for faster scans.</p>",
         "keypoints": [
           "A transmit coil sends the radiofrequency pulse, a receive coil detects the signal.",
           "Receive coils sit close to the anatomy for the best signal to noise.",
@@ -10607,7 +10607,7 @@
       "ord": 1281,
       "body": {
         "title": "What is peripheral nerve stimulation and what causes it?",
-        "html": "<p>Rapidly switching <b>gradient</b> fields induce electric currents in the body. When the rate of change of the gradient (<b>dB/dt</b>) is high enough, those currents can depolarise peripheral nerves and cause tingling or muscle twitching, usually where the body is widest inside the bore.</p><p>Scanners limit dB/dt to stay below the stimulation threshold, which is why very fast sequences such as echo planar imaging may slow their gradients or lengthen the echo spacing. The effect is uncomfortable but not dangerous at approved limits, and it resolves the moment the gradients stop.</p>",
+        "html": "<p>Rapidly switching <b>gradient</b> fields induce electric currents in the body. When the rate of change of the gradient (<b>dB/dt</b>) is high enough, those currents can depolarize peripheral nerves and cause tingling or muscle twitching, usually where the body is widest inside the bore.</p><p>Scanners limit dB/dt to stay below the stimulation threshold, which is why very fast sequences such as echo planar imaging may slow their gradients or lengthen the echo spacing. The effect is uncomfortable but not dangerous at approved limits, and it resolves the moment the gradients stop.</p>",
         "keypoints": [
           "Fast gradient switching (high dB/dt) induces currents that can stimulate peripheral nerves.",
           "It feels like tingling or twitching and appears first where the body is widest in the bore.",
@@ -10649,7 +10649,7 @@
       "ord": 1284,
       "body": {
         "title": "What is proton density weighting?",
-        "html": "<p>A <b>proton density</b> image is made with a <b>long TR</b> and a <b>short TE</b>. The long TR lets nearly all tissues recover their longitudinal magnetisation, which removes most of the T1 difference, and the short TE reads the signal before much T2 decay, which removes most of the T2 difference.</p><p>What is left mostly reflects how many mobile hydrogen protons each tissue holds, so tissues with more protons look brighter. Proton density images give high signal and are useful in the brain and especially in joints, where they show cartilage and menisci well.</p>",
+        "html": "<p>A <b>proton density</b> image is made with a <b>long TR</b> and a <b>short TE</b>. The long TR lets nearly all tissues recover their longitudinal magnetization, which removes most of the T1 difference, and the short TE reads the signal before much T2 decay, which removes most of the T2 difference.</p><p>What is left mostly reflects how many mobile hydrogen protons each tissue holds, so tissues with more protons look brighter. Proton density images give high signal and are useful in the brain and especially in joints, where they show cartilage and menisci well.</p>",
         "keypoints": [
           "Proton density weighting uses a long TR and a short TE to suppress both T1 and T2 contrast.",
           "Brightness then tracks the number of mobile protons in each tissue.",
@@ -10663,10 +10663,10 @@
       "ord": 1285,
       "body": {
         "title": "How does gadolinium change tissue signal?",
-        "html": "<p><b>Gadolinium</b> contrast is paramagnetic and mainly <b>shortens T1</b> in the tissue where it collects. On a T1 weighted image that shortened T1 recovers more signal between pulses, so enhancing tissue turns bright.</p><p>Gadolinium marks areas where it can leak from vessels or pool, such as tumours, active inflammation, and regions where the blood brain barrier has broken down. At high local concentration it also shortens T2 and can paradoxically darken tissue, which is why enhancement is read on T1 weighted sequences.</p>",
+        "html": "<p><b>Gadolinium</b> contrast is paramagnetic and mainly <b>shortens T1</b> in the tissue where it collects. On a T1 weighted image that shortened T1 recovers more signal between pulses, so enhancing tissue turns bright.</p><p>Gadolinium marks areas where it can leak from vessels or pool, such as tumors, active inflammation, and regions where the blood brain barrier has broken down. At high local concentration it also shortens T2 and can paradoxically darken tissue, which is why enhancement is read on T1 weighted sequences.</p>",
         "keypoints": [
           "Gadolinium is paramagnetic and chiefly shortens T1, brightening enhancing tissue on T1 images.",
-          "It highlights tumours, inflammation, and blood brain barrier breakdown.",
+          "It highlights tumors, inflammation, and blood brain barrier breakdown.",
           "Enhancement is assessed on T1 weighting because high concentrations can darken T2."
         ]
       }
@@ -10719,7 +10719,7 @@
       "ord": 1289,
       "body": {
         "title": "What is the tradeoff between SNR, resolution, and scan time?",
-        "html": "<p>Signal to noise, spatial resolution, and scan time form a triangle in which improving one usually worsens another. Bigger voxels and more averaging raise <b>signal to noise</b> but cost resolution or time, while smaller voxels raise <b>resolution</b> but lower signal, and covering more phase encoding steps raises resolution at the cost of <b>scan time</b>.</p><p>No single setting is best; the technologist picks the balance that answers the clinical question. A screening study may favour speed and signal over fine detail, while a small internal ear study accepts a longer scan for very high resolution.</p>",
+        "html": "<p>Signal to noise, spatial resolution, and scan time form a triangle in which improving one usually worsens another. Bigger voxels and more averaging raise <b>signal to noise</b> but cost resolution or time, while smaller voxels raise <b>resolution</b> but lower signal, and covering more phase encoding steps raises resolution at the cost of <b>scan time</b>.</p><p>No single setting is best; the technologist picks the balance that answers the clinical question. A screening study may favor speed and signal over fine detail, while a small internal ear study accepts a longer scan for very high resolution.</p>",
         "keypoints": [
           "SNR, resolution, and scan time trade against each other; gaining one usually costs another.",
           "Larger voxels and more averages help SNR but hurt resolution or time.",
@@ -10747,10 +10747,10 @@
       "ord": 1291,
       "body": {
         "title": "What is an echo train and how does it affect the image?",
-        "html": "<p>An <b>echo train</b> is the group of echoes collected after a single excitation in a fast spin echo or echo planar sequence. Each echo is read at a slightly different time, so the signals in the train have slightly different T2 weighting.</p><p>The echo that fills the <b>centre of k-space</b> sets the effective echo time and therefore the image contrast, while the later, weaker echoes at the edges contribute detail but also introduce blurring. A longer train is faster but blurs more, so the length is chosen to balance speed against sharpness.</p>",
+        "html": "<p>An <b>echo train</b> is the group of echoes collected after a single excitation in a fast spin echo or echo planar sequence. Each echo is read at a slightly different time, so the signals in the train have slightly different T2 weighting.</p><p>The echo that fills the <b>center of k-space</b> sets the effective echo time and therefore the image contrast, while the later, weaker echoes at the edges contribute detail but also introduce blurring. A longer train is faster but blurs more, so the length is chosen to balance speed against sharpness.</p>",
         "keypoints": [
           "An echo train is the set of echoes read after one excitation.",
-          "The echo filling the centre of k-space sets the effective TE and the contrast.",
+          "The echo filling the center of k-space sets the effective TE and the contrast.",
           "Longer trains are faster but blur more because later echoes have decayed."
         ]
       }
@@ -10789,7 +10789,7 @@
       "ord": 1294,
       "body": {
         "title": "What is partial Fourier imaging?",
-        "html": "<p>K-space is nearly symmetric, so in principle one half predicts the other. <b>Partial Fourier</b> imaging acquires only somewhat more than half of the phase encoding lines and mathematically synthesises the missing lines from that symmetry.</p><p>Collecting fewer lines shortens the scan or the echo time, which is useful for motion sensitive or fluid-bright imaging. The cost is lower <b>signal to noise</b>, because real data has been replaced by estimated data, and greater sensitivity to any imperfection that breaks the assumed symmetry.</p>",
+        "html": "<p>K-space is nearly symmetric, so in principle one half predicts the other. <b>Partial Fourier</b> imaging acquires only somewhat more than half of the phase encoding lines and mathematically synthesizes the missing lines from that symmetry.</p><p>Collecting fewer lines shortens the scan or the echo time, which is useful for motion sensitive or fluid-bright imaging. The cost is lower <b>signal to noise</b>, because real data has been replaced by estimated data, and greater sensitivity to any imperfection that breaks the assumed symmetry.</p>",
         "keypoints": [
           "Partial Fourier acquires just over half of k-space and reconstructs the rest from its symmetry.",
           "It shortens scan time or echo time.",
@@ -10887,7 +10887,7 @@
       "ord": 1301,
       "body": {
         "title": "What causes susceptibility artifact and where is it worst?",
-        "html": "<p><b>Magnetic susceptibility</b> artifact arises where tissues of very different magnetisability meet, such as air next to bone or metal next to soft tissue. The abrupt change distorts the local field, which dephases spins and shifts their apparent position, producing signal loss and geometric warping.</p><p>It is worst on <b>gradient echo</b> and echo planar sequences because they do not refocus fixed field non-uniformity, and it grows with field strength and echo time. A spin echo, a shorter echo time, and a smaller voxel all reduce it, while the same sensitivity is deliberately used to detect blood and metal.</p>",
+        "html": "<p><b>Magnetic susceptibility</b> artifact arises where tissues of very different magnetizability meet, such as air next to bone or metal next to soft tissue. The abrupt change distorts the local field, which dephases spins and shifts their apparent position, producing signal loss and geometric warping.</p><p>It is worst on <b>gradient echo</b> and echo planar sequences because they do not refocus fixed field non-uniformity, and it grows with field strength and echo time. A spin echo, a shorter echo time, and a smaller voxel all reduce it, while the same sensitivity is deliberately used to detect blood and metal.</p>",
         "keypoints": [
           "Susceptibility artifact comes from field distortion at air, bone, and metal interfaces.",
           "It causes signal loss and geometric distortion, worst on gradient echo and EPI.",
@@ -10915,10 +10915,10 @@
       "ord": 1303,
       "body": {
         "title": "How does spectral fat saturation work and when does it fail?",
-        "html": "<p><b>Spectral</b> or chemical fat saturation sends a radiofrequency pulse tuned to the fat frequency just before the imaging pulse, tipping and then spoiling the fat signal so fat is dark while water is untouched. It gives clean, selective suppression when the field is uniform.</p><p>It fails where the field is inhomogeneous, such as near metal, at the edges of a large field of view, or off isocentre, because there the fat frequency drifts out from under the saturation pulse. In those situations an inversion method like <b>STIR</b>, which suppresses by T1 rather than frequency, is more reliable.</p>",
+        "html": "<p><b>Spectral</b> or chemical fat saturation sends a radiofrequency pulse tuned to the fat frequency just before the imaging pulse, tipping and then spoiling the fat signal so fat is dark while water is untouched. It gives clean, selective suppression when the field is uniform.</p><p>It fails where the field is inhomogeneous, such as near metal, at the edges of a large field of view, or off isocenter, because there the fat frequency drifts out from under the saturation pulse. In those situations an inversion method like <b>STIR</b>, which suppresses by T1 rather than frequency, is more reliable.</p>",
         "keypoints": [
           "Spectral fat saturation applies an RF pulse at the fat frequency to null fat selectively.",
-          "It needs a uniform field and fails near metal, off centre, or at large field of view edges.",
+          "It needs a uniform field and fails near metal, off center, or at large field of view edges.",
           "STIR, which suppresses by T1, is the robust fallback in inhomogeneous fields."
         ]
       }
@@ -10984,12 +10984,12 @@
       "kind": "reference",
       "ord": 1308,
       "body": {
-        "title": "Why is the region of interest centred at isocentre?",
-        "html": "<p>The <b>isocentre</b> is the point where the main field is most uniform and the gradients are most linear. Placing the anatomy of interest there gives the best fat suppression, the least geometric distortion, and the highest signal.</p><p>Away from isocentre the field drifts and the gradients bend, so spectral fat saturation can fail and structures can appear warped. The technologist therefore lands the coil and table so the target anatomy, not the patient's overall centre, sits at isocentre.</p>",
+        "title": "Why is the region of interest centered at isocenter?",
+        "html": "<p>The <b>isocenter</b> is the point where the main field is most uniform and the gradients are most linear. Placing the anatomy of interest there gives the best fat suppression, the least geometric distortion, and the highest signal.</p><p>Away from isocenter the field drifts and the gradients bend, so spectral fat saturation can fail and structures can appear warped. The technologist therefore lands the coil and table so the target anatomy, not the patient's overall center, sits at isocenter.</p>",
         "keypoints": [
-          "Isocentre has the most uniform field and the most linear gradients.",
-          "Centring anatomy there optimises fat suppression, geometry, and signal.",
-          "Off centre positioning causes distortion and failed spectral fat saturation."
+          "Isocenter has the most uniform field and the most linear gradients.",
+          "Centring anatomy there optimizes fat suppression, geometry, and signal.",
+          "Off center positioning causes distortion and failed spectral fat saturation."
         ]
       }
     },
@@ -11002,7 +11002,7 @@
         "html": "<p>A receive coil picks up the most signal from tissue close to its elements, and its sensitivity falls off quickly with distance. Placing the coil snugly against the region of interest therefore raises <b>signal to noise</b> and lets the technologist use higher resolution.</p><p>A coil that is too large or sits far from the anatomy wastes signal and may fold in distant tissue. The rule is to choose the smallest coil that still covers the target and to bring it as close as comfort and safety allow, keeping any conductive part off bare skin to avoid a heating loop.</p>",
         "keypoints": [
           "Coil sensitivity is highest near its elements and falls off rapidly with distance.",
-          "A snug, appropriately small coil maximises SNR and enables higher resolution.",
+          "A snug, appropriately small coil maximizes SNR and enables higher resolution.",
           "Conductive coil parts must not touch bare skin, to avoid an RF heating loop."
         ]
       }
@@ -11013,10 +11013,10 @@
       "ord": 1310,
       "body": {
         "title": "What positioning steps reduce motion and improve comfort?",
-        "html": "<p>Motion is the most common cause of a repeated sequence, and much of it is prevented at positioning. Supporting the part in a neutral, relaxed posture, padding pressure points, and immobilising with straps or cushions all reduce both voluntary and involuntary movement over a long scan.</p><p>Comfort measures double as safety and quality steps: hearing protection guards against the loud gradients, clear instructions and a squeeze ball reduce anxiety, and padding between the patient and the bore or coil prevents both pressure sores and conductive loops. A comfortable, well supported patient holds still, which protects image quality.</p>",
+        "html": "<p>Motion is the most common cause of a repeated sequence, and much of it is prevented at positioning. Supporting the part in a neutral, relaxed posture, padding pressure points, and immobilizing with straps or cushions all reduce both voluntary and involuntary movement over a long scan.</p><p>Comfort measures double as safety and quality steps: hearing protection guards against the loud gradients, clear instructions and a squeeze ball reduce anxiety, and padding between the patient and the bore or coil prevents both pressure sores and conductive loops. A comfortable, well supported patient holds still, which protects image quality.</p>",
         "keypoints": [
           "Most repeats are from motion, much of which is prevented at positioning.",
-          "Neutral posture, padding, and immobilisation reduce movement over a long scan.",
+          "Neutral posture, padding, and immobilization reduce movement over a long scan.",
           "Hearing protection and padding between skin and hardware are safety and quality steps."
         ]
       }
@@ -11034,7 +11034,7 @@
           "Positioning is the main defense against motion, the commonest cause of repeats.",
           "Padding and cable routing keep conductors off skin to prevent RF heating loops."
         ],
-        "worked_example": "A lumbar spine study is set up by landing the coil on the L3 region so the mid lumbar spine sits at isocenter, not by centring on the patient's waist. A spine array is chosen over the body coil for its higher local signal, foam pads are placed under the knees to flatten the lordosis and ease the back, and cushions immobilize the pelvis. Ear plugs go in, the cable is routed clear of the skin, and the patient is given a squeeze ball, which together cut both motion repeats and heating risk.",
+        "worked_example": "A lumbar spine study is set up by landing the coil on the L3 region so the mid lumbar spine sits at isocenter, not by centering on the patient's waist. A spine array is chosen over the body coil for its higher local signal, foam pads are placed under the knees to flatten the lordosis and ease the back, and cushions immobilize the pelvis. Ear plugs go in, the cable is routed clear of the skin, and the patient is given a squeeze ball, which together cut both motion repeats and heating risk.",
         "memory_hooks": [
           "Center the anatomy, not the patient, at isocenter.",
           "Smallest covering coil, placed close, wins on signal to noise.",
