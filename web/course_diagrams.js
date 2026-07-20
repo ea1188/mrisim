@@ -835,7 +835,7 @@
     return { control: control, label: label, diff: diff };
   }
   function buildAslSubtraction() {
-    var fig = figure("ASL label minus control", "ASL subtracts a control image from a labeled image; static tissue cancels and only blood delivered to tissue (perfusion) remains, so no contrast agent is needed.");
+    var fig = figure("ASL control minus label", "ASL subtracts the labeled image from the control image; static tissue cancels and only blood delivered to tissue (perfusion) remains, so no contrast agent is needed.");
     var N = 64, imgs = aslImages(N);
     function panel(arr, caption) {
       var c = document.createElement("canvas"); c.width = N; c.height = N; c.className = "diag-canvas";
