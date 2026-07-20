@@ -215,6 +215,12 @@
     "Artifacts, applications, and pitfalls": ["magic-angle"],
     "MRCP technique": ["mrcp-te"],
     "Hepatobiliary contrast agents": ["hepatobiliary-phase"],
+    "Making an MR signal: protons, B0, Larmor, and resonance": ["larmor-field"],
+    "MRI contrast agents: gadolinium, safety and special agents": ["gad-t1"],
+    "RF heating and coil safety: SAR, B1+rms, and burns": ["sar-flip"],
+    "Perfusion by DCE: permeability and Ktrans": ["dce-ktrans"],
+    "Contrast-enhanced MRA: bolus timing and technique": ["cemra-bolus"],
+    "Pulse sequences: SE, FSE, GRE, EPI and how they are built": ["pulse-timing"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,

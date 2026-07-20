@@ -1682,10 +1682,253 @@
     return fig;
   }
 
+  // ---- Widget: Larmor frequency versus field strength ---- //
+  function buildLarmorField() {
+    var fig = figure("Larmor frequency", "The Larmor frequency is the resonant frequency of a proton in a magnetic field: f = 42.58 MHz per tesla times B0. Every field strength has its own tuned RF frequency.");
+    var GYRO = 42.58; // MHz per tesla, hydrogen
+    function larmorFreq(b0) { return GYRO * b0; }
+    var xMax = 7, yMax = 300;
+    var plot = makePlot({ xMax: xMax, yMax: yMax, xLabel: "B0 (T)", yLabel: "frequency (MHz)",
+      xTicks: [0, 1.5, 3, 7], yTicks: [0, 100, 200, 300], title: "Larmor frequency versus field strength" });
+    plot.addAxes();
+    plot.addCurve(M.sample(larmorFreq, xMax, 60), "");
+    var state = { b0: 1.5 };
+    var marker = null, dot = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (marker) marker.remove(); if (dot) dot.remove();
+      var f = larmorFreq(state.b0);
+      marker = plot.addMarker(state.b0, "", state.b0 + "T");
+      dot = plot.addDot(state.b0, f, "");
+      readout.textContent = "At " + state.b0 + " T, protons resonate at " + f.toFixed(1)
+        + " MHz. Larmor frequency scales linearly with field strength at 42.58 MHz per tesla.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["1.5T", 1.5], ["3T", 3], ["7T", 7]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.b0 ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.b0 = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: gadolinium T1 shortening ---- //
+  function buildGadT1() {
+    var fig = figure("Gadolinium T1 shortening", "Gadolinium chelates shorten the T1 of nearby tissue. On a T1-weighted image, tissue whose Mz recovers faster appears brighter, which is why enhancing tissue lights up after contrast.");
+    var xMax = 2000, nativeT1 = 1000, gadT1 = 300, tr = 500;
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (ms)", yLabel: "Mz",
+      xTicks: [0, 500, 1000, 1500, 2000], title: "T1 recovery before and after gadolinium" });
+    plot.addAxes();
+    plot.addCurve(M.sample(function (t) { return M.mz(t, nativeT1); }, xMax, 60), "");
+    plot.addCurve(M.sample(function (t) { return M.mz(t, gadT1); }, xMax, 60), "alt");
+    plot.addMarker(tr, "", "TR");
+    fig.appendChild(plot.svg);
+    var native = Math.round(M.mz(tr, nativeT1) * 100);
+    var post = Math.round(M.mz(tr, gadT1) * 100);
+    var readout = el("div", { class: "diag-readout",
+      text: "At TR " + tr + " ms, native tissue (T1 " + nativeT1 + " ms, accent curve) has recovered " + native
+        + "% of Mz, while post-gadolinium tissue (T1 " + gadT1 + " ms, orange curve) has recovered " + post
+        + "%. Gadolinium shortens T1 so enhanced tissue recovers faster and is brighter on T1-weighted images." });
+    fig.appendChild(readout);
+    return fig;
+  }
+
+  // ---- Widget: SAR versus flip angle and field strength ---- //
+  function buildSarFlip() {
+    var fig = figure("SAR and flip angle", "Specific absorption rate rises with the square of flip angle and the square of field strength, so small changes in either add up fast.");
+    var xMax = 180, yMax = 4, flip = 90;
+    var FIELDS = { "1.5T": 1, "3T": 4 };
+    function sar(deg, factor) { return Math.pow(deg / 180, 2) * factor; }
+    var plot = makePlot({ xMax: xMax, yMax: yMax, xLabel: "flip angle (deg)", yLabel: "relative SAR",
+      xTicks: [0, 45, 90, 135, 180], yTicks: [0, 1, 2, 3, 4], title: "Relative SAR versus flip angle" });
+    plot.addAxes();
+    var state = { field: "1.5T" };
+    var curve = null, marker = null, dot = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curve) curve.remove(); if (marker) marker.remove(); if (dot) dot.remove();
+      var factor = FIELDS[state.field];
+      curve = plot.addCurve(M.sample(function (deg) { return sar(deg, factor); }, xMax, 60), state.field === "3T" ? "alt" : "");
+      marker = plot.addMarker(flip, "", flip + "°");
+      dot = plot.addDot(flip, sar(flip, factor), "");
+      readout.textContent = "At " + flip + " degrees flip angle on " + state.field + ", relative SAR is "
+        + sar(flip, factor).toFixed(2) + ". SAR rises with the square of flip angle and the square of field strength, so 3T deposits about four times the RF power of 1.5T at the same flip.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["1.5T", "1.5T"], ["3T", "3T"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.field ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.field = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: DCE Ktrans, tissue permeability curves ---- //
+  function buildDceKtrans() {
+    var fig = figure("DCE and Ktrans", "Ktrans is the volume transfer constant describing how fast gadolinium leaks out of blood vessels into tissue. A leaky, high-permeability tumor has a high Ktrans and fills quickly; normal tissue fills slowly.");
+    var xMax = 300, lowK = 0.006, highK = 0.03, tMark = 60;
+    function conc(t, k) { return 1 - Math.exp(-k * t); }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (s)", yLabel: "contrast concentration",
+      xTicks: [0, 60, 120, 180, 240, 300], title: "Tissue contrast concentration versus time" });
+    plot.addAxes();
+    plot.addCurve(M.sample(function (t) { return conc(t, lowK); }, xMax, 80), "");
+    plot.addCurve(M.sample(function (t) { return conc(t, highK); }, xMax, 80), "alt");
+    plot.addMarker(tMark, "", tMark + "s");
+    fig.appendChild(plot.svg);
+    var lowPct = Math.round(conc(tMark, lowK) * 100), highPct = Math.round(conc(tMark, highK) * 100);
+    var readout = el("div", { class: "diag-readout",
+      text: "By " + tMark + " s, the low-Ktrans tissue (normal, accent curve) has filled to " + lowPct
+        + "%, while the high-Ktrans tissue (leaky tumor, orange curve) has filled to " + highPct
+        + "%. Ktrans is the volume transfer constant: a leaky tumor has a high Ktrans and fills faster, while normal tissue fills slowly." });
+    fig.appendChild(readout);
+    return fig;
+  }
+
+  // ---- Widget: CE-MRA bolus timing and the center of k-space ---- //
+  function buildCemraBolus() {
+    var fig = figure("CE-MRA bolus timing", "Contrast-enhanced MRA depends on the center of k-space being acquired while gadolinium concentration peaks in the artery. Toggle the acquisition window against the bolus curve to see what timing does to the scan.");
+    var xMax = 40, peak = 18, sig = 4, winW = 6;
+    function bolus(t) { return M.gauss(t, peak, sig); }
+    var plot = makePlot({ xMax: xMax, yMax: 1, xLabel: "t (s)", yLabel: "arterial Gd concentration",
+      xTicks: [0, 10, 20, 30, 40], title: "Arterial gadolinium bolus and the k-space acquisition window" });
+    plot.addAxes();
+    plot.addCurve(M.sample(bolus, xMax, 100), "");
+    var WINDOWS = { well: peak - winW / 2, early: peak - 12 - winW / 2, late: peak + 12 - winW / 2 };
+    var state = { mode: "well" };
+    var band = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (band) band.remove();
+      var x0 = WINDOWS[state.mode];
+      band = svgEl("rect", { x: plot.toX(x0).toFixed(1), y: plot.toY(1).toFixed(1),
+        width: (plot.toX(x0 + winW) - plot.toX(x0)).toFixed(1), height: (plot.toY(0) - plot.toY(1)).toFixed(1),
+        fill: "#5db0ef", "fill-opacity": "0.25", stroke: "#5db0ef" });
+      plot.svg.appendChild(band);
+      readout.textContent = state.mode === "well"
+        ? "Well timed: the acquisition window covers the bolus peak, so the center of k-space is filled with maximum arterial signal and the artery is sharply bright."
+        : state.mode === "early"
+          ? "Too early: the window falls before the peak, so the center of k-space is acquired with low arterial concentration, giving weak arterial signal and ringing artifact."
+          : "Too late: the window falls after the arterial peak, by which time contrast has recirculated into veins, giving venous contamination alongside the artery.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Well timed", "well"], ["Too early", "early"], ["Too late", "late"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: pulse-sequence timing, spin echo versus gradient echo ---- //
+  function buildPulseTiming() {
+    var fig = figure("Pulse sequence timing", "A schematic timing diagram: RF, slice-select, phase-encode, and frequency-encode (readout) gradients, and the signal they produce, on a shared time axis. Spin echo uses a 180 degree refocusing pulse; gradient echo uses gradient reversal instead.");
+    var W = 320, H = 200;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "Pulse sequence timing diagram, spin echo versus gradient echo" });
+    var X0 = 42, X1 = 312, TEND = 100;
+    var RF = 26, GSL = 60, GPH = 94, GFR = 128, SIG = 172;
+    function xOf(t) { return X0 + (X1 - X0) * (t / TEND); }
+    [["RF", RF], ["Gslice", GSL], ["Gphase", GPH], ["Gfreq", GFR], ["Signal", SIG]].forEach(function (r) {
+      svg.appendChild(svgEl("line", { class: "diag-axis", x1: X0 - 6, y1: r[1], x2: X1, y2: r[1] }));
+      var t = svgEl("text", { class: "diag-axtext", x: 4, y: r[1] + 3, "text-anchor": "start" });
+      t.textContent = r[0]; svg.appendChild(t);
+    });
+    var g = svgEl("g", {});
+    svg.appendChild(g);
+    function tri(cx, halfW, h, base) {
+      return (cx - halfW).toFixed(1) + "," + base + " " + cx.toFixed(1) + "," + (base - h).toFixed(1)
+        + " " + (cx + halfW).toFixed(1) + "," + base;
+    }
+    function label(x, y, txt) {
+      var t = svgEl("text", { class: "diag-axtext", x: x.toFixed(1), y: y.toFixed(1), "text-anchor": "middle" });
+      t.textContent = txt; return t;
+    }
+    function lobe(cx, halfW, h, base, cls) {
+      return svgEl("rect", { x: (cx - halfW).toFixed(1), y: (base - h).toFixed(1),
+        width: (2 * halfW).toFixed(1), height: h.toFixed(1), class: "diag-curve " + (cls || "") });
+    }
+    var state = { mode: "se" };
+    var readout = el("div", { class: "diag-readout" });
+    function draw() {
+      while (g.firstChild) g.removeChild(g.firstChild);
+      if (state.mode === "se") {
+        var t90 = 6, t180 = 40, te = 80;
+        g.appendChild(svgEl("polyline", { class: "diag-curve", fill: "none", points: tri(xOf(t90), 4, 14, RF) }));
+        g.appendChild(label(xOf(t90), RF - 18, "90°"));
+        g.appendChild(svgEl("polyline", { class: "diag-curve alt", fill: "none", points: tri(xOf(t180), 6, 20, RF) }));
+        g.appendChild(label(xOf(t180), RF - 24, "180°"));
+        g.appendChild(lobe(xOf(t90), 4, 10, GSL, ""));
+        g.appendChild(lobe(xOf(t180), 5, 10, GSL, ""));
+        g.appendChild(lobe(xOf(54), 5, 8, GPH, ""));
+        g.appendChild(lobe(xOf(te), 11, 12, GFR, ""));
+        g.appendChild(svgEl("polyline", { class: "diag-curve", fill: "none", points: tri(xOf(te), 9, 16, SIG) }));
+        g.appendChild(label(xOf(te), SIG + 14, "TE"));
+        readout.textContent = "Spin echo: a 90 degree pulse tips magnetization into the transverse plane, then a 180 degree pulse at TE/2 refocuses static field inhomogeneity, producing a true echo at TE under a single readout lobe. The 180 refocuses static dephasing, so spin echo signal reflects true T2.";
+      } else {
+        var tf = 6, teg = 34;
+        g.appendChild(svgEl("polyline", { class: "diag-curve", fill: "none", points: tri(xOf(tf), 3, 7, RF) }));
+        g.appendChild(label(xOf(tf), RF - 12, "α"));
+        g.appendChild(lobe(xOf(tf), 3, 10, GSL, ""));
+        g.appendChild(lobe(xOf(16), 5, 8, GPH, ""));
+        g.appendChild(svgEl("rect", { x: xOf(10).toFixed(1), y: GFR.toFixed(1),
+          width: (xOf(22) - xOf(10)).toFixed(1), height: "10", class: "diag-curve alt" }));
+        g.appendChild(lobe(xOf(31), 9, 12, GFR, ""));
+        g.appendChild(svgEl("polyline", { class: "diag-curve", fill: "none", points: tri(xOf(teg), 8, 16, SIG) }));
+        g.appendChild(label(xOf(teg), SIG + 14, "TE"));
+        readout.textContent = "Gradient echo: a single sub-90 degree flip excites the tissue, with no 180 degree refocusing pulse. The readout gradient reverses polarity, negative then positive (orange then accent), and that reversal itself forms the echo. Because static field inhomogeneity is never refocused, gradient echo signal reflects the faster T2*, not true T2.";
+      }
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Spin echo", "se"], ["Gradient echo", "gre"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        draw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    draw();
+    return fig;
+  }
+
   var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign, "relaxometry": buildRelaxometry, "r2star-iron": buildR2starIron,
     "dce-kinetics": buildDceKinetics, "bpe-cycle": buildBpeCycle, "prostate-zones": buildProstateZones,
     "prostate-dwi": buildProstateDwi, "metal-bandwidth": buildMetalBandwidth, "magic-angle": buildMagicAngle,
-    "mrcp-te": buildMrcpTe, "hepatobiliary-phase": buildHepatobiliaryPhase };
+    "mrcp-te": buildMrcpTe, "hepatobiliary-phase": buildHepatobiliaryPhase,
+    "larmor-field": buildLarmorField, "gad-t1": buildGadT1, "sar-flip": buildSarFlip,
+    "dce-ktrans": buildDceKtrans, "cemra-bolus": buildCemraBolus, "pulse-timing": buildPulseTiming };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
