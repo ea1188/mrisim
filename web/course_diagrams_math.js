@@ -225,6 +225,7 @@
     "Resting-state fMRI and functional connectivity": ["rs-connectivity"],
     "Cine imaging and ventricular function": ["cardiac-ef"],
     "3D acquisition: isotropic voxels and the sequences that make them": ["iso-voxel"],
+    "The image-formation pipeline: excite, encode, sample, reconstruct": ["signal-chain"],
   };
 
   return { mz: mz, mxy: mxy, t2star: t2star, spinEchoSignal: spinEchoSignal,
