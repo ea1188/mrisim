@@ -1923,12 +1923,257 @@
     return fig;
   }
 
+  // ---- Widget: MR safety, the ACR four-zone system ---- //
+  function buildSafetyZones() {
+    var fig = figure("MR safety zones", "The ACR four-zone system separates the public from the magnet: each zone inward tightens who may enter and what they may bring.");
+    var W = 300, H = 200, cx = W / 2, cy = H / 2;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "ACR four-zone MRI safety diagram" });
+    var ZONES = [
+      { id: "I", w: 280, h: 180,
+        text: "Zone I is the freely accessible public area outside the facility, such as the waiting room and parking area. Anyone may enter without screening." },
+      { id: "II", w: 210, h: 130,
+        text: "Zone II is the reception and screening interface between the public area and the controlled zones. Unscreened patients and visitors may be present here, but only under staff supervision while screening is completed." },
+      { id: "III", w: 140, h: 90,
+        text: "Zone III is the access-restricted controlled area next to the magnet room. Only MRI-screened staff and screened, prepped patients may enter, and ferromagnetic objects are kept out." },
+      { id: "IV", w: 80, h: 60,
+        text: "Zone IV is the magnet room itself, the highest hazard zone because the static field is always on. Only screened staff and the screened patient being imaged may enter, along with pre-screened MRI-safe or MRI-conditional equipment." },
+    ];
+    var rects = {};
+    ZONES.forEach(function (z) {
+      var r = svgEl("rect", { x: (cx - z.w / 2).toFixed(1), y: (cy - z.h / 2).toFixed(1),
+        width: z.w, height: z.h, rx: 8, fill: "none", stroke: "#8a8f98", "stroke-width": "1.5" });
+      svg.appendChild(r);
+      rects[z.id] = r;
+      var lbl = svgEl("text", { class: "diag-axtext", x: (cx - z.w / 2 + 4).toFixed(1),
+        y: (cy - z.h / 2 + 10).toFixed(1), "text-anchor": "start" });
+      lbl.textContent = "Zone " + z.id;
+      svg.appendChild(lbl);
+    });
+    // 5 gauss line: dashed, midway between the Zone III and Zone IV boundaries.
+    var gw = (140 + 80) / 2, gh = (90 + 60) / 2;
+    svg.appendChild(svgEl("rect", { x: (cx - gw / 2).toFixed(1), y: (cy - gh / 2).toFixed(1),
+      width: gw, height: gh, rx: 6, fill: "none", stroke: "#e0554e", "stroke-width": "1", "stroke-dasharray": "4 3" }));
+    var gaussLbl = svgEl("text", { class: "diag-axtext", x: (cx + gw / 2 - 2).toFixed(1),
+      y: (cy + gh / 2 - 4).toFixed(1), "text-anchor": "end" });
+    gaussLbl.textContent = "5 gauss line";
+    svg.appendChild(gaussLbl);
+    // magnet symbol at the center of Zone IV
+    var magnet = svgEl("g", {});
+    magnet.appendChild(svgEl("rect", { x: (cx - 16).toFixed(1), y: (cy - 8).toFixed(1),
+      width: 32, height: 16, rx: 6, fill: "#5db0ef", "fill-opacity": "0.3", stroke: "#5db0ef" }));
+    magnet.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 7, fill: "none", stroke: "#5db0ef" }));
+    var b0 = svgEl("text", { class: "diag-axtext", x: cx, y: cy - 14, "text-anchor": "middle" });
+    b0.textContent = "B0 magnet";
+    magnet.appendChild(b0);
+    svg.appendChild(magnet);
+    var state = { zone: "IV" };
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      ZONES.forEach(function (z) {
+        var on = z.id === state.zone;
+        rects[z.id].setAttribute("stroke", on ? "#5db0ef" : "#8a8f98");
+        rects[z.id].setAttribute("stroke-width", on ? "2.5" : "1.5");
+        rects[z.id].setAttribute("fill", on ? "#5db0ef" : "none");
+        rects[z.id].setAttribute("fill-opacity", on ? "0.12" : "0");
+      });
+      readout.textContent = ZONES.filter(function (z) { return z.id === state.zone; })[0].text;
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    ["I", "II", "III", "IV"].forEach(function (id) {
+      var b = el("button", { type: "button", class: "diag-btn" + (id === state.zone ? " on" : ""), text: "Zone " + id });
+      b.addEventListener("click", function () {
+        state.zone = id;
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: resting-state functional connectivity ---- //
+  function buildRsConnectivity() {
+    var fig = figure("Resting-state functional connectivity", "Spontaneous low-frequency BOLD fluctuations that rise and fall together across distant brain regions define functional connectivity, the basis of networks such as the default mode network.");
+    var xMax = 60;
+    var state = { mode: "connected" };
+    var plot = makePlot({ xMax: xMax, yMin: -1, yMax: 1, xLabel: "time (s)", yLabel: "BOLD",
+      xTicks: [0, 15, 30, 45, 60], yTicks: [-1, -0.5, 0, 0.5, 1], title: "Resting-state BOLD time series for two regions" });
+    plot.addAxes();
+    function regionA(t) {
+      return 0.5 * Math.sin(2 * Math.PI * 0.03 * t) + 0.3 * Math.sin(2 * Math.PI * 0.06 * t + 0.4)
+        + 0.2 * Math.sin(2 * Math.PI * 0.08 * t + 1.1);
+    }
+    function regionBConnected(t) { return 0.9 * regionA(t - 1.5); }
+    function regionBUnconnected(t) {
+      return 0.45 * Math.sin(2 * Math.PI * 0.045 * t + 2.1) + 0.35 * Math.sin(2 * Math.PI * 0.075 * t + 0.2)
+        + 0.2 * Math.sin(2 * Math.PI * 0.035 * t + 3.0);
+    }
+    var curveA = null, curveB = null;
+    var readout = el("div", { class: "diag-readout" });
+    function redraw() {
+      if (curveA) curveA.remove();
+      if (curveB) curveB.remove();
+      curveA = plot.addCurve(M.sample(regionA, xMax, 120), "");
+      var bFn = state.mode === "connected" ? regionBConnected : regionBUnconnected;
+      curveB = plot.addCurve(M.sample(bFn, xMax, 120), "alt");
+      readout.textContent = state.mode === "connected"
+        ? "Connected: region A (accent) and region B (orange) rise and fall together. Correlated spontaneous low-frequency fluctuations between distant regions define functional connectivity, such as the default mode network."
+        : "Not connected: region A (accent) and region B (orange) drift independently, out of phase with each other. Uncorrelated or anticorrelated time courses between regions are not considered functionally connected.";
+    }
+    fig.appendChild(plot.svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Connected", "connected"], ["Not connected", "not"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        redraw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    redraw();
+    return fig;
+  }
+
+  // ---- Widget: cine ejection fraction by the Simpson stack-of-discs method ---- //
+  function buildCardiacEf() {
+    var fig = figure("Ejection fraction by Simpson's method", "Summing the left-ventricular short-axis discs from base to apex, the Simpson method, gives end-diastolic and end-systolic volume; their difference over EDV is the ejection fraction.");
+    var W = 260, H = 180, cx = W / 2;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "Short-axis disc stack for ejection fraction" });
+    var DISC_Y = [18, 44, 70, 96, 122, 148];
+    var ED_RX = [58, 52, 44, 34, 24, 12];
+    var ES_RX = [37, 34, 28, 22, 16, 8];
+    var RY = 9;
+    var VOL_K = 120 / ED_RX.reduce(function (s, r) { return s + r * r; }, 0);
+    function discVolume(rxArr) { return rxArr.reduce(function (s, r) { return s + r * r; }, 0) * VOL_K; }
+    var g = svgEl("g", {});
+    svg.appendChild(g);
+    var state = { mode: "ed" };
+    var readout = el("div", { class: "diag-readout" });
+    function draw() {
+      while (g.firstChild) g.removeChild(g.firstChild);
+      var rxArr = state.mode === "ed" ? ED_RX : ES_RX;
+      DISC_Y.forEach(function (y, i) {
+        g.appendChild(svgEl("ellipse", { cx: cx, cy: y, rx: rxArr[i], ry: RY,
+          fill: "#5db0ef", "fill-opacity": "0.22", stroke: "#5db0ef" }));
+      });
+      var lblBase = svgEl("text", { class: "diag-axtext", x: (cx - rxArr[0] - 4).toFixed(1), y: DISC_Y[0] + 3, "text-anchor": "end" });
+      lblBase.textContent = "base"; g.appendChild(lblBase);
+      var lblApex = svgEl("text", { class: "diag-axtext", x: (cx - rxArr[5] - 4).toFixed(1), y: DISC_Y[5] + 3, "text-anchor": "end" });
+      lblApex.textContent = "apex"; g.appendChild(lblApex);
+      var stateLbl = svgEl("text", { class: "diag-axtext", x: cx, y: H - 6, "text-anchor": "middle" });
+      stateLbl.textContent = state.mode === "ed" ? "End-diastole: cavity at its largest" : "End-systole: cavity at its smallest";
+      g.appendChild(stateLbl);
+      var edv = Math.round(discVolume(ED_RX)), esv = Math.round(discVolume(ES_RX));
+      var sv = edv - esv, ef = Math.round((sv / edv) * 100);
+      readout.textContent = "EDV " + edv + " mL, ESV " + esv + " mL, stroke volume " + sv
+        + " mL, ejection fraction " + ef + "%. Summing the traced short-axis discs from base to apex gives EDV and ESV; ejection fraction is EDV minus ESV, divided by EDV, and a normal left ventricle is over 50 percent.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["End-diastole", "ed"], ["End-systole", "es"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        draw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    draw();
+    return fig;
+  }
+
+  // ---- Widget: isotropic 3D voxels and reformatting ---- //
+  function buildIsoVoxel() {
+    var fig = figure("Isotropic voxels", "A 3D acquisition's voxel shape decides how well it reformats: a cube reformats cleanly into any plane, a flat slab does not.");
+    var W = 260, H = 180;
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "Isotropic versus anisotropic voxel and reformatting" });
+    var g = svgEl("g", {});
+    svg.appendChild(g);
+    var state = { mode: "iso" };
+    var readout = el("div", { class: "diag-readout" });
+    function box(x, y, w, h, dx, dy) {
+      var grp = svgEl("g", {});
+      grp.appendChild(svgEl("polygon", { points:
+        x + "," + y + " " + (x + w) + "," + y + " " + (x + w + dx) + "," + (y - dy) + " " + (x + dx) + "," + (y - dy),
+        fill: "#5db0ef", "fill-opacity": "0.55", stroke: "#5db0ef" }));
+      grp.appendChild(svgEl("polygon", { points:
+        (x + w) + "," + y + " " + (x + w) + "," + (y + h) + " " + (x + w + dx) + "," + (y + h - dy) + " " + (x + w + dx) + "," + (y - dy),
+        fill: "#5db0ef", "fill-opacity": "0.18", stroke: "#5db0ef" }));
+      grp.appendChild(svgEl("rect", { x: x, y: y, width: w, height: h, fill: "#5db0ef", "fill-opacity": "0.32", stroke: "#5db0ef" }));
+      return grp;
+    }
+    function reformatPreview(x, y, w, h, blocky) {
+      var grp = svgEl("g", {});
+      grp.appendChild(svgEl("rect", { x: x, y: y, width: w, height: h, fill: "none", stroke: "#8a8f98" }));
+      if (blocky) {
+        var steps = 5, sw = w / steps, i;
+        for (i = 0; i < steps; i++) {
+          var stepH = (h * (i + 1)) / steps;
+          grp.appendChild(svgEl("rect", { x: x + i * sw, y: y + h - stepH, width: sw, height: stepH,
+            fill: "#e0554e", "fill-opacity": "0.5" }));
+        }
+      } else {
+        grp.appendChild(svgEl("line", { x1: x, y1: y + h, x2: x + w, y2: y, stroke: "#5db0ef", "stroke-width": "2" }));
+      }
+      return grp;
+    }
+    function draw() {
+      while (g.firstChild) g.removeChild(g.firstChild);
+      var w = 64, h = 64, dx, dy;
+      if (state.mode === "iso") { dx = 26; dy = 17; } else { dx = 92; dy = 56; }
+      g.appendChild(box(28, 66, w, h, dx, dy));
+      g.appendChild(reformatPreview(196, 120, 48, 40, state.mode !== "iso"));
+      var capLbl = svgEl("text", { class: "diag-axtext", x: 220, y: 168, "text-anchor": "middle" });
+      capLbl.textContent = "reformat"; g.appendChild(capLbl);
+      var voxLbl = svgEl("text", { class: "diag-axtext", x: 6, y: 148, "text-anchor": "start" });
+      voxLbl.textContent = state.mode === "iso" ? "cube: equal x, y, z" : "slab: thin in-plane, thick through-plane";
+      g.appendChild(voxLbl);
+      readout.textContent = state.mode === "iso"
+        ? "Isotropic voxels have equal dimensions in x, y and z, so a single 3D acquisition can be reformatted into any plane, axial, sagittal, coronal or oblique, or projected as a MIP, without losing resolution."
+        : "Anisotropic voxels are thin in-plane but thick through-plane. In-plane images look sharp, but reformatting across the thick dimension looks blocky and stair-stepped because there is not enough data along that axis.";
+    }
+    fig.appendChild(svg);
+    var controls = el("div", { class: "diag-controls" });
+    [["Isotropic", "iso"], ["Anisotropic", "aniso"]].forEach(function (p) {
+      var b = el("button", { type: "button", class: "diag-btn" + (p[1] === state.mode ? " on" : ""), text: p[0] });
+      b.addEventListener("click", function () {
+        state.mode = p[1];
+        [].forEach.call(controls.querySelectorAll(".diag-btn"), function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+        draw();
+      });
+      controls.appendChild(b);
+    });
+    fig.appendChild(controls);
+    fig.appendChild(readout);
+    draw();
+    return fig;
+  }
+
   var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign, "relaxometry": buildRelaxometry, "r2star-iron": buildR2starIron,
     "dce-kinetics": buildDceKinetics, "bpe-cycle": buildBpeCycle, "prostate-zones": buildProstateZones,
     "prostate-dwi": buildProstateDwi, "metal-bandwidth": buildMetalBandwidth, "magic-angle": buildMagicAngle,
     "mrcp-te": buildMrcpTe, "hepatobiliary-phase": buildHepatobiliaryPhase,
     "larmor-field": buildLarmorField, "gad-t1": buildGadT1, "sar-flip": buildSarFlip,
-    "dce-ktrans": buildDceKtrans, "cemra-bolus": buildCemraBolus, "pulse-timing": buildPulseTiming };
+    "dce-ktrans": buildDceKtrans, "cemra-bolus": buildCemraBolus, "pulse-timing": buildPulseTiming,
+    "safety-zones": buildSafetyZones, "rs-connectivity": buildRsConnectivity,
+    "cardiac-ef": buildCardiacEf, "iso-voxel": buildIsoVoxel };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
