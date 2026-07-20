@@ -1925,19 +1925,19 @@
 
   // ---- Widget: MR safety, the ACR four-zone system ---- //
   function buildSafetyZones() {
-    var fig = figure("MR safety zones", "The ACR four-zone system separates the public from the magnet: each zone inward tightens who may enter and what they may bring.");
-    var W = 300, H = 200, cx = W / 2, cy = H / 2;
+    var fig = figure("MR safety zones", "The ACR four-zone system nests the public (Zone I) inward to the magnet room (Zone IV); each step tightens who may enter. The dashed 5-gauss line is the static fringe-field contour around the magnet, which on a shielded magnet stays within the magnet room.");
+    var W = 320, H = 210, cx = W / 2, cy = H / 2;
     var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
       role: "img", "aria-label": "ACR four-zone MRI safety diagram" });
     var ZONES = [
-      { id: "I", w: 280, h: 180,
+      { id: "I", w: 310, h: 196,
         text: "Zone I is the freely accessible public area outside the facility, such as the waiting room and parking area. Anyone may enter without screening." },
-      { id: "II", w: 210, h: 130,
+      { id: "II", w: 250, h: 158,
         text: "Zone II is the reception and screening interface between the public area and the controlled zones. Unscreened patients and visitors may be present here, but only under staff supervision while screening is completed." },
-      { id: "III", w: 140, h: 90,
+      { id: "III", w: 186, h: 118,
         text: "Zone III is the access-restricted controlled area next to the magnet room. Only MRI-screened staff and screened, prepped patients may enter, and ferromagnetic objects are kept out." },
-      { id: "IV", w: 80, h: 60,
-        text: "Zone IV is the magnet room itself, the highest hazard zone because the static field is always on. Only screened staff and the screened patient being imaged may enter, along with pre-screened MRI-safe or MRI-conditional equipment." },
+      { id: "IV", w: 120, h: 84,
+        text: "Zone IV is the magnet room itself, the highest hazard zone because the static field is always on. Only screened staff and the screened patient being imaged may enter, along with pre-screened MRI-safe or MRI-conditional equipment. The dashed 5-gauss line marks where the fringe field falls to 5 gauss (0.5 mT), the safety threshold for the public and for implants, and it must stay within this controlled area." },
     ];
     var rects = {};
     ZONES.forEach(function (z) {
@@ -1950,20 +1950,18 @@
       lbl.textContent = "Zone " + z.id;
       svg.appendChild(lbl);
     });
-    // 5 gauss line: dashed, midway between the Zone III and Zone IV boundaries.
-    var gw = (140 + 80) / 2, gh = (90 + 60) / 2;
-    svg.appendChild(svgEl("rect", { x: (cx - gw / 2).toFixed(1), y: (cy - gh / 2).toFixed(1),
-      width: gw, height: gh, rx: 6, fill: "none", stroke: "#e0554e", "stroke-width": "1", "stroke-dasharray": "4 3" }));
-    var gaussLbl = svgEl("text", { class: "diag-axtext", x: (cx + gw / 2 - 2).toFixed(1),
-      y: (cy + gh / 2 - 4).toFixed(1), "text-anchor": "end" });
-    gaussLbl.textContent = "5 gauss line";
+    // 5-gauss line: dashed fringe-field contour hugging the magnet, contained within Zone IV.
+    svg.appendChild(svgEl("ellipse", { cx: cx, cy: cy, rx: 40, ry: 28, fill: "none",
+      stroke: "#e0554e", "stroke-width": "1", "stroke-dasharray": "4 3" }));
+    var gaussLbl = svgEl("text", { class: "diag-axtext", x: cx, y: (cy + 39).toFixed(1), "text-anchor": "middle" });
+    gaussLbl.textContent = "5-gauss line";
     svg.appendChild(gaussLbl);
     // magnet symbol at the center of Zone IV
     var magnet = svgEl("g", {});
-    magnet.appendChild(svgEl("rect", { x: (cx - 16).toFixed(1), y: (cy - 8).toFixed(1),
-      width: 32, height: 16, rx: 6, fill: "#5db0ef", "fill-opacity": "0.3", stroke: "#5db0ef" }));
-    magnet.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 7, fill: "none", stroke: "#5db0ef" }));
-    var b0 = svgEl("text", { class: "diag-axtext", x: cx, y: cy - 14, "text-anchor": "middle" });
+    magnet.appendChild(svgEl("rect", { x: (cx - 20).toFixed(1), y: (cy - 9).toFixed(1),
+      width: 40, height: 18, rx: 6, fill: "#5db0ef", "fill-opacity": "0.3", stroke: "#5db0ef" }));
+    magnet.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 8, fill: "none", stroke: "#5db0ef" }));
+    var b0 = svgEl("text", { class: "diag-axtext", x: cx, y: (cy - 17).toFixed(1), "text-anchor": "middle" });
     b0.textContent = "B0 magnet";
     magnet.appendChild(b0);
     svg.appendChild(magnet);
