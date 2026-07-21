@@ -2164,6 +2164,484 @@
     return fig;
   }
 
+  // ---- Widget: the full signal chain, excite through reconstruct ---- //
+  // A 9-stage step-through animation: protons align, net M0, RF flip, FID,
+  // coil detection, spatial encoding, k-space fill, FFT, final image. Stages
+  // 1-6 draw into a shared SVG group; stages 7-9 draw into a shared canvas,
+  // reusing the module-scope FFT/phantom helpers. One rAF loop draws only the
+  // current stage and is restarted (after canceling any prior chain) on every
+  // stage change, so only one loop is ever running.
+  function buildSignalChain() {
+    var W = 340, H = 200, N = 64;
+    var ACCENT = "#5db0ef", WARN = "#e0554e", FAINT = "#3a3f4a";
+    var WOBBLE_PERIOD = 2.2, GROW_DUR = 1.3, FLIP_DUR = 1.3, ROT_PERIOD = 1.6,
+      DECAY_PERIOD = 3.0, KFILL_DUR = 2.4, FFT_DUR = 1.6;
+    var DWELL_MS = 3500;
+
+    function clamp01(x) { return x < 0 ? 0 : (x > 1 ? 1 : x); }
+
+    function drawArrow(g, x1, y1, x2, y2, color) {
+      g.appendChild(svgEl("line", { x1: x1.toFixed(1), y1: y1.toFixed(1), x2: x2.toFixed(1), y2: y2.toFixed(1),
+        stroke: color, "stroke-width": "1.8" }));
+      var ang = Math.atan2(y2 - y1, x2 - x1), a1 = ang + 2.6, a2 = ang - 2.6, size = 5;
+      var p1x = x2 + size * Math.cos(a1), p1y = y2 + size * Math.sin(a1);
+      var p2x = x2 + size * Math.cos(a2), p2y = y2 + size * Math.sin(a2);
+      g.appendChild(svgEl("polygon", { fill: color, points: x2.toFixed(1) + "," + y2.toFixed(1) + " "
+        + p1x.toFixed(1) + "," + p1y.toFixed(1) + " " + p2x.toFixed(1) + "," + p2y.toFixed(1) }));
+    }
+    function drawSpin(g, x, y, up, t, phase, opacity) {
+      var L = 11, wob = 2.0 * Math.sin(2 * Math.PI * t / WOBBLE_PERIOD + phase);
+      var y1 = up ? y + L / 2 : y - L / 2, y2 = up ? y - L / 2 : y + L / 2;
+      var wrap = svgEl("g", { opacity: String(opacity) });
+      drawArrow(wrap, x, y1, x + wob, y2, up ? ACCENT : "#8a8f98");
+      g.appendChild(wrap);
+    }
+    function spinGrid(g, t, opacity) {
+      var cols = 5, rows = 4, gx0 = 95, gx1 = 300, gy0 = 40, gy1 = 150, r, c;
+      for (r = 0; r < rows; r++) {
+        for (c = 0; c < cols; c++) {
+          var x = gx0 + (gx1 - gx0) * c / (cols - 1), y = gy0 + (gy1 - gy0) * r / (rows - 1);
+          drawSpin(g, x, y, ((r + c) % 5) < 3, t, (r * cols + c) * 0.37, opacity);
+        }
+      }
+    }
+    function drawB0(g) {
+      drawArrow(g, 25, 172, 25, 30, ACCENT);
+      var lbl = svgEl("text", { class: "diag-axtext", x: 25, y: 22, "text-anchor": "middle" });
+      lbl.textContent = "B0"; g.appendChild(lbl);
+    }
+    function drawRfBurst(g, x, y, t, on) {
+      var pts = [], i;
+      for (i = 0; i <= 20; i++) {
+        var xx = x + i * 2.4, yy = y + 8 * Math.sin(i * 0.9 + t * 10);
+        pts.push(xx.toFixed(1) + " " + yy.toFixed(1));
+      }
+      g.appendChild(svgEl("path", { d: "M" + pts.join(" L"), fill: "none", stroke: WARN,
+        "stroke-width": "1.3", opacity: on ? "1" : "0.25" }));
+      var lbl = svgEl("text", { class: "diag-axtext", x: x + 24, y: y - 12, "text-anchor": "middle" });
+      lbl.textContent = "RF"; g.appendChild(lbl);
+    }
+
+    // ---- stage 1: protons align in B0 ---- //
+    function drawStage1(g, t) {
+      drawB0(g);
+      spinGrid(g, t, 1);
+    }
+    // Shared frame for stages 2-6 so the same vector and signal carry across stages:
+    // one pivot with a transverse-plane ellipse, and one fixed signal-trace region on the right.
+    var PX = 112, PY = 104, ERX = 52, ERY = 15, MLEN = 74;
+    var SX0 = 190, SX1 = 330, SY = 96, SAMP = 30;
+    function transversePlane(g, opacity) {
+      g.appendChild(svgEl("ellipse", { cx: PX, cy: PY, rx: ERX, ry: ERY, fill: "none",
+        stroke: FAINT, opacity: String(opacity) }));
+    }
+    function signalAxis(g) {
+      g.appendChild(svgEl("line", { class: "diag-axis", x1: SX0, y1: SY, x2: SX1, y2: SY }));
+    }
+    function sigAt(tau, decay) {
+      var env = decay ? Math.exp(-3 * tau / DECAY_PERIOD) : 1;
+      return env * Math.cos(2 * Math.PI * tau / ROT_PERIOD);
+    }
+
+    // ---- stage 2: individual spins fade, net M0 grows along +z at the pivot ---- //
+    function drawStage2(g, t) {
+      var p = clamp01(t / GROW_DUR);
+      spinGrid(g, t, Math.max(0.1, 1 - p * 0.9));
+      transversePlane(g, 0.35);
+      drawArrow(g, PX, PY, PX, PY - p * MLEN, ACCENT);
+      var lbl = svgEl("text", { class: "diag-axtext", x: PX + 8, y: (PY - p * MLEN - 4).toFixed(1) });
+      lbl.textContent = "M0"; g.appendChild(lbl);
+    }
+    // ---- stage 3: RF pulse tips M0 from +z down into the transverse plane ---- //
+    function drawStage3(g, t) {
+      var p = clamp01(t / FLIP_DUR), phi = p * (Math.PI / 2);
+      transversePlane(g, 0.9);
+      var steps = 22, pts = [], k;
+      for (k = 0; k <= steps; k++) {
+        var pk = phi * k / steps;
+        pts.push((PX + ERX * Math.sin(pk)).toFixed(1) + " " + (PY - MLEN * Math.cos(pk)).toFixed(1));
+      }
+      g.appendChild(svgEl("path", { d: "M" + pts.join(" L"), fill: "none", stroke: ACCENT,
+        "stroke-width": "1.1", "stroke-dasharray": "2 2" }));
+      drawArrow(g, PX, PY, PX + ERX * Math.sin(phi), PY - MLEN * Math.cos(phi), ACCENT);
+      drawRfBurst(g, 40, 52, t, t < FLIP_DUR);
+      var lbl = svgEl("text", { class: "diag-axtext", x: PX, y: PY + 36, "text-anchor": "middle" });
+      lbl.textContent = "90 degree flip"; g.appendChild(lbl);
+    }
+    // ---- stage 4: after the flip, two relaxations run at once. The transverse part precesses and
+    //      decays (T2*), tracing the FID the coil detects as voltage; the longitudinal part recovers
+    //      back up to M0 (T1). The vector spirals from the plane back up to M0. ---- //
+    function drawStage4(g, t) {
+      var T1P = DECAY_PERIOD * 1.7, tLoop = t % T1P;
+      var Mxy = Math.exp(-3 * tLoop / DECAY_PERIOD), Mz = 1 - Math.exp(-2.4 * tLoop / T1P);
+      var az = 2 * Math.PI * t / ROT_PERIOD;
+      // longitudinal axis and the M0 target the vector recovers toward
+      g.appendChild(svgEl("line", { class: "diag-axis", x1: PX, y1: PY, x2: PX, y2: PY - MLEN }));
+      g.appendChild(svgEl("circle", { cx: PX, cy: PY - MLEN, r: "2.5", fill: "none", stroke: FAINT }));
+      etag(g, PX + 7, PY - MLEN + 2, "M0");
+      // transverse plane with a faint receiver coil around it
+      transversePlane(g, 0.7);
+      g.appendChild(svgEl("ellipse", { cx: PX, cy: PY, rx: ERX + 13, ry: ERY + 10, fill: "none",
+        stroke: WARN, "stroke-width": "1.2", opacity: "0.5" }));
+      // faint trail of the vector spiralling from the plane back up to M0
+      var tr = [], s, ss = 30, tl, mx, mz, a2;
+      for (s = 0; s <= ss; s++) {
+        tl = tLoop * s / ss; mx = Math.exp(-3 * tl / DECAY_PERIOD); mz = 1 - Math.exp(-2.4 * tl / T1P);
+        a2 = 2 * Math.PI * (t - tLoop + tl) / ROT_PERIOD;
+        tr.push((PX + ERX * mx * Math.cos(a2)).toFixed(1) + " " + (PY + ERY * mx * Math.sin(a2) - MLEN * mz).toFixed(1));
+      }
+      g.appendChild(svgEl("path", { d: "M" + tr.join(" L"), fill: "none", stroke: ACCENT, "stroke-width": "0.8", opacity: "0.3" }));
+      // the 3D magnetization vector: transverse part precesses+decays, longitudinal part grows to M0
+      drawArrow(g, PX, PY, PX + ERX * Mxy * Math.cos(az), PY + ERY * Mxy * Math.sin(az) - MLEN * Mz, ACCENT);
+      etag(g, PX - ERX - 2, PY + 30, "Mxy decays (T2*)");
+      etag(g, PX + 10, PY - MLEN * 0.5, "Mz -> M0 (T1)");
+      // the FID (from the transverse part) that the coil detects as an induced voltage
+      signalAxis(g);
+      var reveal = clamp01(tLoop / DECAY_PERIOD), steps = 90, n = Math.max(1, Math.round(reveal * steps)), pts = [], i;
+      for (i = 0; i <= n; i++) {
+        var tau = DECAY_PERIOD * i / steps;
+        pts.push((SX0 + (SX1 - SX0) * i / steps).toFixed(1) + " " + (SY - sigAt(tau, true) * SAMP).toFixed(1));
+      }
+      g.appendChild(svgEl("path", { d: "M" + pts.join(" L"), fill: "none", stroke: ACCENT, "stroke-width": "1.4" }));
+      etag(g, (SX0 + SX1) / 2, SY + 40, "FID = induced voltage", "middle");
+    }
+    // ---- stages 5-8 (the encode block) run on the SAME real little picture as the rest of the chain,
+    //      so encoding is never abstract: show the object, a gradient labels each position with its own
+    //      frequency, the coil sums the whole object into one signal, and that signal is one line of the
+    //      object's k-space. The object and its k-space are built once here and reused by stages 9-11. ---- //
+    var OBJ = (function () {
+      var c = document.createElement("canvas"); c.width = N; c.height = N;
+      var cx = c.getContext("2d");
+      cx.fillStyle = "#000"; cx.fillRect(0, 0, N, N);
+      cx.fillStyle = "#fff";
+      cx.beginPath(); cx.arc(N / 2, N / 2, N * 0.34, 0, 2 * Math.PI); cx.fill();
+      cx.fillStyle = "#000";
+      cx.beginPath(); cx.arc(N * 0.40, N * 0.43, N * 0.055, 0, 2 * Math.PI); cx.fill();
+      cx.beginPath(); cx.arc(N * 0.60, N * 0.43, N * 0.055, 0, 2 * Math.PI); cx.fill();
+      cx.strokeStyle = "#000"; cx.lineWidth = N * 0.05; cx.lineCap = "round";
+      cx.beginPath(); cx.arc(N / 2, N * 0.52, N * 0.17, 0.18 * Math.PI, 0.82 * Math.PI); cx.stroke();
+      var d = cx.getImageData(0, 0, N, N).data, img = new Array(N * N), i;
+      for (i = 0; i < N * N; i++) img[i] = d[i * 4] / 255;
+      return { img: img, url: c.toDataURL() };
+    })();
+    var spec = centeredSpectrum(OBJ.img, N), kre = spec.re, kim = spec.im;
+    var lineMag = [], lineRe = [];
+    (function () {
+      var cyk = Math.floor(N / 2), lx, re, im, mm = 0, mr = 0;
+      for (lx = 0; lx < N; lx++) {
+        re = kre[cyk * N + lx]; im = kim[cyk * N + lx];
+        lineMag.push(Math.sqrt(re * re + im * im)); lineRe.push(re);
+        if (lineMag[lx] > mm) mm = lineMag[lx];
+        if (Math.abs(re) > mr) mr = Math.abs(re);
+      }
+      for (lx = 0; lx < N; lx++) { lineMag[lx] /= (mm || 1); lineRe[lx] /= (mr || 1); }
+    })();
+    function etag(g, x, y, txt, anchor) {
+      var l = svgEl("text", { class: "diag-axtext", x: x, y: y, "text-anchor": anchor || "start" });
+      l.textContent = txt; g.appendChild(l);
+    }
+    function encClock(g, cx, cy, r, phi, col) {
+      g.appendChild(svgEl("circle", { cx: cx, cy: cy, r: r, fill: "none", stroke: FAINT, opacity: "0.7" }));
+      var hx = cx + r * Math.sin(phi), hy = cy - r * Math.cos(phi);
+      g.appendChild(svgEl("line", { x1: cx, y1: cy, x2: hx.toFixed(1), y2: hy.toFixed(1), stroke: col, "stroke-width": "1.8" }));
+      g.appendChild(svgEl("circle", { cx: hx.toFixed(1), cy: hy.toFixed(1), r: "2", fill: col }));
+    }
+    function objImage(g, x, y, w) {
+      g.appendChild(svgEl("image", { href: OBJ.url, x: x, y: y, width: w, height: w,
+        "image-rendering": "pixelated", preserveAspectRatio: "none" }));
+    }
+    // Stage 5: the object is a 3D body - millions of voxels, each doing steps 1-4.
+    function drawSources(g) {
+      var i;
+      for (i = 4; i >= 1; i--) {
+        g.appendChild(svgEl("image", { href: OBJ.url, x: 124 + i * 7, y: 38 - i * 7, width: 76, height: 76,
+          "image-rendering": "pixelated", preserveAspectRatio: "none", opacity: "0.22" }));
+      }
+      objImage(g, 124, 38, 76);
+      etag(g, 162, 128, "the object: a 3D body", "middle");
+      etag(g, 162, 146, "millions of voxels, each one doing steps 1-4", "middle");
+    }
+    // Stage 6: the RF pulse plus a slice-select gradient (Gz) excite just one 2D slice of the body.
+    function drawSliceSelect(g) {
+      var i;
+      for (i = 4; i >= 1; i--) {
+        g.appendChild(svgEl("image", { href: OBJ.url, x: 62 + i * 6, y: 50 - i * 8, width: 54, height: 54,
+          "image-rendering": "pixelated", preserveAspectRatio: "none", opacity: "0.2" }));
+      }
+      g.appendChild(svgEl("line", { x1: 42, y1: 108, x2: 42, y2: 42, stroke: WARN, "stroke-width": "1.4" }));
+      g.appendChild(svgEl("path", { d: "M38 48 L42 42 L46 48", fill: "none", stroke: WARN, "stroke-width": "1.4" }));
+      etag(g, 42, 122, "Gz", "middle");
+      objImage(g, 62, 50, 54);
+      g.appendChild(svgEl("rect", { x: 62, y: 50, width: 54, height: 54, fill: "none", stroke: ACCENT, "stroke-width": "2" }));
+      etag(g, 89, 118, "one excited slice", "middle");
+      g.appendChild(svgEl("path", { d: "M152 77 L178 77 M172 73 L179 77 L172 81", fill: "none", stroke: FAINT, "stroke-width": "1.3" }));
+      objImage(g, 192, 48, 58);
+      etag(g, 221, 118, "the slice we image", "middle");
+    }
+    function kspaceImage(g, x, y, w) {
+      g.appendChild(svgEl("image", { href: kOffURL, x: x, y: y, width: w, height: w,
+        "image-rendering": "pixelated", preserveAspectRatio: "none" }));
+    }
+    // Stage 6: a gradient makes each column of the object precess at its own frequency.
+    function drawEncode(g, t) {
+      var ox = 128, oy = 36, ow = 80;
+      g.appendChild(svgEl("path", { d: "M" + ox + " " + (oy - 6) + " L" + (ox + ow) + " " + (oy - 6) + " L" + (ox + ow) + " " + (oy - 18) + " Z", fill: WARN, "fill-opacity": "0.16", stroke: WARN, "stroke-width": "1.1" }));
+      etag(g, ox, oy - 22, "gradient across the object: weak -> strong");
+      objImage(g, ox, oy, ow);
+      var n = 3, i;
+      for (i = 0; i < n; i++) {
+        var col = ox + ow * (i + 0.5) / n, rate = 0.4 + 1.7 * i / (n - 1);
+        g.appendChild(svgEl("line", { x1: col, y1: oy + ow, x2: col, y2: oy + ow + 13, stroke: FAINT, "stroke-width": "0.8", "stroke-dasharray": "2 2" }));
+        encClock(g, col, oy + ow + 26, 12, 2 * Math.PI * rate * t, i === 1 ? ACCENT : "#7fb4dd");
+      }
+      etag(g, ox + ow / 2, oy + ow + 48, "each column of the object precesses at its own frequency", "middle");
+    }
+    // Stage 7: the signal comes from the WHOLE excited slice at once - every pixel of the object feeds
+    // the single coil, adding into one signal. Where from? Everywhere, simultaneously.
+    function drawSignal(g) {
+      objImage(g, 22, 38, 62);
+      etag(g, 53, 112, "the excited slice", "middle");
+      var src = [[40, 58], [66, 58], [53, 74], [42, 88], [64, 88]], coil = [118, 74], i;
+      for (i = 0; i < src.length; i++) {
+        g.appendChild(svgEl("line", { x1: src[i][0], y1: src[i][1], x2: coil[0], y2: coil[1], stroke: ACCENT, "stroke-width": "0.8", opacity: "0.4" }));
+        g.appendChild(svgEl("circle", { cx: src[i][0], cy: src[i][1], r: "1.7", fill: ACCENT }));
+      }
+      g.appendChild(svgEl("circle", { cx: coil[0], cy: coil[1], r: "6", fill: "none", stroke: WARN, "stroke-width": "1.4" }));
+      etag(g, coil[0], coil[1] + 19, "coil", "middle");
+      g.appendChild(svgEl("path", { d: "M128 74 L148 74 M142 70 L149 74 L142 78", fill: "none", stroke: FAINT, "stroke-width": "1.3" }));
+      etag(g, 154, 50, "one recorded signal:");
+      var sx0 = 154, sx1 = 324, sy = 92, pts = [];
+      g.appendChild(svgEl("line", { class: "diag-axis", x1: sx0, y1: sy, x2: sx1, y2: sy }));
+      for (i = 0; i < lineRe.length; i++) {
+        pts.push((sx0 + (sx1 - sx0) * i / (lineRe.length - 1)).toFixed(1) + " " + (sy - lineRe[i] * 28).toFixed(1));
+      }
+      g.appendChild(svgEl("path", { d: "M" + pts.join(" L"), fill: "none", stroke: "#cfe4f5", "stroke-width": "1.5" }));
+      etag(g, 171, 148, "every position in the slice adds into this one signal, all at once", "middle");
+    }
+    // Stage 8: readout - while the x-gradient is on, sampling the signal over time sweeps across one
+    // horizontal line of k-space (kx, edge to edge), filling it in point by point.
+    function drawKline(g, t) {
+      objImage(g, 26, 30, 56);
+      etag(g, 54, 96, "the object", "middle");
+      kspaceImage(g, 118, 30, 56);
+      etag(g, 146, 96, "its k-space", "middle");
+      var p = clamp01((t % 3.4) / 2.7);
+      g.appendChild(svgEl("rect", { x: 118, y: 30 + 26, width: 56, height: 3, fill: ACCENT, "fill-opacity": "0.55" }));
+      g.appendChild(svgEl("circle", { cx: (118 + 56 * p).toFixed(1), cy: 30 + 27.5, r: "2", fill: ACCENT }));
+      var sx0 = 30, sx1 = 322, sy = 138, cols = lineMag.length, cw = (sx1 - sx0) / cols, swept = Math.round(p * (cols - 1)), i, lum;
+      for (i = 0; i < cols; i++) {
+        lum = i <= swept ? Math.round(14 + 226 * clamp01(lineMag[i])) : 11;
+        g.appendChild(svgEl("rect", { x: (sx0 + i * cw).toFixed(1), y: sy - 9, width: (cw + 0.6).toFixed(1), height: 18, fill: "rgb(" + lum + "," + lum + "," + lum + ")" }));
+      }
+      g.appendChild(svgEl("rect", { x: sx0, y: sy - 9, width: (sx1 - sx0), height: 18, fill: "none", stroke: ACCENT, "stroke-width": "1" }));
+      var cx = sx0 + p * (sx1 - sx0);
+      g.appendChild(svgEl("line", { x1: cx.toFixed(1), y1: sy - 13, x2: cx.toFixed(1), y2: sy + 13, stroke: ACCENT, "stroke-width": "1.2" }));
+      etag(g, sx0, sy + 30, "-kx", "start");
+      etag(g, sx1, sy + 30, "+kx", "end");
+      etag(g, (sx0 + sx1) / 2, sy - 15, "bright center (k=0) = contrast, faint edges = detail", "middle");
+      etag(g, (sx0 + sx1) / 2, sy + 30, "one horizontal line of k-space, filled point by point", "middle");
+    }
+    // Stage 9: a second gradient (phase encode, along y) picks WHICH horizontal line each readout fills.
+    function drawPhaseEncode(g, t) {
+      objImage(g, 32, 40, 56);
+      etag(g, 60, 106, "the object", "middle");
+      g.appendChild(svgEl("path", { d: "M24 40 L24 96 L15 96 Z", fill: WARN, "fill-opacity": "0.18", stroke: WARN, "stroke-width": "1" }));
+      etag(g, 14, 34, "gradient along y");
+      g.appendChild(svgEl("path", { d: "M94 68 L118 68 M112 64 L119 68 L112 72", fill: "none", stroke: FAINT, "stroke-width": "1.3" }));
+      kspaceImage(g, 136, 40, 56);
+      etag(g, 164, 106, "its k-space", "middle");
+      var ky = 40 + (0.5 + 0.42 * Math.sin(2 * Math.PI * t / 3.2)) * 56;
+      g.appendChild(svgEl("rect", { x: 136, y: ky.toFixed(1), width: 56, height: 3, fill: ACCENT, "fill-opacity": "0.8" }));
+      g.appendChild(svgEl("path", { d: "M228 " + ky.toFixed(1) + " L200 " + ky.toFixed(1), stroke: ACCENT, "stroke-width": "1", opacity: "0.6" }));
+      etag(g, 232, ky.toFixed(1), "this line", "start");
+      etag(g, 171, 130, "phase encode picks which line; step through all values to fill k-space", "middle");
+    }
+
+    // ---- stages 9-11: k-space fill + live reconstruction, center/edge, final image (canvas). Uses the
+    //      same OBJ / kre / kim built for the encode block, so the picture that goes in comes back out. ---- //
+    var kOff = document.createElement("canvas"); kOff.width = N; kOff.height = N;
+    drawKMag(kOff.getContext("2d"), kre, kim, N);
+    var kOffURL = kOff.toDataURL();
+    var iOff = document.createElement("canvas"); iOff.width = N; iOff.height = N;
+    reconMag(iOff.getContext("2d"), kre, kim, N);
+    var rowOrder = [], ry;
+    for (ry = 0; ry < N; ry++) rowOrder.push(ry);
+    rowOrder.sort(function (a, b) { return Math.abs(a - N / 2) - Math.abs(b - N / 2); });
+    // center-only and edge-only reconstructions to show what each part of k-space carries
+    function maskK(re, im, low) {
+      var mre = re.slice(), mim = im.slice(), x, y, dx, dy, keep;
+      for (y = 0; y < N; y++) {
+        for (x = 0; x < N; x++) {
+          dx = x - N / 2; dy = y - N / 2; keep = Math.sqrt(dx * dx + dy * dy) <= N * 0.14;
+          if (low !== keep) { mre[y * N + x] = 0; mim[y * N + x] = 0; }
+        }
+      }
+      return { re: mre, im: mim };
+    }
+    var cImg = document.createElement("canvas"); cImg.width = N; cImg.height = N;
+    var cM = maskK(kre, kim, true); reconMag(cImg.getContext("2d"), cM.re, cM.im, N);
+    var eImg = document.createElement("canvas"); eImg.width = N; eImg.height = N;
+    var eM = maskK(kre, kim, false); reconMag(eImg.getContext("2d"), eM.re, eM.im, N);
+
+    // Stage 9: k-space fills center-out on the left; on the right the image is reconstructed from
+    // whatever has been acquired so far, so it appears as a blurry contrast blob (center only) and
+    // sharpens into edges and fine detail as the outer lines come in.
+    function drawStage7(ctx, t) {
+      var revealed = Math.max(1, Math.min(N, Math.round(clamp01(t / KFILL_DUR) * N)));
+      var keep = new Array(N), i, x, y;
+      for (i = 0; i < N; i++) keep[i] = false;
+      for (i = 0; i < revealed; i++) keep[rowOrder[i]] = true;
+      var mre = kre.slice(), mim = kim.slice();
+      for (y = 0; y < N; y++) {
+        if (!keep[y]) { for (x = 0; x < N; x++) { mre[y * N + x] = 0; mim[y * N + x] = 0; } }
+      }
+      drawKMag(ctx, mre, mim, N);
+      reconMag(reconCtx, mre, mim, N);
+    }
+    // Stage 10: why center and edges differ - reconstruct from the center of k-space alone (a blurry,
+    // all-contrast image) versus from the edges alone (only outlines and fine detail).
+    function drawStage8(ctx) {
+      ctx.clearRect(0, 0, N, N); ctx.drawImage(cImg, 0, 0);
+      reconCtx.clearRect(0, 0, N, N); reconCtx.drawImage(eImg, 0, 0);
+    }
+    // Stage 11: the finished k-space and its image, side by side.
+    function drawStage9(ctx) {
+      ctx.clearRect(0, 0, N, N); ctx.drawImage(kOff, 0, 0);
+      reconCtx.clearRect(0, 0, N, N); reconCtx.drawImage(iOff, 0, 0);
+    }
+
+    var STAGES = [
+      { chip: "1 Align", caption: "Protons align with or against B0; slightly more line up parallel (lower energy).", kind: "svg", draw: drawStage1 },
+      { chip: "2 Net M", caption: "The small parallel excess sums to a net longitudinal magnetization M0 along B0.", kind: "svg", draw: drawStage2 },
+      { chip: "3 RF", caption: "An RF pulse at the Larmor frequency tips M into the transverse plane where it can be detected.", kind: "svg", draw: drawStage3 },
+      { chip: "4 FID", caption: "Two relaxations run at once. The transverse part precesses and decays (T2*), tracing the FID the coil measures as voltage; the longitudinal part recovers back up to M0 (T1). The vector spirals from the plane up to M0.", kind: "svg", draw: drawStage4 },
+      { chip: "5 Object", caption: "The object is a 3D body, millions of tiny voxels, and every voxel is doing steps 1-4 at once. To make a picture we have to work out how much signal comes from each one.", kind: "svg", draw: drawSources },
+      { chip: "6 Slice", caption: "First we narrow it down. The RF pulse combined with a slice-select gradient (Gz) excites just one thin 2D slice; only that slice gives signal, the rest stays silent. This smiley is our slice.", kind: "svg", draw: drawSliceSelect },
+      { chip: "7 Encode", caption: "A gradient along x makes each column of the slice precess at its own frequency. Position across the slice is now frequency.", kind: "svg", draw: drawEncode },
+      { chip: "8 Signal", caption: "The signal comes from the whole slice at once: every pixel feeds the single coil, adding into one signal. This is the FID from step 4, now with the readout gradient on, so it mixes every position together by frequency.", kind: "svg", draw: drawSignal },
+      { chip: "9 Readout", caption: "Readout: while the x-gradient is on, the coil is sampled over time. As the gradient's effect builds, each sample lands at the next point along one horizontal line of k-space, sweeping edge to edge (kx). The bright center (k=0) holds contrast, the faint edges hold fine detail.", kind: "svg", draw: drawKline },
+      { chip: "10 Phase", caption: "One readout gives just one line. A second gradient along y, the phase encode, shifts which horizontal line you land on. Step it through every value and you fill all the lines.", kind: "svg", draw: drawPhaseEncode },
+      { chip: "11 k-space", caption: "Repeating readout for every phase-encode step fills the whole 2D grid, the slice's k-space. The image (its Fourier transform) reconstructs live: the center gives a blurry contrast blob, the outer lines add edges and fine detail.", kind: "canvas", draw: drawStage7 },
+      { chip: "12 Detail", caption: "Why the center and edges differ: reconstruct from the center of k-space alone and you get a blurry image, all overall contrast; from the edges alone you get only outlines and fine detail. The full image needs both.", kind: "canvas", draw: drawStage8 },
+      { chip: "13 Image", caption: "One chain, start to finish: aligned protons to one slice's signal to k-space to image.", kind: "canvas", draw: drawStage9 },
+    ];
+    var REP_T = [0, GROW_DUR + 0.1, FLIP_DUR + 0.1, DECAY_PERIOD * 0.35,
+      0.4, 0, 0.8, 0.5, 0.5, 1.0, KFILL_DUR + 0.1, FFT_DUR + 0.1, 0];
+
+    var fig = figure("Signal chain", "The full signal chain from aligned protons to the reconstructed image, one stage at a time.");
+    var svg = svgEl("svg", { class: "diag-svg", viewBox: "0 0 " + W + " " + H,
+      role: "img", "aria-label": "MRI signal chain animation" });
+    var svgG = svgEl("g", {});
+    svg.appendChild(svgG);
+    fig.appendChild(svg);
+
+    var mainCanvas = document.createElement("canvas");
+    mainCanvas.width = N; mainCanvas.height = N; mainCanvas.className = "diag-canvas";
+    var mainCtx = mainCanvas.getContext("2d");
+    var mainCap = el("figcaption", { class: "diag-canvas-cap", text: "k-space" });
+    var reconCanvas = document.createElement("canvas");
+    reconCanvas.width = N; reconCanvas.height = N; reconCanvas.className = "diag-canvas";
+    var reconCtx = reconCanvas.getContext("2d");
+    var reconCap = el("figcaption", { class: "diag-canvas-cap", text: "image so far" });
+    var canvasStage = el("div", { class: "diag-kspace" }, [
+      el("figure", { class: "diag-canvas-wrap" }, [mainCanvas, mainCap]),
+      el("figure", { class: "diag-canvas-wrap" }, [reconCanvas, reconCap]),
+    ]);
+    fig.appendChild(canvasStage);
+
+    var readout = el("div", { class: "diag-readout" });
+
+    var state = { i: 0, playing: false };
+    var rafId = null;
+
+    function render(t) {
+      var s = STAGES[state.i];
+      if (s.kind === "svg") {
+        while (svgG.firstChild) svgG.removeChild(svgG.firstChild);
+        s.draw(svgG, t);
+      } else {
+        s.draw(mainCtx, t);
+      }
+    }
+    function updateChips() {
+      [].forEach.call(chipsRow.querySelectorAll(".diag-btn"), function (b, idx) {
+        if (idx === state.i) b.classList.add("on"); else b.classList.remove("on");
+      });
+    }
+    function updateStageLabel() { stageLabel.textContent = "Stage " + (state.i + 1) + " of " + STAGES.length; }
+    function updateReadout() { readout.textContent = STAGES[state.i].caption; }
+    function updateVisibility() {
+      var kind = STAGES[state.i].kind;
+      svg.style.display = kind === "svg" ? "" : "none";
+      canvasStage.style.display = kind === "canvas" ? "" : "none";
+      if (kind === "canvas") {
+        if (state.i === 10) { mainCap.textContent = "k-space (filling)"; reconCap.textContent = "image so far"; }
+        else if (state.i === 11) { mainCap.textContent = "center of k-space only"; reconCap.textContent = "edges of k-space only"; }
+        else { mainCap.textContent = "k-space"; reconCap.textContent = "final image"; }
+      }
+    }
+    function updatePlayBtn() {
+      if (!playBtn) return;
+      playBtn.textContent = state.playing ? "⏸ Pause" : "▸ Play";
+      playBtn.classList.toggle("on", state.playing);
+    }
+    function startLoop() {
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+      var startTs = null;
+      function frame(ts) {
+        if (startTs === null) startTs = ts;
+        var t = (ts - startTs) / 1000;
+        render(t);
+        if (state.playing && t * 1000 >= DWELL_MS) {
+          if (state.i < STAGES.length - 1) { goTo(state.i + 1); return; }
+          state.playing = false;
+          updatePlayBtn();
+        }
+        rafId = requestAnimationFrame(frame);
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+    function goTo(i) {
+      state.i = Math.max(0, Math.min(STAGES.length - 1, i));
+      updateChips();
+      updateStageLabel();
+      updateReadout();
+      updateVisibility();
+      if (reduceMotion) render(REP_T[state.i]);
+      else startLoop();
+    }
+
+    var chipsRow = el("div", { class: "diag-controls" });
+    STAGES.forEach(function (s, i) {
+      var b = el("button", { type: "button", class: "diag-btn" + (i === 0 ? " on" : ""), text: s.chip });
+      b.addEventListener("click", function () { state.playing = false; updatePlayBtn(); goTo(i); });
+      chipsRow.appendChild(b);
+    });
+
+    var navRow = el("div", { class: "diag-controls" });
+    var prevBtn = el("button", { type: "button", class: "diag-btn", text: "< Prev" });
+    var stageLabel = el("span", { class: "diag-glabel", text: "Stage 1 of " + STAGES.length });
+    var nextBtn = el("button", { type: "button", class: "diag-btn", text: "Next >" });
+    prevBtn.addEventListener("click", function () { state.playing = false; updatePlayBtn(); goTo(state.i - 1); });
+    nextBtn.addEventListener("click", function () { state.playing = false; updatePlayBtn(); goTo(state.i + 1); });
+    navRow.appendChild(prevBtn);
+    navRow.appendChild(stageLabel);
+    navRow.appendChild(nextBtn);
+    var playBtn = null;
+    if (!reduceMotion) {
+      playBtn = el("button", { type: "button", class: "diag-btn diag-play", text: "▸ Play" });
+      playBtn.addEventListener("click", function () { state.playing = !state.playing; updatePlayBtn(); });
+      navRow.appendChild(playBtn);
+    }
+
+    fig.appendChild(chipsRow);
+    fig.appendChild(navRow);
+    fig.appendChild(readout);
+
+    goTo(0);
+    return fig;
+  }
+
   var BUILDERS = { "t1-recovery": buildT1Recovery, "t2-decay": buildT2Decay, "t2-vs-t2star": buildT2vsT2star, "tr-te-weighting": buildTrTeWeighting, "ernst-angle": buildErnstAngle, "ir-nulling": buildIrNulling, "dwi-bvalue": buildDwiBvalue, "snr-tradeoff": buildSnrTradeoff, "kspace-recon": buildKspaceRecon, "kspace-trajectories": buildKspaceTrajectories, "chemical-shift": buildChemicalShift, "parallel-imaging": buildParallelImaging, "gibbs-ringing": buildGibbsRinging, "dsc-curve": buildDscCurve, "asl-subtraction": buildAslSubtraction, "pc-venc": buildPcVenc, "tof-inflow": buildTofInflow, "fa-anisotropy": buildFaAnisotropy, "tractography": buildTractography, "lge-nulling": buildLgeNulling, "cardiac-gating": buildCardiacGating, "mrs-spectrum": buildMrsSpectrum, "mrs-te": buildMrsTe, "bold-hrf": buildBoldHrf, "fmri-design": buildFmriDesign, "relaxometry": buildRelaxometry, "r2star-iron": buildR2starIron,
     "dce-kinetics": buildDceKinetics, "bpe-cycle": buildBpeCycle, "prostate-zones": buildProstateZones,
     "prostate-dwi": buildProstateDwi, "metal-bandwidth": buildMetalBandwidth, "magic-angle": buildMagicAngle,
@@ -2171,7 +2649,7 @@
     "larmor-field": buildLarmorField, "gad-t1": buildGadT1, "sar-flip": buildSarFlip,
     "dce-ktrans": buildDceKtrans, "cemra-bolus": buildCemraBolus, "pulse-timing": buildPulseTiming,
     "safety-zones": buildSafetyZones, "rs-connectivity": buildRsConnectivity,
-    "cardiac-ef": buildCardiacEf, "iso-voxel": buildIsoVoxel };
+    "cardiac-ef": buildCardiacEf, "iso-voxel": buildIsoVoxel, "signal-chain": buildSignalChain };
 
   function attach(card, eduTitle) {
     if (!M || !card) return;
