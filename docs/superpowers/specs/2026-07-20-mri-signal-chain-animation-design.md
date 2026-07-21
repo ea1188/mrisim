@@ -31,40 +31,31 @@ var STAGES = [ { label, caption, kind: "svg"|"canvas", draw(ctxOrG, t) }, ... ] 
   hide the other (`display`).
 - A caption `div.diag-readout`, a stage-chip row, and a controls row.
 
-## The 9 stages
+## The stages (as shipped: 13, evolved from the original 9 through review)
 
-Each `draw(t)` renders that stage at clock `t` (seconds, looping). Coordinates are schematic.
+The original 9-stage sketch was expanded during iterative review into **13 stages**. Two structural
+decisions drove the change: (a) the whole encode/reconstruct half runs on **one real little picture**
+(a generated smiley + its actual k-space, built once via `centeredSpectrum(OBJ.img)` and
+reconstructed with `reconMag`) so nothing is abstract; (b) the "columns spin -> 2D k-space" leap is
+decompressed into its real physics — slice select (Gz), frequency encode (Gx / readout, kx), and
+phase encode (Gy, ky) as separate steps. A second canvas shows the image reconstructing live beside
+k-space.
 
-1. **Protons align (parallel/antiparallel in B0).** A ~5x4 grid of short spin arrows. A slight
-   majority point up (parallel, low energy) and the rest down (antiparallel); each arrowhead traces a
-   small circle (precession wobble) as `t` advances. A vertical B0 arrow with label on the left.
-   Caption: protons align with or against B0; slightly more align parallel (lower energy).
-2. **Net magnetization M0.** The grid arrows fade to faint; their vector sum resolves into one bold
-   longitudinal vector **M0** along +z (up). Animate the individual arrows shrinking/fading while M0
-   grows in. Caption: the small parallel excess sums to a net longitudinal magnetization M0 along B0.
-3. **RF pulse tips M into the transverse plane.** A small "RF" burst indicator (a short oscillation
-   near the coil), and the M0 vector spirals from +z down to the transverse (xy) plane over the
-   stage's loop (a 90 degree flip), tracing a helix. Caption: an RF pulse at the Larmor frequency tips
-   M into the transverse plane where it can be detected.
-4. **Precession + FID (T2* decay).** The transverse vector rotates in the plane at a steady rate while
-   its length shrinks (dephasing). Beside it, a decaying sinusoid (the free induction decay) draws out
-   synchronized to the rotation. Caption: the transverse magnetization precesses at the Larmor
-   frequency and decays (T2*), inducing the free induction decay.
-5. **Coil detects the signal.** A receiver-coil symbol; the rotating transverse component induces an
-   oscillating voltage shown as a live trace on the coil. Caption: the changing transverse
-   magnetization induces an oscillating voltage in the receiver coil, the raw MR signal.
-6. **Spatial encoding (slice / phase / frequency gradients).** A row of ~8 spins; a gradient "blip"
-   sweeps and winds their phase linearly across space (a phase ramp), i.e., position is encoded into
-   phase/frequency. Small labels Gz/Gy/Gx. Caption: slice, phase, and frequency gradients encode each
-   voxel's position into the signal's phase and frequency.
-7. **Signal fills k-space.** Canvas: the k-space magnitude image fills in line by line, center-out
-   (reuse `phantom(N)`, `centeredSpectrum`, `drawKMag`), animating rows appearing over the loop.
-   Caption: the encoded samples fill k-space; the center holds contrast, the edges hold fine detail.
-8. **2D Fourier transform.** Canvas: a brief transition from the k-space magnitude to the image
-   (reuse `reconMag`/`drawIMag`), e.g., a wipe or crossfade. Caption: a two-dimensional Fourier
-   transform converts k-space into the final image.
-9. **Image.** Canvas: the final reconstructed phantom image, steady. Caption: one-line recap, the same
-   chain from aligned protons to signal to k-space to image.
+**Signal physics (single voxel):** 1 Align, 2 Net M (M0 grows at a shared pivot), 3 RF (M spirals
+into the transverse plane), 4 FID (transverse precesses + decays T2* = the coil's induced voltage,
+while Mz recovers to M0, T1 — the vector spirals back up).
+
+**Imaging (the real picture):** 5 Object (a 3D body — stacked slices — millions of voxels each doing
+1-4); 6 Slice (RF+Gz excite one 2D slice, the smiley); 7 Encode (Gx makes each column of the slice
+precess at its own frequency); 8 Signal (the whole slice feeds one coil = one signal, explicitly the
+FID from step 4 with the readout gradient on); 9 Readout (sampling sweeps across one horizontal line
+of k-space, kx, bright center = contrast / faint edges = detail); 10 Phase (Gy picks which horizontal
+line, ky); 11 k-space (repeat readout x phase fills the 2D grid, image reconstructs live center-out);
+12 Detail (center-only reconstruction = blurry contrast vs edges-only = outlines); 13 Image (the same
+smiley recovered).
+
+Stages 1-10 are SVG (`svgEl`, the shared pivot/plane helpers, an inlined object `<image>` from
+`OBJ.url`); 11-13 are canvas (two side-by-side canvases: `kOff`/masked-k-space + `reconMag`).
 
 ## Interaction
 
