@@ -50,6 +50,7 @@
   var COURSE_COMPLETE_KEY = "mrisim_course_completed_v1"; // first course-completion record (synced)
   var COURSE_TARGET_KEY = "mrisim_course_target_v1"; // study-plan target date (local-only, not synced)
   var DIAG_PER_MODULE = 2;                              // questions sampled per module in the placement test
+  var CORE_MODULE_COUNT = 10;                           // the placement test covers only the core curriculum (2 x 10 = 20 Qs)
   var EXAM = null;  // active practice exam: { questions, picks, timer, timed, remaining, elapsed, reviewing }
   var STRIPE = window.MRISIM_STRIPE || {};
   // Free mode (config.js MRISIM_COURSE.free): any signed-in user gets the full course,
@@ -350,7 +351,7 @@
     if (!loadDiagnostic()) {
       main.appendChild(h("div", { class: "diag-card" }, [
         h("h3", { text: "New here? Take the placement test" }),
-        h("p", { text: "20 questions across every topic, about 10 minutes. It finds your weakest areas and points you where to start. It does not affect your progress." }),
+        h("p", { text: "20 questions across the core curriculum, about 10 minutes. It finds your weakest areas and points you where to start. It does not affect your progress." }),
         h("button", { class: "btn", type: "button", text: "Start the placement test", onclick: startDiagnostic }),
       ]));
     } else {
@@ -437,7 +438,6 @@
   // subsections, each with a checkbox that ticks when its lesson is done or its section is read.
   function buildRail() {
     var curriculum = CTX.curriculum, rail = CTX.rail, done = loadDone(), read = loadRead(), mastery = loadMastery();
-    var CORE_MODULE_COUNT = 10;
     var total = 0, complete = 0;
     var perMod = curriculum.map(function (mod) {
       var subs = moduleSubsections(mod);
@@ -1278,7 +1278,7 @@
 
   function startDiagnostic() {
     var questions = [], modTitles = [];
-    CTX.curriculum.forEach(function (mod) {
+    CTX.curriculum.slice(0, CORE_MODULE_COUNT).forEach(function (mod) {
       var pool = modulePool(mod);
       var pick = shuffleInts(pool.length).slice(0, Math.min(DIAG_PER_MODULE, pool.length));
       pick.forEach(function (idx) {
