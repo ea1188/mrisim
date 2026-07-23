@@ -32,10 +32,11 @@
 
   function showStep() {
     const step = STEPS[idx];
+    if (typeof step.reveal === "function") step.reveal();   // e.g. activate the tab holding the target
     const el = document.querySelector(step.el);
     if (!el) { next(); return; }                      // skip a control that isn't present
     const sec = el.closest("details.group");
-    if (sec && !sec.open) sec.open = true;            // open a collapsed section (main app)
+    if (sec && !sec.open) sec.open = true;            // open a collapsed section (pages using accordions)
     // skip a target with no layout box (e.g. the curve panel when the curve is hidden)
     if (!el.offsetParent && el.getClientRects().length === 0) { next(); return; }
     el.scrollIntoView({ block: "center", behavior: "smooth" });

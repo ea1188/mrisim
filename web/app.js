@@ -292,26 +292,26 @@ function maybeShowIntro() {
 
 // --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
 const TOUR = [
-  { el: "#sequence", title: "Pick a sequence",
+  { el: "#sequence", title: "Pick a sequence", reveal: () => showTab("setup"),
     text: "Choose the pulse sequence — Spin Echo, FLAIR, diffusion, angiography… The plain-language note just below says what each one is for." },
-  { el: "#tr", title: "Set the timing",
+  { el: "#tr", title: "Set the timing", reveal: () => showTab("contrast"),
     text: "Sweep <b>TR / TE / flip</b> to change the contrast — drag the slider, or type an exact value in the box (or arrow-key it)." },
   { el: "#mainImage", title: "The image",
     text: "The reconstructed slice. <b>Scroll</b> (or ↑/↓) to change slice, <b>drag</b> to window/level, and <b>hover</b> any pixel to read its tissue and T1 / T2 / PD." },
   { el: "#protocol-link", title: "Protocol planning",
     text: "Plan a whole exam like a <b>scanner console</b>: pick a protocol, then for each sequence <b>prescribe it on the scout images</b> — angle the plane, place the FOV, set the slices — and <b>Apply to acquire</b> (with scan time + SNR). Drag the acquired images between viewports, window/level, and re-run sequences. Opens in a new workspace." },
   { el: "#curvewrap", title: "The signal curve",
-    text: "Shows how signal depends on your settings. Switch what it plots — or hide it — in the <b>Visualizations</b> section." },
-  { el: "#preset", title: "Clinical presets",
+    text: "Shows how signal depends on your settings. Switch what it plots — or hide it — on the <b>Learn</b> tab." },
+  { el: "#preset-list", title: "Clinical presets",
     text: "Apply a real-world protocol in one click — every setting is filled in for you." },
   { el: "#compare", title: "Compare A / B",
     text: "Snapshot the current setup as <b>A</b>, change something, then <b>Compare</b> to see the two side by side." },
-  { el: "#acq3d", title: "3D & reconstruction",
+  { el: "#acq3d", title: "3D & reconstruction", reveal: () => showTab("quality"),
     text: "Acquire a whole <b>3D slab</b> once and reformat any plane. Reconstruction opens a PACS-style 2×2 view (three planes + a 3D MIP)." },
-  { el: "#measuremode", title: "Measure",
+  { el: "#measuremode", title: "Measure", reveal: () => showTab("learn"),
     text: "<b>Ruler</b> and <b>ROI</b> tools — drag on the image (or a reformat) to read a distance in mm, or an ROI's mean / SD / SNR." },
   { el: "#ctrl-find", title: "Find anything",
-    text: "Lost a control? Type here to jump straight to it — the panel filters as you type." },
+    text: "Lost a control? Type here — matching controls from every tab appear together as you type." },
   { el: "#lessons-btn", title: "Learn from scratch",
     text: "New to MRI? Open <b>Lessons</b> for short guided walkthroughs, or <b>Curriculum</b> for a beginner path. You can re-open this tour anytime from <b>?</b>." },
 ];
@@ -634,7 +634,8 @@ function buildControls(info) {
   wireLessons();
 
   setupSliderA11y();
-  setupCollapsibles();
+  setupTabs();
+  buildPresetRail();
   setupSearch();
   ["tr", "te", "ti", "fa", "np", "slabsharp", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap", "accel", "pv"].forEach((id) => {
     $(id).addEventListener("input", () => {
@@ -847,6 +848,7 @@ async function onPreset() {
   syncVisibility();
   applyingPreset = false;
   $("preset").value = name;           // keep the chosen preset shown
+  syncPresetRail();
   render();
 }
 
@@ -919,69 +921,94 @@ function wireNumbers() {
   });
 }
 
-// Collapsible control groups (<details data-sec>): remember each section's open/closed
-// state per-device so the panel opens the way the user left it.
-const SECTION_LS = "mrisim_sections";
-function loadSectionState() {
-  try { return JSON.parse(localStorage.getItem(SECTION_LS) || "{}"); } catch (e) { return {}; }
-}
-function setupCollapsibles() {
-  const saved = loadSectionState();
-  document.querySelectorAll("details.group[data-sec]").forEach((d) => {
-    const key = d.dataset.sec;
-    if (key in saved) d.open = !!saved[key];   // restore; else keep the HTML default
-    d.addEventListener("toggle", () => {
-      if (document.body.classList.contains("filtering")) return;  // don't persist filter-forced state
-      const s = loadSectionState(); s[key] = d.open;
-      try { localStorage.setItem(SECTION_LS, JSON.stringify(s)); } catch (e) { /* private mode */ }
-    });
+// Tabbed control strip: one pane (Setup / Contrast / Quality / Learn) visible at a
+// time; the active tab is remembered per-device.
+const TAB_LS = "mrisim_tab";
+function showTab(sec) {
+  document.querySelectorAll(".tabs button[data-tab]").forEach((b) => {
+    const on = b.dataset.tab === sec;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
   });
+  document.querySelectorAll(".pane[data-sec]").forEach((p) => { p.hidden = p.dataset.sec !== sec; });
+  try { localStorage.setItem(TAB_LS, sec); } catch (e) { /* private mode */ }
 }
-// Re-apply the user's saved (or default) open state — used when a filter clears.
-function restoreSectionState() {
-  const saved = loadSectionState();
-  document.querySelectorAll("details.group[data-sec]").forEach((d) => {
-    const key = d.dataset.sec;
-    d.open = key in saved ? !!saved[key] : d.hasAttribute("data-open-default");
-  });
+function setupTabs() {
+  document.querySelectorAll(".tabs button[data-tab]").forEach((b) =>
+    b.addEventListener("click", () => showTab(b.dataset.tab)));
+  let sec = "setup";
+  try { sec = localStorage.getItem(TAB_LS) || sec; } catch (e) { /* private mode */ }
+  if (!document.querySelector(`.pane[data-sec="${sec}"]`)) sec = "setup";
+  showTab(sec);
 }
 
-// Control search/filter: type to show only matching labels (and the groups holding
-// them, force-opened); empty restores the normal collapsed layout.
+// Presets rail: one button per preset, proxying the hidden #preset select — the
+// select stays the single source of truth (presets apply through its change event,
+// and a manual tweak resetting it to "" reads as Custom here).
+function buildPresetRail() {
+  const list = $("preset-list");
+  if (!list) return;
+  [...$("preset").options].forEach((o) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = o.value || "Custom";
+    b.addEventListener("click", () => {
+      $("preset").value = o.value;
+      $("preset").dispatchEvent(new Event("change"));
+      syncPresetRail();
+    });
+    li.dataset.preset = o.value;
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+  syncPresetRail();
+}
+function syncPresetRail() {
+  const cur = $("preset").value;
+  document.querySelectorAll("#preset-list li").forEach((li) =>
+    li.classList.toggle("active", li.dataset.preset === cur));
+}
+
+// Control search/filter: type to show only matching rows — across every tab at
+// once (panes and columns without a hit hide); clearing restores the active tab.
 function setupSearch() {
   const box = $("ctrl-find"), clear = $("ctrl-find-x"), empty = $("ctrl-find-empty");
   if (!box) return;
-  // Record each section's HTML default open state so we can restore it after filtering.
-  document.querySelectorAll("details.group[data-sec]").forEach((d) => {
-    if (d.open) d.setAttribute("data-open-default", "");
-  });
+  const colRows = (c) => c.querySelectorAll(":scope > label, :scope > p, :scope > div, :scope > button");
   const run = () => {
     const term = box.value.trim().toLowerCase();
     clear.hidden = term === "";
     if (!term) {
-      document.querySelectorAll("details.group[data-sec]").forEach((d) => {
-        d.hidden = false;
-        d.querySelectorAll(":scope > label, :scope > .btnrow, :scope > p, :scope > div").forEach((r) => { r.style.display = ""; });
+      document.querySelectorAll(".pane[data-sec]").forEach((p) => {
+        p.querySelectorAll(".col").forEach((c) => {
+          c.style.display = "";
+          colRows(c).forEach((r) => { r.style.display = ""; });
+        });
       });
-      restoreSectionState();                       // fires toggles — still guarded by .filtering
-      document.body.classList.remove("filtering"); // …so they aren't persisted
+      document.body.classList.remove("filtering");
+      showTab(document.querySelector(".tabs button.on")?.dataset.tab || "setup");
       empty.hidden = true;
       return;
     }
     document.body.classList.add("filtering");
     let anyHit = false;
-    document.querySelectorAll("details.group[data-sec]").forEach((d) => {
-      const heading = (d.querySelector("summary")?.textContent || "").toLowerCase();
-      const headingHit = heading.includes(term);
-      let groupHit = headingHit;
-      // Show/hide each direct control row by its text.
-      d.querySelectorAll(":scope > label, :scope > .btnrow, :scope > p, :scope > div").forEach((r) => {
-        const hit = headingHit || r.textContent.toLowerCase().includes(term);
-        r.style.display = hit ? "" : "none";
-        if (hit) groupHit = true;
+    document.querySelectorAll(".pane[data-sec]").forEach((p) => {
+      let paneHit = false;
+      p.querySelectorAll(".col").forEach((c) => {
+        const head = (c.querySelector(".subhead")?.textContent || "").toLowerCase();
+        const headHit = head.includes(term);
+        let colHit = headHit;
+        colRows(c).forEach((r) => {
+          const hit = headHit || r.textContent.toLowerCase().includes(term);
+          r.style.display = hit ? "" : "none";
+          if (hit) colHit = true;
+        });
+        c.style.display = colHit ? "" : "none";
+        if (colHit) paneHit = true;
       });
-      d.hidden = !groupHit;
-      if (groupHit) { d.open = true; anyHit = true; }
+      p.hidden = !paneHit;
+      if (paneHit) anyHit = true;
     });
     empty.hidden = anyHit;
   };
@@ -1271,7 +1298,7 @@ function wireScout() {
 let timer = null, pending2 = false, running = false;
 function schedule() {
   if (!booted) return;
-  if (!applyingPreset) $("preset").value = "";   // manual tweak → "custom"
+  if (!applyingPreset) { $("preset").value = ""; syncPresetRail(); }   // manual tweak → "custom"
   updateSeqHelp();                                // keep the clinical blurb current
   clearTimeout(timer);
   timer = setTimeout(render, 90);    // debounce; the worker keeps the UI free
@@ -1284,7 +1311,7 @@ function schedule() {
 let _dragRenderAt = 0;
 function scheduleScoutDrag() {
   if (!booted) return;
-  if (!applyingPreset) $("preset").value = "";
+  if (!applyingPreset) { $("preset").value = ""; syncPresetRail(); }
   const now = Date.now(), gap = now - _dragRenderAt;
   clearTimeout(timer);
   if (gap >= 110) { _dragRenderAt = now; render(); }
