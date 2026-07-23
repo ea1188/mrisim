@@ -259,9 +259,13 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .imgwrap, .curvewrap {
   position: relative;
   background: var(--canvas); border: 1px solid var(--border); border-radius: 2px;
-  display: grid; place-items: center; overflow: hidden;
+  overflow: hidden;
 }
-.imgwrap { min-height: 0; }
+.curvewrap { display: grid; place-items: center; }
+/* Flex centerer (not a content-sized grid): the wrap's stretched height is
+   definite, so the image's max-height:100% resolves and it scales to fit the
+   pinned row instead of overflowing (FOV planning was clipping its bottom). */
+.imgwrap { display: flex; align-items: center; justify-content: center; min-height: 0; min-width: 0; }
 /* The curve panel fills the viewport width (it was letterboxed small in a fixed
    220px box); a wide figure keeps it short enough not to crowd the image. */
 .curvewrap { padding: 4px; }
