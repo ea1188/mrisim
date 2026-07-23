@@ -191,8 +191,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 /* Viewport (center column, top row): image first, optional overlay panels below;
    the column scrolls internally when overlays exceed the space. */
 .viewport { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; overflow-y: auto; }
-/* Image + vertical slice rail share the top row; keep the image tall. */
-.image-row { display: flex; gap: 8px; min-height: min(48vh, 460px); min-width: 0; flex: 1 0 auto; }
+/* Overlay panels keep their natural height — the column scrolls rather than
+   flex-compressing them (which would clip the scout/curve figures). */
+.viewport > :not(.image-row) { flex: 0 0 auto; }
+/* Image + vertical slice rail share the top row; the image stays dominant but
+   yields down to its min-height so an enabled overlay peeks into view below. */
+.image-row { display: flex; gap: 8px; min-height: min(48vh, 460px); min-width: 0; flex: 1 1 auto; }
 .image-row .images { flex: 1; min-width: 0; }
 .slice-rail {
   /* The rail column stretches to the row (image) height via the flex line's
