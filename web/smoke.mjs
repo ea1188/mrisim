@@ -56,19 +56,19 @@ try {
   await page.click("#intro-x");
   await page.waitForSelector("#intro", { state: "hidden", timeout: 5_000 });
 
-  step("UI: collapsible groups, numeric entry, search");
-  // Advanced groups start collapsed (shorter scroll); core groups stay open.
-  if (await page.evaluate(() => document.querySelector('details[data-sec="acquisition"]').open))
-    fail("Acquisition group should start collapsed");
-  if (!(await page.evaluate(() => document.querySelector('details[data-sec="protocol"]').open)))
-    fail("Protocol group should start open");
-  // Clicking a section header expands it.
-  await page.click('details[data-sec="acquisition"] > summary');
-  if (!(await page.evaluate(() => document.querySelector('details[data-sec="acquisition"]').open)))
-    fail("clicking the Acquisition header did not expand it");
+  step("UI: tabbed control strip, numeric entry, search");
+  // The Setup pane shows by default; the other panes wait behind their tabs.
+  if (!(await page.evaluate(() => document.querySelector('.pane[data-sec="setup"]').offsetParent !== null)))
+    fail("Setup pane should be visible initially");
+  if (await page.evaluate(() => document.querySelector('.pane[data-sec="quality"]').offsetParent !== null))
+    fail("Quality pane should be hidden initially");
+  await page.click('.tabs button[data-tab="quality"]');
+  if (!(await page.evaluate(() => document.querySelector('.pane[data-sec="quality"]').offsetParent !== null)))
+    fail("clicking the Quality tab did not show its pane");
 
   // Editable numeric value: typing an exact TR into its number field drives the
-  // slider and re-renders the image. (Timing is open by default.)
+  // slider and re-renders the image. (TR lives on the Contrast tab.)
+  await page.click('.tabs button[data-tab="contrast"]');
   const numBefore = await page.getAttribute("#mainImage", "src");
   await page.fill("#tr-val", "2200");
   await page.waitForFunction(() => document.getElementById("tr").value === "2200", { timeout: 5_000 });
@@ -76,17 +76,24 @@ try {
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     numBefore, { timeout: 15_000 });
 
-  // Control search: filtering by "bandwidth" reveals (and opens) the Acquisition
-  // group and hides unrelated groups; clearing restores them.
+  // Control search: filtering by "bandwidth" surfaces the Quality pane's matching
+  // row from any tab; clearing restores the active (Contrast) tab.
   await page.fill("#ctrl-find", "bandwidth");
   await page.waitForFunction(() => {
-    const acq = document.querySelector('details[data-sec="acquisition"]');
-    const tim = document.querySelector('details[data-sec="timing"]');
-    return acq && !acq.hidden && acq.open && tim && tim.hidden;
+    const qual = document.querySelector('.pane[data-sec="quality"]');
+    const con = document.querySelector('.pane[data-sec="contrast"]');
+    return document.body.classList.contains("filtering")
+      && qual && qual.offsetParent !== null
+      && document.getElementById("bw").offsetParent !== null
+      && con && con.offsetParent === null;
   }, { timeout: 5_000 });
   await page.fill("#ctrl-find", "");
-  await page.waitForFunction(
-    () => !document.querySelector('details[data-sec="timing"]').hidden, { timeout: 5_000 });
+  await page.waitForFunction(() => {
+    const qual = document.querySelector('.pane[data-sec="quality"]');
+    const con = document.querySelector('.pane[data-sec="contrast"]');
+    return !document.body.classList.contains("filtering")
+      && con && con.offsetParent !== null && qual && qual.offsetParent === null;
+  }, { timeout: 5_000 });
 
   step("feature tour");
   // The ? button opens the welcome; "Take the feature tour" starts the spotlight
@@ -106,9 +113,9 @@ try {
   await page.click("#tour-skip");
   await page.waitForSelector("#tour", { state: "hidden", timeout: 5_000 });
 
-  // Expand every group so all controls are actionable in the functional tests below
-  // (the collapse/search UX itself is covered above).
-  await page.evaluate(() => document.querySelectorAll("details.group").forEach((d) => { d.open = true; }));
+  // Unhide every pane so all controls are actionable in the functional tests below
+  // (the tab/search UX itself is covered above).
+  await page.evaluate(() => document.querySelectorAll(".pane[data-sec]").forEach((p) => { p.hidden = false; }));
 
   // The topbar shows the running engine version (e.g. "browser edition · v1.6.1").
   const tag = await page.textContent(".tag");
@@ -149,6 +156,18 @@ try {
   await page.waitForFunction(
     (prev) => { const s = document.getElementById("mainImage").src; return s && s !== prev; },
     before, { timeout: 30_000 });
+  // The presets rail mirrors the select: the applied preset's row is highlighted,
+  // and clicking another row applies that preset.
+  await page.waitForFunction(
+    (name) => document.querySelector(`#preset-list li[data-preset="${name}"]`)?.classList.contains("active"),
+    presets[0], { timeout: 5_000 });
+  if (presets.length > 1) {
+    await page.click(`#preset-list li[data-preset="${presets[1]}"] button`);
+    await page.waitForFunction(
+      (name) => document.querySelector(`#preset-list li[data-preset="${name}"]`)?.classList.contains("active")
+        && document.getElementById("preset").value === name,
+      presets[1], { timeout: 30_000 });
+  }
 
   step("A/B compare");
   // A/B compare: snapshot A, tweak B, expect two images + a delta line.
