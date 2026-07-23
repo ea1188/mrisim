@@ -158,6 +158,17 @@
       <label class="visually-hidden">Preset
         <select id="preset"><option value="">— custom —</option></select></label>
       <ol id="preset-list"></ol>
+      <section id="metrics" aria-label="Measurements">
+        <h2>Measurements</h2>
+        <table>
+          <tr><td>Resolution</td><td id="x-res">—</td></tr>
+          <tr><td>Scan time</td><td id="x-scan">—</td></tr>
+          <tr><td id="x-snr-cap">SNR (WM / GM)</td><td id="x-snr">—</td></tr>
+          <tr><td id="x-cnr-cap">CNR (WM–GM)</td><td id="x-cnr">—</td></tr>
+          <tr><td>SAR (head)</td><td id="x-sar">—</td></tr>
+        </table>
+        <p class="hint" id="hint" role="status" aria-live="polite"></p>
+      </section>
     </aside>
 
     <!-- Viewport -->
@@ -185,12 +196,6 @@
         </div>
       </div>
       <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>
-      <div class="curvewrap" id="curvewrap"><img id="curveImage" alt="signal curve" /></div>
-      <div class="curvewrap" id="cmapwrap" hidden><img id="cmapImage" alt="TR×TE contrast map" /></div>
-      <div class="kspacewrap" id="kspacewrap" hidden><img id="kspaceImage" alt="k-space (log magnitude)" /></div>
-      <div class="kspacewrap" id="b0mapwrap" hidden><img id="b0mapImage" alt="B0 off-resonance field map" /></div>
-      <div class="kspacewrap" id="gfactorwrap" hidden><img id="gfactorImage" alt="parallel-imaging g-factor map" /></div>
-      <div class="curvewrap" id="psdwrap" hidden><img id="psdImage" alt="pulse-sequence diagram" /></div>
       <div class="reconwrap" id="reconwrap" hidden>
         <div class="recon-tri" id="recon-tri">
           <img id="reconAxial" alt="MPR axial reformat" />
@@ -202,7 +207,20 @@
         <svg id="recon-measure-svg" aria-hidden="true"></svg>
         <p class="tiny" id="recon-msg" hidden></p>
       </div>
-      <div class="mathwrap" id="mathwrap" hidden><div class="mathbox" id="math">Hover a pixel to see its signal equation.</div></div>
+
+      <!-- Floating inspector: enabled chart/overlay panels pop up here over the
+           image instead of stacking below it (the viewport itself never scrolls). -->
+      <div id="overlay-pop" hidden>
+        <div class="op-head"><span>Inspect</span>
+          <button id="overlay-pop-x" type="button" title="Close (turns these overlays off)" aria-label="Close inspector">✕</button></div>
+        <div class="curvewrap" id="curvewrap" hidden><img id="curveImage" alt="signal curve" /></div>
+        <div class="curvewrap" id="cmapwrap" hidden><img id="cmapImage" alt="TR×TE contrast map" /></div>
+        <div class="kspacewrap" id="kspacewrap" hidden><img id="kspaceImage" alt="k-space (log magnitude)" /></div>
+        <div class="kspacewrap" id="b0mapwrap" hidden><img id="b0mapImage" alt="B0 off-resonance field map" /></div>
+        <div class="kspacewrap" id="gfactorwrap" hidden><img id="gfactorImage" alt="parallel-imaging g-factor map" /></div>
+        <div class="curvewrap" id="psdwrap" hidden><img id="psdImage" alt="pulse-sequence diagram" /></div>
+        <div class="mathwrap" id="mathwrap" hidden><div class="mathbox" id="math">Hover a pixel to see its signal equation.</div></div>
+      </div>
     </section>
 
     <!-- Control strip: four tab panes below the image (scanner-console model). -->
@@ -403,7 +421,7 @@
         <div class="col">
           <h3 class="subhead">Overlays</h3>
         <p class="tiny">Optional overlays &amp; side panels — each adds a view to help explain what's happening.</p>
-        <label class="check"><input type="checkbox" id="curveshow" checked /> Signal curve</label>
+        <label class="check"><input type="checkbox" id="curveshow" /> Signal curve</label>
         <label id="curvemode-row">Curve type
           <select id="curvemode">
             <option value="TE decay">TE decay (T2 contrast)</option>
@@ -447,18 +465,6 @@
       </div>
     </section>
 
-    <!-- Metrics -->
-    <section class="panel" id="metrics" aria-label="Measurements">
-      <h2>Measurements</h2>
-      <table>
-        <tr><td>Resolution</td><td id="x-res">—</td></tr>
-        <tr><td>Scan time</td><td id="x-scan">—</td></tr>
-        <tr><td id="x-snr-cap">SNR (WM / GM)</td><td id="x-snr">—</td></tr>
-        <tr><td id="x-cnr-cap">CNR (WM–GM)</td><td id="x-cnr">—</td></tr>
-        <tr><td>SAR (head)</td><td id="x-sar">—</td></tr>
-      </table>
-      <p class="hint" id="hint" role="status" aria-live="polite"></p>
-    </section>
   </main>
 
   <!-- Pyodide is loaded inside worker.js (off the main thread). -->

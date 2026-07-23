@@ -69,7 +69,7 @@ body {
 /* Layout — scanner-console grid (planner model): presets rail | image | metrics,
    with the tabbed control strip in a bottom row under the image. The page never
    scrolls on desktop; the rail, viewport and strip scroll internally. */
-#app { display: grid; grid-template-columns: 232px minmax(0, 1fr) 230px;
+#app { display: grid; grid-template-columns: 232px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto; gap: 10px; padding: 10px; height: calc(100% - 52px); }
 .panel { background: var(--panel); border-radius: 2px; padding: 12px; overflow-y: auto; }
 
@@ -82,7 +82,8 @@ body {
   color: #c4cad2; font-size: 12px; padding: 7px 8px; border-radius: 2px; cursor: pointer; }
 #preset-list button:hover { background: var(--raised); color: var(--text); }
 #preset-list li.active button { background: #142231; color: var(--accent-hi); outline: 1px solid var(--accent); }
-#metrics { grid-column: 3; grid-row: 1 / 3; }
+#metrics { flex: none; border-top: 1px solid var(--border); padding: 8px 12px 10px; }
+#metrics h2 { font-size: 11px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin: 0 0 2px; }
 
 /* Control strip (bottom row): tab bar + one visible pane; scrolls internally. */
 .strip { grid-column: 2; max-height: 40vh; overflow-y: auto; }
@@ -188,15 +189,31 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 }
 .radios button.on { background: #142231; color: var(--accent-hi); border-color: var(--accent); }
 
-/* Viewport (center column, top row): image first, optional overlay panels below;
-   the column scrolls internally when overlays exceed the space. */
-.viewport { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; overflow-y: auto; }
-/* Overlay panels keep their natural height — the column scrolls rather than
-   flex-compressing them (which would clip the scout/curve figures). */
-.viewport > :not(.image-row) { flex: 0 0 auto; }
-/* Image + vertical slice rail share the top row; the image stays dominant but
-   yields down to its min-height so an enabled overlay peeks into view below. */
-.image-row { display: flex; gap: 8px; min-height: min(48vh, 460px); min-width: 0; flex: 1 1 auto; }
+/* Viewport (center column, top row): pinned — it never scrolls. The image (and,
+   when enabled, the scout / reconstruction workspace views) share the fixed space;
+   chart overlays float in the #overlay-pop inspector instead of stacking below. */
+.viewport { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0;
+  overflow: hidden; position: relative; }
+/* Image + vertical slice rail share the top row; the image yields when a
+   workspace view (scout / recon) is open below it. vh-scaled minimums keep the
+   worst case (image + scout + recon together) inside the pinned space. */
+.image-row { display: flex; gap: 8px; min-height: 20vh; min-width: 0; flex: 2 1 0; }
+
+/* Floating inspector: hosts the enabled chart/overlay panels over the image. */
+#overlay-pop {
+  position: absolute; right: 12px; bottom: 12px; z-index: 6;
+  width: min(400px, 44%); max-height: calc(100% - 24px); overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--border-hi); border-radius: 2px;
+  padding: 8px 10px 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.op-head { display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase;
+  font-weight: 700; margin-bottom: 6px; }
+.op-head button { background: none; border: none; color: var(--text-dim); font-size: 13px;
+  cursor: pointer; padding: 0 2px; }
+.op-head button:hover { color: var(--text); }
+#overlay-pop .curvewrap, #overlay-pop .kspacewrap, #overlay-pop .mathwrap { margin-top: 8px; }
+#overlay-pop .curvewrap:first-of-type { margin-top: 0; }
 .image-row .images { flex: 1; min-width: 0; }
 .slice-rail {
   /* The rail column stretches to the row (image) height via the flex line's
@@ -229,16 +246,14 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 }
 .scoutwrap {
   background: var(--canvas); border: 1px solid var(--border); border-radius: 2px;
-  display: grid; place-items: center; overflow: hidden;
-  /* Size to the localizer's natural height (capped) rather than a fixed box: a
-     percentage height on the image is unreliable inside this grid row and let the
-     image overflow a fixed box, clipping the localizer to its top half. */
-  height: auto; max-height: 60vh;
+  /* Flex centerer with a flexed (definite) height so the img's max-height:100%
+     resolves — a content-sized grid row makes it circular and the scout clips. */
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  flex: 1 1 0; min-height: 14vh; max-height: 60vh;
 }
-/* Full-width, natural height: the element equals the displayed image (no
-   letterbox), so the scout-drag math in app.js (imgFraction) maps exactly, and
-   the whole localizer is visible rather than clipped to its top half. */
-#scoutImage { display: block; width: 100%; height: auto; }
+/* Fit the localizer inside the box, aspect preserved — the img element equals the
+   displayed image, and the scout-drag math (imgFraction) already letterbox-corrects. */
+#scoutImage { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
 .images { display: flex; gap: 10px; min-height: 0; }
 .images .imgwrap { flex: 1; min-width: 0; }
 .imgwrap, .curvewrap {
@@ -273,20 +288,25 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   display: grid; place-items: center; padding: 4px; overflow: hidden;
 }
 #kspaceImage, #b0mapImage, #gfactorImage { display: block; height: auto; max-width: 100%; max-height: 320px; }
-/* 3-D reconstruction panels: triplanar MPR grid + a single MIP/oblique view. */
-.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 2px; padding: 6px; }
-/* align-items:start so a thin reformat keeps its true (aspect-derived) height
-   instead of being stretched to the tallest panel's row height. */
+/* 3-D reconstruction panels: triplanar MPR grid + a single MIP/oblique view.
+   Fits its share of the pinned viewport — panels scale down, nothing scrolls. */
+.reconwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 2px; padding: 6px;
+  flex: 2 1 0; min-height: 16vh; overflow: hidden; display: flex; flex-direction: column; }
 .reconwrap { position: relative; }
 /* Measure overlay positioned over the active recon panel during a drag. */
 #recon-measure-svg { position: absolute; pointer-events: none; left: 0; top: 0; width: 0; height: 0; overflow: visible; }
 .reconwrap.measuring .recon-tri img:not(#reconOverview) { cursor: crosshair; }
-.recon-tri { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
-.recon-tri img { width: 100%; height: auto; display: block; background: var(--canvas); border-radius: 2px; cursor: crosshair; }
+/* Fit-to-box 2×2: definite 1fr rows (the wrap's flexed height is definite) let
+   each panel's max-height resolve, so all four reformats stay fully visible. */
+.recon-tri { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 6px;
+  flex: 1; min-height: 0; align-items: center; justify-items: center; }
+.recon-tri img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;
+  background: var(--canvas); border-radius: 2px; cursor: crosshair; }
 /* The 3D MIP overview is a reference, not a cross panel — no click-to-navigate. */
 .recon-tri #reconOverview { cursor: default; }
-.recon-single { display: grid; place-items: center; }
-.recon-single img { display: block; height: auto; max-width: 100%; max-height: 56vh; }
+.recon-single { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; }
+.recon-single img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; }
 .recon-modectl { margin-top: 2px; }
 @media (max-width: 560px) { .recon-tri { grid-template-columns: 1fr; } }
 .mathwrap { background: var(--canvas); border: 1px solid var(--border); border-radius: 2px; padding: 12px 14px; }
@@ -474,7 +494,9 @@ kbd {
 /* Responsive — stack to a single column with the image first on narrow screens. */
 @media (max-width: 920px) {
   #app { grid-template-columns: 1fr; grid-template-rows: none; height: auto; overflow: visible; }
-  #preset-rail, #metrics, .strip { grid-column: auto; grid-row: auto; }
+  #preset-rail, .strip { grid-column: auto; grid-row: auto; }
+  .viewport { overflow: visible; }
+  #overlay-pop { position: static; width: auto; max-height: none; box-shadow: none; }
   .viewport { order: -1; min-height: 52vh; overflow: visible; }
   .strip { max-height: none; overflow: visible; }
   #preset-list { max-height: 30vh; }

@@ -300,8 +300,8 @@ const TOUR = [
     text: "The reconstructed slice. <b>Scroll</b> (or ↑/↓) to change slice, <b>drag</b> to window/level, and <b>hover</b> any pixel to read its tissue and T1 / T2 / PD." },
   { el: "#protocol-link", title: "Protocol planning",
     text: "Plan a whole exam like a <b>scanner console</b>: pick a protocol, then for each sequence <b>prescribe it on the scout images</b> — angle the plane, place the FOV, set the slices — and <b>Apply to acquire</b> (with scan time + SNR). Drag the acquired images between viewports, window/level, and re-run sequences. Opens in a new workspace." },
-  { el: "#curvewrap", title: "The signal curve",
-    text: "Shows how signal depends on your settings. Switch what it plots — or hide it — on the <b>Learn</b> tab." },
+  { el: "#curveshow", title: "The signal curve", reveal: () => showTab("learn"),
+    text: "Tick <b>Signal curve</b> (or any overlay here) and it pops up over the image — showing how signal depends on your settings." },
   { el: "#preset-list", title: "Clinical presets",
     text: "Apply a real-world protocol in one click — every setting is filled in for you." },
   { el: "#compare", title: "Compare A / B",
@@ -636,6 +636,7 @@ function buildControls(info) {
   setupSliderA11y();
   setupTabs();
   buildPresetRail();
+  setupOverlayPop();
   setupSearch();
   ["tr", "te", "ti", "fa", "np", "slabsharp", "slice", "matrix", "bw", "nex", "thick", "bval", "etl", "nslices", "sgap", "accel", "pv"].forEach((id) => {
     $(id).addEventListener("input", () => {
@@ -968,6 +969,27 @@ function syncPresetRail() {
   const cur = $("preset").value;
   document.querySelectorAll("#preset-list li").forEach((li) =>
     li.classList.toggle("active", li.dataset.preset === cur));
+}
+
+// Floating inspector (#overlay-pop): hosts the chart/overlay panels over the image.
+// Each wrap's [hidden] is still driven by its own checkbox handler; the popup just
+// shows itself while any wrap is visible. Its ✕ switches those overlays off.
+const OVERLAY_TOGGLES = {
+  curvewrap: "curveshow", cmapwrap: "cmap", kspacewrap: "kspaceshow",
+  b0mapwrap: "b0mapshow", gfactorwrap: "gfactorshow", psdwrap: "psdshow", mathwrap: "mathshow",
+};
+function setupOverlayPop() {
+  const pop = $("overlay-pop");
+  if (!pop) return;
+  const sync = () => { pop.hidden = Object.keys(OVERLAY_TOGGLES).every((id) => $(id).hidden); };
+  const obs = new MutationObserver(sync);
+  Object.keys(OVERLAY_TOGGLES).forEach((id) => obs.observe($(id), { attributes: true, attributeFilter: ["hidden"] }));
+  $("overlay-pop-x").addEventListener("click", () => {
+    Object.entries(OVERLAY_TOGGLES).forEach(([wrap, box]) => {
+      if (!$(wrap).hidden && $(box).checked) { $(box).checked = false; $(box).dispatchEvent(new Event("change")); }
+    });
+  });
+  sync();
 }
 
 // Control search/filter: type to show only matching rows — across every tab at
