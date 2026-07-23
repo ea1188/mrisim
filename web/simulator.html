@@ -197,11 +197,14 @@
       </div>
       <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>
       <div class="reconwrap" id="reconwrap" hidden>
+        <!-- Each panel sits in a flex-centerer cell: WebKit doesn't reliably resolve a
+             replaced element's max-height % against a grid area, so imgs never go bare
+             in the grid. -->
         <div class="recon-tri" id="recon-tri">
-          <img id="reconAxial" alt="MPR axial reformat" />
-          <img id="reconCoronal" alt="MPR coronal reformat" />
-          <img id="reconSagittal" alt="MPR sagittal reformat" />
-          <img id="reconOverview" alt="3D MIP overview of the slab" />
+          <div class="rcell"><img id="reconAxial" alt="MPR axial reformat" /></div>
+          <div class="rcell"><img id="reconCoronal" alt="MPR coronal reformat" /></div>
+          <div class="rcell"><img id="reconSagittal" alt="MPR sagittal reformat" /></div>
+          <div class="rcell"><img id="reconOverview" alt="3D MIP overview of the slab" /></div>
         </div>
         <div class="recon-single" id="recon-single" hidden><img id="reconMain" alt="reconstruction" /></div>
         <svg id="recon-measure-svg" aria-hidden="true"></svg>
