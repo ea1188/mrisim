@@ -975,7 +975,7 @@ function syncPresetRail() {
 function setupSearch() {
   const box = $("ctrl-find"), clear = $("ctrl-find-x"), empty = $("ctrl-find-empty");
   if (!box) return;
-  const colRows = (c) => c.querySelectorAll(":scope > label, :scope > .btnrow, :scope > p, :scope > div, :scope > button");
+  const colRows = (c) => c.querySelectorAll(":scope > label, :scope > p, :scope > div, :scope > button");
   const run = () => {
     const term = box.value.trim().toLowerCase();
     clear.hidden = term === "";

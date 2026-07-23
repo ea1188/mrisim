@@ -175,7 +175,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   input[type=range]::-moz-range-thumb { width: 28px; height: 28px; }
   input[type=checkbox] { width: 22px; height: 22px; }
   .numval { min-height: 32px; width: 66px; }
-  .radios button, .btnrow button, select, #measure-clear, .lp-btns button,
+  .radios button, select, #measure-clear, .lp-btns button,
   .tabs button, .strip-actions button, #preset-list button { min-height: 42px; }
   label.check { padding: 4px 0; }
   .lesson-item { padding: 14px 13px; }
@@ -319,15 +319,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
   font-size: 11px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
   max-width: calc(100% - 16px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
-/* Buttons */
-.btnrow { display: flex; gap: 6px; margin-top: 8px; }
-.btnrow button {
-  flex: 1; background: var(--raised); color: var(--text); border: 1px solid var(--border);
-  border-radius: 2px; padding: 6px 4px; font-size: 11px; font-weight: 700; cursor: pointer;
-}
-.btnrow button:hover { border-color: var(--border-hi); }
-.btnrow button.on { background: #142231; color: var(--accent-hi); border-color: var(--accent); }
 
 /* Metrics */
 #metrics table { width: 100%; border-collapse: collapse; }
