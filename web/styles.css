@@ -300,11 +300,13 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 /* Measure overlay positioned over the active recon panel during a drag. */
 #recon-measure-svg { position: absolute; pointer-events: none; left: 0; top: 0; width: 0; height: 0; overflow: visible; }
 .reconwrap.measuring .recon-tri img:not(#reconOverview) { cursor: crosshair; }
-/* Fit-to-box 2×2: definite 1fr rows (the wrap's flexed height is definite) let
-   each panel's max-height resolve, so all four reformats stay fully visible. */
+/* Fit-to-box 2×2: definite tracks; each cell is a stretched flex centerer, so the
+   img's max-height:100% resolves per the flexbox spec in every engine (WebKit does
+   not honour it against a bare grid area). */
 .recon-tri { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 6px;
-  flex: 1; min-height: 0; align-items: center; justify-items: center; }
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; flex: 1; min-height: 0; }
+.recon-tri .rcell { display: flex; align-items: center; justify-content: center;
+  min-width: 0; min-height: 0; }
 .recon-tri img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;
   background: var(--canvas); border-radius: 2px; cursor: crosshair; }
 /* The 3D MIP overview is a reference, not a cross panel — no click-to-navigate. */
