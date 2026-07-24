@@ -946,22 +946,48 @@ function setupTabs() {
 // Presets rail: one button per preset, proxying the hidden #preset select — the
 // select stays the single source of truth (presets apply through its change event,
 // and a manual tweak resetting it to "" reads as Custom here).
+// Region a preset belongs to, from its name prefix — mirrors the engine's
+// get_preset_region() so the rail groups the way the protocol list is authored.
+const PRESET_REGION_PREFIX = [
+  ["Abdomen", "Abdomen"], ["Spine", "Spine"], ["Pelvis", "Pelvis"], ["Knee", "Knee"],
+  ["Torso", "Torso"], ["Cardiac", "Cardiac"], ["MRCP", "Abdomen"],
+  ["Brain", "Brain"], ["DWI", "Brain"], ["ADC", "Brain"], ["DTI", "Brain"],
+  ["TOF", "Brain"], ["fMRI", "Brain"],
+];
+function presetRegion(name) {
+  const hit = PRESET_REGION_PREFIX.find(([p]) => name.startsWith(p));
+  return hit ? hit[1] : "Other";
+}
+function addPresetRow(list, value, label) {
+  const li = document.createElement("li");
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = label;
+  b.addEventListener("click", () => {
+    $("preset").value = value;
+    $("preset").dispatchEvent(new Event("change"));
+    syncPresetRail();
+  });
+  li.dataset.preset = value;
+  li.appendChild(b);
+  list.appendChild(li);
+}
 function buildPresetRail() {
   const list = $("preset-list");
   if (!list) return;
+  let lastRegion = null;
   [...$("preset").options].forEach((o) => {
-    const li = document.createElement("li");
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = o.value || "Custom";
-    b.addEventListener("click", () => {
-      $("preset").value = o.value;
-      $("preset").dispatchEvent(new Event("change"));
-      syncPresetRail();
-    });
-    li.dataset.preset = o.value;
-    li.appendChild(b);
-    list.appendChild(li);
+    if (!o.value) { addPresetRow(list, "", "Custom"); return; }   // custom state row (no section header)
+    const region = presetRegion(o.value);
+    if (region !== lastRegion) {                                  // section header before each region's first row
+      const h = document.createElement("li");
+      h.className = "rail-section";
+      h.setAttribute("aria-hidden", "true");
+      h.textContent = region;
+      list.appendChild(h);
+      lastRegion = region;
+    }
+    addPresetRow(list, o.value, o.value);
   });
   syncPresetRail();
 }
@@ -989,7 +1015,39 @@ function setupOverlayPop() {
       if (!$(wrap).hidden && $(box).checked) { $(box).checked = false; $(box).dispatchEvent(new Event("change")); }
     });
   });
+  makeOverlayDraggable(pop);
   sync();
+}
+
+// Drag the inspector by its header to move it off the image's baked annotations.
+// Positioned via left/top (switching off the default right/bottom anchor), clamped
+// to the viewport so it can't be dragged out of reach.
+function makeOverlayDraggable(pop) {
+  const head = pop.querySelector(".op-head");
+  if (!head) return;
+  let dragging = false, dx = 0, dy = 0;
+  const onDown = (e) => {
+    if (e.target.closest("button")) return;            // the ✕ isn't a drag handle
+    const host = pop.offsetParent || document.documentElement;
+    const hr = host.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+    dx = e.clientX - pr.left; dy = e.clientY - pr.top;
+    pop.style.right = "auto"; pop.style.bottom = "auto";
+    pop.style.left = (pr.left - hr.left) + "px"; pop.style.top = (pr.top - hr.top) + "px";
+    dragging = true; head.setPointerCapture(e.pointerId); e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    const host = pop.offsetParent || document.documentElement;
+    const hr = host.getBoundingClientRect();
+    const maxL = hr.width - pop.offsetWidth, maxT = hr.height - pop.offsetHeight;
+    pop.style.left = clampN(e.clientX - hr.left - dx, 0, Math.max(0, maxL)) + "px";
+    pop.style.top = clampN(e.clientY - hr.top - dy, 0, Math.max(0, maxT)) + "px";
+  };
+  const onUp = () => { dragging = false; };
+  head.addEventListener("pointerdown", onDown);
+  head.addEventListener("pointermove", onMove);
+  head.addEventListener("pointerup", onUp);
+  head.addEventListener("pointercancel", onUp);
 }
 
 // Control search/filter: type to show only matching rows — across every tab at
