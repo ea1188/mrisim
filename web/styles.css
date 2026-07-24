@@ -82,6 +82,10 @@ body {
   color: #c4cad2; font-size: 12px; padding: 7px 8px; border-radius: 2px; cursor: pointer; }
 #preset-list button:hover { background: var(--raised); color: var(--text); }
 #preset-list li.active button { background: #142231; color: var(--accent-hi); outline: 1px solid var(--accent); }
+/* Region section headers group the protocol list like a scanner's exam tree. */
+.rail-section { color: var(--text-faint); font-size: 9px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; padding: 10px 8px 3px; }
+.rail-section:first-child { padding-top: 2px; }
 #metrics { flex: none; border-top: 1px solid var(--border); padding: 8px 12px 10px; }
 #metrics h2 { font-size: 11px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin: 0 0 2px; }
 
@@ -208,7 +212,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 }
 .op-head { display: flex; align-items: center; justify-content: space-between;
   font-size: 10px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase;
-  font-weight: 700; margin-bottom: 6px; }
+  font-weight: 700; margin-bottom: 6px; cursor: move; touch-action: none; user-select: none; }
 .op-head button { background: none; border: none; color: var(--text-dim); font-size: 13px;
   cursor: pointer; padding: 0 2px; }
 .op-head button:hover { color: var(--text); }

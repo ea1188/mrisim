@@ -162,11 +162,15 @@ def draw_gradient_echo_psd(fig: Any, TR: float, TE: float, flip_angle: float) ->
     t_pe = 0.24 * TE
     for a in np.linspace(-0.85, 0.85, 7):
         _trap(ax[2], t_pe, gw, a, PE_C, fill=False)
-    for a in np.linspace(0.85, -0.85, 7):          # rewinder after readout
-        _trap(ax[2], TE + 0.55 * row, gw, a, PE_C, fill=False)
+    # Spoiled (FLASH/SPGR): the phase encode is NOT rewound; instead an end-of-TR
+    # spoiler on slice + readout dephases the residual transverse magnetisation.
+    t_spoil = TE + 0.65 * row
+    _trap(ax[1], t_spoil, gw, 1.15, SS_C)
     # No 180° → prephaser is NEGATIVE (opposite sign to the readout)
     _trap(ax[3], t_pe, gw, -0.7, RO_C)
     _trap(ax[3], TE, row, 0.8, RO_C)
+    _trap(ax[3], t_spoil, gw, 1.15, RO_C)          # readout spoiler
+    ax[3].text(t_spoil, -0.95, "spoiler", ha="center", va="top", fontsize=6, color=RO_C)
     _echo(ax[4], TE, ew, 0.65); _adc(ax[4], TE, row)
     _te_bracket(ax[0], 0.0, TE, f"TE = {TE:.0f} ms")
     _tr_marker(ax, t1, TR, span)
@@ -213,7 +217,8 @@ def draw_inversion_recovery_psd(fig: Any, TR: float, TE: float, TI: float) -> No
 # --------------------------------------------------------------------------- #
 #  FSE / TSE — 90° then a 180° echo train
 # --------------------------------------------------------------------------- #
-def draw_fse_psd(fig: Any, TR: float, TE: float, etl: int, echo_spacing: float) -> None:
+def draw_fse_psd(fig: Any, TR: float, TE: float, etl: int, echo_spacing: float,
+                 t2: float = 90.0) -> None:
     n = max(1, min(int(etl), 6))
     esp = echo_spacing
     t0, t1 = -0.35 * esp, (n + 0.55) * esp
@@ -233,7 +238,9 @@ def draw_fse_psd(fig: Any, TR: float, TE: float, etl: int, echo_spacing: float) 
         _trap(ax[2], techo - 0.30 * esp, gw, amps[i], PE_C)
         _trap(ax[2], techo + 0.30 * esp, gw, -amps[i], PE_C)
         _trap(ax[3], techo, 0.34 * esp, 0.8, RO_C)
-        decay = float(np.exp(-i * esp / max(TE, 1.0)))
+        # The echo-train envelope decays with tissue T2 (each echo is at t=techo),
+        # not with the user's TE — that's the physical CPMG amplitude.
+        decay = float(np.exp(-techo / max(t2, 1.0)))
         _echo(ax[4], techo, ew, 0.85 * decay)
         _adc(ax[4], techo, 0.34 * esp)
     # effective TE marker (centre of k-space)
@@ -400,12 +407,13 @@ def draw_psd(
     etl: int = 1,
     echo_spacing: float = 10,
     b_value: float = 1000,
+    t2: float = 90.0,
 ) -> None:
     """Draw the appropriate pulse-sequence diagram for ``sequence``."""
     if sequence == "Spin Echo":
         draw_spin_echo_psd(fig, TR, TE)
     elif sequence == "FSE / TSE":
-        draw_fse_psd(fig, TR, TE, etl, echo_spacing)
+        draw_fse_psd(fig, TR, TE, etl, echo_spacing, t2)
     elif sequence in ("Gradient Echo", "Susceptibility (SWI)"):
         draw_gradient_echo_psd(fig, TR, TE, flip_angle)
     elif sequence == "Inversion Recovery":
