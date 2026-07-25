@@ -166,7 +166,8 @@ class WebHost(CurvesMixin):
                     # body_phantoms; done before the L/R mirror below.
                     import region_orient
                     vol = region_orient.straighten(name, vol, 0)
-                    tex = region_orient.straighten(name, tex, 1)
+                    if tex is not None:
+                        tex = region_orient.straighten(name, tex, 1)
                 else:
                     # Synthetic phantom (no real atlas — e.g. Knee), or the desktop
                     # dataset path when running outside the browser.

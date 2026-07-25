@@ -24,13 +24,13 @@ _TILT: dict[str, tuple[float, tuple[int, int]]] = {
 }
 
 
-def straighten(name: str, arr: "np.ndarray | None", order: int) -> "np.ndarray | None":
+def straighten(name: str, arr: np.ndarray, order: int) -> np.ndarray:
     """Return ``arr`` rotated to correct *name*'s known tilt, or unchanged.
 
     ``order`` is the spline order for the rotation: 0 for a label volume (keeps
-    labels intact), 1 for a continuous texture field.
+    labels intact), 1 for a continuous texture field. Callers guard ``None``.
     """
-    if arr is None or name not in _TILT:
+    if name not in _TILT:
         return arr
     from scipy.ndimage import rotate
     deg, axes = _TILT[name]
