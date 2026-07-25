@@ -248,6 +248,41 @@ async function applyHashState() {
   return true;
 }
 
+// The page-load state — every console control at its authored default. Reset
+// re-applies it through applyState (the same path a share-link uses), then puts
+// the view back to Brain / axial / mid-slice with a clean window/level.
+const DEFAULT_STATE = {
+  region: "Brain", seq: "Spin Echo", orient: "axial", field: "3T",
+  tr: 500, te: 15, ti: 800, fa: 90,
+  matrix: 256, bw: 125, nex: 1, thick: 5, bval: 1000, etl: 16,
+  ipfov: 100, satpos: 50, satwidth: 15, satangle: 0, satangle2: 0,
+  nslices: 1, sgap: 0, np: 400, accel: 1, pv: 10,
+  fatsat: false, gd: false, flow: false, acq3d: false, kzpf: false, fovplan: false,
+  cmap: false, kspaceshow: false, psdshow: false, b0mapshow: false, gfactorshow: false,
+  mathshow: false, labelanat: false, curveshow: false,
+  motion: false, chemshift: false, suscept: false, nowrap: false, peswap: false, satband: false,
+  motiontype: "periodic", accelmethod: "SENSE", receivecoil: "uniform", curvemode: "TE decay",
+  diffdisp: "DWI", angiotype: "TOF", qmridisp: "T1 Map (VFA)", fmridisp: "EPI Image",
+  perfdisp: "Perfusion-weighted", perfdyndisp: "CBV (DSC)", pathology: "",
+};
+
+async function resetToDefaults() {
+  if (compareMode) setCompare(false);                       // leave A/B compare
+  await applyState(DEFAULT_STATE);                          // applies every control + syncVisibility
+  // Authoritative slice range from a fresh Brain load (applyState skips the reload
+  // when already on Brain, leaving slice.max stale), then land on the middle slice.
+  const d = await loadRegion("Brain");
+  $("slice").max = d.max_slice;
+  setSlice(Math.floor(d.max_slice / 2));
+  const offBtn = $("measuremode").querySelector('button[data-m="off"]');
+  if (offBtn && measureMode !== "off") offBtn.click();      // measure tool → off
+  winW = 1.0; winL = 0.5;                                   // clean window/level
+  const pop = $("overlay-pop");                             // send the inspector back to its corner
+  if (pop) { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = ""; }
+  $("preset").value = ""; syncPresetRail();                 // Custom
+  render();
+}
+
 function flash(btn, msg) {
   const t = btn.textContent; btn.textContent = msg;
   setTimeout(() => { btn.textContent = t; }, 1200);
@@ -649,6 +684,7 @@ function buildControls(info) {
   wireNumbers();
   $("copylink").addEventListener("click", copyLink);
   $("download").addEventListener("click", downloadPNG);
+  $("reset-defaults").addEventListener("click", resetToDefaults);
   [reg, seq, $("field")].forEach((el) => el.addEventListener("change", onSequenceOrRegion));
   ["fatsat", "gd", "flow", "acq3d", "kzpf"].forEach((id) =>
     $(id).addEventListener("change", () => {
