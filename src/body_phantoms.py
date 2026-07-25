@@ -595,7 +595,16 @@ def _load_cache(subdir: "str | None", which: str) -> "np.ndarray | None":
     try:
         from brainweb_loader import data_dir
         path = os.path.join(data_dir(), subdir, f"{which}.npy")
-        return np.load(path) if os.path.exists(path) else None
+        if not os.path.exists(path):
+            return None
+        arr = np.load(path)
+        # Correct the atlas's known base tilt (e.g. the spine column leans 16.8° in
+        # coronal) — the same rotation the browser applies in web_adapter.
+        import region_orient
+        region = {"spider_spine": "Spine", "knee_kb3d": "Knee"}.get(subdir)
+        if region is not None:
+            arr = region_orient.straighten(region, arr, 0 if which == "atlas" else 1)
+        return arr
     except Exception:
         return None
 

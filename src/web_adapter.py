@@ -161,6 +161,12 @@ class WebHost(CurvesMixin):
                     tex_file = f"/data/regions/{name}_texture.npy"
                     tex = (np.load(tex_file).astype(np.float32)
                            if os.path.exists(tex_file) else None)
+                    # Correct a real atlas's known base tilt (e.g. the spine column
+                    # leans 16.8° in coronal) — same rotation the desktop applies in
+                    # body_phantoms; done before the L/R mirror below.
+                    import region_orient
+                    vol = region_orient.straighten(name, vol, 0)
+                    tex = region_orient.straighten(name, tex, 1)
                 else:
                     # Synthetic phantom (no real atlas — e.g. Knee), or the desktop
                     # dataset path when running outside the browser.
