@@ -277,8 +277,8 @@ async function resetToDefaults() {
   const offBtn = $("measuremode").querySelector('button[data-m="off"]');
   if (offBtn && measureMode !== "off") offBtn.click();      // measure tool → off
   winW = 1.0; winL = 0.5;                                   // clean window/level
-  const pop = $("overlay-pop");                             // send the inspector back to its corner
-  if (pop) { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = ""; }
+  const pop = $("overlay-pop");                             // send the inspector back to its corner + default size
+  if (pop) { pop.style.left = pop.style.top = pop.style.right = pop.style.bottom = ""; pop.style.width = pop.style.height = ""; }
   $("preset").value = ""; syncPresetRail();                 // Custom
   render();
 }
@@ -1052,7 +1052,41 @@ function setupOverlayPop() {
     });
   });
   makeOverlayDraggable(pop);
+  makeOverlayResizable(pop);
   sync();
+}
+
+// Resize the inspector by its top-left grip. The popup sits at the image's
+// bottom-right, so the room to grow is up/left: we pin the bottom-right corner
+// (switching to a right/bottom anchor) and grow width/height toward the cursor.
+// Bounds come from CSS (min/max-width/height); MARGIN keeps it off the edges.
+function makeOverlayResizable(pop) {
+  const grip = pop.querySelector(".op-resize");
+  if (!grip) return;
+  const MIN_W = 240, MIN_H = 140, MARGIN = 8;
+  let sizing = false, fixedR = 0, fixedB = 0;
+  const onDown = (e) => {
+    const host = pop.offsetParent || document.documentElement;
+    const hr = host.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+    fixedR = pr.right - hr.left; fixedB = pr.bottom - hr.top;   // pin bottom-right
+    pop.style.left = "auto"; pop.style.top = "auto";
+    pop.style.right = (hr.width - fixedR) + "px"; pop.style.bottom = (hr.height - fixedB) + "px";
+    sizing = true; e.preventDefault(); e.stopPropagation();
+    try { grip.setPointerCapture(e.pointerId); } catch (_) { /* noop */ }
+  };
+  const onMove = (e) => {
+    if (!sizing) return;
+    const host = pop.offsetParent || document.documentElement;
+    const hr = host.getBoundingClientRect();
+    const cx = e.clientX - hr.left, cy = e.clientY - hr.top;
+    pop.style.width = clampN(fixedR - cx, MIN_W, Math.max(MIN_W, fixedR - MARGIN)) + "px";
+    pop.style.height = clampN(fixedB - cy, MIN_H, Math.max(MIN_H, fixedB - MARGIN)) + "px";
+  };
+  const onUp = (e) => { sizing = false; try { grip.releasePointerCapture(e.pointerId); } catch (_) { /* noop */ } };
+  grip.addEventListener("pointerdown", onDown);
+  grip.addEventListener("pointermove", onMove);
+  grip.addEventListener("pointerup", onUp);
+  grip.addEventListener("pointercancel", onUp);
 }
 
 // Drag the inspector by its header to move it off the image's baked annotations.

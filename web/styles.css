@@ -206,10 +206,21 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 /* Floating inspector: hosts the enabled chart/overlay panels over the image. */
 #overlay-pop {
   position: absolute; right: 12px; bottom: 12px; z-index: 6;
-  width: min(400px, 44%); max-height: calc(100% - 24px); overflow-y: auto;
+  /* Resizable via the top-left grip (.op-resize): the charts inside are width:100%,
+     so a wider box enlarges them. Bounds keep it usable and on-screen. */
+  width: min(400px, 44%); min-width: 240px; max-width: calc(100% - 24px);
+  min-height: 140px; max-height: calc(100% - 24px); overflow-y: auto;
   background: var(--panel); border: 1px solid var(--border-hi); border-radius: 2px;
   padding: 8px 10px 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
+/* Resize grip: pinned to the popup's top-left corner. The popup lives at the image's
+   bottom-right, so the room to grow is up and to the left — dragging this grip toward
+   the cursor expands the box that way (makeOverlayResizable pins the bottom-right). */
+.op-resize { position: absolute; left: 0; top: 0; width: 16px; height: 16px; z-index: 8;
+  cursor: nwse-resize; touch-action: none; opacity: .55;
+  background: linear-gradient(135deg, var(--border-hi) 0 12%, transparent 12% 30%,
+    var(--border-hi) 30% 42%, transparent 42%); }
+.op-resize:hover { opacity: 1; }
 .op-head { display: flex; align-items: center; justify-content: space-between;
   font-size: 10px; letter-spacing: .6px; color: var(--text-dim); text-transform: uppercase;
   font-weight: 700; margin-bottom: 6px; cursor: move; touch-action: none; user-select: none; }
