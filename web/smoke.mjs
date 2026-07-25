@@ -203,6 +203,23 @@ try {
   await page.click("#exitAB");
   await page.waitForSelector("#wrapB", { state: "hidden", timeout: 5_000 });
 
+  step("reset to defaults");
+  // Perturb several controls, then Reset must restore the page-load state:
+  // Spin Echo / Brain / axial, overlays + preset cleared, image still renders.
+  await page.selectOption("#sequence", "Gradient Echo");
+  await page.evaluate(() => { const t = document.getElementById("tr"); t.value = 3200; t.dispatchEvent(new Event("input")); });
+  await page.check("#curveshow");
+  await page.click("#reset-defaults");
+  await page.waitForFunction(
+    () => document.getElementById("sequence").value === "Spin Echo"
+      && document.getElementById("tr").value === "500"
+      && document.getElementById("region").value === "Brain"
+      && document.getElementById("curveshow").checked === false
+      && document.getElementById("preset").value === "",
+    { timeout: 15_000 });
+  await page.waitForFunction(
+    () => (document.getElementById("mainImage").src || "").startsWith("data:image/png"), { timeout: 15_000 });
+
   // Touch support: the image must opt out of the browser's touch gestures so a
   // finger can drag window/level / measure instead of scrolling the page.
   const touchAction = await page.$eval("#mainImage", (el) => getComputedStyle(el).touchAction);
