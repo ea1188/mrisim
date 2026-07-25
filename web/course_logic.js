@@ -195,8 +195,28 @@
     return { weeks: weeks, perWeek: Math.ceil(remaining / weeks) };
   }
 
+  // The first lesson title of a module (for the study rail's "open in simulator"
+  // deep-link), or null when the module has no lessons.
+  function firstLesson(mod) {
+    return (mod && mod.lessons && mod.lessons.length) ? mod.lessons[0] : null;
+  }
+
+  // Previous/next module in curriculum order (by title), null at either end.
+  function topicNav(curriculum, mod) {
+    var i = -1;
+    for (var k = 0; k < curriculum.length; k++) {
+      if (curriculum[k].title === (mod && mod.title)) { i = k; break; }
+    }
+    if (i < 0) return { prev: null, next: null };
+    return {
+      prev: i > 0 ? curriculum[i - 1] : null,
+      next: i < curriculum.length - 1 ? curriculum[i + 1] : null,
+    };
+  }
+
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
+    firstLesson: firstLesson, topicNav: topicNav,
     deriveModuleStatus: deriveModuleStatus,
     rankModulesByDiagnostic: rankModulesByDiagnostic,
     diagnosticStudyNext: diagnosticStudyNext,

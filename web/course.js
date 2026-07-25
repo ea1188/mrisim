@@ -86,7 +86,18 @@
     });
     return e;
   }
-  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+  function clear(el) {
+    // Repainting the main content pane hides the study rail by default; only
+    // renderTopic re-shows it (so exams/overview/review never carry the rail).
+    if (CTX && el === CTX.main) clearStudyRail();
+    while (el.firstChild) el.removeChild(el.firstChild);
+  }
+  function clearStudyRail() {
+    var sr = document.getElementById("studyrail");
+    if (!sr) return;
+    while (sr.firstChild) sr.removeChild(sr.firstChild);
+    sr.hidden = true;
+  }
   function gate(kids) { clear(root); root.appendChild(h("div", { class: "gate" }, [h("div", { class: "card" }, kids)])); }
 
   // --- gate screens ------------------------------------------------------- //
@@ -163,8 +174,9 @@
       assign: assignIndex(assignments),
       expanded: new Set([curriculum[0].title]) };  // which modules are expanded in the TOC
 
+    var studyrail = h("aside", { class: "studyrail", id: "studyrail", hidden: true });
     buildRail();
-    wrap.appendChild(rail); wrap.appendChild(main);
+    wrap.appendChild(rail); wrap.appendChild(main); wrap.appendChild(studyrail);
     clear(root); root.appendChild(wrap);
     renderOverview();   // open on the exam-readiness dashboard, not straight into module 1
   }
@@ -570,6 +582,57 @@
     else renderTopic(CTX.main, CTX.mod, CTX.byTitle, CTX.byTopic);
   }
 
+  // Right-hand study rail: a contextual "do next" panel for the current topic —
+  // progress, jump into the simulator / quiz, and prev/next topic. Desktop-only
+  // (CSS hides it under 1100px). hasPremiumQuiz gates the "course questions" jump.
+  function buildStudyRail(mod, cfg, hasPremiumQuiz) {
+    var sr = document.getElementById("studyrail");
+    if (!sr) return;
+    clear(sr);
+    var done = loadDone(), read = loadRead(), mastery = loadMastery();
+    var subs = moduleSubsections(mod);
+    var doneN = subs.filter(function (s) { return isSubDone(s, done, read, mastery); }).length;
+    var pct = subs.length ? Math.round((doneN / subs.length) * 100) : 0;
+
+    var card = h("div", { class: "sr-card" }, [
+      h("div", { class: "sr-h", text: "This topic" }),
+      h("div", { class: "sr-title", text: mod.title }),
+      h("div", { class: "sr-prog", text: doneN + " / " + subs.length + " done" }),
+      h("div", { class: "bar" }, [h("i", { style: "width:" + pct + "%" })]),
+    ]);
+
+    var acts = h("div", { class: "sr-acts" });
+    var first = CourseLogic.firstLesson(mod);
+    if (first) {
+      acts.appendChild(h("a", { class: "sr-act", href: "simulator.html?lesson=" + encodeURIComponent(first),
+        html: "▶ Open in simulator" }));
+    }
+    if (cfg.quiz && cfg.quiz.length) {
+      acts.appendChild(h("a", { class: "sr-act", href: "quiz.html?topic=" + encodeURIComponent(cfg.quiz[0]),
+        text: "Practice: " + cfg.quiz[0] + " quiz" }));
+    }
+    if (hasPremiumQuiz) {
+      acts.appendChild(h("button", { class: "sr-act", type: "button", text: "Jump to course questions",
+        onclick: function () {
+          var t = document.getElementById("quiz-" + slug(mod.title));
+          if (t && t.scrollIntoView) t.scrollIntoView({ behavior: "smooth", block: "start" });
+        } }));
+    }
+    card.appendChild(acts);
+
+    var nav = CourseLogic.topicNav(CTX.curriculum, mod);
+    var navRow = h("div", { class: "sr-nav" }, [
+      h("button", { class: "sr-navbtn", type: "button", text: "‹ Prev", disabled: !nav.prev,
+        onclick: function () { if (nav.prev) openModule(nav.prev); } }),
+      h("button", { class: "sr-navbtn", type: "button", text: "Next ›", disabled: !nav.next,
+        onclick: function () { if (nav.next) openModule(nav.next); } }),
+    ]);
+    card.appendChild(navRow);
+
+    sr.appendChild(card);
+    sr.hidden = false;
+  }
+
   function renderTopic(main, mod, lessonsByTitle, premiumByTopic) {
     stopExam();  // leaving the practice exam (if any) for a topic
     if (CTX) CTX.mod = mod;
@@ -679,6 +742,7 @@
       main.appendChild(link);
     }
     if (hasMastery(mod)) main.appendChild(masterySection(mod));
+    buildStudyRail(mod, cfg, pq.length > 0);
     window.scrollTo(0, 0);
   }
 
