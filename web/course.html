@@ -52,6 +52,28 @@
        .course keeps min-height:calc(100vh - 56px) → 56px offset + that = exactly 100vh. */
     #course-root { padding-top: 56px; }
     .course { display: grid; grid-template-columns: 288px 1fr; min-height: calc(100vh - 56px); }
+    /* Add the study-rail column only when it's actually shown (topic views, wide screens). */
+    @media (min-width: 1100px) {
+      .course:has(#studyrail:not([hidden])) { grid-template-columns: 288px minmax(0, 1fr) 240px; }
+    }
+    /* Study rail: sticky "do next" panel filling the right gutter on wide screens. */
+    .studyrail { border-left: 1px solid var(--line); padding: 18px 16px;
+      position: sticky; top: 56px; align-self: start; max-height: calc(100vh - 56px); overflow-y: auto; }
+    @media (max-width: 1099px) { .studyrail { display: none; } }
+    .sr-h { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+    .sr-title { color: var(--text); font-weight: 600; font-size: 14px; margin: 6px 0 8px; line-height: 1.3; }
+    .sr-prog { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+    .studyrail .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 6px 0 14px; }
+    .studyrail .bar > i { display: block; height: 100%; background: var(--accent); }
+    .sr-acts { display: flex; flex-direction: column; gap: 8px; }
+    .sr-act { display: block; width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 2px; padding: 9px 11px; font-size: 12.5px; color: var(--text); cursor: pointer; text-decoration: none; }
+    .sr-act:hover { border-color: var(--accent); color: var(--accent); }
+    .sr-nav { display: flex; gap: 8px; margin-top: 14px; }
+    .sr-navbtn { flex: 1; background: none; border: 1px solid var(--line); border-radius: 2px;
+      padding: 7px 0; font-size: 12px; color: var(--muted); cursor: pointer; }
+    .sr-navbtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .sr-navbtn:disabled { opacity: .4; cursor: default; }
     .rail { border-right: 1px solid var(--line); padding: 12px 0; overflow-y: auto; }
     .rail .prog { padding: 6px 18px 14px; color: var(--dim); font-size: 11px; font-family: var(--mono); letter-spacing: .04em; }
     .rail .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 7px 0 0; }

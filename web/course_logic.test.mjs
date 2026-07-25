@@ -2,7 +2,30 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek, reconcileBootProgress } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek, reconcileBootProgress, firstLesson, topicNav } = CourseLogic;
+
+const CURRIC = [
+  { title: "A", lessons: ["a1", "a2"] },
+  { title: "B", lessons: ["b1"] },
+  { title: "C", lessons: [] },
+];
+
+test("firstLesson returns the module's first lesson, or null when none", () => {
+  assert.equal(firstLesson(CURRIC[0]), "a1");
+  assert.equal(firstLesson(CURRIC[1]), "b1");
+  assert.equal(firstLesson(CURRIC[2]), null);
+  assert.equal(firstLesson(null), null);
+});
+
+test("topicNav gives prev/next by curriculum order, null at the ends", () => {
+  assert.deepEqual(topicNav(CURRIC, CURRIC[0]), { prev: null, next: CURRIC[1] });
+  assert.deepEqual(topicNav(CURRIC, CURRIC[1]), { prev: CURRIC[0], next: CURRIC[2] });
+  assert.deepEqual(topicNav(CURRIC, CURRIC[2]), { prev: CURRIC[1], next: null });
+});
+
+test("topicNav returns nulls for a module not in the curriculum", () => {
+  assert.deepEqual(topicNav(CURRIC, { title: "Z", lessons: [] }), { prev: null, next: null });
+});
 
 test("constants match the spec", () => {
   assert.equal(PASS_PCT, 80);
