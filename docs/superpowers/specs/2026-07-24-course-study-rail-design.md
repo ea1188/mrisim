@@ -45,8 +45,9 @@ rail never shows on Overview, Practice exam, Placement test, Review, or the mast
 1. **THIS TOPIC** — module title + a progress line reusing the left rail's count
    (`done / total` lessons) with a slim bar (reuse `.bar`/`.prog` styling).
 2. **Actions** (each row omitted when its target doesn't exist):
-   - **▶ Open in simulator** → `simulator.html?lesson=<encodeURIComponent(mod.lessons[0])>`.
-     Shown when the module has at least one lesson.
+   - **▶ Start first lesson** → opens the module's first lesson in the in-course overlay
+     (`openLesson`), same as the Lessons cards, so finishing returns to the topic (not the
+     full simulator). Shown when the module has at least one lesson.
    - **Practice: <topic> quiz** → `quiz.html?topic=<encodeURIComponent(cfg.quiz[0])>`.
      Shown when `cfg.quiz.length`.
    - **Jump to course questions** → scrolls `#quiz-<slug(mod.title)>` into view.

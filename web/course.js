@@ -604,8 +604,10 @@
     var acts = h("div", { class: "sr-acts" });
     var first = CourseLogic.firstLesson(mod);
     if (first) {
-      acts.appendChild(h("a", { class: "sr-act", href: "simulator.html?lesson=" + encodeURIComponent(first),
-        html: "▶ Open in simulator" }));
+      // Open the lesson in-course (same overlay as the Lessons cards) so finishing
+      // it returns here, instead of stranding the learner in the full simulator.
+      acts.appendChild(h("button", { class: "sr-act", type: "button", text: "▶ Start first lesson",
+        onclick: function () { openLesson(first); } }));
     }
     if (cfg.quiz && cfg.quiz.length) {
       acts.appendChild(h("a", { class: "sr-act", href: "quiz.html?topic=" + encodeURIComponent(cfg.quiz[0]),
