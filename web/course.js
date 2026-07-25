@@ -602,12 +602,15 @@
     ]);
 
     var acts = h("div", { class: "sr-acts" });
-    var first = CourseLogic.firstLesson(mod);
-    if (first) {
-      // Open the lesson in-course (same overlay as the Lessons cards) so finishing
-      // it returns here, instead of stranding the learner in the full simulator.
-      acts.appendChild(h("button", { class: "sr-act", type: "button", text: "▶ Start first lesson",
-        onclick: function () { openLesson(first); } }));
+    // Opens the next unfinished lesson in the in-course overlay (same as the Lessons
+    // cards) so finishing returns here; the label advances with the learner's progress.
+    var nl = CourseLogic.nextLesson(mod, done);
+    if (nl.title) {
+      var lessonLabel = nl.allDone ? "▶ Review lessons"
+        : nl.index === 0 ? "▶ Start first lesson"
+        : "▶ Continue lessons";
+      acts.appendChild(h("button", { class: "sr-act", type: "button", text: lessonLabel,
+        onclick: function () { openLesson(nl.title); } }));
     }
     if (cfg.quiz && cfg.quiz.length) {
       acts.appendChild(h("a", { class: "sr-act", href: "quiz.html?topic=" + encodeURIComponent(cfg.quiz[0]),

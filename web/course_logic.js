@@ -201,6 +201,22 @@
     return (mod && mod.lessons && mod.lessons.length) ? mod.lessons[0] : null;
   }
 
+  // The lesson the study rail's action should open next: the first lesson not yet
+  // done (so it advances as the learner completes them). `doneTitles` is a map of
+  // completed lesson titles → truthy. Returns { title, index, allDone }:
+  //   - some incomplete → that lesson, allDone=false
+  //   - all done        → the first lesson (for review), allDone=true
+  //   - no lessons      → { title:null, index:-1, allDone:false }
+  function nextLesson(mod, doneTitles) {
+    var lessons = (mod && mod.lessons) || [];
+    var done = doneTitles || {};
+    for (var i = 0; i < lessons.length; i++) {
+      if (!done[lessons[i]]) return { title: lessons[i], index: i, allDone: false };
+    }
+    if (lessons.length) return { title: lessons[0], index: 0, allDone: true };
+    return { title: null, index: -1, allDone: false };
+  }
+
   // Previous/next module in curriculum order (by title), null at either end.
   function topicNav(curriculum, mod) {
     var i = -1;
@@ -216,7 +232,7 @@
 
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
-    firstLesson: firstLesson, topicNav: topicNav,
+    firstLesson: firstLesson, nextLesson: nextLesson, topicNav: topicNav,
     deriveModuleStatus: deriveModuleStatus,
     rankModulesByDiagnostic: rankModulesByDiagnostic,
     diagnosticStudyNext: diagnosticStudyNext,

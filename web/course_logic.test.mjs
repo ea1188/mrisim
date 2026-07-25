@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import CourseLogic from "./course_logic.js";
 
-const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek, reconcileBootProgress, firstLesson, topicNav } = CourseLogic;
+const { deriveModuleStatus, PASS_PCT, CHECK_N, MIN_POOL, rankModulesByDiagnostic, diagnosticStudyNext, reviewOnMiss, reviewOnCorrect, dueCount, mergeProgress, isCourseComplete, remainingStudyOrder, pacePerWeek, reconcileBootProgress, firstLesson, nextLesson, topicNav } = CourseLogic;
 
 const CURRIC = [
   { title: "A", lessons: ["a1", "a2"] },
@@ -15,6 +15,19 @@ test("firstLesson returns the module's first lesson, or null when none", () => {
   assert.equal(firstLesson(CURRIC[1]), "b1");
   assert.equal(firstLesson(CURRIC[2]), null);
   assert.equal(firstLesson(null), null);
+});
+
+test("nextLesson advances to the first unfinished lesson", () => {
+  assert.deepEqual(nextLesson(CURRIC[0], {}), { title: "a1", index: 0, allDone: false });
+  assert.deepEqual(nextLesson(CURRIC[0], { a1: true }), { title: "a2", index: 1, allDone: false });
+});
+
+test("nextLesson reports allDone (first lesson, for review) when every lesson is done", () => {
+  assert.deepEqual(nextLesson(CURRIC[0], { a1: true, a2: true }), { title: "a1", index: 0, allDone: true });
+});
+
+test("nextLesson returns a null title for a module with no lessons", () => {
+  assert.deepEqual(nextLesson(CURRIC[2], {}), { title: null, index: -1, allDone: false });
 });
 
 test("topicNav gives prev/next by curriculum order, null at the ends", () => {
