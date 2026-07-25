@@ -21,6 +21,9 @@ _TILT: dict[str, tuple[float, tuple[int, int]]] = {
     # SPIDER lumbar spine (s0267): column drifts sideways as it descends; rotate
     # about the A/P axis to stand it vertical.
     "Spine": (-16.8, (0, 2)),
+    # KneeBones3Dify: the joint sits slightly yawed, so the axial reads rotated;
+    # a small rotation about the S/I axis (the (A/P, L/R) plane) levels the condyles.
+    "Knee": (-15.0, (1, 2)),
 }
 
 
