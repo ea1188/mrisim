@@ -405,10 +405,8 @@ class WebHost(CurvesMixin):
             return None
         if lab.ndim != 2:
             return None
-        # Match the sagittal left-right flip the displayed image gets in _draw_image
-        # (ax.invert_xaxis), so the hover/probe label map lines up with the picture.
-        if orient == "sagittal":
-            lab = np.fliplr(lab)
+        # The displayed image is no longer inverted (see _draw_image), so the label
+        # map matches the picture as-is — the get_slice sagittal convention.
         cap = 160                                  # keep the payload small
         step = max(1, int(np.ceil(max(lab.shape) / cap)))
         lab8 = np.clip(lab[::step, ::step], 0, 255).astype(np.uint8)
@@ -644,15 +642,12 @@ class WebHost(CurvesMixin):
             recon_geom=getattr(self.sim, "_recon3d_geom", None))
         if label_anatomy:
             self._draw_anatomy_labels(ax, orient, sl_idx, params, img.shape)
-        # Sagittal radiological convention: anterior on the left. The scout panels
-        # already flip sagittal (np.fliplr), so flip the displayed image to match —
-        # otherwise the acquired image's A-P reads mirrored vs the localizer it was
-        # planned on. Inverting the axis (not the data) keeps the orientation
-        # letters (transAxes) put and keeps the measure/probe coordinate mapping —
-        # which reads ax.get_xlim() — correct, with the probe label map flipped to
-        # match in _probe_data.
-        if orient == "sagittal":
-            ax.invert_xaxis()
+        # Sagittal is displayed as-is: get_slice already flips it L-R into the
+        # radiological convention (anterior on the left), and the oblique path now
+        # matches (see Simulator._get_phantom_slice). The previous extra
+        # ax.invert_xaxis() here was a second flip that mirrored the acquired image
+        # back to anterior-right — inconsistent with the (un-inverted) recon
+        # reformats and the scout localizers. Removing it lines all surfaces up.
         return _png_b64(self.fig)
 
     def _draw_curve(self, params: dict) -> str:

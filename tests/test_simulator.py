@@ -395,3 +395,36 @@ def test_measure_snr_is_region_agnostic():
     lab2 = np.zeros((48, 48), dtype=int); lab2[10:38, 10:38] = 3
     recon2 = np.where(lab2 == 0, 0.0, 0.6) + rng.normal(0, 0.02, lab2.shape)
     assert sim._measure_snr(recon2, lab2)["wm"] > 0.0
+
+
+def test_sagittal_render_paths_agree_on_handedness():
+    """The default (get_slice) and FOV-planning (oblique_plane) render paths must
+    produce the SAME sagittal left-right convention, so the main image does not
+    mirror when FOV planning is toggled on. Regression for the sagittal double-flip
+    where get_slice flipped A-P but oblique_plane did not (fix: oblique branch adopts
+    get_slice's convention). See docs/superpowers/specs/2026-07-25-render-path-
+    orientation-mismatch-design.md."""
+    from simulator import Simulator
+    # Asymmetric marker: tag the anterior end (low Y = axis 1) so we can read which
+    # display column it lands in. Full extent in Z and X so every sagittal slice hits it.
+    nZ, nY, nX = 40, 50, 60
+    vol = np.zeros((nZ, nY, nX), dtype=np.int16)
+    vol[:, 0:6, :] = 1                     # anterior (low-Y) slab
+    sim = Simulator(); sim.volume = vol; sim.orientation = "sagittal"
+    mid = nX // 2
+    params = {"FOV": 240.0}
+
+    sim.fov_planning = False
+    plain = np.asarray(sim._get_phantom_slice("sagittal", mid, params))
+    sim.fov_planning = True; sim.tilt = 1.0; sim.rot = 0.0
+    obl = np.asarray(sim._get_phantom_slice("sagittal", mid, params))
+
+    def anterior_side(a):
+        """-1 if the anterior marker sits left of centre, +1 if right."""
+        ys, xs = np.where(a == 1)
+        assert len(xs), "anterior marker not found in slice"
+        return -1 if xs.mean() < a.shape[1] / 2.0 else 1
+
+    assert anterior_side(plain) == anterior_side(obl), (
+        "default and oblique sagittal render paths disagree on A-P handedness"
+    )

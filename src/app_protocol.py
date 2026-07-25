@@ -229,8 +229,8 @@ class ProtocolMixin:
         lo, hi = ((float(v) for v in np.percentile(fg, (1, 99))) if fg.size
                   else (0.0, float(a.max() or 1.0)))
         g = (np.clip((a - lo) / ((hi - lo) or 1.0), 0, 1) * 255).astype(np.uint8)
-        if orient == "sagittal":
-            g = np.fliplr(g)
+        # No sagittal L-R flip: the stored image already carries the radiological
+        # convention (get_slice), matching the viewport, which no longer inverts.
         g = np.ascontiguousarray(np.flipud(g))
         self._pp_thumb_refs.append(g)                      # QImage shares the buffer
         h, w = g.shape
@@ -290,8 +290,8 @@ class ProtocolMixin:
                   aspect=self._get_voxel_aspect(orient), vmin=vlo, vmax=vhi)
         render_overlay.frame_image_axes(ax)
         self._annotate_image(ax, params, orient, sl, width, center)
-        if orient == "sagittal":                 # match the viewport's sagittal A-P flip
-            ax.invert_xaxis()
+        # No sagittal invert: the viewport no longer flips sagittal (get_slice already
+        # renders it anterior-left), so the review image matches without inverting.
         self.canvas.draw()
         if entry.get("metrics"):
             self.update_metrics(params, entry["metrics"])

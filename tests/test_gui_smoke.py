@@ -1382,29 +1382,27 @@ def test_protocol_planning_workflow(win):
     win.fov_planning.set(False); win.recalculate()
 
 
-def test_sagittal_image_is_lr_flipped_to_match_scout(win):
-    """Regression: the scout flips sagittal left-right (app_scout, 'sagittal needs LR
-    flip'), so the displayed image must too — otherwise its A-P reads mirrored vs the
-    localizer you planned on (and vs its own A/P letters). The fix inverts the image
-    axis for sagittal (keeping the transAxes letters and the event.xdata measure/hover
-    mapping correct); axial and coronal are untouched."""
-    set_state(win, region="Spine", sequence="FSE / TSE", orientation="sagittal")
-    xl = win.axes[0].get_xlim()
-    assert xl[0] > xl[1], "sagittal image axis must be inverted (anterior-left)"
-    for orient in ("axial", "coronal"):
-        set_state(win, region="Spine", orientation=orient)
-        x2 = win.axes[0].get_xlim()
-        assert x2[0] < x2[1], f"{orient} image axis must not be inverted"
+def test_sagittal_image_not_display_inverted(win):
+    """get_slice already flips sagittal L-R into the radiological convention (anterior
+    on the left), so the displayed image is shown as-is — no extra ax.invert_xaxis().
+    The old second flip mirrored the acquired image to anterior-right, inconsistent with
+    the (un-inverted) recon reformats and the oblique render path. Assert none of the
+    three orientations is left-right display-inverted."""
+    for orient in ("sagittal", "axial", "coronal"):
+        set_state(win, region="Spine", sequence="FSE / TSE", orientation=orient)
+        xl = win.axes[0].get_xlim()
+        assert xl[0] < xl[1], f"{orient} image axis must not be inverted"
 
 
-def test_sagittal_prescription_montage_is_lr_flipped(win):
-    """The FOV-planning / protocol-acquire montage (_display_prescription) flips sagittal
-    too, so the acquired image matches the scout it was planned on."""
+def test_sagittal_prescription_montage_not_display_inverted(win):
+    """The FOV-planning / protocol-acquire montage (_display_prescription) displays
+    sagittal as-is like the main viewport — no extra ax.invert_xaxis(), since get_slice
+    already carries the radiological convention."""
     set_state(win, region="Spine", sequence="FSE / TSE", orientation="sagittal")
     win.n_slices.set(1)
     win.fov_planning.set(True); win.recalculate()
     xl = win.fig.axes[0].get_xlim()
-    assert xl[0] > xl[1], "sagittal prescription montage must be inverted"
+    assert xl[0] < xl[1], "sagittal prescription montage must not be inverted"
     win.fov_planning.set(False); win.recalculate()
 
 
@@ -1466,7 +1464,7 @@ def test_protocol_acquired_series_review(win):
     win.pp_exam.setCurrentText("Knee")
     assert win.pp_thumbs_scroll.isHidden(), "no thumbnails before acquiring"
 
-    # acquire the two sagittal knee sequences (PD / T2 FS) so the sagittal A-P flip below holds
+    # acquire the two sagittal knee sequences (PD / T2 FS) so the sagittal display check below holds
     sag = [i for i, e in enumerate(win.pp_queue)
            if e["preset"] != win._LOCALIZER and get_preset_plane(e["preset"]) == "sagittal"]
     win._pp_open(win.pp_queue[sag[0]]); win._pp_acquire()
@@ -1481,7 +1479,7 @@ def test_protocol_acquired_series_review(win):
     assert np.array_equal(np.asarray(win.current_image), np.asarray(acq[0]["image"]))
     assert "Reviewing" in win.pp_readout.text()
     xl = win.fig.axes[0].get_xlim()
-    assert xl[0] > xl[1], "sagittal review keeps the anterior-left flip"
+    assert xl[0] < xl[1], "sagittal review is displayed un-inverted (like the viewport)"
 
     # clicking an acquired row reviews; a pending row opens to plan
     acq_row = win.pp_queue.index(acq[0])
