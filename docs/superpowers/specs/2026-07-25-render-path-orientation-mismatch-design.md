@@ -1,8 +1,25 @@
 # Render-path orientation mismatch (default vs FOV-planning) — design
 
-**Status:** diagnosed, not yet implemented. Deferred from the 2026-07-24 session (atlas-tilt work,
-PR #481) because the safe fix is a core-render-pipeline change that needs a dedicated verification
-pass. This spec captures the diagnosis + plan so it can be executed cleanly.
+**Status:** RESOLVED (branch `fix/sagittal-render-convention`). The diagnosis below was refined
+during implementation: the mismatch is **sagittal-only** and is a *double-flip*, not the global
+resampling difference first suspected. `get_slice` flips sagittal L-R (`np.fliplr`, into the
+radiological anterior-left convention) and the display layer applied a *second* flip
+(`ax.invert_xaxis()`), netting to a mirrored (anterior-right) main image; the oblique path skipped
+`get_slice`'s flip and so, with the single display invert, rendered correctly. Verified objectively
+by label centroids (spinal cord posterior vs vertebral bodies anterior) and in the live browser.
+
+**Fix shipped:** (1) the oblique branch of `Simulator._get_phantom_slice` now applies `np.fliplr`
+for sagittal so both render paths share `get_slice`'s convention; (2) the redundant sagittal
+`ax.invert_xaxis()` was removed from every main-image display path (`web_adapter._draw_image`,
+`app_qt._match_sagittal_flip`, `app_protocol` review/thumbnail) and the probe label-map
+compensation (`web_adapter._probe_data`). The scout/FOV-planning coordinate system and recon
+reformats were left untouched (they were already un-inverted and correct). Regression guard:
+`tests/test_simulator.py::test_sagittal_render_paths_agree_on_handedness`.
+
+---
+
+**Original diagnosis (superseded in part — the resampling-difference theory below was wrong; kept
+for history):**
 
 ## Symptom
 

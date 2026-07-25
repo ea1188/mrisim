@@ -271,8 +271,16 @@ class Simulator:
             max_dim = max(vol.shape)
             # (Sat band + oblique acquisition is a rare combo; the slab assumes the
             # orthogonal get_slice geometry, so it isn't applied on the oblique path.)
-            return oblique_plane(vol, row_vec, col_vec, center,
-                                 shape=(max_dim, max_dim), order=0)
+            ph = oblique_plane(vol, row_vec, col_vec, center,
+                               shape=(max_dim, max_dim), order=0)
+            # get_slice flips sagittal L-R (A-P), but oblique_plane samples +Y
+            # increasing (unflipped). Match get_slice so the default and FOV-planning
+            # paths share one convention and the image doesn't mirror when planning is
+            # toggled — every other consumer (recon, B0, scout, overlays) is keyed to
+            # get_slice, and the display layer un-mirrors it uniformly.
+            if orient == "sagittal":
+                ph = np.fliplr(ph)
+            return ph
 
         ph = get_slice(vol, orient, sl_idx)
         # Saturation band: a 3-D slab nulled on the raw slice (only the main

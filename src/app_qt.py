@@ -836,13 +836,13 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._match_sagittal_flip(ax)
 
     def _match_sagittal_flip(self, ax: Any) -> None:
-        """Flip a displayed image left-right for sagittal, matching the scout's
-        ``np.fliplr`` (app_scout) so the acquired image's A-P isn't mirrored vs the
-        localizer you planned on. Inverting the axis (not the data) keeps the
-        transAxes orientation letters put and the data-coordinate measure/hover
-        (event.xdata) correct, since matplotlib reports xdata on the inverted axis."""
-        if self.orientation.get() == "sagittal":
-            ax.invert_xaxis()
+        """No-op: sagittal no longer needs a display flip. get_slice already flips
+        sagittal L-R into the radiological convention (anterior-left) and the oblique
+        path now matches (Simulator._get_phantom_slice), so the slice is displayed
+        as-is. The old ax.invert_xaxis() was a second flip that mirrored the image
+        back to anterior-right, inconsistent with the recon reformats. Retained as a
+        seam in case a future orientation ever does need a per-view display flip."""
+        return
 
     def _annotate_image(self, ax: Any, params: dict, orient: str, sl_idx: int,
                         width: float, center: float) -> None:
