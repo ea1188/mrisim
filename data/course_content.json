@@ -309,7 +309,7 @@
    "body": {
     "prompt": "A pregnant MRI technologist may:",
     "options": [
-     "Keep working in and around the MRI suite throughout pregnancy",
+     "Keep working in and around the MRI suite",
      "Not enter Zone III or IV under any circumstance",
      "Work only on scanners at 1.5 T or below",
      "Work only while wearing a lead apron for shielding"
@@ -5710,7 +5710,7 @@
    "body": {
     "prompt": "How is the arm positioned for a standard shoulder MRI, and why?",
     "options": [
-     "Palm up in external rotation, to profile the supraspinatus tendon cleanly",
+     "Palm up in external rotation, to profile the rotator cuff",
      "Palm down in internal rotation, to open the acromial arch",
      "Elbow flexed across the chest, to relax the deltoid muscle",
      "Arm raised overhead, to stretch the supraspinatus tendon"
