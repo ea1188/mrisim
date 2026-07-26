@@ -134,9 +134,13 @@
       style: "display:block;margin:12px auto 0;background:none;border:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;text-decoration:underline",
       text: "or sign in with email", onclick: function () { fallback.hidden = false; toggle.hidden = true; },
     });
+    // Show which address Google's consent screen will display (our Supabase auth
+    // host) so the supabase.co URL doesn't read as a scam.
+    var supaHost = ((window.MRISIM_SUPABASE && window.MRISIM_SUPABASE.url) || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    var authNote = supaHost ? h("p", { style: "margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.5", text: "When you continue, Google will ask you to sign in to " + supaHost + ", our secure authentication provider. This is expected." }) : null;
     gate([h("h2", { text: "Sign in to your course" }),
       h("p", { text: "Your guided curriculum, saved progress and course content are all here. Sign in to pick up where you left off." }),
-      gbtn, toggle, fallback, msg]);
+      gbtn, authNote, toggle, fallback, msg].filter(Boolean));
   }
 
   function paywallView(email, uid) {
