@@ -52,11 +52,15 @@
       }).catch(function (e) { gbtn.disabled = false; msg.className = "msg err"; msg.textContent = String(e.message || e); });
     } });
 
+    // Tell users up front which address Google's consent screen will show (our
+    // Supabase auth host), so the supabase.co URL doesn't read as a scam.
+    var supaHost = ((window.MRISIM_SUPABASE && window.MRISIM_SUPABASE.url) || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    var authNote = supaHost ? h("p", { style: "margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.5", text: "When you continue, Google will ask you to sign in to " + supaHost + ", our secure authentication provider. This is expected." }) : null;
     show(card([
       h("h2", { text: "Sign in" }),
       invited ? h("p", { class: "sub", text: "You've been invited to join a class. Sign in with Google to join it." }) : h("p", { class: "sub", text: "Sign in with your Google account to create classes, join them, and keep your course progress synced across your devices." }),
-      gbtn, msg,
-    ]));
+      gbtn, authNote, msg,
+    ].filter(Boolean)));
   }
 
   // ---- signed in -------------------------------------------------------- //
