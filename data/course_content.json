@@ -309,13 +309,13 @@
    "body": {
     "prompt": "A pregnant MRI technologist may:",
     "options": [
-     "Keep working in the MRI suite but leave the bore in scans",
+     "Keep working in and around the MRI suite throughout pregnancy",
      "Not enter Zone III or IV under any circumstance",
      "Work only on scanners at 1.5 T or below",
      "Work only while wearing a lead apron for shielding"
     ],
     "answer": 0,
-    "explain": "Guidelines permit pregnant staff to work in and around the MRI suite; the usual precaution is not to remain inside the bore during active scanning. MRI uses no ionizing radiation, so lead aprons are irrelevant."
+    "explain": "Guidelines permit pregnant staff to work in and around the MRI suite throughout pregnancy; whether to remain in the scanner room during active scanning is left to the worker's discretion, not a mandatory rule. MRI uses no ionizing radiation, so lead aprons are irrelevant."
    }
   },
   {
@@ -3696,7 +3696,7 @@
     "html": "<p>The <b>flip angle</b> is the angle by which the RF pulse tips the net magnetization away from the main field. It is one of the most useful contrast knobs in MRI, and what it does depends on the sequence family.</p><ul><li><b>90 degrees</b> puts all the magnetization into the transverse plane, giving the maximum signal from a single excitation. This is the classic spin-echo excitation.</li><li><b>Gradient echo</b> usually uses less than 90 degrees. With short TRs there is no time for full longitudinal recovery, so a <b>smaller flip angle</b> yields more steady-state signal.</li><li>The <b>Ernst angle</b> is the flip that maximizes signal for a given TR and tissue T1, following cos(Ernst angle) = exp(-TR / T1); a shorter TR or a longer T1 means a smaller Ernst angle.</li></ul><p>In gradient echo the flip angle also steers <b>contrast</b>: a <b>larger flip</b> leans toward <b>T1 weighting</b>, while a <b>smaller flip</b> leans toward <b>proton density and T2*</b>. The catch is <b>SAR</b>: flip angle scales with RF power, so a bigger flip deposits more heat, which is why fast, high-flip, short-TR sequences can reach SAR limits, especially at higher field strength.</p>",
     "keypoints": [
      "The flip angle is how far the RF pulse tips the magnetization from the main field.",
-     "90 degrees gives maximum single-shot signal (classic spin echo).",
+     "90 degrees gives maximum single-excitation signal (classic spin echo).",
      "Gradient echo uses a smaller flip; the Ernst angle maximizes signal for a given TR and T1.",
      "Larger flip leans to T1 weighting; smaller flip leans to proton density and T2*.",
      "Flip angle scales with RF power, so a larger flip raises SAR."
@@ -4086,7 +4086,7 @@
      "CSF is bright on a proton density sequence"
     ],
     "answer": 0,
-    "explain": "The long TI of about 2548 ms at 1.5T nulls the signal from CSF while preserving T2-weighted contrast elsewhere, which is the defining feature of FLAIR. STIR uses a much shorter TI to null fat, not CSF.",
+    "explain": "The long TI of about 2548 ms, typical of a 1.5T FLAIR, nulls the signal from CSF while preserving T2-weighted contrast elsewhere, which is the defining feature of FLAIR. STIR uses a much shorter TI to null fat, not CSF.",
     "setup": {
      "region": "Brain",
      "orientation": "axial",
@@ -4965,13 +4965,13 @@
    "body": {
     "prompt": "The facial-nerve variant of the IAC study targets which nerve?",
     "options": [
-     "The facial nerve CN VII in patients with facial pain or Bell's palsy",
+     "The facial nerve CN VII in patients with facial weakness or Bell's palsy",
      "The optic nerve CN II in patients with sudden painless vision loss",
      "The hypoglossal nerve CN XII in patients with tongue deviation signs",
      "The accessory nerve CN XI in patients with shoulder droop weakness"
     ],
     "answer": 0,
-    "explain": "The variant evaluates CN VII for facial pain or Bell's palsy, alongside trigeminal assessment. The optic, hypoglossal, and accessory nerves are not the focus of this protocol."
+    "explain": "The variant evaluates CN VII for facial weakness or Bell's palsy, alongside trigeminal assessment. The optic, hypoglossal, and accessory nerves are not the focus of this protocol."
    }
   },
   {
@@ -5448,7 +5448,7 @@
    "kind": "quiz",
    "ord": 981,
    "body": {
-    "prompt": "An AVM or a cavernoma is generally better characterized on which sequence?",
+    "prompt": "A cavernoma is generally better characterized on which sequence?",
     "options": [
      "SWI or diffusion, which show blood products and susceptibility",
      "TOF MRA, which shows only the bright flowing arterial lumen",
@@ -5456,7 +5456,7 @@
      "A plain sagittal two-dimensional TOF venogram of the sinuses"
     ],
     "answer": 0,
-    "explain": "SWI is sensitive to blood products and the susceptibility of a cavernoma, and diffusion adds tissue information. TOF shows flowing lumen but characterizes these lesions less well."
+    "explain": "SWI is sensitive to the blood products and susceptibility of a cavernoma, which is often occult on flow-based imaging. TOF shows the flowing lumen but characterizes a low-flow cavernoma less well. An AVM, by contrast, is well shown on TOF or contrast MRA."
    }
   },
   {
@@ -5710,13 +5710,13 @@
    "body": {
     "prompt": "How is the arm positioned for a standard shoulder MRI, and why?",
     "options": [
-     "Palm up in external rotation, to profile the labrum cleanly",
+     "Palm up in external rotation, to profile the supraspinatus tendon cleanly",
      "Palm down in internal rotation, to open the acromial arch",
      "Elbow flexed across the chest, to relax the deltoid muscle",
      "Arm raised overhead, to stretch the supraspinatus tendon"
     ],
     "answer": 0,
-    "explain": "The arm lies at the side, palm up in external rotation on a sandbag. External rotation swings the bicipital groove out of the way, giving a cleaner profile of the labrum."
+    "explain": "The arm lies at the side, palm up in external rotation on a sandbag. External rotation swings the bicipital groove out of the way and reduces magic angle artifact, giving a cleaner profile of the rotator cuff, especially the supraspinatus tendon."
    }
   },
   {
@@ -6443,7 +6443,7 @@
    "ord": 1039,
    "body": {
     "title": "RF heating and coil safety: SAR, B1+rms, and burns",
-    "html": "<p>SAR, the specific absorption rate, is the rate at which the body absorbs RF power, in watts per kilogram (W/kg). It depends on the patient's habitus, weight, and tissue as well as the sequence, so the height and weight entered at registration must be accurate. SAR roughly quadruples when a protocol moves from a 1.5T to a 3T system. Normal operating mode allows less than 2 W/kg whole body and less than 3.2 W/kg to the head; first level controlled mode allows less than 4 W/kg whole body.</p><p>When a sequence exceeds the limit, reduce RF deposition: lower the flip angle, choose a low-SAR RF pulse, shorten the turbo or echo train factor, run fewer slices, split the scan into more concatenations, and remove saturation bands that are not needed. Removing blankets and fanning air into the bore keep the patient comfortable while heat builds.</p><p>B1+rms is the average effective RF field of the transmit coil for a sequence, in microtesla. Unlike SAR it is patient-independent: it is set by the system, the sequence, and the parameters, and the scanner reports it directly, so it is a more consistent condition to verify than a patient-dependent SAR estimate. Implants often carry a B1+rms condition; a DBS with whole-body eligibility, for example, may require every sequence to stay at or below 2 microtesla, checked before each sequence runs.</p><p>Burn prevention is positioning work. Never let the patient touch the bore wall or a bare coil or cable, and pad skin-to-skin contact points such as crossed hands or touching knees with a pad or pillowcase. When a metal implant causes severe artifact or its conditions demand a lower field, a 1.5T system is the better choice. For an implant without leads that sits entirely within a local transmit-receive coil, that coil can lower RF exposure elsewhere, but a leaded implant such as a pacemaker or neurostimulator often requires body-coil transmission instead, because near-field coupling to the lead is unpredictable.</p>",
+    "html": "<p>SAR, the specific absorption rate, is the rate at which the body absorbs RF power, in watts per kilogram (W/kg). It depends on the patient's habitus, weight, and tissue as well as the sequence, so the height and weight entered at registration must be accurate. SAR roughly quadruples when a protocol moves from a 1.5T to a 3T system. Normal operating mode allows less than 2 W/kg whole body and less than 3.2 W/kg to the head; first level controlled mode allows less than 4 W/kg whole body.</p><p>When a sequence exceeds the limit, reduce RF deposition: lower the flip angle, choose a low-SAR RF pulse, shorten the turbo or echo train factor, run fewer slices, split the scan into more concatenations, and remove saturation bands that are not needed. Removing blankets and fanning air into the bore keep the patient comfortable but do not reduce SAR.</p><p>B1+rms is the average effective RF field of the transmit coil for a sequence, in microtesla. Unlike SAR it is patient-independent: it is set by the system, the sequence, and the parameters, and the scanner reports it directly, so it is a more consistent condition to verify than a patient-dependent SAR estimate. Implants often carry a B1+rms condition; a DBS with whole-body eligibility, for example, may require every sequence to stay at or below 2 microtesla, checked before each sequence runs.</p><p>Burn prevention is positioning work. Never let the patient touch the bore wall or a bare coil or cable, and pad skin-to-skin contact points such as crossed hands or touching knees with a pad or pillowcase. When a metal implant causes severe artifact or its conditions demand a lower field, a 1.5T system is the better choice. For an implant without leads that sits entirely within a local transmit-receive coil, that coil can lower RF exposure elsewhere, but a leaded implant such as a pacemaker or neurostimulator may constrain which transmit coil is permitted, often a body-coil B1+rms limit and sometimes a local transmit/receive coil, because near-field coupling to the lead is hard to predict.</p>",
     "keypoints": [
      "SAR is the rate of RF power absorption in W/kg; it depends on patient habitus, weight, and the sequence",
      "Normal mode: under 2 W/kg whole body and 3.2 W/kg head; first level: under 4 W/kg whole body",
@@ -6645,7 +6645,7 @@
    "kind": "quiz",
    "ord": 1051,
    "body": {
-    "prompt": "During a wrist exam the coil and wrist are angled well past 54.7 degrees relative to B0. The resulting risk is:",
+    "prompt": "During a wrist exam the tendons are oriented near 54.7 degrees relative to B0. The resulting risk is:",
     "options": [
      "Magic angle artifact raising signal in tendons and ligaments",
      "Chemical shift artifact displacing fat along the frequency axis",
@@ -6653,7 +6653,7 @@
      "Zipper artifact from RF leakage entering the receive chain"
     ],
     "answer": 0,
-    "explain": "Near 54.7 degrees to B0, T2 decay in ordered collagen changes and tendons or ligaments appear falsely bright, which can lead to a faulty diagnosis. Keep the wrist coil angled less than 54.7 degrees."
+    "explain": "Near 54.7 degrees to B0, T2 decay in ordered collagen changes and tendons or ligaments appear falsely bright, which can lead to a faulty diagnosis. The effect peaks at that angle and fades as the tendons move toward 0 or 90 degrees, so position the wrist away from 54.7 degrees."
    }
   },
   {
@@ -8220,7 +8220,7 @@
    "kind": "quiz",
    "ord": 1152,
    "body": {
-    "prompt": "SPAIR and SPIR improve on a simple frequency-selective fat-saturation pulse mainly by:",
+    "prompt": "SPAIR improves on a simple frequency-selective fat-saturation pulse mainly by:",
     "options": [
      "Using a spectrally selective inversion that is more tolerant of B1 (transmit) nonuniformity than a plain saturation pulse",
      "Nulling fat purely by its T1, so no knowledge of the fat frequency is needed at all",
@@ -8228,7 +8228,7 @@
      "Applying the fat pulse only to the center of k-space, which halves the added scan time"
     ],
     "answer": 0,
-    "explain": "SPAIR (and SPIR) use a spectrally selective inversion of fat, and the adiabatic version is relatively insensitive to B1 nonuniformity, giving more uniform suppression than a plain saturation pulse. They remain frequency-selective (unlike STIR), do not separate echoes arithmetically (that is Dixon), and are not limited to the center of k-space."
+    "explain": "SPAIR uses an adiabatic spectrally selective inversion of fat that is relatively insensitive to B1 nonuniformity, giving more uniform suppression than a plain saturation pulse or the non-adiabatic SPIR. It remains frequency-selective (unlike STIR), does not separate echoes arithmetically (that is Dixon), and is not limited to the center of k-space."
    }
   },
   {
@@ -11610,7 +11610,7 @@
      "A saturation band on one side of the slab nulls inflow from that direction, isolating arteries or veins.",
      "T1-bright material (fat, subacute blood, residual gadolinium) can mimic flow on TOF."
     ],
-    "worked_example": "A 2D TOF venogram of the lower legs is planned to evaluate for deep vein thrombosis. Because venous flow runs roughly upward toward the heart, a superior saturation band is placed above each imaging slice to null arterial inflow, so only venous flow remains bright. If the band were mistakenly placed inferior to the slice instead, arterial signal would appear bright and venous signal would be nulled, producing a study that looks falsely occluded for the veins the exam was meant to assess.",
+    "worked_example": "A 2D TOF venogram of the lower legs is planned to evaluate for deep vein thrombosis. Because leg arterial flow runs downward and enters from above, a superior saturation band is placed above each imaging slice to null arterial inflow, so only venous flow remains bright. If the band were mistakenly placed inferior to the slice instead, arterial signal would appear bright and venous signal would be nulled, producing a study that looks falsely occluded for the veins the exam was meant to assess.",
     "memory_hooks": [
      "TOF signal is about direction of entry, not vessel type: the saturation band decides whether you see arteries or veins.",
      "Slow or in-plane flow saturates like stationary tissue on TOF: it is stuck in the slab too long and loses its edge."
@@ -12172,7 +12172,7 @@
    "ord": 1371,
    "body": {
     "title": "Cardiac sequences and artifacts: black-blood, phase contrast, and banding",
-    "html": "<p><strong>Black-blood imaging</strong> uses a double inversion-recovery, or double IR, preparation: a nonselective inversion pulse followed immediately by a slice-selective reinversion pulse restores longitudinal magnetization only within the imaging slice, while blood outside the slice remains inverted and flows into the slice by the time of imaging, nulled near the null point of blood. The result is dark, suppressed blood pool signal that sharply defines the myocardial and vessel wall borders, useful for anatomic evaluation of wall thickness, pericardium, and masses where bright intraluminal signal would otherwise obscure the border.</p><p><strong>Phase-contrast imaging</strong> encodes flow velocity into the phase of the MR signal using bipolar gradients, producing both a magnitude image and a velocity, or phase, map that can quantify peak velocity and flow volume across a heart valve or great vessel. The operator sets a <strong>velocity encoding value (venc)</strong> close to the expected peak velocity in the region of interest; a venc set too low causes velocity aliasing that wraps the phase signal, while a venc set too high sacrifices velocity-to-noise sensitivity, so venc should be chosen based on the clinical question, such as a high venc for a stenotic aortic valve jet.</p><p>bSSFP cine sequences are vulnerable to <strong>dark banding artifact</strong> from off-resonance effects, since the balanced gradient waveform requires a very uniform magnetic field and any local field inhomogeneity shifts the frequency response enough to create bands of signal loss. These bands commonly arise near the lungs, at tissue interfaces, or from imperfect shimming, and can mimic or obscure pathology if they cross the myocardium.</p><p>Banding is minimized by performing a careful local <strong>shim</strong> over the heart and running a <strong>frequency scout</strong> to adjust the center frequency so the resulting band is pushed away from the region of interest, ideally out into the lung or chest wall rather than across the ventricle. For free-breathing acquisitions such as coronary MRA, <strong>navigator echoes</strong> placed over the right hemidiaphragm track its position in real time, accepting data only when the diaphragm falls within a narrow gating window near end-expiration, suppressing respiratory motion without requiring a breath-hold.</p>",
+    "html": "<p><strong>Black-blood imaging</strong> uses a double inversion-recovery, or double IR, preparation: a nonselective inversion pulse followed immediately by a slice-selective reinversion pulse restores longitudinal magnetization only within the imaging slice, while blood outside the slice remains inverted and flows into the slice and is imaged at the null point of its inverted magnetization, appearing dark. The result is dark, suppressed blood pool signal that sharply defines the myocardial and vessel wall borders, useful for anatomic evaluation of wall thickness, pericardium, and masses where bright intraluminal signal would otherwise obscure the border.</p><p><strong>Phase-contrast imaging</strong> encodes flow velocity into the phase of the MR signal using bipolar gradients, producing both a magnitude image and a velocity, or phase, map that can quantify peak velocity and flow volume across a heart valve or great vessel. The operator sets a <strong>velocity encoding value (venc)</strong> close to the expected peak velocity in the region of interest; a venc set too low causes velocity aliasing that wraps the phase signal, while a venc set too high sacrifices velocity-to-noise sensitivity, so venc should be chosen based on the clinical question, such as a high venc for a stenotic aortic valve jet.</p><p>bSSFP cine sequences are vulnerable to <strong>dark banding artifact</strong> from off-resonance effects, since the balanced gradient waveform requires a very uniform magnetic field and any local field inhomogeneity shifts the frequency response enough to create bands of signal loss. These bands commonly arise near the lungs, at tissue interfaces, or from imperfect shimming, and can mimic or obscure pathology if they cross the myocardium.</p><p>Banding is minimized by performing a careful local <strong>shim</strong> over the heart and running a <strong>frequency scout</strong> to adjust the center frequency so the resulting band is pushed away from the region of interest, ideally out into the lung or chest wall rather than across the ventricle. For free-breathing acquisitions such as coronary MRA, <strong>navigator echoes</strong> placed over the right hemidiaphragm track its position in real time, accepting data only when the diaphragm falls within a narrow gating window near end-expiration, suppressing respiratory motion without requiring a breath-hold.</p>",
     "keypoints": [
      "Double inversion recovery nulls blood signal for black-blood anatomic imaging of the myocardium and vessel walls.",
      "Phase-contrast imaging quantifies flow velocity through bipolar gradient encoding; venc should approximate expected peak velocity.",
@@ -12432,7 +12432,7 @@
    "ord": 1385,
    "body": {
     "title": "Pitfalls and spectral quality",
-    "html": "<p>The single greatest determinant of spectral quality is <strong>magnetic field homogeneity</strong> within the voxel. A good higher-order shim narrows the linewidth of every peak, keeping adjacent metabolite peaks distinct and allowing accurate measurement of peak height and area. A poor shim broadens each peak, and when linewidths broaden enough, closely spaced peaks, such as glutamate and glutamine overlapping NAA, merge into an unresolvable hump, making the spectrum difficult or impossible to interpret reliably.</p><p><strong>Incomplete water suppression</strong> leaves a residual water signal that can swamp the baseline and distort the shape and apparent height of nearby metabolite peaks, especially choline and creatine, which sit close to the water resonance. If the suppression pulse is mistuned or the shim is poor, the residual water hump can be mistaken for baseline drift or can obscure a genuine metabolite abnormality.</p><p><strong>Voxel contamination</strong> from tissue outside the intended region of interest is one of the most common technologist-controllable pitfalls. A voxel placed too close to the skull, scalp, or facial fat picks up an intense lipid signal that bleeds into the 0.9 to 1.3 ppm region, obscuring or mimicking the lactate doublet. A voxel that includes bone, air, or a portion of CSF or ventricle introduces additional susceptibility effects, dilutes the metabolite signal with fluid or air that contains essentially no measurable metabolites, and further degrades the local shim.</p><p>Finally, <strong>patient motion</strong> during a spectroscopy acquisition, which typically takes several minutes, shifts the voxel relative to the anatomy mid-scan and can smear or duplicate peaks, while a voxel that is made too small to avoid these contaminants sacrifices signal-to-noise to the point that peaks are lost in noise. Careful voxel placement well away from bone, fat, and air interfaces, patient immobilization, and attention to shim quality before acquisition begins are the practical keys to a diagnostic spectrum.</p>",
+    "html": "<p>The single greatest determinant of spectral quality is <strong>magnetic field homogeneity</strong> within the voxel. A good higher-order shim narrows the linewidth of every peak, keeping adjacent metabolite peaks distinct and allowing accurate measurement of peak height and area. A poor shim broadens each peak, and when linewidths broaden enough, closely spaced peaks, such as glutamate and glutamine overlapping NAA, merge into an unresolvable hump, making the spectrum difficult or impossible to interpret reliably.</p><p><strong>Incomplete water suppression</strong> leaves a residual water signal that can swamp the baseline and distort the shape and apparent height of nearby metabolite peaks, especially the peaks nearest the water resonance such as choline. If the suppression pulse is mistuned or the shim is poor, the residual water hump can be mistaken for baseline drift or can obscure a genuine metabolite abnormality.</p><p><strong>Voxel contamination</strong> from tissue outside the intended region of interest is one of the most common technologist-controllable pitfalls. A voxel placed too close to the skull, scalp, or facial fat picks up an intense lipid signal that bleeds into the 0.9 to 1.3 ppm region, obscuring or mimicking the lactate doublet. A voxel that includes bone, air, or a portion of CSF or ventricle introduces additional susceptibility effects, dilutes the metabolite signal with fluid or air that contains essentially no measurable metabolites, and further degrades the local shim.</p><p>Finally, <strong>patient motion</strong> during a spectroscopy acquisition, which typically takes several minutes, shifts the voxel relative to the anatomy mid-scan and can smear or duplicate peaks, while a voxel that is made too small to avoid these contaminants sacrifices signal-to-noise to the point that peaks are lost in noise. Careful voxel placement well away from bone, fat, and air interfaces, patient immobilization, and attention to shim quality before acquisition begins are the practical keys to a diagnostic spectrum.</p>",
     "keypoints": [
      "Good higher-order shim gives narrow, well-resolved peaks; poor shim broadens and merges adjacent peaks.",
      "Incomplete water suppression leaves residual signal that can swamp the baseline near choline and creatine.",
@@ -13514,13 +13514,13 @@
    "body": {
     "prompt": "Which two sequence types are combined for a standard MRCP examination?",
     "options": [
-     "Thin-section single-shot fast spin echo and a thick-slab radial projection",
+     "Thin-section single-shot fast spin echo and a thick-slab rotational projection",
      "Gradient-echo in-phase and opposed-phase imaging with fat suppression",
      "Dynamic post-gadolinium T1 imaging with an antiperistaltic agent",
      "Diffusion-weighted imaging combined with a hepatobiliary phase acquisition"
     ],
     "answer": 0,
-    "explain": "Standard MRCP combines thin-section single-shot fast spin echo images for detailed anatomy with a thick-slab radial projection that produces a cholangiogram-like overview image."
+    "explain": "Standard MRCP combines thin-section single-shot fast spin echo images for detailed anatomy with a thick-slab rotational projection that produces a cholangiogram-like overview image."
    }
   },
   {
