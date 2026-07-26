@@ -14219,7 +14219,7 @@
    "ord": 1483,
    "body": {
     "title": "What is a quench and why is cryogen safety important?",
-    "html": "<p>A superconducting magnet is kept superconducting by liquid helium. A quench is a sudden loss of superconductivity that boils off the helium rapidly. The gas is meant to leave the building through a quench pipe.</p><p>If that gas escapes into the scan room instead, it displaces oxygen and can asphyxiate, and the extreme cold can cause frostbite. Because a quench is costly and takes the magnet out of service, the quench button is used only to free a person pinned by a projectile.</p>",
+    "html": "<p>A superconducting magnet is kept cold by liquid helium, which lets it stay superconducting. A quench is a sudden loss of superconductivity that boils off the helium rapidly. The gas is meant to leave the building through a quench pipe.</p><p>If that gas escapes into the scan room instead, it displaces oxygen and can asphyxiate, and the extreme cold can cause frostbite. Because a quench is costly and takes the magnet out of service, the quench button is used only to free a person pinned by a projectile.</p>",
     "keypoints": [
      "A quench is a rapid loss of superconductivity that boils off helium.",
      "Helium venting into the room can asphyxiate and cause frostbite.",
@@ -14336,6 +14336,174 @@
      "Parallel imaging skips k-space lines and uses coil sensitivity to reconstruct.",
      "SNR drops by about the square root of the acceleration times the g factor.",
      "Too much acceleration leaves residual central artifacts."
+    ]
+   }
+  },
+  {
+   "topic": "contrast-weighting",
+   "kind": "reference",
+   "ord": 1492,
+   "body": {
+    "title": "What is magnetization transfer contrast?",
+    "html": "<p>Magnetization transfer uses an off-resonance RF pulse to saturate the protons that are bound to large molecules such as proteins. Those bound protons constantly exchange magnetization with the free water around them, so saturating them lowers the signal of nearby water.</p><p>Tissues rich in macromolecules, such as muscle, cartilage, and white matter, lose the most signal. This adds contrast and is used to darken background tissue in time of flight MRA and to study white matter.</p>",
+    "keypoints": [
+     "An off-resonance pulse saturates protons bound to macromolecules.",
+     "Those protons exchange with free water and lower its signal.",
+     "Used to darken background in TOF MRA and to probe white matter."
+    ]
+   }
+  },
+  {
+   "topic": "pathology",
+   "kind": "reference",
+   "ord": 1493,
+   "body": {
+    "title": "How does DWI tell an abscess from a necrotic tumor?",
+    "html": "<p>A pyogenic abscess is filled with thick pus, and that viscous fluid restricts water motion. On diffusion imaging the cavity is bright on the DWI image and dark on the ADC map.</p><p>The necrotic or cystic center of a tumor usually holds thin, freely moving fluid that does not restrict, so it stays dark on DWI. When a ring enhancing lesion also shows central restriction, that favors an abscess over a necrotic tumor.</p>",
+    "keypoints": [
+     "Abscess pus restricts diffusion: bright on DWI, dark on ADC.",
+     "Necrotic tumor fluid moves freely and does not restrict.",
+     "Central restriction in a ring lesion favors abscess."
+    ]
+   }
+  },
+  {
+   "topic": "pathology",
+   "kind": "reference",
+   "ord": 1494,
+   "body": {
+    "title": "How does a fat containing lesion behave on MRI?",
+    "html": "<p>A lesion that contains fat, such as a lipoma or a dermoid, follows fat signal. It is bright on T1 and stays fairly bright on fast spin echo T2, which can look like any other bright lesion.</p><p>The confirming step is a fat suppressed sequence. If the bright T1 signal drops out with fat saturation, the lesion holds macroscopic fat, which narrows the diagnosis. A separate clue, signal that drops throughout the lesion on opposed phase images, points instead to microscopic fat mixed with water, as in an adrenal adenoma.</p>",
+    "keypoints": [
+     "Fat in a lesion is bright on T1 and fairly bright on FSE T2.",
+     "Signal that drops out with fat saturation confirms macroscopic fat.",
+     "Signal that drops throughout on opposed phase images points to microscopic fat."
+    ]
+   }
+  },
+  {
+   "topic": "procedures-positioning",
+   "kind": "reference",
+   "ord": 1495,
+   "body": {
+    "title": "How does the localizer guide slice prescription?",
+    "html": "<p>Every exam starts with a fast three plane localizer, also called a scout. The technologist prescribes the imaging slices on the scout rather than blindly, angling and centering them to the anatomy.</p><p>Examples are aligning axial slices to the disc spaces of the spine, or to a standard line through the brain, so the same structures appear on every patient. A careful prescription off the localizer is what makes the images reproducible and easy to compare.</p>",
+    "keypoints": [
+     "A three plane localizer comes first and guides the real slices.",
+     "Slices are angled and centered to the anatomy on the scout.",
+     "Good prescription makes the study reproducible and comparable."
+    ]
+   }
+  },
+  {
+   "topic": "procedures-protocols",
+   "kind": "reference",
+   "ord": 1496,
+   "body": {
+    "title": "What is in a routine lumbar spine protocol?",
+    "html": "<p>A routine lumbar spine MRI usually includes a sagittal T1 and a sagittal T2 to show alignment, the marrow, the discs, and the cord or thecal sac. Axial T2 or T1 slices are then angled through the discs of interest to show the canal and the nerve roots.</p><p>A sagittal STIR or fat suppressed T2 is often added to make edema, infection, or a fracture stand out against suppressed marrow fat.</p>",
+    "keypoints": [
+     "Sagittal T1 and T2 for alignment, marrow, discs, and thecal sac.",
+     "Axial slices angled through the discs show the canal and roots.",
+     "STIR or fat suppressed T2 highlights edema, infection, or fracture."
+    ]
+   }
+  },
+  {
+   "topic": "procedures-protocols",
+   "kind": "reference",
+   "ord": 1497,
+   "body": {
+    "title": "How does MR arthrography work?",
+    "html": "<p>MR arthrography improves the view of joint structures by adding contrast inside the joint. In the direct method a dilute gadolinium solution is injected into the joint under imaging guidance. In the indirect method contrast is given into a vein and allowed to diffuse into the joint over time.</p><p>The fluid distends the joint and outlines structures such as the labrum or a cartilage flap. Fat suppressed T1 images in several planes make the bright contrast stand out.</p>",
+    "keypoints": [
+     "Direct arthrography injects dilute gadolinium into the joint.",
+     "The distended joint outlines the labrum and cartilage.",
+     "Fat suppressed T1 in several planes shows the bright contrast."
+    ]
+   }
+  },
+  {
+   "topic": "procedures-vascular",
+   "kind": "reference",
+   "ord": 1498,
+   "body": {
+    "title": "What non-contrast MRA options exist beyond time of flight?",
+    "html": "<p>Time of flight and phase contrast are the classic non-contrast methods, but there are others that avoid gadolinium, which matters in poor kidney function. Balanced SSFP gives bright blood without contrast and is common in the heart and abdomen.</p><p>ECG gated fast spin echo methods image the legs by subtracting a bright blood diastolic acquisition from a dark blood systolic one, leaving the arteries. These trade some speed and robustness for avoiding contrast.</p>",
+    "keypoints": [
+     "Balanced SSFP gives bright blood with no contrast.",
+     "ECG gated subtraction FSE images the leg arteries.",
+     "These non-contrast methods help when gadolinium must be avoided."
+    ]
+   }
+  },
+  {
+   "topic": "three-d-recon",
+   "kind": "reference",
+   "ord": 1499,
+   "body": {
+    "title": "What is a minimum intensity projection (MinIP)?",
+    "html": "<p>A minimum intensity projection keeps the darkest voxel along each ray cast through a slab, which is the opposite of a maximum intensity projection. It highlights low signal structures rather than bright ones.</p><p>It is used to display veins on susceptibility weighted imaging, and to show air containing structures such as the airways, where the dark signal is the finding.</p>",
+    "keypoints": [
+     "MinIP keeps the darkest voxel along each ray, opposite of MIP.",
+     "It highlights low signal structures.",
+     "Used for SWI venography and to show airways."
+    ]
+   }
+  },
+  {
+   "topic": "safety",
+   "kind": "reference",
+   "ord": 1500,
+   "body": {
+    "title": "What do MR Safe, MR Conditional, and MR Unsafe mean?",
+    "html": "<p>Devices and implants carry a standardized safety label. MR Safe means the item poses no known hazard in any MR environment, which requires it to be nonmetallic and nonconducting. MR Unsafe means it is hazardous, such as a ferromagnetic object.</p><p>MR Conditional is the common middle category: the item is safe only under stated conditions, such as a maximum field strength, a spatial gradient limit, and limits on SAR or scan time. The technologist verifies the exact conditions before scanning.</p>",
+    "keypoints": [
+     "MR Safe: no known hazard, nonmetallic and nonconducting.",
+     "MR Unsafe: hazardous, such as a ferromagnetic object.",
+     "MR Conditional: safe only within stated field, gradient, and SAR limits."
+    ]
+   }
+  },
+  {
+   "topic": "instrumentation",
+   "kind": "reference",
+   "ord": 1501,
+   "body": {
+    "title": "What is the RF shield (Faraday cage)?",
+    "html": "<p>The scan room is built inside a Faraday cage, a continuous copper or aluminum shield in the walls, floor, ceiling, door, and window. It keeps outside radio signals from reaching the sensitive receiver and keeps the scanner's own RF inside.</p><p>A gap in the shield, such as a propped door or a phone left in the room, lets stray signals in and produces a bright line or band across the image, seen as a zipper artifact.</p>",
+    "keypoints": [
+     "A Faraday cage shields the room so outside RF cannot reach the receiver.",
+     "The door and window are part of the continuous shield.",
+     "A break lets interference in, causing a zipper artifact."
+    ]
+   }
+  },
+  {
+   "topic": "contrast-agents",
+   "kind": "reference",
+   "ord": 1502,
+   "body": {
+    "title": "How do iron oxide (T2) agents differ from gadolinium?",
+    "html": "<p>Most agents are gadolinium based and mainly shorten T1, so the tissue that takes them up looks bright. Iron oxide agents work the other way: they strongly shorten T2 and T2 star, so tissue that takes them up loses signal and looks dark.</p><p>Iron oxide agents were used for liver and lymph node imaging, and an iron based blood pool agent is an option for vascular imaging when gadolinium must be avoided.</p>",
+    "keypoints": [
+     "Gadolinium shortens T1 and brightens uptake; iron oxide darkens it.",
+     "Iron oxide strongly shortens T2 and T2 star.",
+     "Iron agents are a gadolinium alternative for some studies."
+    ]
+   }
+  },
+  {
+   "topic": "patient-care",
+   "kind": "reference",
+   "ord": 1503,
+   "body": {
+    "title": "How is contrast extravasation handled?",
+    "html": "<p>Extravasation is contrast leaking into the soft tissue around the IV instead of into the vein. If it happens the injection is stopped right away, the limb is elevated, and a cold or warm compress is applied per department protocol.</p><p>Most gadolinium extravasations are mild because the injected volume is small, but the site is watched for swelling, pain, or skin changes, and a large or symptomatic leak is escalated to the radiologist or care team.</p>",
+    "keypoints": [
+     "Extravasation is contrast leaking into tissue around the IV.",
+     "Stop the injection, elevate the limb, apply a compress.",
+     "Watch the site and escalate large or symptomatic leaks."
     ]
    }
   }
