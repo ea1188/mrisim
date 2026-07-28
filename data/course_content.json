@@ -1492,15 +1492,15 @@
    "kind": "quiz",
    "ord": 408,
    "body": {
-    "prompt": "The periphery of k-space predominantly encodes:",
+    "prompt": "If the outer (peripheral) lines of k-space are not acquired, the image mainly loses:",
     "options": [
-     "Fine detail and high-spatial-frequency resolution",
-     "The overall image contrast and brightness",
-     "The slice selection and slice position",
-     "The receiver gain and coil setting"
+     "Fine spatial detail and edge sharpness",
+     "Overall image contrast and brightness",
+     "Accuracy of slice position",
+     "Receiver bandwidth and coil gain"
     ],
     "answer": 0,
-    "explain": "High spatial frequencies at the edges of k-space carry edges and fine detail, while the center carries bulk signal and contrast."
+    "explain": "The periphery of k-space holds high spatial frequencies (edges, fine detail). Skipping those outer lines, as in a low-resolution or truncated acquisition, blurs the image and lowers spatial resolution, while the center keeps bulk signal and contrast."
    }
   },
   {
