@@ -86,6 +86,29 @@ test("classCompletion counts members satisfying each assignment (incl. a member 
   assert.equal(c.doneCount, 2);
 });
 
+test("studentStatus: rows sort by due date (earliest first), no-due last", () => {
+  const cat = A.catalog(lessonsData, quizData);
+  const asg = [
+    { id: "late", kind: "quiz", ref: "safety", due_at: "2026-08-28T23:59:59Z" },
+    { id: "none", kind: "quiz", ref: "image-quality", due_at: null },
+    { id: "early", kind: "lesson", ref: "Zones", due_at: "2026-08-07T23:59:59Z" },
+  ];
+  const rows = A.studentStatus(asg, [], cat);
+  assert.deepEqual(rows.map((r) => r.id), ["early", "late", "none"]);
+});
+
+test("classCompletion: rows sort by due date (earliest first), no-due last", () => {
+  const cat = A.catalog(lessonsData, quizData);
+  const roster = [{ student_id: "s1" }];
+  const asg = [
+    { id: "late", kind: "quiz", ref: "safety", due_at: "2026-08-28T23:59:59Z" },
+    { id: "none", kind: "quiz", ref: "image-quality", due_at: null },
+    { id: "early", kind: "quiz", ref: "safety", due_at: "2026-08-07T23:59:59Z" },
+  ];
+  const rows = A.classCompletion(asg, roster, [], cat);
+  assert.deepEqual(rows.map((r) => r.id), ["early", "late", "none"]);
+});
+
 test("dueLabel: null when no due; overdue flag compares to now", () => {
   assert.equal(A.dueLabel(null, "2026-07-08T00:00:00Z"), null);
   const future = A.dueLabel("2026-07-12T23:59:59Z", "2026-07-08T00:00:00Z");

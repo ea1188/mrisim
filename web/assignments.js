@@ -70,6 +70,17 @@
     return { done: true, doneAt: latest };
   }
 
+  // Order rows by due date (earliest first); no-due-date rows sink to the bottom,
+  // and same-due rows fall back to label so the order is stable, not insertion order.
+  function _byDueThenLabel(x, y) {
+    if (x.dueAt !== y.dueAt) {
+      if (!x.dueAt) return 1;
+      if (!y.dueAt) return -1;
+      return x.dueAt < y.dueAt ? -1 : 1;
+    }
+    return String(x.label).localeCompare(String(y.label));
+  }
+
   function studentStatus(assignments, activity, cat) {
     cat = cat || { modules: [], lessons: [], quizzes: [] };
     return (assignments || []).map(function (a) {
@@ -80,7 +91,7 @@
         dueAt: a.due_at || null,
         done: s.done, doneAt: s.doneAt,
       };
-    });
+    }).sort(_byDueThenLabel);
   }
 
   function classCompletion(assignments, roster, activity, cat) {
@@ -101,7 +112,7 @@
         dueAt: a.due_at || null,
         doneCount: doneCount, total: members.length,
       };
-    });
+    }).sort(_byDueThenLabel);
   }
 
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
