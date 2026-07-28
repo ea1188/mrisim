@@ -853,7 +853,7 @@
       "prompt": "Gadolinium-based contrast carries which recognised risk, particularly in patients with severe renal impairment?",
       "options": ["Nephrogenic systemic fibrosis (NSF)", "Iodine-related contrast anaphylaxis", "Metformin-associated lactic acidosis", "A thyroid storm from iodine loading"],
       "answer": 0,
-      "explain": "In severe renal impairment, retained gadolinium is linked to nephrogenic systemic fibrosis (fibrosis of skin and organs). Screen renal function (eGFR), use the lowest effective dose / macrocyclic agents, and note gadolinium is unrelated to iodinated CT contrast."
+      "explain": "In severe renal impairment, retained gadolinium is linked to nephrogenic systemic fibrosis (fibrosis of skin and organs). In at-risk patients screen renal function (eGFR), use the lowest effective dose and a stable macrocyclic agent, and note gadolinium is unrelated to iodinated CT contrast."
     },
     {
       "category": "patient-care",
@@ -871,10 +871,10 @@
     },
     {
       "category": "patient-care",
-      "prompt": "Before giving gadolinium contrast, which check is essential?",
+      "prompt": "Before giving gadolinium contrast, which check is standard?",
       "options": ["Renal function (eGFR) and any history of a prior contrast reaction", "The patient's fasting blood glucose level before the injection", "A recent chest radiograph taken within the past several weeks", "The patient's exact standing height measured before the scan"],
       "answer": 0,
-      "explain": "Severe renal impairment raises the risk of nephrogenic systemic fibrosis, so eGFR is screened; a prior reaction changes the agent or requires premedication. Confirm the indication and consent as well."
+      "explain": "Renal function (eGFR) and prior-reaction history guide contrast use. eGFR screening is risk-based and no longer required routinely before Group II macrocyclic agents, but it still identifies the severe renal impairment that raises NSF risk. A prior reaction changes the agent or calls for premedication. Confirm the indication and consent as well."
     },
     {
       "category": "patient-care",

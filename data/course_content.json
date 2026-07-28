@@ -89,7 +89,7 @@
    "ord": 40,
    "body": {
     "title": "Patient care: screening to monitoring",
-    "html": "<p><b>Screen before every scan</b> (status changes): implants, pacemakers, aneurysm clips, cochlear implants, neurostimulators, and metal. A history of metalwork/grinding needs <b>orbital radiographs</b> to exclude an intra-orbital fragment. <b>Prepare</b> the patient: remove all ferromagnetic items, gown as needed, explain the loud noise, and give <b>hearing protection</b>.</p><p><b>Position</b> for signal and comfort: center the anatomy in the <b>coil at isocenter</b>, immobilize to reduce motion, and hand over the <b>call/squeeze device</b>. For <b>contrast</b>, screen for renal risk and prior reactions, obtain consent, and know the plan for an acute reaction (hives/wheeze/hypotension → stop, help, ABCs, epinephrine for anaphylaxis). Routine <b>eGFR</b> screening is no longer required before the <b>Group II macrocyclic</b> agents in common use, since their NSF risk is very low; confirm renal function for older <b>linear</b> agents or when impairment is likely, and follow facility policy. Avoid gadolinium in <b>pregnancy</b> unless essential.</p><p><b>Monitor</b> throughout: keep verbal contact, manage <b>claustrophobia</b> (reassurance, call system, wide/open bore, sedation), and use only <b>MR-safe</b> monitoring equipment for sedated or unstable patients.</p>",
+    "html": "<p><b>Screen before every scan</b> (status changes): implants, pacemakers, aneurysm clips, cochlear implants, neurostimulators, and metal. A history of metalwork/grinding needs <b>orbital radiographs</b> to exclude an intra-orbital fragment. <b>Prepare</b> the patient: remove all ferromagnetic items, gown as needed, explain the loud noise, and give <b>hearing protection</b>.</p><p><b>Position</b> for signal and comfort: center the anatomy in the <b>coil at isocenter</b>, immobilize to reduce motion, and hand over the <b>call/squeeze device</b>. For <b>contrast</b>, screen for renal risk and prior reactions, obtain consent, and know the plan for an acute reaction (hives/wheeze/hypotension → stop, help, ABCs, epinephrine for anaphylaxis). Routine <b>eGFR</b> screening is no longer required before the <b>Group II macrocyclic</b> agents in common use, since their NSF risk is very low; confirm renal function for older <b>linear</b> agents or when impairment is likely, and follow facility policy. Avoid gadolinium in <b>pregnancy</b> unless essential; after gadolinium, <b>breastfeeding</b> may continue without interruption because very little reaches breast milk, though an anxious mother may choose to pump and discard for 24 hours.</p><p><b>Monitor</b> throughout: keep verbal contact, manage <b>claustrophobia</b> (reassurance, call system, wide/open bore, sedation), and use only <b>MR-safe</b> monitoring equipment for sedated or unstable patients.</p>",
     "keypoints": [
      "Screen before every scan; orbital radiographs for metal-in-eye history.",
      "Hearing protection for every patient.",
@@ -315,7 +315,7 @@
      "Work only while wearing a lead apron for shielding"
     ],
     "answer": 0,
-    "explain": "Guidelines permit pregnant staff to work in and around the MRI suite throughout pregnancy; whether to remain in the scanner room during active scanning is left to the worker's discretion, not a mandatory rule. MRI uses no ionizing radiation, so lead aprons are irrelevant."
+    "explain": "Guidelines permit pregnant staff to work in and around the MRI suite throughout pregnancy, including positioning patients and injecting contrast. As a standard precaution they are asked to step out of the scanner room (Zone IV) during active image acquisition, when the RF and gradients are running. MRI uses no ionizing radiation, so lead aprons are irrelevant."
    }
   },
   {
@@ -1004,7 +1004,7 @@
      "Acoustic injury"
     ],
     "answer": 0,
-    "explain": "Gadolinium retention in severe renal failure is linked to nephrogenic systemic fibrosis, so eGFR is checked first."
+    "explain": "Gadolinium retention in severe renal failure is linked to nephrogenic systemic fibrosis; that is why severe renal impairment is the finding to identify before dosing."
    }
   },
   {
@@ -3666,18 +3666,18 @@
    "ord": 87,
    "body": {
     "title": "MRI contrast agents: gadolinium, safety and special agents",
-    "html": "<p>The workhorse MRI contrast agents are <b>gadolinium chelates</b>. Gadolinium is <b>paramagnetic</b> and <b>shortens the T1</b> of nearby tissue, so where it accumulates the tissue brightens on T1-weighted images. In the brain it reaches tissue only where the <b>blood-brain barrier is broken</b>, so enhancement flags tumor, active demyelination or infection. Agents are <b>excreted by the kidneys</b>, which is why renal function (<b>eGFR</b>) is checked first: in severe impairment, less-stable <b>linear</b> agents are linked to <b>nephrogenic systemic fibrosis (NSF)</b>, so more stable <b>macrocyclic</b> agents at the lowest effective dose are preferred, or contrast is avoided.</p><p>Reactions range from mild (hives, treated with antihistamines and observation) to rare <b>anaphylaxis</b>, whose first-line treatment is <b>epinephrine</b>. Gadolinium is avoided in <b>pregnancy</b> unless essential. Beyond standard extracellular agents, <b>hepatobiliary</b> agents aid liver characterization, <b>iron-based</b> agents can act as blood-pool agents, and <b>negative oral</b> agents darken bowel fluid for MRCP.</p>",
+    "html": "<p>The workhorse MRI contrast agents are <b>gadolinium chelates</b>. Gadolinium is <b>paramagnetic</b> and <b>shortens the T1</b> of nearby tissue, so where it accumulates the tissue brightens on T1-weighted images. In the brain it reaches tissue only where the <b>blood-brain barrier is broken</b>, so enhancement flags tumor, active demyelination or infection. Agents are <b>excreted by the kidneys</b>, so <b>eGFR</b> is used to flag the severe renal impairment linked to <b>nephrogenic systemic fibrosis (NSF)</b>: routine screening is no longer required before the stable <b>macrocyclic</b> agents, but older, less-stable <b>linear</b> agents with poor renal function are the classic NSF setting, so macrocyclic agents at the lowest effective dose are preferred, or contrast is avoided.</p><p>Reactions range from mild (hives, treated with antihistamines and observation) to rare <b>anaphylaxis</b>, whose first-line treatment is <b>epinephrine</b>. Gadolinium is avoided in <b>pregnancy</b> unless essential; after gadolinium, <b>breastfeeding</b> may continue without interruption because very little reaches breast milk, though an anxious mother may pump and discard for 24 hours. Beyond standard extracellular agents, <b>hepatobiliary</b> agents aid liver characterization, <b>iron-based</b> agents can act as blood-pool agents, and <b>negative oral</b> agents darken bowel fluid for MRCP.</p>",
     "keypoints": [
      "Gadolinium is paramagnetic, shortens T1, and brightens tissue on T1 images.",
      "Brain enhancement marks blood-brain-barrier breakdown.",
-     "Check eGFR: NSF links less-stable linear agents to severe renal failure.",
+     "eGFR is risk-based, not routine before Group II macrocyclic agents; NSF links less-stable linear agents to severe renal failure.",
      "Prefer stable macrocyclic agents at the lowest effective dose; avoid in pregnancy unless essential.",
      "Mild reactions get antihistamines; anaphylaxis is treated first with epinephrine."
     ],
     "worked_example": "<p>A patient is scheduled for a contrast-enhanced brain MRI and the eGFR comes back at 25 mL per minute per 1.73 square meters, in the range associated with nephrogenic systemic fibrosis risk from gadolinium exposure. Gadolinium itself is the toxic part once it is released from its chelate, so agents are engineered to hold it tightly. Linear chelates bind gadolinium less securely than macrocyclic chelates, so more free gadolinium can be released and deposited in tissue, including skin, and in patients with poor renal clearance this is the mechanism behind NSF. Because gadolinium is cleared through the kidneys, poor renal function means the agent, and any gadolinium it releases, stays in the body far longer, raising both exposure and risk. The response is not to skip a clinically indicated scan but to use a stable macrocyclic agent at the lowest dose that answers the clinical question, with the decision documented. If the goal instead were biliary imaging to look for a bile leak, a hepatobiliary agent, partly excreted through the liver into bile rather than only through the kidneys, would be chosen over a standard extracellular agent.</p>",
     "memory_hooks": [
      "Gadolinium is the toxic part; the chelate is what makes it safe to inject. Macrocyclic chelates cage it more tightly than linear ones, which is why NSF risk concentrates in linear agents.",
-     "Renal clearance is why eGFR is checked before contrast: poor kidney function means gadolinium lingers longer, raising both tissue retention and NSF risk.",
+     "Renal function matters for contrast because poor kidney function means gadolinium lingers longer, raising tissue retention and NSF risk; eGFR is checked in at-risk patients rather than routinely.",
      "Special-purpose agents to keep straight: hepatobiliary agents for liver and bile, iron-based agents for blood-pool vascular imaging, negative oral agents to darken bowel fluid for MRCP."
     ],
     "exam_traps": [
