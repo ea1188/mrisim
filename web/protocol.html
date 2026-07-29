@@ -64,6 +64,15 @@
     #pp-params .seqname { color: var(--text); font-weight: 600; font-size: 13px; }
     #pp-params .pp-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
     #pp-readout { color: var(--muted); font-size: 11px; margin-top: 6px; min-height: 1em; }
+    #pp-angleref-btn { background: transparent; color: var(--accent); border: 1px solid var(--line-2);
+      border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; margin-left: 12px; }
+    #pp-angleref-btn:hover { border-color: var(--accent-deep); background: rgba(93,176,239,.08); }
+    #pp-angleref { margin-top: 10px; border: 1px solid var(--line-2); border-radius: 8px;
+      background: var(--bg-2); padding: 8px 10px; }
+    #pp-angleref .ar-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+    #pp-angleref .ar-label { color: var(--text); font-size: 12px; font-weight: 600; }
+    #pp-angleref .ar-note { color: var(--muted); font-size: 10px; }
+    #pp-angleref img { display: block; width: 100%; border-radius: 4px; }
     #pp-credit { color: var(--dim); font-size: 10px; margin-top: 6px; }
     #pp-credit a { color: var(--accent); }
     button.apply { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 2px;
@@ -160,6 +169,7 @@
         <div id="pp-params">
           <div class="pp-row" style="margin-bottom:8px">
             <span class="seqname" id="pp-seqname">Open a sequence from the protocol →</span>
+            <button id="pp-angleref-btn" type="button" hidden>Reference angulation ▸</button>
           </div>
           <div class="pp-row" id="pp-controls" hidden>
             <label>TR (ms) <input type="number" id="pp-tr" min="5" max="10000" step="10" /></label>
@@ -179,6 +189,13 @@
             <span id="pp-readout"></span>
           </div>
           <div id="pp-credit" hidden></div>
+        </div>
+        <div id="pp-angleref" hidden>
+          <div class="ar-head">
+            <span class="ar-label" id="pp-angleref-label"></span>
+            <span class="ar-note">Recommended slice prescription (illustrative)</span>
+          </div>
+          <img id="pp-angleref-img" alt="reference slice prescription" />
         </div>
       </div>
 

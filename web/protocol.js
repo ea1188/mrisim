@@ -146,13 +146,64 @@ const HAND = [
   { label: "PD FS Coronal",  plane: "coronal",  file: "pdfs_cor" },
   { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
 ];
+// Spine cases (sequence labels derived from the supplied images; axial weightings
+// are best-effort). Cervical combines a sagittal case and an axial case.
+const CERVICAL = [
+  { label: "T1 Sagittal",               plane: "sagittal", file: "t1_sag" },
+  { label: "T1 Sagittal (parasagittal)", plane: "sagittal", file: "t1_sag_para" },
+  { label: "STIR Sagittal",             plane: "sagittal", file: "stir_sag" },
+  { label: "T1 Axial",                  plane: "axial",    file: "t1_ax" },
+  { label: "T1 Axial (lower)",          plane: "axial",    file: "t1_ax_lower" },
+];
+const THORACIC = [
+  { label: "T2 Sagittal", plane: "sagittal", file: "t2_sag" },
+  { label: "T1 Sagittal", plane: "sagittal", file: "t1_sag" },
+  { label: "T2 Axial",    plane: "axial",    file: "t2_ax" },
+];
+const LUMBAR = [
+  { label: "T1 Sagittal",   plane: "sagittal", file: "t1_sag" },
+  { label: "T2 Sagittal",   plane: "sagittal", file: "t2_sag" },
+  { label: "STIR Sagittal", plane: "sagittal", file: "stir_sag" },
+  { label: "T2 Axial",      plane: "axial",    file: "t2_ax" },
+];
+const TOTAL_SPINE = [
+  { label: "T1 Sagittal", plane: "sagittal", file: "t1_sag" },
+  { label: "T2 Sagittal", plane: "sagittal", file: "t2_sag" },
+  { label: "T2 Axial",    plane: "axial",    file: "t2_ax" },
+];
+// Cervical draws sagittals from rID 38418 and axials from rID 53916 (same author).
+const RP_CERVICAL =
+  'Images: cases courtesy of Bruno Di Muzio, '
+  + '<a href="https://radiopaedia.org/cases/38418" target="_blank" rel="noopener">rID 38418</a> and '
+  + '<a href="https://radiopaedia.org/cases/53916" target="_blank" rel="noopener">rID 53916</a> · CC BY-NC-SA 3.0';
 const IMAGE_EXAMS = {
   Shoulder: buildImageExam("Shoulder", SHOULDER, RP(43115, "Andrew Dixon")),
   Wrist:    buildImageExam("Wrist", WRIST, RP(42982, "Andrew Dixon")),
   Hand:     buildImageExam("Hand", HAND, RP(161538, "Mohd Radhwan Bin Abidin")),
   Ankle:    buildImageExam("Ankle", ANKLE, RP(43117, "Andrew Dixon")),
   Foot:     buildImageExam("Foot", FOOT, RP(163787, "Mohd Radhwan Bin Abidin")),
+  "Cervical Spine": buildImageExam("Cervical Spine", CERVICAL, RP_CERVICAL),
+  "Thoracic Spine": buildImageExam("Thoracic Spine", THORACIC, RP(41033, "Bruno Di Muzio")),
+  "Lumbar Spine":   buildImageExam("Lumbar Spine", LUMBAR, RP(47857, "Ian Bickle")),
+  "Total Spine":    buildImageExam("Total Spine", TOTAL_SPINE, RP(181868, "Yahya Baba")),
 };
+
+// Reference "correct slice prescription" images (web/img/angles/), keyed by the
+// current region + the sequence's plane. Shown as an optional toggled strip while
+// planning. Missing combos simply have no reference. Foot uses radiology plane
+// names (coronal = long axis, axial = short axis).
+const ANGLE_REFS = {
+  Brain:    { sagittal: "brain_sagittal.jpg", axial: "brain_axial.jpg" },
+  Knee:     { sagittal: "knee_sagittal.jpg", coronal: "knee_coronal.jpg", axial: "knee_axial.jpg" },
+  Shoulder: { sagittal: "shoulder_sagittal.jpg", coronal: "shoulder_coronal.jpg", axial: "shoulder_axial.jpg" },
+  Wrist:    { sagittal: "wrist_sagittal.jpg", coronal: "wrist_coronal.jpg", axial: "wrist_axial.jpg" },
+  Ankle:    { sagittal: "ankle_sagittal.jpg", coronal: "ankle_coronal.jpg", axial: "ankle_axial.jpg" },
+  Foot:     { sagittal: "foot_sagittal.jpg", coronal: "foot_coronal_long_axis.jpg", axial: "foot_short_axis.jpg" },
+};
+["Spine", "Cervical Spine", "Thoracic Spine", "Lumbar Spine", "Total Spine"].forEach((r) => {
+  ANGLE_REFS[r] = { sagittal: "spine_sagittal.jpg", axial: "spine_axial.jpg" };
+});
+let angleRefOpen = false;   // sticky across sequences; the strip only shows when a ref exists
 
 function loadImageExam(name) {
   imageExam = IMAGE_EXAMS[name];
@@ -227,7 +278,7 @@ function acquireImageExample() {
 // --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
 const TOUR = [
   { el: "#pp-exam", title: "Pick an exam",
-    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand) are positioning examples on real MRI images." },
+    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images." },
   { el: "#pp-list", title: "The protocol queue",
     text: "Every sequence in the exam, in order. Click one to open it and prescribe it; the status dot fills in as you acquire. The Localizer at the top is your 3-plane scout." },
   { el: "#pp-views", title: "Prescribe on the scouts",
@@ -246,6 +297,7 @@ async function onReady() {
   $("splash").hidden = true;
   $("pp-root").hidden = false;
   wireParamPanel();
+  $("pp-angleref-btn").addEventListener("click", () => { angleRefOpen = !angleRefOpen; updateAngleRef(); });
   $("pp-tour-btn").addEventListener("click", startPpTour);
   Tour.wire();
   PLANES.forEach(wireViewport);
@@ -331,6 +383,28 @@ function appendItem(src) {
 const LOCALIZER = "Localizer";
 const isLocalizer = (it) => it && it.preset === LOCALIZER;
 
+// ---- reference-angulation overlay ----------------------------------------- //
+// The matching "correct slice prescription" image for the open sequence, or null.
+function angleRefFor(it) {
+  if (!it || isLocalizer(it)) return null;
+  const plane = imageExam ? (it.examplePlane || it.sequence) : (it.plan && it.plan.orientation);
+  const m = ANGLE_REFS[region];
+  const file = m && plane && m[plane];
+  return file ? { file, plane } : null;
+}
+function updateAngleRef() {
+  const ref = angleRefFor(active);
+  const btn = $("pp-angleref-btn"), box = $("pp-angleref");
+  if (!btn || !box) return;
+  if (!ref) { btn.hidden = true; box.hidden = true; return; }
+  btn.hidden = false;
+  btn.textContent = "Reference angulation " + (angleRefOpen ? "▾" : "▸");
+  if (!angleRefOpen) { box.hidden = true; return; }
+  $("pp-angleref-img").src = "img/angles/" + ref.file;
+  $("pp-angleref-label").textContent = "Recommended: " + region + " " + ref.plane;
+  box.hidden = false;
+}
+
 // ---- open a sequence ------------------------------------------------------ //
 async function openItem(it) {
   active = it;
@@ -347,6 +421,7 @@ async function openItem(it) {
     $("pp-readout").textContent = loc ? ""
       : "Position the FOV box on the in-plane scout; on the others drag the centre to move "
         + "the slice or an end to angle it (illustrative). Acquire to see the example image.";
+    updateAngleRef();
     return;
   }
   if (isLocalizer(it)) {
@@ -354,6 +429,7 @@ async function openItem(it) {
     $("pp-seqname").textContent = "Localizer — 3-plane scout";
     $("pp-controls").hidden = true; $("pp-actions").hidden = true;
     await renderScouts();
+    updateAngleRef();
     return;
   }
   // Provisional plan set synchronously, so hovers / refreshes during the preset
@@ -375,6 +451,7 @@ async function openItem(it) {
   paramsToPanel(it);
   await renderScouts();
   updatePlanReadout();
+  updateAngleRef();
 }
 
 // ---- parameter panel ------------------------------------------------------ //
