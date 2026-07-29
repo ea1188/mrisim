@@ -167,15 +167,17 @@ const LUMBAR = [
   { label: "T2 Axial",      plane: "axial",    file: "t2_ax" },
 ];
 const TOTAL_SPINE = [
-  { label: "T1 Sagittal", plane: "sagittal", file: "t1_sag" },
-  { label: "T2 Sagittal", plane: "sagittal", file: "t2_sag" },
-  { label: "T2 Axial",    plane: "axial",    file: "t2_ax" },
+  { label: "T1 Sagittal (upper)", plane: "sagittal", file: "t1_sag_upper" },
+  { label: "T1 Sagittal (lower)", plane: "sagittal", file: "t1_sag_lower" },
+  { label: "T2 Sagittal (upper)", plane: "sagittal", file: "t2_sag_upper" },
+  { label: "T2 Sagittal (lower)", plane: "sagittal", file: "t2_sag_lower" },
+  { label: "T2 Axial",            plane: "axial",    file: "t2_ax" },
 ];
 const HIP = [
   { label: "PD FS Coronal", plane: "coronal",  file: "pdfs_cor" },
   { label: "PD Coronal",    plane: "coronal",  file: "pd_cor" },
   { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
-  { label: "PD FS Axial",   plane: "axial",    file: "pdfs_ax" },
+  { label: "T2 FS Axial",   plane: "axial",    file: "t2fs_ax" },
 ];
 // Cervical draws sagittals from rID 38418 and axials from rID 53916 (same author).
 const RP_CERVICAL =
