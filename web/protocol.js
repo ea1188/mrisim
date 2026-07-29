@@ -171,6 +171,12 @@ const TOTAL_SPINE = [
   { label: "T2 Sagittal", plane: "sagittal", file: "t2_sag" },
   { label: "T2 Axial",    plane: "axial",    file: "t2_ax" },
 ];
+const HIP = [
+  { label: "PD FS Coronal", plane: "coronal",  file: "pdfs_cor" },
+  { label: "PD Coronal",    plane: "coronal",  file: "pd_cor" },
+  { label: "PD FS Sagittal", plane: "sagittal", file: "pdfs_sag" },
+  { label: "PD FS Axial",   plane: "axial",    file: "pdfs_ax" },
+];
 // Cervical draws sagittals from rID 38418 and axials from rID 53916 (same author).
 const RP_CERVICAL =
   'Images: cases courtesy of Bruno Di Muzio, '
@@ -186,6 +192,7 @@ const IMAGE_EXAMS = {
   "Thoracic Spine": buildImageExam("Thoracic Spine", THORACIC, RP(41033, "Bruno Di Muzio")),
   "Lumbar Spine":   buildImageExam("Lumbar Spine", LUMBAR, RP(47857, "Ian Bickle")),
   "Total Spine":    buildImageExam("Total Spine", TOTAL_SPINE, RP(181868, "Yahya Baba")),
+  Hip:              buildImageExam("Hip", HIP, null),
 };
 
 // Reference "correct slice prescription" images (web/img/angles/), keyed by the
@@ -278,7 +285,7 @@ function acquireImageExample() {
 // --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
 const TOUR = [
   { el: "#pp-exam", title: "Pick an exam",
-    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images." },
+    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, Hip, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images." },
   { el: "#pp-list", title: "The protocol queue",
     text: "Every sequence in the exam, in order. Click one to open it and prescribe it; the status dot fills in as you acquire. The Localizer at the top is your 3-plane scout." },
   { el: "#pp-views", title: "Prescribe on the scouts",
