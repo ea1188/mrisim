@@ -914,6 +914,8 @@
     });
     var pct = Math.round(100 * correct / questions.length);
     saveMasteryResult(mod.title, pct);
+    // Formative sync so a class owner sees mastery per module (best-effort; no-op when signed out).
+    if (window.Accounts) Accounts.logActivity("mastery_check", mod.title, pct, 100);
     renderMasteryResult(mod, body, questions, picks, correct, pct);
     buildRail();
   }
@@ -1113,6 +1115,8 @@
     });
     var total = EXAM.questions.length, pct = Math.round(100 * correct / total);
     saveExamBest(correct, total, pct);
+    // Formative sync so a class owner sees mock-exam readiness (best-effort; no-op when signed out).
+    if (window.Accounts) Accounts.logActivity("mock_exam", "mock", correct, total);
     renderExamReview(correct, total, pct);
   }
   function renderExamReview(correct, total, pct) {

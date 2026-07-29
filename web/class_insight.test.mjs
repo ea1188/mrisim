@@ -71,6 +71,26 @@ test("classStats averages and picks up to 3 weakest topics ascending", () => {
   assert.equal(st.weakestTopics[0].avgBest <= st.weakestTopics[st.weakestTopics.length - 1].avgBest, true);
 });
 
+test("mastery_check counts distinct modules passed; mock_exam tracks best", () => {
+  const roster2 = [{ student_id: "m1", profiles: { display_name: "Cy" } }];
+  const acts = [
+    // module "Safety": fails then passes -> mastered once (best 90 >= 80)
+    { student_id: "m1", kind: "mastery_check", ref: "Safety", score: 60, total: 100, created_at: "2026-07-01T00:00:00Z" },
+    { student_id: "m1", kind: "mastery_check", ref: "Safety", score: 90, total: 100, created_at: "2026-07-02T00:00:00Z" },
+    // module "Physics": best 70 < 80 -> attempted but NOT mastered
+    { student_id: "m1", kind: "mastery_check", ref: "Physics", score: 70, total: 100, created_at: "2026-07-03T00:00:00Z" },
+    // two mock exams -> best is the higher
+    { student_id: "m1", kind: "mock_exam", ref: "mock", score: 30, total: 60, created_at: "2026-07-04T00:00:00Z" },
+    { student_id: "m1", kind: "mock_exam", ref: "mock", score: 48, total: 60, created_at: "2026-07-05T00:00:00Z" },
+  ];
+  const row = CI.perStudent(roster2, acts)[0];
+  assert.equal(row.modulesMastered, 1);          // Safety mastered, Physics not
+  assert.equal(row.bestMockPct, 80);             // 48/60 = 80 beats 30/60 = 50
+  assert.equal(row.lastActive, "2026-07-05T00:00:00Z");
+  const st = CI.classStats([row], { lessons: 10, topics: 4 });
+  assert.equal(st.avgMockPct, 80);
+});
+
 test("toCSV emits the exact header and escapes commas and quotes", () => {
   const rows = CI.perStudent(
     [{ student_id: "x", profiles: { display_name: 'De, "Q"' } }],
@@ -78,6 +98,6 @@ test("toCSV emits the exact header and escapes commas and quotes", () => {
   );
   const csv = CI.toCSV(rows, { lessons: 10, topics: 4 });
   const lines = csv.split("\n");
-  assert.equal(lines[0], '"Member","Practice coverage %","Best score %","Lessons done","Weakest topic","Struggling","Last active"');
+  assert.equal(lines[0], '"Member","Practice coverage %","Best score %","Modules mastered","Best mock %","Lessons done","Weakest topic","Struggling","Last active"');
   assert.ok(lines[1].startsWith('"De, ""Q"""')); // comma preserved, quotes doubled
 });

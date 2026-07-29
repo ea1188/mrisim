@@ -27,6 +27,8 @@
       var acts = byStudent[r.student_id] || [];
       var topics = {};   // ref -> { best, latest, latestAt, attempts }
       var lessons = {};
+      var masteredBest = {};   // premium module title -> best mastery-check %
+      var bestMock = null;     // best mock-exam %
       var quizRuns = 0;
       var lastActive = null;
 
@@ -43,6 +45,12 @@
           }
         } else if (a.kind === "lesson_complete") {
           lessons[a.ref] = true;
+        } else if (a.kind === "mastery_check") {
+          var mp = pct(a.score, a.total);
+          if (mp != null && (masteredBest[a.ref] == null || mp > masteredBest[a.ref])) masteredBest[a.ref] = mp;
+        } else if (a.kind === "mock_exam") {
+          var ep = pct(a.score, a.total);
+          if (ep != null && (bestMock == null || ep > bestMock)) bestMock = ep;
         }
       });
 
@@ -59,6 +67,9 @@
         }
       });
 
+      var modulesMastered = 0;
+      Object.keys(masteredBest).forEach(function (k) { if (masteredBest[k] >= passPct) modulesMastered++; });
+
       return {
         studentId: r.student_id,
         name: (r.profiles && r.profiles.display_name) || "(unnamed)",
@@ -67,6 +78,8 @@
         topics: outTopics,
         topicsPassed: topicsPassed,
         bestPct: bestPct,
+        modulesMastered: modulesMastered,
+        bestMockPct: bestMock,
         weakestTopic: weakestTopic,
         lastActive: lastActive,
         struggling: struggling,
@@ -87,6 +100,7 @@
   function classStats(rows, totals) {
     rows = rows || [];
     var bests = rows.map(function (r) { return r.bestPct; }).filter(function (v) { return v != null; });
+    var mocks = rows.map(function (r) { return r.bestMockPct; }).filter(function (v) { return v != null; });
     var covs = rows.map(function (r) { return coverage(r, totals); });
     var agg = {};
     rows.forEach(function (r) {
@@ -102,6 +116,7 @@
     return {
       members: rows.length,
       avgBestPct: bests.length ? mean(bests) : null,
+      avgMockPct: mocks.length ? mean(mocks) : null,
       avgCoverage: covs.length ? mean(covs) : 0,
       weakestTopics: weakestTopics,
     };
@@ -113,13 +128,15 @@
   }
 
   function toCSV(rows, totals) {
-    var header = ["Member", "Practice coverage %", "Best score %", "Lessons done", "Weakest topic", "Struggling", "Last active"];
+    var header = ["Member", "Practice coverage %", "Best score %", "Modules mastered", "Best mock %", "Lessons done", "Weakest topic", "Struggling", "Last active"];
     var lines = [header.map(csvCell).join(",")];
     (rows || []).forEach(function (r) {
       lines.push([
         r.name,
         coverage(r, totals),
         r.bestPct == null ? "" : Math.round(r.bestPct),
+        r.modulesMastered,
+        r.bestMockPct == null ? "" : Math.round(r.bestMockPct),
         r.lessonsDone,
         r.weakestTopic || "",
         r.struggling ? "yes" : "no",
