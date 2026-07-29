@@ -150,7 +150,7 @@ const HAND = [
 // are best-effort). Cervical combines a sagittal case and an axial case.
 const CERVICAL = [
   { label: "T1 Sagittal",               plane: "sagittal", file: "t1_sag" },
-  { label: "T1 Sagittal (parasagittal)", plane: "sagittal", file: "t1_sag_para" },
+  { label: "T2 Sagittal",               plane: "sagittal", file: "t2_sag" },
   { label: "STIR Sagittal",             plane: "sagittal", file: "stir_sag" },
   { label: "T1 Axial",                  plane: "axial",    file: "t1_ax" },
   { label: "T1 Axial (lower)",          plane: "axial",    file: "t1_ax_lower" },
