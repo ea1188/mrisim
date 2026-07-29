@@ -123,6 +123,9 @@
         " · " + t.attempts + " attempt" + (t.attempts === 1 ? "" : "s") }));
     });
     box.appendChild(h("p", { class: "muted", text: row.lessonsDone + " lesson" + (row.lessonsDone === 1 ? "" : "s") + " completed." }));
+    box.appendChild(h("p", { class: "muted", text:
+      row.modulesMastered + " module" + (row.modulesMastered === 1 ? "" : "s") + " mastered · best mock exam "
+      + (row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%") }));
     return box;
   }
 
@@ -249,8 +252,12 @@
       rows.forEach(function (r) { byId[r.studentId] = r; });
       var covTh = th("Coverage");
       covTh.title = "practice coverage — formative, not graded completion";
+      var masteredTh = th("Mastered");
+      masteredTh.title = "premium modules with a passing mastery check";
+      var mockTh = th("Best mock");
+      mockTh.title = "best full-length mock-exam score";
       var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
-        th("Member"), covTh, th("Best"), th("Weakest topic"), th("Last active"), th(""),
+        th("Member"), covTh, th("Best"), masteredTh, mockTh, th("Weakest topic"), th("Last active"), th(""),
       ])])]);
       var tb = h("tbody");
       roster.forEach(function (r) {
@@ -269,12 +276,14 @@
         var detail = null;   // the inline drill-down <tr>, present while expanded
         var tr = h("tr", { style: "cursor:pointer", onclick: function () {
           if (detail) { tb.removeChild(detail); detail = null; return; }
-          detail = h("tr", {}, [h("td", { colspan: "6" }, [drillDown(row)])]);
+          detail = h("tr", {}, [h("td", { colspan: "8" }, [drillDown(row)])]);
           tb.insertBefore(detail, tr.nextSibling);
         } }, [
           nameCell,
           tdNum(ClassInsight.coverage(row, totals) + "%"),
           tdNum(row.bestPct == null ? "—" : Math.round(row.bestPct) + "%"),
+          tdNum(row.modulesMastered || 0),
+          tdNum(row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%"),
           td(row.weakestTopic || "—"),
           tdNum(row.lastActive ? when(row.lastActive) : "—"),
           h("td", {}, [rm]),
@@ -288,6 +297,7 @@
       body.appendChild(h("p", { class: "muted", text:
         st.members + " member" + (st.members === 1 ? "" : "s") +
         " · class avg best " + (st.avgBestPct == null ? "—" : st.avgBestPct + "%") +
+        " · avg mock " + (st.avgMockPct == null ? "—" : st.avgMockPct + "%") +
         " · avg coverage " + st.avgCoverage + "%" +
         (weak ? " · weakest topics: " + weak : "") }));
       body.appendChild(h("p", { class: "muted", text: "Practice scores are formative, not graded exams." }));
