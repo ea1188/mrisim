@@ -153,7 +153,7 @@ const CERVICAL = [
   { label: "T2 Sagittal",               plane: "sagittal", file: "t2_sag" },
   { label: "STIR Sagittal",             plane: "sagittal", file: "stir_sag" },
   { label: "T1 Axial",                  plane: "axial",    file: "t1_ax" },
-  { label: "T1 Axial (lower)",          plane: "axial",    file: "t1_ax_lower" },
+  { label: "T2 Axial",                  plane: "axial",    file: "t2_ax" },
 ];
 const THORACIC = [
   { label: "T2 Sagittal", plane: "sagittal", file: "t2_sag" },
@@ -307,6 +307,7 @@ async function onReady() {
   $("pp-root").hidden = false;
   wireParamPanel();
   $("pp-angleref-btn").addEventListener("click", () => { angleRefOpen = !angleRefOpen; updateAngleRef(); });
+  wireAngleRef();
   $("pp-tour-btn").addEventListener("click", startPpTour);
   Tour.wire();
   PLANES.forEach(wireViewport);
@@ -412,6 +413,37 @@ function updateAngleRef() {
   $("pp-angleref-img").src = "img/angles/" + ref.file;
   $("pp-angleref-label").textContent = "Recommended: " + region + " " + ref.plane;
   box.hidden = false;
+  if (!box.dataset.placed) {                 // first reveal: center it near the top
+    const w = box.offsetWidth || 520;
+    box.style.left = Math.max(12, (window.innerWidth - w) / 2) + "px";
+    box.style.top = "84px";
+    box.dataset.placed = "1";
+  }
+}
+
+// Drag the reference box by its header; the ✕ closes it. Wired once at boot.
+function wireAngleRef() {
+  const box = $("pp-angleref"), head = $("pp-angleref-head");
+  if (!box || !head) return;
+  $("pp-angleref-close").addEventListener("click", () => { angleRefOpen = false; updateAngleRef(); });
+  let drag = null;
+  head.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("#pp-angleref-close")) return;
+    const r = box.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    try { head.setPointerCapture(e.pointerId); } catch (_) { /* older browsers */ }
+    e.preventDefault();
+  });
+  head.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const w = box.offsetWidth, h = box.offsetHeight;
+    const x = Math.max(4, Math.min(window.innerWidth - w - 4, e.clientX - drag.dx));
+    const y = Math.max(4, Math.min(window.innerHeight - h - 4, e.clientY - drag.dy));
+    box.style.left = x + "px"; box.style.top = y + "px";
+  });
+  const end = () => { drag = null; };
+  head.addEventListener("pointerup", end);
+  head.addEventListener("pointercancel", end);
 }
 
 // ---- open a sequence ------------------------------------------------------ //
