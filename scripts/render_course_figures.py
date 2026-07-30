@@ -169,6 +169,11 @@ def _tumor_t1(gd):
     return st
 
 
+def _t2_brain(**params):
+    """A T2 FSE brain slice, base for the artifact comparison."""
+    return _brain(4000, 100, sequence="FSE / TSE", **params)
+
+
 FIGURES = [
     {
         "slug": "m2-contrast-t1-pd-t2",
@@ -199,6 +204,20 @@ FIGURES = [
         "panels": [
             {"label": "T1 pre-contrast", "caption": "mass isointense, easy to miss", "state": _tumor_t1(False)},
             {"label": "T1 post-gadolinium", "caption": "enhancing mass lights up", "state": _tumor_t1(True)},
+        ],
+    },
+    {
+        # M8: two of the most-tested artifacts, each on the same T2 brain slice.
+        # Motion prints ghost copies along the phase axis; a too-small phase FOV
+        # folds anatomy back onto the image (wrap/aliasing).
+        "slug": "m8-motion-wrap-artifacts",
+        "region": "Brain",
+        "panels": [
+            {"label": "No artifact", "caption": "clean acquisition", "state": _t2_brain()},
+            {"label": "Motion", "caption": "ghosts along the phase axis",
+             "state": _t2_brain(motion_enabled=True, motion_amplitude=8, motion_type="periodic")},
+            {"label": "Aliasing / wrap", "caption": "phase FOV too small, anatomy folds in",
+             "state": _t2_brain(fov_fraction=60)},
         ],
     },
 ]
