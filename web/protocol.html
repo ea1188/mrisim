@@ -68,7 +68,8 @@
       border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; margin-left: 12px; }
     #pp-angleref-btn:hover { border-color: var(--accent-deep); background: rgba(93,176,239,.08); }
     #pp-angleref { position: fixed; z-index: 200; width: min(92vw, 560px); border: 1px solid var(--line-2);
-      border-radius: 8px; background: var(--bg-2); box-shadow: 0 8px 30px rgba(0,0,0,.5); overflow: hidden; }
+      border-radius: 8px; background: var(--bg-2); box-shadow: 0 8px 30px rgba(0,0,0,.5); overflow: hidden;
+      min-width: 280px; }
     #pp-angleref .ar-head { display: flex; justify-content: space-between; align-items: center; gap: 12px;
       padding: 6px 10px; border-bottom: 1px solid var(--line-2); cursor: move; user-select: none;
       background: rgba(93,176,239,.06); }
@@ -77,6 +78,12 @@
       line-height: 1; cursor: pointer; padding: 2px 6px; }
     #pp-angleref-close:hover { color: var(--text); }
     #pp-angleref img { display: block; width: 100%; }
+    #pp-angleref-grip { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px;
+      cursor: nwse-resize; background:
+        linear-gradient(135deg, transparent 0 45%, var(--muted) 45% 55%, transparent 55% 63%,
+        var(--muted) 63% 73%, transparent 73% 81%, var(--muted) 81% 91%, transparent 91%);
+      opacity: .85; }
+    #pp-angleref-grip:hover { opacity: 1; }
     #pp-credit { color: var(--dim); font-size: 10px; margin-top: 6px; }
     #pp-credit a { color: var(--accent); }
     button.apply { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 2px;
@@ -200,6 +207,7 @@
             <button id="pp-angleref-close" type="button" aria-label="Close reference">✕</button>
           </div>
           <img id="pp-angleref-img" alt="reference slice prescription" />
+          <div id="pp-angleref-grip" aria-hidden="true"></div>
         </div>
       </div>
 
