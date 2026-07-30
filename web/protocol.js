@@ -444,6 +444,22 @@ function wireAngleRef() {
   const end = () => { drag = null; };
   head.addEventListener("pointerup", end);
   head.addEventListener("pointercancel", end);
+
+  // Corner grip resizes the box width; the image (width:100%) scales, height follows.
+  const grip = $("pp-angleref-grip");
+  let rez = null;
+  grip.addEventListener("pointerdown", (e) => {
+    rez = { x: e.clientX, w: box.offsetWidth };
+    try { grip.setPointerCapture(e.pointerId); } catch (_) { /* older browsers */ }
+    e.preventDefault(); e.stopPropagation();
+  });
+  grip.addEventListener("pointermove", (e) => {
+    if (!rez) return;
+    box.style.width = Math.max(280, Math.min(window.innerWidth - 20, rez.w + (e.clientX - rez.x))) + "px";
+  });
+  const rend = () => { rez = null; };
+  grip.addEventListener("pointerup", rend);
+  grip.addEventListener("pointercancel", rend);
 }
 
 // ---- open a sequence ------------------------------------------------------ //
