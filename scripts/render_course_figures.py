@@ -174,6 +174,22 @@ def _t2_brain(**params):
     return _brain(4000, 100, sequence="FSE / TSE", **params)
 
 
+def _abdomen(**params):
+    """An axial abdomen slice (plenty of fat/water interfaces) for chemical shift.
+    Chemical-shift displacement scales with 1/bandwidth, so a low bandwidth makes
+    the fat misregistration obvious — which is also the real teaching point."""
+    return {"region": "Abdomen", "orientation": "axial",
+            "params": {"sequence": "FSE / TSE", "TR": 600, "TE": 12,
+                       "chemical_shift_enabled": True, **params}}
+
+
+def _gibbs_brain(**params):
+    """A low-matrix T2 brain slice, where finite k-space sampling rings at the
+    sharp CSF borders; the k-space (apodization) filter trades a little blur to
+    suppress it."""
+    return _t2_brain(matrix_size=64, **params)
+
+
 FIGURES = [
     {
         "slug": "m2-contrast-t1-pd-t2",
@@ -218,6 +234,27 @@ FIGURES = [
              "state": _t2_brain(motion_enabled=True, motion_amplitude=8, motion_type="periodic")},
             {"label": "Aliasing / wrap", "caption": "phase FOV too small, anatomy folds in",
              "state": _t2_brain(fov_fraction=60)},
+        ],
+    },
+    {
+        # Chemical shift: fat resonates ~3.5 ppm below water and is misregistered
+        # along the readout axis. The shift is inversely proportional to receiver
+        # bandwidth, so a low bandwidth exaggerates the bright/dark fat banding.
+        "slug": "artifact-chemical-shift",
+        "region": "Abdomen",
+        "panels": [
+            {"label": "High bandwidth", "caption": "fat stays aligned with water", "state": _abdomen(bandwidth=62)},
+            {"label": "Low bandwidth", "caption": "fat displaced: bright/dark bands at edges", "state": _abdomen(bandwidth=8)},
+        ],
+    },
+    {
+        # Gibbs / truncation ringing at a high-contrast border, and the k-space
+        # filter that suppresses it.
+        "slug": "artifact-gibbs",
+        "region": "Brain",
+        "panels": [
+            {"label": "Truncation (Gibbs)", "caption": "ringing along sharp CSF edges", "state": _gibbs_brain()},
+            {"label": "k-space filter", "caption": "apodization suppresses the ringing", "state": _gibbs_brain(kspace_filter_enabled=True)},
         ],
     },
 ]
