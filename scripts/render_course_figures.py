@@ -87,6 +87,15 @@ def render_tile(host, region, state):
     ensure_region(host, region)
     payload = dict(state)
     payload.setdefault("region", region)
+    # Accept lesson-style aliases and map them to the keys host.render() reads
+    # (orientation / slice_idx / label_anatomy). Without this a spec's `orient`
+    # or `slice` is silently ignored and the engine falls back to its defaults.
+    if "orient" in payload:
+        payload.setdefault("orientation", payload.pop("orient"))
+    if "slice" in payload:
+        payload.setdefault("slice_idx", payload.pop("slice"))
+    if "labelanat" in payload:
+        payload.setdefault("label_anatomy", payload.pop("labelanat"))
     payload.setdefault("orientation", "axial")
     params = dict(payload.get("params", {}))
     params.setdefault("snr_level", 120)   # clean render so anatomy reads clearly
@@ -138,12 +147,25 @@ def compose(host, fig):
 # Proof-first: start with ONE figure (M2 contrast panel) end to end, then scale.
 # Each panel is the SAME brain slice; only TR/TE change, so the contrast shift is
 # the only visible variable — exactly the M2 teaching point.
-_BRAIN_AX = {"region": "Brain", "orient": "axial", "slice": 90}
+_BRAIN_AX = {"region": "Brain", "orientation": "axial", "slice_idx": 90}
 
 
-def _brain(tr, te):
+def _brain(tr, te, **params):
     st = dict(_BRAIN_AX)
-    st["params"] = {"sequence": "Spin Echo", "TR": tr, "TE": te}
+    st["params"] = {"sequence": "Spin Echo", "TR": tr, "TE": te, **params}
+    return st
+
+
+def _brain_mx(mx):
+    """Same T1 brain slice at one acquisition matrix — for the resolution/SNR trade."""
+    return _brain(600, 12, matrix_size=mx)
+
+
+# The demo tumor is painted into brain white matter (web_adapter._PATHOLOGY /
+# rendering.paint_brain_pathology) and enhances only on post-gadolinium T1.
+def _tumor_t1(gd):
+    st = _brain(500, 12, contrast_enabled=gd, contrast_dose=5 if gd else 0)
+    st["pathology"] = "tumor"
     return st
 
 
@@ -155,6 +177,28 @@ FIGURES = [
             {"label": "T1-weighted", "caption": "short TR 500 / short TE 12 ms", "state": _brain(500, 12)},
             {"label": "PD-weighted", "caption": "long TR 4000 / short TE 12 ms", "state": _brain(4000, 12)},
             {"label": "T2-weighted", "caption": "long TR 4000 / long TE 100 ms", "state": _brain(4000, 100)},
+        ],
+    },
+    {
+        # M5 image quality: same slice, only the acquisition matrix changes, so the
+        # resolution-up / SNR-down trade is the single visible variable.
+        "slug": "m5-resolution-snr",
+        "region": "Brain",
+        "panels": [
+            {"label": "Matrix 128", "caption": "coarse voxels, high SNR", "state": _brain_mx(128)},
+            {"label": "Matrix 256", "caption": "standard resolution", "state": _brain_mx(256)},
+            {"label": "Matrix 512", "caption": "fine detail, lower SNR", "state": _brain_mx(512)},
+        ],
+    },
+    {
+        # M4/M10: why we give gadolinium — an enhancing mass is near-invisible on
+        # pre-contrast T1 and lights up on post-Gd T1 (Gd shortens T1 where the BBB
+        # is broken).
+        "slug": "m4-gd-enhancement",
+        "region": "Brain",
+        "panels": [
+            {"label": "T1 pre-contrast", "caption": "mass isointense, easy to miss", "state": _tumor_t1(False)},
+            {"label": "T1 post-gadolinium", "caption": "enhancing mass lights up", "state": _tumor_t1(True)},
         ],
     },
 ]
