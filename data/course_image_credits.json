@@ -1,0 +1,6 @@
+{
+ "_note": "Attribution + license log for CURATED (non-engine) teaching images in web/img/course/. Engine-rendered figures (produced by scripts/render_course_figures.py) are OURS and are NOT listed here. Every entry below MUST be commercial-safe (see license_allowlist) so it survives the course being paywalled again: no -NC, no -ND, no 'free for education'. tests/test_course_figures.py is fail-closed: any img/course/* referenced by an education module that is neither an engine slug nor listed here fails the build. For any CC-BY* image, the referencing figure's <figcaption> must also render the attribution (a <span class=\"fig-credit\"> whose href is the source_url) so the license's attribution requirement is actually met for readers.",
+ "license_allowlist": ["CC0-1.0", "Public-Domain", "CC-BY-4.0", "CC-BY-3.0", "CC-BY-2.0", "Owner-Original"],
+ "figcaption_format": "<figure><img src=\"img/course/<file>\" alt=\"...\" loading=\"lazy\"><figcaption>Teaching caption. <span class=\"fig-credit\">Image: <author> · <license> · <a class=\"linkout\" href=\"<source_url>\" target=\"_blank\" rel=\"noopener\">source</a></span></figcaption></figure>",
+ "credits": {}
+}
