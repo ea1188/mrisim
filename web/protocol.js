@@ -212,6 +212,13 @@ const ANGLE_REFS = {
 ["Spine", "Cervical Spine", "Thoracic Spine", "Lumbar Spine", "Total Spine"].forEach((r) => {
   ANGLE_REFS[r] = { sagittal: "spine_sagittal.jpg", axial: "spine_axial.jpg" };
 });
+// Per-region sagittal prescriptions: real scouts showing the slab box + the
+// coronal angulation line for each station (Total Spine stacks upper + lower).
+ANGLE_REFS["Cervical Spine"].sagittal = "cervical_spine_sagittal.jpg";
+ANGLE_REFS["Thoracic Spine"].sagittal = "thoracic_spine_sagittal.jpg";
+ANGLE_REFS["Lumbar Spine"].sagittal = "lumbar_spine_sagittal.jpg";
+ANGLE_REFS["Total Spine"].sagittal = "total_spine_sagittal.jpg";
+ANGLE_REFS.Hip = { coronal: "hip_coronal.jpg", sagittal: "hip_sagittal.jpg", axial: "hip_axial.jpg" };
 let angleRefOpen = false;   // sticky across sequences; the strip only shows when a ref exists
 
 function loadImageExam(name) {
