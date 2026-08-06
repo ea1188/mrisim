@@ -145,6 +145,17 @@
     }).catch(function () { /* formative sync is best-effort */ });
   }
 
+  // Anonymous end-of-course feedback. Requires sign-in (RLS: only `authenticated`
+  // may INSERT) but stores NO identity — the row has no user_id. Unlike
+  // logActivity this surfaces the insert result so the survey page can confirm
+  // the submission actually saved.
+  function submitCourseFeedback(payload) {
+    if (!ENABLED) return Promise.resolve({ error: { message: "accounts not configured" } });
+    return client().then(function (c) {
+      return c.from("course_feedback").insert(payload || {});
+    });
+  }
+
   // --- learner: cross-device course progress sync -------------------------- //
   // Best-effort mirror of the course's localStorage state. Never block or error the learner.
   function loadProgress() {
@@ -347,6 +358,7 @@
     enabled: enabled, signedIn: signedIn, cachedSession: cachedSession, client: client,
     signIn: signIn, verifyCode: verifyCode, signInWithGoogle: signInWithGoogle, signOut: signOut, getSession: getSession, getUser: getUser,
     profile: profile, updateProfile: updateProfile, onChange: onChange, logActivity: logActivity,
+    submitCourseFeedback: submitCourseFeedback,
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
     renameClass: renameClass, rotateJoinCode: rotateJoinCode, removeMember: removeMember,

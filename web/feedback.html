@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MRISim — course feedback</title>
+  <meta name="description" content="Share anonymous feedback on the MRISim course to help improve it for the next class." />
+  <meta property="og:title" content="MRISim course feedback" />
+  <meta property="og:description" content="A short, anonymous end-of-course survey — about 2–3 minutes." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://mrisimlab.com/feedback.html" />
+  <meta property="og:image" content="https://mrisimlab.com/logo.png" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    .wrap { max-width: 720px; margin: 0 auto; padding: 28px clamp(16px,4vw,22px) 64px; }
+    .top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .top img { width: 30px; height: 30px; }
+    .top h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+    .lede { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 22px; }
+    .anon { color: var(--dim); font-family: var(--mono); font-size: 11.5px; letter-spacing: .03em; }
+    .gate, .thanks { border: 1px solid var(--line); background: var(--panel); border-radius: 3px; padding: 22px; text-align: center; }
+    .btn { background: var(--accent); color: #04121f; border: 1px solid var(--accent); border-radius: 8px;
+      padding: 10px 18px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn:hover { background: #7dbcf8; } .btn:disabled { opacity: .4; cursor: default; }
+    section.grp > h2 { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); font-weight: 700; margin: 22px 0 8px; }
+    .q { border-top: 1px solid var(--line); padding: 14px 0; }
+    .q:first-of-type { border-top: 0; }
+    .q > label.ql { display: block; font-size: 14.5px; margin-bottom: 9px; color: var(--ink); }
+    .scale { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .scale label { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px;
+      padding: 0 6px; border: 1px solid var(--line2); border-radius: 7px; color: var(--muted); font-size: 13px; cursor: pointer; }
+    .scale input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .scale label:hover { border-color: var(--accent-deep); }
+    .scale label.on { border-color: var(--accent); background: #12212f; color: var(--ink); }
+    .ends { display: flex; justify-content: space-between; color: var(--dim); font-size: 11.5px; margin-top: 5px; }
+    select, textarea { width: 100%; background: var(--bg-2); color: var(--ink); border: 1px solid var(--line2);
+      border-radius: 7px; padding: 9px 11px; font: inherit; font-size: 14px; }
+    textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
+    .foot { margin-top: 22px; display: flex; align-items: center; gap: 14px; }
+    .msg { color: var(--warn); font-size: 13px; }
+    a.home { color: var(--accent); text-decoration: none; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top"><img src="logo.png" alt="" /><h1>Course feedback</h1></div>
+    <p class="lede">A short, <b>anonymous</b> survey about the MRISim course — about 2–3 minutes. Your answers help shape the next class. <span class="anon">Nothing is linked to your name.</span></p>
+
+    <div id="gate" class="gate" hidden>
+      <p style="margin:0 0 14px">Please sign in so only the class can leave feedback. Your response stays anonymous.</p>
+      <button id="signin" class="btn">Continue with Google</button>
+      <p style="margin:12px 0 0"><a class="home" href="index.html">Back to MRISim</a></p>
+    </div>
+
+    <form id="fb-form" hidden></form>
+    <div id="form-foot" class="foot" hidden>
+      <button id="submit" class="btn" type="button">Submit feedback</button>
+      <span id="msg" class="msg"></span>
+    </div>
+
+    <div id="thanks" class="thanks" hidden>
+      <p style="font-size:16px;margin:0 0 6px">Thank you</p>
+      <p style="color:var(--muted);margin:0 0 14px">Your feedback was submitted anonymously.</p>
+      <a class="home" href="index.html">Back to MRISim</a>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="accounts.js"></script>
+  <script src="feedback.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var Q = window.CourseFeedback, A = window.Accounts;
+    var form = document.getElementById("fb-form");
+    var el = function (id) { return document.getElementById(id); };
+
+    // Question spec (labels live here; fields/ranges come from feedback.js so the
+    // form can never drift from the stored schema).
+    var SECTIONS = [
+      { title: "Overall", items: [
+        { field: "recommend", label: "How likely are you to recommend this course to a classmate?", scale: [0, 10], lo: "Not likely", hi: "Very likely" },
+        { field: "prepared", label: "How well did the course prepare you for what you needed?", scale: [1, 5], lo: "Not at all", hi: "Very well" },
+        { field: "pace", label: "Pace over the 4 weeks", options: [["too_slow", "Too slow"], ["about_right", "About right"], ["too_fast", "Too fast"]] },
+        { field: "workload", label: "Workload", options: [["too_light", "Too light"], ["about_right", "About right"], ["too_heavy", "Too heavy"]] },
+      ] },
+      { title: "How useful was each part?", items: [
+        { field: "useful_simulator", label: "The physics simulator", scale: [1, 5] },
+        { field: "useful_planner", label: "The protocol planner", scale: [1, 5] },
+        { field: "useful_quiz", label: "The quiz / practice questions", scale: [1, 5] },
+        { field: "useful_lessons", label: "The reading lessons", scale: [1, 5] },
+        { field: "useful_reference", label: "The reference library", scale: [1, 5] },
+      ] },
+      { title: "Modules", items: [
+        { field: "hardest_module", label: "Which module was hardest to follow?", module: true },
+      ] },
+      { title: "In your words", items: [
+        { field: "helped_most", label: "What helped your learning most?", text: true },
+        { field: "improve", label: "What was confusing or should improve?", text: true },
+        { field: "other", label: "Anything else? (optional)", text: true },
+      ] },
+    ];
+
+    function markSelected(field, labelNode) {
+      form.querySelectorAll("label.chip-" + field).forEach(function (l) { l.classList.remove("on"); });
+      labelNode.classList.add("on");
+    }
+
+    function radioRow(item, values) {
+      var row = document.createElement("div"); row.className = "scale";
+      values.forEach(function (v) {
+        var value = Array.isArray(v) ? v[0] : String(v);
+        var text = Array.isArray(v) ? v[1] : String(v);
+        var lab = document.createElement("label"); lab.className = "chip-" + item.field;
+        if (Array.isArray(v)) { lab.style.minWidth = "auto"; lab.style.padding = "0 14px"; }
+        var input = document.createElement("input"); input.type = "radio"; input.name = item.field; input.value = value;
+        var span = document.createElement("span"); span.textContent = text;
+        input.addEventListener("change", function () { markSelected(item.field, lab); });
+        lab.appendChild(input); lab.appendChild(span); row.appendChild(lab);
+      });
+      return row;
+    }
+
+    function scaleControl(item) {
+      var wrap = document.createElement("div");
+      var values = [];
+      for (var v = item.scale[0]; v <= item.scale[1]; v++) values.push(v);
+      wrap.appendChild(radioRow(item, values));
+      if (item.lo || item.hi) {
+        var ends = document.createElement("div"); ends.className = "ends";
+        var l = document.createElement("span"); l.textContent = item.lo || "";
+        var h = document.createElement("span"); h.textContent = item.hi || "";
+        ends.appendChild(l); ends.appendChild(h); wrap.appendChild(ends);
+      }
+      return wrap;
+    }
+
+    function moduleControl(item) {
+      var sel = document.createElement("select"); sel.name = item.field;
+      var blank = document.createElement("option"); blank.value = ""; blank.textContent = "— pick one —"; sel.appendChild(blank);
+      Q.MODULES.forEach(function (m) {
+        var o = document.createElement("option"); o.value = m.key; o.textContent = m.label; sel.appendChild(o);
+      });
+      var none = document.createElement("option"); none.value = "none"; none.textContent = "None were hard"; sel.appendChild(none);
+      return sel;
+    }
+
+    function textControl(item) {
+      var ta = document.createElement("textarea"); ta.name = item.field; ta.maxLength = Q.TEXT_CAP; return ta;
+    }
+
+    function render() {
+      SECTIONS.forEach(function (sec) {
+        var s = document.createElement("section"); s.className = "grp";
+        var h = document.createElement("h2"); h.textContent = sec.title; s.appendChild(h);
+        sec.items.forEach(function (item) {
+          var q = document.createElement("div"); q.className = "q";
+          var lab = document.createElement("label"); lab.className = "ql"; lab.textContent = item.label; q.appendChild(lab);
+          var ctrl = item.scale ? scaleControl(item) : item.options ? radioRow(item, item.options)
+            : item.module ? moduleControl(item) : textControl(item);
+          q.appendChild(ctrl); s.appendChild(q);
+        });
+        form.appendChild(s);
+      });
+    }
+
+    function collect() {
+      var raw = {}, names = ["recommend", "prepared", "pace", "workload",
+        "useful_simulator", "useful_planner", "useful_quiz", "useful_lessons",
+        "useful_reference", "hardest_module", "helped_most", "improve", "other"];
+      names.forEach(function (n) { var e = form.elements[n]; raw[n] = e ? e.value : ""; });
+      return raw;
+    }
+
+    function submit() {
+      el("msg").textContent = "";
+      var built = Q.buildPayload(collect());
+      if (!built.ok) { el("msg").textContent = built.error; return; }
+      var btn = el("submit"); btn.disabled = true; btn.textContent = "Submitting…";
+      A.submitCourseFeedback(built.payload).then(function (res) {
+        if (res && res.error) {
+          btn.disabled = false; btn.textContent = "Submit feedback";
+          el("msg").textContent = "Couldn't submit — please try again.";
+          if (window.console) console.error("feedback insert failed", res.error);
+          return;
+        }
+        form.hidden = true; el("form-foot").hidden = true; el("thanks").hidden = false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    function showForm() {
+      render(); form.hidden = false; el("form-foot").hidden = false; el("gate").hidden = true;
+      el("submit").addEventListener("click", submit);
+    }
+
+    function showGate() {
+      el("gate").hidden = false;
+      el("signin").addEventListener("click", function () {
+        if (A && A.signInWithGoogle) A.signInWithGoogle({ redirectTo: location.href });
+      });
+    }
+
+    // Boot: sign-in is required (RLS needs an authenticated user to INSERT).
+    if (!A || !A.enabled || !A.enabled()) { showGate(); return; }
+    A.getUser().then(function (r) {
+      var u = r && r.data && r.data.user;
+      if (u) showForm(); else showGate();
+    }).catch(showGate);
+  })();
+  </script>
+</body>
+</html>
