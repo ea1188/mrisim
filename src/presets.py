@@ -142,8 +142,8 @@ PRESETS = {
         "matrix_size": 256,
         "FOV": 240,
         "bandwidth": 125,
-        "NEX": 1,
-        "description": "Susceptibility-weighted imaging (SWI). Long TE amplifies phase differences from iron, blood products, calcification. Microbleeds, venous blood appear dark."
+        "NEX": 4,
+        "description": "Susceptibility-weighted imaging (SWI). Long TE amplifies phase differences from iron, blood products, calcification. Microbleeds, venous blood appear dark. Real SWI is a long, averaged 3D acquisition; NEX 4 keeps the characteristic short TR / long TE while lifting SNR out of the noise."
     },
     "Brain GRE T2*": {
         "sequence": "Gradient Echo",
