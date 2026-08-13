@@ -1697,6 +1697,21 @@ function setMetrics(res) {
   $("x-snr").textContent = brain ? `${m.snr_wm.toFixed(1)} / ${m.snr_gm.toFixed(1)}` : (m.snr || 0).toFixed(1);
   $("x-cnr").textContent = brain ? Math.abs(m.snr_wm - m.snr_gm).toFixed(1) : "—";
   $("x-sar").textContent = m.sar_head.toFixed(1) + " W/kg" + (m.sar_exceeds ? " ⚠" : "");
+  // When over the SAR limit, spell out which parameters to change (and to what) to
+  // get back under. Computed from the displayed sar_head so it can't drift from it.
+  const sg = $("sar-guidance");
+  if (m.sar_exceeds && window.SarGuidance) {
+    const g = window.SarGuidance.sarGuidance({
+      flip_angle: +$("fa").value, TR: +$("tr").value, sequence: $("sequence").value, sar_head: m.sar_head });
+    const fixes = [];
+    if (g.maxSafeFa != null) fixes.push(`lower flip angle to ≤${g.maxSafeFa}°`);
+    if (g.minSafeTr != null) fixes.push(`raise TR to ≥${g.minSafeTr} ms`);
+    if (g.lowerSeqOptions.length) fixes.push(`switch to ${g.lowerSeqOptions.join(" or ")}`);
+    if (fixes.length) {
+      sg.textContent = `SAR ${m.sar_head.toFixed(1)} W/kg is over the ${g.limit} W/kg limit. Any one of these brings it under: ${fixes.join("; ")}.`;
+      sg.hidden = false;
+    } else { sg.textContent = ""; sg.hidden = true; }
+  } else { sg.textContent = ""; sg.hidden = true; }
   $("m-scan").textContent = fmtTime(m.scan_time);
   $("m-snrwm").textContent = (brain ? m.snr_wm : (m.snr || 0)).toFixed(1);
   const weight = weighting($("sequence").value, +$("tr").value, +$("te").value);

@@ -26,7 +26,7 @@
 
 const CACHE = "mrisim-v36";                 // bump when this file's caching logic changes
 const SHELL = [
-  "./", "index.html", "simulator.html", "app.js", "styles.css", "theme.css", "worker.js", "logo.png", "lessons.json",
+  "./", "index.html", "simulator.html", "app.js", "sar_guidance.js", "styles.css", "theme.css", "worker.js", "logo.png", "lessons.json",
   "data/brain_slice.bin",
   "protocol.html", "protocol.js", "quiz.html", "quiz.js", "quiz.json", "tour.js",
   // Optional accounts layer + paid course (config.js may be absent — allSettled tolerates it).
