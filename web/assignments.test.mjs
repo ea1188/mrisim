@@ -66,6 +66,39 @@ test("studentStatus: module done needs ALL its lessons; doneAt is the latest", (
   assert.equal(full.doneAt, "2026-07-04T00:00:00Z");   // latest of the two
 });
 
+test("studentStatus: module done on a PASSING mastery_check even with no lessons complete", () => {
+  const cat = A.catalog(lessonsData, quizData);
+  const asg = [{ id: "a3", kind: "module", ref: "1 · Basics", due_at: null }];
+  const s = A.studentStatus(asg, [
+    { kind: "mastery_check", ref: "1 · Basics", score: 80, total: 100, created_at: "2026-07-05T00:00:00Z" },
+  ], cat)[0];
+  assert.equal(s.done, true);
+  assert.equal(s.doneAt, "2026-07-05T00:00:00Z");
+});
+
+test("studentStatus: a FAILING mastery_check does not mark the module done", () => {
+  const cat = A.catalog(lessonsData, quizData);
+  const asg = [{ id: "a3", kind: "module", ref: "1 · Basics", due_at: null }];
+  const s = A.studentStatus(asg, [
+    { kind: "mastery_check", ref: "1 · Basics", score: 70, total: 100, created_at: "2026-07-05T00:00:00Z" },
+  ], cat)[0];
+  assert.equal(s.done, false);
+  assert.equal(s.doneAt, null);
+});
+
+test("studentStatus: module doneAt is the EARLIEST of mastery-pass vs all-lessons-done", () => {
+  const cat = A.catalog(lessonsData, quizData);
+  const asg = [{ id: "a3", kind: "module", ref: "1 · Basics", due_at: null }];
+  // mastery passed 07-02; lessons all complete only by 07-04 → done as of the earlier mastery date
+  const s = A.studentStatus(asg, [
+    { kind: "mastery_check", ref: "1 · Basics", score: 90, total: 100, created_at: "2026-07-02T00:00:00Z" },
+    { kind: "lesson_complete", ref: "What is MRI", created_at: "2026-07-01T00:00:00Z" },
+    { kind: "lesson_complete", ref: "T1 vs T2", created_at: "2026-07-04T00:00:00Z" },
+  ], cat)[0];
+  assert.equal(s.done, true);
+  assert.equal(s.doneAt, "2026-07-02T00:00:00Z");
+});
+
 test("studentStatus: unknown module is not done; unknown ref label falls back to ref", () => {
   const cat = A.catalog(lessonsData, quizData);
   const s = A.studentStatus([{ id: "a4", kind: "module", ref: "9 · Ghost", due_at: null }], [], cat)[0];
