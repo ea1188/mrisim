@@ -505,16 +505,19 @@ PRESETS = {
         "description": "PD-weighted FSE (clinical knee standard). Balanced fluid/cartilage contrast. Meniscal tears appear as linear signal. ACL, PCL assessment."
     },
     "Knee T2 Fat-Sat": {
-        "sequence": "Inversion Recovery",
+        "sequence": "FSE / TSE",
         "TR": 4000,
         "TE": 60,
-        "TI": 265,
+        "TI": 150,
         "flip_angle": 90,
         "matrix_size": 256,
         "FOV": 150,
         "bandwidth": 200,
-        "NEX": 1,
-        "description": "T2 fat-saturated knee (STIR). Bone marrow edema bright. Bone contusions, stress fractures, cartilage defects, ligament tears."
+        "NEX": 2,
+        "etl": 8,
+        "echo_spacing": 10,
+        "fatsat_enabled": True,
+        "description": "T2-weighted FSE with spectral (CHESS) fat saturation — a true 'T2 fat-sat': fat dark while fluid, joint effusion and marrow oedema stay bright. Bone contusions, stress fractures, cartilage defects, ligament tears. (Unlike STIR it leaves water untouched but fails where B0 is inhomogeneous.)"
     },
     "Knee GRE T2*": {
         "sequence": "Gradient Echo",
@@ -560,16 +563,19 @@ PRESETS = {
         "description": "PD-weighted FSE with spectral (CHESS) fat saturation, coronal — marrow oedema and collateral-ligament / meniscal injury against suppressed fat."
     },
     "Knee T2 FS Axial": {
-        "sequence": "Inversion Recovery",
+        "sequence": "FSE / TSE",
         "TR": 4000,
         "TE": 60,
-        "TI": 265,
+        "TI": 150,
         "flip_angle": 90,
         "matrix_size": 256,
         "FOV": 150,
         "bandwidth": 200,
-        "NEX": 1,
-        "description": "T2 fat-saturated (STIR) knee, axial — patellofemoral cartilage, the retinacula and joint effusion; fluid-bright with marrow oedema."
+        "NEX": 2,
+        "etl": 8,
+        "echo_spacing": 10,
+        "fatsat_enabled": True,
+        "description": "T2-weighted FSE with spectral (CHESS) fat saturation, axial — patellofemoral cartilage, the retinacula and joint effusion; fluid-bright with marrow oedema, fat dark."
     },
 
     # ------------------------------------------------------------------ #
