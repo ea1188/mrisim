@@ -367,6 +367,10 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 #metrics td:first-child { color: var(--text-dim); }
 #metrics td:last-child { text-align: right; color: var(--accent-hi); font-weight: 700; }
 .hint { color: var(--text-faint); font-size: 11px; margin-top: 12px; min-height: 1em; }
+/* SAR-over-limit guidance callout (populated by app.js from sar_guidance.js) */
+.sar-guide { color: var(--warn); font-size: 11.5px; line-height: 1.45; margin: 10px 0 0;
+  border-left: 2px solid var(--warn); padding: 5px 0 5px 9px; }
+.sar-guide[hidden] { display: none; }
 .busy #mainImage { opacity: .55; transition: opacity .1s; }
 
 /* Intro / onboarding modal */
