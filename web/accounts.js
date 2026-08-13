@@ -306,7 +306,9 @@
       return c.auth.getUser().then(function (r) {
         var u = r.data.user;
         if (!u) return [];
-        return c.from("activity").select("kind,ref,created_at").eq("student_id", u.id)
+        // score/total are needed so the learner's own assignment view can tell a
+        // PASSING mastery_check from a failed one (see assignments._firstMasteryPass).
+        return c.from("activity").select("kind,ref,score,total,created_at").eq("student_id", u.id)
           .then(function (res) { return res.data || []; });
       });
     }).catch(function () { return []; });
