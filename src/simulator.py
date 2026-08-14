@@ -827,7 +827,7 @@ class Simulator:
             if params.get("metal_implant_enabled") and phantom_slice.shape == image.shape:
                 _b0m = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
                 r = metal_bloom_radius(_b0m, params["bandwidth"], params["sequence"],
-                                       params["TE"], params.get("metal_reduction"))
+                                       params["TE"], bool(params.get("metal_reduction")))
                 h_, w_ = image.shape                       # place at a femoral head
                 image = add_metal_artifact(image, (int(0.58 * h_), int(0.36 * w_)), r)
             # Gradient-coil nonlinearity: geometric warp that grows with FOV

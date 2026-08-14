@@ -197,8 +197,9 @@ def add_susceptibility_artifact(
 _SE_LIKE = ("Spin Echo", "FSE / TSE", "Inversion Recovery")
 
 
-def metal_bloom_radius(field_strength=3.0, bandwidth=125.0, sequence="Gradient Echo",
-                       TE=15.0, mar_enabled=False, base_px=34.0):
+def metal_bloom_radius(field_strength: float = 3.0, bandwidth: float = 125.0,
+                       sequence: str = "Gradient Echo", TE: float = 15.0,
+                       mar_enabled: bool = False, base_px: float = 34.0) -> float:
     """Radius (pixels) of a metal implant's signal void, from the parameters that
     drive real metal artifact: bigger at higher field and long TE, worse on GRE
     than SE, worse at low receiver bandwidth, and shrunk by VAT/SEMAC reduction.
@@ -212,7 +213,8 @@ def metal_bloom_radius(field_strength=3.0, bandwidth=125.0, sequence="Gradient E
     return max(4.0, float(r))
 
 
-def add_metal_artifact(image, center, radius, readout_axis=1):
+def add_metal_artifact(image: np.ndarray, center: "tuple[int, int]", radius: float,
+                       readout_axis: int = 1) -> np.ndarray:
     """Paint a bloomed signal void with a bright pile-up crescent (displaced along
     the readout axis) at `center` — the classic metal susceptibility artifact.
     `radius` comes from metal_bloom_radius, so the whole thing shrinks/grows with
