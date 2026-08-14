@@ -455,6 +455,8 @@
           </select></label>
         <label class="check" title="Fat and water resonate at slightly different frequencies, so fat shifts along the readout direction — worse at low bandwidth and high field. Raise the bandwidth to reduce it."><input type="checkbox" id="chemshift" /> Chemical shift (fat/water)</label>
         <label class="check" title="Field distortion near air/bone interfaces causes signal dropout and warping — worst on gradient-echo and long TE."><input type="checkbox" id="suscept" /> Susceptibility (dropout)</label>
+        <label class="check" title="A metal implant (e.g. hip arthroplasty) blooms into a signal void with pile-up. The void grows at low bandwidth, long TE and on gradient-echo, and shrinks on spin-echo, high bandwidth, and with metal-artifact reduction."><input type="checkbox" id="metal" /> Metal implant (bloom)</label>
+        <label class="check" title="View-angle tilting / SEMAC-style metal artifact reduction shrinks the metal void."><input type="checkbox" id="metalmar" /> Metal artifact reduction (VAT/SEMAC)</label>
         <p class="tiny" id="artifact-help"></p>
         </div>
         <div class="col">

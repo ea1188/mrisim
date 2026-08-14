@@ -189,8 +189,54 @@ def add_susceptibility_artifact(
     signal_loss = np.clip(signal_loss, 0.1, 1.0)
     
     result = image * signal_loss
-    
+
     return result
+
+# Sequences that refocus static off-resonance (spin-echo family) — much smaller
+# metal void than gradient-echo, which does not refocus it.
+_SE_LIKE = ("Spin Echo", "FSE / TSE", "Inversion Recovery")
+
+
+def metal_bloom_radius(field_strength: float = 3.0, bandwidth: float = 125.0,
+                       sequence: str = "Gradient Echo", TE: float = 15.0,
+                       mar_enabled: bool = False, base_px: float = 34.0) -> float:
+    """Radius (pixels) of a metal implant's signal void, from the parameters that
+    drive real metal artifact: bigger at higher field and long TE, worse on GRE
+    than SE, worse at low receiver bandwidth, and shrunk by VAT/SEMAC reduction.
+    Pure and monotonic in each lever (see tests)."""
+    seq_factor = 0.40 if sequence in _SE_LIKE else 1.0
+    te_factor = 0.6 + 0.4 * min(max(TE, 0.0) / 30.0, 3.0)     # longer TE -> more dephasing
+    bw_factor = 125.0 / max(bandwidth, 1.0)                   # 1/bandwidth, ref 125 Hz/px
+    r = base_px * (max(field_strength, 0.1) / 3.0) * seq_factor * te_factor * bw_factor
+    if mar_enabled:
+        r *= 0.4                                             # VAT / SEMAC
+    return max(4.0, float(r))
+
+
+def add_metal_artifact(image: np.ndarray, center: "tuple[int, int]", radius: float,
+                       readout_axis: int = 1) -> np.ndarray:
+    """Paint a bloomed signal void with a bright pile-up crescent (displaced along
+    the readout axis) at `center` — the classic metal susceptibility artifact.
+    `radius` comes from metal_bloom_radius, so the whole thing shrinks/grows with
+    the acquisition parameters."""
+    rows, cols = image.shape
+    yy, xx = np.ogrid[:rows, :cols]
+    dist = np.sqrt((yy - center[0]) ** 2 + (xx - center[1]) ** 2)
+    out = image.astype(float).copy()
+
+    # Inner void: near-total dropout, feathered to the bloom edge.
+    void = np.clip((radius - dist) / max(radius, 1.0), 0.0, 1.0)
+    out *= (1.0 - 0.97 * void)
+
+    # Pile-up: bright signal piles up just outside the void, offset to one side
+    # along the readout axis (off-resonance displacement) — an asymmetric crescent.
+    off = np.zeros(2); off[readout_axis] = radius * 0.55
+    d2 = np.sqrt((yy - (center[0] + off[0])) ** 2 + (xx - (center[1] + off[1])) ** 2)
+    rim = np.exp(-((d2 - radius) ** 2) / (2.0 * (radius * 0.20) ** 2))
+    peak = float(np.percentile(image, 99)) or float(np.max(image)) or 1.0
+    out += rim * peak * 0.7
+    return np.clip(out, 0.0, max(float(out.max()), 1e-6))
+
 
 def add_zipper_artifact(
     image: np.ndarray,
