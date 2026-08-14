@@ -44,7 +44,7 @@
             if (t.latestAt == null || a.created_at > t.latestAt) { t.latest = p; t.latestAt = a.created_at; }
           }
         } else if (a.kind === "lesson_complete") {
-          lessons[a.ref] = true;
+          if (lessons[a.ref] == null || a.created_at < lessons[a.ref]) lessons[a.ref] = a.created_at;
         } else if (a.kind === "mastery_check") {
           var mp = pct(a.score, a.total);
           if (mp != null && (masteredBest[a.ref] == null || mp > masteredBest[a.ref])) masteredBest[a.ref] = mp;
@@ -75,6 +75,8 @@
         name: (r.profiles && r.profiles.display_name) || "(unnamed)",
         quizRuns: quizRuns,
         lessonsDone: Object.keys(lessons).length,
+        mastered: masteredBest,   // module title -> best mastery-check % (all attempts)
+        lessons: lessons,         // lesson title -> earliest completion timestamp
         topics: outTopics,
         topicsPassed: topicsPassed,
         bestPct: bestPct,
@@ -146,5 +148,80 @@
     return lines.join("\n");
   }
 
-  return { perStudent: perStudent, coverage: coverage, classStats: classStats, toCSV: toCSV };
+  // One student × one module: "mastered" (passing mastery check), "lessons" (all
+  // the module's lessons done), "started" (some lessons or a failed mastery
+  // attempt), or "none". Needs a perStudent row + a module {title, lessons:[...]}.
+  function moduleStatus(row, mod, passPct) {
+    var mastered = row.mastered || {}, done = row.lessons || {};
+    if (mastered[mod.title] != null && mastered[mod.title] >= passPct) return "mastered";
+    var ls = mod.lessons || [];
+    var n = 0;
+    for (var i = 0; i < ls.length; i++) if (done[ls[i]] != null) n++;
+    if (ls.length && n === ls.length) return "lessons";
+    if (n > 0 || mastered[mod.title] != null) return "started";
+    return "none";
+  }
+
+  // Rows (from perStudent) × modules grid: each student's status per module.
+  function moduleMatrix(rows, modules, opts) {
+    var passPct = (opts && opts.passPct) || DEFAULTS.passPct;
+    return (rows || []).map(function (row) {
+      return {
+        studentId: row.studentId, name: row.name,
+        cells: (modules || []).map(function (m) {
+          return {
+            module: m.title, status: moduleStatus(row, m, passPct),
+            pct: (row.mastered && row.mastered[m.title] != null) ? Math.round(row.mastered[m.title]) : null,
+          };
+        }),
+      };
+    });
+  }
+
+  // Per-module class rates: how many of the roster mastered / finished the lessons.
+  function moduleRates(rows, modules, opts) {
+    var passPct = (opts && opts.passPct) || DEFAULTS.passPct;
+    var n = (rows || []).length;
+    return (modules || []).map(function (m) {
+      var mastered = 0, lessonsDone = 0;
+      (rows || []).forEach(function (row) {
+        var s = moduleStatus(row, m, passPct);
+        if (s === "mastered") mastered++;
+        if (s === "mastered" || s === "lessons") lessonsDone++;
+      });
+      return {
+        module: m.title, total: n, mastered: mastered, lessonsDone: lessonsDone,
+        masteredPct: n ? Math.round((100 * mastered) / n) : 0,
+        lessonsPct: n ? Math.round((100 * lessonsDone) / n) : 0,
+      };
+    });
+  }
+
+  // Newest-first labeled activity feed across the whole class (capped).
+  function recentActivity(activity, roster, opts) {
+    var limit = (opts && opts.limit) || 30;
+    var passPct = (opts && opts.passPct) || DEFAULTS.passPct;
+    var nameById = {};
+    (roster || []).forEach(function (r) {
+      nameById[r.student_id] = (r.profiles && r.profiles.display_name) || "(unnamed)";
+    });
+    return (activity || []).slice().sort(function (a, b) {
+      return a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0;
+    }).slice(0, limit).map(function (a) {
+      var p = pct(a.score, a.total);
+      var pt = p == null ? null : Math.round(p);
+      var label;
+      if (a.kind === "mastery_check") label = (p != null && p >= passPct ? "passed" : "attempted") + " module " + a.ref + (pt != null ? " — " + pt + "%" : "");
+      else if (a.kind === "lesson_complete") label = "completed lesson " + a.ref;
+      else if (a.kind === "quiz_attempt") label = "quiz " + a.ref + (pt != null ? " — " + pt + "%" : "");
+      else if (a.kind === "mock_exam") label = "mock exam" + (pt != null ? " — " + pt + "%" : "");
+      else label = a.kind + " " + a.ref;
+      return { studentId: a.student_id, name: nameById[a.student_id] || "(unknown)", kind: a.kind, ref: a.ref, pct: pt, at: a.created_at, label: label };
+    });
+  }
+
+  return {
+    perStudent: perStudent, coverage: coverage, classStats: classStats, toCSV: toCSV,
+    moduleStatus: moduleStatus, moduleMatrix: moduleMatrix, moduleRates: moduleRates, recentActivity: recentActivity,
+  };
 });
