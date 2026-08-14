@@ -122,11 +122,68 @@
         " · latest " + (t.latest == null ? "—" : Math.round(t.latest) + "%") +
         " · " + t.attempts + " attempt" + (t.attempts === 1 ? "" : "s") }));
     });
-    box.appendChild(h("p", { class: "muted", text: row.lessonsDone + " lesson" + (row.lessonsDone === 1 ? "" : "s") + " completed." }));
-    box.appendChild(h("p", { class: "muted", text:
-      row.modulesMastered + " module" + (row.modulesMastered === 1 ? "" : "s") + " mastered · best mock exam "
+    // Itemized: which modules were mastered (with %) and which lessons were done.
+    var mastered = Object.keys(row.mastered || {}).filter(function (k) { return row.mastered[k] >= 80; }).sort();
+    box.appendChild(h("p", { class: "muted", text: mastered.length
+      ? "Mastered: " + mastered.map(function (k) { return k + " (" + Math.round(row.mastered[k]) + "%)"; }).join(", ")
+      : "No modules mastered yet." }));
+    var lessons = Object.keys(row.lessons || {}).sort();
+    if (lessons.length) box.appendChild(h("p", { class: "muted", text: "Lessons: " + lessons.join(", ") }));
+    box.appendChild(h("p", { class: "muted", text: "Best mock exam "
       + (row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%") }));
     return box;
+  }
+
+  // The three class-detail blocks under the roster: module × student grid,
+  // per-module rates, and a recent-activity feed. Read-only, same data.
+  function classDetailSections(rows, roster, acts, cat) {
+    var modules = ((cat && cat.modules) || []).map(function (m) { return { title: m.ref, lessons: m.lessons }; });
+    var frag = document.createDocumentFragment();
+    var STAT = { mastered: "M", lessons: "L", started: "·", none: "" };
+
+    // 1) Module × student grid (all modules; scrolls horizontally).
+    frag.appendChild(h("h3", { class: "detail-h", text: "Module progress" }));
+    var matrix = ClassInsight.moduleMatrix(rows, modules);
+    var ghead = [h("th", { text: "Member" })];
+    modules.forEach(function (m, i) { ghead.push(h("th", { class: "mcol", title: m.title, text: String(i + 1) })); });
+    var gbody = h("tbody");
+    matrix.forEach(function (mr) {
+      var tds = [h("td", { text: mr.name })];
+      mr.cells.forEach(function (c) {
+        tds.push(h("td", { class: "cell " + c.status, title: c.module + (c.pct != null ? " — best " + c.pct + "%" : ""), text: STAT[c.status] }));
+      });
+      gbody.appendChild(h("tr", {}, tds));
+    });
+    frag.appendChild(h("div", { class: "grid-scroll" }, [
+      h("table", { class: "mgrid" }, [h("thead", {}, [h("tr", {}, ghead)]), gbody])]));
+    frag.appendChild(h("p", { class: "muted legend", text:
+      "M = mastered · L = lessons done · · = started. Columns are modules 1–" + modules.length + " (hover for names)." }));
+
+    // 2) Per-module rates.
+    frag.appendChild(h("h3", { class: "detail-h", text: "By module" }));
+    var rlist = h("div", { class: "rate-list" });
+    ClassInsight.moduleRates(rows, modules).forEach(function (r) {
+      rlist.appendChild(h("div", { class: "rate-row" }, [
+        h("span", { class: "rate-name", text: r.module }),
+        h("span", { class: "rate-bar" }, [h("i", { style: "width:" + r.masteredPct + "%" })]),
+        h("span", { class: "rate-num", text: r.mastered + "/" + r.total + " mastered · " + r.lessonsDone + "/" + r.total + " lessons" }),
+      ]));
+    });
+    frag.appendChild(rlist);
+
+    // 3) Recent activity feed.
+    frag.appendChild(h("h3", { class: "detail-h", text: "Recent activity" }));
+    var feed = ClassInsight.recentActivity(acts, roster, { limit: 30 });
+    if (!feed.length) { frag.appendChild(h("p", { class: "muted", text: "No activity yet." })); return frag; }
+    var flist = h("ul", { class: "feed" });
+    feed.forEach(function (e) {
+      flist.appendChild(h("li", {}, [
+        h("b", { text: e.name }), document.createTextNode(" " + e.label + " "),
+        h("span", { class: "feed-when", text: when(e.at) }),
+      ]));
+    });
+    frag.appendChild(flist);
+    return frag;
   }
 
   var KIND_LABEL = { lesson: "Lesson", quiz: "Quiz topic", module: "Module" };
@@ -311,6 +368,7 @@
         URL.revokeObjectURL(url);
       } }));
       body.appendChild(assignmentsSection(cl, roster, acts, cat, assignments, reload));
+      body.appendChild(classDetailSections(rows, roster, acts, cat));
     });
     return c;
   }

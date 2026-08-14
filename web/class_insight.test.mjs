@@ -101,3 +101,57 @@ test("toCSV emits the exact header and escapes commas and quotes", () => {
   assert.equal(lines[0], '"Member","Practice coverage %","Best score %","Modules mastered","Best mock %","Lessons done","Weakest topic","Struggling","Last active"');
   assert.ok(lines[1].startsWith('"De, ""Q"""')); // comma preserved, quotes doubled
 });
+
+// --- class-detail views (moduleMatrix / moduleRates / recentActivity) --------
+const MODS = [
+  { title: "1 · A", lessons: ["L1", "L2"] },
+  { title: "2 · B", lessons: ["L3"] },
+];
+const detRoster = [
+  { student_id: "s1", profiles: { display_name: "Ada" } },
+  { student_id: "s2", profiles: { display_name: "Ben" } },
+];
+const detActivity = [
+  { student_id: "s1", kind: "mastery_check", ref: "1 · A", score: 90, total: 100, created_at: "2026-08-01T00:00:00Z" },
+  { student_id: "s1", kind: "lesson_complete", ref: "L3", created_at: "2026-08-02T00:00:00Z" },
+  { student_id: "s2", kind: "lesson_complete", ref: "L1", created_at: "2026-08-03T00:00:00Z" },
+  { student_id: "s2", kind: "mastery_check", ref: "1 · A", score: 60, total: 100, created_at: "2026-08-04T00:00:00Z" },
+];
+
+test("perStudent exposes mastered map and lessons map with dates", () => {
+  const rows = CI.perStudent(detRoster, detActivity);
+  const s1 = rows.find((r) => r.studentId === "s1");
+  assert.equal(s1.mastered["1 · A"], 90);
+  assert.equal(s1.lessons["L3"], "2026-08-02T00:00:00Z");
+});
+
+test("moduleMatrix: per-student status per module", () => {
+  const rows = CI.perStudent(detRoster, detActivity);
+  const mtx = CI.moduleMatrix(rows, MODS);
+  const s1 = mtx.find((r) => r.studentId === "s1");
+  const s2 = mtx.find((r) => r.studentId === "s2");
+  assert.deepEqual(s1.cells.map((c) => c.status), ["mastered", "lessons"]); // A mastered; B all lessons done
+  assert.deepEqual(s2.cells.map((c) => c.status), ["started", "none"]);     // A: 1/2 lessons + failed check; B: nothing
+  assert.equal(s1.cells[0].pct, 90);
+});
+
+test("moduleRates: per-module mastered/lessons counts and pct", () => {
+  const rows = CI.perStudent(detRoster, detActivity);
+  const rates = CI.moduleRates(rows, MODS);
+  assert.equal(rates[0].module, "1 · A");
+  assert.equal(rates[0].mastered, 1);      // only Ada
+  assert.equal(rates[0].masteredPct, 50);  // 1 of 2
+  assert.equal(rates[1].mastered, 0);
+  assert.equal(rates[1].lessonsDone, 1);   // Ada finished B's lessons
+});
+
+test("recentActivity: newest-first, labeled, name-resolved, capped", () => {
+  const feed = CI.recentActivity(detActivity, detRoster);
+  assert.equal(feed[0].at, "2026-08-04T00:00:00Z");  // newest first
+  assert.equal(feed[0].name, "Ben");
+  assert.match(feed[0].label, /attempted module 1 · A — 60%/);
+  const pass = feed.find((e) => e.kind === "mastery_check" && e.name === "Ada");
+  assert.match(pass.label, /passed module 1 · A — 90%/);
+  const capped = CI.recentActivity(detActivity, detRoster, { limit: 2 });
+  assert.equal(capped.length, 2);
+});
