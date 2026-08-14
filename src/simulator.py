@@ -24,7 +24,8 @@ from fse import simulate_fse_image
 import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
-                       apply_gradient_distortion, calculate_chemical_shift_pixels)
+                       apply_gradient_distortion, calculate_chemical_shift_pixels,
+                       add_metal_artifact, metal_bloom_radius)
 from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d,
                                 simulate_fa_map_3d, simulate_fmri_3d_slice, compute_activation_map_3d,
                                 compute_tstat_map_3d)
@@ -148,6 +149,7 @@ def default_params(**overrides: object) -> dict:
         field_strength="3T", contrast_enabled=False, contrast_dose=1,
         motion_enabled=False, motion_type="periodic", motion_amplitude=3.0,
         chemical_shift_enabled=False, susceptibility_enabled=False,
+        metal_implant_enabled=False, metal_reduction=False,
         susceptibility_strength=3.0, zipper_enabled=False, snr_level=35.0,
         pf_enabled=False, pf_fraction="Full",
         kspace_filter_enabled=False, kspace_filter_window="hamming",
@@ -820,6 +822,14 @@ class Simulator:
             if params["susceptibility_enabled"] and phantom_slice.shape == image.shape:
                 image = add_susceptibility_artifact(image, phantom_slice,
                                                     params["susceptibility_strength"] / 10.0)
+            # Metal implant (hip arthroplasty): a bloomed signal void + pile-up whose
+            # size follows field / bandwidth / sequence / TE and shrinks with VAT/SEMAC.
+            if params.get("metal_implant_enabled") and phantom_slice.shape == image.shape:
+                _b0m = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
+                r = metal_bloom_radius(_b0m, params["bandwidth"], params["sequence"],
+                                       params["TE"], params.get("metal_reduction"))
+                h_, w_ = image.shape                       # place at a femoral head
+                image = add_metal_artifact(image, (int(0.58 * h_), int(0.36 * w_)), r)
             # Gradient-coil nonlinearity: geometric warp that grows with FOV
             # (worse toward the periphery of a large field of view).
             if params.get("gradient_distort", 0) > 0 and phantom_slice.shape == image.shape:

@@ -189,7 +189,7 @@ async function applyState(st) {
    "nslices", "sgap", "ipfov", "satpos", "satwidth", "satangle", "satangle2", "accel", "pv"].forEach(sv);
   ["fatsat", "gd", "flow", "acq3d", "kzpf", "fovplan", "cmap", "kspaceshow", "psdshow",
    "b0mapshow", "gfactorshow", "mathshow", "labelanat", "curveshow",
-   "motion", "chemshift", "suscept", "nowrap", "peswap", "satband"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
+   "motion", "chemshift", "suscept", "metal", "metalmar", "nowrap", "peswap", "satband"].forEach((k) => { if (st[k] !== undefined) $(k).checked = !!st[k]; });
   // A lesson/link that enables the 3-D slab without asking for a specific depth
   // gets full anatomy coverage (same as ticking 3D by hand), so reformats are full.
   if (st.acq3d && st.np === undefined) {
@@ -260,7 +260,7 @@ const DEFAULT_STATE = {
   fatsat: false, gd: false, flow: false, acq3d: false, kzpf: false, fovplan: false,
   cmap: false, kspaceshow: false, psdshow: false, b0mapshow: false, gfactorshow: false,
   mathshow: false, labelanat: false, curveshow: false,
-  motion: false, chemshift: false, suscept: false, nowrap: false, peswap: false, satband: false,
+  motion: false, chemshift: false, suscept: false, metal: false, metalmar: false, nowrap: false, peswap: false, satband: false,
   motiontype: "periodic", accelmethod: "SENSE", receivecoil: "uniform", curvemode: "TE decay",
   diffdisp: "DWI", angiotype: "TOF", qmridisp: "T1 Map (VFA)", fmridisp: "EPI Image",
   perfdisp: "Perfusion-weighted", perfdyndisp: "CBV (DSC)", pathology: "",
@@ -696,7 +696,7 @@ function buildControls(info) {
       }
       schedule();
     }));
-  ["motion", "chemshift", "suscept"].forEach((id) =>
+  ["motion", "chemshift", "suscept", "metal", "metalmar"].forEach((id) =>
     $(id).addEventListener("change", () => { syncVisibility(); schedule(); }));
   $("motiontype").addEventListener("change", schedule);
   ["diffdisp", "perfdisp", "perfdyndisp", "angiotype", "qmridisp", "fmridisp"].forEach((id) => $(id).addEventListener("change", schedule));
@@ -802,6 +802,8 @@ function collectPayload() {
     motion_enabled: $("motion").checked, motion_type: $("motiontype").value,
     chemical_shift_enabled: $("chemshift").checked,
     susceptibility_enabled: $("suscept").checked,
+    metal_implant_enabled: $("metal").checked,
+    metal_reduction: $("metalmar").checked,
   };
   if (s === "Diffusion (DWI)") { params.b_value = +$("bval").value; params.diff_display = $("diffdisp").value; }
   if (s === "Perfusion (ASL)") params.perf_display = $("perfdisp").value;
