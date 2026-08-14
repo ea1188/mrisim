@@ -267,7 +267,7 @@ PRESETS = {
         "FOV": 240,
         "bandwidth": 250,
         "NEX": 1,
-        "fmri_display": "T-statistic Map",
+        "fmri_display": "Activation Map",
         "fmri_volumes": 200,
         "fmri_threshold": 3,
         "description": "Standard fMRI. TE=30ms optimal for BOLD at 3T (matches T2* of gray matter)."
@@ -282,7 +282,7 @@ PRESETS = {
         "FOV": 200,
         "bandwidth": 200,
         "NEX": 1,
-        "fmri_display": "T-statistic Map",
+        "fmri_display": "Activation Map",
         "fmri_volumes": 150,
         "fmri_threshold": 3,
         "description": "Higher resolution fMRI. Better spatial localization, longer TR reduces temporal sampling."
