@@ -199,18 +199,36 @@ _SE_LIKE = ("Spin Echo", "FSE / TSE", "Inversion Recovery")
 
 def metal_bloom_radius(field_strength: float = 3.0, bandwidth: float = 125.0,
                        sequence: str = "Gradient Echo", TE: float = 15.0,
-                       mar_enabled: bool = False, base_px: float = 34.0) -> float:
+                       mar_enabled: bool = False, base_px: float = 55.0) -> float:
     """Radius (pixels) of a metal implant's signal void, from the parameters that
     drive real metal artifact: bigger at higher field and long TE, worse on GRE
     than SE, worse at low receiver bandwidth, and shrunk by VAT/SEMAC reduction.
-    Pure and monotonic in each lever (see tests)."""
-    seq_factor = 0.40 if sequence in _SE_LIKE else 1.0
-    te_factor = 0.6 + 0.4 * min(max(TE, 0.0) / 30.0, 3.0)     # longer TE -> more dephasing
-    bw_factor = 125.0 / max(bandwidth, 1.0)                   # 1/bandwidth, ref 125 Hz/px
+    A hip implant is a large artifact even on spin echo, so the void stays clearly
+    visible by default and the levers move it within a bounded range. Pure and
+    monotonic in each lever (see tests)."""
+    seq_factor = 0.6 if sequence in _SE_LIKE else 1.0        # SE still shows a big void
+    te_factor = 0.6 + 0.4 * min(max(TE, 0.0) / 30.0, 3.0)    # longer TE -> more dephasing
+    bw_factor = min(2.2, max(0.55, 125.0 / max(bandwidth, 1.0)))  # 1/bandwidth, bounded
     r = base_px * (max(field_strength, 0.1) / 3.0) * seq_factor * te_factor * bw_factor
     if mar_enabled:
-        r *= 0.4                                             # VAT / SEMAC
-    return max(4.0, float(r))
+        r *= 0.45                                            # VAT / SEMAC
+    return float(min(70.0, max(6.0, r)))
+
+
+def metal_implant_center(phantom_slice: np.ndarray,
+                         bone_labels: "tuple[int, ...]" = (5, 13, 14)) -> "tuple[int, int]":
+    """Place the implant on a real hip: the centroid of bone/marrow in one lateral,
+    mid-height quadrant of the slice (a femoral head / acetabulum). Falls back to a
+    fixed fraction if no bone is found there."""
+    rows, cols = phantom_slice.shape
+    mask = np.isin(phantom_slice, bone_labels)
+    band = np.zeros_like(mask, dtype=bool)
+    band[int(0.30 * rows):int(0.72 * rows), int(0.12 * cols):int(0.45 * cols)] = True
+    m = mask & band
+    if int(m.sum()) < 20:
+        return (int(0.55 * rows), int(0.30 * cols))
+    ys, xs = np.where(m)
+    return (int(ys.mean()), int(xs.mean()))
 
 
 def add_metal_artifact(image: np.ndarray, center: "tuple[int, int]", radius: float,

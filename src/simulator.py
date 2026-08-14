@@ -25,7 +25,7 @@ import flow
 from artifacts import (add_motion_artifact, add_chemical_shift_artifact,
                        add_susceptibility_artifact, add_zipper_artifact,
                        apply_gradient_distortion, calculate_chemical_shift_pixels,
-                       add_metal_artifact, metal_bloom_radius)
+                       add_metal_artifact, metal_bloom_radius, metal_implant_center)
 from phantom3d_extended import (simulate_diffusion_3d_slice, simulate_adc_map_3d,
                                 simulate_fa_map_3d, simulate_fmri_3d_slice, compute_activation_map_3d,
                                 compute_tstat_map_3d)
@@ -828,8 +828,7 @@ class Simulator:
                 _b0m = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
                 r = metal_bloom_radius(_b0m, params["bandwidth"], params["sequence"],
                                        params["TE"], bool(params.get("metal_reduction")))
-                h_, w_ = image.shape                       # place at a femoral head
-                image = add_metal_artifact(image, (int(0.58 * h_), int(0.36 * w_)), r)
+                image = add_metal_artifact(image, metal_implant_center(phantom_slice), r)
             # Gradient-coil nonlinearity: geometric warp that grows with FOV
             # (worse toward the periphery of a large field of view).
             if params.get("gradient_distort", 0) > 0 and phantom_slice.shape == image.shape:
