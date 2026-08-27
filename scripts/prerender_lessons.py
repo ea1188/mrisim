@@ -45,6 +45,9 @@ _PARAM_MAP = {
     "matrix": "matrix_size", "bw": "bandwidth", "nex": "NEX", "thick": "slice_thickness",
     "nslices": "n_slices", "sgap": "slice_gap", "accel": "accel_factor", "pv": "pv_sigma",
     "bval": "b_value", "etl": "etl",
+    "accelmethod": "accel_method", "motiontype": "motion_type", "angiotype": "angio_type",
+    "diffdisp": "diff_display", "fmridisp": "fmri_display", "qmridisp": "qmri_display",
+    "perfdisp": "perf_display", "perfdyndisp": "perf_dyn_display",
 }
 
 
@@ -64,20 +67,41 @@ def payload_for_state(st):
     params["contrast_enabled"] = bool(st.get("gd"))
     params["contrast_dose"] = 5 if st.get("gd") else 0
     params["flow_enabled"] = bool(st.get("flow"))
+    params["motion_enabled"] = bool(st.get("motion"))
+    params["chemical_shift_enabled"] = bool(st.get("chemshift"))
+    params["susceptibility_enabled"] = bool(st.get("suscept"))
     if st.get("acq3d"):
         params["acq3d"] = True
         if "np" in st:
             params["n_partitions"] = st["np"]
+        params["kz_pf"] = 0.75 if st.get("kzpf") else None
     payload = {
         "region": st.get("region", "Brain"),
         "orientation": st.get("orient", "axial"),
         "params": params,
         "label_anatomy": bool(st.get("labelanat")),
         "pathology": st.get("pathology", ""),
+        "receive_coil": st.get("receivecoil", "uniform"),
     }
     if "slice" in st:
         payload["slice_idx"] = st["slice"]
     return payload
+
+
+def step_payloads(lesson):
+    """Yield (step_index, render_payload) for each stateful step of a lesson.
+
+    Lesson steps carry *partial* state: the live player applies each step's keys
+    on top of the controls as-left by the previous step. Mirror that here by
+    accumulating state across the lesson, so a delta step like
+    {"receivecoil": "surface"} keeps the region/sequence/TR/TE it inherited."""
+    acc = {}
+    for i, step in enumerate(lesson.get("steps", [])):
+        st = step.get("state")
+        if not st:
+            continue                     # reading/concept step: text only, no image
+        acc.update(st)
+        yield i, payload_for_state(acc)
 
 
 def ensure_region(host, region):
@@ -103,13 +127,10 @@ def main():
     for L in lessons:
         title = L.get("title", "")
         d = os.path.join(OUT, slug(title))
-        for i, step in enumerate(L.get("steps", [])):
-            st = step.get("state")
-            if not st:
-                continue                     # reading/concept step: text only, no image
+        for i, payload in step_payloads(L):
             try:
-                ensure_region(host, st.get("region", "Brain"))
-                res = host.render(payload_for_state(st))
+                ensure_region(host, payload["region"])
+                res = host.render(payload)
                 png = base64.b64decode(res["image"].split(",")[-1])
             except Exception as e:            # never fail the whole build on one step
                 print(f"  lesson '{title}' step {i}: render skipped ({e})")
