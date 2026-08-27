@@ -22,7 +22,7 @@
     "3 · Making a tissue disappear":  { premium: ["fat-suppression"], quiz: [] },
     "4 · Reading pathology":          { premium: ["pathology", "procedures-anatomy"], quiz: ["pathology"] },
     "5 · Image quality & speed":      { premium: ["image-quality"], quiz: ["image-quality"] },
-    "6 · How the image is built":     { premium: ["image-quality", "pulse-sequences", "data-acquisition"], quiz: ["image-quality"] },
+    "6 · How the image is built":     { premium: ["pulse-sequences", "data-acquisition"], quiz: ["image-quality"] },
     "7 · 3D imaging & reconstruction": { premium: ["three-d-recon"], quiz: [] },
     "8 · Flow, function & artifacts": { premium: ["flow-artifacts", "procedures-vascular"], quiz: ["artifacts"] },
     "9 · Putting it together":        { premium: ["procedures-protocols", "procedures-positioning"], quiz: [] },
