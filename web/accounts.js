@@ -244,6 +244,51 @@
       });
     }).then(function (r) { return r.data || []; });
   }
+  // --- co-instructors ------------------------------------------------------ //
+  // Redeem an instructor invite code (server-side SECURITY DEFINER RPC).
+  function joinClassAsInstructor(code) {
+    return client().then(function (c) {
+      return c.rpc("join_class_instructor", { p_code: String(code || "").trim() });
+    });
+  }
+  // The class's instructor invite code. RLS returns it only to the owner.
+  function instructorCode(classId) {
+    return client().then(function (c) {
+      return c.from("class_instructor_codes").select("code").eq("class_id", classId).maybeSingle();
+    }).then(function (r) { return r.data ? r.data.code : null; });
+  }
+  // Rotate the instructor code of a class you own (owner-checked RPC).
+  function rotateInstructorCode(classId) {
+    return client().then(function (c) { return c.rpc("rotate_instructor_code", { p_class: classId }); });
+  }
+  // Co-instructors of a class (visible to anyone who teaches it).
+  function classInstructors(classId) {
+    return client().then(function (c) {
+      return c.from("class_instructors")
+        .select("instructor_id,added_at,profiles(display_name)")
+        .eq("class_id", classId).order("added_at");
+    }).then(function (r) { return r.data || []; });
+  }
+  // Remove a co-instructor. RLS scopes this to the owner — or to yourself (leave).
+  function removeInstructor(classId, instructorId) {
+    return client().then(function (c) {
+      return c.from("class_instructors").delete()
+        .eq("class_id", classId).eq("instructor_id", instructorId);
+    });
+  }
+  // Classes this user co-teaches (is a co-instructor of, not the owner).
+  function coTaughtClasses() {
+    return client().then(function (c) {
+      return c.auth.getUser().then(function (u) {
+        return c.from("class_instructors")
+          .select("class_id,classes(id,name,join_code,archived,created_at)")
+          .eq("instructor_id", u.data.user.id);
+      });
+    }).then(function (r) {
+      return (r.data || []).map(function (row) { return row.classes; }).filter(Boolean);
+    });
+  }
+
   function archiveClass(classId, archived) {
     return client().then(function (c) {
       return c.from("classes").update({ archived: !!archived }).eq("id", classId);
@@ -364,6 +409,9 @@
     joinClass: joinClass, myClasses: myClasses, myActivity: myActivity,
     createClass: createClass, instructorClasses: instructorClasses,
     renameClass: renameClass, rotateJoinCode: rotateJoinCode, removeMember: removeMember,
+    joinClassAsInstructor: joinClassAsInstructor, instructorCode: instructorCode,
+    rotateInstructorCode: rotateInstructorCode, classInstructors: classInstructors,
+    removeInstructor: removeInstructor, coTaughtClasses: coTaughtClasses,
     archiveClass: archiveClass, deleteClass: deleteClass,
     roster: roster, classActivity: classActivity,
     classAssignments: classAssignments, createAssignment: createAssignment,
