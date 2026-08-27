@@ -829,6 +829,22 @@ def test_render_json_roundtrip():
     _assert_good_render(out, "render_json")
 
 
+def test_pc_angiogram_displays_bright_vessels():
+    """A phase-contrast 'Speed' MIP is near-binary: every vessel voxel carries the
+    same |φ|/π brightness. The display auto-window must not anchor its range on
+    that single foreground value — doing so put the vessels at vmin and rendered
+    the whole angiogram black."""
+    import io
+    from PIL import Image
+    wa.init()
+    r = wa.render({"region": "Brain", "orientation": "axial", "slice_idx": 90,
+                   "params": {"sequence": "MR Angiography", "TR": 500, "TE": 15,
+                              "angio_type": "Phase Contrast"}})
+    raw = _decode(r["image"], "PC angiogram")
+    px = np.asarray(Image.open(io.BytesIO(raw)).convert("L"), dtype=float)
+    assert (px > 128).mean() > 0.05, "PC vessel tree should render bright, not black"
+
+
 def test_coil_shading_matches_physics():
     """Receive-coil shading: the ideal coil is a no-op, each real coil shades the
     image differently, and a surface coil shows strong one-sided falloff."""

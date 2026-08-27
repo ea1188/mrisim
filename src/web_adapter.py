@@ -611,7 +611,14 @@ class WebHost(CurvesMixin):
         nz = img[img > 1e-6]
         if nz.size:
             lo, hi = (float(v) for v in np.percentile(nz, (1.0, 99.0)))
-            base, rng = lo, max(hi - lo, mx * 0.05)
+            if hi - lo < mx * 0.05:
+                # (Near-)single-valued foreground — e.g. a phase-contrast angiogram,
+                # where every vessel voxel carries the same |φ|/π speed. Anchoring the
+                # window at that one value would render the foreground black; window
+                # the full [0, max] range instead so it reads bright on dark.
+                base, rng = 0.0, mx
+            else:
+                base, rng = lo, hi - lo
         else:
             base, rng = 0.0, mx
         center, width = base + wl * rng, max(0.01, ww) * rng
