@@ -247,9 +247,11 @@
     return box;
   }
 
-  // A class you own: join code, roster and each member's formative practice.
-  // `reload` re-fetches the owning list after archive/delete.
-  function classCard(cl, reload) {
+  // A class you teach: join code, roster and each member's formative practice.
+  // `reload` re-fetches the owning list after archive/delete. `isOwner` gates the
+  // administrative controls (rename/archive/delete, codes, removals) to the owner;
+  // a co-instructor gets the same insight plus a "Leave" button instead.
+  function classCard(cl, reload, isOwner, uid) {
     var body = h("div");
     var archiveBtn = h("button", { class: "ghost", text: cl.archived ? "Unarchive" : "Archive", onclick: function () {
       archiveBtn.disabled = true;
@@ -286,11 +288,24 @@
         reload();
       }).catch(function () { regen.disabled = false; });
     } });
-    var head = h("div", { class: "classhead" }, [
+    var leave = h("button", { class: "ghost", text: "Leave class", onclick: function () {
+      if (!window.confirm("Stop co-teaching \"" + cl.name + "\"? You can rejoin later with the instructor code.")) return;
+      leave.disabled = true;
+      Accounts.removeInstructor(cl.id, uid).then(function (res) {
+        if (res && res.error) { leave.disabled = false; return; }
+        reload();
+      }).catch(function () { leave.disabled = false; });
+    } });
+    var head = h("div", { class: "classhead" }, isOwner ? [
       title,
       h("span", { class: "muted", text: "Join code:" }),
       h("span", { class: "code", text: cl.join_code }),
       regen, rename, archiveBtn, delBtn,
+    ] : [
+      title,
+      h("span", { class: "muted", text: "Join code:" }),
+      h("span", { class: "code", text: cl.join_code }),
+      leave,
     ]);
     var c = card([head, body]);
     body.appendChild(h("p", { class: "muted", text: "Loading roster…" }));
@@ -302,6 +317,7 @@
       if (!roster.length) {
         body.appendChild(h("p", { class: "muted", text: "No members yet. Share the join code above." }));
         body.appendChild(assignmentsSection(cl, roster, acts, cat, assignments, reload));
+        body.appendChild(instructorsSection(cl, isOwner, uid, reload));
         return;
       }
       var rows = ClassInsight.perStudent(roster, acts);
@@ -343,7 +359,7 @@
           tdNum(row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%"),
           td(row.weakestTopic || "—"),
           tdNum(row.lastActive ? when(row.lastActive) : "—"),
-          h("td", {}, [rm]),
+          h("td", {}, isOwner ? [rm] : []),
         ]);
         tb.appendChild(tr);
       });
@@ -368,9 +384,68 @@
         URL.revokeObjectURL(url);
       } }));
       body.appendChild(assignmentsSection(cl, roster, acts, cat, assignments, reload));
+      body.appendChild(instructorsSection(cl, isOwner, uid, reload));
       body.appendChild(classDetailSections(rows, roster, acts, cat));
     });
     return c;
+  }
+
+  // The class's teaching staff: who co-teaches it and (owner only) the instructor
+  // invite code that adds a colleague. Teach-level: co-instructors see everything
+  // and manage assignments; class administration stays with the owner.
+  function instructorsSection(cl, isOwner, uid, reload) {
+    var box = h("div");
+    box.appendChild(h("h3", { text: "Instructors" }));
+    var list = h("div");
+    box.appendChild(list);
+    list.appendChild(h("p", { class: "muted", text: "Loading…" }));
+    Accounts.classInstructors(cl.id).then(function (rows) {
+      clear(list);
+      if (!rows.length) {
+        list.appendChild(h("p", { class: "muted", text: isOwner
+          ? "No co-instructors yet. Share the instructor code below with a colleague."
+          : "No other co-instructors." }));
+        return;
+      }
+      rows.forEach(function (r) {
+        var name = (r.profiles && r.profiles.display_name) || "Instructor";
+        var p = h("p", {}, [document.createTextNode(name + (r.instructor_id === uid ? " (you)" : "") + "  ")]);
+        if (isOwner) {
+          var rm = h("button", { class: "ghost", text: "Remove", onclick: function () {
+            if (!window.confirm("Remove " + name + " as an instructor of \"" + cl.name + "\"? They can rejoin with the instructor code.")) return;
+            rm.disabled = true;
+            Accounts.removeInstructor(cl.id, r.instructor_id).then(function (res) {
+              if (res && res.error) { rm.disabled = false; return; }
+              reload();
+            }).catch(function () { rm.disabled = false; });
+          } });
+          p.appendChild(rm);
+        }
+        list.appendChild(p);
+      });
+    });
+    if (isOwner) {
+      var codeSpan = h("span", { class: "code", text: "……" });
+      var rot = h("button", { class: "ghost", text: "Regenerate", onclick: function () {
+        if (!window.confirm("Generate a new instructor code for \"" + cl.name + "\"? The current code stops working immediately. Current co-instructors keep access.")) return;
+        rot.disabled = true;
+        Accounts.rotateInstructorCode(cl.id).then(function (res) {
+          rot.disabled = false;
+          if (res && res.error) return;
+          codeSpan.textContent = res.data;
+        }).catch(function () { rot.disabled = false; });
+      } });
+      Accounts.instructorCode(cl.id).then(function (code) { codeSpan.textContent = code || "—"; });
+      box.appendChild(h("p", {}, [
+        h("span", { class: "muted", text: "Instructor code: " }), codeSpan,
+        document.createTextNode(" "), rot,
+      ]));
+      box.appendChild(h("p", { class: "muted", text:
+        "A colleague who enters this code co-teaches the class: they see the roster, " +
+        "insight and activity, and can manage assignments. Renaming or archiving the class, " +
+        "rotating codes, and removing people stay with you." }));
+    }
+    return box;
   }
 
   // A small "Your name" card: the display name instructors see, prefilled from the Google
@@ -426,12 +501,31 @@
     function loadTeach() {
       clear(teachList);
       teachList.appendChild(h("p", { class: "muted", text: "Loading…" }));
-      Accounts.instructorClasses().then(function (classes) {
+      Promise.all([Accounts.instructorClasses(), Accounts.coTaughtClasses()]).then(function (res) {
         clear(teachList);
-        if (!classes.length) { teachList.appendChild(h("p", { class: "muted", text: "No classes yet — create one above, then share its join code." })); return; }
-        classes.forEach(function (cl) { teachList.appendChild(classCard(cl, loadTeach)); });
+        var owned = res[0], co = res[1];
+        if (!owned.length && !co.length) { teachList.appendChild(h("p", { class: "muted", text: "No classes yet — create one above, then share its join code." })); return; }
+        owned.forEach(function (cl) { teachList.appendChild(classCard(cl, loadTeach, true, uid)); });
+        if (co.length) {
+          teachList.appendChild(h("h3", { text: "Classes you co-teach" }));
+          co.forEach(function (cl) { teachList.appendChild(classCard(cl, loadTeach, false, uid)); });
+        }
       });
     }
+
+    // -- co-teach: redeem an instructor code a colleague shared with you --
+    var icodeIn = h("input", { type: "text", placeholder: "Instructor code", maxlength: "12" });
+    var imsg = h("div", { class: "msg" });
+    var ijoin = h("button", { class: "ghost", text: "Join as co-instructor", onclick: function () {
+      var code = icodeIn.value.trim();
+      if (!code) { imsg.className = "msg err"; imsg.textContent = "Enter the instructor code you were given."; return; }
+      ijoin.disabled = true; imsg.className = "msg"; imsg.textContent = "Joining…";
+      Accounts.joinClassAsInstructor(code).then(function (r) {
+        ijoin.disabled = false;
+        if (r && r.error) { imsg.className = "msg err"; imsg.textContent = r.error.message || "That code didn't work."; return; }
+        icodeIn.value = ""; imsg.className = "msg ok"; imsg.textContent = "You now co-teach this class."; loadTeach();
+      }).catch(function (e) { ijoin.disabled = false; imsg.className = "msg err"; imsg.textContent = String(e.message || e); });
+    } });
 
     // -- join: enter a code + the classes you've joined (owned ones excluded) --
     var codeIn = h("input", { type: "text", placeholder: "e.g. A1B2C3", maxlength: "12" });
@@ -449,9 +543,12 @@
     function loadJoined() {
       clear(joinedList);
       joinedList.appendChild(h("p", { class: "muted", text: "Loading…" }));
-      Accounts.myClasses().then(function (cs) {
+      Promise.all([Accounts.myClasses(), Accounts.coTaughtClasses()]).then(function (res) {
         clear(joinedList);
-        var joined = cs.filter(function (c) { return c.instructor_id !== uid; });  // not the ones you own
+        var cs = res[0], coIds = {};
+        res[1].forEach(function (c) { coIds[c.id] = true; });
+        // Not the ones you own or co-teach — those live in the teach section.
+        var joined = cs.filter(function (c) { return c.instructor_id !== uid && !coIds[c.id]; });
         if (!joined.length) { joinedList.appendChild(h("p", { class: "muted", text: "You haven't joined a class yet." })); return; }
         joined.forEach(function (c) {
           joinedList.appendChild(h("p", {}, [document.createTextNode(c.name), document.createTextNode("  "),
@@ -517,8 +614,9 @@
 
     wrap.appendChild(card([
       h("h2", { text: "Classes you teach" }),
-      h("p", { class: "sub", text: "Create a class and share its join code. You'll see each member's quiz and lesson practice as they go." }),
+      h("p", { class: "sub", text: "Create a class and share its join code. You'll see each member's quiz and lesson practice as they go. Have an instructor code from a colleague? Enter it to co-teach their class." }),
       nameIn, create, cmsg,
+      icodeIn, ijoin, imsg,
       teachList,
     ]));
     wrap.appendChild(card([
