@@ -20,6 +20,9 @@ from nifti_region import (
     _enrich_filled_labels,
     _mark_bowel_gas,
     _normalize_texture_per_label,
+    encode_mixel_fraction,
+    decode_mixel_fraction,
+    build_mixel,
     load_region_nifti,
     load_totalseg_mri_subject,
 )
@@ -810,6 +813,93 @@ class TestNormalizeTexturePerLabel:
         tex = np.full(label.shape, 1.0, dtype=np.float32); tex[label == 6] = 0.5
         out = _normalize_texture_per_label(tex, label)
         assert (out[label == 0] == 1.0).all()
+
+
+class TestMixelCodec:
+    def test_roundtrip(self):
+        f = np.array([0.5, 0.75, 1.0], dtype=np.float32)
+        b = encode_mixel_fraction(f)
+        assert b.dtype == np.uint8 and b[2] == 255 and b[0] == 0
+        np.testing.assert_allclose(decode_mixel_fraction(b), f, atol=0.002)
+
+
+class TestBuildMixel:
+    def _hires(self):
+        """Two-tissue block at 2x the target resolution, vertical boundary."""
+        hi = np.zeros((8, 20, 40), dtype=np.uint8)
+        hi[:, :, :21] = 4          # fat — boundary at hi-res column 21 (odd,
+        hi[:, :, 21:] = 6          # muscle    so target column 10 is mixed)
+        return hi
+
+    def test_hires_boundary_is_mixed_and_complementary(self):
+        hi = self._hires()
+        atlas = hi[:, ::2, ::2]                    # nearest-downsample stand-in
+        mix = build_mixel(hi, atlas)
+        assert mix.shape == (2,) + atlas.shape and mix.dtype == np.uint8
+        z, y, bcol = 4, 5, 10                      # straddles the hi-res boundary
+        assert mix[1, z, y, bcol] < 255            # mixed
+        a = atlas[z, y, bcol]
+        assert mix[0, z, y, bcol] == (6 if a == 4 else 4)   # the OTHER tissue
+
+    def test_interiors_are_pure(self):
+        hi = self._hires()
+        atlas = hi[:, ::2, ::2]
+        mix = build_mixel(hi, atlas)
+        assert (mix[0, :, :, :5] == 0).all() and (mix[1, :, :, :5] == 255).all()
+        assert (mix[0, :, :, 15:] == 0).all() and (mix[1, :, :, 15:] == 255).all()
+
+    def test_background_is_pure(self):
+        hi = np.zeros((4, 10, 10), dtype=np.uint8); hi[:, 3:7, 3:7] = 6
+        mix = build_mixel(hi, hi)                  # blur-fallback path
+        assert (mix[0][hi == 0] == 0).all() and (mix[1][hi == 0] == 255).all()
+
+    def test_blur_fallback_marks_boundary(self):
+        lab = np.zeros((4, 10, 20), dtype=np.uint8)
+        lab[:, :, :10] = 4; lab[:, :, 10:] = 6
+        mix = build_mixel(lab, lab)
+        assert (mix[1][:, :, 9:11] < 255).any()    # boundary mixed
+        assert (mix[1][:, :, :4] == 255).all()     # interior pure
+
+
+class TestMixelCacheEmitted:
+    @pytest.mark.parametrize("subj", ["s0246", "s0187", "s0250", "s0267"])
+    def test_totalseg_mixel_cache_exists(self, subj):
+        import os
+        path = os.path.join(os.path.dirname(__file__), "..", "data",
+                            "TotalsegmentatorMRI_dataset_v200", subj,
+                            "mixel_iso_adapt_256.npy")
+        if not os.path.exists(os.path.dirname(path)):
+            pytest.skip("dataset not present")
+        assert os.path.exists(path), f"{subj}: mixel sidecar missing"
+        atlas = np.load(os.path.join(os.path.dirname(path), "atlas_iso_adapt_256.npy"))
+        mix = np.load(path)
+        assert mix.shape == (2,) + atlas.shape and mix.dtype == np.uint8
+        mixed = mix[1] < 255
+        body = atlas > 0
+        assert 0.005 < mixed[body].mean() < 0.35, "implausible mixed-voxel share"
+        # Objective boundary check (no eyeballing): the vast majority of mixed
+        # voxels must hug atlas label changes. A small off-boundary residue is
+        # legitimate — thin structures on the finer working grid (cortical
+        # shells, vessel walls) can vanish from the nearest-neighbor atlas yet
+        # still carry partial volume. Measured 96-98% on-boundary, <=0.2%
+        # off-5x5 across all four subjects.
+        from scipy.ndimage import maximum_filter, minimum_filter
+        v3 = maximum_filter(atlas, 3) != minimum_filter(atlas, 3)
+        v5 = maximum_filter(atlas, 5) != minimum_filter(atlas, 5)
+        on3 = (mixed & body & v3).sum() / max((mixed & body).sum(), 1)
+        assert on3 > 0.90, f"only {on3:.1%} of mixels on atlas boundaries"
+        assert (mixed & body & ~v5).mean() < 0.005
+
+    @pytest.mark.parametrize("d", ["spider_spine", "knee_kb3d"])
+    def test_script_mixel_exists(self, d):
+        import os
+        base = os.path.join(os.path.dirname(__file__), "..", "data", d)
+        atlas = np.load(os.path.join(base, "atlas.npy"))
+        path = os.path.join(base, "mixel.npy")
+        assert os.path.exists(path), f"{d}: mixel sidecar missing"
+        mix = np.load(path)
+        assert mix.shape == (2,) + atlas.shape and mix.dtype == np.uint8
+        assert (mix[1] < 255).any() and (mix[0][mix[1] == 255] == 0).all()
 
 
 class TestDenseRegionAtlases:

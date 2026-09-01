@@ -131,12 +131,15 @@ def build(raw_dir):
     # Per-label normalisation: texture keeps only intra-tissue detail; the
     # source study's own contrast no longer leaks into every rendered sequence.
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
-    from nifti_region import _normalize_texture_per_label
+    from nifti_region import _normalize_texture_per_label, build_mixel
     tex = _normalize_texture_per_label(tex, lab)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     np.save(os.path.join(OUT_DIR, "atlas.npy"), lab)
     np.save(os.path.join(OUT_DIR, "texture.npy"), tex.astype(np.float16))
+    # Partial-volume sidecar (blur fallback: classification exists only on the
+    # final grid here — see the voxel-model-v2 spec).
+    np.save(os.path.join(OUT_DIR, "mixel.npy"), build_mixel(lab, lab))
     print(f"wrote {OUT_DIR}: atlas {lab.shape} {lab.nbytes // 1024} KB, "
           f"labels {sorted(np.unique(lab).tolist())}")
 

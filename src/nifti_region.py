@@ -670,6 +670,59 @@ def _normalize_texture_per_label(tex: np.ndarray, label_vol: np.ndarray,
     return out
 
 
+def encode_mixel_fraction(f: np.ndarray) -> np.ndarray:
+    """Dominant fraction f in [0.5, 1.0] -> uint8 byte (255 = pure)."""
+    return np.clip(np.round((np.asarray(f, np.float32) - 0.5) * 510.0),
+                   0, 255).astype(np.uint8)
+
+
+def decode_mixel_fraction(b: np.ndarray) -> np.ndarray:
+    """Inverse of encode_mixel_fraction."""
+    return 0.5 + np.asarray(b, np.float32) / 510.0
+
+
+def build_mixel(labels_src: np.ndarray, atlas: np.ndarray,
+                blur_sigma: float = 0.5) -> np.ndarray:
+    """Two-tissue partial-volume sidecar for *atlas*: (2, Z, Y, X) uint8 —
+    channel 0 the second tissue's label (0 = pure), channel 1 the dominant
+    (atlas-label) fraction via encode_mixel_fraction.
+
+    Fractions come from linearly resampling each label's indicator from
+    ``labels_src`` (the pipeline's higher-resolution grid) onto the atlas
+    grid; when the grids share a shape a ``blur_sigma`` indicator blur
+    stands in (synthetic sub-voxel estimate). The dominant label is always
+    the atlas's own label, so atlas and sidecar cannot disagree.
+    """
+    from scipy.ndimage import gaussian_filter, zoom
+    shape = atlas.shape
+    same = tuple(labels_src.shape) == tuple(shape)
+    zf = None if same else [t / s for t, s in zip(shape, labels_src.shape, strict=True)]
+
+    fa = np.zeros(shape, np.float32)               # fraction of the atlas label
+    fb = np.zeros(shape, np.float32)               # best other-label fraction
+    lb = np.zeros(shape, np.uint8)
+    for lab in np.unique(labels_src):
+        if lab == 0:
+            continue
+        ind = (labels_src == lab).astype(np.float32)
+        f = gaussian_filter(ind, blur_sigma) if same else zoom(ind, zf, order=1)
+        mine = atlas == lab
+        fa[mine] = f[mine]
+        other = ~mine & (f > fb)
+        fb[other] = f[other]
+        lb[other] = lab
+
+    mixed = (fb > 0.02) & (atlas > 0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        frac = np.where(mixed, fa / np.maximum(fa + fb, 1e-6), 1.0)
+    frac = np.clip(frac, 0.5, 1.0)
+
+    out = np.zeros((2,) + shape, np.uint8)
+    out[0][mixed] = lb[mixed]
+    out[1] = np.where(mixed, encode_mixel_fraction(frac), np.uint8(255))
+    return out
+
+
 def _enrich_filled_labels(label_vol: np.ndarray) -> np.ndarray:
     """Post-fill enrichment: split bone into cortical shell + marrow interior
     (label 13 -> shell 13 / interior 14) and paint a 1-voxel in-plane skin rind
@@ -713,7 +766,8 @@ def load_totalseg_mri_subject(
     fat_threshold: "float | None" = None,
     body_threshold: "float | None" = None,
     with_texture: bool = False,
-) -> "np.ndarray | tuple[np.ndarray, np.ndarray]":
+    with_mixel: bool = False,
+) -> "np.ndarray | tuple":
     """Build a rich multi-label atlas from a TotalSegmentatorMRI per-subject dir.
 
     Combines up to 56 per-organ binary masks into a single uint8 label volume,
@@ -723,8 +777,10 @@ def load_totalseg_mri_subject(
 
     Returns a uint8 volume in simulator (Z, Y, X) convention, resampled to
     isotropic with the longest axis <= target_max. If ``with_texture`` is set,
-    returns ``(labels, texture)`` where texture is a float32 real-MRI detail
-    field at the same shape (see :func:`_mri_texture`).
+    a float32 real-MRI detail texture is appended (see :func:`_mri_texture`);
+    if ``with_mixel`` is set, a partial-volume sidecar built from the
+    working-grid labels is appended (see :func:`build_mixel`). Return shapes:
+    ``labels`` | ``(labels, tex)`` | ``(labels, mixel)`` | ``(labels, tex, mixel)``.
     """
     import nibabel as nib
 
@@ -776,8 +832,12 @@ def load_totalseg_mri_subject(
     spacing_zyx = (float(zooms[2]) * step, float(zooms[1]) * step, float(zooms[0]) * step)
     labels_iso = resample_labels_isotropic(label_filled, spacing_zyx, max_dim=target_max)
 
+    # Partial-volume sidecar from the working-grid labels (the honest
+    # sub-voxel source: finer than the iso grid it is resampled onto).
+    mixel = build_mixel(label_filled, labels_iso) if with_mixel else None
+
     if not with_texture:
-        return labels_iso
+        return (labels_iso, mixel) if with_mixel else labels_iso
 
     # Real-MRI texture, resampled (linear) to exactly match the iso label grid.
     from scipy.ndimage import zoom
@@ -788,7 +848,7 @@ def load_totalseg_mri_subject(
         zf = [labels_iso.shape[i] / tex.shape[i] for i in range(3)]
         tex_iso = zoom(tex, zf, order=1).astype(np.float32)
     tex_iso = _normalize_texture_per_label(tex_iso, labels_iso)
-    return labels_iso, tex_iso
+    return (labels_iso, tex_iso, mixel) if with_mixel else (labels_iso, tex_iso)
 
 
 def load_region_nifti(
@@ -814,9 +874,11 @@ def load_region_nifti(
             if os.path.exists(cache):
                 return np.load(cache)
             try:
-                vol, tex = load_totalseg_mri_subject(ts_root, target_max=target_max, with_texture=True)
+                vol, tex, mixel = load_totalseg_mri_subject(
+                    ts_root, target_max=target_max, with_texture=True, with_mixel=True)
                 np.save(cache, vol)
                 np.save(os.path.join(ts_root, f"texture_iso_adapt_{target_max}.npy"), tex)
+                np.save(os.path.join(ts_root, f"mixel_iso_adapt_{target_max}.npy"), mixel)
                 return vol
             except Exception as exc:
                 print(f"nifti_region: TotalSegMRI load failed for {subj_name}: {exc}")
