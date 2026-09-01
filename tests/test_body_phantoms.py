@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 from body_phantoms import (
@@ -485,3 +487,49 @@ class TestRealKnee:
         assert set(np.unique(vol).tolist()) >= {0, 13, 14}   # bg + cortical bone + marrow
         tex = bp.build_region_texture("Knee", vol)
         assert tex is not None and tex.shape == vol.shape
+
+
+class TestRealSpineDense:
+    """The densified SPIDER Spine atlas (data/spider_spine/atlas.npy).
+
+    Guards the TotalSegmentator-augmented rebuild: organs/vessels/cord come
+    from real masks rather than an all-muscle threshold fill. Directional
+    checks use label centroids on axis 1 (higher index = anterior), the
+    objective method that settled the render-path orientation bug.
+    """
+
+    @pytest.fixture(scope="class")
+    def atlas(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "data",
+                            "spider_spine", "atlas.npy")
+        return np.load(path)
+
+    def _centroid_y(self, atlas, label):
+        ys = np.where(atlas == label)[1]
+        assert ys.size > 0, f"label {label} missing from spine atlas"
+        return float(ys.mean())
+
+    def test_dense_labels_present(self, atlas):
+        # bg, CSF, fat, skin, muscle, blood, cortical, marrow, disc, cord
+        assert set(np.unique(atlas).tolist()) >= {0, 1, 4, 5, 6, 11, 13, 14, 15, 16}
+
+    def test_muscle_no_longer_dominates(self, atlas):
+        # Densified rebuild measures 0.49 (k-means verified against T2 intensity:
+        # muscle 0.77 vs fat 1.60 texture mean); the old threshold fill hit 0.67.
+        body = atlas > 0
+        muscle_frac = (atlas == 6).sum() / body.sum()
+        assert muscle_frac < 0.55, f"muscle {muscle_frac:.2f} of body — fill regression"
+
+    def test_fat_is_substantial(self, atlas):
+        ratio = (atlas == 4).sum() / max((atlas == 6).sum(), 1)
+        assert ratio > 0.25, f"fat/muscle {ratio:.2f} — subcutaneous fat under-classified"
+
+    def test_blood_volume_sane(self, atlas):
+        n = int((atlas == 11).sum())
+        assert 1_000 < n < 200_000, f"blood label voxels {n}"
+
+    def test_aorta_anterior_to_vertebral_bodies(self, atlas):
+        assert self._centroid_y(atlas, 11) > self._centroid_y(atlas, 14)
+
+    def test_cord_posterior_to_discs(self, atlas):
+        assert self._centroid_y(atlas, 16) < self._centroid_y(atlas, 15)
