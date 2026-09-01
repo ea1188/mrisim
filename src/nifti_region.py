@@ -670,6 +670,59 @@ def _normalize_texture_per_label(tex: np.ndarray, label_vol: np.ndarray,
     return out
 
 
+def encode_mixel_fraction(f: np.ndarray) -> np.ndarray:
+    """Dominant fraction f in [0.5, 1.0] -> uint8 byte (255 = pure)."""
+    return np.clip(np.round((np.asarray(f, np.float32) - 0.5) * 510.0),
+                   0, 255).astype(np.uint8)
+
+
+def decode_mixel_fraction(b: np.ndarray) -> np.ndarray:
+    """Inverse of encode_mixel_fraction."""
+    return 0.5 + np.asarray(b, np.float32) / 510.0
+
+
+def build_mixel(labels_src: np.ndarray, atlas: np.ndarray,
+                blur_sigma: float = 0.5) -> np.ndarray:
+    """Two-tissue partial-volume sidecar for *atlas*: (2, Z, Y, X) uint8 —
+    channel 0 the second tissue's label (0 = pure), channel 1 the dominant
+    (atlas-label) fraction via encode_mixel_fraction.
+
+    Fractions come from linearly resampling each label's indicator from
+    ``labels_src`` (the pipeline's higher-resolution grid) onto the atlas
+    grid; when the grids share a shape a ``blur_sigma`` indicator blur
+    stands in (synthetic sub-voxel estimate). The dominant label is always
+    the atlas's own label, so atlas and sidecar cannot disagree.
+    """
+    from scipy.ndimage import gaussian_filter, zoom
+    shape = atlas.shape
+    same = tuple(labels_src.shape) == tuple(shape)
+    zf = None if same else [t / s for t, s in zip(shape, labels_src.shape)]
+
+    fa = np.zeros(shape, np.float32)               # fraction of the atlas label
+    fb = np.zeros(shape, np.float32)               # best other-label fraction
+    lb = np.zeros(shape, np.uint8)
+    for lab in np.unique(labels_src):
+        if lab == 0:
+            continue
+        ind = (labels_src == lab).astype(np.float32)
+        f = gaussian_filter(ind, blur_sigma) if same else zoom(ind, zf, order=1)
+        mine = atlas == lab
+        fa[mine] = f[mine]
+        other = ~mine & (f > fb)
+        fb[other] = f[other]
+        lb[other] = lab
+
+    mixed = (fb > 0.02) & (atlas > 0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        frac = np.where(mixed, fa / np.maximum(fa + fb, 1e-6), 1.0)
+    frac = np.clip(frac, 0.5, 1.0)
+
+    out = np.zeros((2,) + shape, np.uint8)
+    out[0][mixed] = lb[mixed]
+    out[1] = np.where(mixed, encode_mixel_fraction(frac), np.uint8(255))
+    return out
+
+
 def _enrich_filled_labels(label_vol: np.ndarray) -> np.ndarray:
     """Post-fill enrichment: split bone into cortical shell + marrow interior
     (label 13 -> shell 13 / interior 14) and paint a 1-voxel in-plane skin rind

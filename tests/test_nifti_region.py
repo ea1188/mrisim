@@ -20,6 +20,9 @@ from nifti_region import (
     _enrich_filled_labels,
     _mark_bowel_gas,
     _normalize_texture_per_label,
+    encode_mixel_fraction,
+    decode_mixel_fraction,
+    build_mixel,
     load_region_nifti,
     load_totalseg_mri_subject,
 )
@@ -810,6 +813,52 @@ class TestNormalizeTexturePerLabel:
         tex = np.full(label.shape, 1.0, dtype=np.float32); tex[label == 6] = 0.5
         out = _normalize_texture_per_label(tex, label)
         assert (out[label == 0] == 1.0).all()
+
+
+class TestMixelCodec:
+    def test_roundtrip(self):
+        f = np.array([0.5, 0.75, 1.0], dtype=np.float32)
+        b = encode_mixel_fraction(f)
+        assert b.dtype == np.uint8 and b[2] == 255 and b[0] == 0
+        np.testing.assert_allclose(decode_mixel_fraction(b), f, atol=0.002)
+
+
+class TestBuildMixel:
+    def _hires(self):
+        """Two-tissue block at 2x the target resolution, vertical boundary."""
+        hi = np.zeros((8, 20, 40), dtype=np.uint8)
+        hi[:, :, :21] = 4          # fat — boundary at hi-res column 21 (odd,
+        hi[:, :, 21:] = 6          # muscle    so target column 10 is mixed)
+        return hi
+
+    def test_hires_boundary_is_mixed_and_complementary(self):
+        hi = self._hires()
+        atlas = hi[:, ::2, ::2]                    # nearest-downsample stand-in
+        mix = build_mixel(hi, atlas)
+        assert mix.shape == (2,) + atlas.shape and mix.dtype == np.uint8
+        z, y, bcol = 4, 5, 10                      # straddles the hi-res boundary
+        assert mix[1, z, y, bcol] < 255            # mixed
+        a = atlas[z, y, bcol]
+        assert mix[0, z, y, bcol] == (6 if a == 4 else 4)   # the OTHER tissue
+
+    def test_interiors_are_pure(self):
+        hi = self._hires()
+        atlas = hi[:, ::2, ::2]
+        mix = build_mixel(hi, atlas)
+        assert (mix[0, :, :, :5] == 0).all() and (mix[1, :, :, :5] == 255).all()
+        assert (mix[0, :, :, 15:] == 0).all() and (mix[1, :, :, 15:] == 255).all()
+
+    def test_background_is_pure(self):
+        hi = np.zeros((4, 10, 10), dtype=np.uint8); hi[:, 3:7, 3:7] = 6
+        mix = build_mixel(hi, hi)                  # blur-fallback path
+        assert (mix[0][hi == 0] == 0).all() and (mix[1][hi == 0] == 255).all()
+
+    def test_blur_fallback_marks_boundary(self):
+        lab = np.zeros((4, 10, 20), dtype=np.uint8)
+        lab[:, :, :10] = 4; lab[:, :, 10:] = 6
+        mix = build_mixel(lab, lab)
+        assert (mix[1][:, :, 9:11] < 255).any()    # boundary mixed
+        assert (mix[1][:, :, :4] == 255).all()     # interior pure
 
 
 class TestDenseRegionAtlases:
