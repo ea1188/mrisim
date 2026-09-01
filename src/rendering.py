@@ -422,17 +422,19 @@ def texture_property_ratio(phantom_slice: np.ndarray, tex_slice: np.ndarray,
     simulation is preserved. Returns None for sequences outside the supported
     SE / FSE / GRE / IR families (caller falls back to signal-mode texture).
     """
+    # The signal_engine equations are annotated for scalars but are pure numpy
+    # expressions that vectorize over the per-voxel property maps.
     if sequence in ("Spin Echo", "FSE / TSE"):
-        def sig(t1, t2, pd):
-            return spin_echo_signal(t1, t2, pd, TR, TE)
+        def sig(t1: np.ndarray, t2: np.ndarray, pd: np.ndarray) -> np.ndarray:
+            return spin_echo_signal(t1, t2, pd, TR, TE)  # type: ignore[arg-type, return-value]
         t2_key = "T2"
     elif sequence == "Inversion Recovery":
-        def sig(t1, t2, pd):
-            return inversion_recovery_signal(t1, t2, pd, TR, TE, TI)
+        def sig(t1: np.ndarray, t2: np.ndarray, pd: np.ndarray) -> np.ndarray:
+            return inversion_recovery_signal(t1, t2, pd, TR, TE, TI)  # type: ignore[arg-type, return-value]
         t2_key = "T2"
     elif sequence == "Gradient Echo":
-        def sig(t1, t2, pd):
-            return gradient_echo_signal(t1, t2, pd, TR, TE, flip_angle)
+        def sig(t1: np.ndarray, t2: np.ndarray, pd: np.ndarray) -> np.ndarray:
+            return gradient_echo_signal(t1, t2, pd, TR, TE, flip_angle)  # type: ignore[arg-type, return-value]
         t2_key = "T2star"
     else:
         return None
