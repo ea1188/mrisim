@@ -399,6 +399,57 @@ def partial_volume(image: np.ndarray, phantom_slice: np.ndarray,
     return image * (1.0 - w) + mixed * w
 
 
+# Property-level texture (voxel model v2, phase B): how strongly the real-MRI
+# detail field perturbs each tissue property. PD carries most intra-tissue
+# variation; T2 and T1 follow more weakly. Calibrated so property-mode T1w/T2w
+# renders stay close to the signal-mode look while gaining sequence-correct
+# behavior of the detail.
+_TEXTURE_PD_COEF = 1.0
+_TEXTURE_T2_COEF = 0.5
+_TEXTURE_T1_COEF = 0.3
+
+
+def texture_property_ratio(phantom_slice: np.ndarray, tex_slice: np.ndarray,
+                           tprops: dict, sequence: str, TR: float, TE: float,
+                           TI: float, flip_angle: float) -> "np.ndarray | None":
+    """Per-voxel modulation ratio for property-level texture.
+
+    Instead of multiplying the rendered signal by the texture field (which is
+    sequence-independent and bakes the source acquisition's behavior into
+    every contrast), perturb the tissue PROPERTIES by the texture and return
+    S(perturbed)/S(base) for the sequence's weighting equation — the same
+    eff/nom ratio pattern apply_b1 uses, so each sequence path's own
+    simulation is preserved. Returns None for sequences outside the supported
+    SE / FSE / GRE / IR families (caller falls back to signal-mode texture).
+    """
+    # The signal_engine equations are annotated for scalars but are pure numpy
+    # expressions that vectorize over the per-voxel property maps.
+    if sequence in ("Spin Echo", "FSE / TSE"):
+        def sig(t1: np.ndarray, t2: np.ndarray, pd: np.ndarray) -> np.ndarray:
+            return spin_echo_signal(t1, t2, pd, TR, TE)  # type: ignore[arg-type, return-value]
+        t2_key = "T2"
+    elif sequence == "Inversion Recovery":
+        def sig(t1: np.ndarray, t2: np.ndarray, pd: np.ndarray) -> np.ndarray:
+            return inversion_recovery_signal(t1, t2, pd, TR, TE, TI)  # type: ignore[arg-type, return-value]
+        t2_key = "T2"
+    elif sequence == "Gradient Echo":
+        def sig(t1: np.ndarray, t2: np.ndarray, pd: np.ndarray) -> np.ndarray:
+            return gradient_echo_signal(t1, t2, pd, TR, TE, flip_angle)  # type: ignore[arg-type, return-value]
+        t2_key = "T2star"
+    else:
+        return None
+
+    t1m, t2m, pdm = param_maps(phantom_slice, tprops, ("T1", t2_key, "PD"))
+    d = tex_slice.astype(np.float64) - 1.0
+    with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
+        base = sig(t1m, t2m, pdm)
+        mod = sig(t1m * (1.0 + _TEXTURE_T1_COEF * d),
+                  t2m * (1.0 + _TEXTURE_T2_COEF * d),
+                  pdm * (1.0 + _TEXTURE_PD_COEF * d))
+        ratio = np.where(np.abs(base) > 1e-9, mod / np.where(base == 0, 1, base), 1.0)
+    return np.clip(np.nan_to_num(ratio, nan=1.0), 0.0, 3.0)
+
+
 def gre_fw_phase_label(TE_ms: float, B0: float) -> str:
     """Short label describing the current fat-water phase (for metrics display)."""
     phi     = 2.0 * np.pi * dixon.fat_water_shift_hz(B0) * TE_ms / 1000.0

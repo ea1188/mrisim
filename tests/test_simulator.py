@@ -428,3 +428,32 @@ def test_sagittal_render_paths_agree_on_handedness():
     assert anterior_side(plain) == anterior_side(obl), (
         "default and oblique sagittal render paths disagree on A-P handedness"
     )
+
+
+# --------------------------------------------------------------------------- #
+# Property-level texture (voxel model v2, phase B)
+# --------------------------------------------------------------------------- #
+def test_texture_mode_property_flag(sim, monkeypatch):
+    """texture_mode='property' must change the render only when set; absent or
+    'signal' must take the identical code path. Noise is neutralised so the
+    comparison is deterministic; a smooth texture field is attached because the
+    synthetic brain ships none."""
+    import rician as _ric
+    monkeypatch.setattr(_ric, "add_rician_noise", lambda block, *a, **k: block)
+    rng = np.random.default_rng(3)
+    from scipy.ndimage import gaussian_filter as _gf
+    tex = 1.0 + 0.25 * _gf(rng.standard_normal(sim.volume.shape), 3.0)
+    monkeypatch.setattr(sim, "texture", tex.astype(np.float32), raising=False)
+
+    img_default, _ = sim.simulate(base_params(sequence="Spin Echo", TR=3000, TE=90))
+    img_signal, _ = sim.simulate(base_params(sequence="Spin Echo", TR=3000, TE=90,
+                                             texture_mode="signal"))
+    img_prop, _ = sim.simulate(base_params(sequence="Spin Echo", TR=3000, TE=90,
+                                           texture_mode="property"))
+    np.testing.assert_array_equal(img_default, img_signal)
+    assert not np.allclose(img_prop, img_signal), "property mode had no effect"
+
+    # Unsupported sequence: property flag must fall back to the signal path.
+    b_sig, _ = sim.simulate(base_params(sequence="Balanced SSFP", texture_mode="signal"))
+    b_prop, _ = sim.simulate(base_params(sequence="Balanced SSFP", texture_mode="property"))
+    np.testing.assert_array_equal(b_prop, b_sig)

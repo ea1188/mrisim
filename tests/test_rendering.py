@@ -425,6 +425,50 @@ def test_fat_sat_fails_in_off_resonance():
     assert out[:, 98].mean() > 3 * out[:, 2].mean()    # failed patch much brighter than suppressed bulk
 
 
+# --- Property-level texture (voxel model v2, phase B) -----------------------
+class TestTexturePropertyRatio:
+    def _slice(self):
+        ph = np.zeros((20, 20), dtype=np.uint8)
+        ph[:, :10] = 6; ph[:, 10:] = 4          # muscle | fat
+        return ph
+
+    def test_identity_when_tex_is_one(self, props):
+        ph = self._slice()
+        tex = np.ones(ph.shape, dtype=np.float32)
+        r = rendering.texture_property_ratio(ph, tex, props, "Spin Echo", 500, 15, 150, 90)
+        np.testing.assert_allclose(r[ph > 0], 1.0, atol=1e-6)
+
+    def test_ratio_is_sequence_dependent(self, props):
+        """A bright-texture voxel means longer T2 (helps long-TE) and longer T1
+        (hurts short-TR): the same texture must brighten T2w MORE than T1w —
+        the physically-correct divergence signal-mode texture cannot show."""
+        ph = self._slice()
+        tex = np.ones(ph.shape, dtype=np.float32); tex[5, 5] = 1.3   # muscle voxel
+        r_t2 = rendering.texture_property_ratio(ph, tex, props, "Spin Echo", 3500, 100, 150, 90)
+        r_t1 = rendering.texture_property_ratio(ph, tex, props, "Spin Echo", 400, 10, 150, 90)
+        assert r_t2[5, 5] > 1.0
+        assert r_t2[5, 5] > r_t1[5, 5]
+
+    def test_pd_limit_approaches_tex(self, props):
+        """At TR >> T1 and TE ~ 0 the weighting is pure PD, so ratio -> tex."""
+        ph = self._slice()
+        tex = np.ones(ph.shape, dtype=np.float32); tex[5, 5] = 1.2
+        r = rendering.texture_property_ratio(ph, tex, props, "Spin Echo", 10000, 1, 150, 90)
+        assert abs(r[5, 5] - 1.2) < 0.05
+
+    def test_gre_and_ir_supported(self, props):
+        ph = self._slice()
+        tex = np.full(ph.shape, 1.1, dtype=np.float32)
+        for seq, tr, te in [("Gradient Echo", 150, 5), ("Inversion Recovery", 4000, 40)]:
+            r = rendering.texture_property_ratio(ph, tex, props, seq, tr, te, 150, 30)
+            assert r is not None and np.isfinite(r[ph > 0]).all()
+
+    def test_unsupported_sequence_returns_none(self, props):
+        ph = self._slice()
+        tex = np.ones(ph.shape, dtype=np.float32)
+        assert rendering.texture_property_ratio(ph, tex, props, "Balanced SSFP", 5, 2.5, 150, 45) is None
+
+
 def test_fat_sat_suppresses_marrow():
     """Yellow marrow is ~80% fat chemically: spectral fat-sat must darken it
     (the knee PD FS hallmark — dark marrow), though less completely than pure
