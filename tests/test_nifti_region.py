@@ -861,6 +861,36 @@ class TestBuildMixel:
         assert (mix[1][:, :, :4] == 255).all()     # interior pure
 
 
+class TestMixelCacheEmitted:
+    @pytest.mark.parametrize("subj", ["s0246", "s0187", "s0250", "s0267"])
+    def test_totalseg_mixel_cache_exists(self, subj):
+        import os
+        path = os.path.join(os.path.dirname(__file__), "..", "data",
+                            "TotalsegmentatorMRI_dataset_v200", subj,
+                            "mixel_iso_adapt_256.npy")
+        if not os.path.exists(os.path.dirname(path)):
+            pytest.skip("dataset not present")
+        assert os.path.exists(path), f"{subj}: mixel sidecar missing"
+        atlas = np.load(os.path.join(os.path.dirname(path), "atlas_iso_adapt_256.npy"))
+        mix = np.load(path)
+        assert mix.shape == (2,) + atlas.shape and mix.dtype == np.uint8
+        mixed = mix[1] < 255
+        body = atlas > 0
+        assert 0.005 < mixed[body].mean() < 0.35, "implausible mixed-voxel share"
+        # Objective boundary check (no eyeballing): the vast majority of mixed
+        # voxels must hug atlas label changes. A small off-boundary residue is
+        # legitimate — thin structures on the finer working grid (cortical
+        # shells, vessel walls) can vanish from the nearest-neighbor atlas yet
+        # still carry partial volume. Measured 96-98% on-boundary, <=0.2%
+        # off-5x5 across all four subjects.
+        from scipy.ndimage import maximum_filter, minimum_filter
+        v3 = maximum_filter(atlas, 3) != minimum_filter(atlas, 3)
+        v5 = maximum_filter(atlas, 5) != minimum_filter(atlas, 5)
+        on3 = (mixed & body & v3).sum() / max((mixed & body).sum(), 1)
+        assert on3 > 0.90, f"only {on3:.1%} of mixels on atlas boundaries"
+        assert (mixed & body & ~v5).mean() < 0.005
+
+
 class TestDenseRegionAtlases:
     """Committed TotalSegMRI region caches carry the densified fill:
     marrow-split bone, a skin rind, and measured (not quota) fat."""

@@ -766,7 +766,8 @@ def load_totalseg_mri_subject(
     fat_threshold: "float | None" = None,
     body_threshold: "float | None" = None,
     with_texture: bool = False,
-) -> "np.ndarray | tuple[np.ndarray, np.ndarray]":
+    with_mixel: bool = False,
+) -> "np.ndarray | tuple":
     """Build a rich multi-label atlas from a TotalSegmentatorMRI per-subject dir.
 
     Combines up to 56 per-organ binary masks into a single uint8 label volume,
@@ -776,8 +777,10 @@ def load_totalseg_mri_subject(
 
     Returns a uint8 volume in simulator (Z, Y, X) convention, resampled to
     isotropic with the longest axis <= target_max. If ``with_texture`` is set,
-    returns ``(labels, texture)`` where texture is a float32 real-MRI detail
-    field at the same shape (see :func:`_mri_texture`).
+    a float32 real-MRI detail texture is appended (see :func:`_mri_texture`);
+    if ``with_mixel`` is set, a partial-volume sidecar built from the
+    working-grid labels is appended (see :func:`build_mixel`). Return shapes:
+    ``labels`` | ``(labels, tex)`` | ``(labels, mixel)`` | ``(labels, tex, mixel)``.
     """
     import nibabel as nib
 
@@ -829,8 +832,12 @@ def load_totalseg_mri_subject(
     spacing_zyx = (float(zooms[2]) * step, float(zooms[1]) * step, float(zooms[0]) * step)
     labels_iso = resample_labels_isotropic(label_filled, spacing_zyx, max_dim=target_max)
 
+    # Partial-volume sidecar from the working-grid labels (the honest
+    # sub-voxel source: finer than the iso grid it is resampled onto).
+    mixel = build_mixel(label_filled, labels_iso) if with_mixel else None
+
     if not with_texture:
-        return labels_iso
+        return (labels_iso, mixel) if with_mixel else labels_iso
 
     # Real-MRI texture, resampled (linear) to exactly match the iso label grid.
     from scipy.ndimage import zoom
@@ -841,7 +848,7 @@ def load_totalseg_mri_subject(
         zf = [labels_iso.shape[i] / tex.shape[i] for i in range(3)]
         tex_iso = zoom(tex, zf, order=1).astype(np.float32)
     tex_iso = _normalize_texture_per_label(tex_iso, labels_iso)
-    return labels_iso, tex_iso
+    return (labels_iso, tex_iso, mixel) if with_mixel else (labels_iso, tex_iso)
 
 
 def load_region_nifti(
@@ -867,9 +874,11 @@ def load_region_nifti(
             if os.path.exists(cache):
                 return np.load(cache)
             try:
-                vol, tex = load_totalseg_mri_subject(ts_root, target_max=target_max, with_texture=True)
+                vol, tex, mixel = load_totalseg_mri_subject(
+                    ts_root, target_max=target_max, with_texture=True, with_mixel=True)
                 np.save(cache, vol)
                 np.save(os.path.join(ts_root, f"texture_iso_adapt_{target_max}.npy"), tex)
+                np.save(os.path.join(ts_root, f"mixel_iso_adapt_{target_max}.npy"), mixel)
                 return vol
             except Exception as exc:
                 print(f"nifti_region: TotalSegMRI load failed for {subj_name}: {exc}")
