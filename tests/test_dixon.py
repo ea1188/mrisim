@@ -486,6 +486,35 @@ class TestDixonEndToEnd:
 # ---------------------------------------------------------------------------
 # Branch coverage additions
 # ---------------------------------------------------------------------------
+class TestMarrowFatFractionConsistency:
+    def test_marrow_derived_ff_matches_magnitude_dixon_physics(self):
+        """End-to-end: the 0.8 marrow fat fraction in gre_fatwater_phase must
+        propagate to a two-point-Dixon-derived fat-fraction map. Magnitude-only
+        2-pt Dixon has the dominant-species ambiguity (|W-F| can't tell ff from
+        1-ff), so marrow's TRUE ff 0.8 must read as ~0.2 — while pure-water
+        muscle stays near 0. Pins #528's fat-fraction map to the Dixon library."""
+        import sys
+        sys.path.insert(0, "src")
+        import rendering
+
+        ph = np.zeros((40, 60), dtype=np.uint8)
+        ph[:, :20] = 14                       # marrow
+        ph[:, 20:40] = 6                      # muscle
+        ph[:, 40:] = 4                        # fat
+        img = np.ones(ph.shape, dtype=float)
+        ip = rendering.gre_fatwater_phase(img, ph, inphase_te_ms(3.0), 3.0)
+        op = rendering.gre_fatwater_phase(img, ph, opposed_phase_te_ms(3.0), 3.0)
+        W, F = two_point_dixon(ip, op)
+        ff = fat_fraction(F, W)
+        deep = slice(10, 30)                  # rows well inside each block
+        ff_marrow = float(np.median(ff[deep, 5:15]))
+        ff_muscle = float(np.median(ff[deep, 25:35]))
+        assert 0.10 < ff_marrow < 0.32, f"marrow derived ff {ff_marrow:.2f}"
+        assert ff_muscle < 0.08, f"muscle derived ff {ff_muscle:.2f}"
+        assert ff_marrow > ff_muscle + 0.08
+
+
+# ---------------------------------------------------------------------------
 class TestDixonImportErrorFallback:
     def test_default_props_empty_when_phantom3d_missing(self, monkeypatch):
         """When phantom3d is absent at import time, _DEFAULT_PROPS falls back to {} (lines 18-19)."""
