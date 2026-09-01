@@ -633,6 +633,43 @@ def _classify_unlabeled_from_mri(
     return out
 
 
+def _mark_bowel_gas(label_vol: np.ndarray, mri_vol: np.ndarray,
+                    gas_frac: float = 0.3, bowel_label: int = 17,
+                    gas_label: int = 12) -> np.ndarray:
+    """Dark bowel content is gas: relabel it 12 (internal gas) so the
+    susceptibility artifact sees real bowel-gas sources and every sequence
+    renders it signal-void. The cut is relative to the body's median MRI
+    intensity (measured: 31%/47% of Abdomen/Torso bowel falls below 0.3x)."""
+    body = label_vol > 0
+    nz = min(label_vol.shape[0], mri_vol.shape[0])
+    if not body[:nz].any():
+        return label_vol
+    med = float(np.median(mri_vol[:nz][body[:nz]]))
+    out = label_vol.copy()
+    gas = (label_vol[:nz] == bowel_label) & (mri_vol[:nz] < gas_frac * med)
+    out[:nz][gas] = gas_label
+    return out
+
+
+def _normalize_texture_per_label(tex: np.ndarray, label_vol: np.ndarray,
+                                 clip: "tuple[float, float]" = (0.6, 1.6)) -> np.ndarray:
+    """Remove cross-tissue contrast from the texture field: divide by each
+    label's median so texture carries only intra-tissue parenchymal detail.
+    Without this the source acquisition's own contrast leaks into every
+    rendered sequence (e.g. a fat-dark source muting physics-bright fat on
+    T1). Background (label 0) keeps its 1.0."""
+    out = tex.astype(np.float32).copy()
+    for lab in np.unique(label_vol):
+        if lab == 0:
+            continue
+        m = label_vol == lab
+        med = float(np.median(tex[m]))
+        if med > 1e-6:
+            out[m] = tex[m] / med
+    out[label_vol > 0] = np.clip(out[label_vol > 0], *clip)
+    return out
+
+
 def _enrich_filled_labels(label_vol: np.ndarray) -> np.ndarray:
     """Post-fill enrichment: split bone into cortical shell + marrow interior
     (label 13 -> shell 13 / interior 14) and paint a 1-voxel in-plane skin rind
@@ -731,6 +768,7 @@ def load_totalseg_mri_subject(
         step = 1
 
     label_filled = _classify_unlabeled_from_mri(label_zyx, mri_zyx, fat_threshold, body_threshold)
+    label_filled = _mark_bowel_gas(label_filled, mri_zyx)
     label_filled = _enrich_filled_labels(label_filled)
 
     # Resample to isotropic so sagittal/coronal reformats are smooth rather than
@@ -749,6 +787,7 @@ def load_totalseg_mri_subject(
     else:
         zf = [labels_iso.shape[i] / tex.shape[i] for i in range(3)]
         tex_iso = zoom(tex, zf, order=1).astype(np.float32)
+    tex_iso = _normalize_texture_per_label(tex_iso, labels_iso)
     return labels_iso, tex_iso
 
 

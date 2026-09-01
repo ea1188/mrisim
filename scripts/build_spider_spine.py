@@ -220,6 +220,11 @@ def build(subject: int, ts_path: "str | None" = None,
     # skin rind
     lab[body & ~binary_erosion(body, iterations=1)] = SKIN
     lab[~body] = BG
+    # Dark bowel content (from the TS colon/bowel overlay) is gas — label it 12
+    # so susceptibility and rendering treat it as air, like the body regions.
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
+    from nifti_region import _mark_bowel_gas, _normalize_texture_per_label
+    lab = _mark_bowel_gas(lab, v)
 
     # Crop to the body bounding box (a little padding).
     zz, yy, xx = np.where(body)
@@ -235,6 +240,9 @@ def build(subject: int, ts_path: "str | None" = None,
     tex = np.ones(v.shape, dtype=np.float32)
     mean = float(vs[body].mean())
     tex[body] = np.clip(vs[body] / max(mean, 1e-3), 0.5, 1.7)
+    # Per-label normalisation: texture keeps only intra-tissue detail; the
+    # source study's own contrast no longer leaks into every rendered sequence.
+    tex = _normalize_texture_per_label(tex, lab)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     np.save(os.path.join(OUT_DIR, "atlas.npy"), lab)

@@ -18,6 +18,8 @@ from nifti_region import (
     _SEG_FILE_TO_MR,
     _classify_unlabeled_from_mri,
     _enrich_filled_labels,
+    _mark_bowel_gas,
+    _normalize_texture_per_label,
     load_region_nifti,
     load_totalseg_mri_subject,
 )
@@ -768,6 +770,48 @@ class TestEnrichFilledLabels:
         assert (out[self._volume() == 0] == 0).all()
 
 
+class TestMarkBowelGas:
+    def _pair(self):
+        label = np.zeros((6, 20, 20), dtype=np.uint8)
+        label[:, 2:18, 2:18] = 6                       # muscle body
+        label[:, 6:14, 6:14] = 17                      # bowel
+        mri = np.full(label.shape, 100.0, dtype=np.float32)
+        mri[:, 8:12, 8:12] = 5.0                       # dark gas pocket in bowel
+        mri[:, 3, 3] = 5.0                             # dark voxel OUTSIDE bowel
+        return label, mri
+
+    def test_dark_bowel_content_becomes_gas(self):
+        label, mri = self._pair()
+        out = _mark_bowel_gas(label, mri)
+        assert (out[:, 8:12, 8:12] == 12).all()
+
+    def test_bright_bowel_and_other_labels_untouched(self):
+        label, mri = self._pair()
+        out = _mark_bowel_gas(label, mri)
+        assert out[0, 6, 6] == 17                      # fluid-bright bowel stays
+        assert out[0, 3, 3] == 6                       # dark muscle voxel NOT gas
+
+
+class TestNormalizeTexturePerLabel:
+    def test_medians_become_one_and_detail_survives(self):
+        label = np.zeros((4, 10, 10), dtype=np.uint8)
+        label[:, :, :5] = 4; label[:, :, 5:] = 6
+        rng = np.random.default_rng(0)
+        tex = np.ones(label.shape, dtype=np.float32)
+        tex[label == 4] = 1.5 + 0.05 * rng.standard_normal((label == 4).sum())
+        tex[label == 6] = 0.7 + 0.05 * rng.standard_normal((label == 6).sum())
+        out = _normalize_texture_per_label(tex, label)
+        assert abs(np.median(out[label == 4]) - 1.0) < 0.02
+        assert abs(np.median(out[label == 6]) - 1.0) < 0.02
+        assert out[label == 4].std() > 0.01            # intra-label detail kept
+
+    def test_background_stays_one(self):
+        label = np.zeros((2, 4, 4), dtype=np.uint8); label[:, 1:3, 1:3] = 6
+        tex = np.full(label.shape, 1.0, dtype=np.float32); tex[label == 6] = 0.5
+        out = _normalize_texture_per_label(tex, label)
+        assert (out[label == 0] == 1.0).all()
+
+
 class TestDenseRegionAtlases:
     """Committed TotalSegMRI region caches carry the densified fill:
     marrow-split bone, a skin rind, and measured (not quota) fat."""
@@ -796,6 +840,28 @@ class TestDenseRegionAtlases:
         a = self._load(self._CACHES[region])
         ratio = (a == 4).sum() / max((a == 6).sum(), 1)
         assert ratio > 0.25, f"{region}: fat/muscle {ratio:.2f}"
+
+    @pytest.mark.parametrize("region", ["Abdomen", "Torso"])
+    def test_bowel_gas_labeled(self, region):
+        # Pelvis's bowel is fluid-filled on this subject — only guard the two
+        # with measured gas (31% / 47% of bowel content below the gas cut).
+        a = self._load(self._CACHES[region])
+        assert (a == 12).sum() > 10_000, f"{region}: no bowel-gas voxels"
+
+    @pytest.mark.parametrize("region", ["Abdomen", "Pelvis", "Torso"])
+    def test_texture_is_label_normalized(self, region):
+        import os
+        subj = self._CACHES[region]
+        path = os.path.join(os.path.dirname(__file__), "..", "data",
+                            "TotalsegmentatorMRI_dataset_v200", subj,
+                            "texture_iso_adapt_256.npy")
+        if not os.path.exists(path):
+            pytest.skip("texture cache not present")
+        a = self._load(subj)
+        t = np.load(path).astype(np.float32)
+        for lab in (4, 6):   # fat, muscle — where the cross-tissue bias lived
+            med = float(np.median(t[a == lab]))
+            assert abs(med - 1.0) < 0.1, f"{region} label {lab}: texture median {med:.2f}"
 
 
 import os as _os
