@@ -128,6 +128,11 @@ def build(raw_dir):
     tex = np.ones(v.shape, dtype=np.float32)
     mean = float(vs[body].mean())
     tex[body] = np.clip(vs[body] / max(mean, 1e-3), 0.5, 1.7)
+    # Per-label normalisation: texture keeps only intra-tissue detail; the
+    # source study's own contrast no longer leaks into every rendered sequence.
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
+    from nifti_region import _normalize_texture_per_label
+    tex = _normalize_texture_per_label(tex, lab)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     np.save(os.path.join(OUT_DIR, "atlas.npy"), lab)
