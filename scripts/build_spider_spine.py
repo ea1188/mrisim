@@ -11,7 +11,10 @@ regions use: a uint8 tissue-label atlas + a ~1.0 multiplicative real-MRI texture
 field, resampled to (near-)isotropic so axial/coronal reformats stay sensible.
 Vertebrae become cortical shell + marrow, discs map to the Cartilage/Disc label,
 the canal carries CSF with the cord down its centre, and the surrounding soft
-tissue is classified from the real T2 intensity (fat / muscle / skin).
+tissue is classified from the real T2 intensity (fat / muscle / skin) via
+k-means. Optionally, a multilabel volume from an offline TotalSegmentator
+``total_mr`` run densifies the fill with real organ / vessel / paraspinal-muscle
+/ sacrum masks (SPIDER's gold vertebra/disc/canal masks always take priority).
 
 The 3.7 GB image archive is never downloaded whole: a seekable HTTP file lets
 ``zipfile`` pull just the one subject's image via range requests.
@@ -20,6 +23,7 @@ The 3.7 GB image archive is never downloaded whole: a seekable HTTP file lets
 writes data/spider_spine/{atlas,texture}.npy (only the small cache is committed).
 """
 import io
+import json
 import os
 import sys
 import urllib.request
@@ -32,6 +36,7 @@ from scipy.ndimage import (binary_closing, binary_erosion, binary_fill_holes,
 
 # tissue_db labels
 BG, FLUID, FAT, SKIN, MUSCLE = 0, 1, 4, 5, 6
+BLOOD = 11
 BONE_CORTICAL, MARROW, CARTILAGE, CORD = 13, 14, 15, 16
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "spider_spine")
@@ -98,10 +103,59 @@ def _read_mha(blob: bytes) -> "tuple[np.ndarray, list[float]]":
     return vol, spacing[::-1]
 
 
-def build(subject: int) -> None:
+def _kmeans1d(x: np.ndarray, k: int = 3, iters: int = 25) -> "tuple[np.ndarray, np.ndarray]":
+    """Tiny 1-D k-means (no sklearn dep). Returns (assignments, sorted centres);
+    cluster ids are ordered dark -> bright."""
+    c = np.percentile(x, np.linspace(15, 90, k)).astype(np.float64)
+    a = np.zeros(x.shape, dtype=np.int64)
+    for _ in range(iters):
+        a = np.abs(x[:, None] - c[None, :]).argmin(1)
+        for j in range(k):
+            if (a == j).any():
+                c[j] = x[a == j].mean()
+    order = np.argsort(c)
+    return np.argsort(order)[a], c[order]
+
+
+def _ts_overlay(ts_path: str, ts_labels: str, native_shape: tuple, zf: tuple) -> np.ndarray:
+    """Load a TotalSegmentator --ml multilabel volume (run offline on the same
+    native-grid T2 study) and return it as a tissue_db-label volume on the
+    resampled+flipped grid build() works on.
+
+    The class-name -> tissue-label mapping is nifti_region._SEG_FILE_TO_MR (the
+    body-region source of truth); TS class names match its keys.
+    """
+    import nibabel as nib
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
+    from nifti_region import _SEG_FILE_TO_MR
+
+    with open(ts_labels) as f:
+        id_to_name = {int(k): v for k, v in json.load(f).items()}
+    ts_xyz = np.asarray(nib.load(ts_path).dataobj).astype(np.uint8)
+    ts = np.transpose(ts_xyz, (2, 1, 0))            # back to the MHA (Z, Y, X) grid
+    if ts.shape != native_shape:
+        raise ValueError(f"TS grid {ts.shape} != study grid {native_shape}")
+    ts = zoom(ts, zf, order=0)[:, ::-1]             # same resample + A-P flip as msk
+
+    out = np.zeros(ts.shape, dtype=np.uint8)
+    for ts_id, name in id_to_name.items():
+        mr = _SEG_FILE_TO_MR.get(name)
+        if mr is None or not (ts == ts_id).any():
+            continue
+        out[ts == ts_id] = mr
+    # TS bone (sacrum, hips...) gets the same cortical-shell + marrow treatment
+    # the vertebrae get, so it doesn't render as a solid dark block.
+    ts_bone = out == BONE_CORTICAL
+    out[binary_erosion(ts_bone, iterations=1)] = MARROW
+    return out
+
+
+def build(subject: int, ts_path: "str | None" = None,
+          ts_labels: "str | None" = None) -> None:
     img, sp = _read_mha(_extract("images.zip", f"images/{subject}_t2.mha"))
     msk, _ = _read_mha(_extract("masks.zip", f"masks/{subject}_t2.mha"))
     img = img.astype(np.float32)
+    native_shape = msk.shape
 
     # Resample to isotropic ISO_MM so reformats aren't distorted by the thick
     # sagittal slice spacing (image: linear; mask: nearest to keep integer labels).
@@ -133,18 +187,36 @@ def build(subject: int) -> None:
 
     lab = np.zeros(v.shape, dtype=np.uint8)
     soft = body & ~(vert | disc | canal)
-    rim = body & ~binary_erosion(body, iterations=5)
-    p60, p85 = np.percentile(v[soft], (60, 85)) if soft.any() else (0.5, 0.8)
-    lab[soft] = MUSCLE
-    lab[soft & (v > p60) & rim] = FAT                 # subcutaneous / epidural fat
-    lab[soft & (v > p85)] = FLUID                     # bright fluid pockets
+    # Residual soft tissue: 3-cluster k-means on the T2 intensity instead of a
+    # single percentile threshold (which classified 2/3 of the body as muscle).
+    # Dark + mid clusters -> muscle, bright cluster -> fat; the very bright
+    # tail stays fluid. Organs/vessels are then overlaid from real TS masks.
+    if soft.any():
+        assign, _ = _kmeans1d(v[soft].astype(np.float64))
+        soft_lab = np.where(assign >= 2, FAT, MUSCLE).astype(np.uint8)
+        p97 = np.percentile(v[soft], 97)
+        soft_lab[v[soft] > p97] = FLUID               # bright fluid pockets
+        lab[soft] = soft_lab
+    # Real organ/vessel/muscle/bone masks from an offline TotalSegmentator
+    # total_mr run (aorta/IVC -> Blood, kidney/liver/... -> organ labels,
+    # autochthon/iliopsoas -> Muscle, sacrum -> bone shell + marrow).
+    ts = None
+    if ts_path is not None:
+        ts = _ts_overlay(ts_path, ts_labels, native_shape, zf)
+        lab[ts > 0] = ts[ts > 0]
+    # SPIDER's gold masks always win where they overlap the TS estimates.
     # Intervertebral discs (bright on T2) and vertebrae (cortical rim + marrow).
     lab[disc] = CARTILAGE
     lab[vert] = BONE_CORTICAL
     lab[binary_erosion(vert, iterations=1)] = MARROW
-    # Spinal canal: CSF with the cord running down its centre.
+    # Spinal canal: CSF with the cord down its centre — the real TS cord mask
+    # where available, the erosion approximation otherwise.
     lab[canal] = FLUID
-    lab[binary_erosion(canal, iterations=2)] = CORD
+    ts_cord = (ts == CORD) & canal if ts is not None else np.zeros_like(canal)
+    if ts_cord.sum() > 500:
+        lab[ts_cord] = CORD
+    else:
+        lab[binary_erosion(canal, iterations=2)] = CORD
     # skin rind
     lab[body & ~binary_erosion(body, iterations=1)] = SKIN
     lab[~body] = BG
@@ -172,4 +244,9 @@ def build(subject: int) -> None:
 
 
 if __name__ == "__main__":
-    build(int(sys.argv[1]) if len(sys.argv) > 1 else 1)
+    #   python scripts/build_spider_spine.py [subject] [ts_multilabel.nii.gz ts_labels.json]
+    # The optional TS pair comes from an offline TotalSegmentator run:
+    #   TotalSegmentator -i <subject_t2.nii.gz> -o ts.nii.gz --task total_mr --ml
+    build(int(sys.argv[1]) if len(sys.argv) > 1 else 1,
+          ts_path=sys.argv[2] if len(sys.argv) > 2 else None,
+          ts_labels=sys.argv[3] if len(sys.argv) > 3 else None)

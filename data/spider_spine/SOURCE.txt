@@ -12,3 +12,12 @@ Sagittal lumbar T1/T2 MRI with per-structure masks (vertebrae, intervertebral
 discs, spinal canal). Only the small processed cache is committed here; the raw
 3.7 GB image archive is not redistributed — the build script pulls a single
 subject's image on demand via HTTP range requests.
+
+Densification (2026-09): organ / vessel / paraspinal-muscle / sacrum / cord
+labels in atlas.npy were derived by running TotalSegmentator's total_mr task
+(Wasserthal et al., https://github.com/wasserth/TotalSegmentator, model weights
+free for non-commercial use) offline on the same SPIDER T2 study, merged under
+SPIDER's gold vertebra/disc/canal masks. The remaining soft tissue is k-means
+classified from the T2 intensity. TotalSegmentator is a build-time tool only;
+nothing from it is redistributed except the derived label voxels, and this
+simulator is free and open source.
