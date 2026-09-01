@@ -535,6 +535,17 @@ _REGION_NIFTI = {
 }
 
 
+def _kmeans1d(x: np.ndarray, k: int = 3, iters: int = 25) -> np.ndarray:
+    """Tiny 1-D k-means (no sklearn dep). Returns centres sorted dark -> bright."""
+    c = np.percentile(x, np.linspace(15, 90, k)).astype(np.float64)
+    for _ in range(iters):
+        a = np.abs(x[:, None] - c[None, :]).argmin(1)
+        for j in range(k):
+            if (a == j).any():
+                c[j] = x[a == j].mean()
+    return np.sort(c)
+
+
 def _classify_unlabeled_from_mri(
     label_vol: np.ndarray,
     mri_vol: np.ndarray,
@@ -548,39 +559,96 @@ def _classify_unlabeled_from_mri(
     to bright unlabeled voxels and muscle (label 6) to medium-intensity ones.
     Existing segmented labels are never overwritten.
 
-    Thresholds are *scanner-adaptive* by default (``fat_thresh``/``body_thresh``
-    = None): they are derived per slice from the MRI intensity distribution so
-    the fill generalises across the dataset's many scanners / sequences instead
-    of assuming one fixed intensity scale. The body cut is a low percentile of
-    the positive intensities; fat is the brightest ``fat_pct`` percentile within
-    the body silhouette. Passing explicit values restores fixed-threshold mode.
+    The default (``fat_thresh``/``body_thresh`` = None) is *measured*, not a
+    quota. Because the dataset mixes sequences with opposite fat/muscle
+    polarity (fat bright on some subjects, darker than muscle on others), the
+    split is calibrated per volume from two reference distributions: the gold
+    muscle masks already painted as label 6, and the subcutaneous rind (which
+    is anatomically fat). Each unlabeled voxel goes to the nearer reference
+    median in per-slice-normalised intensity. When no muscle reference exists,
+    a 3-cluster k-means brightest-cluster-is-fat fallback applies. The old
+    fixed ``fat_pct`` percentile forced ~28% of every body to be fat
+    regardless of anatomy. Explicit values restore fixed-threshold mode.
     """
     out = label_vol.copy()
     nz = min(label_vol.shape[0], mri_vol.shape[0])
+
+    # Pass 1: per-slice silhouettes, normalised intensities, reference samples.
+    slices = []          # (z, empty, norm_sl)
+    empty_samples, mus_samples, fat_samples = [], [], []
     for z in range(nz):
         sl = label_vol[z]
         mri_sl = mri_vol[z].astype(float)
-
         if body_thresh is None:
             pos = mri_sl[mri_sl > 0]
             bt = max(0.10 * float(mri_sl.max()),
                      float(np.percentile(pos, 20))) if pos.size else 0.0
         else:
             bt = body_thresh
-
         body = _slice_silhouette(mri_sl > bt)
         empty = body & (sl == 0)
         if not empty.any():
             continue
+        if fat_thresh is not None:
+            out[z][empty & (mri_sl >= fat_thresh)] = 4
+            out[z][empty & (mri_sl < fat_thresh)] = 6
+            continue
+        scale = float(np.median(mri_sl[body])) if body.any() else 1.0
+        norm_sl = mri_sl / max(scale, 1e-6)
+        slices.append((z, empty, norm_sl))
+        empty_samples.append(norm_sl[empty])
+        mus = body & (sl == 6)
+        if mus.any():
+            mus_samples.append(norm_sl[mus])
+        rind = empty & ~_erode(body, 3)          # subcutaneous layer ~ fat
+        if rind.any():
+            fat_samples.append(norm_sl[rind])
 
-        if fat_thresh is None:
-            in_body = mri_sl[body]
-            ft = float(np.percentile(in_body, fat_pct)) if in_body.size > 10 else bt
-        else:
-            ft = fat_thresh
+    if fat_thresh is not None or not slices:
+        return out
 
-        out[z][empty & (mri_sl >= ft)] = 4   # subcutaneous / mesenteric fat
-        out[z][empty & (mri_sl < ft)] = 6    # abdominal wall / unlabeled muscle
+    mus_ref = np.concatenate(mus_samples) if mus_samples else np.empty(0)
+    fat_ref = np.concatenate(fat_samples) if fat_samples else np.empty(0)
+    if mus_ref.size >= 500 and fat_ref.size >= 500:
+        # Pass 2a: nearest-reference-median split (polarity-agnostic).
+        med_mus, med_fat = float(np.median(mus_ref)), float(np.median(fat_ref))
+        for z, empty, norm_sl in slices:
+            d_fat = np.abs(norm_sl - med_fat)
+            d_mus = np.abs(norm_sl - med_mus)
+            out[z][empty & (d_fat <= d_mus)] = 4
+            out[z][empty & (d_fat > d_mus)] = 6
+        return out
+
+    # Pass 2b: no reference masks — k-means over the normalised empties,
+    # cut midway between the middle and bright cluster centres.
+    x = np.concatenate(empty_samples)
+    if x.size >= 30:
+        c = _kmeans1d(x[:: max(1, x.size // 200_000)])
+        cut = 0.5 * (c[-2] + c[-1])
+    else:
+        cut = float(np.percentile(x, fat_pct)) if x.size else np.inf
+    for z, empty, norm_sl in slices:
+        out[z][empty & (norm_sl >= cut)] = 4   # subcutaneous / mesenteric fat
+        out[z][empty & (norm_sl < cut)] = 6    # abdominal wall / unlabeled muscle
+    return out
+
+
+def _enrich_filled_labels(label_vol: np.ndarray) -> np.ndarray:
+    """Post-fill enrichment: split bone into cortical shell + marrow interior
+    (label 13 -> shell 13 / interior 14) and paint a 1-voxel in-plane skin rind
+    (label 5) on the body silhouette — the same treatment the SPIDER spine
+    build applies, so bones aren't solid dark blocks and STIR/T1 read right."""
+    from scipy.ndimage import binary_erosion
+
+    out = label_vol.copy()
+    bone = out == 13
+    if bone.any():
+        out[binary_erosion(bone, iterations=1)] = 14   # trabecular marrow
+    body = out > 0
+    for z in range(out.shape[0]):
+        b = body[z]
+        if b.any():
+            out[z][b & ~binary_erosion(b, iterations=1)] = 5   # skin rind
     return out
 
 
@@ -663,6 +731,7 @@ def load_totalseg_mri_subject(
         step = 1
 
     label_filled = _classify_unlabeled_from_mri(label_zyx, mri_zyx, fat_threshold, body_threshold)
+    label_filled = _enrich_filled_labels(label_filled)
 
     # Resample to isotropic so sagittal/coronal reformats are smooth rather than
     # stair-stepped. Spacing is (sz, sy, sx), scaled by any working-grid step.

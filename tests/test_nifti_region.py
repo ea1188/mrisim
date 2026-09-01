@@ -17,6 +17,7 @@ from nifti_region import (
     _REGION_TOTALSEG,
     _SEG_FILE_TO_MR,
     _classify_unlabeled_from_mri,
+    _enrich_filled_labels,
     load_region_nifti,
     load_totalseg_mri_subject,
 )
@@ -726,6 +727,75 @@ class TestClassifyUnlabeledFromMri:
         mri = np.zeros((5, 20, 20), dtype=np.float32)   # fewer slices
         out = _classify_unlabeled_from_mri(label, mri)
         assert out.shape == label.shape   # first 5 slices processed, rest untouched
+
+    def test_adaptive_fat_follows_anatomy_not_a_quota(self):
+        """k-means adaptive mode: when half the unlabeled body is fat-bright,
+        about half must be classified fat — not a fixed percentile quota."""
+        D, H, W = (8, 40, 40)
+        label = np.zeros((D, H, W), dtype=np.uint8)
+        mri = np.zeros((D, H, W), dtype=np.float32)
+        mri[:, 2:H - 2, 2:W - 2] = 200.0            # dark half: muscle-level
+        mri[:, 2:H // 2, 2:W - 2] = 520.0           # bright half: fat-level
+        out = _classify_unlabeled_from_mri(label, mri)
+        empty = mri > 60
+        fat_frac = (out[empty] == 4).sum() / empty.sum()
+        assert fat_frac > 0.40, f"fat {fat_frac:.2f} — bright half not classified fat"
+
+
+# ---------------------------------------------------------------------------
+# _enrich_filled_labels  (synthetic — no real data needed)
+# ---------------------------------------------------------------------------
+class TestEnrichFilledLabels:
+    def _volume(self):
+        vol = np.zeros((10, 30, 30), dtype=np.uint8)
+        vol[:, 5:25, 5:25] = 6                       # muscle body
+        vol[3:8, 10:20, 10:20] = 13                  # bone block inside
+        return vol
+
+    def test_bone_interior_becomes_marrow(self):
+        out = _enrich_filled_labels(self._volume())
+        assert (out == 14).any(), "no marrow split inside bone"
+        assert (out == 13).any(), "cortical shell vanished"
+
+    def test_body_rind_becomes_skin(self):
+        out = _enrich_filled_labels(self._volume())
+        z = 5
+        assert out[z, 5, 15] == 5, "outer body rind should be skin"
+        assert out[z, 15, 15] != 5, "interior must not become skin"
+
+    def test_background_untouched(self):
+        out = _enrich_filled_labels(self._volume())
+        assert (out[self._volume() == 0] == 0).all()
+
+
+class TestDenseRegionAtlases:
+    """Committed TotalSegMRI region caches carry the densified fill:
+    marrow-split bone, a skin rind, and measured (not quota) fat."""
+
+    _CACHES = {
+        "Abdomen": "s0246", "Pelvis": "s0187", "Torso": "s0250", "Spine": "s0267",
+    }
+
+    def _load(self, subj):
+        import os
+        path = os.path.join(os.path.dirname(__file__), "..", "data",
+                            "TotalsegmentatorMRI_dataset_v200", subj,
+                            "atlas_iso_adapt_256.npy")
+        if not os.path.exists(path):
+            pytest.skip(f"{subj} cache not present")
+        return np.load(path)
+
+    @pytest.mark.parametrize("region", ["Abdomen", "Pelvis", "Torso", "Spine"])
+    def test_marrow_and_skin_present(self, region):
+        a = self._load(self._CACHES[region])
+        assert (a == 14).sum() > 1_000, f"{region}: no marrow in bone"
+        assert (a == 5).sum() > 1_000, f"{region}: no skin rind"
+
+    @pytest.mark.parametrize("region", ["Abdomen", "Pelvis", "Torso"])
+    def test_fat_is_substantial(self, region):
+        a = self._load(self._CACHES[region])
+        ratio = (a == 4).sum() / max((a == 6).sum(), 1)
+        assert ratio > 0.25, f"{region}: fat/muscle {ratio:.2f}"
 
 
 import os as _os
