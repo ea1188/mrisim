@@ -15,6 +15,8 @@ A single 3-D isotropic T2 (3D SST2) right-knee MRI series (286 × 512 × 512 @
 The files in this directory (atlas.npy, texture.npy) are a DERIVED WORK produced
 by scripts/build_knee_atlas.py: the bone masks split into cortical shell +
 marrow, the surrounding soft tissue classified from the real T2 intensity into
-subcutaneous fat / muscle / joint fluid / articular cartilage / skin, and the
-real intensity normalised into a ~1.0 multiplicative texture field. Redistributed
-here under CC-BY-4.0 with attribution to the original authors above.
+fat / muscle / joint fluid / articular cartilage / skin via 3-cluster k-means
+(muscle is the distinctly dark tissue on this sequence; fat is labeled wherever
+it is bright — subcutaneous, Hoffa's pad, intermuscular), and the real intensity
+normalised into a ~1.0 multiplicative texture field. Redistributed here under
+CC-BY-4.0 with attribution to the original authors above.

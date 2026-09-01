@@ -489,6 +489,31 @@ class TestRealKnee:
         assert tex is not None and tex.shape == vol.shape
 
 
+class TestRealKneeDense:
+    """Densified knee fill (data/knee_kb3d/atlas.npy): fat must dominate the
+    way a real knee does (subcutaneous + Hoffa's pad + intermuscular), and the
+    old bright-interior-is-fluid rule must be gone — it mislabeled the fat pad
+    as fluid, which then refused to suppress on STIR ("fat sat does nothing")."""
+
+    @pytest.fixture(scope="class")
+    def atlas(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "data",
+                            "knee_kb3d", "atlas.npy")
+        return np.load(path)
+
+    def test_fat_is_substantial(self, atlas):
+        ratio = (atlas == 4).sum() / max((atlas == 6).sum(), 1)
+        assert ratio > 0.35, f"fat/muscle {ratio:.2f} — knee fat under-classified"
+
+    def test_fluid_is_effusion_scale_not_fat_pad_scale(self, atlas):
+        body = (atlas > 0).sum()
+        fluid_frac = (atlas == 1).sum() / body
+        assert fluid_frac < 0.04, f"fluid {fluid_frac:.2%} of body — fat pad mislabeled fluid"
+
+    def test_marrow_and_bone_kept(self, atlas):
+        assert (atlas == 13).sum() > 10_000 and (atlas == 14).sum() > 10_000
+
+
 class TestRealSpineDense:
     """The densified SPIDER Spine atlas (data/spider_spine/atlas.npy).
 
