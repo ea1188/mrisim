@@ -237,31 +237,37 @@ def simulate_slice_props(phantom_slice: np.ndarray, TR: float, TE: float,
 
 def apply_fat_sat(image: np.ndarray, phantom_slice: np.ndarray,
                   off_resonance_hz: "np.ndarray | None" = None,
-                  residual: float = 0.1, fat_label: int = 4) -> np.ndarray:
+                  residual: float = 0.1, fat_label: int = 4,
+                  marrow_label: int = 14, marrow_residual: float = 0.3) -> np.ndarray:
     """Spectral (CHESS) fat saturation: null the fat resonance before imaging.
 
     A frequency-selective pulse saturates fat, so its signal drops to a small
-    ``residual``. Unlike STIR this leaves water untouched — but it is sensitive
-    to B0: where off-resonance moves fat out of the (~±100 Hz) saturation band
-    the suppression fails and fat signal returns, the classic "failed fat-sat"
-    seen near air interfaces and field-of-view edges.
+    ``residual``. Yellow bone marrow is ~80% fat chemically, so it suppresses
+    too — the hallmark dark marrow of a knee PD FS — but keeps a larger
+    ``marrow_residual`` from its water fraction. Unlike STIR this leaves water
+    untouched; it is sensitive to B0: where off-resonance moves fat out of the
+    (~±100 Hz) saturation band the suppression fails and fat signal returns,
+    the classic "failed fat-sat" seen near air interfaces and FOV edges.
     """
     fat = phantom_slice == fat_label
-    if not np.any(fat) or phantom_slice.shape != image.shape:
+    marrow = phantom_slice == marrow_label
+    if not (np.any(fat) or np.any(marrow)) or phantom_slice.shape != image.shape:
         return image
     out = image.copy()
     if off_resonance_hz is not None and off_resonance_hz.shape == image.shape:
         # Suppression fails only where off-resonance is worst (air interfaces);
         # use a percentile threshold so it's robust to the field's absolute scale.
         a = np.abs(off_resonance_hz)
-        ref = a[fat] if int(fat.sum()) > 10 else a
+        both = fat | marrow
+        ref = a[both] if int(both.sum()) > 10 else a
         lo = float(np.percentile(ref, 85))
         hi = float(np.percentile(ref, 97))
         fail = np.clip((a - lo) / max(hi - lo, 1.0), 0.0, 1.0)
-        factor = residual + (1.0 - residual) * fail
-        out[fat] = image[fat] * factor[fat]
+        out[fat] = image[fat] * (residual + (1.0 - residual) * fail[fat])
+        out[marrow] = image[marrow] * (marrow_residual + (1.0 - marrow_residual) * fail[marrow])
     else:
         out[fat] = image[fat] * residual
+        out[marrow] = image[marrow] * marrow_residual
     return out
 
 
