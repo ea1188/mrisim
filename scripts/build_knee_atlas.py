@@ -89,12 +89,24 @@ def build(raw_dir):
 
     lab = np.zeros(v.shape, dtype=np.uint8)
     soft = body & ~bone
-    # subcutaneous fat = bright AND within ~6 voxels of the skin boundary
+    # Soft-tissue split by 3-cluster k-means on the real T2 intensity (this 3D
+    # SST2 study is fat-bright): the bright cluster is fat WHEREVER it sits —
+    # subcutaneous, Hoffa's pad, intermuscular planes. The old rule confined
+    # fat to a 6-voxel skin rim and called bright interior "fluid", which
+    # mislabeled the fat pad and made fat suppression a no-op on the knee.
+    # On this sequence muscle (T2 ~32 ms) is the distinctly DARK tissue while
+    # fat stays bright through the FSE train (marrow, same chemistry, measures
+    # 1.58 vs muscle 0.55 in the texture field) — so the fat cut sits between
+    # the dark and mid clusters: dark -> muscle, mid+bright -> fat.
+    from build_spider_spine import _kmeans1d
+    assign, _ = _kmeans1d(v[soft].astype(np.float64))
+    soft_lab = np.where(assign >= 1, FAT, MUSCLE).astype(np.uint8)
+    # Joint fluid is the extreme bright tail only (effusion-scale, not pad-scale).
+    p98 = float(np.percentile(v[soft], 98))
+    soft_lab[v[soft] >= min(p98, 1.55)] = FLUID
+    lab[soft] = soft_lab
+    p25, p60 = np.percentile(v[soft], (25, 60))
     rim = body & ~binary_erosion(body, iterations=6)
-    p25, p60, p85 = np.percentile(v[soft], (25, 60, 85))
-    lab[soft] = MUSCLE
-    lab[soft & (v > p60) & rim] = FAT             # subcutaneous fat
-    lab[soft & (v > p85) & ~rim] = FLUID          # bright focal interior = effusion/fluid
     # dense fibrous tissue — menisci (dark wedges at the tibiofemoral joint line),
     # cruciates in the notch, the patellar/quadriceps tendons: all very low signal,
     # so dark *interior* soft tissue (below the skin rim) maps to ligament/meniscus.
