@@ -127,6 +127,10 @@ def _bundle_regions() -> None:
         if tex:
             np.save(os.path.join(out, f"{region}_texture.npy"),
                     np.load(tex[0]).astype(np.float16))
+        mix = glob.glob(os.path.join(ROOT, "data", "Totalsegmentator*",
+                                     subj, "mixel_iso_adapt_256.npy"))
+        if mix:
+            shutil.copy2(mix[0], os.path.join(out, f"{region}_mixel.npy"))
         mb = sum(os.path.getsize(os.path.join(out, f"{region}_{k}.npy"))
                  for k in ("atlas", "texture")
                  if os.path.exists(os.path.join(out, f"{region}_{k}.npy"))) // (1024 * 1024)
@@ -139,6 +143,8 @@ def _bundle_regions() -> None:
             shutil.copy2(os.path.join(src, "atlas.npy"), os.path.join(out, f"{region}_atlas.npy"))
             if os.path.exists(os.path.join(src, "texture.npy")):
                 shutil.copy2(os.path.join(src, "texture.npy"), os.path.join(out, f"{region}_texture.npy"))
+            if os.path.exists(os.path.join(src, "mixel.npy")):
+                shutil.copy2(os.path.join(src, "mixel.npy"), os.path.join(out, f"{region}_mixel.npy"))
             print(f"  region {region}: bundled real atlas ({subdir})")
         else:
             print(f"  region {region}: no real atlas cache — browser uses synthetic")

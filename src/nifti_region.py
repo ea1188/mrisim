@@ -696,7 +696,7 @@ def build_mixel(labels_src: np.ndarray, atlas: np.ndarray,
     from scipy.ndimage import gaussian_filter, zoom
     shape = atlas.shape
     same = tuple(labels_src.shape) == tuple(shape)
-    zf = None if same else [t / s for t, s in zip(shape, labels_src.shape)]
+    zf = None if same else [t / s for t, s in zip(shape, labels_src.shape, strict=True)]
 
     fa = np.zeros(shape, np.float32)               # fraction of the atlas label
     fb = np.zeros(shape, np.float32)               # best other-label fraction
