@@ -408,3 +408,24 @@ def test_fat_sat_fails_in_off_resonance():
     off = np.zeros((10, 100)); off[:, 96:] = 500.0     # small strong off-res patch (~4%)
     out = rendering.apply_fat_sat(img, sl, off)
     assert out[:, 98].mean() > 3 * out[:, 2].mean()    # failed patch much brighter than suppressed bulk
+
+
+def test_fat_sat_suppresses_marrow():
+    """Yellow marrow is ~80% fat chemically: spectral fat-sat must darken it
+    (the knee PD FS hallmark — dark marrow), though less completely than pure
+    fat because of its residual water signal."""
+    sl = np.zeros((10, 12), dtype=np.uint8)
+    sl[:, :4] = 4; sl[:, 4:8] = 14; sl[:, 8:] = 6     # fat | marrow | muscle
+    img = np.ones((10, 12))
+    out = rendering.apply_fat_sat(img, sl)
+    assert out[sl == 14].mean() < 0.4                  # marrow clearly suppressed
+    assert out[sl == 14].mean() >= out[sl == 4].mean()  # but not below pure fat
+    np.testing.assert_allclose(out[sl == 6], img[sl == 6])  # water untouched
+
+
+def test_fat_sat_marrow_fails_in_off_resonance_too():
+    sl = np.full((10, 100), 14, dtype=np.uint8)       # all marrow
+    img = np.ones((10, 100))
+    off = np.zeros((10, 100)); off[:, 96:] = 500.0
+    out = rendering.apply_fat_sat(img, sl, off)
+    assert out[:, 98].mean() > 2 * out[:, 2].mean()
