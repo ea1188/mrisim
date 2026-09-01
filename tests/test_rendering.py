@@ -215,6 +215,21 @@ def test_gre_fatwater_opposed_darker_than_inphase():
     assert op[:, col].mean() < ip[:, col].mean()   # India-ink at opposed phase
 
 
+def test_gre_fatwater_marrow_drops_on_opposed_phase():
+    """Marrow is a fat+water mix *within* each voxel, so opposed-phase must
+    drop its signal even deep inside the marrow — the basis of in/opposed
+    imaging for marrow lesions (normal marrow drops; a metastasis doesn't)."""
+    import dixon
+    ph = np.zeros((40, 40), dtype=int)
+    ph[:, :20] = 14    # marrow
+    ph[:, 20:] = 2     # water (GM)
+    img = np.where(ph == 14, 0.6, 0.3).astype(float)
+    op = rendering.gre_fatwater_phase(img, ph, dixon.opposed_phase_te_ms(3.0), 3.0)
+    ip = rendering.gre_fatwater_phase(img, ph, dixon.inphase_te_ms(3.0), 3.0)
+    deep = (slice(None), slice(2, 10))   # well inside the marrow, away from the border
+    assert op[deep].mean() < 0.8 * ip[deep].mean(), "no intra-voxel marrow drop"
+
+
 # --------------------------------------------------------------------------- #
 # gre_fw_phase_label
 # --------------------------------------------------------------------------- #

@@ -99,29 +99,36 @@ def add_chemical_shift_artifact(
     phantom_slice: np.ndarray,
     shift_pixels: float = 3,
     fat_label: int = 4,
+    marrow_label: int = 14,
+    marrow_fat_fraction: float = 0.8,
 ) -> np.ndarray:
     """Simulate chemical shift artifact.
-    
+
     Fat resonates at a different frequency than water (~3.5 ppm).
-    This causes fat signal to be shifted in the readout (frequency encode) direction.
-    
+    This causes fat signal to be shifted in the readout (frequency encode)
+    direction. Bone marrow is ~80% fat, so its fat fraction misregisters too —
+    the textbook bright/dark banding at vertebral endplates — while its water
+    fraction stays in place.
+
     shift_pixels: displacement in pixels (depends on bandwidth)
         At 125 Hz/pixel bandwidth: shift = 3.5ppm * 128MHz / 125Hz = ~3.6 pixels at 3T
     """
-    # Find fat voxels
-    fat_mask = phantom_slice == fat_label
-    if not np.any(fat_mask) or abs(float(shift_pixels)) < 1e-3:
+    # Per-voxel fat fraction: pure fat shifts entirely, marrow partially.
+    fat_frac = (phantom_slice == fat_label).astype(float)
+    fat_frac[phantom_slice == marrow_label] = marrow_fat_fraction
+    if not np.any(fat_frac > 0) or abs(float(shift_pixels)) < 1e-3:
         return image.copy()
 
-    # Fat is misregistered along the readout (column) direction by the chemical
-    # shift. Remove it from its true position and re-deposit it displaced by the
-    # *sub-pixel* amount (linear interpolation), so the characteristic bright band
-    # (shifted fat overlapping water) and dark band (where fat was removed) form
-    # at the exact fractional offset rather than snapping to whole pixels.
+    # The fat component is misregistered along the readout (column) direction by
+    # the chemical shift. Remove it from its true position and re-deposit it
+    # displaced by the *sub-pixel* amount (linear interpolation), so the
+    # characteristic bright band (shifted fat overlapping water) and dark band
+    # (where fat was removed) form at the exact fractional offset rather than
+    # snapping to whole pixels.
     from scipy.ndimage import shift as nd_shift
 
-    fat_signal = np.where(fat_mask, image, 0.0)
-    result = np.where(fat_mask, 0.0, image)
+    fat_signal = image * fat_frac
+    result = image - fat_signal
     shifted_fat = nd_shift(fat_signal, (0.0, float(shift_pixels)),
                            order=1, mode="constant", cval=0.0)
     return result + shifted_fat

@@ -328,14 +328,19 @@ def gre_fatwater_phase(image: np.ndarray, phantom_slice: np.ndarray,
     only split the rendered image into water/fat components and blur them to
     model the partial-volume mixing that makes the boundary effect visible.
     """
-    fat_mask    = phantom_slice == 4   # Fat/Scalp label
+    # Per-voxel fat fraction: pure fat (4) is all fat; marrow (14) is a
+    # fat+water mix (~80% fat), so opposed-phase cancels *within* its voxels —
+    # the marrow signal drop that makes in/opposed imaging clinically useful.
     tissue_mask = phantom_slice > 0
+    fat_frac = np.zeros(image.shape, dtype=float)
+    fat_frac[phantom_slice == 4] = 1.0   # Fat/Scalp label
+    fat_frac[phantom_slice == 14] = 0.8  # Marrow
 
-    if not np.any(fat_mask) or not np.any(tissue_mask & ~fat_mask):
+    if not np.any(fat_frac > 0) or not np.any(tissue_mask & (fat_frac < 1.0)):
         return image
 
-    water_blur = gaussian_filter(np.where(tissue_mask & ~fat_mask, image, 0.0), sigma=1.5)
-    fat_blur   = gaussian_filter(np.where(fat_mask, image, 0.0), sigma=1.5)
+    water_blur = gaussian_filter(np.where(tissue_mask, image * (1.0 - fat_frac), 0.0), sigma=1.5)
+    fat_blur   = gaussian_filter(np.where(tissue_mask, image * fat_frac, 0.0), sigma=1.5)
 
     combined = np.abs(dixon.combined_gre_signal(water_blur, fat_blur, B0, TE_ms))
 

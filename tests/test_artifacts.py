@@ -71,6 +71,17 @@ class TestChemicalShiftArtifact:
         out = add_chemical_shift_artifact(brain_image, brain_phantom_64, shift_pixels=0)
         assert out.shape == brain_image.shape
 
+    def test_marrow_fat_fraction_displaces(self):
+        """Marrow (~80% fat) must misregister along the readout too — the
+        textbook bright/dark banding at vertebral endplates. Only its fat
+        fraction shifts; the water fraction stays put."""
+        sl = np.zeros((10, 20), dtype=np.uint8); sl[:, 5:10] = 14
+        img = np.where(sl == 14, 1.0, 0.2)
+        out = add_chemical_shift_artifact(img, sl, shift_pixels=3)
+        assert out[:, 11].mean() > 0.5, "no shifted marrow-fat deposit"     # bright band
+        assert out[:, 5].mean() < 0.5, "no signal loss at trailing edge"    # dark band
+        assert out[:, 6].mean() > 0.15, "marrow water fraction vanished"    # water stayed
+
 
 class TestSusceptibilityArtifact:
     def test_output_shape(self, brain_image, brain_phantom_64):
