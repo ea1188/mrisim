@@ -223,7 +223,7 @@ def build(subject: int, ts_path: "str | None" = None,
     # Dark bowel content (from the TS colon/bowel overlay) is gas — label it 12
     # so susceptibility and rendering treat it as air, like the body regions.
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
-    from nifti_region import _mark_bowel_gas, _normalize_texture_per_label
+    from nifti_region import _mark_bowel_gas, _normalize_texture_per_label, build_mixel
     lab = _mark_bowel_gas(lab, v)
 
     # Crop to the body bounding box (a little padding).
@@ -247,6 +247,9 @@ def build(subject: int, ts_path: "str | None" = None,
     os.makedirs(OUT_DIR, exist_ok=True)
     np.save(os.path.join(OUT_DIR, "atlas.npy"), lab)
     np.save(os.path.join(OUT_DIR, "texture.npy"), tex.astype(np.float16))
+    # Partial-volume sidecar (blur fallback: classification exists only on the
+    # final grid here — see the voxel-model-v2 spec).
+    np.save(os.path.join(OUT_DIR, "mixel.npy"), build_mixel(lab, lab))
     print(f"wrote {OUT_DIR}: atlas {lab.shape} {lab.nbytes // 1024} KB, "
           f"labels {sorted(np.unique(lab).tolist())}")
 

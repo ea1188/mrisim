@@ -890,6 +890,17 @@ class TestMixelCacheEmitted:
         assert on3 > 0.90, f"only {on3:.1%} of mixels on atlas boundaries"
         assert (mixed & body & ~v5).mean() < 0.005
 
+    @pytest.mark.parametrize("d", ["spider_spine", "knee_kb3d"])
+    def test_script_mixel_exists(self, d):
+        import os
+        base = os.path.join(os.path.dirname(__file__), "..", "data", d)
+        atlas = np.load(os.path.join(base, "atlas.npy"))
+        path = os.path.join(base, "mixel.npy")
+        assert os.path.exists(path), f"{d}: mixel sidecar missing"
+        mix = np.load(path)
+        assert mix.shape == (2,) + atlas.shape and mix.dtype == np.uint8
+        assert (mix[1] < 255).any() and (mix[0][mix[1] == 255] == 0).all()
+
 
 class TestDenseRegionAtlases:
     """Committed TotalSegMRI region caches carry the densified fill:
