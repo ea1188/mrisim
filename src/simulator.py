@@ -158,7 +158,7 @@ def default_params(**overrides: object) -> dict:
         rician_bias_correction=False, pv_sigma=10,
         flow_enabled=True, flow_velocity=70,
         n_slices=1, slice_gap=0.0, gradient_distort=0, fatsat_enabled=False,
-        texture_mode="signal",
+        texture_mode="property",
         trajectory="Cartesian", radial_spokes=128,
     )
     p.update(overrides)
@@ -805,7 +805,7 @@ class Simulator:
                 # detail responds correctly to TR/TE/TI. Falls back to the
                 # plain signal multiply for unsupported sequences.
                 _ratio = None
-                if params.get("texture_mode", "signal") == "property":
+                if params.get("texture_mode", "property") == "property":
                     _tp = tissue_db.properties(params.get("field_strength", "3T"))
                     if params.get("contrast_enabled") and params.get("contrast_dose", 0) > 0:
                         _tp = rendering.apply_gd(_tp, params["contrast_dose"] * 0.1)
