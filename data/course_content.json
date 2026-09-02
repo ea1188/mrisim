@@ -14602,26 +14602,26 @@
    "kind": "quiz",
    "ord": 1507,
    "body": {
-    "prompt": "This axial abdominal image shows bright subcutaneous and mesenteric fat with dark fluid. TR is 500 ms and TE is 15 ms. What weighting is shown?",
+    "prompt": "On this sagittal knee image, subcutaneous fat is the brightest tissue and the marrow is brighter than muscle. TR is 500 ms and TE is 15 ms. What weighting is shown?",
     "options": [
      "T1-weighted",
      "T2-weighted",
      "Proton density",
-     "STIR"
+     "T2 star weighted"
     ],
     "answer": 0,
-    "explain": "Short TR and short TE give T1 weighting, where fat is the brightest tissue and fluid is dark. On T2 weighting the relationship reverses for fluid, proton density uses a long TR to remove T1 effects, and STIR would suppress the fat that dominates this image.",
+    "explain": "Short TR and short TE give T1 weighting, where fat leads the brightness scale and fatty marrow sits above muscle. On T2 weighting fluid would outshine fat, proton density removes T1 contrast with a long TR, and T2 star weighting belongs to gradient echo imaging, not this spin echo acquisition.",
     "setup": {
-     "region": "Abdomen",
-     "orientation": "axial",
-     "slice_idx": 128,
+     "region": "Knee",
+     "orientation": "sagittal",
+     "slice_idx": 102,
      "params": {
       "sequence": "Spin Echo",
       "TR": 500,
       "TE": 15
      }
     },
-    "img": "cq2-t1-abdo-01.jpg"
+    "img": "cq2-t1-knee-01.jpg"
    }
   },
   {
@@ -14656,27 +14656,28 @@
    "kind": "quiz",
    "ord": 1509,
    "body": {
-    "prompt": "This gradient echo abdominal image was acquired at 3 T with a TE of 1.1 ms. A thin dark line outlines the organs where they border fat. What causes this line?",
+    "prompt": "This gradient echo knee image was acquired at 3 T with a TE of 1.1 ms. A thin dark line outlines the muscles where they border fat. What causes this line?",
     "options": [
      "Fat and water signals cancel within boundary voxels at this TE",
-     "Respiratory motion of the abdominal wall during the acquisition",
-     "Susceptibility difference between organs and fat",
-     "Truncation of high spatial frequencies at sharp organ edges"
+     "Respiratory motion of the patient during the acquisition",
+     "Susceptibility difference between muscle and fat",
+     "Truncation of high spatial frequencies at sharp tissue edges"
     ],
     "answer": 0,
-    "explain": "At 3 T a TE near 1.1 ms puts fat and water 180 degrees out of phase, so voxels containing both cancel and draw the india ink line around organs. It appears on all fat and water interfaces in every direction, which distinguishes it from chemical shift misregistration along the frequency axis, and from motion or truncation artifacts.",
+    "explain": "At 3 T a TE near 1.1 ms puts fat and water 180 degrees out of phase, so voxels containing both cancel and draw the india ink line around the muscles. It appears on all fat and water interfaces in every direction, which distinguishes it from chemical shift misregistration along the frequency axis, and from motion or truncation artifacts.",
     "setup": {
-     "region": "Abdomen",
-     "orientation": "axial",
-     "slice_idx": 128,
+     "region": "Knee",
+     "orientation": "sagittal",
+     "slice_idx": 102,
      "params": {
       "sequence": "Gradient Echo",
       "TR": 150,
       "TE": 1.1,
-      "flip_angle": 30
+      "flip_angle": 30,
+      "field_strength": "3T"
      }
     },
-    "img": "cq2-opposed-abdo-01.jpg"
+    "img": "cq2-opposed-knee-01.jpg"
    }
   },
   {
@@ -14713,7 +14714,7 @@
    "kind": "quiz",
    "ord": 1511,
    "body": {
-    "prompt": "On this gradient echo abdominal image, signal is lost around the gas filled bowel and the image darkens with T2 star decay. Why is this susceptibility effect worse on gradient echo than on spin echo?",
+    "prompt": "On this sagittal gradient echo image of the lumbar spine, signal is lost around the gas in the bowel anterior to the vertebral column. Why is this susceptibility effect worse on gradient echo than on spin echo?",
     "options": [
      "Gradient echo has no 180 degree pulse to refocus local field variations",
      "Gradient echo sequences always use a much longer repetition time",
@@ -14723,9 +14724,9 @@
     "answer": 0,
     "explain": "Gas and tissue differ in magnetic susceptibility, which distorts the local field near bowel. A spin echo refocuses that static dephasing with its 180 degree pulse, but a gradient echo does not, so signal near gas dephases away with T2 star. Receiver bandwidth changes how severe the artifact looks, but it is the missing refocusing pulse that separates the two sequence families.",
     "setup": {
-     "region": "Abdomen",
-     "orientation": "axial",
-     "slice_idx": 128,
+     "region": "Spine",
+     "orientation": "sagittal",
+     "slice_idx": 64,
      "params": {
       "sequence": "Gradient Echo",
       "TR": 150,
@@ -14734,37 +14735,35 @@
       "susceptibility_enabled": true
      }
     },
-    "img": "cq2-suscep-abdo-01.jpg"
+    "img": "cq2-suscep-spine-01.jpg"
    }
   },
   {
-   "topic": "fat-suppression",
+   "topic": "image-quality",
    "kind": "quiz",
    "ord": 1512,
    "body": {
-    "prompt": "On this axial STIR image of the pelvis at 1.5 T, which structures remain bright after the fat signal is suppressed?",
+    "prompt": "This sagittal T2 image of the lumbar spine was acquired with a 128 matrix. A faint dark and bright line runs within the cord, parallel to its edges, mimicking a syrinx. What is the most likely explanation?",
     "options": [
-     "Fluid containing structures such as the bladder",
-     "The subcutaneous fat surrounding the pelvis",
-     "The fatty marrow of the iliac wings",
-     "All tissues are equally suppressed"
+     "Truncation (Gibbs) artifact from the coarse matrix",
+     "A true fluid filled syrinx within the cord",
+     "Chemical shift misregistration from the marrow fat",
+     "Pulsatile CSF flow ghosting across the cord"
     ],
     "answer": 0,
-    "explain": "STIR nulls tissue with the T1 of fat, so subcutaneous fat and marrow fat go dark while water rich structures keep their long T2 signal and appear bright. That contrast is the reason STIR is used to survey for edema and fluid collections.",
+    "explain": "Sampling a high contrast boundary with too few phase encoding steps produces ringing that parallels the edge, and at the bright CSF to cord interface the ring lands inside the cord where it mimics a syrinx. Raising the matrix makes it vanish, which a real syrinx would not do. Chemical shift displaces fat along frequency, and flow ghosts repeat across the whole phase direction rather than hugging one edge.",
     "setup": {
-     "region": "Pelvis",
-     "orientation": "axial",
-     "slice_idx": 50,
+     "region": "Spine",
+     "orientation": "sagittal",
+     "slice_idx": 64,
      "params": {
-      "sequence": "Inversion Recovery",
-      "TR": 4000,
-      "TE": 40,
-      "TI": 150,
-      "field_strength": "1.5T",
-      "NEX": 4
+      "sequence": "FSE / TSE",
+      "TR": 3500,
+      "TE": 100,
+      "matrix_size": 128
      }
     },
-    "img": "cq2-stir-pelvis-01.jpg"
+    "img": "cq2-gibbs-spine-01.jpg"
    }
   },
   {

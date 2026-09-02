@@ -488,3 +488,29 @@ def test_mixel_pv_engages_and_respects_sigma_zero(sim, monkeypatch):
     monkeypatch.setattr(sim, "mixel", None, raising=False)
     b, _ = sim.simulate({**p, "pv_sigma": 0})
     np.testing.assert_array_equal(a, b)
+
+
+def test_susceptibility_dropout_worse_on_gre_than_se(sim, monkeypatch):
+    """A spin echo refocuses static susceptibility dephasing; the artifact
+    must therefore attenuate far less signal on SE than on GRE at the same
+    strength (previously it applied sequence-independently)."""
+    import rician as _ric
+    monkeypatch.setattr(_ric, "add_rician_noise", lambda block, *a, **k: block)
+    # The synthetic brain has no internal air; paint a gas pocket (label 12,
+    # an enclosed susceptibility source) into the slice under test.
+    vol = sim.volume.copy()
+    z = sim.slice_idx
+    zz, yy, xx = vol.shape
+    vol[z - 2:z + 3, yy // 2 - 3:yy // 2 + 3, xx // 2 - 3:xx // 2 + 3] = 12
+    monkeypatch.setattr(sim, "volume", vol, raising=False)
+    p = dict(susceptibility_enabled=True, susceptibility_strength=3.0,
+             TR=150, TE=15, flip_angle=30, texture_mode="signal")
+    gre_on, _ = sim.simulate(base_params(sequence="Gradient Echo", **p))
+    gre_off, _ = sim.simulate(base_params(sequence="Gradient Echo",
+                                          **{**p, "susceptibility_enabled": False}))
+    se_on, _ = sim.simulate(base_params(sequence="Spin Echo", **p))
+    se_off, _ = sim.simulate(base_params(sequence="Spin Echo",
+                                         **{**p, "susceptibility_enabled": False}))
+    gre_loss = 1 - gre_on.sum() / gre_off.sum()
+    se_loss = 1 - se_on.sum() / se_off.sum()
+    assert gre_loss > 2 * se_loss, f"GRE loss {gre_loss:.3f} vs SE loss {se_loss:.3f}"

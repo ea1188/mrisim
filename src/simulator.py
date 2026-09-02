@@ -859,8 +859,13 @@ class Simulator:
                 image = add_chemical_shift_artifact(image, phantom_slice,
                     calculate_chemical_shift_pixels(params["bandwidth"] * 1000 / matrix, field_strength=_b0_cs))
             if params["susceptibility_enabled"] and phantom_slice.shape == image.shape:
-                image = add_susceptibility_artifact(image, phantom_slice,
-                                                    params["susceptibility_strength"] / 10.0)
+                # A 180-degree refocusing pulse recovers static susceptibility
+                # dephasing, so the spin-echo family keeps only a small residual
+                # (diffusion through the gradients); GRE takes the full T2* hit.
+                _sus = params["susceptibility_strength"] / 10.0
+                if params["sequence"] in ("Spin Echo", "FSE / TSE", "Inversion Recovery"):
+                    _sus *= 0.15
+                image = add_susceptibility_artifact(image, phantom_slice, _sus)
             # Metal implant (hip arthroplasty): a bloomed signal void + pile-up whose
             # size follows field / bandwidth / sequence / TE and shrinks with VAT/SEMAC.
             if params.get("metal_implant_enabled") and phantom_slice.shape == image.shape:
