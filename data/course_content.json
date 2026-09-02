@@ -8,13 +8,13 @@
    "ord": 10,
    "body": {
     "title": "Contrast & weighting: the exam synthesis",
-    "html": "<p>Image contrast in conventional spin echo is set by two knobs: <b>TR</b> governs how much <b>T1</b> weighting you get, and <b>TE</b> governs how much <b>T2</b> weighting. Combine them:</p><ul><li><b>Short TR / short TE → T1-weighted.</b> Fat and white matter bright; fluid (CSF) dark.</li><li><b>Long TR / long TE → T2-weighted.</b> Fluid bright. This is where most pathology (extra water) shows.</li><li><b>Long TR / short TE → proton density.</b> Both weightings minimized; signal tracks tissue water content.</li></ul><figure><img src=\"img/course/m2-contrast-t1-pd-t2.jpg\" alt=\"The same axial brain slice acquired three ways. T1-weighted (short TR, short TE) shows dark CSF in the ventricles. Proton-density (long TR, short TE) is bright with low contrast between tissues. T2-weighted (long TR, long TE) shows bright CSF.\" loading=\"lazy\"><figcaption>One brain slice, three weightings: only TR and TE change between panels. Watch the CSF in the ventricles: dark on T1, mid-gray on PD, bright on T2.</figcaption></figure><p><b>Inversion recovery</b> adds a preparatory 180° pulse and a <b>TI</b>. Choosing TI at a tissue's null point suppresses it: <b>STIR</b> (short TI ≈ 0.69·T1 of fat) nulls <b>fat</b>; <b>FLAIR</b> (long TI ≈ 2000-2500 ms) nulls <b>CSF</b> so periventricular lesions aren't hidden. <b>Gradient echo</b> uses a flip angle instead of a 180° refocuser and is sensitive to <b>T2*</b> (susceptibility). <b>Gadolinium</b> shortens T1, so enhancing tissue is bright on T1, which marks blood-brain-barrier breakdown.</p><p>The fastest read: <b>find the fluid</b> (ventricles, eyeballs). Dark fluid → T1. Bright fluid → T2. Dark CSF but lesions still bright → FLAIR.</p>",
+    "html": "<p>Image contrast in conventional spin echo is set by two knobs: <b>TR</b> governs how much <b>T1</b> weighting you get, and <b>TE</b> governs how much <b>T2</b> weighting. Combine them:</p><ul><li><b>Short TR / short TE \u2192 T1-weighted.</b> Fat and white matter bright; fluid (CSF) dark.</li><li><b>Long TR / long TE \u2192 T2-weighted.</b> Fluid bright. This is where most pathology (extra water) shows.</li><li><b>Long TR / short TE \u2192 proton density.</b> Both weightings minimized; signal tracks tissue water content.</li></ul><figure><img src=\"img/course/m2-contrast-t1-pd-t2.jpg\" alt=\"The same axial brain slice acquired three ways. T1-weighted (short TR, short TE) shows dark CSF in the ventricles. Proton-density (long TR, short TE) is bright with low contrast between tissues. T2-weighted (long TR, long TE) shows bright CSF.\" loading=\"lazy\"><figcaption>One brain slice, three weightings: only TR and TE change between panels. Watch the CSF in the ventricles: dark on T1, mid-gray on PD, bright on T2.</figcaption></figure><p><b>Inversion recovery</b> adds a preparatory 180\u00b0 pulse and a <b>TI</b>. Choosing TI at a tissue's null point suppresses it: <b>STIR</b> (short TI \u2248 0.69\u00b7T1 of fat) nulls <b>fat</b>; <b>FLAIR</b> (long TI \u2248 2000-2500 ms) nulls <b>CSF</b> so periventricular lesions aren't hidden. <b>Gradient echo</b> uses a flip angle instead of a 180\u00b0 refocuser and is sensitive to <b>T2*</b> (susceptibility). <b>Gadolinium</b> shortens T1, so enhancing tissue is bright on T1, which marks blood-brain-barrier breakdown.</p><p>The fastest read: <b>find the fluid</b> (ventricles, eyeballs). Dark fluid \u2192 T1. Bright fluid \u2192 T2. Dark CSF but lesions still bright \u2192 FLAIR.</p>",
     "keypoints": [
      "TR controls T1 weighting; TE controls T2 weighting.",
      "Short TR/short TE = T1; long TR/long TE = T2; long TR/short TE = PD.",
-     "STIR nulls fat (TI ≈ 0.69·T1 fat); FLAIR nulls CSF (long TI).",
-     "Gradient echo → flip angle, T2* sensitive.",
-     "Gadolinium shortens T1 → bright on T1 at BBB breakdown."
+     "STIR nulls fat (TI \u2248 0.69\u00b7T1 fat); FLAIR nulls CSF (long TI).",
+     "Gradient echo \u2192 flip angle, T2* sensitive.",
+     "Gadolinium shortens T1 \u2192 bright on T1 at BBB breakdown."
     ],
     "worked_example": "<p>You pull up a lumbar spine protocol and see a sagittal sequence with TR 500 ms and TE 20 ms alongside a second sagittal sequence with TR 3500 ms and TE 110 ms. The first is T1-weighted: the short TR gives longitudinal magnetization little time to recover between excitations, so tissue with a short T1, like fat and marrow, regrows the most magnetization and looks bright, while CSF, with its long T1, stays dark. The second is T2-weighted: the long TR lets essentially every tissue fully recover before the next pulse, which erases T1 differences, and the long TE then lets transverse magnetization decay, so tissue with a long T2, like CSF and edema, still has signal left and looks bright. A disc herniation with surrounding edema can be easy to miss on the T1 image, where fat dominates the contrast, but it stands out against the dark disc and cord on the T2 image. If a third sequence paired a long TR with a short TE, both T1 and T2 weighting would be minimized and the image would instead track proton density, the raw concentration of mobile hydrogen in each tissue.</p>",
     "memory_hooks": [
@@ -35,13 +35,13 @@
    "ord": 20,
    "body": {
     "title": "Image quality: SNR, CNR, resolution & the trade-offs",
-    "html": "<p><b>SNR</b> (signal-to-noise) rises with <b>voxel volume</b> (bigger voxels = more signal), with <b>√NEX</b> (averages), with lower <b>receiver bandwidth</b>, with <b>field strength</b>, and with better coils. <b>CNR</b> (contrast-to-noise) is the difference in signal between two tissues over the noise, and it is what actually makes a lesion visible.</p><p><b>Spatial resolution</b> is set by voxel size: a finer <b>matrix</b> or smaller <b>FOV</b> or thinner <b>slice</b> = smaller voxels = more detail, but each holds less signal, so <b>SNR falls</b>. That is the fundamental <b>resolution ↔ SNR</b> trade at fixed scan time.</p><figure><img src=\"img/course/m5-resolution-snr.jpg\" alt=\"The same axial brain slice acquired at three matrix sizes. At 128 the image is smooth with high signal but coarse detail; at 256 it is standard resolution; at 512 fine structures are sharp but the image is visibly grainy from lower signal per voxel.\" loading=\"lazy\"><figcaption>Same slice, same scan time, only the acquisition matrix changes. Finer matrix means smaller voxels and more detail, but each voxel holds less signal, so the 512 image is grainier: the resolution to SNR trade.</figcaption></figure><p><b>Scan time (2D SE) = TR × phase-encode steps × NEX.</b> So doubling the phase matrix doubles both resolution-in-that-axis <i>and</i> scan time. Everything is a four-way balance of <b>SNR, resolution, coverage, and time</b>.</p><p>Two efficiency levers: the <b>Ernst angle</b> maximizes GRE signal for a given TR/T1, and <b>parallel imaging</b> (SENSE/GRAPPA) buys speed at an SNR cost of <b>g·√R</b> (the g-factor, worst centrally).</p>",
+    "html": "<p><b>SNR</b> (signal-to-noise) rises with <b>voxel volume</b> (bigger voxels = more signal), with <b>\u221aNEX</b> (averages), with lower <b>receiver bandwidth</b>, with <b>field strength</b>, and with better coils. <b>CNR</b> (contrast-to-noise) is the difference in signal between two tissues over the noise, and it is what actually makes a lesion visible.</p><p><b>Spatial resolution</b> is set by voxel size: a finer <b>matrix</b> or smaller <b>FOV</b> or thinner <b>slice</b> = smaller voxels = more detail, but each holds less signal, so <b>SNR falls</b>. That is the fundamental <b>resolution \u2194 SNR</b> trade at fixed scan time.</p><figure><img src=\"img/course/m5-resolution-snr.jpg\" alt=\"The same axial brain slice acquired at three matrix sizes. At 128 the image is smooth with high signal but coarse detail; at 256 it is standard resolution; at 512 fine structures are sharp but the image is visibly grainy from lower signal per voxel.\" loading=\"lazy\"><figcaption>Same slice, same scan time, only the acquisition matrix changes. Finer matrix means smaller voxels and more detail, but each voxel holds less signal, so the 512 image is grainier: the resolution to SNR trade.</figcaption></figure><p><b>Scan time (2D SE) = TR \u00d7 phase-encode steps \u00d7 NEX.</b> So doubling the phase matrix doubles both resolution-in-that-axis <i>and</i> scan time. Everything is a four-way balance of <b>SNR, resolution, coverage, and time</b>.</p><p>Two efficiency levers: the <b>Ernst angle</b> maximizes GRE signal for a given TR/T1, and <b>parallel imaging</b> (SENSE/GRAPPA) buys speed at an SNR cost of <b>g\u00b7\u221aR</b> (the g-factor, worst centrally).</p>",
     "keypoints": [
-     "SNR ∝ voxel volume × √NEX; lower bandwidth and higher field raise it.",
+     "SNR \u221d voxel volume \u00d7 \u221aNEX; lower bandwidth and higher field raise it.",
      "Finer matrix / smaller FOV / thinner slice = more resolution, less SNR.",
-     "Scan time (2D SE) = TR × phase steps × NEX.",
+     "Scan time (2D SE) = TR \u00d7 phase steps \u00d7 NEX.",
      "CNR (not raw SNR) determines lesion conspicuity.",
-     "Parallel imaging costs SNR by g·√R (g-factor)."
+     "Parallel imaging costs SNR by g\u00b7\u221aR (g-factor)."
     ],
     "worked_example": "<p>You are imaging a small joint with a 3 mm slice, a 256 phase-encode matrix, 1 NEX, and the images are noisy. Thinning the slice to 2 mm to reduce partial-volume blur cuts voxel volume by a third, and since SNR is proportional to voxel volume, SNR falls by roughly that same fraction. To claw some signal back you average twice, going to 2 NEX. Because SNR improves only with the square root of the number of averages, that recovers about the square root of 2, not a full doubling, and it doubles scan time, since 2D spin echo scan time equals TR times phase-encode steps times NEX. If instead you had doubled the phase matrix to 512 steps to gain in-plane resolution, you would halve the phase-encode pixel dimension, taking another SNR hit from the smaller voxel, while also doubling scan time directly, because phase steps multiply straight into the scan-time formula. Resolution, SNR, and time are locked together: buying back one always costs one of the other two.</p>",
     "memory_hooks": [
@@ -62,13 +62,13 @@
    "ord": 30,
    "body": {
     "title": "MR safety: the exam-focused overview",
-    "html": "<p>MRI has <b>no ionizing radiation</b>, but it uses three magnetic fields, and only the <b>static field</b> is always on. Its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness and a metallic taste) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat (<b>SAR</b>, W/kg), risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public → IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labeling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium, which is vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
+    "html": "<p>MRI has <b>no ionizing radiation</b>, but it uses three magnetic fields, and only the <b>static field</b> is always on. Its danger is the <b>projectile (missile) effect</b> on ferromagnetic objects, plus benign transient bioeffects (dizziness and a metallic taste) at high field. The <b>gradients</b> switch fast: their <b>dB/dt</b> can cause <b>peripheral nerve stimulation</b>, and their acoustic noise (up to ~120 dB) mandates <b>hearing protection</b>. The <b>RF</b> deposits energy as heat (<b>SAR</b>, W/kg), risking burns from looped cables or skin-to-skin contact.</p><p>Facilities use <b>four zones</b> (I public \u2192 IV magnet room, most restricted). Everyone is <b>screened</b>; implants are checked against <b>MR-safe / MR-conditional / MR-unsafe</b> labeling (an <i>MR-conditional</i> device is safe only under the stated field/SAR/slew limits). A <b>quench</b> boils off helium, which is vented outside, but a failed vent risks <b>oxygen displacement (asphyxiation)</b> and frostbite. <b>Gadolinium</b> in severe renal impairment carries a risk of <b>nephrogenic systemic fibrosis</b>.</p>",
     "keypoints": [
      "Three fields: static (projectile), gradient (PNS + acoustic), RF (SAR/burns).",
      "Zone IV = magnet room, most restricted; no ferromagnetic items.",
      "MR-conditional = safe ONLY under the stated conditions.",
-     "Quench → helium boil-off → possible oxygen displacement.",
-     "Gadolinium + severe renal impairment → NSF risk."
+     "Quench \u2192 helium boil-off \u2192 possible oxygen displacement.",
+     "Gadolinium + severe renal impairment \u2192 NSF risk."
     ],
     "worked_example": "<p>A patient in a wheelchair with a small pocketknife left in a jacket pocket is brought toward the scanner room by a family member who was never screened. The knife is drawn toward the bore and becomes a projectile, the classic ferromagnetic missile effect from the always-on static field. The correct workflow is that everyone entering Zone III or IV, staff, patients, and visitors alike, is screened with a ferromagnetic detection system and a verbal/written questionnaire before crossing into Zone IV, and only MR-trained, screened staff supervise anyone in Zone IV. The static field is never off, even during a power outage, so screening has to happen at the zone boundary every single time, not just once at intake.</p>",
     "memory_hooks": [
@@ -89,7 +89,7 @@
    "ord": 40,
    "body": {
     "title": "Patient care: screening to monitoring",
-    "html": "<p><b>Screen before every scan</b> (status changes): implants, pacemakers, aneurysm clips, cochlear implants, neurostimulators, and metal. A history of metalwork/grinding needs <b>orbital radiographs</b> to exclude an intra-orbital fragment. <b>Prepare</b> the patient: remove all ferromagnetic items, gown as needed, explain the loud noise, and give <b>hearing protection</b>.</p><p><b>Position</b> for signal and comfort: center the anatomy in the <b>coil at isocenter</b>, immobilize to reduce motion, and hand over the <b>call/squeeze device</b>. For <b>contrast</b>, screen for renal risk and prior reactions, obtain consent, and know the plan for an acute reaction (hives/wheeze/hypotension → stop, help, ABCs, epinephrine for anaphylaxis). Routine <b>eGFR</b> screening is no longer required before the <b>Group II macrocyclic</b> agents in common use, since their NSF risk is very low; confirm renal function for older <b>linear</b> agents or when impairment is likely, and follow facility policy. Avoid gadolinium in <b>pregnancy</b> unless essential; after gadolinium, <b>breastfeeding</b> may continue without interruption because very little reaches breast milk, though an anxious mother may choose to pump and discard for 24 hours.</p><p><b>Monitor</b> throughout: keep verbal contact, manage <b>claustrophobia</b> (reassurance, call system, wide/open bore, sedation), and use only <b>MR-safe</b> monitoring equipment for sedated or unstable patients.</p>",
+    "html": "<p><b>Screen before every scan</b> (status changes): implants, pacemakers, aneurysm clips, cochlear implants, neurostimulators, and metal. A history of metalwork/grinding needs <b>orbital radiographs</b> to exclude an intra-orbital fragment. <b>Prepare</b> the patient: remove all ferromagnetic items, gown as needed, explain the loud noise, and give <b>hearing protection</b>.</p><p><b>Position</b> for signal and comfort: center the anatomy in the <b>coil at isocenter</b>, immobilize to reduce motion, and hand over the <b>call/squeeze device</b>. For <b>contrast</b>, screen for renal risk and prior reactions, obtain consent, and know the plan for an acute reaction (hives/wheeze/hypotension \u2192 stop, help, ABCs, epinephrine for anaphylaxis). Routine <b>eGFR</b> screening is no longer required before the <b>Group II macrocyclic</b> agents in common use, since their NSF risk is very low; confirm renal function for older <b>linear</b> agents or when impairment is likely, and follow facility policy. Avoid gadolinium in <b>pregnancy</b> unless essential; after gadolinium, <b>breastfeeding</b> may continue without interruption because very little reaches breast milk, though an anxious mother may choose to pump and discard for 24 hours.</p><p><b>Monitor</b> throughout: keep verbal contact, manage <b>claustrophobia</b> (reassurance, call system, wide/open bore, sedation), and use only <b>MR-safe</b> monitoring equipment for sedated or unstable patients.</p>",
     "keypoints": [
      "Screen before every scan; orbital radiographs for metal-in-eye history.",
      "Hearing protection for every patient.",
@@ -139,7 +139,7 @@
      "About half the repetition time TR"
     ],
     "answer": 0,
-    "explain": "In inversion recovery, a tissue is nulled when TI ≈ 0.69·T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal, useful where spectral fat-sat fails (off-isocenter, metal, poor shim)."
+    "explain": "In inversion recovery, a tissue is nulled when TI \u2248 0.69\u00b7T1 of that tissue. STIR sets a short TI at fat's null point, so fat gives no signal, useful where spectral fat-sat fails (off-isocenter, metal, poor shim)."
    }
   },
   {
@@ -187,7 +187,7 @@
      "No change in SNR at any time cost"
     ],
     "answer": 0,
-    "explain": "SNR scales with the square root of the number of averages, so 4 averages give √4 = 2× SNR, but scan time scales linearly, so it costs 4× the time. Averaging is an expensive way to buy SNR."
+    "explain": "SNR scales with the square root of the number of averages, so 4 averages give \u221a4 = 2\u00d7 SNR, but scan time scales linearly, so it costs 4\u00d7 the time. Averaging is an expensive way to buy SNR."
    }
   },
   {
@@ -219,7 +219,7 @@
      "TR times the frequency-encode steps"
     ],
     "answer": 0,
-    "explain": "Each TR collects one phase-encode line; you need one per phase step, repeated for each average. So time = TR × (phase steps) × NEX. Frequency encoding is free (within the readout), which is why the phase matrix (not the frequency matrix) drives scan time."
+    "explain": "Each TR collects one phase-encode line; you need one per phase step, repeated for each average. So time = TR \u00d7 (phase steps) \u00d7 NEX. Frequency encoding is free (within the readout), which is why the phase matrix (not the frequency matrix) drives scan time."
    }
   },
   {
@@ -14505,6 +14505,294 @@
      "Stop the injection, elevate the limb, apply a compress.",
      "Watch the site and escalate large or symptomatic leaks."
     ]
+   }
+  },
+  {
+   "topic": "fat-suppression",
+   "kind": "quiz",
+   "ord": 1504,
+   "body": {
+    "prompt": "This sagittal knee image was acquired at 1.5 T with TR 4000 ms, TE 40 ms and TI 150 ms. Joint fluid is bright while subcutaneous fat and bone marrow are dark. Which technique produced the fat suppression?",
+    "options": [
+     "Short tau inversion recovery",
+     "Spectral (CHESS) saturation",
+     "Water excitation",
+     "Opposed-phase gradient echo"
+    ],
+    "answer": 0,
+    "explain": "The short inversion time of about 150 ms is the signature of STIR: fat is nulled because the readout occurs as fat crosses its null point, and marrow suppresses with it because marrow is largely fat. Spectral saturation and water excitation are frequency-selective methods and need no inversion time, and opposed-phase imaging reduces signal only in voxels that mix fat and water.",
+    "setup": {
+     "region": "Knee",
+     "orientation": "sagittal",
+     "slice_idx": 102,
+     "params": {
+      "sequence": "Inversion Recovery",
+      "TR": 4000,
+      "TE": 40,
+      "TI": 150,
+      "field_strength": "1.5T",
+      "NEX": 4
+     },
+     "window_width": 1.5,
+     "window_level": 0.6
+    },
+    "img": "cq2-stir-knee-01.jpg"
+   }
+  },
+  {
+   "topic": "fat-suppression",
+   "kind": "quiz",
+   "ord": 1505,
+   "body": {
+    "prompt": "On this proton density fat saturated knee image, the femoral and tibial marrow appear dark. Why does spectral fat saturation suppress bone marrow?",
+    "options": [
+     "Yellow marrow is mostly fat, so the fat saturation pulse nulls it",
+     "Marrow has a very short T2 star and always appears dark",
+     "The saturation pulse suppresses all tissues within bone",
+     "The surrounding cortical bone shields marrow from the pulse"
+    ],
+    "answer": 0,
+    "explain": "Adult yellow marrow is around 80 percent fat, so the frequency-selective saturation pulse suppresses it along with subcutaneous fat. That dark background is exactly why PD FS is the workhorse knee sequence: marrow edema keeps its water signal and stands out brightly against the suppressed normal marrow.",
+    "setup": {
+     "region": "Knee",
+     "orientation": "sagittal",
+     "slice_idx": 102,
+     "params": {
+      "sequence": "Spin Echo",
+      "TR": 3000,
+      "TE": 20,
+      "fatsat_enabled": true
+     }
+    },
+    "img": "cq2-pdfs-knee-01.jpg"
+   }
+  },
+  {
+   "topic": "fat-suppression",
+   "kind": "quiz",
+   "ord": 1506,
+   "body": {
+    "prompt": "On this sagittal STIR image of the lumbar spine at 1.5 T, which tissue has been nulled by the 150 ms inversion time?",
+    "options": [
+     "Fat, including the vertebral marrow",
+     "Cerebrospinal fluid",
+     "The paraspinal muscles",
+     "The intervertebral discs and their nuclei"
+    ],
+    "answer": 0,
+    "explain": "A TI near 150 ms at this field strength catches fat at its null point, so subcutaneous fat and the fatty vertebral marrow lose their signal. CSF nulling requires the much longer TI of FLAIR, about 2000 ms, and muscle and discs are not selectively nulled by either.",
+    "setup": {
+     "region": "Spine",
+     "orientation": "sagittal",
+     "slice_idx": 64,
+     "params": {
+      "sequence": "Inversion Recovery",
+      "TR": 4000,
+      "TE": 40,
+      "TI": 150,
+      "field_strength": "1.5T",
+      "NEX": 4
+     }
+    },
+    "img": "cq2-stir-spine-01.jpg"
+   }
+  },
+  {
+   "topic": "contrast-weighting",
+   "kind": "quiz",
+   "ord": 1507,
+   "body": {
+    "prompt": "This axial abdominal image shows bright subcutaneous and mesenteric fat with dark fluid. TR is 500 ms and TE is 15 ms. What weighting is shown?",
+    "options": [
+     "T1-weighted",
+     "T2-weighted",
+     "Proton density",
+     "STIR"
+    ],
+    "answer": 0,
+    "explain": "Short TR and short TE give T1 weighting, where fat is the brightest tissue and fluid is dark. On T2 weighting the relationship reverses for fluid, proton density uses a long TR to remove T1 effects, and STIR would suppress the fat that dominates this image.",
+    "setup": {
+     "region": "Abdomen",
+     "orientation": "axial",
+     "slice_idx": 128,
+     "params": {
+      "sequence": "Spin Echo",
+      "TR": 500,
+      "TE": 15
+     }
+    },
+    "img": "cq2-t1-abdo-01.jpg"
+   }
+  },
+  {
+   "topic": "contrast-weighting",
+   "kind": "quiz",
+   "ord": 1508,
+   "body": {
+    "prompt": "On this sagittal lumbar spine image, CSF is bright and the discs retain high signal. TR is 3500 ms and TE is 100 ms. What weighting is shown?",
+    "options": [
+     "T2-weighted",
+     "T1-weighted",
+     "Proton density",
+     "Inversion recovery"
+    ],
+    "answer": 0,
+    "explain": "Long TR with long TE is T2 weighting: CSF becomes the brightest structure and well hydrated discs stay bright. T1 weighting would darken the CSF, proton density would use a much shorter TE, and inversion recovery requires an inversion pulse that this sequence does not have.",
+    "setup": {
+     "region": "Spine",
+     "orientation": "sagittal",
+     "slice_idx": 64,
+     "params": {
+      "sequence": "FSE / TSE",
+      "TR": 3500,
+      "TE": 100
+     }
+    },
+    "img": "cq2-t2-spine-01.jpg"
+   }
+  },
+  {
+   "topic": "pulse-sequences",
+   "kind": "quiz",
+   "ord": 1509,
+   "body": {
+    "prompt": "This gradient echo abdominal image was acquired at 3 T with a TE of 1.1 ms. A thin dark line outlines the organs where they border fat. What causes this line?",
+    "options": [
+     "Fat and water signals cancel within boundary voxels at this TE",
+     "Respiratory motion of the abdominal wall during the acquisition",
+     "Susceptibility difference between organs and fat",
+     "Truncation of high spatial frequencies at sharp organ edges"
+    ],
+    "answer": 0,
+    "explain": "At 3 T a TE near 1.1 ms puts fat and water 180 degrees out of phase, so voxels containing both cancel and draw the india ink line around organs. It appears on all fat and water interfaces in every direction, which distinguishes it from chemical shift misregistration along the frequency axis, and from motion or truncation artifacts.",
+    "setup": {
+     "region": "Abdomen",
+     "orientation": "axial",
+     "slice_idx": 128,
+     "params": {
+      "sequence": "Gradient Echo",
+      "TR": 150,
+      "TE": 1.1,
+      "flip_angle": 30
+     }
+    },
+    "img": "cq2-opposed-abdo-01.jpg"
+   }
+  },
+  {
+   "topic": "image-quality",
+   "kind": "quiz",
+   "ord": 1510,
+   "body": {
+    "prompt": "This T1 spine image was acquired with a low receiver bandwidth. Bright and dark bands appear at the vertebral endplates along the frequency direction. What artifact is this?",
+    "options": [
+     "Chemical shift misregistration",
+     "Gibbs truncation",
+     "Motion ghosting",
+     "Susceptibility distortion"
+    ],
+    "answer": 0,
+    "explain": "Fat resonates about 3.5 ppm below water, so the fatty marrow signal is mapped a few pixels away along the frequency axis, stacking a bright band on one endplate and a signal void on the other. Lowering the bandwidth increases the shift in pixels. Gibbs banding parallels sharp edges regardless of direction, and ghosting from motion repeats along the phase axis.",
+    "setup": {
+     "region": "Spine",
+     "orientation": "sagittal",
+     "slice_idx": 64,
+     "params": {
+      "sequence": "Spin Echo",
+      "TR": 500,
+      "TE": 15,
+      "bandwidth": 30,
+      "chemical_shift_enabled": true
+     }
+    },
+    "img": "cq2-chemshift-spine-01.jpg"
+   }
+  },
+  {
+   "topic": "image-quality",
+   "kind": "quiz",
+   "ord": 1511,
+   "body": {
+    "prompt": "On this gradient echo abdominal image, signal is lost around the gas filled bowel. Why is this artifact worse on gradient echo than on spin echo?",
+    "options": [
+     "Gradient echo has no 180 degree pulse to refocus local field variations",
+     "Gradient echo sequences always use a much longer repetition time",
+     "The gas resonates at the same frequency as fat and shifts position",
+     "Spin echo sequences always use a lower receiver bandwidth"
+    ],
+    "answer": 0,
+    "explain": "Gas and tissue differ in magnetic susceptibility, which distorts the local field near bowel. A spin echo refocuses that static dephasing with its 180 degree pulse, but a gradient echo does not, so the signal near gas decays with T2 star and drops out. TR, bandwidth and resonance frequency do not explain the difference.",
+    "setup": {
+     "region": "Abdomen",
+     "orientation": "axial",
+     "slice_idx": 128,
+     "params": {
+      "sequence": "Gradient Echo",
+      "TR": 150,
+      "TE": 15,
+      "flip_angle": 30,
+      "susceptibility_enabled": true
+     }
+    },
+    "img": "cq2-suscep-abdo-01.jpg"
+   }
+  },
+  {
+   "topic": "fat-suppression",
+   "kind": "quiz",
+   "ord": 1512,
+   "body": {
+    "prompt": "On this axial STIR image of the pelvis at 1.5 T, which structures remain bright after the fat signal is suppressed?",
+    "options": [
+     "Fluid containing structures such as the bladder",
+     "The subcutaneous fat surrounding the pelvis",
+     "The fatty marrow of the iliac wings",
+     "All tissues are equally suppressed"
+    ],
+    "answer": 0,
+    "explain": "STIR nulls tissue with the T1 of fat, so subcutaneous fat and marrow fat go dark while water rich structures keep their long T2 signal and appear bright. That contrast is the reason STIR is used to survey for edema and fluid collections.",
+    "setup": {
+     "region": "Pelvis",
+     "orientation": "axial",
+     "slice_idx": 50,
+     "params": {
+      "sequence": "Inversion Recovery",
+      "TR": 4000,
+      "TE": 40,
+      "TI": 150,
+      "field_strength": "1.5T",
+      "NEX": 4
+     }
+    },
+    "img": "cq2-stir-pelvis-01.jpg"
+   }
+  },
+  {
+   "topic": "pulse-sequences",
+   "kind": "quiz",
+   "ord": 1513,
+   "body": {
+    "prompt": "Compared with an in phase acquisition, the vertebral marrow on this opposed phase gradient echo image has lost signal. What does this indicate about normal marrow?",
+    "options": [
+     "Marrow voxels contain both fat and water, which cancel when opposed",
+     "Normal marrow has an unusually long T2 star relative to muscle",
+     "The surrounding cortical bone shields marrow from both echoes",
+     "Marrow signal depends only on proton density, not echo time"
+    ],
+    "answer": 0,
+    "explain": "Normal marrow mixes fat and water in every voxel, so at an opposed phase TE the two components cancel and the marrow darkens. This drop is the basis of in and opposed phase imaging for marrow lesions: a metastasis replaces the fat, contains almost only water, and fails to drop.",
+    "setup": {
+     "region": "Spine",
+     "orientation": "sagittal",
+     "slice_idx": 64,
+     "params": {
+      "sequence": "Gradient Echo",
+      "TR": 150,
+      "TE": 1.1,
+      "flip_angle": 30
+     }
+    },
+    "img": "cq2-opposed-spine-01.jpg"
    }
   }
  ]
