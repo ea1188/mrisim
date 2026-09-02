@@ -16,6 +16,7 @@
 
   // Which free curriculum module maps to which premium topic keys + free quiz categories.
   // Modules absent here just show their free lessons (no premium block / topic quiz yet).
+  var A11y = window.A11y;   // accessibility helpers (a11y.js), loaded before this
   var TOPIC_CFG = {
     "1 · What an MRI image is":       { premium: ["instrumentation"], quiz: [] },
     "2 · Where contrast comes from":  { premium: ["contrast-weighting"], quiz: ["sequences"] },
@@ -766,7 +767,7 @@
   // pronunciation), one utterance at a time, aria-pressed while playing.
   var activeListen = null;
   function listenBtn(getText) {
-    if (!window.A11y || !window.speechSynthesis) return null;
+    if (!A11y || !window.speechSynthesis) return null;
     var btn = h("button", { class: "ghost listen", text: "Listen", "aria-pressed": "false" });
     btn.setAttribute("aria-label", "Read this section aloud");
     btn.onclick = function () {
@@ -793,7 +794,7 @@
   function addQImg(box, q) {
     if (!q || !q.img) return;
     var img = h("img", { class: "q-img", src: "img/course-quiz/" + q.img,
-                 alt: window.A11y ? A11y.describeScan(q.setup) : "Scan for this question" });
+                 alt: A11y ? A11y.describeScan(q.setup) : "Scan for this question" });
     box.insertBefore(img, box.firstChild);
     if (q.credit && q.credit.license !== "Owner-Original") {
       var c = q.credit;
