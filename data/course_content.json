@@ -14530,8 +14530,11 @@
       "TR": 4000,
       "TE": 40,
       "TI": 150,
-      "field_strength": "1.5T"
-     }
+      "field_strength": "1.5T",
+      "NEX": 4
+     },
+     "window_width": 1.5,
+     "window_level": 0.6
     },
     "img": "cq2-stir-knee-01.jpg"
    }
@@ -14587,7 +14590,8 @@
       "TR": 4000,
       "TE": 40,
       "TI": 150,
-      "field_strength": "1.5T"
+      "field_strength": "1.5T",
+      "NEX": 4
      }
     },
     "img": "cq2-stir-spine-01.jpg"
@@ -14756,7 +14760,8 @@
       "TR": 4000,
       "TE": 40,
       "TI": 150,
-      "field_strength": "1.5T"
+      "field_strength": "1.5T",
+      "NEX": 4
      }
     },
     "img": "cq2-stir-pelvis-01.jpg"
