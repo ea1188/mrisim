@@ -669,7 +669,7 @@
           var t = b.title + ". " + textOf(b.html);
           (b.keypoints || []).forEach(function (kpt) { t += " Key point: " + kpt; });
           return t;
-        });
+        }, (b._ptopic || "") + "|" + b.title);
         if (lb) eduH4.appendChild(lb);
         var card = h("div", { class: "edu" + (isRead ? " read" : ""), id: "edu-" + slug(b.title), "data-subid": rid }, [eduH4, h("div", { class: "body", html: b.html })]);
         if (b.keypoints && b.keypoints.length) {
@@ -763,26 +763,59 @@
     window.scrollTo(0, 0);
   }
 
-  // A "Listen" toggle for any text getter: speaks via A11y (MRI-aware
-  // pronunciation), one utterance at a time, aria-pressed while playing.
+  // A "Listen" toggle for any text getter. Prefers pre-rendered neural
+  // narration (web/audio/cards, built by scripts/prerender_narration.py) when
+  // the card has one; falls back to on-device speech (A11y). One player at a
+  // time, aria-pressed while playing, speed applies live to both paths.
   var activeListen = null;
-  function listenBtn(getText) {
-    if (!A11y || !window.speechSynthesis) return null;
+  var activeAudio = null;
+  var narration = null;   // manifest: card title -> { file, seconds }
+  fetch("audio/cards/manifest.json")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (m) { narration = m; })
+    .catch(function () { narration = null; });
+
+  function stopPlayback() {
+    if (A11y) A11y.stop();
+    if (activeAudio) { activeAudio.onended = null; activeAudio.pause(); activeAudio = null; }
+    if (activeListen) { activeListen.setAttribute("aria-pressed", "false"); activeListen = null; }
+    hideTtsBar();
+  }
+
+  function listenBtn(getText, narrTitle) {
+    if (!A11y) return null;
     var btn = h("button", { class: "ghost listen", text: "Listen", "aria-pressed": "false" });
     btn.setAttribute("aria-label", "Read this section aloud");
+    function finish() {
+      btn.setAttribute("aria-pressed", "false");
+      if (activeListen === btn) activeListen = null;
+      hideTtsBar();
+    }
     btn.onclick = function () {
-      if (activeListen === btn && A11y.speaking()) {
-        A11y.stop(); btn.setAttribute("aria-pressed", "false"); activeListen = null; return;
-      }
-      if (activeListen) activeListen.setAttribute("aria-pressed", "false");
+      var wasActive = activeListen === btn;
+      stopPlayback();
+      if (wasActive) return;
       activeListen = btn;
       btn.setAttribute("aria-pressed", "true");
-      showTtsBar();
-      A11y.speak(getText(), function () {
-        btn.setAttribute("aria-pressed", "false");
-        if (activeListen === btn) activeListen = null;
-        hideTtsBar();
-      });
+      var rec = narrTitle && narration && narration[narrTitle];
+      if (rec) {
+        var a = new Audio("audio/cards/" + rec.file);
+        a.playbackRate = (A11y.prefs().rate || 0.95);
+        a.onended = function () { activeAudio = null; finish(); };
+        a.onerror = function () {           // missing/offline: fall back to TTS
+          activeAudio = null;
+          if (window.speechSynthesis) { showTtsBar(false); A11y.speak(getText(), finish); }
+          else finish();
+        };
+        activeAudio = a;
+        showTtsBar(true);
+        a.play();
+      } else if (window.speechSynthesis) {
+        showTtsBar(false);
+        A11y.speak(getText(), finish);
+      } else {
+        finish();
+      }
     };
     return btn;
   }
@@ -795,8 +828,13 @@
   // Floating audio bar: visible only while speech plays. Voice + speed are
   // remembered (A11y prefs) and apply from the next chunk onward.
   var ttsBar = null;
-  function showTtsBar() {
-    if (ttsBar) { ttsBar.hidden = false; return; }
+  var ttsVoiceSel = null;
+  function showTtsBar(audioMode) {
+    if (ttsBar) {
+      ttsBar.hidden = false;
+      if (ttsVoiceSel) ttsVoiceSel.hidden = !!audioMode;   // voice is fixed in a recording
+      return;
+    }
     var voiceSel = h("select", { "aria-label": "Reading voice" });
     function fillVoices() {
       clear(voiceSel);
@@ -819,11 +857,15 @@
     ]);
     var saved = A11y.prefs().rate;
     if (saved) rateSel.value = String(saved);
-    rateSel.onchange = function () { A11y.setPrefs({ rate: parseFloat(rateSel.value) }); A11y.refresh(); };
-    var stopBtn = h("button", { class: "ghost", text: "Stop", onclick: function () {
-      A11y.stop();
-    } });
+    rateSel.onchange = function () {
+      A11y.setPrefs({ rate: parseFloat(rateSel.value) });
+      if (activeAudio) activeAudio.playbackRate = parseFloat(rateSel.value);
+      else A11y.refresh();
+    };
+    var stopBtn = h("button", { class: "ghost", text: "Stop", onclick: stopPlayback });
     ttsBar = h("div", { class: "tts-bar" }, [voiceSel, rateSel, stopBtn]);
+    ttsVoiceSel = voiceSel;
+    voiceSel.hidden = !!audioMode;
     document.body.appendChild(ttsBar);
   }
   function hideTtsBar() { if (ttsBar) ttsBar.hidden = true; }

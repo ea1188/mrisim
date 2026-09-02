@@ -67,3 +67,15 @@ test("refresh is a safe no-op when idle or under Node", () => {
   A11y.refresh();
   assert.equal(A11y.speaking(), false);
 });
+
+test("speakable expands compound MRI units", () => {
+  assert.equal(A11y.speakable("SAR limit 2 W/kg, gradients 45 mT/m"),
+    "specific absorption rate limit 2 watts per kilogram, gradients 45 millitesla per meter");
+  assert.equal(A11y.speakable("bandwidth 130 Hz/px at 128 MHz"),
+    "bandwidth 130 hertz per pixel at 128 megahertz");
+});
+
+test("speakable spells device acronyms", () => {
+  assert.equal(A11y.speakable("a DBS with a B1+rms condition"),
+    "a D B S with a B one plus R M S condition");
+});

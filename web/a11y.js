@@ -23,6 +23,7 @@
     ["DWI", "diffusion weighted imaging"], ["ADC", "A D C"],
     ["SWI", "susceptibility weighted imaging"], ["CSF", "cerebrospinal fluid"],
     ["MRCP", "M R C P"], ["CHESS", "chess"], ["Gd", "gadolinium"],
+    ["DBS", "D B S"], ["B1+rms", "B one plus R M S"],
     ["B0", "B zero"], ["B1", "B one"], ["1.5T", "1.5 tesla"],
     ["3T", "3 tesla"], ["7T", "7 tesla"], ["mpMRI", "multiparametric MRI"],
   ];
@@ -34,6 +35,13 @@
       out = out.replace(new RegExp("(^|[^A-Za-z0-9])" + esc + "(?![A-Za-z0-9*])", "g"),
                         "$1" + p[1]);
     });
+    // Compound units before single symbols: W/kg would otherwise read "W per kg".
+    out = out.replace(/\bW\/kg\b/g, "watts per kilogram");
+    out = out.replace(/\bmT\/m\b/g, "millitesla per meter");
+    out = out.replace(/\bT\/s\b/g, "tesla per second");
+    out = out.replace(/\bHz\/(px|pixel)\b/g, "hertz per pixel");
+    out = out.replace(/\bkHz\b/g, "kilohertz").replace(/\bMHz\b/g, "megahertz");
+    out = out.replace(/\b[µu]T\b/g, "microtesla");
     out = out.replace(/(\d)\s*ms\b/g, "$1 milliseconds");
     out = out.replace(/(\d)\s*mm\b/g, "$1 millimeters");
     out = out.replace(/°/g, " degrees").replace(/±/g, "plus or minus").replace(/×/g, " by ");
