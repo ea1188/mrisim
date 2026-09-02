@@ -37,7 +37,51 @@
     out = out.replace(/(\d)\s*ms\b/g, "$1 milliseconds");
     out = out.replace(/(\d)\s*mm\b/g, "$1 millimeters");
     out = out.replace(/°/g, " degrees").replace(/±/g, "plus or minus").replace(/×/g, " by ");
+    // Prosody: parentheticals and dashes become comma-breaths, not swallowed.
+    out = out.replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*/g, ", ");
+    out = out.replace(/\s+[–—]\s+/g, ", ");
+    out = out.replace(/,\s*([.,!?])/g, "$1").replace(/\s{2,}/g, " ").replace(/,\s*$/, "");
+    return out.trim();
+  }
+
+  // Sentence-level chunks: pleasant rhythm AND a workaround for Chrome's
+  // silent truncation of long utterances. Length-capped so run-on sentences
+  // still split at the nearest comma.
+  function chunks(text, cap) {
+    cap = cap || 200;
+    var parts = String(text || "").replace(/([.!?])\s+/g, "$1\u0000").split("\u0000")
+      .filter(function (t) { return t.trim(); });
+    var out = [];
+    parts.forEach(function (p) {
+      p = p.trim();
+      while (p.length > cap) {
+        var cut = p.lastIndexOf(", ", cap);
+        if (cut < 40) cut = cap;
+        out.push(p.slice(0, cut + 1).trim());
+        p = p.slice(cut + 1).trim();
+      }
+      if (p) out.push(p);
+    });
     return out;
+  }
+
+  // Prefer known-good voices over the platform default (nearly always the
+  // worst installed voice). Pure: pass the voice list; an explicit saved
+  // preference (by name) wins when still present.
+  var VOICE_PREF = [/google us english/i, /\(enhanced\)/i, /samantha/i, /aria/i,
+                    /jenny/i, /ava/i, /natural/i];
+  function pickVoice(voices, savedName) {
+    voices = voices || [];
+    if (savedName) {
+      var saved = voices.filter(function (v) { return v.name === savedName; })[0];
+      if (saved) return saved;
+    }
+    var en = voices.filter(function (v) { return /^en(-|_|$)/i.test(v.lang || ""); });
+    for (var i = 0; i < VOICE_PREF.length; i++) {
+      var hit = en.filter(function (v) { return VOICE_PREF[i].test(v.name || ""); })[0];
+      if (hit) return hit;
+    }
+    return en[0] || voices[0] || null;
   }
 
   // Alt text for an engine-rendered scan, from its render setup (the same
@@ -63,25 +107,51 @@
 
   // --- browser speech (no-op under Node) ------------------------------------ //
   var synth = (typeof window !== "undefined" && window.speechSynthesis) || null;
-  var current = null;
+  var queue = [], active = false, onDone = null;
+  var PREF_KEY = "mrisim_tts_v1";
+
+  function prefs() {
+    try { return JSON.parse(localStorage.getItem(PREF_KEY) || "{}"); }
+    catch (e) { return {}; }
+  }
+  function setPrefs(p) {
+    var cur = prefs();
+    Object.keys(p || {}).forEach(function (k) { cur[k] = p[k]; });
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(cur)); } catch (e) { /* storage off */ }
+  }
+  function voices() { return synth ? synth.getVoices() : []; }
 
   function stop() {
+    queue = []; active = false;
     if (synth) synth.cancel();
-    if (current) { current.onend = null; current = null; }
+    if (onDone) { var f = onDone; onDone = null; f(); }
   }
 
-  function speaking() { return !!(synth && synth.speaking); }
+  function speaking() { return active; }
+
+  function _next() {
+    if (!queue.length) { active = false; if (onDone) { var f = onDone; onDone = null; f(); } return; }
+    var p = prefs();
+    var u = new SpeechSynthesisUtterance(queue.shift());
+    var v = pickVoice(voices(), p.voice);
+    if (v) u.voice = v;
+    u.rate = p.rate || 0.95;
+    u.onend = _next;
+    u.onerror = _next;
+    synth.speak(u);
+  }
 
   function speak(text, onend) {
     if (!synth) { if (onend) onend(); return false; }
     stop();
-    var u = new SpeechSynthesisUtterance(speakable(text));
-    u.onend = function () { current = null; if (onend) onend(); };
-    current = u;
-    synth.speak(u);
-    return true;
+    onDone = onend || null;
+    queue = chunks(speakable(text));
+    active = queue.length > 0;
+    if (active) _next(); else stop();
+    return active;
   }
 
-  return { speakable: speakable, describeScan: describeScan,
+  return { speakable: speakable, describeScan: describeScan, chunks: chunks,
+           pickVoice: pickVoice, voices: voices, prefs: prefs, setPrefs: setPrefs,
            speak: speak, stop: stop, speaking: speaking };
 });
