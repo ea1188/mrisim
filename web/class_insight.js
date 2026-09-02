@@ -247,7 +247,13 @@
           out[c.key] = null;
         }
       });
-      return { studentId: r.studentId, name: r.name, cats: out,
+      var weakestCat = null, weakestVal = null;
+      cats.forEach(function (c) {
+        if (out[c.key] != null && (weakestVal == null || out[c.key] < weakestVal)) {
+          weakestVal = out[c.key]; weakestCat = c.key;
+        }
+      });
+      return { studentId: r.studentId, name: r.name, cats: out, weakestCat: weakestCat,
                overall: wsum ? Math.round(acc / wsum) : null };
     });
     var classCats = {}, cw = 0, ca = 0;

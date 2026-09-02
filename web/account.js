@@ -159,32 +159,51 @@
     frag.appendChild(h("p", { class: "muted legend", text:
       "M = mastered · L = lessons done · · = started. Columns are modules 1–" + modules.length + " (hover for names)." }));
 
-    // 1b) Registry readiness by ARRT category (formative rollup of quiz
-    // accuracy through the same blueprint weighting the learner panel uses).
+    // 1b) Registry readiness: per-student triage by ARRT category. Rows sort
+    // weakest-first so at-risk students surface; the Focus column names the
+    // weakest practiced category (an average alone is not actionable).
     if (window.Blueprint) {
       var BP = window.Blueprint;
       var rd = ClassInsight.arrtReadiness(rows, BP.PREMIUM_MAP, BP.ARRT_BLUEPRINT);
+      var catName = {};
+      BP.ARRT_BLUEPRINT.forEach(function (c) { catName[c.key] = c.name; });
       frag.appendChild(h("h3", { class: "detail-h", text: "Registry readiness" }));
-      var rhead = [h("th", { text: "Category" }), h("th", { class: "num", text: "Class average" }), h("th", { class: "num", text: "Range" })];
-      var rbody = h("tbody");
+      var rhead = [h("th", { text: "Member" })];
       BP.ARRT_BLUEPRINT.forEach(function (c) {
-        var vals = rd.students.map(function (st) { return st.cats[c.key]; })
-                             .filter(function (v) { return v != null; });
-        var range = vals.length ? Math.min.apply(null, vals) + "–" + Math.max.apply(null, vals) + "%" : "—";
-        rbody.appendChild(h("tr", {}, [
-          h("td", { text: c.name + " (" + Math.round(100 * c.weight) + "%)" }),
-          h("td", { class: "num", text: rd["class"].cats[c.key] == null ? "—" : rd["class"].cats[c.key] + "%" }),
-          h("td", { class: "num", text: range }),
-        ]));
+        var t = h("th", { class: "num", text: c.name });
+        t.title = Math.round(100 * c.weight) + "% of the registry";
+        rhead.push(t);
       });
-      rbody.appendChild(h("tr", {}, [
-        h("td", { text: "Weighted overall" }),
-        h("td", { class: "num", text: rd["class"].overall == null ? "—" : rd["class"].overall + "%" }),
-        h("td", { class: "num", text: "" }),
-      ]));
-      frag.appendChild(h("table", {}, [h("thead", {}, [h("tr", {}, rhead)]), rbody]));
+      rhead.push(h("th", { class: "num", text: "Overall" }), h("th", { text: "Focus" }));
+      var rbody = h("tbody");
+      var cell = function (v) {
+        var td = h("td", { class: "num", text: v == null ? "\u2014" : v + "%" });
+        if (v == null) td.title = "not practiced yet";
+        return td;
+      };
+      var sorted = rd.students.slice().sort(function (a, b) {
+        if (a.overall == null) return 1;
+        if (b.overall == null) return -1;
+        return a.overall - b.overall;
+      });
+      sorted.forEach(function (st) {
+        var focus;
+        if (st.overall == null) focus = "no quiz practice yet";
+        else if (st.weakestCat != null && st.cats[st.weakestCat] < 80) focus = catName[st.weakestCat] + " (" + st.cats[st.weakestCat] + "%)";
+        else focus = "on track";
+        var tds = [h("td", { text: st.name })];
+        BP.ARRT_BLUEPRINT.forEach(function (c) { tds.push(cell(st.cats[c.key])); });
+        tds.push(cell(st.overall), h("td", { class: "muted", text: focus }));
+        rbody.appendChild(h("tr", {}, tds));
+      });
+      var avg = [h("td", { text: "Class average" })];
+      BP.ARRT_BLUEPRINT.forEach(function (c) { avg.push(cell(rd["class"].cats[c.key])); });
+      avg.push(cell(rd["class"].overall), h("td", { text: "" }));
+      rbody.appendChild(h("tr", {}, avg));
+      frag.appendChild(h("div", { class: "grid-scroll" }, [
+        h("table", {}, [h("thead", {}, [h("tr", {}, rhead)]), rbody])]));
       frag.appendChild(h("p", { class: "muted legend", text:
-        "Formative practice accuracy mapped onto the ARRT content weights; categories a student has not practiced are left out of their average." }));
+        "Formative quiz accuracy mapped onto the ARRT content weights, weakest students first. \u2014 = category not practiced yet; Focus names the weakest practiced category below 80%." }));
     }
 
     // 2) Per-module rates.
