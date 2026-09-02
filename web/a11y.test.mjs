@@ -79,3 +79,37 @@ test("speakable spells device acronyms", () => {
   assert.equal(A11y.speakable("a DBS with a B1+rms condition"),
     "a D B S with a B one plus R M S condition");
 });
+
+// --- read-along: sentencePlan must mirror the spoken chunk stream ------------
+test("sentencePlan counts align with chunking the full spoken text", () => {
+  const title = "RF heating and coil safety";
+  const blocks = ["The RF field deposits energy. SAR tracks it.", "Burns cluster at loops and skin contact points."];
+  const keypoints = ["Keep cables straight", "Use pads between skin and bore."];
+  const worked = ["Compute SAR for a 70 kg patient. It doubles with B1."];
+  const hooks = ["SAR scales with the square of B1"];
+  const traps = ["Whole body SAR limit is 2 W/kg in normal mode."];
+  const plan = A11y.sentencePlan(title, blocks, keypoints, worked, hooks, traps);
+  let spoken = title + ". " + blocks.join(" ");
+  keypoints.forEach((k) => { spoken += " Key point: " + k + "."; });
+  spoken += " Worked example. " + worked.join(" ");
+  hooks.forEach((k) => { spoken += " Memory hook: " + k + "."; });
+  traps.forEach((k) => { spoken += " Exam trap: " + k + "."; });
+  assert.equal(plan.total, A11y.chunks(spoken).length);
+  assert.equal(plan.workedHeader.count, 1);
+  assert.deepEqual(plan.workedBlocks.map((b) => b.count), [2]);
+  assert.equal(plan.traps[0].count, 1);
+  assert.equal(plan.title.start, 0);
+  assert.deepEqual(plan.blocks.map((b) => b.count), [2, 1]);
+  assert.equal(plan.keypoints[0].count, 1);
+});
+
+test("sentencePlan tolerates empty parts", () => {
+  const plan = A11y.sentencePlan("Title", [], []);
+  assert.equal(plan.total, 1);
+  assert.deepEqual(plan.blocks, []);
+});
+
+test("seekChunk and position are safe no-ops when idle or under Node", () => {
+  A11y.seekChunk(3);
+  assert.deepEqual(A11y.position(), { index: -1, total: 0 });
+});

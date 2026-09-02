@@ -15,6 +15,7 @@ ffmpeg on PATH for the mp3 encode. Run:
     <venv>/bin/python scripts/prerender_narration.py
 """
 import hashlib
+import html as html_mod
 import json
 import os
 import re
@@ -37,19 +38,34 @@ def card_text(b):
     t = re.sub(r"<br\s*/?>", ". ", t)
     t = re.sub(r"<[^>]+>", "", t)
     t = re.sub(r"\.\s*\.", ".", t)
-    t = re.sub(r"\s{2,}", " ", t).strip()
+    t = html_mod.unescape(re.sub(r"\s{2,}", " ", t)).strip()
+    def strip_inline(html):
+        x = re.sub(r"</(p|li|h[1-6]|div)>", ". ", str(html or ""))
+        x = re.sub(r"<br\s*/?>", ". ", x)
+        x = re.sub(r"<[^>]+>", "", x)
+        x = re.sub(r"\.\s*\.", ".", x)
+        return html_mod.unescape(re.sub(r"\s{2,}", " ", x)).strip()
     text = b["title"] + ". " + t
     for kp in b.get("keypoints") or []:
         text += " Key point: " + kp + "."
+    if b.get("worked_example"):
+        text += " Worked example. " + strip_inline(b["worked_example"])
+    for hk in b.get("memory_hooks") or []:
+        text += " Memory hook: " + hk + "."
+    for tp in b.get("exam_traps") or []:
+        text += " Exam trap: " + tp + "."
     return text
 
 
-def speakable_all(texts):
-    """Run the site's pronunciation dictionary (web/a11y.js) over all texts."""
+def speakable_chunks_all(texts):
+    """Sentence-chunk each text, then run the pronunciation dictionary over the
+    chunks (web/a11y.js) — the same split the browser player uses, so chunk i
+    lines up with display sentence i for read-along highlighting."""
     script = (
         "const A11y = require(process.argv[1]);"
         "const texts = JSON.parse(require('fs').readFileSync(0, 'utf8'));"
-        "process.stdout.write(JSON.stringify(texts.map(A11y.speakable)));"
+        "process.stdout.write(JSON.stringify("
+        "texts.map(function (t) { return A11y.chunks(t).map(A11y.speakable); })));"
     )
     r = subprocess.run(["node", "-e", script, os.path.join(ROOT, "web", "a11y.js")],
                        input=json.dumps(texts), capture_output=True, text=True, check=True)
@@ -65,16 +81,17 @@ def main():
     manifest = json.load(open(man_path)) if os.path.exists(man_path) else {}
 
     texts = [card_text(b) for _, b in cards]
-    spoken = speakable_all(texts)
+    spoken = speakable_chunks_all(texts)
     todo = []
-    for (topic, b), text in zip(cards, spoken, strict=True):
-        h = hashlib.sha1((VOICE + "\n" + text).encode()).hexdigest()[:12]
+    for (topic, b), chunks in zip(cards, spoken, strict=True):
+        text = "\n".join(chunks)
+        h = hashlib.sha1((VOICE + "\nv2\n" + text).encode()).hexdigest()[:12]
         key = topic + "|" + b["title"]        # titles repeat across modules
         f = slug(topic + "-" + b["title"]) + ".mp3"
         rec = manifest.get(key)
         if rec and rec.get("hash") == h and os.path.exists(os.path.join(OUT, f)):
             continue
-        todo.append((key, f, h, text))
+        todo.append((key, f, h, chunks))
     print(f"{len(cards)} cards, {len(todo)} to synthesize")
     if not todo:
         return
@@ -88,14 +105,21 @@ def main():
     import soundfile as sf
     pipe = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
 
-    for i, (key, f, h, text) in enumerate(todo):
-        wav = np.concatenate([a for _, _, a in pipe(text, voice=VOICE)])
+    for i, (key, f, h, chunks) in enumerate(todo):
+        pieces, starts, pos = [], [], 0.0
+        for c in chunks:
+            audio = np.concatenate([a for _, _, a in pipe(c, voice=VOICE)])
+            starts.append(round(pos, 2))
+            pos += len(audio) / 24000.0
+            pieces.append(audio)
+        wav = np.concatenate(pieces)
         tmp = os.path.join(OUT, f + ".tmp.wav")   # per-card: concurrent runs can't race
         sf.write(tmp, wav, 24000)
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp,
                         "-ac", "1", "-b:a", "48k", os.path.join(OUT, f)], check=True)
         os.remove(tmp)
-        manifest[key] = {"file": f, "hash": h, "seconds": round(len(wav) / 24000, 1)}
+        manifest[key] = {"file": f, "hash": h, "seconds": round(len(wav) / 24000, 1),
+                         "starts": starts}
         json.dump(manifest, open(man_path, "w"), indent=1)   # checkpoint per card
         print(f"[{i + 1}/{len(todo)}] {key} ({manifest[key]['seconds']}s)")
     print(f"done -> {OUT}")
