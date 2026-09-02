@@ -34,3 +34,31 @@ test("speech API no-ops under Node", () => {
   assert.equal(A11y.speaking(), false);
   A11y.stop();
 });
+
+// --- TTS quality: chunking, voice preference, prosody ------------------------
+test("chunks splits at sentences and caps run-ons at commas", () => {
+  const c = A11y.chunks("Short one. Another short one!");
+  assert.deepEqual(c, ["Short one.", "Another short one!"]);
+  const long = "A very long clause that keeps going, " + "and adds more detail, ".repeat(8) + "then ends.";
+  const parts = A11y.chunks(long, 120);
+  assert.ok(parts.length > 1);
+  assert.ok(parts.every((p) => p.length <= 121));
+});
+
+test("pickVoice prefers saved, then known-good, then any English", () => {
+  const vs = [
+    { name: "Robot Default", lang: "en-US" },
+    { name: "Google US English", lang: "en-US" },
+    { name: "Samantha", lang: "en-US" },
+    { name: "Autre", lang: "fr-FR" },
+  ];
+  assert.equal(A11y.pickVoice(vs, "Samantha").name, "Samantha");
+  assert.equal(A11y.pickVoice(vs, null).name, "Google US English");
+  assert.equal(A11y.pickVoice([{ name: "Only", lang: "en-GB" }], "Gone").name, "Only");
+  assert.equal(A11y.pickVoice([], null), null);
+});
+
+test("speakable turns parentheticals and dashes into comma breaths", () => {
+  assert.equal(A11y.speakable("Fat is bright (short T1) — muscle is not."),
+    "Fat is bright, short T one, muscle is not.");
+});

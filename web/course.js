@@ -777,17 +777,56 @@
       if (activeListen) activeListen.setAttribute("aria-pressed", "false");
       activeListen = btn;
       btn.setAttribute("aria-pressed", "true");
+      showTtsBar();
       A11y.speak(getText(), function () {
         btn.setAttribute("aria-pressed", "false");
         if (activeListen === btn) activeListen = null;
+        hideTtsBar();
       });
     };
     return btn;
   }
   function textOf(html) {
-    var d = document.createElement("div"); d.innerHTML = html || "";
-    return d.textContent || "";
+    var d = document.createElement("div");
+    d.innerHTML = String(html || "").replace(/<\/(p|li|h[1-6]|div)>/gi, ". $&").replace(/<br\s*\/?>(?=.)/gi, ". ");
+    return (d.textContent || "").replace(/\.\s*\./g, ".").replace(/\s{2,}/g, " ").trim();
   }
+
+  // Floating audio bar: visible only while speech plays. Voice + speed are
+  // remembered (A11y prefs) and apply from the next chunk onward.
+  var ttsBar = null;
+  function showTtsBar() {
+    if (ttsBar) { ttsBar.hidden = false; return; }
+    var voiceSel = h("select", { "aria-label": "Reading voice" });
+    function fillVoices() {
+      clear(voiceSel);
+      var p = A11y.prefs();
+      var vs = A11y.voices().filter(function (v) { return /^en(-|_|$)/i.test(v.lang || ""); });
+      var chosen = A11y.pickVoice(vs, p.voice);
+      vs.forEach(function (v) {
+        var o = h("option", { value: v.name }, [document.createTextNode(v.name)]);
+        if (chosen && v.name === chosen.name) o.selected = true;
+        voiceSel.appendChild(o);
+      });
+    }
+    fillVoices();
+    if (window.speechSynthesis) speechSynthesis.addEventListener("voiceschanged", fillVoices);
+    voiceSel.onchange = function () { A11y.setPrefs({ voice: voiceSel.value }); };
+    var rateSel = h("select", { "aria-label": "Reading speed" }, [
+      h("option", { value: "0.8" }, ["Slow"]),
+      h("option", { value: "0.95", selected: "selected" }, ["Normal"]),
+      h("option", { value: "1.15" }, ["Fast"]),
+    ]);
+    var saved = A11y.prefs().rate;
+    if (saved) rateSel.value = String(saved);
+    rateSel.onchange = function () { A11y.setPrefs({ rate: parseFloat(rateSel.value) }); };
+    var stopBtn = h("button", { class: "ghost", text: "Stop", onclick: function () {
+      A11y.stop();
+    } });
+    ttsBar = h("div", { class: "tts-bar" }, [voiceSel, rateSel, stopBtn]);
+    document.body.appendChild(ttsBar);
+  }
+  function hideTtsBar() { if (ttsBar) ttsBar.hidden = true; }
 
   // Premium image questions carry an `img` (a pre-rendered scan in web/img/course-quiz/).
   // Show it above the prompt; text-only questions have no img and are unaffected.
