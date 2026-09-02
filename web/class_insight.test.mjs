@@ -177,6 +177,7 @@ test("arrtReadiness maps topics through categories with blueprint weights", () =
   // weighted over attempted categories, renormalized:
   // (0.530*70 + 0.105*90) / (0.530 + 0.105) -> 73
   assert.equal(s1.overall, 73);
+  assert.equal(s1.weakestCat, "image-production");   // 70 < 90
 });
 
 test("arrtReadiness: empty student is null; class averages skip missing", () => {
