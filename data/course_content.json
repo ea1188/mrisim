@@ -14512,7 +14512,7 @@
    "kind": "quiz",
    "ord": 1504,
    "body": {
-    "prompt": "This sagittal knee image was acquired with TR 4000 ms, TE 40 ms and TI 150 ms. Joint fluid is bright while subcutaneous fat and bone marrow are dark. Which technique produced the fat suppression?",
+    "prompt": "This sagittal knee image was acquired at 1.5 T with TR 4000 ms, TE 40 ms and TI 150 ms. Joint fluid is bright while subcutaneous fat and bone marrow are dark. Which technique produced the fat suppression?",
     "options": [
      "Short tau inversion recovery",
      "Spectral (CHESS) saturation",
@@ -14529,7 +14529,8 @@
       "sequence": "Inversion Recovery",
       "TR": 4000,
       "TE": 40,
-      "TI": 150
+      "TI": 150,
+      "field_strength": "1.5T"
      }
     },
     "img": "cq2-stir-knee-01.jpg"
@@ -14568,7 +14569,7 @@
    "kind": "quiz",
    "ord": 1506,
    "body": {
-    "prompt": "On this sagittal STIR image of the lumbar spine, which tissue has been nulled by the 150 ms inversion time?",
+    "prompt": "On this sagittal STIR image of the lumbar spine at 1.5 T, which tissue has been nulled by the 150 ms inversion time?",
     "options": [
      "Fat, including the vertebral marrow",
      "Cerebrospinal fluid",
@@ -14585,7 +14586,8 @@
       "sequence": "Inversion Recovery",
       "TR": 4000,
       "TE": 40,
-      "TI": 150
+      "TI": 150,
+      "field_strength": "1.5T"
      }
     },
     "img": "cq2-stir-spine-01.jpg"
@@ -14736,7 +14738,7 @@
    "kind": "quiz",
    "ord": 1512,
    "body": {
-    "prompt": "On this axial STIR image of the pelvis, which structures remain bright after the fat signal is suppressed?",
+    "prompt": "On this axial STIR image of the pelvis at 1.5 T, which structures remain bright after the fat signal is suppressed?",
     "options": [
      "Fluid containing structures such as the bladder",
      "The subcutaneous fat surrounding the pelvis",
@@ -14753,7 +14755,8 @@
       "sequence": "Inversion Recovery",
       "TR": 4000,
       "TE": 40,
-      "TI": 150
+      "TI": 150,
+      "field_strength": "1.5T"
      }
     },
     "img": "cq2-stir-pelvis-01.jpg"
