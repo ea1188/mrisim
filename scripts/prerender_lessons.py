@@ -105,17 +105,35 @@ def step_payloads(lesson):
 
 
 def ensure_region(host, region):
-    """Load a region, injecting the real body atlas so build images match the browser."""
+    """Load a region, injecting the real body atlas + texture + mixel with the
+    SAME transforms web_adapter.load_region applies (straighten, then body L/R
+    flip), so build images match the browser render exactly."""
     if region == "Brain" or region in host._region_cache:
         host.load_region(region)
         return
     src = _BODY_SRC.get(region)
     if src and os.path.exists(os.path.join(ROOT, src)):
+        import region_orient
         vol = np.load(os.path.join(ROOT, src))
+        tex_p = os.path.join(ROOT, src.replace("atlas", "texture"))
+        mix_p = os.path.join(ROOT, src.replace("atlas", "mixel"))
+        tex = np.load(tex_p).astype(np.float32) if os.path.exists(tex_p) else None
+        mix = np.load(mix_p) if os.path.exists(mix_p) else None
+        vol = region_orient.straighten(region, vol, 0)
+        if tex is not None:
+            tex = region_orient.straighten(region, tex, 1)
+        if mix is not None:
+            mix = np.stack([region_orient.straighten(region, mix[i], 0)
+                            for i in range(mix.shape[0])])
         if region in web_adapter._BODY_REGIONS:
             vol = np.ascontiguousarray(np.flip(vol, axis=2))
+            if tex is not None:
+                tex = np.ascontiguousarray(np.flip(tex, axis=2))
+            if mix is not None:
+                mix = np.ascontiguousarray(np.flip(mix, axis=3))
         host._region_cache[region] = vol
-        host._region_tex_cache[region] = None
+        host._region_tex_cache[region] = tex
+        host._region_mixel_cache[region] = mix
         host._region_aux_cache[region] = (None, None)
     host.load_region(region)
 

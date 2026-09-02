@@ -18,7 +18,6 @@ import io
 import os
 import sys
 
-import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -67,19 +66,7 @@ def _font(size, bold=False):
     return ImageFont.load_default()
 
 
-def ensure_region(host, region):
-    if region == "Brain" or region in host._region_cache:
-        host.load_region(region)
-        return
-    src = _BODY_SRC.get(region)
-    if src and os.path.exists(os.path.join(ROOT, src)):
-        vol = np.load(os.path.join(ROOT, src))
-        if region in web_adapter._BODY_REGIONS:
-            vol = np.ascontiguousarray(np.flip(vol, axis=2))
-        host._region_cache[region] = vol
-        host._region_tex_cache[region] = None
-        host._region_aux_cache[region] = (None, None)
-    host.load_region(region)
+from prerender_lessons import ensure_region  # noqa: E402  (full-fidelity: atlas+texture+mixel, straighten+flip)
 
 
 def render_tile(host, region, state):
