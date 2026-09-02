@@ -565,3 +565,9 @@ kbd {
   align-items: center; background: var(--bg-panel, #14171c); border: 1px solid var(--line, #232830);
   padding: 8px 10px; }
 .tts-bar select { max-width: 180px; }
+
+/* read-along: the sentence being narrated */
+.rs.active { background: rgba(79, 179, 191, 0.16); box-shadow: 0 0 0 2px rgba(79, 179, 191, 0.16); border-radius: 2px; }
+@media (prefers-reduced-motion: reduce) { .rs.active { box-shadow: none; } }
+
+.tts-bar .tts-seek { flex: 1; min-width: 140px; accent-color: var(--accent-hi, #4FB3BF); }

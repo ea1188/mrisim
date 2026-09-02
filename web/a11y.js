@@ -116,6 +116,7 @@
   // --- browser speech (no-op under Node) ------------------------------------ //
   var synth = (typeof window !== "undefined" && window.speechSynthesis) || null;
   var queue = [], active = false, onDone = null;
+  var allSpoken = [];
   var PREF_KEY = "mrisim_tts_v1";
 
   function prefs() {
@@ -130,18 +131,20 @@
   function voices() { return synth ? synth.getVoices() : []; }
 
   function stop() {
-    queue = []; active = false;
+    queue = []; allSpoken = []; active = false;
     if (synth) synth.cancel();
     if (onDone) { var f = onDone; onDone = null; f(); }
   }
 
   function speaking() { return active; }
 
-  var currentChunk = null;
+  var currentChunk = null, chunkIndex = -1, onChunk = null;
   function _next() {
     if (!queue.length) { active = false; currentChunk = null; if (onDone) { var f = onDone; onDone = null; f(); } return; }
     var p = prefs();
     currentChunk = queue.shift();
+    chunkIndex++;
+    if (onChunk) { try { onChunk(chunkIndex); } catch (e) { /* highlight is best-effort */ } }
     var u = new SpeechSynthesisUtterance(currentChunk);
     var v = pickVoice(voices(), p.voice);
     if (v) u.voice = v;
@@ -156,20 +159,65 @@
   function refresh() {
     if (!synth || !active || currentChunk == null) return;
     queue.unshift(currentChunk);
+    chunkIndex--;                       // the requeued chunk keeps its index
     synth.cancel();   // fires the cancelled utterance's end handler -> _next()
   }
 
-  function speak(text, onend) {
+  // Jump TTS playback to sentence i (the audio bar's drag-to-seek).
+  function seekChunk(i) {
+    if (!synth || !active || !allSpoken.length) return;
+    i = Math.max(0, Math.min(allSpoken.length - 1, Math.round(i)));
+    queue = allSpoken.slice(i);
+    chunkIndex = i - 1;                 // _next() advances to i and reports it
+    currentChunk = null;
+    synth.cancel();                     // end handler pulls the new queue head
+  }
+  function position() { return { index: chunkIndex, total: allSpoken.length }; }
+
+  function speak(text, onend, onchunk) {
     if (!synth) { if (onend) onend(); return false; }
     stop();
     onDone = onend || null;
-    queue = chunks(speakable(text));
+    onChunk = onchunk || null;
+    chunkIndex = -1;
+    allSpoken = chunks(text).map(speakable);   // chunk DISPLAY text first: indices align with sentencePlan
+    queue = allSpoken.slice();
     active = queue.length > 0;
     if (active) _next(); else stop();
     return active;
   }
 
+  // Chunk counts per card part, mirroring the spoken construction
+  // (title, then each body block, then each "Key point: ..." item). The
+  // wrapper assigns each part the index range [start, start+count).
+  function sentencePlan(title, blockTexts, keypoints, workedBlocks, hooks, traps) {
+    var idx = 0;
+    function take(text) {
+      var n = chunks(text).length;
+      var r = { start: idx, count: n };
+      idx += n;
+      return r;
+    }
+    var plan = {
+      title: take(title + "."),
+      blocks: (blockTexts || []).map(function (t) { return take(t); }),
+      keypoints: (keypoints || []).map(function (k) { return take("Key point: " + k + "."); }),
+    };
+    if (workedBlocks && workedBlocks.length) {
+      plan.workedHeader = take("Worked example.");
+      plan.workedBlocks = workedBlocks.map(function (t) { return take(t); });
+    } else {
+      plan.workedHeader = null; plan.workedBlocks = [];
+    }
+    plan.hooks = (hooks || []).map(function (k) { return take("Memory hook: " + k + "."); });
+    plan.traps = (traps || []).map(function (k) { return take("Exam trap: " + k + "."); });
+    plan.total = idx;
+    return plan;
+  }
+
   return { speakable: speakable, describeScan: describeScan, chunks: chunks,
+           sentencePlan: sentencePlan,
            pickVoice: pickVoice, voices: voices, prefs: prefs, setPrefs: setPrefs,
-           speak: speak, stop: stop, speaking: speaking, refresh: refresh };
+           speak: speak, stop: stop, speaking: speaking, refresh: refresh,
+           seekChunk: seekChunk, position: position };
 });

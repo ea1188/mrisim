@@ -667,9 +667,12 @@
         var eduH4 = h("h4", { text: b.title });
         var lb = listenBtn(function () {
           var t = b.title + ". " + textOf(b.html);
-          (b.keypoints || []).forEach(function (kpt) { t += " Key point: " + kpt; });
+          (b.keypoints || []).forEach(function (kpt) { t += " Key point: " + kpt + "."; });
+          if (b.worked_example) t += " Worked example. " + textOf(b.worked_example);
+          (b.memory_hooks || []).forEach(function (hk) { t += " Memory hook: " + hk + "."; });
+          (b.exam_traps || []).forEach(function (tp) { t += " Exam trap: " + tp + "."; });
           return t;
-        }, (b._ptopic || "") + "|" + b.title);
+        }, (b._ptopic || "") + "|" + b.title, function () { return card; }, b);
         if (lb) eduH4.appendChild(lb);
         var card = h("div", { class: "edu" + (isRead ? " read" : ""), id: "edu-" + slug(b.title), "data-subid": rid }, [eduH4, h("div", { class: "body", html: b.html })]);
         if (b.keypoints && b.keypoints.length) {
@@ -775,20 +778,112 @@
     .then(function (m) { narration = m; })
     .catch(function () { narration = null; });
 
+  // --- read-along highlighting ------------------------------------------- //
+  // Sentences never cross block boundaries (textOf inserts a terminator at
+  // every block end), so wrapping per block with the same A11y.chunks split
+  // keeps span indices aligned with the audio chunk timeline.
+  function wrapCardSentences(card, b) {
+    if (!card || card.dataset.rsWrapped) return;
+    var body = card.querySelector(".body");
+    var blocks = body ? Array.prototype.slice.call(body.querySelectorAll("p, li, h5")) : [];
+    if (body && !blocks.length) blocks = [body];
+    var kpItems = Array.prototype.slice.call(card.querySelectorAll(".keypoints li"));
+    var workedBody = card.querySelector(".edu-worked .body");
+    var workedBlocks = workedBody
+      ? (Array.prototype.slice.call(workedBody.querySelectorAll("p, li, h5")).length
+          ? Array.prototype.slice.call(workedBody.querySelectorAll("p, li, h5")) : [workedBody])
+      : [];
+    var hookItems = Array.prototype.slice.call(card.querySelectorAll(".edu-hooks li"));
+    var trapItems = Array.prototype.slice.call(card.querySelectorAll(".edu-traps li"));
+    var plan = A11y.sentencePlan(b.title,
+      blocks.map(function (el) { return el.textContent || ""; }),
+      b.keypoints || [],
+      workedBlocks.map(function (el) { return el.textContent || ""; }),
+      b.memory_hooks || [],
+      b.exam_traps || []);
+    function markWhole(el, r) {
+      if (!el || !r.count) return;
+      var span = h("span", { class: "rs" });
+      span.dataset.s0 = r.start; span.dataset.s1 = r.start + r.count - 1;
+      while (el.firstChild) {
+        var c = el.firstChild;
+        if (c.classList && c.classList.contains("listen")) break;   // keep the button outside
+        span.appendChild(c);
+      }
+      el.insertBefore(span, el.firstChild);
+    }
+    function wrapBlock(el, r) {
+      if (!r.count) return;
+      if (r.count === 1) { markWhole(el, r); return; }
+      var idx = r.start, last = r.start + r.count - 1;
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      var nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        var pieces = node.nodeValue.replace(/([.!?])\s+/g, "$1\u0000").split("\u0000");
+        var frag = document.createDocumentFragment();
+        pieces.forEach(function (piece, i) {
+          var span = h("span", { class: "rs" });
+          span.dataset.s0 = idx; span.dataset.s1 = idx;
+          span.appendChild(document.createTextNode(piece));
+          frag.appendChild(span);
+          if (i < pieces.length - 1 && idx < last) idx++;
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    }
+    markWhole(card.querySelector("h4"), plan.title);
+    blocks.forEach(function (el, i) { wrapBlock(el, plan.blocks[i]); });
+    kpItems.forEach(function (el, i) { if (plan.keypoints[i]) markWhole(el, plan.keypoints[i]); });
+    if (plan.workedHeader) markWhole(card.querySelector(".edu-worked h5"), plan.workedHeader);
+    workedBlocks.forEach(function (el, i) { if (plan.workedBlocks[i]) wrapBlock(el, plan.workedBlocks[i]); });
+    hookItems.forEach(function (el, i) { if (plan.hooks[i]) markWhole(el, plan.hooks[i]); });
+    trapItems.forEach(function (el, i) { if (plan.traps[i]) markWhole(el, plan.traps[i]); });
+    card.dataset.rsWrapped = "1";
+  }
+
+  var highlightedCard = null;
+  function highlightSentence(card, idx) {
+    if (highlightedCard && highlightedCard !== card) clearHighlight();
+    highlightedCard = card;
+    var spans = card.querySelectorAll(".rs");
+    var target = null;
+    for (var i = 0; i < spans.length; i++) {
+      var on = +spans[i].dataset.s0 <= idx && idx <= +spans[i].dataset.s1;
+      spans[i].classList.toggle("active", on);
+      if (on && !target) target = spans[i];
+    }
+    if (target && target.scrollIntoView) target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  function clearHighlight() {
+    if (!highlightedCard) return;
+    highlightedCard.querySelectorAll(".rs.active").forEach(function (el) { el.classList.remove("active"); });
+    highlightedCard = null;
+  }
+
+  function ttsProgress(mark) {
+    return function (i) {
+      var pos = A11y.position();
+      setSeekUI(i, Math.max(1, pos.total - 1));
+      if (mark) mark(i);
+    };
+  }
+
   function stopPlayback() {
     if (A11y) A11y.stop();
     if (activeAudio) { activeAudio.onended = null; activeAudio.pause(); activeAudio = null; }
     if (activeListen) { activeListen.setAttribute("aria-pressed", "false"); activeListen = null; }
+    clearHighlight();
     hideTtsBar();
   }
 
-  function listenBtn(getText, narrTitle) {
+  function listenBtn(getText, narrTitle, getCard, cardBody) {
     if (!A11y) return null;
     var btn = h("button", { class: "ghost listen", text: "Listen", "aria-pressed": "false" });
     btn.setAttribute("aria-label", "Read this section aloud");
     function finish() {
       btn.setAttribute("aria-pressed", "false");
       if (activeListen === btn) activeListen = null;
+      clearHighlight();
       hideTtsBar();
     }
     btn.onclick = function () {
@@ -797,14 +892,28 @@
       if (wasActive) return;
       activeListen = btn;
       btn.setAttribute("aria-pressed", "true");
+      var card = getCard && getCard();
+      var mark = null;
+      if (card && cardBody) {
+        try { wrapCardSentences(card, cardBody); mark = function (i) { highlightSentence(card, i); }; }
+        catch (e) { mark = null; }   // highlighting is best-effort, never blocks audio
+      }
       var rec = narrTitle && narration && narration[narrTitle];
       if (rec) {
         var a = new Audio("audio/cards/" + rec.file);
         a.playbackRate = (A11y.prefs().rate || 0.95);
+        a.ontimeupdate = function () {
+          setSeekUI(a.currentTime, rec.seconds || a.duration);
+          if (mark && rec.starts && rec.starts.length) {
+            var t = a.currentTime, i = 0;
+            while (i + 1 < rec.starts.length && rec.starts[i + 1] <= t) i++;
+            mark(i);
+          }
+        };
         a.onended = function () { activeAudio = null; finish(); };
         a.onerror = function () {           // missing/offline: fall back to TTS
           activeAudio = null;
-          if (window.speechSynthesis) { showTtsBar(false); A11y.speak(getText(), finish); }
+          if (window.speechSynthesis) { showTtsBar(false); A11y.speak(getText(), finish, ttsProgress(mark)); }
           else finish();
         };
         activeAudio = a;
@@ -812,7 +921,7 @@
         a.play();
       } else if (window.speechSynthesis) {
         showTtsBar(false);
-        A11y.speak(getText(), finish);
+        A11y.speak(getText(), finish, ttsProgress(mark));
       } else {
         finish();
       }
@@ -829,6 +938,12 @@
   // remembered (A11y prefs) and apply from the next chunk onward.
   var ttsBar = null;
   var ttsVoiceSel = null;
+  var ttsSeek = null;
+  function setSeekUI(value, max) {
+    if (!ttsSeek) return;
+    if (max != null && isFinite(max) && max > 0) ttsSeek.max = String(max);
+    if (document.activeElement !== ttsSeek) ttsSeek.value = String(value);
+  }
   function showTtsBar(audioMode) {
     if (ttsBar) {
       ttsBar.hidden = false;
@@ -863,7 +978,15 @@
       else A11y.refresh();
     };
     var stopBtn = h("button", { class: "ghost", text: "Stop", onclick: stopPlayback });
-    ttsBar = h("div", { class: "tts-bar" }, [voiceSel, rateSel, stopBtn]);
+    var seek = h("input", { type: "range", class: "tts-seek", min: "0", max: "1", step: "any", value: "0" });
+    seek.setAttribute("aria-label", "Narration position");
+    seek.addEventListener("input", function () {
+      var v = parseFloat(seek.value);
+      if (activeAudio) activeAudio.currentTime = v;
+      else if (A11y.speaking()) A11y.seekChunk(v);
+    });
+    ttsSeek = seek;
+    ttsBar = h("div", { class: "tts-bar" }, [voiceSel, rateSel, seek, stopBtn]);
     ttsVoiceSel = voiceSel;
     voiceSel.hidden = !!audioMode;
     document.body.appendChild(ttsBar);
