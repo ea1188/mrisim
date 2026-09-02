@@ -159,53 +159,6 @@
     frag.appendChild(h("p", { class: "muted legend", text:
       "M = mastered · L = lessons done · · = started. Columns are modules 1–" + modules.length + " (hover for names)." }));
 
-    // 1b) Registry readiness: per-student triage by ARRT category. Rows sort
-    // weakest-first so at-risk students surface; the Focus column names the
-    // weakest practiced category (an average alone is not actionable).
-    if (window.Blueprint) {
-      var BP = window.Blueprint;
-      var rd = ClassInsight.arrtReadiness(rows, BP.PREMIUM_MAP, BP.ARRT_BLUEPRINT);
-      var catName = {};
-      BP.ARRT_BLUEPRINT.forEach(function (c) { catName[c.key] = c.name; });
-      frag.appendChild(h("h3", { class: "detail-h", text: "Registry readiness" }));
-      var rhead = [h("th", { text: "Member" })];
-      BP.ARRT_BLUEPRINT.forEach(function (c) {
-        var t = h("th", { class: "num", text: c.name });
-        t.title = Math.round(100 * c.weight) + "% of the registry";
-        rhead.push(t);
-      });
-      rhead.push(h("th", { class: "num", text: "Overall" }), h("th", { text: "Focus" }));
-      var rbody = h("tbody");
-      var cell = function (v) {
-        var td = h("td", { class: "num", text: v == null ? "\u2014" : v + "%" });
-        if (v == null) td.title = "not practiced yet";
-        return td;
-      };
-      var sorted = rd.students.slice().sort(function (a, b) {
-        if (a.overall == null) return 1;
-        if (b.overall == null) return -1;
-        return a.overall - b.overall;
-      });
-      sorted.forEach(function (st) {
-        var focus;
-        if (st.overall == null) focus = "no quiz practice yet";
-        else if (st.weakestCat != null && st.cats[st.weakestCat] < 80) focus = catName[st.weakestCat] + " (" + st.cats[st.weakestCat] + "%)";
-        else focus = "on track";
-        var tds = [h("td", { text: st.name })];
-        BP.ARRT_BLUEPRINT.forEach(function (c) { tds.push(cell(st.cats[c.key])); });
-        tds.push(cell(st.overall), h("td", { class: "muted", text: focus }));
-        rbody.appendChild(h("tr", {}, tds));
-      });
-      var avg = [h("td", { text: "Class average" })];
-      BP.ARRT_BLUEPRINT.forEach(function (c) { avg.push(cell(rd["class"].cats[c.key])); });
-      avg.push(cell(rd["class"].overall), h("td", { text: "" }));
-      rbody.appendChild(h("tr", {}, avg));
-      frag.appendChild(h("div", { class: "grid-scroll" }, [
-        h("table", {}, [h("thead", {}, [h("tr", {}, rhead)]), rbody])]));
-      frag.appendChild(h("p", { class: "muted legend", text:
-        "Formative quiz accuracy mapped onto the ARRT content weights, weakest students first. \u2014 = category not practiced yet; Focus names the weakest practiced category below 80%." }));
-    }
-
     // 2) Per-module rates.
     frag.appendChild(h("h3", { class: "detail-h", text: "By module" }));
     var rlist = h("div", { class: "rate-list" });
@@ -270,7 +223,7 @@
     var comp = Assignments.classCompletion(assignments, roster, acts, cat);
     if (!comp.length) { box.appendChild(h("p", { class: "muted", text: "No assignments yet." })); return box; }
     var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
-      th("Assigned"), th("Type"), th("Due"), th("Done"), th(""),
+      th("Assigned"), th("Type"), th("Due"), th("Done"), th("Waiting on"), th(""),
     ])])]);
     var tb = h("tbody");
     comp.forEach(function (a) {
@@ -284,9 +237,16 @@
           reload();
         }).catch(function () { rm.disabled = false; });
       } });
+      var waiting;
+      if (!a.missing || !a.missing.length) waiting = h("td", { class: "muted", text: "everyone done" });
+      else {
+        var shown = a.missing.slice(0, 3).join(", ") + (a.missing.length > 3 ? " +" + (a.missing.length - 3) + " more" : "");
+        waiting = h("td", { class: "muted", text: shown });
+        waiting.title = a.missing.join(", ");
+      }
       tb.appendChild(h("tr", {}, [
         td(a.label), td(KIND_LABEL[a.kind] || a.kind), dueCell,
-        tdNum(a.doneCount + "/" + a.total), h("td", {}, [rm]),
+        tdNum(a.doneCount + "/" + a.total), waiting, h("td", {}, [rm]),
       ]));
     });
     tbl.appendChild(tb);

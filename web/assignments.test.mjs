@@ -150,3 +150,20 @@ test("dueLabel: null when no due; overdue flag compares to now", () => {
   const past = A.dueLabel("2026-07-05T23:59:59Z", "2026-07-08T00:00:00Z");
   assert.equal(past.overdue, true);
 });
+
+// --- classCompletion: per-assignment missing names (status board) ------------
+test("classCompletion lists who is missing, by display name", () => {
+  const roster = [
+    { student_id: "s1", profiles: { display_name: "Ada" } },
+    { student_id: "s2", profiles: { display_name: "Bo" } },
+    { student_id: "s3", profiles: {} },
+  ];
+  const assignments = [{ id: "a1", kind: "lesson", ref: "Lesson A", due_at: null }];
+  const activity = [
+    { student_id: "s1", kind: "lesson_complete", ref: "Lesson A", created_at: "2026-09-01T10:00:00Z" },
+  ];
+  const cat = { modules: [], lessons: [{ ref: "Lesson A", label: "Lesson A" }], quizzes: [] };
+  const comp = A.classCompletion(assignments, roster, activity, cat);
+  assert.equal(comp[0].doneCount, 1);
+  assert.deepEqual(comp[0].missing, ["Bo", "(unnamed)"]);
+});

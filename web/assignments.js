@@ -132,16 +132,22 @@
       (byStudent[a.student_id] || (byStudent[a.student_id] = [])).push(a);
     });
     var members = (roster || []).map(function (r) { return r.student_id; });
+    var nameById = {};
+    (roster || []).forEach(function (r) {
+      nameById[r.student_id] = (r.profiles && r.profiles.display_name) || "(unnamed)";
+    });
     return (assignments || []).map(function (a) {
-      var doneCount = 0;
+      var doneCount = 0, missing = [];
       members.forEach(function (sid) {
         if (_statusOne(a, byStudent[sid] || [], cat).done) doneCount++;
+        else missing.push(nameById[sid]);
       });
       return {
         id: a.id, kind: a.kind, ref: a.ref,
         label: _labelOf(cat, a.kind, a.ref),
         dueAt: a.due_at || null,
         doneCount: doneCount, total: members.length,
+        missing: missing,
       };
     }).sort(_byDueThenLabel);
   }
