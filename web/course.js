@@ -795,10 +795,11 @@
       : [];
     var hookItems = Array.prototype.slice.call(card.querySelectorAll(".edu-hooks li"));
     var trapItems = Array.prototype.slice.call(card.querySelectorAll(".edu-traps li"));
+    function flat(el) { return (el.textContent || "").replace(/\s+/g, " ").trim(); }
     var plan = A11y.sentencePlan(b.title,
-      blocks.map(function (el) { return el.textContent || ""; }),
+      blocks.map(flat),
       b.keypoints || [],
-      workedBlocks.map(function (el) { return el.textContent || ""; }),
+      workedBlocks.map(flat),
       b.memory_hooks || [],
       b.exam_traps || []);
     function markWhole(el, r) {
@@ -823,10 +824,15 @@
         var frag = document.createDocumentFragment();
         pieces.forEach(function (piece, i) {
           var span = h("span", { class: "rs" });
-          span.dataset.s0 = idx; span.dataset.s1 = idx;
+          // The audio chunker may cap-split a long sentence into several
+          // chunks; this span owns that whole index range so later sentences
+          // in the block stay aligned.
+          var m = Math.max(1, A11y.chunks(piece.replace(/\s+/g, " ").trim()).length);
+          var end = Math.min(last, idx + m - 1);
+          span.dataset.s0 = idx; span.dataset.s1 = end;
           span.appendChild(document.createTextNode(piece));
           frag.appendChild(span);
-          if (i < pieces.length - 1 && idx < last) idx++;
+          if (i < pieces.length - 1 && idx < last) idx = Math.min(last, end + 1);
         });
         node.parentNode.replaceChild(frag, node);
       });
