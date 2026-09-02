@@ -556,3 +556,7 @@ kbd {
     scroll-behavior: auto !important;
   }
 }
+
+/* a11y: listen toggle on education cards and lesson steps */
+.listen { margin-left: 10px; font-size: 11.5px; padding: 1px 8px; vertical-align: middle; }
+.listen[aria-pressed="true"] { color: var(--accent-hi); border-color: var(--accent-hi); }
