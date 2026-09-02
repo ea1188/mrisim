@@ -159,6 +159,34 @@
     frag.appendChild(h("p", { class: "muted legend", text:
       "M = mastered · L = lessons done · · = started. Columns are modules 1–" + modules.length + " (hover for names)." }));
 
+    // 1b) Registry readiness by ARRT category (formative rollup of quiz
+    // accuracy through the same blueprint weighting the learner panel uses).
+    if (window.Blueprint) {
+      var BP = window.Blueprint;
+      var rd = ClassInsight.arrtReadiness(rows, BP.PREMIUM_MAP, BP.ARRT_BLUEPRINT);
+      frag.appendChild(h("h3", { class: "detail-h", text: "Registry readiness" }));
+      var rhead = [h("th", { text: "Category" }), h("th", { class: "num", text: "Class average" }), h("th", { class: "num", text: "Range" })];
+      var rbody = h("tbody");
+      BP.ARRT_BLUEPRINT.forEach(function (c) {
+        var vals = rd.students.map(function (st) { return st.cats[c.key]; })
+                             .filter(function (v) { return v != null; });
+        var range = vals.length ? Math.min.apply(null, vals) + "–" + Math.max.apply(null, vals) + "%" : "—";
+        rbody.appendChild(h("tr", {}, [
+          h("td", { text: c.name + " (" + Math.round(100 * c.weight) + "%)" }),
+          h("td", { class: "num", text: rd["class"].cats[c.key] == null ? "—" : rd["class"].cats[c.key] + "%" }),
+          h("td", { class: "num", text: range }),
+        ]));
+      });
+      rbody.appendChild(h("tr", {}, [
+        h("td", { text: "Weighted overall" }),
+        h("td", { class: "num", text: rd["class"].overall == null ? "—" : rd["class"].overall + "%" }),
+        h("td", { class: "num", text: "" }),
+      ]));
+      frag.appendChild(h("table", {}, [h("thead", {}, [h("tr", {}, rhead)]), rbody]));
+      frag.appendChild(h("p", { class: "muted legend", text:
+        "Formative practice accuracy mapped onto the ARRT content weights; categories a student has not practiced are left out of their average." }));
+    }
+
     // 2) Per-module rates.
     frag.appendChild(h("h3", { class: "detail-h", text: "By module" }));
     var rlist = h("div", { class: "rate-list" });
@@ -570,9 +598,10 @@
         var tb = h("tbody");
         as.slice(0, 25).forEach(function (a) {
           tb.appendChild(h("tr", {}, [
-            h("td", { text: a.kind === "quiz_attempt" ? "Quiz" : "Lesson" }),
-            h("td", { text: a.ref }),
-            h("td", { class: "num", text: a.kind === "quiz_attempt" ? (a.score + "/" + a.total + " (" + pct(a.score, a.total) + ")") : "—" }),
+            h("td", { text: { quiz_attempt: "Quiz", lesson_complete: "Lesson",
+                              mastery_check: "Mastery check", mock_exam: "Mock exam" }[a.kind] || a.kind }),
+            h("td", { text: a.kind === "mock_exam" ? "full mock" : a.ref }),
+            h("td", { class: "num", text: a.total ? (a.score + "/" + a.total + " (" + pct(a.score, a.total) + ")") : "—" }),
             h("td", { class: "num", text: when(a.created_at) }),
           ]));
         });
