@@ -179,6 +179,7 @@ class Simulator:
         self.activation: np.ndarray | None = None      # activation_3d (fMRI)
         self.real_tof: np.ndarray | None = None
         self.texture: np.ndarray | None = None          # real-MRI detail field (body regions)
+        self.mixel: np.ndarray | None = None            # (2,Z,Y,X) partial-volume sidecar
         self.native_fov: float = 220.0
 
         # View / geometry state (set by the caller before simulate)
@@ -756,6 +757,21 @@ class Simulator:
         self.last_kspace = None
         return image, metrics
 
+
+    def _pv_mixel_slices(self, orient: str, sl_idx: int, params: dict,
+                         shape: "tuple[int, ...]") -> "tuple[np.ndarray, np.ndarray] | None":
+        """Second-label and fraction-byte slices of the mixel sidecar, sliced
+        with the exact phantom geometry (crop/zoom/oblique) so they stay
+        pixel-aligned with phantom_slice. None when no sidecar applies."""
+        if (self.mixel is None or self.mixel.ndim != 4 or self.volume is None
+                or self.mixel.shape[1:] != self.volume.shape):
+            return None
+        s2 = self._get_phantom_slice(orient, sl_idx, params, volume=self.mixel[0])
+        fr = self._get_phantom_slice(orient, sl_idx, params, volume=self.mixel[1])
+        if s2.shape != shape or fr.shape != shape:
+            return None
+        return s2, fr
+
     def simulate(self, params: dict) -> tuple[np.ndarray, dict]:
         assert self.volume is not None
         orient = self.orientation; sl_idx = self.slice_idx
@@ -822,8 +838,14 @@ class Simulator:
                 _n = gaussian_filter(_rng.standard_normal(image.shape).astype(float), sigma=2.5)
                 _n /= max(float(np.abs(_n).max()), 1e-9)
                 image[_tm] = np.maximum(0.0, image[_tm] * (1.0 + 0.08 * _n[_tm]))
-            # Partial-volume boundary mixing (pv tissue-fraction model)
-            image = rendering.partial_volume(image, phantom_slice, params.get("pv_sigma", 10) / 10.0)
+            # Partial-volume boundary mixing: real stored mixel fractions when
+            # the region ships a sidecar, else the synthetic pv model.
+            _pvs = params.get("pv_sigma", 10) / 10.0
+            _mix = self._pv_mixel_slices(orient, sl_idx, params, image.shape) if _pvs > 0 else None
+            if _mix is not None:
+                image = rendering.partial_volume_mixel(image, phantom_slice, _mix[0], _mix[1])
+            else:
+                image = rendering.partial_volume(image, phantom_slice, _pvs)
             image[~_tm] = 0.0
 
         if not is_map:
@@ -1006,8 +1028,13 @@ class Simulator:
                       (params["sequence"] == "Diffusion (DWI)"
                        and params["diff_display"] in ("ADC Map", "FA Map")))
             if pv_map and phantom_slice.shape == image.shape:
-                reconstructed = rendering.partial_volume(
-                    image, phantom_slice, params.get("pv_sigma", 10) / 10.0)
+                _pvs = params.get("pv_sigma", 10) / 10.0
+                _mix = self._pv_mixel_slices(orient, sl_idx, params, image.shape) if _pvs > 0 else None
+                if _mix is not None:
+                    reconstructed = rendering.partial_volume_mixel(
+                        image, phantom_slice, _mix[0], _mix[1])
+                else:
+                    reconstructed = rendering.partial_volume(image, phantom_slice, _pvs)
             else:
                 reconstructed = image
 

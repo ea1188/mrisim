@@ -61,7 +61,7 @@ const fetchedRegions = new Set();
 async function ensureRegionData(name) {
   if (!REAL_REGIONS.has(name) || fetchedRegions.has(name)) return;
   pyodide.FS.mkdirTree("/data/regions");
-  for (const kind of ["atlas", "texture"]) {
+  for (const kind of ["atlas", "texture", "mixel"]) {
     const r = await fetch(bust(`data/regions/${name}_${kind}.npy`));
     if (!r.ok) continue;                       // texture optional / region absent
     pyodide.FS.writeFile(`/data/regions/${name}_${kind}.npy`,

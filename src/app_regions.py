@@ -34,12 +34,14 @@ class RegionMixin(_Base):
     pathology: Any
     phantom_3d: Any
     texture_3d: Any
+    mixel_3d: Any
     _brain_volume: Any
     _lesion_vol_cache: Any
     _PATHOLOGY_KIND: Any
     _region_cache: Any
     _region_sequences: Any
     _region_texture_cache: Any
+    _region_mixel_cache: Any
     _region_dd: Any
     _seq_dropdown: Any
     _body_phantoms: Any
@@ -88,6 +90,7 @@ class RegionMixin(_Base):
             QApplication.processEvents()
             vol = self._body_phantoms.build_region(name)
             tex = self._body_phantoms.build_region_texture(name, vol)
+            mix = self._body_phantoms.build_region_mixel(name)
             # The body phantoms are built patient-right on the viewer's right
             # (neurological). Mirror L/R (axis 2) so they display radiological \u2014
             # patient-right on the viewer's left \u2014 consistent with the brain. The
@@ -99,10 +102,14 @@ class RegionMixin(_Base):
                 vol = np.ascontiguousarray(np.flip(vol, axis=2))
                 if tex is not None:
                     tex = np.ascontiguousarray(np.flip(tex, axis=2))
+                if mix is not None:
+                    mix = np.ascontiguousarray(np.flip(mix, axis=3))
             self._region_cache[name] = vol
             self._region_texture_cache[name] = tex
+            self._region_mixel_cache[name] = mix
         self.phantom_3d = self._region_cache[name]
         self.texture_3d = self._region_texture_cache.get(name)
+        self.mixel_3d = self._region_mixel_cache.get(name)
         self._apply_brain_pathology()   # overlay a demo lesion if Brain + pathology
 
         # Restrict the Sequence list to what this region supports (loaded real

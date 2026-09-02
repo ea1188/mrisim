@@ -603,7 +603,12 @@ def _load_cache(subdir: "str | None", which: str) -> "np.ndarray | None":
         import region_orient
         region = {"spider_spine": "Spine", "knee_kb3d": "Knee"}.get(subdir)
         if region is not None:
-            arr = region_orient.straighten(region, arr, 0 if which == "atlas" else 1)
+            if which == "mixel":
+                # (2, Z, Y, X): straighten each channel with nearest (labels + bytes)
+                arr = np.stack([region_orient.straighten(region, arr[i], 0)
+                                for i in range(arr.shape[0])])
+            else:
+                arr = region_orient.straighten(region, arr, 0 if which == "atlas" else 1)
         return arr
     except Exception:
         return None
@@ -643,6 +648,20 @@ def synthetic_texture_3d(label_vol: np.ndarray, seed: int = 0) -> np.ndarray:
     for lab, a in _TEXTURE_AMP.items():
         amp[label_vol == lab] = a
     return np.clip(1.0 + amp * field, 0.45, 1.7).astype(np.float32)
+
+
+def build_region_mixel(name: str) -> "np.ndarray | None":
+    """(2, Z, Y, X) mixel partial-volume sidecar aligned to build_region(name),
+    or None for regions without one (Brain, synthetic fallbacks)."""
+    cached = _load_cache(_CACHE_SUBDIR.get(name), "mixel")
+    if cached is not None:
+        return cached
+    try:
+        from nifti_region import load_region_mixel
+        from brainweb_loader import data_dir
+        return load_region_mixel(name, data_dir())
+    except Exception:
+        return None
 
 
 def build_region_texture(name: str, label_vol: "np.ndarray | None" = None) -> "np.ndarray | None":

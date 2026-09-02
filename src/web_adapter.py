@@ -113,6 +113,7 @@ class WebHost(CurvesMixin):
         self._acq3d_metrics: dict = {}
         self._region_cache: dict[str, np.ndarray] = {}
         self._region_tex_cache: dict[str, Any] = {}
+        self._region_mixel_cache: dict[str, Any] = {}
         self._region_aux_cache: dict[str, tuple] = {}   # (vessels, activation) per region
         self._vessels: Any = None       # TOF vessel tree (MRA), brain only
         self._activation: Any = None    # fMRI activation, brain only
@@ -153,6 +154,7 @@ class WebHost(CurvesMixin):
                     from phantom3d import generate_synthetic_3d_brain
                     vol = generate_synthetic_3d_brain()
                 tex = None
+                mix = None
             else:
                 atlas_file = f"/data/regions/{name}_atlas.npy"
                 if os.path.exists(atlas_file):
@@ -161,6 +163,8 @@ class WebHost(CurvesMixin):
                     tex_file = f"/data/regions/{name}_texture.npy"
                     tex = (np.load(tex_file).astype(np.float32)
                            if os.path.exists(tex_file) else None)
+                    mixel_file = f"/data/regions/{name}_mixel.npy"
+                    mix = np.load(mixel_file) if os.path.exists(mixel_file) else None
                     # Correct a real atlas's known base tilt (e.g. the spine column
                     # leans 16.8° in coronal) — same rotation the desktop applies in
                     # body_phantoms; done before the L/R mirror below.
@@ -168,11 +172,15 @@ class WebHost(CurvesMixin):
                     vol = region_orient.straighten(name, vol, 0)
                     if tex is not None:
                         tex = region_orient.straighten(name, tex, 1)
+                    if mix is not None:
+                        mix = np.stack([region_orient.straighten(name, mix[i], 0)
+                                        for i in range(mix.shape[0])])
                 else:
                     # Synthetic phantom (no real atlas — e.g. Knee), or the desktop
                     # dataset path when running outside the browser.
                     vol = body_phantoms.build_region(name)
                     tex = body_phantoms.build_region_texture(name, vol)
+                    mix = body_phantoms.build_region_mixel(name)
                 # Body volumes are built neurological; mirror L/R (axis 2) to match
                 # the radiological brain. A-P (axis 1) is already correct and must NOT
                 # be flipped: an earlier axis-(1,2) flip mirrored knee/spine/abdomen
@@ -183,8 +191,11 @@ class WebHost(CurvesMixin):
                     vol = np.ascontiguousarray(np.flip(vol, axis=2))
                     if tex is not None:
                         tex = np.ascontiguousarray(np.flip(tex, axis=2))
+                    if mix is not None:
+                        mix = np.ascontiguousarray(np.flip(mix, axis=3))
             self._region_cache[name] = vol
             self._region_tex_cache[name] = tex
+            self._region_mixel_cache[name] = mix
             # fMRI activation is cheap; build it once per brain. The TOF vessel
             # tree (add_vessels_3d) is *expensive* (~minute), so it is built
             # lazily on the first MR-Angiography render (see _ensure_vessels).
@@ -197,6 +208,7 @@ class WebHost(CurvesMixin):
         vol = self._region_cache[name]
         self.sim.volume = vol
         self.sim.texture = self._region_tex_cache.get(name)
+        self.sim.mixel = self._region_mixel_cache.get(name)
         _vessels, self._activation = self._region_aux_cache[name]
         self._vessels = _vessels
         self._acq3d_key = None                 # new anatomy invalidates the slab
