@@ -434,8 +434,8 @@ def test_sagittal_render_paths_agree_on_handedness():
 # Property-level texture (voxel model v2, phase B)
 # --------------------------------------------------------------------------- #
 def test_texture_mode_property_flag(sim, monkeypatch):
-    """texture_mode='property' must change the render only when set; absent or
-    'signal' must take the identical code path. Noise is neutralised so the
+    """texture_mode is 'property' by default; explicit 'signal' restores the
+    legacy multiply and must differ. Noise is neutralised so the
     comparison is deterministic; a smooth texture field is attached because the
     synthetic brain ships none."""
     import rician as _ric
@@ -450,7 +450,7 @@ def test_texture_mode_property_flag(sim, monkeypatch):
                                              texture_mode="signal"))
     img_prop, _ = sim.simulate(base_params(sequence="Spin Echo", TR=3000, TE=90,
                                            texture_mode="property"))
-    np.testing.assert_array_equal(img_default, img_signal)
+    np.testing.assert_array_equal(img_default, img_prop)   # property is the default
     assert not np.allclose(img_prop, img_signal), "property mode had no effect"
 
     # Unsupported sequence: property flag must fall back to the signal path.
