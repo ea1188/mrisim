@@ -79,6 +79,10 @@
     function animateCurve(path, points) {
       if (reduceMotion) return; // final curve already drawn by addCurve
       var start = null, dur = 650;
+      if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        path.setAttribute("d", pathData(points));   // final frame, no animation
+        return;
+      }
       path.setAttribute("d", pathData(points.slice(0, 1)));
       function frame(ts) {
         if (start === null) start = ts;

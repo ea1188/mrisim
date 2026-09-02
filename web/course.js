@@ -16,6 +16,7 @@
 
   // Which free curriculum module maps to which premium topic keys + free quiz categories.
   // Modules absent here just show their free lessons (no premium block / topic quiz yet).
+  var A11y = window.A11y;   // accessibility helpers (a11y.js), loaded before this
   var TOPIC_CFG = {
     "1 · What an MRI image is":       { premium: ["instrumentation"], quiz: [] },
     "2 · Where contrast comes from":  { premium: ["contrast-weighting"], quiz: ["sequences"] },
@@ -663,7 +664,14 @@
       var esec = h("div", { class: "sec" }, [h("h3", { text: "Course material" })]);
       edu.forEach(function (b) {
         var rid = "e:" + b.title, isRead = !!readState[rid];
-        var card = h("div", { class: "edu" + (isRead ? " read" : ""), id: "edu-" + slug(b.title), "data-subid": rid }, [h("h4", { text: b.title }), h("div", { class: "body", html: b.html })]);
+        var eduH4 = h("h4", { text: b.title });
+        var lb = listenBtn(function () {
+          var t = b.title + ". " + textOf(b.html);
+          (b.keypoints || []).forEach(function (kpt) { t += " Key point: " + kpt; });
+          return t;
+        });
+        if (lb) eduH4.appendChild(lb);
+        var card = h("div", { class: "edu" + (isRead ? " read" : ""), id: "edu-" + slug(b.title), "data-subid": rid }, [eduH4, h("div", { class: "body", html: b.html })]);
         if (b.keypoints && b.keypoints.length) {
           var kp = h("div", { class: "keypoints" }, [h("b", { text: "Key points" })]);
           var ul = h("ul");
@@ -755,11 +763,38 @@
     window.scrollTo(0, 0);
   }
 
+  // A "Listen" toggle for any text getter: speaks via A11y (MRI-aware
+  // pronunciation), one utterance at a time, aria-pressed while playing.
+  var activeListen = null;
+  function listenBtn(getText) {
+    if (!A11y || !window.speechSynthesis) return null;
+    var btn = h("button", { class: "ghost listen", text: "Listen", "aria-pressed": "false" });
+    btn.setAttribute("aria-label", "Read this section aloud");
+    btn.onclick = function () {
+      if (activeListen === btn && A11y.speaking()) {
+        A11y.stop(); btn.setAttribute("aria-pressed", "false"); activeListen = null; return;
+      }
+      if (activeListen) activeListen.setAttribute("aria-pressed", "false");
+      activeListen = btn;
+      btn.setAttribute("aria-pressed", "true");
+      A11y.speak(getText(), function () {
+        btn.setAttribute("aria-pressed", "false");
+        if (activeListen === btn) activeListen = null;
+      });
+    };
+    return btn;
+  }
+  function textOf(html) {
+    var d = document.createElement("div"); d.innerHTML = html || "";
+    return d.textContent || "";
+  }
+
   // Premium image questions carry an `img` (a pre-rendered scan in web/img/course-quiz/).
   // Show it above the prompt; text-only questions have no img and are unaffected.
   function addQImg(box, q) {
     if (!q || !q.img) return;
-    var img = h("img", { class: "q-img", src: "img/course-quiz/" + q.img, alt: "Scan for this question" });
+    var img = h("img", { class: "q-img", src: "img/course-quiz/" + q.img,
+                 alt: A11y ? A11y.describeScan(q.setup) : "Scan for this question" });
     box.insertBefore(img, box.firstChild);
     if (q.credit && q.credit.license !== "Owner-Original") {
       var c = q.credit;
@@ -1487,13 +1522,17 @@
     clear(body);
     var wrap = h("div", { class: "lv" });
     if (step.state) {                    // only steps with sim state have a rendered image
-      var img = h("img", { src: "img/lessons/" + slug(ls.title) + "/" + i + ".jpg", alt: "Acquired image for this step" });
+      var img = h("img", { src: "img/lessons/" + slug(ls.title) + "/" + i + ".jpg",
+                   alt: "Acquired image for step " + (i + 1) + " of the lesson " + ls.title });
       var imgBox = h("div", { class: "lv-img" }, [img]);
       img.addEventListener("error", function () { imgBox.remove(); textCol.classList.add("solo"); });
       wrap.appendChild(imgBox);
     }
+    var stepHead = h("div", { class: "lv-step", text: "Step " + (i + 1) + " of " + steps.length });
+    var slb = listenBtn(function () { return textOf(step.text); });
+    if (slb) stepHead.appendChild(slb);
     var textCol = h("div", { class: "lv-text" + (step.state ? "" : " solo") }, [
-      h("div", { class: "lv-step", text: "Step " + (i + 1) + " of " + steps.length }),
+      stepHead,
       h("div", { class: "lv-box", html: step.text || "" }),
     ]);
     var isLast = i >= steps.length - 1;
