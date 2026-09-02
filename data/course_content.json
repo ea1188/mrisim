@@ -14520,7 +14520,7 @@
      "Opposed-phase gradient echo"
     ],
     "answer": 0,
-    "explain": "The short inversion time of about 150 ms is the signature of STIR: fat is nulled because the readout occurs as fat crosses its null point, and marrow suppresses with it because marrow is largely fat. Spectral saturation and water excitation are frequency-selective methods and need no inversion time, and opposed-phase imaging reduces signal only in voxels that mix fat and water.",
+    "explain": "The short inversion time of about 150 ms is the signature of STIR: fat is nulled because the excitation is applied just as fat's magnetization crosses its null point, and marrow suppresses with it because marrow is largely fat. Spectral saturation and water excitation are frequency-selective methods and need no inversion time, and opposed-phase imaging reduces signal only in voxels that mix fat and water.",
     "setup": {
      "region": "Knee",
      "orientation": "sagittal",
@@ -14629,7 +14629,7 @@
    "kind": "quiz",
    "ord": 1508,
    "body": {
-    "prompt": "On this sagittal lumbar spine image, CSF is bright and the discs retain high signal. TR is 3500 ms and TE is 100 ms. What weighting is shown?",
+    "prompt": "On this sagittal lumbar spine image, the CSF within the thecal sac is bright. TR is 3500 ms and TE is 100 ms. What weighting is shown?",
     "options": [
      "T2-weighted",
      "T1-weighted",
@@ -14637,7 +14637,7 @@
      "Inversion recovery"
     ],
     "answer": 0,
-    "explain": "Long TR with long TE is T2 weighting: CSF becomes the brightest structure and well hydrated discs stay bright. T1 weighting would darken the CSF, proton density would use a much shorter TE, and inversion recovery requires an inversion pulse that this sequence does not have.",
+    "explain": "Long TR with long TE is T2 weighting, and bright CSF is its most reliable marker. T1 weighting would darken the CSF, proton density would use a much shorter TE, and inversion recovery requires an inversion pulse that this sequence does not have. Note that the discs here appear dark, as degenerated or desiccated discs do; well hydrated disc nuclei would stay bright on T2.",
     "setup": {
      "region": "Spine",
      "orientation": "sagittal",
@@ -14692,7 +14692,7 @@
      "Susceptibility distortion"
     ],
     "answer": 0,
-    "explain": "Fat resonates about 3.5 ppm below water, so the fatty marrow signal is mapped a few pixels away along the frequency axis, stacking a bright band on one endplate and a signal void on the other. Lowering the bandwidth increases the shift in pixels. Gibbs banding parallels sharp edges regardless of direction, and ghosting from motion repeats along the phase axis.",
+    "explain": "Fat resonates about 3.5 ppm below water, so the fatty marrow signal is mapped a few pixels away along the frequency axis, stacking a bright band on one endplate and a signal void on the other. Lowering the bandwidth increases the shift in pixels. Gibbs ringing appears beside sharp edges, most prominently along the lower resolution phase axis, and ghosting from motion repeats along the phase axis.",
     "setup": {
      "region": "Spine",
      "orientation": "sagittal",
@@ -14713,7 +14713,7 @@
    "kind": "quiz",
    "ord": 1511,
    "body": {
-    "prompt": "On this gradient echo abdominal image, signal is lost around the gas filled bowel. Why is this artifact worse on gradient echo than on spin echo?",
+    "prompt": "On this gradient echo abdominal image, signal is lost around the gas filled bowel and the image darkens with T2 star decay. Why is this susceptibility effect worse on gradient echo than on spin echo?",
     "options": [
      "Gradient echo has no 180 degree pulse to refocus local field variations",
      "Gradient echo sequences always use a much longer repetition time",
@@ -14721,7 +14721,7 @@
      "Spin echo sequences always use a lower receiver bandwidth"
     ],
     "answer": 0,
-    "explain": "Gas and tissue differ in magnetic susceptibility, which distorts the local field near bowel. A spin echo refocuses that static dephasing with its 180 degree pulse, but a gradient echo does not, so the signal near gas decays with T2 star and drops out. TR, bandwidth and resonance frequency do not explain the difference.",
+    "explain": "Gas and tissue differ in magnetic susceptibility, which distorts the local field near bowel. A spin echo refocuses that static dephasing with its 180 degree pulse, but a gradient echo does not, so signal near gas dephases away with T2 star. Receiver bandwidth changes how severe the artifact looks, but it is the missing refocusing pulse that separates the two sequence families.",
     "setup": {
      "region": "Abdomen",
      "orientation": "axial",
@@ -14772,7 +14772,7 @@
    "kind": "quiz",
    "ord": 1513,
    "body": {
-    "prompt": "Compared with an in phase acquisition, the vertebral marrow on this opposed phase gradient echo image has lost signal. What does this indicate about normal marrow?",
+    "prompt": "This gradient echo spine image was acquired at an opposed phase echo time, and the vertebral marrow shows low signal. What property of normal marrow explains this?",
     "options": [
      "Marrow voxels contain both fat and water, which cancel when opposed",
      "Normal marrow has an unusually long T2 star relative to muscle",
