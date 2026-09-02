@@ -782,7 +782,7 @@
   // Sentences never cross block boundaries (textOf inserts a terminator at
   // every block end), so wrapping per block with the same A11y.chunks split
   // keeps span indices aligned with the audio chunk timeline.
-  function wrapCardSentences(card, b) {
+  function wrapCardSentences(card, b, authChunks) {
     if (!card || card.dataset.rsWrapped) return;
     var body = card.querySelector(".body");
     var blocks = body ? Array.prototype.slice.call(body.querySelectorAll("p, li, h5")) : [];
@@ -813,35 +813,53 @@
       }
       el.insertBefore(span, el.firstChild);
     }
-    function wrapBlock(el, r) {
+    function wrapBlock(el, r, texts) {
       if (!r.count) return;
-      if (r.count === 1) { markWhole(el, r); return; }
-      var idx = r.start, last = r.start + r.count - 1;
+      if (r.count === 1 || !texts) { markWhole(el, r); return; }
+      // Continuous match against the AUTHORITATIVE chunk texts: walk every
+      // text node in the block as one character stream (crossing inline tags),
+      // splitting exactly where the audio's chunks end. Whitespace runs count
+      // as one character (the chunker collapsed them); the whitespace swallowed
+      // at a chunk boundary counts as zero.
+      var boundaries = [], acc = 0;
+      texts.forEach(function (t) { acc += t.replace(/\s+/g, " ").trim().length; boundaries.push(acc); });
+      var last = r.start + r.count - 1;
       var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       var nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+      var norm = 0, bi = 0, atGap = true, lastWasWs = false;
       nodes.forEach(function (node) {
-        var pieces = node.nodeValue.replace(/([.!?])\s+/g, "$1\u0000").split("\u0000");
-        var frag = document.createDocumentFragment();
-        pieces.forEach(function (piece, i) {
+        var raw = node.nodeValue, cuts = [], segIdx = [];
+        var segStartIdx = Math.min(last, r.start + bi);
+        for (var i = 0; i < raw.length; i++) {
+          var ws = /\s/.test(raw[i]);
+          if (ws) { if (!lastWasWs && !atGap) norm++; lastWasWs = true; }
+          else { lastWasWs = false; atGap = false; norm++; }
+          if (bi < boundaries.length - 1 && norm >= boundaries[bi]) {
+            cuts.push(i + 1); segIdx.push(segStartIdx);
+            bi++; atGap = true;
+            segStartIdx = Math.min(last, r.start + bi);
+          }
+        }
+        segIdx.push(segStartIdx);
+        var frag = document.createDocumentFragment(), prev = 0;
+        cuts.concat([raw.length]).forEach(function (cut, k) {
+          if (cut <= prev) return;
           var span = h("span", { class: "rs" });
-          // The audio chunker may cap-split a long sentence into several
-          // chunks; this span owns that whole index range so later sentences
-          // in the block stay aligned.
-          var m = Math.max(1, A11y.chunks(piece.replace(/\s+/g, " ").trim()).length);
-          var end = Math.min(last, idx + m - 1);
-          span.dataset.s0 = idx; span.dataset.s1 = end;
-          span.appendChild(document.createTextNode(piece));
+          span.dataset.s0 = segIdx[k]; span.dataset.s1 = segIdx[k];
+          span.appendChild(document.createTextNode(raw.slice(prev, cut)));
           frag.appendChild(span);
-          if (i < pieces.length - 1 && idx < last) idx = Math.min(last, end + 1);
+          prev = cut;
         });
         node.parentNode.replaceChild(frag, node);
       });
     }
+    var auth = (authChunks && authChunks.length === plan.total) ? authChunks : null;
+    function textsFor(r) { return auth ? auth.slice(r.start, r.start + r.count) : null; }
     markWhole(card.querySelector("h4"), plan.title);
-    blocks.forEach(function (el, i) { wrapBlock(el, plan.blocks[i]); });
+    blocks.forEach(function (el, i) { wrapBlock(el, plan.blocks[i], textsFor(plan.blocks[i])); });
     kpItems.forEach(function (el, i) { if (plan.keypoints[i]) markWhole(el, plan.keypoints[i]); });
     if (plan.workedHeader) markWhole(card.querySelector(".edu-worked h5"), plan.workedHeader);
-    workedBlocks.forEach(function (el, i) { if (plan.workedBlocks[i]) wrapBlock(el, plan.workedBlocks[i]); });
+    workedBlocks.forEach(function (el, i) { if (plan.workedBlocks[i]) wrapBlock(el, plan.workedBlocks[i], textsFor(plan.workedBlocks[i])); });
     hookItems.forEach(function (el, i) { if (plan.hooks[i]) markWhole(el, plan.hooks[i]); });
     trapItems.forEach(function (el, i) { if (plan.traps[i]) markWhole(el, plan.traps[i]); });
     card.dataset.rsWrapped = "1";
@@ -899,12 +917,16 @@
       activeListen = btn;
       btn.setAttribute("aria-pressed", "true");
       var card = getCard && getCard();
+      var rec = narrTitle && narration && narration[narrTitle];
       var mark = null;
       if (card && cardBody) {
-        try { wrapCardSentences(card, cardBody); mark = function (i) { highlightSentence(card, i); }; }
+        try {
+          var auth = (rec && rec.chunks) || A11y.chunks(getText());
+          wrapCardSentences(card, cardBody, auth);
+          mark = function (i) { highlightSentence(card, i); };
+        }
         catch (e) { mark = null; }   // highlighting is best-effort, never blocks audio
       }
-      var rec = narrTitle && narration && narration[narrTitle];
       if (rec) {
         var a = new Audio("audio/cards/" + rec.file);
         a.playbackRate = (A11y.prefs().rate || 0.95);
