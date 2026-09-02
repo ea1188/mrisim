@@ -155,3 +155,43 @@ test("recentActivity: newest-first, labeled, name-resolved, capped", () => {
   const capped = CI.recentActivity(detActivity, detRoster, { limit: 2 });
   assert.equal(capped.length, 2);
 });
+
+// --- arrtReadiness (instructor registry-readiness rollup) --------------------
+import BP from "./blueprint.js";
+
+const READY_ROWS = [
+  { studentId: "s1", name: "A", topics: {
+    "safety": { best: 90, latest: 90, attempts: 2 },
+    "image-quality": { best: 60, latest: 60, attempts: 1 },
+    "pulse-sequences": { best: 80, latest: 70, attempts: 3 } } },
+  { studentId: "s2", name: "B", topics: { "patient-care": { best: 50, latest: 50, attempts: 1 } } },
+  { studentId: "s3", name: "C", topics: {} },
+];
+
+test("arrtReadiness maps topics through categories with blueprint weights", () => {
+  const r = CI.arrtReadiness(READY_ROWS, BP.PREMIUM_MAP, BP.ARRT_BLUEPRINT);
+  const s1 = r.students.find((s) => s.studentId === "s1");
+  assert.equal(s1.cats["image-production"], 70);   // mean(60, 80)
+  assert.equal(s1.cats["safety"], 90);
+  assert.equal(s1.cats["procedures"], null);
+  // weighted over attempted categories, renormalized:
+  // (0.530*70 + 0.105*90) / (0.530 + 0.105) -> 73
+  assert.equal(s1.overall, 73);
+});
+
+test("arrtReadiness: empty student is null; class averages skip missing", () => {
+  const r = CI.arrtReadiness(READY_ROWS, BP.PREMIUM_MAP, BP.ARRT_BLUEPRINT);
+  const s3 = r.students.find((s) => s.studentId === "s3");
+  assert.equal(s3.overall, null);
+  assert.ok(Object.values(s3.cats).every((v) => v === null));
+  assert.equal(r.class.cats["safety"], 90);
+  assert.equal(r.class.cats["patient-care"], 50);
+  assert.notEqual(r.class.overall, null);
+});
+
+test("arrtReadiness ignores topics missing from the premium map", () => {
+  const rows = [{ studentId: "x", name: "X",
+    topics: { "not-a-topic": { best: 100, latest: 100, attempts: 1 } } }];
+  const r = CI.arrtReadiness(rows, BP.PREMIUM_MAP, BP.ARRT_BLUEPRINT);
+  assert.equal(r.students[0].overall, null);
+});

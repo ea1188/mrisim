@@ -220,8 +220,56 @@
     });
   }
 
+  // Registry-readiness rollup for a class: map each student's per-topic best
+  // accuracy through the premium topic -> ARRT category map, average within a
+  // category, then weight across ATTEMPTED categories (renormalized) the same
+  // way the personal readiness panel does. Formative, not predictive.
+  function arrtReadiness(rows, premiumMap, blueprint) {
+    var cats = (blueprint || []).map(function (b) { return { key: b.key, weight: b.weight }; });
+    var students = (rows || []).map(function (r) {
+      var byCat = {};
+      Object.keys(r.topics || {}).forEach(function (t) {
+        var cat = premiumMap && premiumMap[t];
+        if (!cat) return;
+        var best = r.topics[t] && r.topics[t].best;
+        if (best == null) return;
+        (byCat[cat] = byCat[cat] || []).push(best);
+      });
+      var out = {}, wsum = 0, acc = 0;
+      cats.forEach(function (c) {
+        var vals = byCat[c.key];
+        if (vals && vals.length) {
+          var m = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+          out[c.key] = Math.round(m);
+          wsum += c.weight;
+          acc += c.weight * m;
+        } else {
+          out[c.key] = null;
+        }
+      });
+      return { studentId: r.studentId, name: r.name, cats: out,
+               overall: wsum ? Math.round(acc / wsum) : null };
+    });
+    var classCats = {}, cw = 0, ca = 0;
+    cats.forEach(function (c) {
+      var vals = students.map(function (s) { return s.cats[c.key]; })
+                         .filter(function (v) { return v != null; });
+      if (vals.length) {
+        var m = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+        classCats[c.key] = Math.round(m);
+        cw += c.weight;
+        ca += c.weight * m;
+      } else {
+        classCats[c.key] = null;
+      }
+    });
+    return { students: students,
+             "class": { cats: classCats, overall: cw ? Math.round(ca / cw) : null } };
+  }
+
   return {
     perStudent: perStudent, coverage: coverage, classStats: classStats, toCSV: toCSV,
     moduleStatus: moduleStatus, moduleMatrix: moduleMatrix, moduleRates: moduleRates, recentActivity: recentActivity,
+    arrtReadiness: arrtReadiness,
   };
 });
