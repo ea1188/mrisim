@@ -41,6 +41,7 @@ class RegionMixin(_Base):
     _region_cache: Any
     _region_sequences: Any
     _region_texture_cache: Any
+    _region_mixel_cache: Any
     _region_dd: Any
     _seq_dropdown: Any
     _body_phantoms: Any
