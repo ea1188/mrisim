@@ -1042,3 +1042,33 @@ def test_scout_panels_background_only_with_overlay_geometry():
     # the main-app localizer still bakes its overlays into the PNG (default)
     baked = h.render_scout({**payload})
     assert isinstance(baked, str) and baked.startswith("data:image/png")
+
+
+# --------------------------------------------------------------------------- #
+# Mixel loading (voxel model v2, phase C)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("region", ["Spine", "Pelvis"])
+def test_region_mixel_loaded_and_flip_consistent(region):
+    """The mixel sidecar must arrive in the engine transformed IDENTICALLY to
+    its atlas (straighten + body L/R flip). The objective check: mixed voxels
+    must hug the LOADED atlas's label boundaries — any flip or rotation
+    mismatch scatters them off-boundary and fails hard (the sagittal-flip
+    lesson: centroids and adjacency, never eyeballing)."""
+    from scipy.ndimage import maximum_filter, minimum_filter
+    h = wa.WebHost()
+    h.load_region(region)
+    mix = h.sim.mixel
+    vol = h.sim.volume
+    assert mix is not None, f"{region}: mixel not loaded into engine"
+    assert mix.shape == (2,) + vol.shape and mix.dtype == np.uint8
+    mixed = (mix[1] < 255) & (vol > 0)
+    assert mixed.any()
+    varies = maximum_filter(vol, 3) != minimum_filter(vol, 3)
+    on3 = (mixed & varies).sum() / mixed.sum()
+    assert on3 > 0.90, f"{region}: only {on3:.1%} of mixels on boundaries — transform mismatch"
+
+
+def test_brain_has_no_mixel():
+    h = wa.WebHost()
+    h.load_region("Brain")
+    assert h.sim.mixel is None

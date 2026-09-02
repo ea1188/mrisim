@@ -488,3 +488,34 @@ def test_fat_sat_marrow_fails_in_off_resonance_too():
     off = np.zeros((10, 100)); off[:, 96:] = 500.0
     out = rendering.apply_fat_sat(img, sl, off)
     assert out[:, 98].mean() > 2 * out[:, 2].mean()
+
+
+# --- Mixel partial volume (voxel model v2, phase C) --------------------------
+class TestPartialVolumeMixel:
+    def _setup(self):
+        from nifti_region import encode_mixel_fraction
+        ph = np.zeros((10, 10), dtype=np.uint8)
+        ph[:, :5] = 4; ph[:, 5:] = 6                 # fat | muscle
+        img = np.where(ph == 4, 1.0, 0.4)
+        second = np.zeros_like(ph)
+        frac = np.full(ph.shape, 255, dtype=np.uint8)
+        second[:, 4] = 6                             # fat boundary voxel, 30% muscle
+        frac[:, 4] = encode_mixel_fraction(np.float32(0.7))
+        return ph, img, second, frac
+
+    def test_boundary_blend(self):
+        ph, img, second, frac = self._setup()
+        out = rendering.partial_volume_mixel(img, ph, second, frac)
+        np.testing.assert_allclose(out[:, 4], 0.7 * 1.0 + 0.3 * 0.4, atol=0.01)
+
+    def test_pure_voxels_untouched(self):
+        ph, img, second, frac = self._setup()
+        out = rendering.partial_volume_mixel(img, ph, second, frac)
+        np.testing.assert_array_equal(out[:, :4], img[:, :4])
+        np.testing.assert_array_equal(out[:, 5:], img[:, 5:])
+
+    def test_second_tissue_absent_in_slice_left_pure(self):
+        ph, img, second, frac = self._setup()
+        second[:, 4] = 9                             # label 9 never dominant here
+        out = rendering.partial_volume_mixel(img, ph, second, frac)
+        np.testing.assert_array_equal(out, img)

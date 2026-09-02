@@ -296,7 +296,9 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         self._region_sequences: dict[str, list[str]] = {}
         # Real-MRI texture field per region (None = use synthetic texture, e.g. Brain)
         self.texture_3d: np.ndarray | None = None
+        self.mixel_3d: np.ndarray | None = None
         self._region_texture_cache: dict[str, "np.ndarray | None"] = {"Brain": None}
+        self._region_mixel_cache: dict[str, "np.ndarray | None"] = {"Brain": None}
 
         # --- State variables (Var shim instead of tk.*Var) ---
         self.region = Var("Brain")
@@ -1619,6 +1621,7 @@ class MRISimulator(RegionMixin, InteractionMixin, ScoutMixin,
         s.activation = self.activation_3d
         s.real_tof = self.real_tof
         s.texture = self.texture_3d
+        s.mixel = self.mixel_3d
         s.native_fov = self._get_native_fov()
         s.orientation = self.orientation.get()
         s.slice_idx = self.slice_idx.get()

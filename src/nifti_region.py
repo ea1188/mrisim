@@ -902,6 +902,25 @@ def load_region_nifti(
         return None
 
 
+def load_region_mixel(
+    region: str,
+    data_dir: str,
+    *,
+    target_max: int = 256,
+) -> "np.ndarray | None":
+    """The (2, Z, Y, X) mixel partial-volume sidecar for *region*, aligned to
+    its label volume. Returns None when the cache is absent (the sidecar is
+    written alongside the atlas by load_region_nifti)."""
+    subj_name = _REGION_TOTALSEG.get(region)
+    if subj_name is None:
+        return None
+    ts_root = _ts_subject_root(data_dir, subj_name)
+    if ts_root is None:
+        return None
+    path = os.path.join(ts_root, f"mixel_iso_adapt_{target_max}.npy")
+    return np.load(path) if os.path.exists(path) else None
+
+
 def load_region_texture(
     region: str,
     data_dir: str,

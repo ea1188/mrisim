@@ -450,6 +450,33 @@ def texture_property_ratio(phantom_slice: np.ndarray, tex_slice: np.ndarray,
     return np.clip(np.nan_to_num(ratio, nan=1.0), 0.0, 3.0)
 
 
+def partial_volume_mixel(image: np.ndarray, phantom_slice: np.ndarray,
+                         second_slice: np.ndarray, frac_slice: np.ndarray) -> np.ndarray:
+    """Boundary mixing from a stored mixel sidecar slice (voxel model v2 phase C).
+
+    Replaces the synthetic blur-derived fractions of :func:`partial_volume`
+    with the atlas's real sub-voxel fractions: at each mixed voxel the output
+    is ``f·S_a + (1−f)·S_b``, where S_a is the voxel's own rendered value (so
+    texture detail survives) and S_b is the slice-mean rendered signal of the
+    second tissue. Voxels whose second tissue is never dominant in this slice
+    have no reference signal and stay pure.
+    """
+    from nifti_region import decode_mixel_fraction
+    mixed = (second_slice > 0) & (phantom_slice > 0)
+    if not np.any(mixed) or phantom_slice.shape != image.shape:
+        return image
+    out = image.astype(float, copy=True)
+    f = decode_mixel_fraction(frac_slice)
+    for lab in np.unique(second_slice[mixed]):
+        sel_dom = phantom_slice == lab
+        if not sel_dom.any():
+            continue
+        s_b = float(image[sel_dom].mean())
+        sel = mixed & (second_slice == lab)
+        out[sel] = f[sel] * image[sel] + (1.0 - f[sel]) * s_b
+    return out
+
+
 def gre_fw_phase_label(TE_ms: float, B0: float) -> str:
     """Short label describing the current fat-water phase (for metrics display)."""
     phi     = 2.0 * np.pi * dixon.fat_water_shift_hz(B0) * TE_ms / 1000.0

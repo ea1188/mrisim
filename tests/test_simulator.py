@@ -457,3 +457,34 @@ def test_texture_mode_property_flag(sim, monkeypatch):
     b_sig, _ = sim.simulate(base_params(sequence="Balanced SSFP", texture_mode="signal"))
     b_prop, _ = sim.simulate(base_params(sequence="Balanced SSFP", texture_mode="property"))
     np.testing.assert_array_equal(b_prop, b_sig)
+
+
+# --------------------------------------------------------------------------- #
+# Mixel partial volume in the render path (voxel model v2, phase C)
+# --------------------------------------------------------------------------- #
+def test_mixel_pv_engages_and_respects_sigma_zero(sim, monkeypatch):
+    """With a sidecar attached, boundary voxels blend by the stored fractions;
+    pv_sigma=0 (the PV-off teaching control) must disable it."""
+    import rician as _ric
+    from nifti_region import encode_mixel_fraction
+    monkeypatch.setattr(_ric, "add_rician_noise", lambda block, *a, **k: block)
+    mix = np.zeros((2,) + sim.volume.shape, dtype=np.uint8)
+    mix[1] = 255
+    interior = sim.volume == 3                       # WM voxels get 40% CSF
+    mix[0][interior] = 1
+    mix[1][interior] = encode_mixel_fraction(np.float32(0.6))
+    monkeypatch.setattr(sim, "mixel", mix, raising=False)
+    p = base_params(sequence="Spin Echo", TR=3000, TE=90, texture_mode="signal")
+    img_mix, _ = sim.simulate(p)
+    monkeypatch.setattr(sim, "mixel", None, raising=False)
+    img_plain, _ = sim.simulate(p)
+    assert not np.allclose(img_mix, img_plain), "mixel PV had no effect"
+    # WM (dark on T2) gains CSF fraction -> brighter with the sidecar
+    ph = sim._get_phantom_slice("axial", sim.slice_idx, p)
+    wm = ph == 3
+    assert img_mix[wm].mean() > img_plain[wm].mean()
+    monkeypatch.setattr(sim, "mixel", mix, raising=False)
+    a, _ = sim.simulate({**p, "pv_sigma": 0})
+    monkeypatch.setattr(sim, "mixel", None, raising=False)
+    b, _ = sim.simulate({**p, "pv_sigma": 0})
+    np.testing.assert_array_equal(a, b)
