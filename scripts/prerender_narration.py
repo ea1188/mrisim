@@ -65,7 +65,8 @@ def speakable_chunks_all(texts):
         "const A11y = require(process.argv[1]);"
         "const texts = JSON.parse(require('fs').readFileSync(0, 'utf8'));"
         "process.stdout.write(JSON.stringify("
-        "texts.map(function (t) { return A11y.chunks(t).map(A11y.speakable); })));"
+        "texts.map(function (t) { var c = A11y.chunks(t);"
+        " return { display: c, spoken: c.map(A11y.speakable) }; })));"
     )
     r = subprocess.run(["node", "-e", script, os.path.join(ROOT, "web", "a11y.js")],
                        input=json.dumps(texts), capture_output=True, text=True, check=True)
@@ -83,15 +84,20 @@ def main():
     texts = [card_text(b) for _, b in cards]
     spoken = speakable_chunks_all(texts)
     todo = []
-    for (topic, b), chunks in zip(cards, spoken, strict=True):
-        text = "\n".join(chunks)
+    for (topic, b), pair in zip(cards, spoken, strict=True):
+        chunks = pair["spoken"]
+        display = pair["display"]
+        text = "\n".join(chunks)               # hash input unchanged: no resynthesis
         h = hashlib.sha1((VOICE + "\nv2\n" + text).encode()).hexdigest()[:12]
         key = topic + "|" + b["title"]        # titles repeat across modules
         f = slug(topic + "-" + b["title"]) + ".mp3"
         rec = manifest.get(key)
         if rec and rec.get("hash") == h and os.path.exists(os.path.join(OUT, f)):
+            if rec.get("chunks") != display:     # authoritative DISPLAY chunk texts,
+                rec["chunks"] = display          # 1:1 with starts; no re-synthesis
+                json.dump(manifest, open(man_path, "w"), indent=1)
             continue
-        todo.append((key, f, h, chunks))
+        todo.append((key, f, h, chunks, display))
     print(f"{len(cards)} cards, {len(todo)} to synthesize")
     if not todo:
         return
@@ -105,7 +111,7 @@ def main():
     import soundfile as sf
     pipe = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
 
-    for i, (key, f, h, chunks) in enumerate(todo):
+    for i, (key, f, h, chunks, display) in enumerate(todo):
         pieces, starts, pos = [], [], 0.0
         for c in chunks:
             audio = np.concatenate([a for _, _, a in pipe(c, voice=VOICE)])
@@ -119,7 +125,7 @@ def main():
                         "-ac", "1", "-b:a", "48k", os.path.join(OUT, f)], check=True)
         os.remove(tmp)
         manifest[key] = {"file": f, "hash": h, "seconds": round(len(wav) / 24000, 1),
-                         "starts": starts}
+                         "starts": starts, "chunks": display}
         json.dump(manifest, open(man_path, "w"), indent=1)   # checkpoint per card
         print(f"[{i + 1}/{len(todo)}] {key} ({manifest[key]['seconds']}s)")
     print(f"done -> {OUT}")
