@@ -811,7 +811,7 @@
     }
     fillVoices();
     if (window.speechSynthesis) speechSynthesis.addEventListener("voiceschanged", fillVoices);
-    voiceSel.onchange = function () { A11y.setPrefs({ voice: voiceSel.value }); };
+    voiceSel.onchange = function () { A11y.setPrefs({ voice: voiceSel.value }); A11y.refresh(); };
     var rateSel = h("select", { "aria-label": "Reading speed" }, [
       h("option", { value: "0.8" }, ["Slow"]),
       h("option", { value: "0.95", selected: "selected" }, ["Normal"]),
@@ -819,7 +819,7 @@
     ]);
     var saved = A11y.prefs().rate;
     if (saved) rateSel.value = String(saved);
-    rateSel.onchange = function () { A11y.setPrefs({ rate: parseFloat(rateSel.value) }); };
+    rateSel.onchange = function () { A11y.setPrefs({ rate: parseFloat(rateSel.value) }); A11y.refresh(); };
     var stopBtn = h("button", { class: "ghost", text: "Stop", onclick: function () {
       A11y.stop();
     } });

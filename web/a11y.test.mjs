@@ -62,3 +62,8 @@ test("speakable turns parentheticals and dashes into comma breaths", () => {
   assert.equal(A11y.speakable("Fat is bright (short T1) — muscle is not."),
     "Fat is bright, short T one, muscle is not.");
 });
+
+test("refresh is a safe no-op when idle or under Node", () => {
+  A11y.refresh();
+  assert.equal(A11y.speaking(), false);
+});

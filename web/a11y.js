@@ -129,16 +129,26 @@
 
   function speaking() { return active; }
 
+  var currentChunk = null;
   function _next() {
-    if (!queue.length) { active = false; if (onDone) { var f = onDone; onDone = null; f(); } return; }
+    if (!queue.length) { active = false; currentChunk = null; if (onDone) { var f = onDone; onDone = null; f(); } return; }
     var p = prefs();
-    var u = new SpeechSynthesisUtterance(queue.shift());
+    currentChunk = queue.shift();
+    var u = new SpeechSynthesisUtterance(currentChunk);
     var v = pickVoice(voices(), p.voice);
     if (v) u.voice = v;
     u.rate = p.rate || 0.95;
     u.onend = _next;
     u.onerror = _next;
     synth.speak(u);
+  }
+
+  // Re-speak the current sentence with the latest prefs (voice auditioning:
+  // a picker change takes effect immediately instead of at the next chunk).
+  function refresh() {
+    if (!synth || !active || currentChunk == null) return;
+    queue.unshift(currentChunk);
+    synth.cancel();   // fires the cancelled utterance's end handler -> _next()
   }
 
   function speak(text, onend) {
@@ -153,5 +163,5 @@
 
   return { speakable: speakable, describeScan: describeScan, chunks: chunks,
            pickVoice: pickVoice, voices: voices, prefs: prefs, setPrefs: setPrefs,
-           speak: speak, stop: stop, speaking: speaking };
+           speak: speak, stop: stop, speaking: speaking, refresh: refresh };
 });
