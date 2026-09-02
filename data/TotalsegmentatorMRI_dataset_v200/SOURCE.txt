@@ -1,0 +1,15 @@
+TotalSegmentator MRI dataset (v2.0.0) — data source & license
+==============================================================
+
+  Akinci D'Antonoli, Wasserthal et al., "TotalSegmentator MRI dataset:
+  616 MRI images with segmentations", Zenodo record 14710732
+  License: CC-BY-NC-SA-2.0 (NonCommercial, ShareAlike)
+
+The committed atlas/texture/mixel caches in the s0xxx subdirectories are
+DERIVED WORKS of this dataset and are therefore shared under the same
+CC-BY-NC-SA terms, separately from the repository's MIT code license.
+
+License policy (verified 2026-09-02): these derivatives power the free,
+unpaywalled simulator only. They must NOT be used to produce paid course
+content (course images/questions use CC-BY or owner-original sources:
+SPIDER spine, KneeBones3Dify knee).
