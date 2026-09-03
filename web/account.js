@@ -131,7 +131,7 @@
     if (lessons.length) box.appendChild(h("p", { class: "muted", text: "Lessons: " + lessons.join(", ") }));
     box.appendChild(h("p", { class: "muted", text: "Best mock exam "
       + (row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%")
-      + " · Best OSCE " + (row.bestOscePct == null ? "—" : Math.round(row.bestOscePct) + "%") }));
+      + " · Best clinical scenario " + (row.bestOscePct == null ? "—" : Math.round(row.bestOscePct) + "%") }));
     return box;
   }
 
@@ -337,8 +337,8 @@
       masteredTh.title = "premium modules with a passing mastery check";
       var mockTh = th("Best mock");
       mockTh.title = "best full-length mock-exam score";
-      var osceTh = th("OSCE");
-      osceTh.title = "best graded protocol-planning scenario score";
+      var osceTh = th("Scenario");
+      osceTh.title = "best graded clinical-scenario score (protocol planner)";
       var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
         th("Member"), covTh, th("Best"), masteredTh, mockTh, osceTh, th("Weakest topic"), th("Last active"), th(""),
       ])])]);
