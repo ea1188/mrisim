@@ -94,6 +94,17 @@
       var v = it.params[c.param];
       if (v == null || !isFinite(v)) return "fail";
       var band = c.band || c.target;   // authored band, or derived (null_ti)
+      if (band.t1 != null) {
+        // Inversion-time criteria are TR-aware: recompute the null for the TR
+        // the learner actually submitted (same formula as the derivation), so
+        // changing TR and re-deriving the correct TI earns full credit.
+        var tr = isFinite(it.params.TR) ? it.params.TR : band.ref_tr;
+        var ti = band.t1 * Math.log(2 / (1 + Math.exp(-tr / band.t1)));
+        band = {
+          full: [ti * (1 - band.full_frac), ti * (1 + band.full_frac)],
+          partial: [ti * (1 - band.partial_frac), ti * (1 + band.partial_frac)],
+        };
+      }
       if (inBand(v, band.full)) return "pass";
       if (inBand(v, band.partial)) return "partial";
       return "fail";

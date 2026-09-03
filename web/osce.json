@@ -109,7 +109,7 @@
     },
     {
      "feedback": {
-      "fail": "The axial slab does not cover the L4-L5 disc. Increase the slice count or thickness, or re-center the stack, so the symptomatic level is fully inside the coverage.",
+      "fail": "The axial slab does not cover the L4-L5 disc. Increase the slice count or re-center the stack so the symptomatic level is fully inside the coverage.",
       "partial": "Axial coverage includes the L4-L5 disc but not the adjacent levels. The standard for radiculopathy is to cover the lower three discs, since an L5-S1 fragment can produce an identical picture.",
       "pass": "Axial coverage spans L3-L4 through L5-S1. If the symptomatic level is uncertain or there is pathology at an adjacent level, it is already covered."
      },
@@ -120,8 +120,8 @@
      "target": {
       "axis": 0,
       "full": [
-       48,
-       114
+       58,
+       109
       ],
       "partial": [
        77,
@@ -133,7 +133,7 @@
     {
      "feedback": {
       "fail": "The sagittal stack covers only the midline. Widen the stack so it extends through both neural foramina; foraminal and far-lateral herniations sit lateral to the canal.",
-      "partial": "Sagittal coverage reaches most of the disc width but clips one side. A far-lateral herniation at the edge of coverage is exactly the lesion this exam exists to catch.",
+      "partial": "Sagittal coverage reaches beyond the midline but not through both foramina. A foraminal or far-lateral herniation sits at the edge of coverage and is easy to miss on a midline-only stack.",
       "pass": "Sagittal coverage extends across the full width of the discs, so both neural foramina are inside the stack."
      },
      "id": "sag-coverage",
@@ -143,15 +143,26 @@
      "target": {
       "axis": 2,
       "full": [
-       37,
-       91
-      ],
-      "partial": [
        48,
        80
+      ],
+      "partial": [
+       55,
+       73
       ]
      },
      "type": "coverage"
+    },
+    {
+     "feedback": {
+      "fail": "No STIR was acquired. A fluid-sensitive fat-suppressed sagittal is a routine part of the lumbar exam even when the history is benign, as insurance against occult fracture, infection, or marrow disease hiding behind a disc story.",
+      "pass": "Sagittal STIR acquired. Even without red flags, one fluid-sensitive fat-suppressed sagittal is routine in lumbar spine imaging: it is the series that shows marrow edema, an occult endplate fracture, or early discitis that T1 and T2 can miss."
+     },
+     "id": "acq-stir",
+     "label": "Sagittal STIR acquired",
+     "points": 2,
+     "preset": "Spine STIR",
+     "type": "acquired"
     },
     {
      "feedback": {
@@ -165,14 +176,10 @@
      "points": 2,
      "preset": "Spine STIR",
      "target": {
-      "full": [
-       225.1,
-       304.5
-      ],
-      "partial": [
-       185.3,
-       344.2
-      ],
+      "full_frac": 0.15,
+      "partial_frac": 0.3,
+      "ref_tr": 4000.0,
+      "t1": 382.0,
       "target": 264.8
      },
      "type": "param"
@@ -188,8 +195,8 @@
    "criteria": [
     {
      "feedback": {
-      "fail": "No coronal PD fat-sat was acquired. The body of each meniscus and the collateral ligaments are coronal-plane structures, and fat suppression is what makes their tears and the reactive edema conspicuous.",
-      "pass": "Coronal PD fat-sat acquired. Menisci and collateral ligaments read best in the coronal plane with fat suppressed."
+      "fail": "No coronal PD fat-sat was acquired. The body of each meniscus and the collateral ligaments are coronal-plane reads, and the fat-suppressed series is where marrow edema and reactive edema around a collateral injury show.",
+      "pass": "Coronal PD fat-sat acquired. The meniscal body and the collateral ligaments are coronal-plane structures; fat suppression on this series is there for the marrow edema and the reactive edema around a torn collateral."
      },
      "id": "acq-pd-fs-cor",
      "label": "Coronal PD fat-sat acquired",
@@ -211,7 +218,7 @@
     {
      "feedback": {
       "fail": "No axial T2 fat-sat was acquired. The patellar cartilage, retinacula, and the effusion that follows an acute pivot injury are all assessed in the axial plane.",
-      "pass": "Axial T2 fat-sat acquired. The patellofemoral compartment and retinacula are axial-plane reads, and the effusion is quantified here."
+      "pass": "Axial T2 fat-sat acquired. The patellofemoral compartment and retinacula are axial-plane reads, and the effusion is assessed here."
      },
      "id": "acq-t2-ax",
      "label": "Axial T2 fat-sat acquired",
@@ -221,8 +228,8 @@
     },
     {
      "feedback": {
-      "fail": "Every acquired series is fat-suppressed. Keeping one PD without fat suppression preserves meniscal and marrow detail that suppression trades away; the combination is the standard.",
-      "pass": "A non-suppressed PD was acquired alongside the fat-sat series. Keeping one series without fat suppression preserves anatomic detail and marrow architecture."
+      "fail": "No non-suppressed coronal PD was acquired. Pairing a fat-suppressed and a non-suppressed series in the same plane is the standard: the suppressed one raises the conspicuity of marrow edema, the non-suppressed one keeps the SNR and the fat planes that outline the collaterals and show marrow replacement.",
+      "pass": "A non-suppressed coronal PD was acquired alongside the fat-sat series. Pairing suppressed and non-suppressed series in the same plane is the standard: one raises edema conspicuity, the other keeps the SNR and the fat planes that outline the collaterals and show marrow replacement."
      },
      "id": "acq-pd-nofs",
      "label": "Non-fat-sat PD acquired for marrow and menisci detail",
@@ -231,20 +238,31 @@
      "type": "acquired"
     },
     {
+     "feedback": {
+      "fail": "No sagittal fluid-sensitive series was acquired. With a pop, rapid swelling, and giving way, ACL injury is squarely on the table, and its discontinuity plus the pivot-shift bone contusions read on a sagittal T2 fat-sat.",
+      "pass": "Sagittal T2 fat-sat acquired. This history is the classic cruciate story, and the sagittal fluid-sensitive series is where ACL discontinuity and the pivot-shift bone contusions of the lateral femoral condyle and posterolateral tibia show."
+     },
+     "id": "acq-t2fs-sag",
+     "label": "Sagittal fluid-sensitive series acquired",
+     "points": 2,
+     "preset": "Knee T2 Fat-Sat",
+     "type": "acquired"
+    },
+    {
      "band": {
       "full": [
-       10,
+       5,
        40
       ],
       "partial": [
-       10,
+       5,
        60
       ]
      },
      "feedback": {
-      "fail": "At this echo time the series is T2 weighted, not proton density. The meniscus goes uniformly dark on long TE images and intrasubstance tears disappear into it.",
-      "partial": "The echo time is drifting toward T2 weighting. As TE grows, meniscal signal drops and subtle tears lose their conspicuity.",
-      "pass": "The echo time keeps the series proton-density weighted, where menisci retain enough signal for tears to appear as bright lines through dark fibrocartilage."
+      "fail": "This echo time no longer gives proton-density contrast. PD needs a long TR with a short-to-intermediate TE, roughly 10 to 40 ms; tear signal is intermediate, not fluid-bright, so at long TE it decays toward the dark meniscus and intrasubstance tears become invisible.",
+      "partial": "The echo time is drifting toward T2 weighting. Tear signal is intermediate, so as TE lengthens it decays toward the dark meniscus and subtle tears lose conspicuity.",
+      "pass": "The echo time keeps this series proton-density weighted, where the high SNR and the intermediate signal of a tear stand out against the uniformly dark meniscus."
      },
      "id": "pd-te",
      "label": "PD echo time stays proton-density weighted",
@@ -256,7 +274,7 @@
     {
      "feedback": {
       "fail": "The sagittal stack covers only the central joint. Widen the coverage so both femorotibial compartments are included from edge to edge.",
-      "partial": "Sagittal coverage reaches most of the joint but clips a compartment edge. The peripheral third of the meniscus at the edge of coverage is a common tear site.",
+      "partial": "Sagittal coverage reaches most of the joint but clips a compartment edge. The far medial and lateral sagittal slices carry the peripheral meniscus and the meniscocapsular junction.",
       "pass": "Sagittal coverage spans the cartilage from compartment to compartment, so both menisci are fully inside the stack."
      },
      "id": "sag-coverage",
@@ -280,7 +298,7 @@
    "exam": "Knee",
    "id": "knee-internal-derangement",
    "region": "Knee",
-   "stem": "A 28-year-old basketball player felt a pop during a pivot, followed by swelling over hours and a sense of the knee giving way. Examination suggests a meniscal tear, with the cruciate ligaments to be assessed. Plan and acquire the exam.",
+   "stem": "A 28-year-old basketball player felt a pop during a pivot, followed by swelling over hours and a sense of the knee giving way. Examination suggests a cruciate injury, with the menisci to be assessed. Plan and acquire the exam.",
    "title": "Knee internal derangement"
   },
   {
@@ -288,7 +306,7 @@
     {
      "feedback": {
       "fail": "FLAIR was not acquired. On plain T2 a periventricular or cortical lesion sits next to bright CSF and can vanish into it; nulling the CSF is what makes the classic epileptogenic lesions visible.",
-      "pass": "FLAIR acquired. With CSF nulled, cortical and periventricular lesions such as mesial temporal sclerosis or cortical dysplasia stand out; this is the single highest-yield sequence for epilepsy."
+      "pass": "FLAIR acquired. With CSF nulled, cortical, subcortical, and periventricular signal change stays visible where plain T2 would lose it against bright CSF, which is why FLAIR is the highest-yield sequence in epilepsy. Hippocampal sclerosis and cortical dysplasia are the classic targets."
      },
      "id": "acq-flair",
      "label": "FLAIR acquired",
@@ -299,7 +317,7 @@
     {
      "feedback": {
       "fail": "No T1 was acquired. Gray-white differentiation and anatomy assessment need a T1 series.",
-      "pass": "T1 acquired, giving the anatomic reference and gray-white differentiation for the study."
+      "pass": "T1 acquired, giving the anatomic reference for the study. On modern scanners this role usually falls to a volumetric T1 acquisition."
      },
      "id": "acq-t1",
      "label": "T1 acquired",
@@ -320,7 +338,7 @@
     },
     {
      "feedback": {
-      "fail": "No diffusion was acquired. An acute infarct can present as a first seizure, and DWI is the only sequence that reliably shows it in the first hours.",
+      "fail": "No diffusion was acquired. An acute infarct can present as a first seizure, and DWI is the most sensitive sequence for it in the first hours.",
       "pass": "Diffusion acquired. A first seizure can be the presentation of an acute infarct, and postictal changes have a diffusion signature too."
      },
      "id": "acq-dwi",
@@ -352,14 +370,10 @@
      "points": 2,
      "preset": "Brain FLAIR",
      "target": {
-      "full": [
-       2242.2,
-       2853.7
-      ],
-      "partial": [
-       1911.0,
-       3185.0
-      ],
+      "full_frac": 0.12,
+      "partial_frac": 0.25,
+      "ref_tr": 9000.0,
+      "t1": 4500.0,
       "target": 2548.0
      },
      "type": "param"
@@ -376,7 +390,7 @@
       ]
      },
      "feedback": {
-      "fail": "At this b-value the series is not diagnostically diffusion weighted for stroke. Restriction contrast needs b near 1000.",
+      "fail": "At this b-value the series does not work as stroke diffusion imaging. Too low and T2 shine-through dominates with little diffusion contrast; too high and the SNR collapses. Restriction is read near b of 1000.",
       "partial": "The b-value is outside the usual stroke range. Very low values leave T2 shine-through dominant, very high values cost SNR that small cortical infarcts need.",
       "pass": "The b-value sits in the standard stroke range near 1000, enough diffusion weighting to make restriction conspicuous without starving the image of signal."
      },

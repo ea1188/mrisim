@@ -133,11 +133,17 @@ def rank(comps: list[dict[str, Any]], r: int) -> dict[str, Any]:
 def derive(spec: dict[str, Any], vols: dict[str, np.ndarray]) -> dict[str, Any]:
     kind = spec["kind"]
     if kind == "null_ti":
+        import tissue_db
+        t1 = float(tissue_db.properties("3T")[int(spec["tissue"])]["T1"])
         ti = null_ti(int(spec["tissue"]), float(spec["TR"]))
+        # t1 + ref_tr let the rubric recompute the null for the SUBMITTED TR, so
+        # a learner who shortens TR and re-derives the correct TI is rewarded.
         return {
+            "t1": round(t1, 1),
+            "ref_tr": float(spec["TR"]),
             "target": round(ti, 1),
-            "full": [round(ti * (1 - spec["full_frac"]), 1), round(ti * (1 + spec["full_frac"]), 1)],
-            "partial": [round(ti * (1 - spec["partial_frac"]), 1), round(ti * (1 + spec["partial_frac"]), 1)],
+            "full_frac": float(spec["full_frac"]),
+            "partial_frac": float(spec["partial_frac"]),
         }
 
     region = spec["region"]
@@ -160,17 +166,24 @@ def derive(spec: dict[str, Any], vols: dict[str, np.ndarray]) -> dict[str, Any]:
         lo_r, hi_r = spec["component_ranks"]
         span = [rank(comps, r) for r in range(int(lo_r), int(hi_r) + 1)]
         part = rank(comps, int(spec["partial_component_rank"]))
-        return {"axis": axis,
-                "full": [int(min(c["lo"][axis] for c in span)), int(max(c["hi"][axis] for c in span))],
+        if spec.get("span") == "centroids":
+            full = [int(round(float(span[0]["centroid"][axis]))),
+                    int(round(float(span[-1]["centroid"][axis])))]
+            full.sort()
+        else:
+            full = [int(min(c["lo"][axis] for c in span)), int(max(c["hi"][axis] for c in span))]
+        return {"axis": axis, "full": full,
                 "partial": [int(part["lo"][axis]), int(part["hi"][axis])]}
     if kind == "extent":
         mask = vol == int(spec["label"])
         idx = np.argwhere(mask)
         lo, hi = int(idx[:, axis].min()), int(idx[:, axis].max())
         mid, half = (lo + hi) / 2.0, (hi - lo) / 2.0
-        f = float(spec["partial_frac"])
-        return {"axis": axis, "full": [lo, hi],
-                "partial": [int(round(mid - half * f)), int(round(mid + half * f))]}
+        ff = float(spec.get("full_frac", 1.0))
+        pf = float(spec["partial_frac"])
+        return {"axis": axis,
+                "full": [int(round(mid - half * ff)), int(round(mid + half * ff))],
+                "partial": [int(round(mid - half * pf)), int(round(mid + half * pf))]}
     raise ValueError(f"unknown derive kind: {kind}")
 
 

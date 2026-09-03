@@ -102,7 +102,7 @@ test("lumbar: narrow sagittal stack clips the foramina", () => {
   const sub = lumbarIdeal();
   sub[1].params = { n_slices: 3, slice_thickness: 4 };    // 12mm midline-only
   assert.equal(verdicts(Rubric.grade(LUMBAR, sub, R))["sag-coverage"], "fail");
-  sub[1].params = { n_slices: 17, slice_thickness: 6 };   // 102mm: partial band only
+  sub[1].params = { n_slices: 12, slice_thickness: 5 };   // 60mm: partial band only
   assert.equal(verdicts(Rubric.grade(LUMBAR, sub, R))["sag-coverage"], "partial");
 });
 
@@ -118,6 +118,7 @@ function kneeIdeal() {
       params: { n_slices: 28, slice_thickness: 3.5 },
       plan: { slice: 115 },
     }),
+    item("Knee T2 Fat-Sat", "sagittal"),
   ];
 }
 
@@ -128,7 +129,7 @@ test("knee: the ideal protocol earns full credit", () => {
 
 test("knee: PD echo time drifting long loses PD weighting", () => {
   const sub = kneeIdeal();
-  const cases = [[30, "pass"], [50, "partial"], [70, "fail"]];
+  const cases = [[30, "pass"], [8, "pass"], [50, "partial"], [70, "fail"]];
   for (const [te, want] of cases) {
     sub[1].params.TE = te;
     assert.equal(verdicts(Rubric.grade(KNEE, sub, R))["pd-te"], want, `TE ${te}`);
@@ -164,6 +165,15 @@ test("brain: FLAIR TI off the CSF null degrades and then fails", () => {
     sub[2].params.TI = ti;
     assert.equal(verdicts(Rubric.grade(BRAIN, sub, R))["flair-ti"], want, `TI ${ti}`);
   }
+});
+
+test("brain: FLAIR TI is graded against the SUBMITTED TR", () => {
+  const sub = brainIdeal();
+  sub[2].params.TR = 6000;
+  sub[2].params.TI = 2068;            // correctly re-derived null for TR 6000
+  assert.equal(verdicts(Rubric.grade(BRAIN, sub, R))["flair-ti"], "pass");
+  sub[2].params.TI = 2548;            // stale TI from the TR 9000 preset
+  assert.equal(verdicts(Rubric.grade(BRAIN, sub, R))["flair-ti"], "partial");
 });
 
 test("brain: DWI b-value bands", () => {
