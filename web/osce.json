@@ -75,8 +75,8 @@
     {
      "angle": "tilt",
      "feedback": {
-      "fail": "The axial stack is not angled to the L4-L5 disc plane. Tilt the stack on the sagittal scout so slices run parallel to the disc; unangled axials cut the disc obliquely and distort the anatomy you are being asked to judge.",
-      "partial": "The axial angulation is close but not parallel to the L4-L5 disc. Off-angle axials elongate the canal and can mimic or hide root compromise.",
+      "fail": "The axial stack is not angled to the L4-L5 disc plane. If you went to L5-S1 because the stem says L5, you have met the classic lumbar trap: each root exits beneath the pedicle of its own vertebra, so a posterolateral herniation at L4-L5 compresses the L5 root while it is still traversing the canal toward its exit. L5 symptoms usually point to the L4-L5 disc. Tilt the stack on the sagittal scout so the slices run parallel to that disc.",
+      "partial": "The axial angulation is close but not parallel to the L4-L5 disc, the level a traversing L5 root points to. Off-angle axials elongate the canal and can mimic or hide root compromise.",
       "pass": "The axial stack is angled parallel to the L4-L5 disc. In-plane discs show the true canal and foraminal anatomy at the level that matters."
      },
      "id": "ax-angle",
@@ -93,7 +93,7 @@
     },
     {
      "feedback": {
-      "fail": "The axial stack is not centered on L4-L5. A left L5 radiculopathy usually means L4-L5 disc pathology compressing the traversing L5 root, so center the stack there.",
+      "fail": "The axial stack is not centered on L4-L5. The level is counterintuitive on purpose: the L5 root is usually compressed one level above its exit, at L4-L5, where a posterolateral herniation catches it while it is still traversing the canal. The L5-S1 disc is the answer for S1 symptoms, or for the rarer far-lateral compression of the exiting L5 root.",
       "pass": "The axial stack is centered on the L4-L5 disc, the level the clinical picture points to."
      },
      "id": "ax-slice",
