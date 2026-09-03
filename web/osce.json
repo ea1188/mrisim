@@ -1,0 +1,399 @@
+{
+ "regions": {
+  "Brain": {
+   "shape": [
+    181,
+    217,
+    181
+   ],
+   "voxel_mm": 1.2155
+  },
+  "Knee": {
+   "shape": [
+    143,
+    223,
+    204
+   ],
+   "voxel_mm": 0.7353
+  },
+  "Spine": {
+   "shape": [
+    223,
+    145,
+    128
+   ],
+   "voxel_mm": 2.5
+  }
+ },
+ "scenarios": [
+  {
+   "criteria": [
+    {
+     "feedback": {
+      "fail": "The sagittal T1 was not acquired. Without it you lose marrow assessment and the fat planes that make foraminal narrowing visible.",
+      "pass": "Sagittal T1 acquired. It shows marrow signal, vertebral alignment, and foraminal fat, the anatomic backbone of the study."
+     },
+     "id": "acq-t1-sag",
+     "label": "Sagittal T1 acquired",
+     "points": 2,
+     "preset": "Spine T1 Sagittal",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "The sagittal T2 was not acquired. Disc desiccation, canal compromise, and cord signal cannot be assessed without it.",
+      "pass": "Sagittal T2 acquired. Disc hydration, canal caliber, and cord signal all read from this series."
+     },
+     "id": "acq-t2-sag",
+     "label": "Sagittal T2 acquired",
+     "points": 2,
+     "preset": "Spine T2 Sagittal",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "No axial T2 was acquired. A herniation's position (central, paracentral, foraminal) and root contact can only be judged in the axial plane.",
+      "pass": "Axial T2 acquired. The axial plane is where a posterolateral herniation and its relation to the traversing root are actually called."
+     },
+     "id": "acq-ax-t2",
+     "label": "Axial T2 acquired",
+     "points": 2,
+     "preset": "Spine Axial T2",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "Post-contrast imaging was acquired. In first-presentation radiculopathy with no history of surgery, malignancy, or infection, gadolinium is not indicated. It is reserved for the postoperative spine (scar versus recurrent disc) and suspected tumor or infection.",
+      "pass": "Contrast was correctly withheld. Gadolinium adds nothing for first-presentation radiculopathy without red flags."
+     },
+     "id": "no-gd",
+     "label": "Contrast withheld",
+     "points": 2,
+     "preset": "Spine T1 Post-Gd",
+     "type": "not_acquired"
+    },
+    {
+     "angle": "tilt",
+     "feedback": {
+      "fail": "The axial stack is not angled to the L4-L5 disc plane. Tilt the stack on the sagittal scout so slices run parallel to the disc; unangled axials cut the disc obliquely and distort the anatomy you are being asked to judge.",
+      "partial": "The axial angulation is close but not parallel to the L4-L5 disc. Off-angle axials elongate the canal and can mimic or hide root compromise.",
+      "pass": "The axial stack is angled parallel to the L4-L5 disc. In-plane discs show the true canal and foraminal anatomy at the level that matters."
+     },
+     "id": "ax-angle",
+     "label": "Axial angled to the L4-L5 disc plane",
+     "points": 3,
+     "preset": "Spine Axial T2",
+     "target": {
+      "full_deg": 5,
+      "partial_deg": 10,
+      "rot_deg": 0.0,
+      "tilt_deg": 8.2
+     },
+     "type": "angulation"
+    },
+    {
+     "feedback": {
+      "fail": "The axial stack is not centered on L4-L5. A left L5 radiculopathy usually means L4-L5 disc pathology compressing the traversing L5 root, so center the stack there.",
+      "pass": "The axial stack is centered on the L4-L5 disc, the level the clinical picture points to."
+     },
+     "id": "ax-slice",
+     "label": "Axial stack centered on L4-L5",
+     "points": 2,
+     "preset": "Spine Axial T2",
+     "target": {
+      "axis": 0,
+      "hi": 88,
+      "lo": 77
+     },
+     "type": "slice"
+    },
+    {
+     "feedback": {
+      "fail": "The axial slab does not cover the L4-L5 disc. Increase the slice count or thickness, or re-center the stack, so the symptomatic level is fully inside the coverage.",
+      "partial": "Axial coverage includes the L4-L5 disc but not the adjacent levels. The standard for radiculopathy is to cover the lower three discs, since an L5-S1 fragment can produce an identical picture.",
+      "pass": "Axial coverage spans L3-L4 through L5-S1. If the symptomatic level is uncertain or there is pathology at an adjacent level, it is already covered."
+     },
+     "id": "ax-coverage",
+     "label": "Axial coverage spans the lower three discs",
+     "points": 2,
+     "preset": "Spine Axial T2",
+     "target": {
+      "axis": 0,
+      "full": [
+       48,
+       114
+      ],
+      "partial": [
+       77,
+       88
+      ]
+     },
+     "type": "coverage"
+    },
+    {
+     "feedback": {
+      "fail": "The sagittal stack covers only the midline. Widen the stack so it extends through both neural foramina; foraminal and far-lateral herniations sit lateral to the canal.",
+      "partial": "Sagittal coverage reaches most of the disc width but clips one side. A far-lateral herniation at the edge of coverage is exactly the lesion this exam exists to catch.",
+      "pass": "Sagittal coverage extends across the full width of the discs, so both neural foramina are inside the stack."
+     },
+     "id": "sag-coverage",
+     "label": "Sagittal coverage includes both foramina",
+     "points": 2,
+     "preset": "Spine T2 Sagittal",
+     "target": {
+      "axis": 2,
+      "full": [
+       37,
+       91
+      ],
+      "partial": [
+       48,
+       80
+      ]
+     },
+     "type": "coverage"
+    },
+    {
+     "feedback": {
+      "fail": "The STIR inversion time does not null fat. STIR works by inverting and then imaging at the moment fat crosses zero; at this TI fat still has signal and edema loses its conspicuity.",
+      "partial": "The STIR inversion time is near the fat null but off enough to leave residual fat signal, which costs contrast for marrow edema.",
+      "pass": "The STIR inversion time sits at the fat null. Marrow edema and soft-tissue fluid will be conspicuous against suppressed fat."
+     },
+     "id": "stir-ti",
+     "label": "STIR inversion time nulls fat",
+     "param": "TI",
+     "points": 2,
+     "preset": "Spine STIR",
+     "target": {
+      "full": [
+       225.1,
+       304.5
+      ],
+      "partial": [
+       185.3,
+       344.2
+      ],
+      "target": 264.8
+     },
+     "type": "param"
+    }
+   ],
+   "exam": "Spine",
+   "id": "lumbar-radiculopathy",
+   "region": "Spine",
+   "stem": "A 45-year-old presents with six weeks of left L5 radiculopathy: pain radiating below the knee into the dorsum of the foot, with a positive straight-leg raise. No fever, no history of malignancy, no trauma. The referral asks you to evaluate for lumbar disc herniation. Plan and acquire the exam.",
+   "title": "Lumbar radiculopathy"
+  },
+  {
+   "criteria": [
+    {
+     "feedback": {
+      "fail": "No coronal PD fat-sat was acquired. The body of each meniscus and the collateral ligaments are coronal-plane structures, and fat suppression is what makes their tears and the reactive edema conspicuous.",
+      "pass": "Coronal PD fat-sat acquired. Menisci and collateral ligaments read best in the coronal plane with fat suppressed."
+     },
+     "id": "acq-pd-fs-cor",
+     "label": "Coronal PD fat-sat acquired",
+     "points": 2,
+     "preset": "Knee PD FS Coronal",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "No sagittal PD was acquired. Meniscal horns and the ACL are judged on sagittal images; this is the workhorse series of a knee exam.",
+      "pass": "Sagittal PD acquired. The anterior and posterior horns and the cruciates read in the sagittal plane."
+     },
+     "id": "acq-pd-sag",
+     "label": "Sagittal PD acquired",
+     "points": 2,
+     "preset": "Knee PD FSE",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "No axial T2 fat-sat was acquired. The patellar cartilage, retinacula, and the effusion that follows an acute pivot injury are all assessed in the axial plane.",
+      "pass": "Axial T2 fat-sat acquired. The patellofemoral compartment and retinacula are axial-plane reads, and the effusion is quantified here."
+     },
+     "id": "acq-t2-ax",
+     "label": "Axial T2 fat-sat acquired",
+     "points": 2,
+     "preset": "Knee T2 FS Axial",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "Every acquired series is fat-suppressed. Keeping one PD without fat suppression preserves meniscal and marrow detail that suppression trades away; the combination is the standard.",
+      "pass": "A non-suppressed PD was acquired alongside the fat-sat series. Keeping one series without fat suppression preserves anatomic detail and marrow architecture."
+     },
+     "id": "acq-pd-nofs",
+     "label": "Non-fat-sat PD acquired for marrow and menisci detail",
+     "points": 1,
+     "preset": "Knee PD Coronal",
+     "type": "acquired"
+    },
+    {
+     "band": {
+      "full": [
+       10,
+       40
+      ],
+      "partial": [
+       10,
+       60
+      ]
+     },
+     "feedback": {
+      "fail": "At this echo time the series is T2 weighted, not proton density. The meniscus goes uniformly dark on long TE images and intrasubstance tears disappear into it.",
+      "partial": "The echo time is drifting toward T2 weighting. As TE grows, meniscal signal drops and subtle tears lose their conspicuity.",
+      "pass": "The echo time keeps the series proton-density weighted, where menisci retain enough signal for tears to appear as bright lines through dark fibrocartilage."
+     },
+     "id": "pd-te",
+     "label": "PD echo time stays proton-density weighted",
+     "param": "TE",
+     "points": 2,
+     "preset": "Knee PD FS Coronal",
+     "type": "param"
+    },
+    {
+     "feedback": {
+      "fail": "The sagittal stack covers only the central joint. Widen the coverage so both femorotibial compartments are included from edge to edge.",
+      "partial": "Sagittal coverage reaches most of the joint but clips a compartment edge. The peripheral third of the meniscus at the edge of coverage is a common tear site.",
+      "pass": "Sagittal coverage spans the cartilage from compartment to compartment, so both menisci are fully inside the stack."
+     },
+     "id": "sag-coverage",
+     "label": "Sagittal coverage spans the joint",
+     "points": 2,
+     "preset": "Knee PD FSE",
+     "target": {
+      "axis": 2,
+      "full": [
+       50,
+       180
+      ],
+      "partial": [
+       76,
+       154
+      ]
+     },
+     "type": "coverage"
+    }
+   ],
+   "exam": "Knee",
+   "id": "knee-internal-derangement",
+   "region": "Knee",
+   "stem": "A 28-year-old basketball player felt a pop during a pivot, followed by swelling over hours and a sense of the knee giving way. Examination suggests a meniscal tear, with the cruciate ligaments to be assessed. Plan and acquire the exam.",
+   "title": "Knee internal derangement"
+  },
+  {
+   "criteria": [
+    {
+     "feedback": {
+      "fail": "FLAIR was not acquired. On plain T2 a periventricular or cortical lesion sits next to bright CSF and can vanish into it; nulling the CSF is what makes the classic epileptogenic lesions visible.",
+      "pass": "FLAIR acquired. With CSF nulled, cortical and periventricular lesions such as mesial temporal sclerosis or cortical dysplasia stand out; this is the single highest-yield sequence for epilepsy."
+     },
+     "id": "acq-flair",
+     "label": "FLAIR acquired",
+     "points": 3,
+     "preset": "Brain FLAIR",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "No T1 was acquired. Gray-white differentiation and anatomy assessment need a T1 series.",
+      "pass": "T1 acquired, giving the anatomic reference and gray-white differentiation for the study."
+     },
+     "id": "acq-t1",
+     "label": "T1 acquired",
+     "points": 2,
+     "preset": "Brain T1 SE",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "No T2 was acquired. FLAIR alone is not enough; T2 confirms lesions and shows posterior fossa detail where FLAIR is weakest.",
+      "pass": "T2 acquired. Most parenchymal pathology is T2 bright, and it pairs with FLAIR to separate true lesions from CSF-space artifact."
+     },
+     "id": "acq-t2",
+     "label": "T2 acquired",
+     "points": 2,
+     "preset": "Brain T2 SE",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "No diffusion was acquired. An acute infarct can present as a first seizure, and DWI is the only sequence that reliably shows it in the first hours.",
+      "pass": "Diffusion acquired. A first seizure can be the presentation of an acute infarct, and postictal changes have a diffusion signature too."
+     },
+     "id": "acq-dwi",
+     "label": "Diffusion acquired",
+     "points": 2,
+     "preset": "DWI Stroke",
+     "type": "acquired"
+    },
+    {
+     "feedback": {
+      "fail": "Post-contrast imaging was acquired. In a first unprovoked seizure with full recovery and a normal examination, gadolinium is reserved for cases where the non-contrast study finds a lesion or the history suggests tumor or infection.",
+      "pass": "Contrast was correctly withheld. With a normal examination and no red flags, the non-contrast seizure protocol is the appropriate first study."
+     },
+     "id": "no-gd",
+     "label": "Contrast withheld",
+     "points": 2,
+     "preset": "Brain T1 Post-Gd",
+     "type": "not_acquired"
+    },
+    {
+     "feedback": {
+      "fail": "At this inversion time CSF is not nulled and the sequence no longer behaves as FLAIR. The TI must sit where the CSF longitudinal recovery crosses zero for this TR.",
+      "partial": "The inversion time is near the CSF null but off enough that CSF keeps some signal, which erodes the contrast that makes periventricular lesions visible.",
+      "pass": "The inversion time sits at the CSF null, which is the entire point of FLAIR: dark ventricles and sulci with lesions left bright."
+     },
+     "id": "flair-ti",
+     "label": "FLAIR inversion time nulls CSF",
+     "param": "TI",
+     "points": 2,
+     "preset": "Brain FLAIR",
+     "target": {
+      "full": [
+       2242.2,
+       2853.7
+      ],
+      "partial": [
+       1911.0,
+       3185.0
+      ],
+      "target": 2548.0
+     },
+     "type": "param"
+    },
+    {
+     "band": {
+      "full": [
+       800,
+       1400
+      ],
+      "partial": [
+       500,
+       2000
+      ]
+     },
+     "feedback": {
+      "fail": "At this b-value the series is not diagnostically diffusion weighted for stroke. Restriction contrast needs b near 1000.",
+      "partial": "The b-value is outside the usual stroke range. Very low values leave T2 shine-through dominant, very high values cost SNR that small cortical infarcts need.",
+      "pass": "The b-value sits in the standard stroke range near 1000, enough diffusion weighting to make restriction conspicuous without starving the image of signal."
+     },
+     "id": "dwi-b",
+     "label": "Diffusion b-value in the stroke range",
+     "param": "b_value",
+     "points": 2,
+     "preset": "DWI Stroke",
+     "type": "param"
+    }
+   ],
+   "exam": "Brain",
+   "id": "brain-first-seizure",
+   "region": "Brain",
+   "stem": "A 31-year-old had a first generalized seizure witnessed at home, with full recovery and a normal neurological examination. There is no fever, trauma, malignancy history, or immunocompromise. The referral asks for a seizure-protocol MRI. Plan and acquire the exam.",
+   "title": "Brain, first seizure"
+  }
+ ],
+ "version": 1
+}
