@@ -29,6 +29,7 @@
       var lessons = {};
       var masteredBest = {};   // premium module title -> best mastery-check %
       var bestMock = null;     // best mock-exam %
+      var bestOsce = null;     // best OSCE %
       var quizRuns = 0;
       var lastActive = null;
 
@@ -51,6 +52,9 @@
         } else if (a.kind === "mock_exam") {
           var ep = pct(a.score, a.total);
           if (ep != null && (bestMock == null || ep > bestMock)) bestMock = ep;
+        } else if (a.kind === "osce") {
+          var op = pct(a.score, a.total);
+          if (op != null && (bestOsce == null || op > bestOsce)) bestOsce = op;
         }
       });
 
@@ -82,6 +86,7 @@
         bestPct: bestPct,
         modulesMastered: modulesMastered,
         bestMockPct: bestMock,
+        bestOscePct: bestOsce,
         weakestTopic: weakestTopic,
         lastActive: lastActive,
         struggling: struggling,
@@ -215,6 +220,7 @@
       else if (a.kind === "lesson_complete") label = "completed lesson " + a.ref;
       else if (a.kind === "quiz_attempt") label = "quiz " + a.ref + (pt != null ? " — " + pt + "%" : "");
       else if (a.kind === "mock_exam") label = "mock exam" + (pt != null ? " — " + pt + "%" : "");
+      else if (a.kind === "osce") label = "OSCE " + a.ref + (pt != null ? " — " + pt + "%" : "");
       else label = a.kind + " " + a.ref;
       return { studentId: a.student_id, name: nameById[a.student_id] || "(unknown)", kind: a.kind, ref: a.ref, pct: pt, at: a.created_at, label: label };
     });
