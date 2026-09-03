@@ -314,6 +314,17 @@ function closeDialog(id) {
   $(id).hidden = true;
   if (lastDialogFocus && typeof lastDialogFocus.focus === "function") lastDialogFocus.focus();
 }
+// Tab cycles inside an open modal dialog instead of escaping behind it.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const dlg = document.querySelector('[role="dialog"][aria-modal="true"]:not([hidden])');
+  if (!dlg) return;
+  const els = dlg.querySelectorAll("button:not(:disabled), a[href], select, input, [tabindex]:not([tabindex='-1'])");
+  if (!els.length) return;
+  const first = els[0], last = els[els.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (document.activeElement === last || !dlg.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+});
 function showIntro() { openDialog("intro", "intro-tour"); }
 function hideIntro() { closeDialog("intro"); localStorage.setItem("mrisim_seen", "1"); }
 function maybeShowIntro() {
