@@ -172,14 +172,14 @@
   // --- the course --------------------------------------------------------- //
   function courseView(curriculum, lessonsByTitle, premiumByTopic, assignments) {
     var wrap = h("div", { class: "course" });
-    var rail = h("div", { class: "rail" });
-    var main = h("div", { class: "main" });
+    var rail = h("nav", { class: "rail", "aria-label": "Course navigation" });
+    var main = h("main", { class: "main", id: "course-main" });
     CTX = { curriculum: curriculum, byTitle: lessonsByTitle, byTopic: premiumByTopic,
       rail: rail, main: main, mod: curriculum[0],
       assign: assignIndex(assignments),
       expanded: new Set([curriculum[0].title]) };  // which modules are expanded in the TOC
 
-    var studyrail = h("aside", { class: "studyrail", id: "studyrail", hidden: true });
+    var studyrail = h("aside", { class: "studyrail", id: "studyrail", "aria-label": "Study shortcuts", hidden: true });
     buildRail();
     wrap.appendChild(rail); wrap.appendChild(main); wrap.appendChild(studyrail);
     clear(root); root.appendChild(wrap);
@@ -187,6 +187,26 @@
   }
 
   function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+
+  // Screen-reader announcement (see #sr-live in course.html). Cleared first so
+  // repeating the same message still re-announces.
+  function announce(msg) {
+    var live = document.getElementById("sr-live");
+    if (!live) return;
+    live.textContent = "";
+    setTimeout(function () { live.textContent = msg; }, 30);
+  }
+
+  // After a view swap, move focus to the new view's heading so keyboard and
+  // screen-reader users land where the content starts (skipped on initial load).
+  var viewBooted = false;
+  function focusMain() {
+    if (!viewBooted) { viewBooted = true; return; }
+    var head = CTX && CTX.main && CTX.main.querySelector("h2, .ms-pct, .er-score");
+    if (!head) return;
+    head.setAttribute("tabindex", "-1");
+    try { head.focus({ preventScroll: true }); } catch (e) { head.focus(); }
+  }
 
   // Index the learner's assignments by "kind ref" -> the assignment row, for O(1)
   // badge lookup during render. Best-effort: absent/[] means no badges.
@@ -267,7 +287,7 @@
           h("span", { class: "bp-acc" + (pct == null ? " none" : ""),
             text: pct == null ? "Not started" : pct + "%" }),
         ]),
-        h("div", { class: "bar" }, [h("i", { style: "width:" + (pct == null ? 0 : pct) + "%" })]),
+        h("div", { class: "bar", "aria-hidden": "true" }, [h("i", { style: "width:" + (pct == null ? 0 : pct) + "%" })]),
         h("div", { class: "bp-cov-line", text: c.attempted + " of " + c.memberCount
           + " topic" + (c.memberCount === 1 ? "" : "s") + " practiced" }),
       ]);
@@ -335,7 +355,7 @@
     main.appendChild(h("div", { class: "ready" }, [
       h("div", { class: "ready-num", text: r.overall + "%" }),
       h("div", { class: "ready-band", text: r.band }),
-      h("div", { class: "bar wide" }, [h("i", { style: "width:" + r.overall + "%" })]),
+      h("div", { class: "bar wide", "aria-hidden": "true" }, [h("i", { style: "width:" + r.overall + "%" })]),
       h("div", { class: "ready-sub", text: r.readPct + "% read · " + r.quizAcc + "% quiz accuracy"
         + (r.exam && r.exam.bestPct != null ? " · best mock " + r.exam.bestPct + "%" : "") }),
     ]));
@@ -442,6 +462,7 @@
       document.createTextNode(" within 7 days."),
     ]));
     buildRail();
+    focusMain();
   }
 
   function openModule(mod) {
@@ -465,10 +486,12 @@
     clear(rail);
     rail.appendChild(h("div", { class: "prog" }, [
       document.createTextNode(complete + " / " + total + " read"),
-      h("div", { class: "bar" }, [h("i", { style: "width:" + (total ? Math.round(100 * complete / total) : 0) + "%" })]),
+      h("div", { class: "bar", "aria-hidden": "true" }, [h("i", { style: "width:" + (total ? Math.round(100 * complete / total) : 0) + "%" })]),
     ]));
-    rail.appendChild(h("button", { class: "overview-cta" + (CTX.mod == null ? " on" : ""), type: "button",
-      onclick: renderOverview, text: "Overview" }));
+    var ovBtn = h("button", { class: "overview-cta" + (CTX.mod == null ? " on" : ""), type: "button",
+      onclick: renderOverview, text: "Overview" });
+    if (CTX.mod == null) ovBtn.setAttribute("aria-current", "true");
+    rail.appendChild(ovBtn);
     rail.appendChild(h("button", { class: "exam-cta" + (EXAM && !EXAM.diagnostic ? " on" : ""), type: "button", onclick: openExam }, [
       document.createTextNode("Practice exam"),
       h("span", { class: "ec-sub", text: "Registry-style run across the whole bank" }),
@@ -494,28 +517,32 @@
       subs.forEach(function (s) {
         var d = isSubDone(s, done, read, mastery);
         inner.appendChild(h("button", { class: "sub" + (d ? " done" : ""), type: "button",
+          "aria-label": s.label + (d ? " — done" : ""),
           onclick: function () { gotoSub(mod, s); } }, [
-          h("span", { class: "box" + (d ? " on" : ""), text: d ? "✓" : "" }),
+          h("span", { class: "box" + (d ? " on" : ""), "aria-hidden": "true", text: d ? "✓" : "" }),
           h("span", { class: "sl", text: s.label }),
         ]));
       });
       var subsWrap = h("div", { class: "mod-subs" + (expanded ? " open" : "") }, [inner]);
-      var caret = h("span", { class: "caret" + (expanded ? " open" : ""), text: "▸" });
+      var caret = h("span", { class: "caret" + (expanded ? " open" : ""), "aria-hidden": "true", text: "▸" });
       // Toggle in place so the expand/collapse animates; a full buildRail() would recreate
       // the element in its target state and skip the CSS transition. Rebuilds elsewhere
       // (marking read, navigation) still paint the resting state instantly, which is correct.
       var header = h("button", { class: "mod-h" + (mod === CTX.mod ? " on" : ""), type: "button",
+        "aria-expanded": expanded ? "true" : "false",
         onclick: function () {
           var wasActive = CTX.mod === mod;
           if (wasActive && CTX.expanded.has(mod.title)) {
             CTX.expanded.delete(mod.title);
             subsWrap.classList.remove("open");
             caret.classList.remove("open");
+            header.setAttribute("aria-expanded", "false");
             return;
           }
           CTX.expanded.add(mod.title);
           subsWrap.classList.add("open");
           caret.classList.add("open");
+          header.setAttribute("aria-expanded", "true");
           if (!wasActive) {
             // Clear any active rail button (module header, Overview, or an exam CTA) so
             // navigating in place leaves exactly one highlight, matching a full buildRail().
@@ -527,8 +554,10 @@
         } }, [
         caret,
         document.createTextNode(mod.title),
-        h("span", { class: "mtk" + (modDone ? " done" : ""), text: modDone ? "✓" : pm.c + "/" + subs.length }),
+        h("span", { class: "mtk" + (modDone ? " done" : ""), text: modDone ? "✓" : pm.c + "/" + subs.length,
+          "aria-label": modDone ? "complete" : pm.c + " of " + subs.length + " done" }),
       ]);
+      if (mod === CTX.mod) header.setAttribute("aria-current", "true");
       rail.appendChild(h("div", { class: "mod" }, [header, subsWrap]));
     });
   }
@@ -542,7 +571,10 @@
     }
     setTimeout(function () {
       var el = document.getElementById(s.anchor);
-      if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!el) return;
+      if (el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.setAttribute("tabindex", "-1");
+      try { el.focus({ preventScroll: true }); } catch (e2) { el.focus(); }
     }, 30);
   }
 
@@ -603,7 +635,7 @@
       h("div", { class: "sr-h", text: "This topic" }),
       h("div", { class: "sr-title", text: mod.title }),
       h("div", { class: "sr-prog", text: doneN + " / " + subs.length + " done" }),
-      h("div", { class: "bar" }, [h("i", { style: "width:" + pct + "%" })]),
+      h("div", { class: "bar", "aria-hidden": "true" }, [h("i", { style: "width:" + pct + "%" })]),
     ]);
 
     var acts = h("div", { class: "sr-acts" });
@@ -764,6 +796,7 @@
     if (hasMastery(mod)) main.appendChild(masterySection(mod));
     buildStudyRail(mod, cfg, pq.length > 0);
     window.scrollTo(0, 0);
+    focusMain();
   }
 
   // A "Listen" toggle for any text getter. Prefers pre-rendered neural
@@ -971,6 +1004,12 @@
     if (!ttsSeek) return;
     if (max != null && isFinite(max) && max > 0) ttsSeek.max = String(max);
     if (document.activeElement !== ttsSeek) ttsSeek.value = String(value);
+    var m = parseFloat(ttsSeek.max);
+    if (isFinite(m) && m > 0) ttsSeek.setAttribute("aria-valuetext", fmtClock(value) + " of " + fmtClock(m));
+  }
+  function fmtClock(sec) {
+    var t = Math.max(0, Math.round(sec));
+    return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
   }
   function showTtsBar(audioMode) {
     if (ttsBar) {
@@ -1087,7 +1126,7 @@
       var j = Math.floor(Math.random() * (i + 1)); var t = order[i]; order[i] = order[j]; order[j] = t;
     }
     var answered = false;
-    var fb = h("div", { class: "fb", hidden: true });
+    var fb = h("div", { class: "fb", role: "status", hidden: true });
     var box = h("div", { class: "q" }, [h("p", { class: "prompt", text: q.prompt })]);
     addQImg(box, q);
     order.forEach(function (orig) {
@@ -1095,9 +1134,13 @@
         if (answered) return; answered = true;
         var correct = orig === q.answer;
         b.classList.add(correct ? "correct" : "wrong");
+        b.setAttribute("aria-label", b.textContent + (correct ? " — correct" : " — your answer, incorrect"));
         if (!correct) {
           [].forEach.call(box.querySelectorAll(".opt"), function (o, k) {
-            if (order[k] === q.answer) o.classList.add("correct");
+            if (order[k] === q.answer && o !== b) {
+              o.classList.add("correct");
+              o.setAttribute("aria-label", o.textContent + " — correct answer");
+            }
           });
         }
         [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
@@ -1155,10 +1198,12 @@
       ]);
       addQImg(box, item.q);
       item.order.forEach(function (orig) {
-        var opt = h("button", { class: "opt", type: "button", onclick: function () {
+        var opt = h("button", { class: "opt", type: "button", "aria-pressed": "false", onclick: function () {
           picks[qi] = orig;
-          [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.classList.remove("sel"); });
-          opt.classList.add("sel");
+          [].forEach.call(box.querySelectorAll(".opt"), function (o) {
+            o.classList.remove("sel"); o.setAttribute("aria-pressed", "false");
+          });
+          opt.classList.add("sel"); opt.setAttribute("aria-pressed", "true");
         } }, [document.createTextNode(item.q.options[orig])]);
         box.appendChild(opt);
       });
@@ -1189,10 +1234,13 @@
   function renderMasteryResult(mod, body, questions, picks, correct, pct) {
     clear(body);
     var passed = pct >= PASS_PCT;
-    body.appendChild(h("div", { class: "mchk-score " + (passed ? "pass" : "fail") }, [
+    var score = h("div", { class: "mchk-score " + (passed ? "pass" : "fail"), tabindex: "-1",
+      "aria-label": pct + " percent. " + correct + " of " + questions.length + (passed ? ". Mastered." : ". You need " + PASS_PCT + " percent.") }, [
       h("div", { class: "ms-pct", text: pct + "%" }),
       h("div", { class: "ms-line", text: correct + " of " + questions.length + (passed ? " · mastered" : " · need " + PASS_PCT + "%") }),
-    ]));
+    ]);
+    body.appendChild(score);
+    try { score.focus({ preventScroll: true }); } catch (e) { score.focus(); }
     var missed = [];
     questions.forEach(function (item, qi) { if (picks[qi] !== item.q.answer) missed.push({ item: item, pick: picks[qi] }); });
     if (missed.length) {
@@ -1202,8 +1250,11 @@
         var box = h("div", { class: "q reviewed miss" }, [h("p", { class: "prompt", text: item.q.prompt })]);
         addQImg(box, item.q);
         item.order.forEach(function (orig) {
-          var cls = "opt"; if (orig === item.q.answer) cls += " correct"; else if (orig === mm.pick) cls += " wrong";
-          box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
+          var cls = "opt", verdict = "";
+          if (orig === item.q.answer) { cls += " correct"; verdict = " — correct answer"; }
+          else if (orig === mm.pick) { cls += " wrong"; verdict = " — your answer, incorrect"; }
+          box.appendChild(h("button", { class: cls, type: "button", disabled: true,
+            "aria-label": item.q.options[orig] + verdict }, [document.createTextNode(item.q.options[orig])]));
         });
         var fbrev = h("div", { class: "fb", text: item.q.explain }); appendRefLink(fbrev, item.q); box.appendChild(fbrev);
         body.appendChild(box);
@@ -1252,6 +1303,7 @@
     CTX.mod = null;
     buildRail();
     renderExamSetup(CTX.main);
+    focusMain();
   }
   function renderExamSetup(main) {
     clear(main);
@@ -1339,7 +1391,7 @@
       ]);
       addQImg(box, item.q);
       item.order.forEach(function (orig) {
-        var opt = h("button", { class: "exam-opt", type: "button", onclick: function () { selectOpt(qi, orig, box, opt); } },
+        var opt = h("button", { class: "exam-opt", type: "button", "aria-pressed": "false", onclick: function () { selectOpt(qi, orig, box, opt); } },
           [document.createTextNode(item.q.options[orig])]);
         box.appendChild(opt);
       });
@@ -1352,8 +1404,10 @@
   function selectOpt(qi, orig, box, opt) {
     if (!EXAM || EXAM.reviewing) return;
     EXAM.picks[qi] = orig;
-    [].forEach.call(box.querySelectorAll(".exam-opt"), function (o) { o.classList.remove("sel"); });
-    opt.classList.add("sel");
+    [].forEach.call(box.querySelectorAll(".exam-opt"), function (o) {
+      o.classList.remove("sel"); o.setAttribute("aria-pressed", "false");
+    });
+    opt.classList.add("sel"); opt.setAttribute("aria-pressed", "true");
     updateExamBar();
   }
   function updateExamBar() {
@@ -1412,16 +1466,18 @@
       var box = h("div", { class: "exam-q reviewed" + (right ? "" : " miss") }, [num, h("p", { class: "prompt", text: item.q.prompt })]);
       addQImg(box, item.q);
       item.order.forEach(function (orig) {
-        var cls = "exam-opt";
-        if (orig === item.q.answer) cls += " correct";
-        else if (orig === pick) cls += " wrong";
-        box.appendChild(h("button", { class: cls, type: "button", disabled: true }, [document.createTextNode(item.q.options[orig])]));
+        var cls = "exam-opt", verdict = "";
+        if (orig === item.q.answer) { cls += " correct"; verdict = " — correct answer"; }
+        else if (orig === pick) { cls += " wrong"; verdict = " — your answer, incorrect"; }
+        box.appendChild(h("button", { class: cls, type: "button", disabled: true,
+          "aria-label": item.q.options[orig] + verdict }, [document.createTextNode(item.q.options[orig])]));
       });
       if (pick < 0) box.appendChild(h("div", { class: "fb muted", text: "You left this one blank." }));
       box.appendChild(h("div", { class: "fb", text: item.q.explain }));
       main.appendChild(box);
     });
     window.scrollTo(0, 0);
+    focusMain();
   }
   function loadExamBest() { try { return JSON.parse(localStorage.getItem(COURSE_EXAM_KEY) || "null"); } catch (e) { return null; } }
   function saveExamBest(score, total, pct) {
@@ -1583,6 +1639,7 @@
     order.forEach(function (idx) { main.appendChild(reviewCard(items[idx])); });
     main.appendChild(h("button", { class: "btn ghost", type: "button", text: "Done", onclick: renderOverview }));
     buildRail(); window.scrollTo(0, 0);
+    focusMain();
   }
 
   // One review question: shuffled options, immediate feedback, and reschedule on answer.
@@ -1591,7 +1648,7 @@
   function reviewCard(q) {
     var order = shuffleInts(q.options.length);
     var answered = false;
-    var fb = h("div", { class: "fb", hidden: true });
+    var fb = h("div", { class: "fb", role: "status", hidden: true });
     var box = h("div", { class: "q" }, [h("p", { class: "prompt", text: q.prompt })]);
     addQImg(box, q);
     order.forEach(function (orig) {
@@ -1599,8 +1656,14 @@
         if (answered) return; answered = true;
         var correct = orig === q.answer;
         b.classList.add(correct ? "correct" : "wrong");
+        b.setAttribute("aria-label", b.textContent + (correct ? " — correct" : " — your answer, incorrect"));
         if (!correct) {
-          [].forEach.call(box.querySelectorAll(".opt"), function (o, k) { if (order[k] === q.answer) o.classList.add("correct"); });
+          [].forEach.call(box.querySelectorAll(".opt"), function (o, k) {
+            if (order[k] === q.answer && o !== b) {
+              o.classList.add("correct");
+              o.setAttribute("aria-label", o.textContent + " — correct answer");
+            }
+          });
         }
         [].forEach.call(box.querySelectorAll(".opt"), function (o) { o.disabled = true; });
         fb.hidden = false; fb.textContent = (correct ? "Correct. " : "Not quite. ") + q.explain;
@@ -1669,7 +1732,7 @@
       grid.appendChild(h("div", { class: "diag-row" }, [
         h("span", { class: "dr-title", text: t }),
         h("span", { class: "dr-acc", text: a == null ? "not tested" : a + "%" }),
-        h("div", { class: "bar" }, [h("i", { style: "width:" + (a == null ? 0 : a) + "%" })]),
+        h("div", { class: "bar", "aria-hidden": "true" }, [h("i", { style: "width:" + (a == null ? 0 : a) + "%" })]),
       ]));
     });
     main.appendChild(grid);
@@ -1739,14 +1802,20 @@
   // Each step shows its pre-rendered acquired image (web/img/lessons/<slug>/<i>.png,
   // built by scripts/prerender_lessons.py) + the step's teaching box, stepped through
   // with no engine/Pyodide load. The live interactive simulator is one click away.
+  var lessonOpener = null;   // focus returns here when the overlay closes
   function openLesson(title) {
     var L = CTX.byTitle[title] || {};
     lessonState = { title: title, steps: L.steps || [], i: 0 };
     document.getElementById("lesson-title").textContent = title;
     document.getElementById("lesson-fullsim").href = "simulator.html?lesson=" + encodeURIComponent(title);
+    lessonOpener = document.activeElement;
     overlay.hidden = false;
     document.body.style.overflow = "hidden";
     renderLessonStep();
+    // Move focus into the dialog (the launcher stays recorded in lessonOpener).
+    var firstBtn = overlay.querySelector(".lv-nav .btn:not(.ghost)") || document.getElementById("lesson-close");
+    if (firstBtn) { try { firstBtn.focus({ preventScroll: true }); } catch (e) { firstBtn.focus(); } }
+    announce(title + ". Step 1 of " + lessonState.steps.length + ".");
   }
   function renderLessonStep() {
     var body = document.getElementById("lesson-body");
@@ -1769,14 +1838,19 @@
     ]);
     var isLast = i >= steps.length - 1;
     var back = h("button", { class: "btn ghost", type: "button", text: "← Back",
-      onclick: function () { if (ls.i > 0) { ls.i -= 1; renderLessonStep(); } } });
+      onclick: function () { if (ls.i > 0) { ls.i -= 1; renderLessonStep(); announce("Step " + (ls.i + 1) + " of " + steps.length + "."); } } });
     back.disabled = i === 0;
     var next = h("button", { class: "btn", type: "button", text: isLast ? "Finish lesson" : "Next →",
-      onclick: function () { if (isLast) { markDone(ls.title); closeLesson(); } else { ls.i += 1; renderLessonStep(); } } });
+      onclick: function () { if (isLast) { markDone(ls.title); closeLesson(); announce("Lesson complete."); } else { ls.i += 1; renderLessonStep(); announce("Step " + (ls.i + 1) + " of " + steps.length + "."); } } });
     textCol.appendChild(h("div", { class: "lv-nav" }, [back, next]));
     wrap.appendChild(textCol);
     body.appendChild(wrap);
     if (body.scrollTo) body.scrollTo(0, 0);
+    // Re-render destroyed the previously focused button; keep keyboard flow on Next
+    // (Enter-Enter advances) and let the live region announce the step change.
+    if (overlay.contains(document.activeElement) || document.activeElement === document.body) {
+      try { next.focus({ preventScroll: true }); } catch (e) { next.focus(); }
+    }
   }
   function closeLesson() {
     if (overlay.hidden) return;
@@ -1784,9 +1858,22 @@
     lessonState = null;
     document.body.style.overflow = "";
     refresh();                          // pick up the completion we just recorded
+    if (lessonOpener && document.contains(lessonOpener)) {
+      try { lessonOpener.focus({ preventScroll: true }); } catch (e) { lessonOpener.focus(); }
+    }
+    lessonOpener = null;
   }
   document.getElementById("lesson-close").addEventListener("click", closeLesson);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLesson(); });
+  // Modal focus trap: while the lesson dialog is open, Tab cycles inside it.
+  overlay.addEventListener("keydown", function (e) {
+    if (e.key !== "Tab" || overlay.hidden) return;
+    var els = overlay.querySelectorAll("button:not(:disabled), a[href], select, input, [tabindex]:not([tabindex='-1'])");
+    if (!els.length) return;
+    var first = els[0], last = els[els.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 
   // Reading-progress bar: fill tracks how far the window is scrolled through the current view.
   // Stays at 0 (invisible) when there is nothing meaningful to scroll, e.g. the sign-in gate.
