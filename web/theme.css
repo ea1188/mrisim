@@ -4,7 +4,7 @@
 :root {
   --bg: #07090c; --bg-2: #0b0f14; --panel: #10151b; --panel-2: #141b23;
   --line: #1e262f; --line-2: #2a3441;
-  --text: #e8edf3; --muted: #8b97a6; --dim: #5f6b78;
+  --text: #e8edf3; --muted: #8b97a6; --dim: #788492;  /* AA: 4.55:1 on the brightest panel; was #5f6b78 at 3.19 */
   --accent: #5db0ef; --accent-deep: #3f86c8; --accent-ink: #04121f;
   --signal: #57e0a8;            /* live signal / progress accents */
   --ok: #6bbf83;                /* semantic success (completed) */
