@@ -203,7 +203,7 @@
     var byTopic = CTX.byTopic, subs = [];
     cfg.premium.forEach(function (key) {
       (byTopic[key] || []).forEach(function (it) {
-        if (it.kind === "education") subs.push({ type: "read", id: "e:" + it.body.title, label: it.body.title, anchor: "edu-" + slug(it.body.title) });
+        if (it.kind === "education") subs.push({ type: "read", id: "e:" + key + "|" + it.body.title, label: it.body.title, anchor: "edu-" + slug(it.body.title) });
       });
     });
     mod.lessons.forEach(function (t) { subs.push({ type: "lesson", id: t, label: t, anchor: "lesson-" + slug(t) }); });
@@ -647,7 +647,7 @@
       var readState = loadRead();
       var esec = h("div", { class: "sec" }, [h("h3", { text: "Course material" })]);
       edu.forEach(function (b) {
-        var rid = "e:" + b.title, isRead = !!readState[rid];
+        var rid = "e:" + (b._ptopic || "") + "|" + b.title, isRead = !!readState[rid];
         var eduH4 = h("h4", { text: b.title });
         var lb = listenBtn(function () {
           var t = b.title + ". " + textOf(b.html);
@@ -1859,6 +1859,13 @@
         (byTopic[it.topic] = byTopic[it.topic] || []).push(it);
       });
       return bootSync().then(function () {
+        // Migrate legacy "e:<title>" read ids to topic-scoped ones (title
+        // collisions across modules shared a key). After bootSync, so remote
+        // state is merged first; the migrated blob then syncs back.
+        var mig = CourseLogic.migrateReadState(loadRead(), premium || []);
+        if (mig.changed) {
+          try { localStorage.setItem(COURSE_READ_KEY, JSON.stringify(mig.read)); queueSync(); } catch (e) { /* storage off */ }
+        }
         courseView(data.curriculum || [], byTitle, byTopic, assignments);
         openFromQuery();
       });
