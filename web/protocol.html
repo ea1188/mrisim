@@ -58,6 +58,19 @@
       color: var(--text); border-radius: 2px; padding: 5px 7px; font: inherit; font-family: var(--mono);
       font-size: 13px; font-variant-numeric: tabular-nums; }
     #pp-params input[type=number]:focus { outline: none; border-color: var(--accent); }
+    /* Native number spinners are nearly invisible on the dark theme (Safari
+       especially); hide them and give every field explicit +/- steppers. */
+    #pp-params input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    #pp-params input[type=number]::-webkit-inner-spin-button,
+    #pp-params input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .stepwrap { display: inline-flex; align-items: stretch; }
+    .stepwrap input[type=number] { border-radius: 0; text-align: center; }
+    .step { width: 22px; flex: none; background: var(--bg-2); border: 1px solid var(--line-2);
+      color: var(--muted); font: inherit; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }
+    .step:first-child { border-right: none; }
+    .step:last-child { border-left: none; }
+    .step:hover { color: var(--text); border-color: var(--accent-deep); background: var(--panel-2); }
+    .step:active { background: var(--panel); }
     #pp-queue select { background: var(--bg-2); border: 1px solid var(--line-2); color: var(--text);
       border-radius: 2px; padding: 5px 8px; font: inherit; font-size: 13px; }
     #pp-queue select:focus { outline: none; border-color: var(--accent); }

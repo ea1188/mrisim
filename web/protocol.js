@@ -375,6 +375,32 @@ function acquireImageExample() {
   renderQueue();
 }
 
+// Explicit +/- steppers on every parameter field: the native number spinners
+// are nearly invisible on the dark theme (owner report, Safari). Pointer
+// affordances only (aria-hidden, not tabbable): the input itself stays the
+// accessible control and arrow keys already step it.
+function wireSteppers() {
+  document.querySelectorAll("#pp-params input[type=number]").forEach((inp) => {
+    const wrap = document.createElement("span");
+    wrap.className = "stepwrap";
+    inp.parentNode.insertBefore(wrap, inp);
+    const mk = (txt, dn) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "step"; b.textContent = txt;
+      b.tabIndex = -1; b.setAttribute("aria-hidden", "true");
+      b.addEventListener("click", () => {
+        if (inp.disabled) return;
+        try { if (dn) inp.stepDown(); else inp.stepUp(); } catch (e) { return; }
+        inp.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      return b;
+    };
+    wrap.appendChild(mk("\u2212", true));
+    wrap.appendChild(inp);
+    wrap.appendChild(mk("+", false));
+  });
+}
+
 // --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
 const TOUR = [
   { el: "#pp-exam", title: "Pick an exam",
@@ -397,6 +423,7 @@ async function onReady() {
   $("splash").hidden = true;
   $("pp-root").hidden = false;
   wireParamPanel();
+  wireSteppers();
   $("pp-angleref-btn").addEventListener("click", () => { angleRefOpen = !angleRefOpen; updateAngleRef(); });
   wireAngleRef();
   $("pp-tour-btn").addEventListener("click", startPpTour);
