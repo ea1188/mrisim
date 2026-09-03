@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "lint": "eslint web/",
-    "test:web": "node --test web/course_logic.test.mjs web/a11y.test.mjs web/auth_url.test.mjs web/join_link.test.mjs web/class_insight.test.mjs web/assignments.test.mjs web/blueprint.test.mjs web/course_diagrams_math.test.mjs web/contrast.test.mjs"
+    "test:web": "node --test web/course_logic.test.mjs web/a11y.test.mjs web/auth_url.test.mjs web/join_link.test.mjs web/class_insight.test.mjs web/assignments.test.mjs web/blueprint.test.mjs web/course_diagrams_math.test.mjs web/contrast.test.mjs web/osce_rubric.test.mjs"
   },
   "repository": {
     "type": "git",
