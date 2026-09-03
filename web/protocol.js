@@ -65,6 +65,83 @@ let lastSeriesPlane = null;   // viewport last hovered/scrolled (arrow keys page
 // web/img/exams/<part>/ — see that folder's README — and they replace the
 // labelled placeholders automatically; no code change needed.
 let imageExam = null;    // active image-exam data, or null for engine (simulated) exams
+let osce = null;          // active OSCE scenario (web/osce.json entry), or null
+let osceCatalog = null;   // fetched once; null until loaded, false if unavailable
+const OsceRubric = window.OsceRubric;
+
+async function fetchOsceCatalog() {
+  if (osceCatalog !== null) return osceCatalog;
+  try {
+    const r = await fetch("osce.json");
+    osceCatalog = r.ok ? await r.json() : false;
+  } catch (e) { osceCatalog = false; }
+  return osceCatalog;
+}
+
+function updateOsceUI() {
+  const box = $("pp-osce");
+  if (!box) return;
+  box.hidden = !osce;
+  if (osce) {
+    $("pp-osce-title").textContent = osce.title;
+    $("pp-osce-stem").textContent = osce.stem;
+  }
+}
+
+// An OSCE runs the scenario's normal engine exam with a clinical stem attached;
+// the learner plans as usual and submits the queue for rubric grading.
+async function loadOsceScenario(id) {
+  const cat = await fetchOsceCatalog();
+  const s = cat && cat.scenarios.find((x) => x.id === id);
+  if (!s) return;
+  await loadExam(s.exam);              // clears osce; selector keeps the OSCE entry
+  osce = s;
+  updateOsceUI();
+}
+
+function buildOsceSubmission() {
+  return queue.filter((it) => !isLocalizer(it)).map((it) => ({
+    preset: it.preset,
+    acquired: it.status === "acquired",
+    params: it.params || {},
+    plan: it.plan || {},
+  }));
+}
+
+let osceReviewOpener = null;
+function submitOsce() {
+  if (!osce || !OsceRubric || !osceCatalog) return;
+  const r = OsceRubric.grade(osce, buildOsceSubmission(), osceCatalog.regions);
+  const order = { fail: 0, partial: 1, pass: 2 };
+  const rows = r.criteria.slice().sort((a, b) => order[a.verdict] - order[b.verdict]);
+  $("osce-rev-title").textContent = osce.title;
+  $("osce-rev-score").textContent = r.points + " / " + r.max + " points · " + r.pct + "%";
+  const ol = $("osce-rev-list");
+  ol.textContent = "";
+  const VERDICT = { pass: "Good", partial: "Partial", fail: "Missed" };
+  rows.forEach((c) => {
+    const li = document.createElement("li");
+    const head = document.createElement("div"); head.className = "oc-head";
+    const v = document.createElement("span"); v.className = "oc-verdict " + c.verdict;
+    v.textContent = VERDICT[c.verdict];
+    const lb = document.createElement("span"); lb.className = "oc-label"; lb.textContent = c.label;
+    const pt = document.createElement("span"); pt.className = "oc-pts";
+    pt.textContent = c.points + "/" + c.max;
+    head.append(v, lb, pt);
+    const fb = document.createElement("p"); fb.className = "oc-fb"; fb.textContent = c.feedback;
+    li.append(head, fb);
+    ol.appendChild(li);
+  });
+  osceReviewOpener = document.activeElement;
+  $("pp-osce-review").hidden = false;
+  $("osce-rev-title").focus();
+}
+
+function closeOsceReview() {
+  $("pp-osce-review").hidden = true;
+  if (osceReviewOpener && document.contains(osceReviewOpener)) osceReviewOpener.focus();
+  osceReviewOpener = null;
+}
 
 function placeholderImg(title, sub, tint) {
   const svg =
@@ -294,7 +371,7 @@ function acquireImageExample() {
 // --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
 const TOUR = [
   { el: "#pp-exam", title: "Pick an exam",
-    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, Hip, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images." },
+    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, Hip, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images. <b>OSCE</b> entries are graded clinical scenarios: plan the exam the stem asks for, then submit it for feedback." },
   { el: "#pp-list", title: "The protocol queue",
     text: "Every sequence in the exam, in order. Click one to open it and prescribe it; the status dot fills in as you acquire. The Localizer at the top is your 3-plane scout." },
   { el: "#pp-views", title: "Prescribe on the scouts",
@@ -316,6 +393,19 @@ async function onReady() {
   $("pp-angleref-btn").addEventListener("click", () => { angleRefOpen = !angleRefOpen; updateAngleRef(); });
   wireAngleRef();
   $("pp-tour-btn").addEventListener("click", startPpTour);
+  $("pp-osce-submit").addEventListener("click", submitOsce);
+  $("osce-rev-close").addEventListener("click", closeOsceReview);
+  document.addEventListener("keydown", (e) => {
+    const dlg = $("pp-osce-review");
+    if (dlg.hidden) return;
+    if (e.key === "Escape") { closeOsceReview(); return; }
+    if (e.key !== "Tab") return;                    // modal: Tab cycles inside
+    const els = dlg.querySelectorAll("button:not(:disabled), a[href], [tabindex]:not([tabindex='-1'])");
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !dlg.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  });
   Tour.wire();
   PLANES.forEach(wireViewport);
   window.addEventListener("resize", () => PLANES.forEach((p) => drawOverlay(p, null)));
@@ -326,6 +416,9 @@ async function onReady() {
 }
 
 async function loadExam(name) {
+  if (name.startsWith("osce:")) { await loadOsceScenario(name.slice(5)); return; }
+  osce = null;
+  updateOsceUI();
   if (name in IMAGE_EXAMS) { loadImageExam(name); return; }
   imageExam = null;
   showCredit(null);
@@ -338,6 +431,13 @@ async function loadExam(name) {
     og.label = "Image library (examples)";
     Object.keys(IMAGE_EXAMS).forEach((ex) => og.appendChild(new Option(ex, ex)));
     sel.add(og);
+    const cat = await fetchOsceCatalog();               // graded clinical scenarios
+    if (cat && OsceRubric) {
+      const ogo = document.createElement("optgroup");
+      ogo.label = "OSCE (graded scenarios)";
+      cat.scenarios.forEach((sc) => ogo.appendChild(new Option(sc.title, "osce:" + sc.id)));
+      sel.add(ogo);
+    }
     sel.value = name;
     sel.addEventListener("change", () => loadExam(sel.value));
   }

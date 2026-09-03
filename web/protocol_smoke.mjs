@@ -352,6 +352,30 @@ try {
   await page.setViewportSize({ width: 1280, height: 720 });
   if (desktopCols !== 3) fail(`desktop views should be 3 columns, got ${desktopCols}`);
   console.log("mobile: views collapse to one column at phone width ✓");
+
+  // OSCE: pick a graded scenario, acquire one series, submit, review, retry
+  await page.selectOption("#pp-exam", "osce:lumbar-radiculopathy");
+  await page.waitForFunction(() => !document.querySelector("#pp-osce").hidden, { timeout: 60_000 });
+  const stem = await page.$eval("#pp-osce-stem", (e) => e.textContent);
+  if (!/radiculopathy/.test(stem)) fail("OSCE stem did not render");
+  await page.click("#pp-list li:nth-child(2)");            // Spine T1 Sagittal
+  await page.waitForFunction(() => !document.querySelector("#pp-actions").hidden, { timeout: 60_000 });
+  await page.click("#pp-apply");
+  await page.waitForSelector("#pp-list li.acquired", { timeout: 120_000 });
+  await page.click("#pp-osce-submit");
+  await page.waitForFunction(() => !document.querySelector("#pp-osce-review").hidden, { timeout: 10_000 });
+  const nCrit = await page.$$eval("#osce-rev-list li", (els) => els.length);
+  if (nCrit !== 10) fail(`lumbar OSCE should grade 10 criteria, got ${nCrit}`);
+  const score = await page.$eval("#osce-rev-score", (e) => e.textContent);
+  if (!/points/.test(score)) fail("OSCE score line missing");
+  // the one acquired series earns its criterion; the ungraded rest read as missed
+  const verdicts = await page.$$eval("#osce-rev-list .oc-verdict", (els) => els.map((e) => e.textContent));
+  if (!verdicts.includes("Good") || !verdicts.includes("Missed")) fail("OSCE verdict mix wrong: " + verdicts);
+  await page.click("#osce-rev-close");                     // retry: back to planning, queue intact
+  await page.waitForFunction(() => document.querySelector("#pp-osce-review").hidden, { timeout: 5_000 });
+  const stillAcq = await page.$$eval("#pp-list li.acquired", (els) => els.length);
+  if (stillAcq !== 1) fail("queue lost the acquisition after review close");
+  console.log("OSCE: scenario loads, grades 10 criteria, review opens and closes ✓");
 } catch (e) {
   fail(e.message);
 }
