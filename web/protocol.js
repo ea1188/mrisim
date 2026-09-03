@@ -539,6 +539,31 @@ function paramsToPanel(it) {
   // A 3-D acquisition is a slab of partitions, not a 2-D multi-slice group.
   $("pp-nsl-label").textContent = p.acq3d ? "Partitions" : "Slices";
   $("pp-nsl").value = p.acq3d ? (p.n_partitions ?? 32) : (p.n_slices ?? 1);
+  $("pp-slice-row").hidden = !!imageExam;
+  $("pp-shift-row").hidden = !!imageExam;
+  if (!imageExam) {
+    $("pp-slice").value = it.plan.slice ?? "";
+    $("pp-shift").value = Math.round(it.plan.inplane_off || 0);
+  }
+}
+
+// Keyboard path for the two plan fields that were drag-only (slice slide and
+// in-plane recenter): bounds come from the live scout geometry once it lands.
+function crossN() {
+  for (const pn of PLANES) { const g = vpGeom[pn]; if (g && g.n) return g.n; }
+  return null;
+}
+function syncPlanInputs() {
+  if (!active || isLocalizer(active) || imageExam) return;
+  const pl = active.plan, n = crossN();
+  if (n) $("pp-slice").max = n - 1;
+  const g = PLANES.map((pn) => vpGeom[pn]).find((g2) => g2 && g2.ip_axis_len);
+  if (g) {
+    const half = Math.round(g.ip_axis_len / 2);
+    $("pp-shift").min = -half; $("pp-shift").max = half;
+  }
+  if (document.activeElement !== $("pp-slice")) $("pp-slice").value = pl.slice ?? (n ? Math.round((n - 1) / 2) : "");
+  if (document.activeElement !== $("pp-shift")) $("pp-shift").value = Math.round(pl.inplane_off || 0);
 }
 function wireParamPanel() {
   Object.entries(NUMP).forEach(([id, key]) => {
@@ -558,6 +583,21 @@ function wireParamPanel() {
   $("pp-fov").addEventListener("input", () => { if (active) { active.plan.fov_pct = clampN(+$("pp-fov").value, 20, 100); scheduleParamRender(); } });
   $("pp-tilt").addEventListener("input", () => { if (active) { active.plan.tilt = clampN(+$("pp-tilt").value, -90, 90); scheduleParamRender(); } });
   $("pp-rot").addEventListener("input", () => { if (active) { active.plan.rot = clampN(+$("pp-rot").value, -90, 90); scheduleParamRender(); } });
+  $("pp-slice").addEventListener("input", () => {
+    if (!active || isLocalizer(active) || imageExam) return;
+    const v = Math.round(+$("pp-slice").value);
+    if (!isFinite(v)) return;
+    const n = crossN();
+    active.plan.slice = clampN(v, 0, n ? n - 1 : 255);
+    scheduleParamRender();
+  });
+  $("pp-shift").addEventListener("input", () => {
+    if (!active || isLocalizer(active) || imageExam) return;
+    const v = Math.round(+$("pp-shift").value);
+    if (!isFinite(v)) return;
+    active.plan.inplane_off = v;
+    scheduleParamRender();
+  });
   $("pp-apply").addEventListener("click", applyAndAcquire);
   // Re-prescribe: restore the full 3-plane planning view for the acquired sequence
   // (all scouts at the saved prescription) so the angle / FOV can be changed and it
@@ -627,6 +667,7 @@ function renderSlot(plane) {
     const sc = scoutCache[plane]; if (!sc) return;
     vpGeom[plane] = sc.geom;
     window.vpGeom = vpGeom;        // exposed for the headless smoke's drag targeting
+    syncPlanInputs();
     drawTile(plane, sc.png, sc.label, true, false, sc.fallback, sc.alts);   // plannable, not draggable
     drawOverlay(plane);                                            // crisp interactive handles
   } else {                                                   // series: view-only, draggable
@@ -918,6 +959,7 @@ const DRAG_APPLY = {
     }
     const s = p.map === "row" ? (1 - loc.py) * (p.n - 1) : (p.flip ? (1 - loc.px) : loc.px) * (p.n - 1);
     pl.slice = clampN(Math.round(s), 0, p.n - 1);
+    $("pp-slice").value = pl.slice;
     if (!p.band) return null;                       // optimistic: the band follows the cursor
     const isRow = p.map === "row";
     const bc = p.center || [(p.band[0][0] + p.band[1][0]) / 2, (p.band[0][1] + p.band[1][1]) / 2];
@@ -933,6 +975,7 @@ const DRAG_APPLY = {
     }
     const u = (p.ip_dir === "x" ? loc.px : loc.py) - 0.5;
     pl.inplane_off = p.ip_sign * u * p.ip_axis_len;
+    $("pp-shift").value = Math.round(pl.inplane_off);
     if (!fb) return null;
     return { fovBox: p.ip_dir === "x"               // optimistic: the box follows the cursor
       ? [clampN(loc.px - fb[2] / 2, 0, 1 - fb[2]), fb[1], fb[2], fb[3]]
@@ -1088,6 +1131,7 @@ function wireSeriesViewer(plane, box) {
     if (!active || isLocalizer(active)) return;
     Object.assign(active.plan, { tilt: 0, rot: 0, inplane_off: 0, fov_pct: 100 });
     $("pp-tilt").value = 0; $("pp-rot").value = 0; $("pp-fov").value = 100;
+    $("pp-shift").value = 0; $("pp-slice").value = "";
     scheduleScouts();
   });
 }
