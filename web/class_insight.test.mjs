@@ -105,7 +105,7 @@ test("recentActivity: OSCE rows are labelled with scenario and score", () => {
   const roster = [{ student_id: "s1", profiles: { display_name: "Ada" } }];
   const acts = [{ student_id: "s1", kind: "osce", ref: "lumbar-radiculopathy", score: 18, total: 20, created_at: "2026-09-03T11:00:00Z" }];
   const feed = CI.recentActivity(acts, roster, { limit: 5 });
-  assert.equal(feed[0].label, "OSCE lumbar-radiculopathy — 90%");
+  assert.equal(feed[0].label, "clinical scenario lumbar-radiculopathy — 90%");
 });
 
 test("toCSV emits the exact header and escapes commas and quotes", () => {

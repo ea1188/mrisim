@@ -220,7 +220,7 @@
       else if (a.kind === "lesson_complete") label = "completed lesson " + a.ref;
       else if (a.kind === "quiz_attempt") label = "quiz " + a.ref + (pt != null ? " — " + pt + "%" : "");
       else if (a.kind === "mock_exam") label = "mock exam" + (pt != null ? " — " + pt + "%" : "");
-      else if (a.kind === "osce") label = "OSCE " + a.ref + (pt != null ? " — " + pt + "%" : "");
+      else if (a.kind === "osce") label = "clinical scenario " + a.ref + (pt != null ? " — " + pt + "%" : "");
       else label = a.kind + " " + a.ref;
       return { studentId: a.student_id, name: nameById[a.student_id] || "(unknown)", kind: a.kind, ref: a.ref, pct: pt, at: a.created_at, label: label };
     });

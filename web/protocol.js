@@ -404,7 +404,7 @@ function wireSteppers() {
 // --- Guided feature tour (spotlight coachmarks over the real controls) ------- //
 const TOUR = [
   { el: "#pp-exam", title: "Pick an exam",
-    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, Hip, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images. <b>OSCE</b> entries are graded clinical scenarios: plan the exam the stem asks for, then submit it for feedback." },
+    text: "Choose a protocol. The simulated exams (Brain, Knee, …) run the real engine; the <b>Image library</b> exams (Ankle, Wrist, Shoulder, Foot, Hand, Hip, and Cervical/Thoracic/Lumbar/Total spine) are positioning examples on real MRI images. <b>Clinical scenario</b> entries are graded cases: plan the exam the stem asks for, then submit it for feedback." },
   { el: "#pp-list", title: "The protocol queue",
     text: "Every sequence in the exam, in order. Click one to open it and prescribe it; the status dot fills in as you acquire. The Localizer at the top is your 3-plane scout." },
   { el: "#pp-views", title: "Prescribe on the scouts",
@@ -468,7 +468,7 @@ async function loadExam(name) {
     const cat = await fetchOsceCatalog();               // graded clinical scenarios
     if (cat && OsceRubric) {
       const ogo = document.createElement("optgroup");
-      ogo.label = "OSCE (graded scenarios)";
+      ogo.label = "Clinical scenarios (graded)";
       cat.scenarios.forEach((sc) => ogo.appendChild(new Option(sc.title, "osce:" + sc.id)));
       sel.add(ogo);
     }
