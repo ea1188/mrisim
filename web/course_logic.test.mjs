@@ -226,3 +226,30 @@ test("reconcileBootProgress: different owner with no remote yields a clean slate
   assert.equal(r.sameOwner, false);
   assert.deepEqual(r.state, {}); // brand-new account B starts empty, not with A's data
 });
+
+test("migrateReadState: unique titles move to topic-scoped ids", () => {
+  const items = [{ topic: "safety", kind: "education", body: { title: "RF heating" } }];
+  const r = CourseLogic.migrateReadState({ "e:RF heating": true, "e:safety|Already new": true, "lesson-x": true }, items);
+  assert.equal(r.changed, true);
+  assert.deepEqual(r.read, { "e:safety|RF heating": true, "e:safety|Already new": true, "lesson-x": true });
+});
+
+test("migrateReadState: a colliding title fans out to every topic that has it", () => {
+  const items = [
+    { topic: "quant-advanced", kind: "education", body: { title: "Applications and pitfalls" } },
+    { topic: "breast-advanced", kind: "education", body: { title: "Applications and pitfalls" } },
+  ];
+  const r = CourseLogic.migrateReadState({ "e:Applications and pitfalls": true }, items);
+  assert.equal(r.read["e:quant-advanced|Applications and pitfalls"], true);
+  assert.equal(r.read["e:breast-advanced|Applications and pitfalls"], true);
+  assert.equal(r.read["e:Applications and pitfalls"], undefined);
+});
+
+test("migrateReadState: unknown legacy keys and clean blobs pass through unchanged", () => {
+  const items = [{ topic: "safety", kind: "education", body: { title: "RF heating" } }];
+  const stale = CourseLogic.migrateReadState({ "e:Removed card": true }, items);
+  assert.equal(stale.changed, false);
+  assert.deepEqual(stale.read, { "e:Removed card": true });
+  const clean = CourseLogic.migrateReadState({ "e:safety|RF heating": true }, items);
+  assert.equal(clean.changed, false);
+});

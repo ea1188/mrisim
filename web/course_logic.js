@@ -230,8 +230,33 @@
     };
   }
 
+  // One-time read-state migration: education read ids move from "e:<title>" to
+  // "e:<topic>|<title>" because titles repeat across modules ("Applications and
+  // pitfalls" exists in two), so one shared key marked both cards read. A unique
+  // title maps to its topic; an ambiguous one fans out to EVERY topic carrying
+  // it, which preserves exactly what the learner saw before the fix (the shared
+  // key showed both as read). Non-education keys and unknown titles pass through.
+  function migrateReadState(read, items) {
+    var topicsByTitle = {};
+    (items || []).forEach(function (it) {
+      if (it.kind !== "education" || !it.body || !it.body.title) return;
+      var t = topicsByTitle[it.body.title] || (topicsByTitle[it.body.title] = []);
+      if (t.indexOf(it.topic) < 0) t.push(it.topic);
+    });
+    var out = {}, changed = false;
+    Object.keys(read || {}).forEach(function (k) {
+      var m = /^e:([^|]*)$/.exec(k);
+      var topics = m && topicsByTitle[m[1]];
+      if (!topics || !topics.length) { out[k] = read[k]; return; }
+      topics.forEach(function (tp) { out["e:" + tp + "|" + m[1]] = read[k]; });
+      changed = true;
+    });
+    return { read: out, changed: changed };
+  }
+
   return {
     PASS_PCT: PASS_PCT, CHECK_N: CHECK_N, MIN_POOL: MIN_POOL,
+    migrateReadState: migrateReadState,
     firstLesson: firstLesson, nextLesson: nextLesson, topicNav: topicNav,
     deriveModuleStatus: deriveModuleStatus,
     rankModulesByDiagnostic: rankModulesByDiagnostic,
