@@ -130,7 +130,8 @@
     var lessons = Object.keys(row.lessons || {}).sort();
     if (lessons.length) box.appendChild(h("p", { class: "muted", text: "Lessons: " + lessons.join(", ") }));
     box.appendChild(h("p", { class: "muted", text: "Best mock exam "
-      + (row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%") }));
+      + (row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%")
+      + " · Best OSCE " + (row.bestOscePct == null ? "—" : Math.round(row.bestOscePct) + "%") }));
     return box;
   }
 
@@ -336,8 +337,10 @@
       masteredTh.title = "premium modules with a passing mastery check";
       var mockTh = th("Best mock");
       mockTh.title = "best full-length mock-exam score";
+      var osceTh = th("OSCE");
+      osceTh.title = "best graded protocol-planning scenario score";
       var tbl = h("table", {}, [h("thead", {}, [h("tr", {}, [
-        th("Member"), covTh, th("Best"), masteredTh, mockTh, th("Weakest topic"), th("Last active"), th(""),
+        th("Member"), covTh, th("Best"), masteredTh, mockTh, osceTh, th("Weakest topic"), th("Last active"), th(""),
       ])])]);
       var tb = h("tbody");
       roster.forEach(function (r) {
@@ -356,7 +359,7 @@
         var detail = null;   // the inline drill-down <tr>, present while expanded
         var tr = h("tr", { style: "cursor:pointer", onclick: function () {
           if (detail) { tb.removeChild(detail); detail = null; return; }
-          detail = h("tr", {}, [h("td", { colspan: "8" }, [drillDown(row)])]);
+          detail = h("tr", {}, [h("td", { colspan: "9" }, [drillDown(row)])]);
           tb.insertBefore(detail, tr.nextSibling);
         } }, [
           nameCell,
@@ -364,6 +367,7 @@
           tdNum(row.bestPct == null ? "—" : Math.round(row.bestPct) + "%"),
           tdNum(row.modulesMastered || 0),
           tdNum(row.bestMockPct == null ? "—" : Math.round(row.bestMockPct) + "%"),
+          tdNum(row.bestOscePct == null ? "—" : Math.round(row.bestOscePct) + "%"),
           td(row.weakestTopic || "—"),
           tdNum(row.lastActive ? when(row.lastActive) : "—"),
           h("td", {}, isOwner ? [rm] : []),

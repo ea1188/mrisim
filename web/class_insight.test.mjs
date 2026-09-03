@@ -91,6 +91,23 @@ test("mastery_check counts distinct modules passed; mock_exam tracks best", () =
   assert.equal(st.avgMockPct, 80);
 });
 
+test("perStudent: OSCE attempts roll up to the best percentage", () => {
+  const roster = [{ student_id: "s1", profiles: { display_name: "Ada" } }];
+  const acts = [
+    { student_id: "s1", kind: "osce", ref: "lumbar-radiculopathy", score: 10, total: 20, created_at: "2026-09-03T10:00:00Z" },
+    { student_id: "s1", kind: "osce", ref: "lumbar-radiculopathy", score: 18, total: 20, created_at: "2026-09-03T11:00:00Z" },
+  ];
+  const row = CI.perStudent(roster, acts)[0];
+  assert.equal(row.bestOscePct, 90);             // retryable: best of the attempts
+});
+
+test("recentActivity: OSCE rows are labelled with scenario and score", () => {
+  const roster = [{ student_id: "s1", profiles: { display_name: "Ada" } }];
+  const acts = [{ student_id: "s1", kind: "osce", ref: "lumbar-radiculopathy", score: 18, total: 20, created_at: "2026-09-03T11:00:00Z" }];
+  const feed = CI.recentActivity(acts, roster, { limit: 5 });
+  assert.equal(feed[0].label, "OSCE lumbar-radiculopathy — 90%");
+});
+
 test("toCSV emits the exact header and escapes commas and quotes", () => {
   const rows = CI.perStudent(
     [{ student_id: "x", profiles: { display_name: 'De, "Q"' } }],

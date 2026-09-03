@@ -132,6 +132,13 @@ function submitOsce() {
     li.append(head, fb);
     ol.appendChild(li);
   });
+  // Formative sync: a class owner sees the attempt on the Insight page
+  // (best-effort; a signed-out learner just doesn't sync).
+  try {
+    if (window.Accounts && window.Accounts.enabled()) {
+      window.Accounts.logActivity("osce", osce.id, r.points, r.max);
+    }
+  } catch (e) { /* offline or unconfigured: grading still works */ }
   osceReviewOpener = document.activeElement;
   $("pp-osce-review").hidden = false;
   $("osce-rev-title").focus();
