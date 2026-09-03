@@ -3,7 +3,7 @@
 :root {
   --canvas: #07090c; --panel: #10151b; --raised: #141b23; --header: #0b0f14;
   --chip: #0b0f14; --border: #1e262f; --border-hi: #2a3441;
-  --text: #e8edf3; --text-dim: #8b97a6; --text-faint: #5f6b78;
+  --text: #e8edf3; --text-dim: #8b97a6; --text-faint: #788492;  /* AA: 4.55:1 on the brightest panel; was #5f6b78 at 3.19 */
   --accent: #5db0ef; --accent-hi: #7cc0f4; --accent-ink: #04121f;
   /* Sans for prose/labels; a monospace for numeric readouts — scan parameters, metrics
      and timers, the way a real scanner console / DICOM overlay renders them (tabular). */
