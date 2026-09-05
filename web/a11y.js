@@ -35,6 +35,25 @@
       out = out.replace(new RegExp("(^|[^A-Za-z0-9])" + esc + "(?![A-Za-z0-9*])", "g"),
                         "$1" + p[1]);
     });
+    // Roman numerals in the contexts the course uses them (safety zones,
+    // gadolinium agent groups): the voice reads bare "IV" as letters, which is
+    // right for intravenous but wrong for "Zone IV". Ranges/pairs first.
+    var ROMAN = { I: "1", II: "2", III: "3", IV: "4" };
+    out = out.replace(/\b(Zones?|Groups?)\s+(I{1,3}|IV)\s+(or|and|to|through)\s+(I{1,3}|IV)\b/g,
+      function (_m, w, a, conj, b) { return w + " " + ROMAN[a] + " " + conj + " " + ROMAN[b]; });
+    out = out.replace(/\b(Zones?|Groups?)\s+(I{1,3}|IV)\b/g,
+      function (_m, w, n) { return w + " " + ROMAN[n]; });
+    // Zone lists that drop the word "Zone" ("four zones, I public through IV
+    // magnet room"): a numeral directly before a zone descriptor is a zone.
+    out = out.replace(/\b(I{1,3}|IV)\b(?=\s+(public|screening|controlled|magnet))/g,
+      function (_m, n) { return ROMAN[n]; });
+    // Abbreviations the voice expands like honorifics or words.
+    out = out.replace(/\bMR\b/g, "M R");          // else it reads "mister"
+    out = out.replace(/\bMS\b/g, "M S");          // else it reads "Ms"
+    out = out.replace(/\bIV\b/g, "I V");          // intravenous, letter by letter
+    out = out.replace(/\bGd\b/g, "gadolinium");
+    out = out.replace(/\b([BP])I-?RADS\b/g, "$1 I rads");   // clinical reading
+    out = out.replace(/\s*(?:→|->)\s*/g, " to ");
     // Compound units before single symbols: W/kg would otherwise read "W per kg".
     out = out.replace(/\bW\/kg\b/g, "watts per kilogram");
     out = out.replace(/\bmT\/m\b/g, "millitesla per meter");
