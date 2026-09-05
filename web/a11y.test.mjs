@@ -113,3 +113,22 @@ test("seekChunk and position are safe no-ops when idle or under Node", () => {
   A11y.seekChunk(3);
   assert.deepEqual(A11y.position(), { index: -1, total: 0 });
 });
+
+test("speakable: MR and MS spell out instead of reading as honorifics", () => {
+  assert.equal(A11y.speakable("MR safety"), "M R safety");
+  assert.equal(A11y.speakable("MR-conditional device"), "M R-conditional device");
+  assert.equal(A11y.speakable("MS plaques"), "M S plaques");
+});
+
+test("speakable: safety-zone and group Roman numerals become numbers", () => {
+  assert.equal(A11y.speakable("Zone IV rules"), "Zone 4 rules");
+  assert.equal(A11y.speakable("Zone III or IV requires screening"), "Zone 3 or 4 requires screening");
+  assert.equal(A11y.speakable("zones, I public through IV magnet room"), "zones, 1 public through 4 magnet room");
+  assert.equal(A11y.speakable("Group II macrocyclic"), "Group 2 macrocyclic");
+});
+
+test("speakable: intravenous IV stays letters; Gd and BI-RADS read clinically", () => {
+  assert.equal(A11y.speakable("IV contrast"), "I V contrast");
+  assert.equal(A11y.speakable("Gd deposits"), "gadolinium deposits");
+  assert.equal(A11y.speakable("BI-RADS 4"), "B I rads 4");
+});
