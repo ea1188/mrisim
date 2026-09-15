@@ -8,6 +8,7 @@ is checked in. Run from the repo root:  ``python build_web.py``.
 """
 import glob
 import os
+import re
 import shutil
 import zipfile
 
@@ -41,6 +42,34 @@ def _build_id() -> str:
     return str(int(time.time()))
 
 
+def stamp_html(build_id: str) -> None:
+    """Version-stamp local script/stylesheet URLs in every page (x.js?v=<id>).
+
+    GitHub Pages serves ~10-minute max-age, so after a deploy a browser can pair
+    a fresh HTML with a stale cached script (owner hit this: new markup, dead
+    JS). Stamped URLs make each deployed HTML+asset set atomic: new HTML always
+    misses the cache for its assets. CI-only (or MRISIM_STAMP=1) so local
+    checkouts aren't dirtied; external URLs and already-stamped refs are left
+    alone.
+    """
+    if not (os.environ.get("GITHUB_ACTIONS") or os.environ.get("MRISIM_STAMP")):
+        return
+    pat = re.compile(r'(src|href)="([A-Za-z0-9_][A-Za-z0-9_./-]*\.(?:js|css))"')
+    n = 0
+    for name in sorted(os.listdir(WEB)):
+        if not name.endswith(".html"):
+            continue
+        path = os.path.join(WEB, name)
+        with open(path) as f:
+            html = f.read()
+        out = pat.sub(lambda m: f'{m.group(1)}="{m.group(2)}?v={build_id}"', html)
+        if out != html:
+            with open(path, "w") as f:
+                f.write(out)
+            n += 1
+    print(f"stamped ?v={build_id} into {n} pages")
+
+
 def build() -> None:
     os.makedirs(WEB, exist_ok=True)
     os.makedirs(os.path.join(WEB, "data"), exist_ok=True)
@@ -49,6 +78,7 @@ def build() -> None:
     with open(os.path.join(WEB, "build_id.js"), "w") as f:
         f.write(f'BUILD_ID = "{_build_id()}";\n')
     print(f"wrote build_id.js  (BUILD_ID={_build_id()})")
+    stamp_html(_build_id())
 
     # 1. Zip the Python engine. Flat layout so Pyodide can `sys.path.insert('/src')`.
     zip_path = os.path.join(WEB, "mrisim_src.zip")
