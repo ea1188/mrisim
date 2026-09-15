@@ -375,6 +375,119 @@ function acquireImageExample() {
   renderQueue();
 }
 
+// Scanner-style protocol names per preset (the console vocabulary techs see;
+// "tra" is the console word for axial). Fallback: slugified label.
+const SEQ_NAMES = {
+  "Localizer": "localizer",
+  "Brain T1 SE": "t1_se_tra", "Brain T2 SE": "t2_se_tra",
+  "Brain FLAIR": "t2_tirm_tra_dark-fluid", "DWI Stroke": "ep2d_diff_tra_b1000",
+  "Brain ASL Perfusion": "asl_3d_tra", "Brain SWI": "swi3d_tra",
+  "Brain T1 Post-Gd": "t1_se_tra_post", "Brain MPRAGE": "t1_mprage_sag_iso",
+  "Spine T1 Sagittal": "t1_se_sag", "Spine T2 Sagittal": "t2_tse_sag",
+  "Spine STIR": "stir_tse_sag", "Spine Axial T2": "t2_tse_tra",
+  "Spine T1 Post-Gd": "t1_se_sag_post",
+  "Knee T2 FS Axial": "t2_tse_fs_tra", "Knee PD FS Coronal": "pd_tse_fs_cor",
+  "Knee PD Coronal": "pd_tse_cor", "Knee PD FSE": "pd_tse_sag",
+  "Knee T2 Fat-Sat": "t2_tse_fs_sag",
+  "Abdomen T2 FSE": "t2_tse_tra", "Abdomen In-Phase": "t1_gre_in_tra",
+  "Abdomen Opposed-Phase": "t1_gre_opp_tra", "Abdomen DWI": "ep2d_diff_tra_b800",
+  "Abdomen 3D GRE (VIBE)": "t1_vibe_fs_tra", "Abdomen T1 FS Post-Gd": "t1_gre_fs_tra_post",
+  "Pelvis T2 High-Res": "t2_tse_tra", "Pelvis T1 SE": "t1_se_tra",
+  "Pelvis STIR": "stir_tse_tra", "Pelvis DWI": "ep2d_diff_tra_b800",
+  "Pelvis T1 Post-Gd": "t1_gre_tra_post",
+};
+function seqName(it) {
+  return SEQ_NAMES[it.preset]
+    || String(it.preset || it.label || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+// Region -> patient position + coil for the banner (simulated demo patient).
+const REGION_SETUP = {
+  Brain:   ["Head First Supine", "Head/Neck 20"],
+  Spine:   ["Head First Supine", "Spine 32"],
+  Knee:    ["Feet First Supine", "Tx/Rx Knee 15"],
+  Abdomen: ["Head First Supine", "Body 18"],
+  Pelvis:  ["Head First Supine", "Body 18"],
+};
+const PART_SETUP = [
+  [/ankle|foot/i, ["Feet First Supine", "Foot/Ankle 16"]],
+  [/knee/i, ["Feet First Supine", "Tx/Rx Knee 15"]],
+  [/hip/i, ["Head First Supine", "Body 18"]],
+  [/wrist|hand/i, ["Head First Prone", "Hand/Wrist 16"]],
+  [/shoulder/i, ["Head First Supine", "Shoulder 16"]],
+  [/spine/i, ["Head First Supine", "Spine 32"]],
+];
+function updatePatientBanner(examName) {
+  const el = (id) => $(id);
+  let setup = REGION_SETUP[examName];
+  if (!setup) {
+    for (const [re, v] of PART_SETUP) if (re.test(examName)) { setup = v; break; }
+  }
+  setup = setup || ["Supine", "Flex Coil"];
+  el("pp-pt-pos").textContent = setup[0];
+  el("pp-pt-coil").textContent = "Coil: " + setup[1];
+  el("pp-pt-exam").textContent = examName;
+}
+function setScanStatus(busy) {
+  const st = $("pp-pt-status");
+  if (!st) return;
+  st.textContent = busy ? "Scanning\u2026" : "Ready";
+  st.classList.toggle("busy", !!busy);
+}
+
+// Acquisition time, mirroring simulator.py exactly (2-D: TR*matrix*NEX/(ETL*R);
+// 3-D: TR*matrix*n_partitions*NEX/R; ETL applies to FSE/TSE only).
+function taSeconds(p) {
+  if (!p || !p.TR) return null;
+  const matrix = p.matrix_size || 256, NEX = p.NEX || 1, R = p.accel_factor || 1;
+  if (p.acq3d) return p.TR * matrix * (p.n_partitions || 32) * NEX / Math.max(1, R) / 1000;
+  const etl = p.sequence === "FSE / TSE" ? (p.etl || 16) : 1;
+  return p.TR * matrix * NEX / (etl * Math.max(1, R)) / 1000;
+}
+
+// Parameter-card tabs (Routine / Contrast / Geometry).
+const PP_TABS = ["routine", "contrast", "geometry"];
+function selectTab(name) {
+  PP_TABS.forEach((t) => {
+    const tab = $("pp-tab-" + t), page = $("pp-page-" + t);
+    const on = t === name;
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+    page.hidden = !on;
+  });
+}
+function updateContrastTab() {
+  const empty = $("pp-ti-row").hidden && $("pp-bval-row").hidden;
+  const tab = $("pp-tab-contrast");
+  tab.disabled = empty;
+  if (empty && tab.getAttribute("aria-selected") === "true") selectTab("routine");
+}
+function wireTabs() {
+  PP_TABS.forEach((t, i) => {
+    const tab = $("pp-tab-" + t);
+    tab.addEventListener("click", () => { if (!tab.disabled) selectTab(t); });
+    tab.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      const dir = e.key === "ArrowRight" ? 1 : -1;
+      for (let k = 1; k <= PP_TABS.length; k++) {
+        const n = PP_TABS[(i + dir * k + 3 * PP_TABS.length) % PP_TABS.length];
+        if (!$("pp-tab-" + n).disabled) { selectTab(n); $("pp-tab-" + n).focus(); break; }
+      }
+    });
+  });
+}
+
+// Background preset prefetch so queue rows can show TA before being opened.
+async function prefetchQueueParams() {
+  const mine = queue;
+  for (const it of mine) {
+    if (queue !== mine) return;                       // exam changed mid-prefetch
+    if (isLocalizer(it) || imageExam || it.params || it._pre) continue;
+    try { it._pre = (await call("preset", it.preset)) || null; } catch (e) { it._pre = null; }
+  }
+  if (queue === mine) renderQueue();
+}
+
 // Explicit +/- steppers on every parameter field: the native number spinners
 // are nearly invisible on the dark theme (owner report, Safari). Pointer
 // affordances only (aria-hidden, not tabbable): the input itself stays the
@@ -424,6 +537,7 @@ async function onReady() {
   $("pp-root").hidden = false;
   wireParamPanel();
   wireSteppers();
+  wireTabs();
   $("pp-angleref-btn").addEventListener("click", () => { angleRefOpen = !angleRefOpen; updateAngleRef(); });
   wireAngleRef();
   $("pp-tour-btn").addEventListener("click", startPpTour);
@@ -476,6 +590,7 @@ async function loadExam(name) {
     sel.addEventListener("change", () => loadExam(sel.value));
   }
   region = name;                       // exam name == region name here (Brain)
+  updatePatientBanner(name);
   await call("setRegion", region);
   // build the queue
   seq = 0;
@@ -485,6 +600,7 @@ async function loadExam(name) {
   }));
   active = null;
   renderQueue();
+  prefetchQueueParams();               // fills queue-row TA readouts in the background
   // open the localizer first so the scouts show immediately
   openItem(queue[0]);
 }
@@ -498,12 +614,14 @@ function renderQueue() {
     const li = document.createElement("li");
     li.className = (it === active ? "active " : "") + (it.status === "acquired" ? "acquired" : "");
     const dot = it.status === "acquired" ? "✓" : (it === active ? "▸" : "·");
-    const t = it.metrics && it.metrics.scan_time;
-    if (t) total += t;
+    const t = (it.metrics && it.metrics.scan_time)
+      || taSeconds(it.params || (it._pre && it._pre.params));
+    if (it.metrics && it.metrics.scan_time) total += it.metrics.scan_time;
     li.innerHTML = `<span class="q-num">${i + 1}</span>`
-      + `<span class="q-label">${it.label}</span>`
-      + (t ? `<span class="q-time">${fmtTime(t)}</span>` : "")
-      + `<span class="q-status">${dot}</span>`;
+      + `<span class="q-seq">${seqName(it)}</span>`
+      + (t && !isLocalizer(it) ? `<span class="q-time">TA ${fmtTime(t)}</span>` : "")
+      + `<span class="q-status">${dot}</span>`
+      + (isLocalizer(it) ? "" : `<span class="q-sub">${it.label}</span>`);
     li.addEventListener("click", () => openItem(it));
     if (it.status === "acquired") {           // re-run: append a fresh copy to the queue
       const add = document.createElement("button");
@@ -673,6 +791,8 @@ function paramsToPanel(it) {
   // A 3-D acquisition is a slab of partitions, not a 2-D multi-slice group.
   $("pp-nsl-label").textContent = p.acq3d ? "Partitions" : "Slices";
   $("pp-nsl").value = p.acq3d ? (p.n_partitions ?? 32) : (p.n_slices ?? 1);
+  selectTab("routine");
+  updateContrastTab();
   $("pp-slice-row").hidden = !!imageExam;
   $("pp-shift-row").hidden = !!imageExam;
   if (!imageExam) {
@@ -1287,6 +1407,7 @@ async function applyAndAcquire() {
   };
   if (pl.slice != null) payload.slice_idx = pl.slice;
   $("pp-apply").disabled = true;
+  setScanStatus(true);
   $("pp-readout").textContent = "Acquiring…";
   try {
     const r = await call("render", payload);
@@ -1316,6 +1437,7 @@ async function applyAndAcquire() {
     $("pp-readout").textContent = "Acquisition failed: " + err.message;
   } finally {
     $("pp-apply").disabled = false;
+    setScanStatus(false);
   }
 }
 
@@ -1337,6 +1459,12 @@ function scrollSeries(plane, step) {
 
 // Live prescription summary while planning.
 function updatePlanReadout() {
+  const ta = $("pp-ta");
+  if (ta) {
+    const t = active && !isLocalizer(active) && !imageExam ? taSeconds(active.params) : null;
+    ta.hidden = t == null;
+    if (t != null) ta.textContent = "TA " + fmtTime(t);
+  }
   if (!active || isLocalizer(active)) { $("pp-readout").textContent = ""; return; }
   if (!active.plan || !active.params) return;
   const pl = active.plan, p = active.params;

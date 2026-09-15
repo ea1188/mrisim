@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="theme.css" />
   <style>
     /* ---- Protocol-planning workspace (scanner-console layout) — flat/crisp system (theme.css) ---- */
-    #pp-root { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+    #pp-root { display: grid; grid-template-rows: auto auto 1fr; height: 100vh; }
     #pp-head {
       display: flex; align-items: center; gap: 14px; padding: 0 clamp(12px,3vw,14px); height: 52px;
       border-bottom: 1px solid var(--line); background: var(--bg-2);
@@ -150,6 +150,40 @@
       .vp { min-height: 64vw; }                       /* big enough to prescribe on by touch */
       #pp-params { max-height: none; }                /* params flow; the page scrolls */
     }
+    /* Patient banner: the console's identity strip. Clearly-simulated demo data. */
+    #pp-patient { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px;
+      padding: 5px clamp(12px,3vw,14px); background: var(--panel); border-bottom: 1px solid var(--line);
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+    #pp-patient .spacer { flex: 1; }
+    .pt-chip { font-size: 9px; letter-spacing: .14em; color: var(--accent); border: 1px solid var(--accent);
+      padding: 1px 6px; }
+    .pt-name { color: var(--text); font-weight: 600; letter-spacing: .02em; }
+    .pt-sep { width: 1px; align-self: stretch; background: var(--border-hi); }
+    .pt-status { color: var(--signal); }
+    .pt-status.busy { color: var(--accent); }
+    /* Parameter card tabs */
+    #pp-tabs { display: flex; gap: 0; margin: 0 0 8px; border-bottom: 1px solid var(--border-hi); }
+    #pp-tabs [role=tab] { background: none; border: 1px solid transparent; border-bottom: none;
+      color: var(--text-dim); font: inherit; font-size: 12px; padding: 5px 14px; cursor: pointer; }
+    #pp-tabs [role=tab][aria-selected="true"] { color: var(--text); background: var(--raised);
+      border-color: var(--border-hi); margin-bottom: -1px; padding-bottom: 6px; }
+    #pp-tabs [role=tab][disabled] { opacity: .4; cursor: default; }
+    .ta-chip { font-family: var(--mono); font-size: 12px; color: var(--accent);
+      border: 1px solid var(--border-hi); padding: 5px 10px; }
+    /* Two-line scanner-style queue rows */
+    #pp-queue li { display: grid; grid-template-columns: auto 1fr auto auto auto; grid-template-rows: auto auto;
+      align-items: center; column-gap: 8px; }
+    .q-seq { font-family: var(--mono); font-size: 12.5px; color: var(--text); letter-spacing: .01em;
+      justify-self: start; text-align: left; }
+    li.acquired .q-seq { color: var(--signal); }
+    .q-sub { grid-column: 2 / 4; font-size: 10.5px; color: var(--text-faint); }
+    /* Explicit columns: the row-spanning num/status otherwise get placed FIRST
+       by the grid algorithm and steal the name's column. */
+    .q-num { grid-row: 1 / 3; grid-column: 1; }
+    .q-seq { grid-column: 2; }
+    #pp-queue li .q-time { grid-column: 3; }
+    .q-status { grid-row: 1 / 3; grid-column: 4; }
+    #pp-queue li .q-append { grid-row: 1 / 3; grid-column: 5; }
     /* Touch devices: bigger tap targets regardless of width. */
     @media (pointer: coarse) {
       #pp-queue li { padding: 11px 9px; font-size: 13px; }
@@ -211,6 +245,20 @@
       <a href="index.html">Home</a>
     </header>
 
+    <div id="pp-patient" aria-label="Simulated patient banner">
+      <span class="pt-chip">SIMULATION</span>
+      <span class="pt-name">SIM^PATIENT</span>
+      <span class="pt-field">ID SIM-0001</span>
+      <span class="pt-field">DOB 12 May 1985</span>
+      <span class="pt-field">72 kg</span>
+      <span class="pt-sep" aria-hidden="true"></span>
+      <span class="pt-field" id="pp-pt-pos">Head First Supine</span>
+      <span class="pt-field" id="pp-pt-coil">Coil: Head/Neck 20</span>
+      <span class="spacer"></span>
+      <span class="pt-field" id="pp-pt-exam">Brain</span>
+      <span class="pt-status" id="pp-pt-status">Ready</span>
+    </div>
+
     <div id="pp-body">
       <div id="pp-main">
         <div id="pp-views">
@@ -224,22 +272,34 @@
             <span class="seqname" id="pp-seqname">Open a sequence from the protocol →</span>
             <button id="pp-angleref-btn" type="button" hidden>Reference angulation ▸</button>
           </div>
-          <div class="pp-row" id="pp-controls" hidden>
-            <label>TR (ms) <input type="number" id="pp-tr" min="5" max="10000" step="10" /></label>
-            <label>TE (ms) <input type="number" id="pp-te" min="1" max="500" step="1" /></label>
-            <label>Flip (°) <input type="number" id="pp-flip" min="1" max="180" step="1" /></label>
-            <label id="pp-ti-row" hidden>TI (ms) <input type="number" id="pp-ti" min="0" max="4000" step="10" /></label>
-            <label id="pp-bval-row" hidden>b-value <input type="number" id="pp-bval" min="0" max="3000" step="50" /></label>
-            <label>FOV (%) <input type="number" id="pp-fov" min="20" max="100" step="5" /></label>
-            <label>Slice thk (mm) <input type="number" id="pp-thk" min="1" max="10" step="1" /></label>
-            <label><span id="pp-nsl-label">Slices</span> <input type="number" id="pp-nsl" min="1" max="256" step="1" /></label>
-            <label>Tilt (°) <input type="number" id="pp-tilt" min="-90" max="90" step="1" /></label>
-            <label>Rot (°) <input type="number" id="pp-rot" min="-90" max="90" step="1" /></label>
-            <label id="pp-slice-row">Slice <input type="number" id="pp-slice" min="0" max="255" step="1" /></label>
-            <label id="pp-shift-row">Shift <input type="number" id="pp-shift" min="-128" max="128" step="1" /></label>
+          <div id="pp-controls" hidden>
+            <div id="pp-tabs" role="tablist" aria-label="Sequence parameters">
+              <button type="button" role="tab" id="pp-tab-routine" aria-controls="pp-page-routine" aria-selected="true">Routine</button>
+              <button type="button" role="tab" id="pp-tab-contrast" aria-controls="pp-page-contrast" aria-selected="false">Contrast</button>
+              <button type="button" role="tab" id="pp-tab-geometry" aria-controls="pp-page-geometry" aria-selected="false">Geometry</button>
+            </div>
+            <div class="pp-row pp-page" id="pp-page-routine" role="tabpanel" aria-labelledby="pp-tab-routine">
+              <label>TR (ms) <input type="number" id="pp-tr" min="5" max="10000" step="10" /></label>
+              <label>TE (ms) <input type="number" id="pp-te" min="1" max="500" step="1" /></label>
+              <label>Flip (°) <input type="number" id="pp-flip" min="1" max="180" step="1" /></label>
+              <label><span id="pp-nsl-label">Slices</span> <input type="number" id="pp-nsl" min="1" max="256" step="1" /></label>
+              <label>Slice thk (mm) <input type="number" id="pp-thk" min="1" max="10" step="1" /></label>
+            </div>
+            <div class="pp-row pp-page" id="pp-page-contrast" role="tabpanel" aria-labelledby="pp-tab-contrast" hidden>
+              <label id="pp-ti-row" hidden>TI (ms) <input type="number" id="pp-ti" min="0" max="4000" step="10" /></label>
+              <label id="pp-bval-row" hidden>b-value <input type="number" id="pp-bval" min="0" max="3000" step="50" /></label>
+            </div>
+            <div class="pp-row pp-page" id="pp-page-geometry" role="tabpanel" aria-labelledby="pp-tab-geometry" hidden>
+              <label>FOV (%) <input type="number" id="pp-fov" min="20" max="100" step="5" /></label>
+              <label>Tilt (°) <input type="number" id="pp-tilt" min="-90" max="90" step="1" /></label>
+              <label>Rot (°) <input type="number" id="pp-rot" min="-90" max="90" step="1" /></label>
+              <label id="pp-slice-row">Slice <input type="number" id="pp-slice" min="0" max="255" step="1" /></label>
+              <label id="pp-shift-row">Shift <input type="number" id="pp-shift" min="-128" max="128" step="1" /></label>
+            </div>
           </div>
           <div class="pp-actions" id="pp-actions" hidden>
             <button class="apply" id="pp-apply">Apply &amp; acquire ▸</button>
+            <span id="pp-ta" class="ta-chip" hidden></span>
             <button id="pp-replan" type="button" hidden>↻ Re-prescribe</button>
             <span id="pp-readout"></span>
           </div>
