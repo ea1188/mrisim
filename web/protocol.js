@@ -308,6 +308,7 @@ let angleRefOpen = false;   // sticky across sequences; the strip only shows whe
 function loadImageExam(name) {
   imageExam = IMAGE_EXAMS[name];
   region = name;
+  updatePatientBanner(name);
   seq = 0;
   queue = [{ id: ++seq, preset: LOCALIZER, label: "Localizer", sequence: null,
              status: "pending", image: null, plan: null }]
