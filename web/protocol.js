@@ -618,10 +618,10 @@ function renderQueue() {
       || taSeconds(it.params || (it._pre && it._pre.params));
     if (it.metrics && it.metrics.scan_time) total += it.metrics.scan_time;
     li.innerHTML = `<span class="q-num">${i + 1}</span>`
-      + `<span class="q-seq">${seqName(it)}</span>`
+      + `<span class="q-seq">${it.label}</span>`
       + (t && !isLocalizer(it) ? `<span class="q-time">TA ${fmtTime(t)}</span>` : "")
       + `<span class="q-status">${dot}</span>`
-      + (isLocalizer(it) ? "" : `<span class="q-sub">${it.label}</span>`);
+      + (isLocalizer(it) ? "" : `<span class="q-sub">${seqName(it)}</span>`);
     li.addEventListener("click", () => openItem(it));
     if (it.status === "acquired") {           // re-run: append a fresh copy to the queue
       const add = document.createElement("button");
