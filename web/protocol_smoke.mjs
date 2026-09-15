@@ -235,7 +235,7 @@ try {
   // the spine atlas the first time, so give it room).
   await page.selectOption("#pp-exam", "Spine");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-sub")].some((e) => /sag/i.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-seq")].some((e) => /sag/i.test(e.textContent)),
     { timeout: 90_000 });
   console.log("exam switch → Spine protocol ✓");
 
@@ -243,7 +243,7 @@ try {
   // wait for an abdomen-unique label, e.g. the VIBE post-Gd series).
   await page.selectOption("#pp-exam", "Abdomen");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-sub")].some((e) => /VIBE|phase/i.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-seq")].some((e) => /VIBE|phase/i.test(e.textContent)),
     { timeout: 90_000 });
   console.log("exam switch → Abdomen protocol ✓");
 
@@ -262,7 +262,7 @@ try {
   }
   await page.selectOption("#pp-exam", "Ankle");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-sub")].some((e) => /PD FS/.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-seq")].some((e) => /PD FS/.test(e.textContent)),
     { timeout: 10_000 });
   await page.waitForFunction(() => {                      // scout loads (real image or placeholder)
     const im = document.querySelector("#vp-axial img");
