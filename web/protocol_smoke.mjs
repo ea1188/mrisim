@@ -118,6 +118,7 @@ try {
   await page.waitForFunction(() => document.querySelector("#pp-tilt").value === "0", { timeout: 6_000 });
 
   // tweak the in-plane FOV → scouts refresh without error
+  await page.click("#pp-tab-geometry");
   await page.fill("#pp-fov", "70");
   await page.dispatchEvent("#pp-fov", "input");
   await page.waitForTimeout(1500);
@@ -195,6 +196,7 @@ try {
   // double-click a scout resets the prescription (angle it, then undo). The append above
   // re-rendered the queue/params, so wait for the tilt control to settle before driving it
   // — filling it mid-re-render intermittently hit a detached input (30 s timeout flake).
+  await page.click("#pp-tab-geometry");
   await page.waitForFunction(() => {
     const e = document.querySelector("#pp-tilt");
     return e && !e.disabled && e.offsetParent !== null;
@@ -218,6 +220,7 @@ try {
   const acquireTilt = async (deg) => {
     await page.click("#pp-list li:nth-child(2)");                    // re-open T1 (resets scouts)
     await page.waitForFunction(() => !document.querySelector("#pp-controls").hidden, { timeout: 12_000 });
+    await page.click("#pp-tab-geometry");
     await page.fill("#pp-tilt", String(deg)); await page.dispatchEvent("#pp-tilt", "input");
     await page.waitForTimeout(700);
     await page.click("#pp-apply");
@@ -232,7 +235,7 @@ try {
   // the spine atlas the first time, so give it room).
   await page.selectOption("#pp-exam", "Spine");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /sag/i.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-sub")].some((e) => /sag/i.test(e.textContent)),
     { timeout: 90_000 });
   console.log("exam switch → Spine protocol ✓");
 
@@ -240,7 +243,7 @@ try {
   // wait for an abdomen-unique label, e.g. the VIBE post-Gd series).
   await page.selectOption("#pp-exam", "Abdomen");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /VIBE|phase/i.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-sub")].some((e) => /VIBE|phase/i.test(e.textContent)),
     { timeout: 90_000 });
   console.log("exam switch → Abdomen protocol ✓");
 
@@ -259,7 +262,7 @@ try {
   }
   await page.selectOption("#pp-exam", "Ankle");
   await page.waitForFunction(
-    () => [...document.querySelectorAll("#pp-list li .q-label")].some((e) => /PD FS/.test(e.textContent)),
+    () => [...document.querySelectorAll("#pp-list li .q-sub")].some((e) => /PD FS/.test(e.textContent)),
     { timeout: 10_000 });
   await page.waitForFunction(() => {                      // scout loads (real image or placeholder)
     const im = document.querySelector("#vp-axial img");
