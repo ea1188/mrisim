@@ -24,7 +24,7 @@
  */
 "use strict";
 
-const CACHE = "mrisim-v36";                 // bump when this file's caching logic changes
+const CACHE = "mrisim-v37";                 // bump when this file's caching logic changes
 const SHELL = [
   "./", "index.html", "simulator.html", "app.js", "sar_guidance.js", "styles.css", "theme.css", "worker.js", "logo.png", "lessons.json",
   "data/brain_slice.bin",
@@ -33,6 +33,8 @@ const SHELL = [
   "config.js", "accounts.js", "account.html", "account.js", "course.html", "course.js",
   "course_diagrams_math.js", "course_diagrams.js",
   "reference.html", "reference.js",
+  "a11y.js", "course_logic.js", "assignments.js", "blueprint.js",
+  "osce_rubric.js", "osce.json",
 ];
 
 self.addEventListener("install", (event) => {
@@ -82,7 +84,9 @@ async function networkFirst(request) {
     }
     return resp;
   } catch (err) {
-    const cached = await caches.match(request);
+    // Offline fallback. ignoreSearch: shell URLs carry a per-deploy ?v= stamp,
+    // but the precached copies are stored under their plain names.
+    const cached = await caches.match(request, { ignoreSearch: true });
     if (cached) return cached;
     throw err;
   }
