@@ -1046,7 +1046,18 @@ class Simulator:
         # Metrics
         TR, _TE, FA = params["TR"], params["TE"], params["flip_angle"]
         FOV, NEX, _BW = params["FOV"], params["NEX"], params["bandwidth"] * 1000
-        ETL = params["etl"] if params["sequence"] == "FSE / TSE" else 1
+        # Echo-train per excitation, by readout: FSE/TSE and clinical IR (TIRM:
+        # STIR/FLAIR run a TSE readout behind the inversion; conventional IR is
+        # extinct) share the echo train; single-shot EPI (DWI/BOLD/ASL/dynamic
+        # perfusion) collects EVERY phase-encode line in one excitation. This is
+        # what keeps a TR-9000 FLAIR at ~2:24 instead of a fictional 38:24.
+        if params["sequence"] in ("FSE / TSE", "Inversion Recovery"):
+            ETL = params["etl"]
+        elif params["sequence"] in ("Diffusion (DWI)", "Echo Planar (EPI)", "fMRI (BOLD)",
+                                    "Perfusion (ASL)", "Perfusion (Dynamic)"):
+            ETL = matrix
+        else:
+            ETL = 1
         pf_val = _PF_MAP.get(params.get("pf_fraction", "Full"), 1.0) if params.get("pf_enabled") else 1.0
         resolution = FOV / matrix
         scan_time = TR * matrix * NEX / (ETL * R) * pf_val / 1000

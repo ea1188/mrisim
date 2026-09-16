@@ -442,7 +442,10 @@ function taSeconds(p) {
   if (!p || !p.TR) return null;
   const matrix = p.matrix_size || 256, NEX = p.NEX || 1, R = p.accel_factor || 1;
   if (p.acq3d) return p.TR * matrix * (p.n_partitions || 32) * NEX / Math.max(1, R) / 1000;
-  const etl = p.sequence === "FSE / TSE" ? (p.etl || 16) : 1;
+  const TSE_READOUT = p.sequence === "FSE / TSE" || p.sequence === "Inversion Recovery";
+  const SS_EPI = ["Diffusion (DWI)", "Echo Planar (EPI)", "fMRI (BOLD)",
+                  "Perfusion (ASL)", "Perfusion (Dynamic)"].includes(p.sequence);
+  const etl = TSE_READOUT ? (p.etl || 16) : SS_EPI ? matrix : 1;
   return p.TR * matrix * NEX / (etl * Math.max(1, R)) / 1000;
 }
 
