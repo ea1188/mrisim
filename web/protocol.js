@@ -380,7 +380,7 @@ function acquireImageExample() {
 // "tra" is the console word for axial). Fallback: slugified label.
 const SEQ_NAMES = {
   "Localizer": "localizer",
-  "Brain T1 SE": "t1_se_tra", "Brain T2 SE": "t2_se_tra",
+  "Brain T1 SE": "t1_se_tra", "Brain T2 SE": "t2_tse_tra",
   "Brain FLAIR": "t2_tirm_tra_dark-fluid", "DWI Stroke": "ep2d_diff_tra_b1000",
   "Brain ASL Perfusion": "asl_3d_tra", "Brain SWI": "swi3d_tra",
   "Brain T1 Post-Gd": "t1_se_tra_post", "Brain MPRAGE": "t1_mprage_sag_iso",
@@ -441,7 +441,10 @@ function setScanStatus(busy) {
 function taSeconds(p) {
   if (!p || !p.TR) return null;
   const matrix = p.matrix_size || 256, NEX = p.NEX || 1, R = p.accel_factor || 1;
-  if (p.acq3d) return p.TR * matrix * (p.n_partitions || 32) * NEX / Math.max(1, R) / 1000;
+  if (p.acq3d) {
+    const perShot = p.sequence === "Inversion Recovery" ? 1 : matrix;  // MPRAGE: shot per partition
+    return p.TR * perShot * (p.n_partitions || 32) * NEX / Math.max(1, R) / 1000;
+  }
   const TSE_READOUT = p.sequence === "FSE / TSE" || p.sequence === "Inversion Recovery";
   const SS_EPI = ["Diffusion (DWI)", "Echo Planar (EPI)", "fMRI (BOLD)",
                   "Perfusion (ASL)", "Perfusion (Dynamic)"].includes(p.sequence);

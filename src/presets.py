@@ -14,7 +14,8 @@ PRESETS = {
         "description": "Standard T1-weighted spin echo. Short TR/TE for T1 contrast. WM bright, GM intermediate, CSF dark."
     },
     "Brain T2 SE": {
-        "sequence": "Spin Echo",
+        "sequence": "FSE / TSE",
+        "etl": 16,
         "TR": 4000,
         "TE": 100,
         "TI": 150,
@@ -23,7 +24,7 @@ PRESETS = {
         "FOV": 240,
         "bandwidth": 125,
         "NEX": 1,
-        "description": "T2-weighted spin echo. Long TR/TE. CSF bright, pathology bright, WM dark."
+        "description": "T2-weighted fast spin echo (echo train 16). Long TR/TE. CSF bright, pathology bright, WM dark."
     },
     "Brain PD": {
         "sequence": "Spin Echo",

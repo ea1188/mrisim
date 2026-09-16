@@ -63,7 +63,7 @@ PROTOCOLS: dict[str, list[str]] = {
 _LABELS: dict[str, str] = {
     LOCALIZER: "Localizer",
     "Brain T1 SE": "T1 SE  ax",
-    "Brain T2 SE": "T2 SE  ax",
+    "Brain T2 SE": "T2 TSE  ax",
     "Brain FLAIR": "FLAIR  ax",
     "DWI Stroke": "DWI (stroke)",
     "Brain ASL Perfusion": "ASL CBF  ax",
