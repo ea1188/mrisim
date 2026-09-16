@@ -62,7 +62,7 @@ PROTOCOLS: dict[str, list[str]] = {
 # Short, scanner-style queue labels (preset name → label).
 _LABELS: dict[str, str] = {
     LOCALIZER: "Localizer",
-    "Brain T1 SE": "T1 SE  ax",
+    "Brain T1 SE": "T1 TSE  ax",
     "Brain T2 SE": "T2 TSE  ax",
     "Brain FLAIR": "FLAIR  ax",
     "DWI Stroke": "DWI (stroke)",

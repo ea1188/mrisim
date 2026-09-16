@@ -2,7 +2,8 @@
 
 PRESETS = {
     "Brain T1 SE": {
-        "sequence": "Spin Echo",
+        "sequence": "FSE / TSE",
+        "etl": 4,
         "TR": 500,
         "TE": 15,
         "TI": 150,
@@ -10,8 +11,8 @@ PRESETS = {
         "matrix_size": 256,
         "FOV": 240,
         "bandwidth": 125,
-        "NEX": 1,
-        "description": "Standard T1-weighted spin echo. Short TR/TE for T1 contrast. WM bright, GM intermediate, CSF dark."
+        "NEX": 2,
+        "description": "Standard T1-weighted fast spin echo (echo train 4). Short TR/TE for T1 contrast. WM bright, GM intermediate, CSF dark."
     },
     "Brain T2 SE": {
         "sequence": "FSE / TSE",
@@ -379,7 +380,8 @@ PRESETS = {
     #  Spine  (FOV 380 mm — same atlas as Abdomen, full T/L spine)
     # ------------------------------------------------------------------ #
     "Spine T1 Sagittal": {
-        "sequence": "Spin Echo",
+        "sequence": "FSE / TSE",
+        "etl": 4,
         "TR": 600,
         "TE": 15,
         "TI": 150,
@@ -435,7 +437,8 @@ PRESETS = {
     #  Pelvis  (FOV 380 mm)
     # ------------------------------------------------------------------ #
     "Pelvis T1 SE": {
-        "sequence": "Spin Echo",
+        "sequence": "FSE / TSE",
+        "etl": 4,
         "TR": 600,
         "TE": 15,
         "TI": 150,
@@ -583,7 +586,8 @@ PRESETS = {
     #  Post-contrast (Gadolinium)
     # ------------------------------------------------------------------ #
     "Brain T1 Post-Gd": {
-        "sequence": "Spin Echo",
+        "sequence": "FSE / TSE",
+        "etl": 4,
         "TR": 500,
         "TE": 15,
         "TI": 150,
@@ -591,7 +595,7 @@ PRESETS = {
         "matrix_size": 256,
         "FOV": 240,
         "bandwidth": 125,
-        "NEX": 1,
+        "NEX": 2,
         "contrast_enabled": True,
         "contrast_dose": 2,
         "description": "T1w SE after gadolinium. Enhancing tumour, abscess rim, meningeal disease and vessels brighten where the blood–brain barrier is disrupted; normal brain barely changes."
@@ -826,7 +830,8 @@ PRESETS = {
         "description": "Quantitative T2 map of articular cartilage (multi-echo fit; pixel value = T2 in ms). Cartilage T2 rises with collagen-matrix breakdown and water content, so a focal T2 increase flags early degeneration before it is visible on morphological images."
     },
     "Spine T1 Post-Gd": {
-        "sequence": "Spin Echo", "TR": 600, "TE": 12, "TI": 150, "flip_angle": 90,
+        "sequence": "FSE / TSE",
+        "etl": 4, "TR": 600, "TE": 12, "TI": 150, "flip_angle": 90,
         "matrix_size": 320, "FOV": 320, "bandwidth": 150, "NEX": 2,
         "contrast_enabled": True, "contrast_dose": 4,
         "description": "Post-gadolinium T1 of the spine. Enhancing tumour, infection (discitis/epidural abscess) and active inflammation brighten; compare with the pre-contrast T1 to spot true enhancement."
