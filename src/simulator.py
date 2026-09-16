@@ -736,7 +736,14 @@ class Simulator:
         # Metrics — 3-D scan time also encodes the kz partitions (the 3-D trade-off:
         # longer scan, but the √Nz SNR gain above).
         NEX, R = params["NEX"], params["accel_factor"]
-        scan_time = TR * matrix * n_part * NEX * (kz_pf or 1.0) / max(1, R) / 1000.0
+        if params["sequence"] == "Inversion Recovery":
+            # MPRAGE-style shot readout: one inversion-prepared turbo-FLASH shot
+            # per partition collects every in-plane line, so acquisition scales
+            # with partitions, not partitions x matrix (line-per-TR priced a
+            # 32-partition MPRAGE at 5.7 hours).
+            scan_time = TR * n_part * NEX * (kz_pf or 1.0) / max(1, R) / 1000.0
+        else:
+            scan_time = TR * matrix * n_part * NEX * (kz_pf or 1.0) / max(1, R) / 1000.0
         B0_sar = _B0_MAP.get(field, 3.0)
         sar = estimate_sar(FA, TR, sequence={"Spin Echo": "SE", "Gradient Echo": "GRE",
                            "Inversion Recovery": "IR", "Balanced SSFP": "GRE"}[params["sequence"]])
