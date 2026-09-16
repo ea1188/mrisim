@@ -432,7 +432,7 @@ function updatePatientBanner(examName) {
 function setScanStatus(busy) {
   const st = $("pp-pt-status");
   if (!st) return;
-  st.textContent = busy ? "Scanning\u2026" : "Ready";
+  st.textContent = busy ? "Scanning\u2026" : "";
   st.classList.toggle("busy", !!busy);
 }
 
