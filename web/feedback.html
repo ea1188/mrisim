@@ -206,10 +206,15 @@
 
     // Boot: sign-in is required (RLS needs an authenticated user to INSERT).
     if (!A || !A.enabled || !A.enabled()) { showGate(); return; }
-    A.getUser().then(function (r) {
-      var u = r && r.data && r.data.user;
+    // getUser() resolves to the user object directly (or null) — do NOT
+    // re-unwrap r.data.user, which is always undefined and pinned the gate
+    // open regardless of session (the feedback sign-in loop, 2026-09-17).
+    A.getUser().then(function (u) {
       if (u) showForm(); else showGate();
     }).catch(showGate);
+    // Also flip to the form the moment sign-in completes, so an OAuth return
+    // that resolves after this initial check doesn't leave the gate showing.
+    if (A.onChange) A.onChange(function (session) { if (session) showForm(); });
   })();
   </script>
 </body>
