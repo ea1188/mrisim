@@ -200,7 +200,7 @@
     function showGate() {
       el("gate").hidden = false;
       el("signin").addEventListener("click", function () {
-        if (A && A.signInWithGoogle) A.signInWithGoogle({ redirectTo: location.href });
+        if (A && A.signInWithGoogle) A.signInWithGoogle();   // default: origin+pathname, no fragment
       });
     }
 
