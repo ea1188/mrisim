@@ -192,7 +192,10 @@
       });
     }
 
+    var formShown = false;
     function showForm() {
+      if (formShown) return;   // idempotent: the initial check AND an onChange
+      formShown = true;        // SIGNED_IN both call this; render once, bind once.
       render(); form.hidden = false; el("form-foot").hidden = false; el("gate").hidden = true;
       el("submit").addEventListener("click", submit);
     }
