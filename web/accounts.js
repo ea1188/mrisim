@@ -17,6 +17,14 @@
 
   function enabled() { return ENABLED; }
 
+  // Complete an OAuth return on whatever page it lands. The client is lazy, so
+  // a redirect that falls back to a page that never touches the accounts layer
+  // (e.g. the launcher, when the intended page is missing from the Supabase
+  // redirect allow-list) would otherwise leave the one-time code unexchanged
+  // and the visitor signed out. Building the client here lets
+  // detectSessionInUrl finish the sign-in immediately.
+  if (ENABLED && /[?#&](code|access_token|error_description)=/.test(location.href)) client();
+
   // Lazy-load supabase-js and build the client exactly once. detectSessionInUrl
   // lets the magic-link redirect (…/account.html#access_token=…) log the user in.
   function client() {
