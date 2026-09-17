@@ -92,7 +92,13 @@
     return client().then(function (c) {
       return c.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: opts.redirectTo || (location.origin + location.pathname) },
+        options: {
+          // Never carry a fragment (or query) into the OAuth return target: a
+          // stale #access_token in location.href compounds on every retry and
+          // the doubled hash makes the returned tokens unparseable (the
+          // feedback-page sign-in loop, 2026-09-17).
+          redirectTo: String(opts.redirectTo || (location.origin + location.pathname)).split("#")[0],
+        },
       });
     });
   }
