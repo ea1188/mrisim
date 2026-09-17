@@ -17,6 +17,27 @@
 
   function enabled() { return ENABLED; }
 
+  // Normalize a mangled OAuth return fragment BEFORE the client reads it. A
+  // misconfigured Supabase Site URL (trailing '#') plus retry-compounding can
+  // land the browser on "…/feedback##access_token=…#access_token=…": the double
+  // leading hash makes supabase-js read the first key as "#access_token" (never
+  // "access_token"), so it can't parse the session and the page loops. Collapse
+  // to the first valid "#access_token=…" (implicit flow) or "?code=…" (PKCE)
+  // segment so detectSessionInUrl sees a clean URL.
+  function normalizeAuthReturn() {
+    try {
+      var h = location.hash || "";
+      if (/#.*access_token=/.test("#" + h) || /^#{2,}/.test(h)) {
+        var body = h.replace(/^#+/, "");
+        var seg = body.split("#").filter(function (p) { return /(?:^|&)access_token=/.test(p); })[0];
+        if (seg && "#" + seg !== h && history.replaceState) {
+          history.replaceState(null, "", location.pathname + location.search + "#" + seg);
+        }
+      }
+    } catch (e) { /* leave the URL as-is; worst case is the old behavior */ }
+  }
+  if (ENABLED) normalizeAuthReturn();
+
   // Complete an OAuth return on whatever page it lands. The client is lazy, so
   // a redirect that falls back to a page that never touches the accounts layer
   // (e.g. the launcher, when the intended page is missing from the Supabase
