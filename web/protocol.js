@@ -436,6 +436,20 @@ function setScanStatus(busy) {
   st.classList.toggle("busy", !!busy);
 }
 
+// Head SAR estimate, mirroring presets.estimate_sar + simulator.py's call
+// exactly (fixed 20-slice reference, head = whole-body x 2.5, 3 T default) so
+// the live chip always equals the post-acquire metric. FDA head limit 3.2 W/kg.
+const SAR_SEQ = { "Spin Echo": 1.5, "FSE / TSE": 1.5, "Gradient Echo": 0.5,
+  "Inversion Recovery": 2.0, "Diffusion (DWI)": 1.5, "MR Angiography": 0.5,
+  "fMRI (BOLD)": 0.5, "Perfusion (ASL)": 0.5, "Perfusion (Dynamic)": 0.5,
+  "Echo Planar (EPI)": 0.5, "Balanced SSFP": 0.5, "Susceptibility (SWI)": 0.5 };
+function sarHead(p) {
+  if (!p || !p.TR || !p.flip_angle) return null;
+  const wb = 2.0 * Math.pow(p.flip_angle / 90, 2) * (500 / Math.max(p.TR, 10))
+    * (20 / 20) * (SAR_SEQ[p.sequence] != null ? SAR_SEQ[p.sequence] : 1.0);
+  return Math.round(wb * 2.5 * 100) / 100;
+}
+
 // Acquisition time, mirroring simulator.py exactly (2-D: TR*matrix*NEX/(ETL*R);
 // 3-D: TR*matrix*n_partitions*NEX/R; ETL applies to FSE/TSE only).
 function taSeconds(p) {
@@ -798,6 +812,7 @@ function paramsToPanel(it) {
   // A 3-D acquisition is a slab of partitions, not a 2-D multi-slice group.
   $("pp-nsl-label").textContent = p.acq3d ? "Partitions" : "Slices";
   $("pp-nsl").value = p.acq3d ? (p.n_partitions ?? 32) : (p.n_slices ?? 1);
+  $("pp-gap").value = p.slice_gap ?? 0;
   selectTab("routine");
   updateContrastTab();
   $("pp-slice-row").hidden = !!imageExam;
@@ -851,6 +866,11 @@ function wireParamPanel() {
     const n = crossN();
     active.plan.slice = clampN(v, 0, n ? n - 1 : 255);
     scheduleParamRender();
+  });
+  $("pp-gap").addEventListener("input", () => {
+    if (!active || isLocalizer(active) || imageExam) return;
+    const v = +$("pp-gap").value;
+    if (isFinite(v)) { active.params.slice_gap = clampN(v, 0, 10); scheduleParamRender(); }
   });
   $("pp-shift").addEventListener("input", () => {
     if (!active || isLocalizer(active) || imageExam) return;
@@ -1466,6 +1486,27 @@ function scrollSeries(plane, step) {
 
 // Live prescription summary while planning.
 function updatePlanReadout() {
+  const sarEl = $("pp-sar");
+  if (sarEl) {
+    const sh = active && !isLocalizer(active) && !imageExam ? sarHead(active.params) : null;
+    sarEl.hidden = sh == null;
+    if (sh != null) {
+      sarEl.textContent = "SAR " + sh.toFixed(1) + " W/kg";
+      sarEl.classList.toggle("warn", sh > 2.5 && sh <= 3.2);
+      sarEl.classList.toggle("limit", sh > 3.2);
+      if (sh > 3.2 && window.SarGuidance) {
+        // Concrete console-style advice: the exact changes that get back under.
+        const g = window.SarGuidance.sarGuidance({ sar_head: sh,
+          flip_angle: active.params.flip_angle, TR: active.params.TR, sequence: active.params.sequence });
+        const fixes = [];
+        if (g.minSafeTr) fixes.push("TR \u2265 " + g.minSafeTr + " ms");
+        if (g.maxSafeFa) fixes.push("flip \u2264 " + g.maxSafeFa + "\u00b0");
+        sarEl.title = "Head SAR limit exceeded (3.2 W/kg). Get under with: " + (fixes.join(" or ") || "a lower-SAR sequence");
+      } else {
+        sarEl.title = sh > 2.5 ? "Approaching the head SAR limit (3.2 W/kg)" : "Estimated head SAR";
+      }
+    }
+  }
   const ta = $("pp-ta");
   if (ta) {
     const t = active && !isLocalizer(active) && !imageExam ? taSeconds(active.params) : null;

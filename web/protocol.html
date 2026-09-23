@@ -170,6 +170,9 @@
     #pp-tabs [role=tab][disabled] { opacity: .4; cursor: default; }
     .ta-chip { font-family: var(--mono); font-size: 14px; color: var(--accent);
       border: 1px solid var(--border-hi); padding: 8px 13px; }
+    .sar-chip { color: var(--signal); }
+    .sar-chip.warn { color: var(--warn); border-color: var(--warn); }
+    .sar-chip.limit { color: var(--accent-ink); background: var(--warn); border-color: var(--warn); font-weight: 700; }
     /* Two-line scanner-style queue rows */
     #pp-queue li { display: grid; grid-template-columns: auto 1fr auto auto auto; grid-template-rows: auto auto;
       align-items: center; column-gap: 8px; }
@@ -293,6 +296,7 @@
               <label>Flip (°) <input type="number" id="pp-flip" min="1" max="180" step="1" /></label>
               <label><span id="pp-nsl-label">Slices</span> <input type="number" id="pp-nsl" min="1" max="256" step="1" /></label>
               <label>Slice thk (mm) <input type="number" id="pp-thk" min="1" max="10" step="1" /></label>
+              <label>Gap (mm) <input type="number" id="pp-gap" min="0" max="10" step="0.5" /></label>
             </div>
             <div class="pp-row pp-page" id="pp-page-contrast" role="tabpanel" aria-labelledby="pp-tab-contrast" hidden>
               <label id="pp-ti-row" hidden>TI (ms) <input type="number" id="pp-ti" min="0" max="4000" step="10" /></label>
@@ -309,6 +313,7 @@
           <div class="pp-actions" id="pp-actions" hidden>
             <button class="apply" id="pp-apply">Apply &amp; acquire ▸</button>
             <span id="pp-ta" class="ta-chip" hidden></span>
+            <span id="pp-sar" class="ta-chip sar-chip" hidden></span>
             <button id="pp-replan" type="button" hidden>↻ Re-prescribe</button>
             <span id="pp-readout"></span>
           </div>
@@ -375,6 +380,7 @@
   <script src="tour.js"></script>
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="sar_guidance.js"></script>
   <script src="osce_rubric.js"></script>
   <script src="protocol.js"></script>
 </body>
