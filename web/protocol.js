@@ -1227,7 +1227,7 @@ function bandLocal(p, slice) {
 // Which CSS cursor signals each grabbable region (so it's obvious where to grab).
 const cursorFor = (m) => ({
   recenter: "move", resize: "nwse-resize", oblique: "grab",
-  slice: "move", slices: "row-resize",
+  slice: "move", slices: "row-resize", satmove: "grab",
 }[m] || "crosshair");
 
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
@@ -1241,6 +1241,12 @@ function modeAt(p, loc) {
     }
     const cc = p.center || [0.5, 0.5];             // cross scout: centre → move slice, outer → angle
     return Math.hypot(loc.px - cc[0], loc.py - cc[1]) < 0.16 ? "slice" : "oblique";
+  }
+  // Saturation band grabs first when enabled — it's an overlay on top of the
+  // slice band / FOV box. Near its projected centre-line (e1–e2) → slide it.
+  if (active.params && active.params.satband_enabled && p.satband && p.satband.e1 && p.satband.e2
+      && segDist(loc.px, loc.py, p.satband.e1, p.satband.e2) < 0.06) {
+    return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
@@ -1292,6 +1298,16 @@ const OBLIQUE_SIGN = {
 // ({band} | {fovBox} | {bandDir}) or null, and mutates the open item's plan/params as a
 // side effect. `d` is the in-flight drag (mode, geom `p`, and per-mode start state).
 const DRAG_APPLY = {
+  satmove(d, loc) {
+    const sb = d.p.satband;
+    if (!sb || !sb.p0 || !sb.p1) return null;
+    const dx = sb.p1[0] - sb.p0[0], dy = sb.p1[1] - sb.p0[1];
+    const t = ((loc.px - sb.p0[0]) * dx + (loc.py - sb.p0[1]) * dy) / ((dx * dx + dy * dy) || 1);
+    active.params.satband_pos = clampN(Math.round(t * 100 / 5) * 5, 0, 100);
+    $("pp-satpos").value = active.params.satband_pos;
+    scheduleScouts();                              // engine re-projects the band (coalesced)
+    return null;
+  },
   slice(d, loc, plane) {
     const p = d.p, pl = active.plan;
     if (imageExam) {                                // image scout: move the slice centre to the cursor
