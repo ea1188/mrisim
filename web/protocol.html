@@ -175,7 +175,12 @@
     .sar-chip.limit { color: var(--accent-ink); background: var(--warn); border-color: var(--warn); font-weight: 700; }
     /* Two-line scanner-style queue rows */
     #pp-queue li { display: grid; grid-template-columns: auto 1fr auto auto auto; grid-template-rows: auto auto;
-      align-items: center; column-gap: 8px; }
+      align-items: center; column-gap: 8px; position: relative; }
+    /* Per-sequence acquisition progress: a thin accent bar along the row's base,
+       console-style, driven by applyAndAcquire over a scaled TA. */
+    .q-prog { position: absolute; left: 0; bottom: 0; height: 2px; width: 0;
+      background: var(--accent); pointer-events: none; }
+    li.acquired .q-prog { display: none; }
     .q-seq { font-size: 12.5px; color: var(--text); font-weight: 550;
       justify-self: start; text-align: left; }
     li.acquired .q-seq { color: var(--signal); }
