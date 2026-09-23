@@ -811,6 +811,10 @@ async function openItem(it) {
 // ---- parameter panel ------------------------------------------------------ //
 const NUMP = { "pp-tr": "TR", "pp-te": "TE", "pp-flip": "flip_angle", "pp-thk": "slice_thickness" };
 const nslKey = (p) => (p.acq3d ? "n_partitions" : "n_slices");   // 3-D uses partitions
+function syncSatRows() {
+  const on = $("pp-sat").checked;
+  ["pp-satpos-row", "pp-satwidth-row", "pp-satangle-row"].forEach((id) => { $(id).hidden = !on; });
+}
 function paramsToPanel(it) {
   const p = it.params;
   $("pp-tr").value = p.TR ?? 500;
@@ -889,11 +893,6 @@ function wireParamPanel() {
     active.plan.slice = clampN(v, 0, n ? n - 1 : 255);
     scheduleParamRender();
   });
-  function syncSatRows() {
-    const on = $("pp-sat").checked;
-    ["pp-satpos-row", "pp-satwidth-row", "pp-satangle-row"].forEach((id) => { $(id).hidden = !on; });
-  }
-  window.syncSatRows = syncSatRows;
   $("pp-sat").addEventListener("change", () => {
     if (!active || isLocalizer(active) || imageExam) return;
     active.params.satband_enabled = $("pp-sat").checked;
@@ -1187,6 +1186,18 @@ function drawOverlay(plane, hoverMode, live) {
         els.push(md);
       }
     }
+  }
+  // Saturation band: a distinct orange slab drawn on every panel it projects
+  // onto (the engine returns g.satband.e1/e2 = the band centre-line ends). Read
+  // -only in Phase 1 — positioned via the numeric controls, dragged in Phase 2.
+  if (g.satband && g.satband.e1 && g.satband.e2) {
+    const SAT = "#ff9d3a";
+    const a = px(g.satband.e1), b = px(g.satband.e2);
+    els.push(el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1],
+      stroke: SAT, "stroke-width": 2, "stroke-opacity": 0.9, "stroke-dasharray": "6 3" }));
+    const lab = el("text", { x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2 - 4,
+      fill: SAT, "font-size": 8, "text-anchor": "middle", "font-family": "monospace" });
+    lab.textContent = "SAT"; els.push(lab);
   }
   // Acquired plane: the FOV box, corner resize handles, and a move dot.
   if (g.role === "acq") {
