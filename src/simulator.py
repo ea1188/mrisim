@@ -745,7 +745,8 @@ class Simulator:
         else:
             scan_time = TR * matrix * n_part * NEX * (kz_pf or 1.0) / max(1, R) / 1000.0
         B0_sar = _B0_MAP.get(field, 3.0)
-        sar = estimate_sar(FA, TR, sequence={"Spin Echo": "SE", "Gradient Echo": "GRE",
+        sar = estimate_sar(FA, TR, num_slices=1,   # 3-D: one excitation per TR, any partitions
+                           sequence={"Spin Echo": "SE", "Gradient Echo": "GRE",
                            "Inversion Recovery": "IR", "Balanced SSFP": "GRE"}[params["sequence"]])
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         snr = self._measure_snr(image, phantom_slice)
@@ -1073,7 +1074,8 @@ class Simulator:
                    "Perfusion (ASL)": "EPI", "Perfusion (Dynamic)": "EPI",
                    "Echo Planar (EPI)": "EPI", "Balanced SSFP": "GRE"}
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
-        sar = estimate_sar(FA, TR, sequence=seq_map.get(params["sequence"], "SE"))
+        sar = estimate_sar(FA, TR, num_slices=max(1, int(params.get("n_slices", 1) or 1)),
+                           sequence=seq_map.get(params["sequence"], "SE"))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
                    "snr": 0.0, "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
