@@ -961,6 +961,7 @@ function addSatband(out, params) {
   out.satband_pos = params.satband_pos != null ? params.satband_pos : 50;
   out.satband_width = params.satband_width != null ? params.satband_width : 15;
   out.satband_angle = params.satband_angle != null ? params.satband_angle : 0;
+  out.satband_angle2 = params.satband_angle2 != null ? params.satband_angle2 : 0;
   return out;
 }
 // Coalesced: only one scoutPanels render in flight; bursts collapse to a single
@@ -1246,10 +1247,10 @@ function modeAt(p, loc) {
   // slice band / FOV box. Grab an END → angle it, the centre-line → slide it.
   if (active.params && active.params.satband_enabled && p.satband && p.satband.e1 && p.satband.e2) {
     const sb = p.satband, near = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.07;
-    // Angle by grabbing an end only on the ACQUIRED-plane scout, where a line
-    // drag maps cleanly to the band's in-plane angle. On cross panels the band
-    // is move-only (its out-of-plane tilt has no intuitive line-drag).
-    if (sb.amode === "angle" && (near(sb.e1) || near(sb.e2))) return "satangle";
+    // Grab an END to angle the band on this scout, the centre-line to slide it.
+    // The acquired-plane scout sets the in-plane angle; cross scouts set the
+    // out-of-plane (cross) angle — so the band angles on whatever plane you drag.
+    if (near(sb.e1) || near(sb.e2)) return "satangle";
     if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.06) return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
@@ -1308,8 +1309,13 @@ const DRAG_APPLY = {
     const W = sb.wh[0], H = sb.wh[1];               // undo panel aspect for the true angle
     let ang = Math.atan2(-(loc.py - sb.c[1]) * H, (loc.px - sb.c[0]) * W) * 180 / Math.PI;
     if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;
-    active.params.satband_angle = clampN(Math.round(ang / 5) * 5, -90, 90);
-    $("pp-satangle").value = active.params.satband_angle;
+    ang = clampN(Math.round(ang / 5) * 5, -90, 90);
+    if (sb.amode === "angle2") {                    // cross scout → out-of-plane tilt
+      active.params.satband_angle2 = ang;
+    } else {                                        // acquired scout → in-plane angle
+      active.params.satband_angle = ang;
+      $("pp-satangle").value = ang;
+    }
     scheduleScouts();
     return null;
   },
