@@ -533,12 +533,21 @@ def scout_band(
     step_mm     = thickness_mm + gap_mm
     half_cov_mm = (n_slices * thickness_mm + max(0, n_slices - 1) * gap_mm) / 2.0
 
+    # A slab prescribed larger than the volume pushes its boundary planes outside
+    # the scout, where _intersect_line finds no crossing and the line silently
+    # vanishes (the coverage rim, then the outer slice bands, disappear as
+    # thickness climbs). Clamp every plane centre back into the volume box so an
+    # over-large slab renders pinned to the anatomy edge — a clear "coverage runs
+    # past the volume" cue — instead of dropping lines.
+    hi = np.array([nz - 1, ny - 1, nx - 1], dtype=float)
+    clamp = lambda p: np.clip(p, 0.0, hi)
+
     # Front/back boundary plane centres in voxel-index space
-    front_ctr = ctr - half_cov_mm * n_unit / vox
-    back_ctr  = ctr + half_cov_mm * n_unit / vox
+    front_ctr = clamp(ctr - half_cov_mm * n_unit / vox)
+    back_ctr  = clamp(ctr + half_cov_mm * n_unit / vox)
 
     # Individual slice plane centres
-    slice_ctrs = [ctr + (i - (n_slices - 1) / 2.0) * step_mm * n_unit / vox
+    slice_ctrs = [clamp(ctr + (i - (n_slices - 1) / 2.0) * step_mm * n_unit / vox)
                   for i in range(int(n_slices))]
 
     # Scout geometry: (fixed_axis, row_axis, col_axis, row_len, col_len)
