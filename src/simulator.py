@@ -747,7 +747,9 @@ class Simulator:
         B0_sar = _B0_MAP.get(field, 3.0)
         sar = estimate_sar(FA, TR, num_slices=1,   # 3-D: one excitation per TR, any partitions
                            sequence={"Spin Echo": "SE", "Gradient Echo": "GRE",
-                           "Inversion Recovery": "IR", "Balanced SSFP": "GRE"}[params["sequence"]])
+                           "Inversion Recovery": "IR", "Balanced SSFP": "GRE"}[params["sequence"]],
+                           satband=getattr(self, "satband_enabled", False),
+                           fatsat=bool(params.get("fatsat_enabled", False)))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         snr = self._measure_snr(image, phantom_slice)
         # Slab geometry for the UI: isotropic 3-D partitions, so the through-plane
@@ -1076,7 +1078,9 @@ class Simulator:
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
         rf_etl = int(params.get("etl", 1)) if params["sequence"] in ("FSE / TSE", "Inversion Recovery") else 1
         sar = estimate_sar(FA, TR, num_slices=max(1, int(params.get("n_slices", 1) or 1)),
-                           sequence=seq_map.get(params["sequence"], "SE"), etl=rf_etl)
+                           sequence=seq_map.get(params["sequence"], "SE"), etl=rf_etl,
+                           satband=getattr(self, "satband_enabled", False),
+                           fatsat=bool(params.get("fatsat_enabled", False)))
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
                    "snr": 0.0, "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,

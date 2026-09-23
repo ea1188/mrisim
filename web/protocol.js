@@ -447,9 +447,12 @@ function sarWeight(p) {
   const fa2 = Math.pow((p.flip_angle || 90) / 90, 2);
   const seq = p.sequence, train = Math.max(1, p.etl || (seq === "FSE / TSE" || seq === "Inversion Recovery" ? 16 : 1));
   const refoc = train > 1 ? train * Math.pow(150 / 90, 2) : 4.0;
-  if (seq === "Spin Echo" || seq === "FSE / TSE" || seq === "Diffusion (DWI)") return fa2 + refoc;
-  if (seq === "Inversion Recovery") return 4.0 + fa2 + refoc;
-  return fa2;                                // GRE / EPI families
+  // Each selective prep pulse (spatial sat band, spectral CHESS fat-sat) adds
+  // one ~90 deg pulse per TR — mirrors presets.estimate_sar.
+  const sat = 1.0 * ((p.satband_enabled ? 1 : 0) + (p.fatsat_enabled ? 1 : 0));
+  if (seq === "Spin Echo" || seq === "FSE / TSE" || seq === "Diffusion (DWI)") return fa2 + refoc + sat;
+  if (seq === "Inversion Recovery") return 4.0 + fa2 + refoc + sat;
+  return fa2 + sat;                           // GRE / EPI families
 }
 function sarHead(p) {
   if (!p || !p.TR || !p.flip_angle) return null;
@@ -896,7 +899,7 @@ function wireParamPanel() {
   $("pp-sat").addEventListener("change", () => {
     if (!active || isLocalizer(active) || imageExam) return;
     active.params.satband_enabled = $("pp-sat").checked;
-    syncSatRows(); scheduleScouts();
+    syncSatRows(); updatePlanReadout(); scheduleScouts();
   });
   ["pp-satpos", "pp-satwidth", "pp-satangle"].forEach((id) => {
     $(id).addEventListener("input", () => {
