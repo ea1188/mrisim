@@ -830,6 +830,11 @@ function paramsToPanel(it) {
   $("pp-nsl-label").textContent = p.acq3d ? "Partitions" : "Slices";
   $("pp-nsl").value = p.acq3d ? (p.n_partitions ?? 32) : (p.n_slices ?? 1);
   $("pp-gap").value = p.slice_gap ?? 0;
+  $("pp-sat").checked = !!p.satband_enabled;
+  $("pp-satpos").value = p.satband_pos ?? 50;
+  $("pp-satwidth").value = p.satband_width ?? 15;
+  $("pp-satangle").value = p.satband_angle ?? 0;
+  syncSatRows();
   selectTab("routine");
   updateContrastTab();
   $("pp-slice-row").hidden = !!imageExam;
@@ -884,6 +889,24 @@ function wireParamPanel() {
     active.plan.slice = clampN(v, 0, n ? n - 1 : 255);
     scheduleParamRender();
   });
+  function syncSatRows() {
+    const on = $("pp-sat").checked;
+    ["pp-satpos-row", "pp-satwidth-row", "pp-satangle-row"].forEach((id) => { $(id).hidden = !on; });
+  }
+  window.syncSatRows = syncSatRows;
+  $("pp-sat").addEventListener("change", () => {
+    if (!active || isLocalizer(active) || imageExam) return;
+    active.params.satband_enabled = $("pp-sat").checked;
+    syncSatRows(); scheduleScouts();
+  });
+  ["pp-satpos", "pp-satwidth", "pp-satangle"].forEach((id) => {
+    $(id).addEventListener("input", () => {
+      if (!active || isLocalizer(active) || imageExam) return;
+      const key = { "pp-satpos": "satband_pos", "pp-satwidth": "satband_width", "pp-satangle": "satband_angle" }[id];
+      const v = +$(id).value;
+      if (isFinite(v)) { active.params[key] = v; scheduleScouts(); }
+    });
+  });
   $("pp-gap").addEventListener("input", () => {
     if (!active || isLocalizer(active) || imageExam) return;
     const v = +$("pp-gap").value;
@@ -926,6 +949,19 @@ function scoutPayload() {
     params: isLocalizer(active) ? { sequence: "Spin Echo" } : active.params,
   };
   if (pl.slice != null) out.slice_idx = pl.slice;
+  addSatband(out, active.params);
+  return out;
+}
+
+// Copy the open sequence's sat-band settings into a render/scout payload. The
+// engine draws the band on every scout and (on the orthogonal path) saturates
+// the acquired signal. Off by default; no-op unless enabled.
+function addSatband(out, params) {
+  if (!params || !params.satband_enabled) return out;
+  out.satband_enabled = true;
+  out.satband_pos = params.satband_pos != null ? params.satband_pos : 50;
+  out.satband_width = params.satband_width != null ? params.satband_width : 15;
+  out.satband_angle = params.satband_angle != null ? params.satband_angle : 0;
   return out;
 }
 // Coalesced: only one scoutPanels render in flight; bursts collapse to a single
@@ -1482,6 +1518,7 @@ async function applyAndAcquire() {
     region, orientation: pl.orientation, fov_planning: true, inplane_fov_pct: pl.fov_pct,
     inplane_off: pl.inplane_off, tilt: pl.tilt, rot: pl.rot, params: active.params,
   };
+  addSatband(payload, active.params);
   if (pl.slice != null) payload.slice_idx = pl.slice;
   $("pp-apply").disabled = true;
   setScanStatus(true);
