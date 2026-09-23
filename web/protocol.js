@@ -1264,12 +1264,7 @@ function modeAt(p, loc) {
     const sb = p.satband;
     const len = Math.hypot(sb.e2[0] - sb.e1[0], sb.e2[1] - sb.e1[1]);
     const nearEnd = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.06;
-    // Angle by dragging only on the ACQUIRED-plane scout (amode "angle"), where
-    // the line maps directly to the in-plane angle and stays stable. The cross-
-    // plane angle (angle2) maps nonlinearly to the projected line and swung the
-    // band around when dragged (owner video), so cross scouts are move-only —
-    // the numeric Sat angle control still sets the in-plane angle.
-    if (sb.amode === "angle" && len > 0.18 && (nearEnd(sb.e1) || nearEnd(sb.e2))) return "satangle";
+    if (len > 0.18 && (nearEnd(sb.e1) || nearEnd(sb.e2))) return "satangle";
     if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.05) return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
@@ -1329,13 +1324,23 @@ const DRAG_APPLY = {
     let ang = Math.atan2(-(loc.py - sb.c[1]) * H, (loc.px - sb.c[0]) * W) * 180 / Math.PI;
     if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;
     ang = clampN(Math.round(ang / 5) * 5, -90, 90);
-    if (sb.amode === "angle2") {                    // cross scout → out-of-plane tilt
-      active.params.satband_angle2 = ang;
-    } else {                                        // acquired scout → in-plane angle
-      active.params.satband_angle = ang;
-      $("pp-satangle").value = ang;
+    if (sb.amode === "angle2" && d.satCC) {
+      // Cross scout: rotate the out-of-plane angle by the cursor's angular
+      // motion around the band centre (an accumulating rotate drag), and let
+      // the engine re-project the true band. Absolute mapping flipped; the
+      // accumulate is stable and controllable — the band shows where it is.
+      const a1 = Math.atan2(loc.py - d.satCC[1], loc.px - d.satCC[0]);
+      let dd = (a1 - d.satPrevA) * 180 / Math.PI;
+      if (dd > 180) dd -= 360; else if (dd < -180) dd += 360;
+      d.satCur = clampN(d.satCur - dd, -90, 90);   // negate: turns the way you circle
+      d.satPrevA = a1;
+      active.params.satband_angle2 = Math.round(d.satCur / 5) * 5;
+      scheduleScouts();
+      return null;
     }
-    // Live: rotate the line about its centre toward the cursor.
+    // Acquired scout: the line maps 1:1 to the in-plane angle, so preview it live.
+    active.params.satband_angle = ang;
+    $("pp-satangle").value = ang;
     const half = 0.5 * Math.hypot(sb.e2[0] - sb.e1[0], sb.e2[1] - sb.e1[1]);
     let ux = loc.px - sb.c[0], uy = loc.py - sb.c[1];
     const L = Math.hypot(ux, uy) || 1; ux /= L; uy /= L;
@@ -1443,6 +1448,11 @@ function wirePlanningDrag(plane, box) {
     if (mode === "resize") { d.box0 = p.fov_box; d.pct0 = active.plan.fov_pct || 100; }
     if (mode === "recenter") { d.box0 = p.fov_box; }
     if (mode === "slices") { d.half0 = p.slab.half; d.n0 = (+$("pp-nsl").value) || 1; }
+    if (mode === "satangle" && p.satband && p.satband.amode === "angle2") {
+      const cc = p.satband.cc || p.satband.c;
+      d.satCC = cc; d.satPrevA = Math.atan2(loc.py - cc[1], loc.px - cc[0]);
+      d.satCur = active.params.satband_angle2 || 0;
+    }
     return d;
   };
   const applyDrag = (loc) => {
