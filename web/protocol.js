@@ -1264,10 +1264,12 @@ function modeAt(p, loc) {
     const sb = p.satband;
     const len = Math.hypot(sb.e2[0] - sb.e1[0], sb.e2[1] - sb.e1[1]);
     const nearEnd = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.06;
-    // Angle only when the band is long enough to angle stably (a short, near
-    // edge-on projection has its ends bunched at the centre, where the angle is
-    // hyper-sensitive and the grab is ambiguous — so it's move-only there).
-    if (len > 0.18 && (nearEnd(sb.e1) || nearEnd(sb.e2))) return "satangle";
+    // Angle by dragging only on the ACQUIRED-plane scout (amode "angle"), where
+    // the line maps directly to the in-plane angle and stays stable. The cross-
+    // plane angle (angle2) maps nonlinearly to the projected line and swung the
+    // band around when dragged (owner video), so cross scouts are move-only —
+    // the numeric Sat angle control still sets the in-plane angle.
+    if (sb.amode === "angle" && len > 0.18 && (nearEnd(sb.e1) || nearEnd(sb.e2))) return "satangle";
     if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.05) return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
