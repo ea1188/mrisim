@@ -173,6 +173,8 @@
     .sar-chip { color: var(--signal); }
     .sar-chip.warn { color: var(--warn); border-color: var(--warn); }
     .sar-chip.limit { color: var(--accent-ink); background: var(--warn); border-color: var(--warn); font-weight: 700; }
+    .pp-satcheck { color: var(--text) !important; }
+    .pp-satcheck input { margin-right: 4px; }
     /* Two-line scanner-style queue rows */
     #pp-queue li { display: grid; grid-template-columns: auto 1fr auto auto auto; grid-template-rows: auto auto;
       align-items: center; column-gap: 8px; position: relative; }
@@ -313,6 +315,10 @@
               <label>Rot (°) <input type="number" id="pp-rot" min="-90" max="90" step="1" /></label>
               <label id="pp-slice-row">Slice <input type="number" id="pp-slice" min="0" max="255" step="1" /></label>
               <label id="pp-shift-row">Shift <input type="number" id="pp-shift" min="-128" max="128" step="1" /></label>
+              <label class="pp-satcheck"><input type="checkbox" id="pp-sat" /> Saturation band</label>
+              <label id="pp-satpos-row" hidden>Sat pos (%) <input type="number" id="pp-satpos" min="0" max="100" step="5" /></label>
+              <label id="pp-satwidth-row" hidden>Sat width (%) <input type="number" id="pp-satwidth" min="0" max="60" step="5" /></label>
+              <label id="pp-satangle-row" hidden>Sat angle (°) <input type="number" id="pp-satangle" min="-90" max="90" step="5" /></label>
             </div>
           </div>
           <div class="pp-actions" id="pp-actions" hidden>
