@@ -1021,7 +1021,7 @@ class WebHost(CurvesMixin):
             thick_mm, gap_mm = int(p.get("n_partitions", 16)) * voxel_mm, 0.0
             band_lbl = f"slab · {int(p.get('n_partitions', 16))}p"
         else:
-            n_eff = int(np.clip(int(p.get("n_slices", 1)), 1, 32))
+            n_eff = int(np.clip(int(p.get("n_slices", 1)), 1, 80))
             thick_mm = float(p.get("slice_thickness", 5))
             gap_mm = float(p.get("slice_gap", 0.0))
             band_lbl = f"{n_eff} × {thick_mm:.0f} mm" if n_eff > 1 else f"{thick_mm:.0f} mm"

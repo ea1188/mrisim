@@ -1295,7 +1295,7 @@ const DRAG_APPLY = {
   },
   slices(d, loc) {                                  // drag the slab rim → number of slices
     const p = d.p, perp = p.map === "row" ? loc.py : loc.px;
-    active.params.n_slices = clampN(Math.round(d.n0 * Math.abs(perp - p.slab.c) / (d.half0 || 0.03)), 1, 32);
+    active.params.n_slices = clampN(Math.round(d.n0 * Math.abs(perp - p.slab.c) / (d.half0 || 0.03)), 1, 80);
     $("pp-nsl").value = active.params.n_slices;
     return null;
   },
