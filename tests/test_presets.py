@@ -195,6 +195,33 @@ class TestEstimateSAR:
         sar_20 = estimate_sar(90, 500, num_slices=20)
         assert sar_20["whole_body"] > sar_5["whole_body"]
 
+    def test_satband_raises_sar(self):
+        # A spatial saturation band adds a ~90 deg sat pulse per TR, so SAR
+        # goes up whenever the band is on. The relative bump is largest on a
+        # low-flip GRE (its excitation is the only other pulse).
+        se_off = estimate_sar(90, 500, sequence="SE")
+        se_on  = estimate_sar(90, 500, sequence="SE", satband=True)
+        assert se_on["whole_body"] > se_off["whole_body"]
+        gre_off = estimate_sar(20, 500, sequence="GRE")
+        gre_on  = estimate_sar(20, 500, sequence="GRE", satband=True)
+        assert gre_on["whole_body"] > gre_off["whole_body"]
+        # GRE excitation weight = (20/90)^2 ~ 0.049; +1.0 sat pulse is a big
+        # relative jump, so the sat-on GRE more than doubles.
+        assert gre_on["whole_body"] > 2 * gre_off["whole_body"]
+
+    def test_fatsat_raises_sar(self):
+        # Spectral (CHESS) fat-sat fires a ~90 deg pulse per TR too, so it
+        # raises SAR exactly like a spatial sat band.
+        off = estimate_sar(90, 500, sequence="SE")
+        on  = estimate_sar(90, 500, sequence="SE", fatsat=True)
+        assert on["whole_body"] > off["whole_body"]
+
+    def test_satband_and_fatsat_stack(self):
+        # Two prep pulses deposit more than one.
+        one = estimate_sar(90, 500, sequence="SE", satband=True)
+        two = estimate_sar(90, 500, sequence="SE", satband=True, fatsat=True)
+        assert two["whole_body"] > one["whole_body"]
+
     def test_head_is_approx_1point15x_whole_body(self):
         # head = whole_body * 1.15 (per-pulse model)
         sar = estimate_sar(60, 1000, sequence="GRE", num_slices=20)

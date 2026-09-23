@@ -1021,7 +1021,8 @@ def get_preset(name: str) -> dict | None:
 
 
 def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20,
-                 sequence: str = "SE", etl: int = 1) -> dict[str, float | bool]:
+                 sequence: str = "SE", etl: int = 1,
+                 satband: bool = False, fatsat: bool = False) -> dict[str, float | bool]:
     """Estimate SAR (W/kg) from per-pulse RF energy — the physics a console uses.
 
     Each RF pulse deposits energy proportional to its flip angle squared. Per
@@ -1032,6 +1033,10 @@ def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20,
       IR          : an inversion (180) on top of its readout train
       Diffusion   : spin-echo pair (excitation + 180)
       GRE / EPI   : the excitation only
+    A spatial saturation band and spectral (CHESS) fat saturation each add
+    one selective ~90 degree preparation pulse per TR interval (before the
+    excitation), so each adds a 1.0 flip-squared term that scales with slices
+    and 1/TR like every other pulse.
     Time-averaged SAR = C x num_slices x weight / TR. C is calibrated so the
     bundled clinical presets land in the 0.5-2.3 W/kg range a 3 T console
     shows, with the FDA head limit (3.2) reachable only by genuinely
@@ -1040,6 +1045,7 @@ def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20,
     fa2 = (flip_angle / 90.0) ** 2
     REFOC_TRAIN = (150.0 / 90.0) ** 2      # reduced-angle TSE refocusing
     PULSE_180 = 4.0
+    SAT_PULSE = 1.0                        # a 90 degree selective prep pulse per TR
     train = max(1, int(etl))
     if sequence in ("SE", "Diffusion"):
         weight = fa2 + (train * REFOC_TRAIN if train > 1 else PULSE_180)
@@ -1047,6 +1053,7 @@ def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20,
         weight = PULSE_180 + fa2 + (train * REFOC_TRAIN if train > 1 else PULSE_180)
     else:                                   # GRE, EPI, and anything unknown
         weight = fa2
+    weight += SAT_PULSE * (int(bool(satband)) + int(bool(fatsat)))
     C = 0.0034
     whole_body_sar = C * max(1, int(num_slices)) * weight / (max(TR, 10) / 1000.0)
     head_sar = whole_body_sar * 1.15
