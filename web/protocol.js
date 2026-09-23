@@ -654,7 +654,16 @@ function renderQueue() {
     ol.appendChild(li);
   });
   const acq = queue.filter((it) => it.status === "acquired").length;
-  $("pp-total").textContent = acq ? `acquired ${acq}/${queue.length} · ${fmtTime(total)}` : "";
+  let examTotal = 0;
+  queue.forEach((it) => {
+    if (isLocalizer(it)) return;
+    const t = (it.metrics && it.metrics.scan_time) || taSeconds(it.params || (it._pre && it._pre.params));
+    if (t) examTotal += t;
+  });
+  const parts = [];
+  if (examTotal) parts.push(`exam ${fmtTime(examTotal)}`);
+  if (acq) parts.push(`acquired ${acq}/${queue.length} · ${fmtTime(total)}`);
+  $("pp-total").textContent = parts.join(" · ");
 }
 
 // Append a fresh, pending copy of an acquired sequence so it can be re-run with edits.
@@ -1424,6 +1433,39 @@ function wireViewport(plane) {
 }
 
 // ---- Apply & acquire ------------------------------------------------------ //
+let _acqAnim = null;
+function startAcqProgress(item) {
+  const rows = $("pp-list").children;
+  const idx = queue.indexOf(item);
+  const li = rows[idx];
+  if (!li) return;
+  const bar = document.createElement("span");
+  bar.className = "q-prog";
+  li.appendChild(bar);
+  // One real second per scan-minute (clamped 1.2-6 s): long enough to read as a
+  // running scanner, short enough to never feel like waiting.
+  const ta = taSeconds(item.params) || 60;
+  const durMs = Math.min(6000, Math.max(1200, ta / 60 * 1000));
+  const t0 = performance.now();
+  cancelAnimationFrame(_acqAnim);
+  (function tick() {
+    const p = Math.min(0.92, (performance.now() - t0) / durMs);   // hold at 92% for the engine
+    bar.style.width = (p * 100).toFixed(1) + "%";
+    if (p < 0.92 && bar.isConnected) _acqAnim = requestAnimationFrame(tick);
+  })();
+  // The result is held until this resolves, so acquiring FEELS like scanning
+  // even when the warm engine renders in milliseconds.
+  bar._minWait = new Promise((res) => setTimeout(res, durMs));
+  return bar;
+}
+function finishAcqProgress(bar) {
+  cancelAnimationFrame(_acqAnim);
+  if (bar && bar.isConnected) {
+    bar.style.width = "100%";
+    setTimeout(() => { if (bar.isConnected) bar.remove(); }, 250);
+  }
+}
+
 async function applyAndAcquire() {
   if (!active || isLocalizer(active)) return;
   if (imageExam) { acquireImageExample(); return; }   // pop up the example image
@@ -1435,9 +1477,11 @@ async function applyAndAcquire() {
   if (pl.slice != null) payload.slice_idx = pl.slice;
   $("pp-apply").disabled = true;
   setScanStatus(true);
+  const acqBar = startAcqProgress(active);
   $("pp-readout").textContent = "Acquiring…";
   try {
     const r = await call("render", payload);
+    if (acqBar && acqBar._minWait) await acqBar._minWait;
     active.image = r.image;
     active.status = "acquired";
     active.metrics = r.metrics || {};
@@ -1465,6 +1509,7 @@ async function applyAndAcquire() {
   } finally {
     $("pp-apply").disabled = false;
     setScanStatus(false);
+    finishAcqProgress(acqBar);
   }
 }
 
