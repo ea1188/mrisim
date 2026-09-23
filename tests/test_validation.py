@@ -213,7 +213,7 @@ def _sar(sim, **over):
 
 
 def test_sar_scales_with_flip_angle_squared(sim):
-    r = _sar(sim, sequence="Gradient Echo", flip_angle=90) / _sar(sim, sequence="Gradient Echo", flip_angle=45)
+    r = _sar(sim, sequence="Gradient Echo", flip_angle=90, n_slices=20) / _sar(sim, sequence="Gradient Echo", flip_angle=45, n_slices=20)
     assert 3.5 < r < 4.3               # SAR ∝ FA²
 
 

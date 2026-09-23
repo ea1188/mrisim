@@ -195,14 +195,16 @@ class TestEstimateSAR:
         sar_20 = estimate_sar(90, 500, num_slices=20)
         assert sar_20["whole_body"] > sar_5["whole_body"]
 
-    def test_head_is_approx_2point5x_whole_body(self):
-        # head = round(whole_body * 2.5, 2), so ratio is within rounding error
+    def test_head_is_approx_1point15x_whole_body(self):
+        # head = whole_body * 1.15 (per-pulse model)
         sar = estimate_sar(60, 1000, sequence="GRE", num_slices=20)
         ratio = sar["head"] / sar["whole_body"]
-        assert 2.4 < ratio < 2.6
+        assert 1.1 < ratio < 1.2
 
-    def test_zero_flip_angle_zero_sar(self):
-        sar = estimate_sar(0, 500, sequence="SE")
+    def test_zero_flip_angle_zero_sar_for_excitation_only(self):
+        # GRE plays only the excitation pulse, so zero flip = zero SAR. (A spin
+        # echo would still deposit its 180 refocusing energy — correctly nonzero.)
+        sar = estimate_sar(0, 500, sequence="GRE")
         assert sar["whole_body"] == pytest.approx(0.0)
         assert sar["head"] == pytest.approx(0.0)
         assert not sar["exceeds_limit"]
