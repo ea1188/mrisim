@@ -47,6 +47,7 @@ PRESETS = {
         "n_slices": 28,
         "slice_thickness": 4,
         "sequence": "Inversion Recovery",
+        "etl": 16,
         "TR": 9000,
         "TE": 90,
         "TI": 2548,
@@ -430,6 +431,7 @@ PRESETS = {
         "n_slices": 13,
         "slice_thickness": 4,
         "sequence": "Inversion Recovery",
+        "etl": 16,
         "TR": 4000,
         "TE": 30,
         "TI": 265,
@@ -495,6 +497,7 @@ PRESETS = {
         "n_slices": 24,
         "slice_thickness": 5,
         "sequence": "Inversion Recovery",
+        "etl": 16,
         "TR": 5000,
         "TE": 40,
         "TI": 265,
@@ -1017,53 +1020,46 @@ def get_preset(name: str) -> dict | None:
     return PRESETS.get(name, None)
 
 
-def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20, sequence: str = "SE") -> dict[str, float | bool]:
-    """Estimate SAR (Specific Absorption Rate) in W/kg.
-    
-    SAR is proportional to:
-    - (flip_angle)^2
-    - Number of RF pulses per unit time (1/TR * num_slices)
-    - Duty cycle
-    
-    Returns estimated whole-body SAR and head SAR.
+def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20,
+                 sequence: str = "SE", etl: int = 1) -> dict[str, float | bool]:
+    """Estimate SAR (W/kg) from per-pulse RF energy — the physics a console uses.
+
+    Each RF pulse deposits energy proportional to its flip angle squared. Per
+    slice per TR the sequence plays:
+      SE          : the excitation + one true 180 refocusing pulse
+      TSE (etl>1) : the excitation + etl refocusing pulses at a reduced ~150
+                    degree train angle (how real TSE manages SAR)
+      IR          : an inversion (180) on top of its readout train
+      Diffusion   : spin-echo pair (excitation + 180)
+      GRE / EPI   : the excitation only
+    Time-averaged SAR = C x num_slices x weight / TR. C is calibrated so the
+    bundled clinical presets land in the 0.5-2.3 W/kg range a 3 T console
+    shows, with the FDA head limit (3.2) reachable only by genuinely
+    aggressive settings. Head SAR runs ~15% above whole-body.
     """
-    # SAR proportional to B1^2 which is proportional to flip_angle^2
-    # Reference: 90° pulse at TR=500ms, 20 slices ≈ 2 W/kg (typical 3T)
-    
-    reference_sar = 2.0  # W/kg at reference conditions
-    reference_fa = 90
-    reference_tr = 500
-    reference_slices = 20
-    
-    # Scale factors
-    fa_factor = (flip_angle / reference_fa) ** 2
-    tr_factor = reference_tr / max(TR, 10)  # more pulses per second = more SAR
-    slice_factor = num_slices / reference_slices
-    
-    # Sequence-dependent RF factor
-    seq_factors = {
-        "SE": 1.5,      # 90° + 180° refocusing
-        "GRE": 0.5,     # Only excitation pulse
-        "IR": 2.0,      # Inversion + 90° + 180°
-        "EPI": 0.5,     # Single excitation
-        "Diffusion": 1.5,  # 90° + 180° + diffusion gradients
-    }
-    seq_factor = seq_factors.get(sequence, 1.0)
-    
-    whole_body_sar = reference_sar * fa_factor * tr_factor * slice_factor * seq_factor
-    head_sar = whole_body_sar * 2.5  # Head SAR typically 2-3x whole body
-    
+    fa2 = (flip_angle / 90.0) ** 2
+    REFOC_TRAIN = (150.0 / 90.0) ** 2      # reduced-angle TSE refocusing
+    PULSE_180 = 4.0
+    train = max(1, int(etl))
+    if sequence in ("SE", "Diffusion"):
+        weight = fa2 + (train * REFOC_TRAIN if train > 1 else PULSE_180)
+    elif sequence == "IR":
+        weight = PULSE_180 + fa2 + (train * REFOC_TRAIN if train > 1 else PULSE_180)
+    else:                                   # GRE, EPI, and anything unknown
+        weight = fa2
+    C = 0.0034
+    whole_body_sar = C * max(1, int(num_slices)) * weight / (max(TR, 10) / 1000.0)
+    head_sar = whole_body_sar * 1.15
+
     # FDA limits: 3 W/kg whole body, 3.2 W/kg head (averaged over 6 min)
     return {
-        # 3 decimals: single-slice acquisitions are ~20x smaller than the
-        # 20-slice reference, and 2-decimal rounding distorted small-value
-        # ratios (the FA-squared validation test caught it).
         "whole_body": round(whole_body_sar, 3),
         "head": round(head_sar, 3),
         "limit_whole_body": 3.0,
         "limit_head": 3.2,
         "exceeds_limit": whole_body_sar > 3.0 or head_sar > 3.2,
     }
+
 
 if __name__ == "__main__":
     print("Available presets:")

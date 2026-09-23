@@ -439,16 +439,23 @@ function setScanStatus(busy) {
 // Head SAR estimate, mirroring presets.estimate_sar + simulator.py's call
 // exactly (fixed 20-slice reference, head = whole-body x 2.5, 3 T default) so
 // the live chip always equals the post-acquire metric. FDA head limit 3.2 W/kg.
-const SAR_SEQ = { "Spin Echo": 1.5, "FSE / TSE": 1.5, "Gradient Echo": 0.5,
-  "Inversion Recovery": 2.0, "Diffusion (DWI)": 1.5, "MR Angiography": 0.5,
-  "fMRI (BOLD)": 0.5, "Perfusion (ASL)": 0.5, "Perfusion (Dynamic)": 0.5,
-  "Echo Planar (EPI)": 0.5, "Balanced SSFP": 0.5, "Susceptibility (SWI)": 0.5 };
+// Per-pulse RF energy, mirroring presets.estimate_sar exactly: SE = excitation
+// + one true 180; TSE = excitation + etl reduced-angle (150 deg) refocusers;
+// IR adds an inversion; diffusion is a spin-echo pair; GRE/EPI excitation only.
+// C = 0.0034, head = whole-body x 1.15.
+function sarWeight(p) {
+  const fa2 = Math.pow((p.flip_angle || 90) / 90, 2);
+  const seq = p.sequence, train = Math.max(1, p.etl || (seq === "FSE / TSE" || seq === "Inversion Recovery" ? 16 : 1));
+  const refoc = train > 1 ? train * Math.pow(150 / 90, 2) : 4.0;
+  if (seq === "Spin Echo" || seq === "FSE / TSE" || seq === "Diffusion (DWI)") return fa2 + refoc;
+  if (seq === "Inversion Recovery") return 4.0 + fa2 + refoc;
+  return fa2;                                // GRE / EPI families
+}
 function sarHead(p) {
   if (!p || !p.TR || !p.flip_angle) return null;
   const nsl = p.acq3d ? 1 : Math.max(1, p.n_slices || 1);   // mirrors simulator.py
-  const wb = 2.0 * Math.pow(p.flip_angle / 90, 2) * (500 / Math.max(p.TR, 10))
-    * (nsl / 20) * (SAR_SEQ[p.sequence] != null ? SAR_SEQ[p.sequence] : 1.0);
-  return Math.round(wb * 2.5 * 100) / 100;
+  const wb = 0.0034 * nsl * sarWeight(p) / (Math.max(p.TR, 10) / 1000);
+  return Math.round(wb * 1.15 * 1000) / 1000;
 }
 
 // Acquisition time, mirroring simulator.py exactly (2-D: TR*matrix*NEX/(ETL*R);

@@ -58,10 +58,23 @@
       if (ns >= 1 && ns < n) out.maxSafeSlices = ns;
     }
 
-    // Flip angle: scale by √(limit/sar); clamp to a usable integer below current FA.
+    // Flip angle: only the excitation term scales with FA² — the refocusing
+    // train and inversion are fixed cost (mirrors estimate_sar). When the
+    // fixed part alone keeps SAR over the limit, no flip reduction can help
+    // and no advice is offered (true on a real console for TSE/IR).
     if (fa > 0) {
-      var target = Math.round(fa * Math.sqrt(limit / sar));
-      out.maxSafeFa = clamp(target, 1, Math.max(1, Math.floor(fa) - 1));
+      var fa2 = Math.pow(fa / 90, 2);
+      var train = Math.max(1, Number(opts.etl) ||
+        ((seq === "FSE / TSE" || seq === "Inversion Recovery") ? 16 : 1));
+      var refoc = train > 1 ? train * Math.pow(150 / 90, 2) : 4.0;
+      var fixed = 0;
+      if (seq === "Spin Echo" || seq === "FSE / TSE" || seq === "Diffusion (DWI)") fixed = refoc;
+      else if (seq === "Inversion Recovery") fixed = 4.0 + refoc;
+      var wCur = fa2 + fixed;
+      var fa2Target = wCur * (limit / sar) - fixed;
+      out.maxSafeFa = fa2Target > 0
+        ? clamp(Math.floor(90 * Math.sqrt(fa2Target)), 1, Math.max(1, Math.floor(fa) - 1))
+        : null;
     }
     // TR: scale by sar/limit; only offer if it stays practical.
     if (tr > 0) {

@@ -16,12 +16,19 @@ test("under the limit → over:false and no targets", () => {
   assert.deepEqual(g.lowerSeqOptions, []);
 });
 
-test("max safe flip angle brings SAR to ~the limit and is below current FA", () => {
+test("flip advice is refocusing-aware: SE's fixed 180 cost can make it futile", () => {
+  // SE at 120°: w = (120/90)² + 4 = 5.78; target w = 5.78·(3.2/5) = 3.70 < 4
+  // → even 0° flip stays over; a real console would not offer flip here either.
   const g = S.sarGuidance({ flip_angle: 120, TR: 500, sequence: "Spin Echo", sar_head: 5.0 });
   assert.equal(g.over, true);
-  assert.ok(g.maxSafeFa >= 1 && g.maxSafeFa < 120);
-  // applying the suggested FA should sit at or just under the 3.2 limit
-  assert.ok(sarAfterFa(5.0, 120, g.maxSafeFa) <= 3.2 + 0.15);
+  assert.equal(g.maxSafeFa, null);
+});
+
+test("flip advice works where excitation dominates (GRE)", () => {
+  // GRE: w = fa² only, so fa_target = fa·√(limit/sar) exactly.
+  const g = S.sarGuidance({ flip_angle: 70, TR: 8, sequence: "Gradient Echo", sar_head: 5.0 });
+  assert.ok(g.maxSafeFa >= 1 && g.maxSafeFa < 70);
+  assert.ok(sarAfterFa(5.0, 70, g.maxSafeFa) <= 3.2 + 0.15);
 });
 
 test("min safe TR brings SAR under the limit", () => {
@@ -30,10 +37,9 @@ test("min safe TR brings SAR under the limit", () => {
   assert.ok(sarAfterTr(5.0, 500, g.minSafeTr) <= 3.2 + 1e-6);
 });
 
-test("max safe FA is clamped to >= 1 even for a huge overage", () => {
+test("IR far over: the inversion + train are fixed cost, so flip advice is withheld", () => {
   const g = S.sarGuidance({ flip_angle: 10, TR: 200, sequence: "Inversion Recovery", sar_head: 40 });
-  assert.ok(g.maxSafeFa >= 1);
-  assert.ok(g.maxSafeFa < 10);
+  assert.equal(g.maxSafeFa, null);
 });
 
 test("impractical TR (beyond ceiling) is dropped", () => {
