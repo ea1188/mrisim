@@ -445,8 +445,9 @@ const SAR_SEQ = { "Spin Echo": 1.5, "FSE / TSE": 1.5, "Gradient Echo": 0.5,
   "Echo Planar (EPI)": 0.5, "Balanced SSFP": 0.5, "Susceptibility (SWI)": 0.5 };
 function sarHead(p) {
   if (!p || !p.TR || !p.flip_angle) return null;
+  const nsl = p.acq3d ? 1 : Math.max(1, p.n_slices || 1);   // mirrors simulator.py
   const wb = 2.0 * Math.pow(p.flip_angle / 90, 2) * (500 / Math.max(p.TR, 10))
-    * (20 / 20) * (SAR_SEQ[p.sequence] != null ? SAR_SEQ[p.sequence] : 1.0);
+    * (nsl / 20) * (SAR_SEQ[p.sequence] != null ? SAR_SEQ[p.sequence] : 1.0);
   return Math.round(wb * 2.5 * 100) / 100;
 }
 
@@ -1542,10 +1543,12 @@ function updatePlanReadout() {
       if (sh > 3.2 && window.SarGuidance) {
         // Concrete console-style advice: the exact changes that get back under.
         const g = window.SarGuidance.sarGuidance({ sar_head: sh,
-          flip_angle: active.params.flip_angle, TR: active.params.TR, sequence: active.params.sequence });
+          flip_angle: active.params.flip_angle, TR: active.params.TR, sequence: active.params.sequence,
+          n_slices: active.params.acq3d ? 1 : active.params.n_slices });
         const fixes = [];
         if (g.minSafeTr) fixes.push("TR \u2265 " + g.minSafeTr + " ms");
         if (g.maxSafeFa) fixes.push("flip \u2264 " + g.maxSafeFa + "\u00b0");
+        if (g.maxSafeSlices) fixes.push("slices \u2264 " + g.maxSafeSlices);
         sarEl.title = "Head SAR limit exceeded (3.2 W/kg). Get under with: " + (fixes.join(" or ") || "a lower-SAR sequence");
       } else {
         sarEl.title = sh > 2.5 ? "Approaching the head SAR limit (3.2 W/kg)" : "Estimated head SAR";

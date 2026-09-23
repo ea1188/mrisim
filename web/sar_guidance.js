@@ -46,8 +46,17 @@
     var seq = opts.sequence;
 
     var over = sar > limit;
-    var out = { over: over, limit: limit, ratio: sar / limit, maxSafeFa: null, minSafeTr: null, lowerSeqOptions: [] };
+    var out = { over: over, limit: limit, ratio: sar / limit, maxSafeFa: null, minSafeTr: null,
+      maxSafeSlices: null, lowerSeqOptions: [] };
     if (!over) return out;
+    // Slice count: SAR scales linearly with the stack, so the largest stack
+    // that fits under the limit is floor(n * limit/sar). Only meaningful when
+    // a multi-slice stack is prescribed.
+    var n = Number(opts.n_slices) || 0;
+    if (n > 1) {
+      var ns = Math.floor(n * (limit / sar));
+      if (ns >= 1 && ns < n) out.maxSafeSlices = ns;
+    }
 
     // Flip angle: scale by √(limit/sar); clamp to a usable integer below current FA.
     if (fa > 0) {

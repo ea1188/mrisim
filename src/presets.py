@@ -1055,8 +1055,11 @@ def estimate_sar(flip_angle: float, TR: float, num_slices: int = 20, sequence: s
     
     # FDA limits: 3 W/kg whole body, 3.2 W/kg head (averaged over 6 min)
     return {
-        "whole_body": round(whole_body_sar, 2),
-        "head": round(head_sar, 2),
+        # 3 decimals: single-slice acquisitions are ~20x smaller than the
+        # 20-slice reference, and 2-decimal rounding distorted small-value
+        # ratios (the FA-squared validation test caught it).
+        "whole_body": round(whole_body_sar, 3),
+        "head": round(head_sar, 3),
         "limit_whole_body": 3.0,
         "limit_head": 3.2,
         "exceeds_limit": whole_body_sar > 3.0 or head_sar > 3.2,

@@ -65,3 +65,14 @@ test("exactly at the limit is not 'over'", () => {
   const g = S.sarGuidance({ flip_angle: 90, TR: 500, sequence: "Spin Echo", sar_head: 3.2 });
   assert.equal(g.over, false);
 });
+
+test("sarGuidance: over-limit with a multi-slice stack suggests the largest safe stack", () => {
+  const g = S.sarGuidance({ flip_angle: 90, TR: 500, sequence: "Spin Echo", sar_head: 6.4, n_slices: 24 });
+  // linear in slices: 24 * (3.2/6.4) = 12
+  assert.equal(g.maxSafeSlices, 12);
+});
+
+test("sarGuidance: no slice advice for single-slice or missing n_slices", () => {
+  assert.equal(S.sarGuidance({ flip_angle: 90, TR: 500, sequence: "Spin Echo", sar_head: 6.4, n_slices: 1 }).maxSafeSlices, null);
+  assert.equal(S.sarGuidance({ flip_angle: 90, TR: 500, sequence: "Spin Echo", sar_head: 6.4 }).maxSafeSlices, null);
+});
