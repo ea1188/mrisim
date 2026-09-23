@@ -1227,7 +1227,7 @@ function bandLocal(p, slice) {
 // Which CSS cursor signals each grabbable region (so it's obvious where to grab).
 const cursorFor = (m) => ({
   recenter: "move", resize: "nwse-resize", oblique: "grab",
-  slice: "move", slices: "row-resize", satmove: "grab",
+  slice: "move", slices: "row-resize", satmove: "grab", satangle: "grab",
 }[m] || "crosshair");
 
 // What does the pointer do at this spot on a scout panel? (shared by hover + drag)
@@ -1243,10 +1243,11 @@ function modeAt(p, loc) {
     return Math.hypot(loc.px - cc[0], loc.py - cc[1]) < 0.16 ? "slice" : "oblique";
   }
   // Saturation band grabs first when enabled — it's an overlay on top of the
-  // slice band / FOV box. Near its projected centre-line (e1–e2) → slide it.
-  if (active.params && active.params.satband_enabled && p.satband && p.satband.e1 && p.satband.e2
-      && segDist(loc.px, loc.py, p.satband.e1, p.satband.e2) < 0.06) {
-    return "satmove";
+  // slice band / FOV box. Grab an END → angle it, the centre-line → slide it.
+  if (active.params && active.params.satband_enabled && p.satband && p.satband.e1 && p.satband.e2) {
+    const sb = p.satband, near = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.07;
+    if (near(sb.e1) || near(sb.e2)) return "satangle";
+    if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.06) return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
@@ -1298,6 +1299,17 @@ const OBLIQUE_SIGN = {
 // ({band} | {fovBox} | {bandDir}) or null, and mutates the open item's plan/params as a
 // side effect. `d` is the in-flight drag (mode, geom `p`, and per-mode start state).
 const DRAG_APPLY = {
+  satangle(d, loc) {
+    const sb = d.p.satband;
+    if (!sb || !sb.c || !sb.wh) return null;
+    const W = sb.wh[0], H = sb.wh[1];
+    let ang = Math.atan2(-(loc.py - sb.c[1]) * H, (loc.px - sb.c[0]) * W) * 180 / Math.PI;
+    if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;
+    active.params.satband_angle = clampN(Math.round(ang / 5) * 5, -90, 90);
+    $("pp-satangle").value = active.params.satband_angle;
+    scheduleScouts();
+    return null;
+  },
   satmove(d, loc) {
     const sb = d.p.satband;
     if (!sb || !sb.p0 || !sb.p1) return null;
