@@ -1261,12 +1261,14 @@ function modeAt(p, loc) {
   // Saturation band grabs first when enabled — it's an overlay on top of the
   // slice band / FOV box. Grab an END → angle it, the centre-line → slide it.
   if (active.params && active.params.satband_enabled && p.satband && p.satband.e1 && p.satband.e2) {
-    const sb = p.satband, near = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.07;
-    // Grab an END to angle the band on this scout, the centre-line to slide it.
-    // The acquired-plane scout sets the in-plane angle; cross scouts set the
-    // out-of-plane (cross) angle — so the band angles on whatever plane you drag.
-    if (near(sb.e1) || near(sb.e2)) return "satangle";
-    if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.06) return "satmove";
+    const sb = p.satband;
+    const len = Math.hypot(sb.e2[0] - sb.e1[0], sb.e2[1] - sb.e1[1]);
+    const nearEnd = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.06;
+    // Angle only when the band is long enough to angle stably (a short, near
+    // edge-on projection has its ends bunched at the centre, where the angle is
+    // hyper-sensitive and the grab is ambiguous — so it's move-only there).
+    if (len > 0.18 && (nearEnd(sb.e1) || nearEnd(sb.e2))) return "satangle";
+    if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.05) return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
     const fb = p.fov_box; if (!fb) return "slice";
@@ -1341,6 +1343,7 @@ const DRAG_APPLY = {
     const sb = d.p.satband;
     if (!sb || !sb.p0 || !sb.p1) return null;
     const dx = sb.p1[0] - sb.p0[0], dy = sb.p1[1] - sb.p0[1];
+    if (dx * dx + dy * dy < 0.01) return null;      // travel invisible on this panel → don't snap
     let t = ((loc.px - sb.p0[0]) * dx + (loc.py - sb.p0[1]) * dy) / ((dx * dx + dy * dy) || 1);
     t = clampN(t, 0, 1);
     active.params.satband_pos = clampN(Math.round(t * 100 / 5) * 5, 0, 100);
