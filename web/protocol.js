@@ -1188,16 +1188,31 @@ function drawOverlay(plane, hoverMode, live) {
       }
     }
   }
-  // Saturation band: a distinct orange slab drawn on every panel it projects
-  // onto (the engine returns g.satband.e1/e2 = the band centre-line ends). Read
-  // -only in Phase 1 — positioned via the numeric controls, dragged in Phase 2.
-  if (g.satband && g.satband.e1 && g.satband.e2) {
+  // Saturation band: a distinct orange slab with the same handle vocabulary as
+  // the slice band — a centre dot to slide it, diamond end-handles to angle it,
+  // both enlarging on hover. During a drag the live override (live.satLine)
+  // follows the cursor client-side; the exact geometry syncs on release.
+  const sbG = g.satband;
+  if (sbG && sbG.e1 && sbG.e2) {
     const SAT = "#ff9d3a";
-    const a = px(g.satband.e1), b = px(g.satband.e2);
+    const ln = (live && live.satLine) || [sbG.e1, sbG.e2];
+    const a = px(ln[0]), b = px(ln[1]);
+    const cc = [(ln[0][0] + ln[1][0]) / 2, (ln[0][1] + ln[1][1]) / 2], pc = px(cc);
     els.push(el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1],
-      stroke: SAT, "stroke-width": 2, "stroke-opacity": 0.9, "stroke-dasharray": "6 3" }));
-    const lab = el("text", { x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2 - 4,
-      fill: SAT, "font-size": 8, "text-anchor": "middle", "font-family": "monospace" });
+      stroke: SAT, "stroke-width": 2, "stroke-opacity": 0.95, "stroke-dasharray": "6 3" }));
+    for (const e of [a, b]) {                       // angle handles (diamonds) at the ends
+      const r = hov === "satangle" ? 6 : 4.5;
+      const d = el("rect", { x: e[0] - r, y: e[1] - r, width: 2 * r, height: 2 * r,
+        transform: `rotate(45 ${e[0]} ${e[1]})`, fill: SAT, stroke: "#1a1f26", "stroke-width": 1 });
+      d.appendChild(el("title", {})).textContent = "Drag an end to angle the saturation band";
+      els.push(d);
+    }
+    const r = hov === "satmove" ? 5.5 : 4;          // move handle (dot) at the centre
+    const md = el("circle", { cx: pc[0], cy: pc[1], r, fill: "#0b0e13", stroke: SAT, "stroke-width": 1.6 });
+    md.appendChild(el("title", {})).textContent = "Drag the centre to move the saturation band";
+    els.push(md);
+    const lab = el("text", { x: pc[0], y: pc[1] - 9, fill: SAT, "font-size": 8,
+      "text-anchor": "middle", "font-family": "monospace" });
     lab.textContent = "SAT"; els.push(lab);
   }
   // Acquired plane: the FOV box, corner resize handles, and a move dot.
@@ -1316,18 +1331,25 @@ const DRAG_APPLY = {
       active.params.satband_angle = ang;
       $("pp-satangle").value = ang;
     }
-    scheduleScouts();
-    return null;
+    // Live: rotate the line about its centre toward the cursor.
+    const half = 0.5 * Math.hypot(sb.e2[0] - sb.e1[0], sb.e2[1] - sb.e1[1]);
+    let ux = loc.px - sb.c[0], uy = loc.py - sb.c[1];
+    const L = Math.hypot(ux, uy) || 1; ux /= L; uy /= L;
+    return { satLine: [[sb.c[0] - ux * half, sb.c[1] - uy * half], [sb.c[0] + ux * half, sb.c[1] + uy * half]] };
   },
   satmove(d, loc) {
     const sb = d.p.satband;
     if (!sb || !sb.p0 || !sb.p1) return null;
     const dx = sb.p1[0] - sb.p0[0], dy = sb.p1[1] - sb.p0[1];
-    const t = ((loc.px - sb.p0[0]) * dx + (loc.py - sb.p0[1]) * dy) / ((dx * dx + dy * dy) || 1);
+    let t = ((loc.px - sb.p0[0]) * dx + (loc.py - sb.p0[1]) * dy) / ((dx * dx + dy * dy) || 1);
+    t = clampN(t, 0, 1);
     active.params.satband_pos = clampN(Math.round(t * 100 / 5) * 5, 0, 100);
     $("pp-satpos").value = active.params.satband_pos;
-    scheduleScouts();                              // engine re-projects the band (coalesced)
-    return null;
+    // Live: translate the band line so its centre rides the travel point.
+    const nc = [sb.p0[0] + t * dx, sb.p0[1] + t * dy];
+    const oc = sb.c || [(sb.e1[0] + sb.e2[0]) / 2, (sb.e1[1] + sb.e2[1]) / 2];
+    const off = [nc[0] - oc[0], nc[1] - oc[1]];
+    return { satLine: [[sb.e1[0] + off[0], sb.e1[1] + off[1]], [sb.e2[0] + off[0], sb.e2[1] + off[1]]] };
   },
   slice(d, loc, plane) {
     const p = d.p, pl = active.plan;
