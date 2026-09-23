@@ -1246,7 +1246,10 @@ function modeAt(p, loc) {
   // slice band / FOV box. Grab an END → angle it, the centre-line → slide it.
   if (active.params && active.params.satband_enabled && p.satband && p.satband.e1 && p.satband.e2) {
     const sb = p.satband, near = (e) => Math.hypot(loc.px - e[0], loc.py - e[1]) < 0.07;
-    if (near(sb.e1) || near(sb.e2)) return "satangle";
+    // Angle by grabbing an end only on the ACQUIRED-plane scout, where a line
+    // drag maps cleanly to the band's in-plane angle. On cross panels the band
+    // is move-only (its out-of-plane tilt has no intuitive line-drag).
+    if (sb.amode === "angle" && (near(sb.e1) || near(sb.e2))) return "satangle";
     if (segDist(loc.px, loc.py, sb.e1, sb.e2) < 0.06) return "satmove";
   }
   if (p.role === "acq") {                          // acquired plane: the FOV box
@@ -1302,7 +1305,7 @@ const DRAG_APPLY = {
   satangle(d, loc) {
     const sb = d.p.satband;
     if (!sb || !sb.c || !sb.wh) return null;
-    const W = sb.wh[0], H = sb.wh[1];
+    const W = sb.wh[0], H = sb.wh[1];               // undo panel aspect for the true angle
     let ang = Math.atan2(-(loc.py - sb.c[1]) * H, (loc.px - sb.c[0]) * W) * 180 / Math.PI;
     if (ang > 90) ang -= 180; else if (ang < -90) ang += 180;
     active.params.satband_angle = clampN(Math.round(ang / 5) * 5, -90, 90);
