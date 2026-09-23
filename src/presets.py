@@ -2,6 +2,8 @@
 
 PRESETS = {
     "Brain T1 SE": {
+        "n_slices": 28,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "etl": 4,
         "TR": 500,
@@ -15,6 +17,8 @@ PRESETS = {
         "description": "Standard T1-weighted fast spin echo (echo train 4). Short TR/TE for T1 contrast. WM bright, GM intermediate, CSF dark."
     },
     "Brain T2 SE": {
+        "n_slices": 28,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "etl": 16,
         "TR": 4000,
@@ -40,6 +44,8 @@ PRESETS = {
         "description": "Proton density weighted. Long TR, short TE. Contrast based on hydrogen density."
     },
     "Brain FLAIR": {
+        "n_slices": 28,
+        "slice_thickness": 4,
         "sequence": "Inversion Recovery",
         "TR": 9000,
         "TE": 90,
@@ -106,6 +112,8 @@ PRESETS = {
         "description": "3D T2 (SPACE / CUBE / VISTA family): a heavily T2-weighted volumetric acquisition reformatted to any plane. Thin contiguous partitions and isotropic voxels; CSF and fluid bright. (Clinically a variable-flip 3D TSE; modelled here as a 3D spin-echo slab.)"
     },
     "Brain ASL Perfusion": {
+        "n_slices": 20,
+        "slice_thickness": 5,
         "sequence": "Perfusion (ASL)",
         "TR": 4000,
         "TE": 14,
@@ -136,6 +144,8 @@ PRESETS = {
         "description": "Dynamic Susceptibility Contrast (DSC) — a gadolinium-bolus T2*-EPI acquisition tracked over time. The default CBV map shows grey > white blood volume; an infarct core drops CBV with prolonged MTT, while a high-grade tumour shows raised CBV. Switch the Dynamic map to CBF / MTT, or to Ktrans (DCE) for blood-brain-barrier permeability."
     },
     "Brain SWI": {
+        "n_slices": 28,
+        "slice_thickness": 3,
         "sequence": "Susceptibility (SWI)",
         "TR": 28,
         "TE": 20,
@@ -172,6 +182,8 @@ PRESETS = {
         "description": "T1-weighted GRE. Fast acquisition, good for post-contrast imaging."
     },
     "DWI Stroke": {
+        "n_slices": 26,
+        "slice_thickness": 5,
         "sequence": "Diffusion (DWI)",
         "TR": 8000,
         "TE": 80,
@@ -321,6 +333,8 @@ PRESETS = {
         "description": "3D spoiled GRE (VIBE / LAVA / THRIVE): fat-suppressed volumetric T1w acquired in one breath-hold, reformatted to any plane. The workhorse for dynamic post-contrast liver/abdomen imaging — enable Gd to see arterial/portal enhancement."
     },
     "Abdomen T2 FSE": {
+        "n_slices": 24,
+        "slice_thickness": 6,
         "sequence": "FSE / TSE",
         "TR": 4000,
         "TE": 90,
@@ -347,6 +361,8 @@ PRESETS = {
         "description": "STIR abdomen. TI=265ms nulls fat at 3T. Lymph nodes, inflammation, and edema appear bright against dark fat background."
     },
     "Abdomen DWI": {
+        "n_slices": 24,
+        "slice_thickness": 6,
         "sequence": "Diffusion (DWI)",
         "TR": 6000,
         "TE": 60,
@@ -380,6 +396,8 @@ PRESETS = {
     #  Spine  (FOV 380 mm — same atlas as Abdomen, full T/L spine)
     # ------------------------------------------------------------------ #
     "Spine T1 Sagittal": {
+        "n_slices": 13,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "etl": 4,
         "TR": 600,
@@ -393,6 +411,8 @@ PRESETS = {
         "description": "Sagittal T1w spine. Normal marrow fat bright. Disc herniation, marrow infiltration (metastases appear dark)."
     },
     "Spine T2 Sagittal": {
+        "n_slices": 13,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "TR": 4000,
         "TE": 110,
@@ -407,6 +427,8 @@ PRESETS = {
         "description": "Sagittal T2w FSE (clinical standard). CSF bright, spinal cord intermediate. Disc dehydration, cord compression, myelopathy."
     },
     "Spine STIR": {
+        "n_slices": 13,
+        "slice_thickness": 4,
         "sequence": "Inversion Recovery",
         "TR": 4000,
         "TE": 30,
@@ -419,6 +441,8 @@ PRESETS = {
         "description": "Sagittal STIR spine. Fat-suppressed — marrow fat dark. Highly sensitive for bone marrow edema, fractures, metastases, discitis."
     },
     "Spine Axial T2": {
+        "n_slices": 12,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "TR": 3500,
         "TE": 100,
@@ -437,6 +461,8 @@ PRESETS = {
     #  Pelvis  (FOV 380 mm)
     # ------------------------------------------------------------------ #
     "Pelvis T1 SE": {
+        "n_slices": 24,
+        "slice_thickness": 5,
         "sequence": "FSE / TSE",
         "etl": 4,
         "TR": 600,
@@ -450,6 +476,8 @@ PRESETS = {
         "description": "T1w pelvis. Bone marrow and fat bright. Lymph node staging, anatomic survey before targeted sequences."
     },
     "Pelvis T2 High-Res": {
+        "n_slices": 24,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "TR": 5000,
         "TE": 100,
@@ -464,6 +492,8 @@ PRESETS = {
         "description": "High-resolution T2w FSE pelvis. Clinical standard for prostate and uterine cancer staging. Zonal anatomy, capsule, invasion."
     },
     "Pelvis STIR": {
+        "n_slices": 24,
+        "slice_thickness": 5,
         "sequence": "Inversion Recovery",
         "TR": 5000,
         "TE": 40,
@@ -476,6 +506,8 @@ PRESETS = {
         "description": "STIR pelvis. Fat suppressed. Sacral insufficiency fractures, AVN femoral heads, marrow edema, soft-tissue inflammation."
     },
     "Pelvis DWI": {
+        "n_slices": 24,
+        "slice_thickness": 5,
         "sequence": "Diffusion (DWI)",
         "TR": 6000,
         "TE": 80,
@@ -495,6 +527,8 @@ PRESETS = {
     #  Knee  (FOV 150 mm — dedicated small joint)
     # ------------------------------------------------------------------ #
     "Knee PD FSE": {
+        "n_slices": 24,
+        "slice_thickness": 3,
         "sequence": "FSE / TSE",
         "TR": 3500,
         "TE": 30,
@@ -509,6 +543,8 @@ PRESETS = {
         "description": "PD-weighted FSE (clinical knee standard). Balanced fluid/cartilage contrast. Meniscal tears appear as linear signal. ACL, PCL assessment."
     },
     "Knee T2 Fat-Sat": {
+        "n_slices": 24,
+        "slice_thickness": 3,
         "sequence": "FSE / TSE",
         "TR": 4000,
         "TE": 60,
@@ -538,6 +574,8 @@ PRESETS = {
         "description": "GRE T2* knee, acquired as a 3D slab for multi-planar reformat (MPR). Articular cartilage mapping. Sensitive to calcifications, haemosiderin, loose bodies."
     },
     "Knee PD Coronal": {
+        "n_slices": 24,
+        "slice_thickness": 3,
         "sequence": "FSE / TSE",
         "TR": 3500,
         "TE": 30,
@@ -552,6 +590,8 @@ PRESETS = {
         "description": "PD-weighted FSE, coronal — collateral ligaments (MCL/LCL), the meniscal body and the tibiofemoral joint line."
     },
     "Knee PD FS Coronal": {
+        "n_slices": 24,
+        "slice_thickness": 3,
         "sequence": "FSE / TSE",
         "TR": 3500,
         "TE": 30,
@@ -567,6 +607,8 @@ PRESETS = {
         "description": "PD-weighted FSE with spectral (CHESS) fat saturation, coronal — marrow oedema and collateral-ligament / meniscal injury against suppressed fat."
     },
     "Knee T2 FS Axial": {
+        "n_slices": 24,
+        "slice_thickness": 3,
         "sequence": "FSE / TSE",
         "TR": 4000,
         "TE": 60,
@@ -586,6 +628,8 @@ PRESETS = {
     #  Post-contrast (Gadolinium)
     # ------------------------------------------------------------------ #
     "Brain T1 Post-Gd": {
+        "n_slices": 28,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "etl": 4,
         "TR": 500,
@@ -615,6 +659,8 @@ PRESETS = {
         "description": "Post-Gd T1 GRE (VIBE). Arterial-phase enhancement of liver, spleen, kidneys and vessels. Hypervascular lesions (HCC) enhance avidly; portal/hepatic veins brighten."
     },
     "Pelvis T1 Post-Gd": {
+        "n_slices": 24,
+        "slice_thickness": 5,
         "sequence": "Gradient Echo",
         "TR": 220,
         "TE": 4,
@@ -633,6 +679,8 @@ PRESETS = {
     #  In/Opposed-phase (chemical-shift / Dixon, 3T)
     # ------------------------------------------------------------------ #
     "Abdomen In-Phase": {
+        "n_slices": 24,
+        "slice_thickness": 6,
         "sequence": "Gradient Echo",
         "TR": 200,
         "TE": 2.3,
@@ -645,6 +693,8 @@ PRESETS = {
         "description": "In-phase GRE (TE≈2.3 ms at 3T): fat and water signals add. Baseline for the in/opposed-phase pair used to detect microscopic fat."
     },
     "Abdomen Opposed-Phase": {
+        "n_slices": 24,
+        "slice_thickness": 6,
         "sequence": "Gradient Echo",
         "TR": 200,
         "TE": 1.15,
@@ -760,6 +810,8 @@ PRESETS = {
         "description": "PD-weighted FSE with spectral (CHESS) fat saturation — fat dark, cartilage/fluid conspicuous. Unlike STIR it leaves water untouched, but fails where B0 is inhomogeneous."
     },
     "Abdomen T1 FS Post-Gd": {
+        "n_slices": 24,
+        "slice_thickness": 6,
         "sequence": "Gradient Echo",
         "TR": 200,
         "TE": 4,
@@ -830,6 +882,8 @@ PRESETS = {
         "description": "Quantitative T2 map of articular cartilage (multi-echo fit; pixel value = T2 in ms). Cartilage T2 rises with collagen-matrix breakdown and water content, so a focal T2 increase flags early degeneration before it is visible on morphological images."
     },
     "Spine T1 Post-Gd": {
+        "n_slices": 13,
+        "slice_thickness": 4,
         "sequence": "FSE / TSE",
         "etl": 4, "TR": 600, "TE": 12, "TI": 150, "flip_angle": 90,
         "matrix_size": 320, "FOV": 320, "bandwidth": 150, "NEX": 2,
