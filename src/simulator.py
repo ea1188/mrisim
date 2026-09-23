@@ -1074,8 +1074,9 @@ class Simulator:
                    "Perfusion (ASL)": "EPI", "Perfusion (Dynamic)": "EPI",
                    "Echo Planar (EPI)": "EPI", "Balanced SSFP": "GRE"}
         B0_sar = _B0_MAP.get(params.get("field_strength", "3T"), 3.0)
+        rf_etl = int(params.get("etl", 1)) if params["sequence"] in ("FSE / TSE", "Inversion Recovery") else 1
         sar = estimate_sar(FA, TR, num_slices=max(1, int(params.get("n_slices", 1) or 1)),
-                           sequence=seq_map.get(params["sequence"], "SE"))
+                           sequence=seq_map.get(params["sequence"], "SE"), etl=rf_etl)
         sar_head = sar["head"] * (B0_sar / 3.0) ** 2
         metrics = {"scan_time": scan_time, "resolution": resolution, "snr_wm": 0, "snr_gm": 0,
                    "snr": 0.0, "sar_head": sar_head, "sar_exceeds": sar_head > 3.2,
