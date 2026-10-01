@@ -12,19 +12,9 @@
   <meta name="description" content="MRISim — learn MRI in your browser: a real physics simulator, a scanner-console protocol planner, a guided course and a read-the-scan quiz." />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="site_nav.css" />
   <style>
     /* Tokens + base + .btn come from the shared theme.css. Page-specific styles below. */
-
-    /* ---- nav ---- */
-    .nav { position: sticky; top: 0; z-index: 30; background: rgba(7,9,12,.78);
-      backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
-    .nav .row { display: flex; align-items: center; gap: 24px; height: 58px; }
-    .nav .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.3px; font-size: 16px; }
-    .nav .logo .mark { width: 24px; height: 24px; }
-    .nav .links { display: flex; gap: 22px; margin-left: auto; font-size: 13.5px; color: var(--muted); }
-    .nav .links a { transition: color .15s; }
-    .nav .links a:hover { color: var(--text); }
-    .nav .signin { font-size: 13px; color: var(--accent); }
 
     /* ---- hero ---- */
     .hero { padding: clamp(40px,8vw,88px) 0 clamp(30px,5vw,56px); }
@@ -108,7 +98,6 @@
       .hero .grid { grid-template-columns: 1fr; }
       .hero .scope { order: 2; }
       .tools { grid-template-columns: 1fr; }
-      .nav .links { display: none; }
       .proof { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 520px) { .proof { grid-template-columns: 1fr; } }
@@ -117,20 +106,21 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <nav class="nav">
-    <div class="wrap row">
-      <a class="logo" href="index.html">
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="#5db0ef" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M4 8l16 8" stroke-opacity=".5"/></svg>MRISim</a>
-      <div class="links">
+  <header class="site-nav" role="banner">
+    <div class="site-nav-row">
+      <a class="site-brand" href="index.html"><img class="site-mark" src="logo-nav.png" alt="" width="26" height="26" />MRISim</a>
+      <button class="site-menu" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu"><i></i><i></i><i></i></button>
+      <nav class="site-links" id="site-links" aria-label="Site">
         <a href="simulator.html">Simulator</a>
         <a href="protocol.html">Planner</a>
         <a href="course.html">Course</a>
         <a href="reference.html">Reference</a>
         <a href="quiz.html">Quiz</a>
-      </div>
-      <a class="signin accounts-only" href="account.html" hidden>Sign in</a>
+      </nav>
+      <div class="site-slot"></div><!-- /site-slot -->
+      <a class="site-signin accounts-only" href="account.html" hidden>Sign in</a>
     </div>
-  </nav>
+  </header>
 
   <main id="main">
     <!-- HERO: A's restrained layout, C's live-instrument centerpiece -->
@@ -271,6 +261,7 @@
 
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="site_nav.js"></script>
   <script>
     // Best quiz score (written by quiz.js to localStorage) on the quiz card.
     (function () {

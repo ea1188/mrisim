@@ -8,17 +8,14 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="site_nav.css" />
   <style>
     /* Account / instructor page: consumes the shared design system (theme.css). Every selector
        here is a hook account.js renders into — restyled to the flat/crisp system, never renamed. */
     .wrap { max-width: 860px; margin: 0 auto; padding: 28px clamp(16px,4vw,22px) 60px; }
-    .top { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-    .top img { width: 30px; height: 30px; }
-    .top h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
-    .top .sp { flex: 1; }
-    .top a, .whoami button { color: var(--accent); text-decoration: none; font-size: 13px;
+    .whoami button { color: var(--accent); text-decoration: none; font-size: 13px;
       background: none; border: none; cursor: pointer; font: inherit; transition: color .15s; }
-    .top a:hover, .whoami button:hover { color: #8fc6f5; }
+    .whoami button:hover { color: #8fc6f5; }
     .card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 22px; margin-bottom: 16px; }
     h2 { font-size: 15px; font-weight: 640; margin: 0 0 12px; }
     p.sub { color: var(--muted); font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
@@ -76,14 +73,24 @@
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <div class="top">
-      <img src="logo.png" alt="" />
-      <h1>MRISim</h1>
-      <span class="sp"></span>
-      <a href="index.html">← Home</a>
-      <span id="whoami" class="whoami" hidden></span>
+  <header class="site-nav" role="banner">
+    <div class="site-nav-row">
+      <a class="site-brand" href="index.html"><img class="site-mark" src="logo-nav.png" alt="" width="26" height="26" />MRISim</a>
+      <button class="site-menu" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu"><i></i><i></i><i></i></button>
+      <nav class="site-links" id="site-links" aria-label="Site">
+        <a href="simulator.html">Simulator</a>
+        <a href="protocol.html">Planner</a>
+        <a href="course.html">Course</a>
+        <a href="reference.html">Reference</a>
+        <a href="quiz.html">Quiz</a>
+      </nav>
+      <div class="site-slot">
+        <span id="whoami" class="whoami" hidden></span>
+        </div><!-- /site-slot -->
+      <a class="site-signin accounts-only" href="account.html" hidden>Sign in</a>
     </div>
+  </header>
+  <main class="wrap">
     <div id="root" role="status" aria-live="polite">
       <div class="card"><p class="sub">Loading…</p></div>
     </div>
@@ -97,6 +104,7 @@
   <script src="auth_url.js"></script>
   <script src="join_link.js"></script>
   <script src="accounts.js"></script>
+  <script src="site_nav.js"></script>
   <script src="blueprint.js"></script>
   <script src="class_insight.js"></script>
   <script src="assignments.js"></script>

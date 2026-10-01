@@ -1,0 +1,46 @@
+/* MRISim shared site header — identical markup on every page (guarded by site_nav.test.mjs):
+   brand | primary links | page slot (page-specific controls) | sign-in. Loaded by every page
+   after its own stylesheet; needs only the design-system tokens (theme.css, or the aliases
+   styles.css declares for the simulator). Fixed 56px tall so app pages can size their
+   console grids against --nav-h. */
+:root { --nav-h: 56px; }
+.site-nav { position: sticky; top: 0; z-index: 30; background: rgba(7,9,12,.82);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.site-nav a { color: inherit; text-decoration: none; }   /* self-contained: the simulator has no global <a> reset */
+.site-nav-row { display: flex; align-items: center; gap: 22px; height: var(--nav-h); padding: 0 clamp(14px,4vw,24px); }
+.site-brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; letter-spacing: -.3px; flex: none; }
+.site-mark { width: 26px; height: 26px; object-fit: contain; display: block; }
+.site-links { display: flex; gap: 20px; font-size: 13.5px; color: var(--muted); }
+.site-links a { transition: color .15s; white-space: nowrap; }
+.site-links a:hover { color: var(--text); }
+.site-links a[aria-current="page"] { color: var(--text); }
+.site-slot { display: flex; align-items: center; gap: 14px; margin-left: auto; min-width: 0; }
+.site-slot a, .site-slot button { color: var(--muted); font: inherit; font-size: 13px; background: none; border: none;
+  cursor: pointer; transition: color .15s; white-space: nowrap; }
+.site-slot a:hover, .site-slot button:hover { color: var(--text); }
+.site-slot .whoami { color: var(--muted); font-size: 12.5px; }
+/* Page tag (often the page's <h1>): small mono label, like the course badge it replaces. */
+.site-slot .site-tag { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent); border: 1px solid var(--line-2); border-radius: 2px;
+  padding: 2px 9px; margin: 0; line-height: 1.5; }
+.site-nav .site-signin { font-size: 13px; color: var(--accent); flex: none; }
+.site-nav .site-signin:hover { color: #8fc6f5; }
+/* Hamburger: hidden on desktop; on narrow screens it toggles the primary links as a sheet. */
+.site-menu { display: none; width: 36px; height: 36px; padding: 0; order: 10; background: none;
+  border: 1px solid var(--line-2); border-radius: 2px; cursor: pointer; position: relative; flex: none; }
+.site-menu i { position: absolute; left: 9px; right: 9px; height: 2px; background: var(--text); border-radius: 1px;
+  top: 50%; transform: translateY(-50%); transition: transform .15s, opacity .15s; }
+.site-menu i:nth-child(1) { transform: translateY(-7px); }
+.site-menu i:nth-child(3) { transform: translateY(5px); }
+.site-nav.open .site-menu i:nth-child(1) { transform: rotate(45deg); }
+.site-nav.open .site-menu i:nth-child(2) { opacity: 0; }
+.site-nav.open .site-menu i:nth-child(3) { transform: rotate(-45deg); }
+@media (max-width: 760px) {
+  .site-nav-row { gap: 12px; }
+  .site-menu { display: block; }
+  .site-links { display: none; position: absolute; left: 0; right: 0; top: var(--nav-h); flex-direction: column; gap: 0;
+    background: var(--bg-2); border-bottom: 1px solid var(--line); font-size: 15px; }
+  .site-links a { padding: 14px clamp(14px,4vw,24px); border-top: 1px solid var(--line); }
+  .site-nav.open .site-links { display: flex; }
+}
+@media (prefers-reduced-motion: reduce) { .site-menu i { transition: none; } }

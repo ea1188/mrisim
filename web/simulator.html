@@ -13,15 +13,15 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="site_nav.css" />
   <!-- Embedded-lesson mode: the guided course (course.html) opens a lesson in an
        iframe as simulator.html?lesson=…&embed=1. We then hide the outbound-navigation
        chrome so the embedded view stays focused on the lesson and can't navigate the
        frame off to another page. Applied to <html> during parse to avoid a flash. -->
   <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
   <style>
-    html.embed #protocol-link, html.embed #quiz-link,
-    html.embed #topbar > a[href="index.html"],
-    html.embed #topbar > a[href*="github.com"] { display: none !important; }
+    html.embed .site-links, html.embed .site-menu, html.embed .site-signin { display: none !important; }
+    html.embed .site-brand { pointer-events: none; }
   </style>
 </head>
 <body>
@@ -54,7 +54,7 @@
         <li><b>Navigate</b> — scroll the wheel or press <kbd>↑</kbd>/<kbd>↓</kbd> over the image to change slice; <b>drag</b> the image to window/level (<kbd>R</kbd> resets); <b>hover</b> the image to read the tissue and its T1/T2/PD under the cursor. <i>On a touchscreen: drag with one finger to window/level, and use the <b>Slice</b> slider to scroll slices.</i></li>
         <li><b>Compare</b> — “Set as A”, then tweak B to see the difference side by side.</li>
         <li><b>FOV planning</b> — toggle the 3-plane localizer (<kbd>F</kbd>). The prescription shows as a band of the slice's true thickness — or a stack of slices with a gap, or the whole 3-D slab. Click a cross panel to move the slice, drag the slice band to angle the plane (oblique), and drag the dashed FOV box to resize or recentre it. Double-click to reset. More slices with no gap cost SNR (slice cross-talk).</li>
-        <li><b>Protocol planning</b> — the <b>scanner-console workflow</b> (top-bar button): pick an exam, then <b>prescribe each sequence on the scout images</b> and acquire it, one after another, like a real console. Reports scan time + SNR, and you can drag/window-level/re-run the acquired series.</li>
+        <li><b>Protocol planning</b> — the <b>scanner-console workflow</b> (<b>Planner</b> in the top bar): pick an exam, then <b>prescribe each sequence on the scout images</b> and acquire it, one after another, like a real console. Reports scan time + SNR, and you can drag/window-level/re-run the acquired series.</li>
         <li><b>Contrast map</b> — toggle the TR×TE map to see the whole contrast landscape for a tissue pair (bright = high contrast), with your current protocol marked — so you can see <i>where</i> contrast comes from, not just one curve.</li>
         <li><b>Show the math</b> — toggle it on, then hover a pixel to see the active sequence's signal equation with that tissue's T1/T2/PD and your TR/TE plugged in, and the resulting signal — the number that becomes the pixel.</li>
       </ul>
@@ -131,24 +131,33 @@
     </div>
   </aside>
 
-  <header id="topbar">
-    <div class="brand"><img class="logo-sm" src="logo.png" alt="" /><b>MRISim</b>
-      <span class="tag">browser edition</span></div>
-    <div class="topchips" role="group" aria-label="Quick metrics">
-      <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>
-      <span class="chip"><i id="m-snrwm-cap">SNR (WM)</i><b id="m-snrwm">—</b></span>
-      <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
-      <!-- Composed, contextual announcement of the metrics after each recalculation,
-           so a screen-reader user sweeping TR/TE hears the result change. -->
-      <span id="a11y-metrics" class="visually-hidden" role="status" aria-live="polite"></span>
+  <header class="site-nav" role="banner">
+    <div class="site-nav-row">
+      <a class="site-brand" href="index.html"><img class="site-mark" src="logo-nav.png" alt="" width="26" height="26" />MRISim</a>
+      <button class="site-menu" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu"><i></i><i></i><i></i></button>
+      <nav class="site-links" id="site-links" aria-label="Site">
+        <a href="simulator.html" aria-current="page">Simulator</a>
+        <a href="protocol.html">Planner</a>
+        <a href="course.html">Course</a>
+        <a href="reference.html">Reference</a>
+        <a href="quiz.html">Quiz</a>
+      </nav>
+      <div class="site-slot">
+        <span class="tag">browser edition</span>
+        <div class="topchips" role="group" aria-label="Quick metrics">
+          <span class="chip"><i>SCAN TIME</i><b id="m-scan">—</b></span>
+          <span class="chip"><i id="m-snrwm-cap">SNR (WM)</i><b id="m-snrwm">—</b></span>
+          <span class="chip"><i>WEIGHTING</i><b id="m-weight">—</b></span>
+          <!-- Composed, contextual announcement of the metrics after each recalculation,
+               so a screen-reader user sweeping TR/TE hears the result change. -->
+          <span id="a11y-metrics" class="visually-hidden" role="status" aria-live="polite"></span>
+        </div>
+        <button id="curriculum-btn" type="button" title="Guided curriculum for beginners">Curriculum</button>
+        <button id="lessons-btn" type="button" title="Guided lessons">Lessons</button>
+        <button id="help" type="button" title="Help, welcome &amp; feature tour">?</button>
+        </div><!-- /site-slot -->
+      <a class="site-signin accounts-only" href="account.html" hidden>Sign in</a>
     </div>
-    <button id="curriculum-btn" class="ghlink" type="button" title="Guided curriculum for beginners">Curriculum</button>
-    <button id="lessons-btn" class="ghlink" type="button" title="Guided lessons">Lessons</button>
-    <button id="help" class="ghlink" type="button" title="Help, welcome &amp; feature tour">?</button>
-    <a id="protocol-link" class="ghlink protocol-cta" href="protocol.html" title="Plan a whole exam like a scanner — pick a protocol, prescribe each sequence on the scouts, acquire">Protocol planning</a>
-    <a id="quiz-link" class="ghlink" href="quiz.html" title="Read-the-scan quiz — identify the sequence, weighting and pathology, with scoring">Quiz</a>
-    <a class="ghlink" href="index.html" title="MRISim home — choose a mode">Home</a>
-    <a class="ghlink" href="https://github.com/ea1188/mrisim" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 
   <main id="app" hidden>
@@ -480,6 +489,7 @@
   <script src="tour.js"></script>
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="site_nav.js"></script>
   <script src="sar_guidance.js"></script>
   <script src="app.js"></script>
 </body>
