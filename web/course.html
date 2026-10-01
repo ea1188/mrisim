@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="site_nav.css" />
   <style>
     /* Course app: consumes the shared design system (theme.css). Every selector here is a
        hook course.js renders into — restyled, never renamed. */
@@ -20,24 +21,14 @@
     .vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
       clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
     /* Skip link: first tab stop, visible only while focused */
-    .skip { position: fixed; top: -40px; left: 12px; z-index: 20; background: var(--accent);
+    .skip { position: fixed; top: -40px; left: 12px; z-index: 40; background: var(--accent);
       color: var(--accent-ink); font-size: 13px; font-weight: 600; padding: 8px 14px;
       border-radius: 2px; text-decoration: none; transition: top .12s; }
     .skip:focus { top: 8px; }
 
-    /* Top app bar (blurred, sticky) */
-    .top { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 clamp(14px,4vw,22px);
-      background: rgba(7,9,12,.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
-      position: fixed; top: 0; left: 0; right: 0; z-index: 10; }
-    .top img { width: 26px; height: 26px; }
-    .top h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
-    .top .badge { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--accent); border: 1px solid var(--line-2); border-radius: 2px; padding: 2px 9px; }
-    .top .sp { flex: 1; }
-    .top a, .top button { color: var(--muted); text-decoration: none; font: inherit; font-size: 13px;
-      background: none; border: none; cursor: pointer; transition: color .15s; }
-    .top a:hover, .top button:hover { color: var(--text); }
-    .top .whoami { color: var(--muted); font-size: 12.5px; }
+    /* Shared header (site_nav.css), but FIXED here rather than sticky: iPad Safari releases
+       a sticky header after ~one screen of scroll (#436/#437). #course-root pads for it. */
+    .site-nav { position: fixed; left: 0; right: 0; }
 
     /* Gate screens (sign-in / paywall / notices) */
     .gate { max-width: 520px; margin: 8vh auto; padding: 0 18px; }
@@ -241,7 +232,7 @@
       color: var(--ok); font-weight: 700; font-size: 14px; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     /* Reading-progress bar: fills as the window scrolls through the current view (sits under the app bar) */
-    /* Sits at the sticky header's bottom edge (inside .top) so it moves with the header and
+    /* Sits at the fixed header's bottom edge (inside .site-nav) so it moves with the header and
        never detaches to float over the body text. */
     #readbar { position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; z-index: 9; pointer-events: none; }
     #readbar > i { display: block; height: 100%; width: 0; background: var(--accent); }
@@ -443,14 +434,25 @@
 </head>
 <body>
   <a class="skip" href="#course-main">Skip to content</a>
-  <div class="top" role="banner">
-    <img src="logo.png" alt="" /><h1>MRISim</h1><span class="badge">Course</span>
-    <span class="sp"></span>
-    <a href="reference.html">Reference</a>
-    <a href="index.html">← Home</a>
-    <span id="whoami" class="whoami" hidden></span>
-    <div id="readbar" aria-hidden="true"><i></i></div>
-  </div>
+  <header class="site-nav" role="banner">
+    <div class="site-nav-row">
+      <a class="site-brand" href="index.html"><img class="site-mark" src="logo-nav.png" alt="" width="26" height="26" />MRISim</a>
+      <button class="site-menu" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu"><i></i><i></i><i></i></button>
+      <nav class="site-links" id="site-links" aria-label="Site">
+        <a href="simulator.html">Simulator</a>
+        <a href="protocol.html">Planner</a>
+        <a href="course.html" aria-current="page">Course</a>
+        <a href="reference.html">Reference</a>
+        <a href="quiz.html">Quiz</a>
+      </nav>
+      <div class="site-slot">
+        <h1 class="site-tag">Course</h1>
+        <span id="whoami" class="whoami" hidden></span>
+        <div id="readbar" aria-hidden="true"><i></i></div>
+        </div><!-- /site-slot -->
+      <a class="site-signin accounts-only" href="account.html" hidden>Sign in</a>
+    </div>
+  </header>
   <div id="course-root">
     <div class="gate"><div class="card"><p>Loading…</p></div></div>
   </div>
@@ -476,6 +478,7 @@
 
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="site_nav.js"></script>
   <script src="a11y.js"></script>
   <script src="course_logic.js"></script>
   <script src="assignments.js"></script>

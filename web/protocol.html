@@ -9,18 +9,11 @@
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="site_nav.css" />
   <style>
     /* ---- Protocol-planning workspace (scanner-console layout) — flat/crisp system (theme.css) ---- */
-    #pp-root { display: grid; grid-template-rows: auto auto 1fr; height: 100vh; }
-    #pp-head {
-      display: flex; align-items: center; gap: 14px; padding: 0 clamp(12px,3vw,14px); height: 52px;
-      border-bottom: 1px solid var(--line); background: var(--bg-2);
-    }
-    #pp-head h1 { font-size: 15px; margin: 0; color: var(--text); font-weight: 700; letter-spacing: -.2px; }
-    #pp-head .spacer { flex: 1; }
-    #pp-head a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .15s; }
-    #pp-head a:hover { color: var(--text); }
-    #pp-tour-btn {
+    #pp-root { display: grid; grid-template-rows: auto 1fr; height: calc(100vh - var(--nav-h)); }
+    .site-slot #pp-tour-btn {
       background: transparent; color: var(--accent); border: 1px solid var(--line-2);
       border-radius: 2px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: .15s;
     }
@@ -138,10 +131,7 @@
 
     /* ---- Mobile / narrow screens: stack the console into one scrolling column ---- */
     @media (max-width: 640px) {
-      #pp-root { height: auto; min-height: 100vh; min-height: 100dvh; }
-      #pp-head { flex-wrap: wrap; gap: 8px 12px; padding: 8px 12px; height: auto; }
-      #pp-head h1 { font-size: 14px; }
-      #pp-head .spacer { display: none; }            /* let the links wrap naturally */
+      #pp-root { height: auto; min-height: calc(100vh - var(--nav-h)); min-height: calc(100dvh - var(--nav-h)); }
       #pp-body { grid-template-columns: 1fr; }        /* single column */
       #pp-queue { order: -1; border-right: 0; border-bottom: 1px solid var(--line); }
       #pp-queue ol { max-height: 24vh; }              /* keep the queue compact, scroll it */
@@ -254,16 +244,25 @@
     </div>
   </div>
 
+  <header class="site-nav" role="banner">
+    <div class="site-nav-row">
+      <a class="site-brand" href="index.html"><img class="site-mark" src="logo-nav.png" alt="" width="26" height="26" />MRISim</a>
+      <button class="site-menu" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu"><i></i><i></i><i></i></button>
+      <nav class="site-links" id="site-links" aria-label="Site">
+        <a href="simulator.html">Simulator</a>
+        <a href="protocol.html" aria-current="page">Planner</a>
+        <a href="course.html">Course</a>
+        <a href="reference.html">Reference</a>
+        <a href="quiz.html">Quiz</a>
+      </nav>
+      <div class="site-slot">
+        <h1 class="site-tag">Protocol planning</h1>
+        <button id="pp-tour-btn" type="button">Tour</button>
+        </div><!-- /site-slot -->
+      <a class="site-signin accounts-only" href="account.html" hidden>Sign in</a>
+    </div>
+  </header>
   <div id="pp-root" role="main" hidden>
-    <header id="pp-head">
-      <h1>MRISim · Protocol Planning</h1>
-      <span class="spacer"></span>
-      <button id="pp-tour-btn" type="button">Tour</button>
-      <a href="quiz.html">Quiz</a>
-      <a href="simulator.html">Simulator</a>
-      <a href="index.html">Home</a>
-    </header>
-
     <div id="pp-patient" aria-label="Simulated patient banner">
       <span class="pt-chip">SIMULATION</span>
       <span class="pt-name">SIM^PATIENT</span>
@@ -391,6 +390,7 @@
   <script src="tour.js"></script>
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="site_nav.js"></script>
   <script src="sar_guidance.js"></script>
   <script src="osce_rubric.js"></script>
   <script src="protocol.js"></script>

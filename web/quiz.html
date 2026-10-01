@@ -9,17 +9,10 @@
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="site_nav.css" />
   <style>
     /* ---- Quiz mode (read-the-scan self-test) — flat/crisp design system (theme.css) ---- */
-    #qz-root { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
-    #qz-head {
-      display: flex; align-items: center; gap: 14px; padding: 0 clamp(12px,4vw,18px); height: 52px;
-      border-bottom: 1px solid var(--line); background: var(--bg-2);
-    }
-    #qz-head h1 { font-size: 15px; margin: 0; color: var(--text); font-weight: 700; letter-spacing: -.2px; }
-    #qz-head .spacer { flex: 1; }
-    #qz-head a { color: var(--muted); text-decoration: none; font-size: 13px; margin-left: 16px; transition: color .15s; }
-    #qz-head a:hover { color: var(--text); }
+    #qz-root { display: grid; grid-template-rows: 1fr; height: calc(100vh - var(--nav-h)); }
     #qz-score { color: var(--muted); font-size: 13px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
     #qz-body { display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 18px; }
     #qz-card { width: min(720px, 96vw); background: var(--panel); border: 1px solid var(--line);
@@ -68,7 +61,7 @@
     #qz-topics-back { background: transparent; color: #c4cad2; border: 1px solid var(--line-2);
       border-radius: 2px; padding: 9px 16px; font-weight: 600; cursor: pointer; margin: 10px 6px 0; }
     #qz-topics-back:hover { border-color: var(--accent-deep); }
-    @media (max-width: 640px) { #qz-root { height: auto; min-height: 100dvh; } }
+    @media (max-width: 640px) { #qz-root { height: auto; min-height: calc(100dvh - var(--nav-h)); } }
   </style>
 </head>
 <body>
@@ -83,16 +76,25 @@
     </div>
   </div>
 
+  <header class="site-nav" role="banner">
+    <div class="site-nav-row">
+      <a class="site-brand" href="index.html"><img class="site-mark" src="logo-nav.png" alt="" width="26" height="26" />MRISim</a>
+      <button class="site-menu" type="button" aria-expanded="false" aria-controls="site-links" aria-label="Menu"><i></i><i></i><i></i></button>
+      <nav class="site-links" id="site-links" aria-label="Site">
+        <a href="simulator.html">Simulator</a>
+        <a href="protocol.html">Planner</a>
+        <a href="course.html">Course</a>
+        <a href="reference.html">Reference</a>
+        <a href="quiz.html" aria-current="page">Quiz</a>
+      </nav>
+      <div class="site-slot">
+        <h1 class="site-tag">Quiz</h1>
+        <span id="qz-score" role="status" aria-live="polite" aria-atomic="true">Score 0 / 0</span>
+        </div><!-- /site-slot -->
+      <a class="site-signin accounts-only" href="account.html" hidden>Sign in</a>
+    </div>
+  </header>
   <div id="qz-root" hidden>
-    <header id="qz-head">
-      <h1>MRISim · MRI Quizzes</h1>
-      <span class="spacer"></span>
-      <span id="qz-score" role="status" aria-live="polite" aria-atomic="true">Score 0 / 0</span>
-      <a href="protocol.html">Protocol</a>
-      <a href="simulator.html">Simulator</a>
-      <a href="index.html">Home</a>
-    </header>
-
     <div id="qz-body">
       <div id="qz-card">
         <div id="qz-menu">
@@ -126,6 +128,7 @@
 
   <script src="config.js"></script>
   <script src="accounts.js"></script>
+  <script src="site_nav.js"></script>
   <script src="quiz.js"></script>
 </body>
 </html>

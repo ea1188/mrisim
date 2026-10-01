@@ -9,6 +9,10 @@
      and timers, the way a real scanner console / DICOM overlay renders them (tabular). */
   --font-sans: "SF Pro Text", "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  /* theme.css token names, aliased so the shared header (site_nav.css) renders on the
+     simulator, which loads only this sheet. Aliases, not values: no second palette copy. */
+  --bg-2: var(--header); --line: var(--border); --line-2: var(--border-hi);
+  --muted: var(--text-dim); --mono: var(--font-mono);
 }
 * { box-sizing: border-box; }
 /* The [hidden] attribute must always win over element display rules below
@@ -49,34 +53,19 @@ body {
 .bar { height: 6px; background: #1c2027; border-radius: 2px; overflow: hidden; margin: 12px 0; }
 #splash-bar { height: 100%; width: 5%; background: var(--accent); transition: width .3s; }
 
-/* Top bar */
-#topbar {
-  display: flex; align-items: center; gap: 14px; padding: 8px 14px;
-  background: var(--header); border-bottom: 1px solid #1b222a;
-}
-.brand { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; }
-.logo-sm {
-  width: 30px; height: 30px; object-fit: contain; display: block;
-}
-.tag { color: var(--text-faint); font-size: 11px; }
-.topchips { display: flex; gap: 18px; margin-left: auto; }
+/* Top bar: the shared site header (site_nav.css); only the simulator's slot contents
+   (metric chips + Curriculum / Lessons / ? buttons) are styled here. */
+.tag { color: var(--text-faint); font-size: 11px; white-space: nowrap; }
+.topchips { display: flex; gap: 18px; }
 .chip { line-height: 1.2; }
 .chip i { display: block; color: var(--text-faint); font-size: 8px; font-style: normal; font-weight: 700; letter-spacing: .04em; }
 .chip b { color: var(--accent-hi); font-size: 13px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.ghlink { color: var(--text-dim); text-decoration: none; font-size: 13px; }
-.ghlink:hover { color: var(--accent-hi); }
-/* Protocol-planning call-to-action — a flagship workflow, so it stands out. */
-.protocol-cta {
-  color: var(--accent-ink); background: var(--accent);
-  padding: 4px 10px; border-radius: 2px; font-weight: 600;
-}
-.protocol-cta:hover { color: var(--accent-ink); background: var(--accent-hi); }
 
 /* Layout — scanner-console grid (planner model): presets rail | image | metrics,
    with the tabbed control strip in a bottom row under the image. The page never
    scrolls on desktop; the rail, viewport and strip scroll internally. */
 #app { display: grid; grid-template-columns: 232px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto; gap: 10px; padding: 10px; height: calc(100% - 52px); }
+  grid-template-rows: minmax(0, 1fr) auto; gap: 10px; padding: 10px; height: calc(100% - var(--nav-h)); }
 .panel { background: var(--panel); border-radius: 2px; padding: 12px; overflow-y: auto; }
 
 /* Presets rail (left column, spans both rows; the list scrolls). */
@@ -540,11 +529,8 @@ kbd {
   label.check { font-size: 13px; }
 }
 @media (max-width: 560px) {
-  #topbar { gap: 10px; padding: 8px 12px; flex-wrap: wrap; }
   .topchips { display: none; }     /* the Measurements panel below shows these */
   .tag { display: none; }
-  .brand { font-size: 15px; }
-  .ghlink { font-size: 13px; }
   .scoutwrap { max-height: 46vh; }
   .viewport { min-height: 46vh; }
 }
