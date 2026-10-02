@@ -204,6 +204,7 @@
         <div class="slice-rail" title="Drag to scroll through slices">
           <input type="range" id="slice-v" class="slice-rail-input" orient="vertical"
                  min="0" max="180" value="90" aria-label="Slice (scroll)" />
+          <span class="slice-rail-cap" aria-hidden="true">Slice</span>
         </div>
       </div>
       <div class="scoutwrap" id="scoutwrap" hidden><img id="scoutImage" alt="3-plane localizer" /></div>
@@ -286,15 +287,6 @@
           <select id="qmridisp"><option>T1 Map (VFA)</option><option>T2 Map (multi-echo)</option><option>T2* Map (multi-echo)</option><option>Synthetic SE</option></select></label>
         <label id="fmridisp-row" hidden>fMRI display
           <select id="fmridisp"><option>EPI Image</option><option>Activation Map</option><option>T-statistic Map</option></select></label>
-        <label>Orientation
-          <div class="radios" id="orientation" role="group" aria-label="Slice orientation">
-            <button data-v="axial" class="on" aria-pressed="true">Axial</button>
-            <button data-v="coronal" aria-pressed="false">Coronal</button>
-            <button data-v="sagittal" aria-pressed="false">Sagittal</button>
-          </div>
-        </label>
-        <label>Slice <output id="slice-val"></output>
-          <input type="range" id="slice" min="0" max="180" value="90" /></label>
         <label class="check"><input type="checkbox" id="labelanat" /> Label the anatomy (name the structures)</label>
         <label id="pathology-row" title="Paint a demo lesion into the brain — each one is revealed by a specific sequence">Pathology (demo)
           <select id="pathology">
@@ -309,6 +301,15 @@
         </div>
         <div class="col">
           <h3 class="subhead">Geometry</h3>
+        <label>Orientation
+          <div class="radios" id="orientation" role="group" aria-label="Slice orientation">
+            <button data-v="axial" class="on" aria-pressed="true">Axial</button>
+            <button data-v="coronal" aria-pressed="false">Coronal</button>
+            <button data-v="sagittal" aria-pressed="false">Sagittal</button>
+          </div>
+        </label>
+        <label>Slice <output id="slice-val"></output>
+          <input type="range" id="slice" min="0" max="180" value="90" /></label>
         <label class="check"><input type="checkbox" id="fovplan" /> FOV planning (3-plane localizer)</label>
         <div id="planctl" hidden>
           <label>In-plane FOV (%) <input type="number" id="ipfov-val" class="numval" min="30" max="100" step="5" value="100" />

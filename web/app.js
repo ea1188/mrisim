@@ -595,7 +595,7 @@ function reflectSlice() {
 function sizeSliceRail() {
   const rail = $("slice-v"), images = document.querySelector(".image-row .images");
   if (!rail || !images) return;
-  const h = images.clientHeight - 16;
+  const h = images.clientHeight - 16 - 44;      // 44px: the "Slice" caption at the foot
   if (h > 60) rail.style.height = h + "px";
 }
 
