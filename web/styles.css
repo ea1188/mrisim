@@ -250,6 +250,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .slice-rail-input::-webkit-slider-thumb { -webkit-appearance: auto; margin: 0; width: auto; height: auto; border: none; background: initial; box-shadow: none; }
 .slice-rail-input::-moz-range-track { width: 5px; height: auto; background: var(--border); border-radius: 2px; }
 .slice-rail-input::-moz-range-thumb { width: 16px; height: 16px; }
+/* Caption at the foot of the rail, so it reads as a labelled console control rather
+   than a stray scrollbar. sizeSliceRail() leaves it 44px of room. */
+.slice-rail-cap { position: absolute; bottom: 10px; left: 0; right: 0; height: 30px; display: block;
+  width: 12px; margin: 0 auto; writing-mode: vertical-rl; transform: rotate(180deg);
+  font: 700 9px/12px var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-faint); pointer-events: none; }
 @media (pointer: coarse) {
   .slice-rail { width: 42px; }
   .slice-rail-input { width: 32px; }
@@ -528,9 +534,11 @@ kbd {
   .rail-head h2 { font-size: 12px; }
   label.check { font-size: 13px; }
 }
+/* The header slot shares a row with the primary links: drop its optional readouts as
+   the row narrows (the Measurements panel shows the same numbers). */
+@media (max-width: 1180px) { .tag { display: none; } }
+@media (max-width: 980px) { .topchips { display: none; } }
 @media (max-width: 560px) {
-  .topchips { display: none; }     /* the Measurements panel below shows these */
-  .tag { display: none; }
   .scoutwrap { max-height: 46vh; }
   .viewport { min-height: 46vh; }
 }
