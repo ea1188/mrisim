@@ -557,7 +557,8 @@ class Simulator:
         direction = {"Left-Right": [1.0, 0.0], "Up-Down": [0.0, 1.0], "Diagonal": [0.707, 0.707]}[c.params["diff_direction"]]
         disp = c.params["diff_display"]
         if disp == "DWI":
-            return simulate_diffusion_3d_slice(c.phantom_slice, c.params["b_value"], direction, c.TR, c.TE)
+            return simulate_diffusion_3d_slice(c.phantom_slice, c.params["b_value"], direction, c.TR, c.TE,
+                                               tissue_props=c.tprops)
         if disp == "ADC Map":
             return simulate_adc_map_3d(c.phantom_slice)
         if disp == "FA Map":
@@ -611,11 +612,12 @@ class Simulator:
         act = self._get_phantom_slice(c.orient, c.sl_idx, c.params, volume=self.activation)
         disp = c.params["fmri_display"]
         if disp == "EPI Image":
-            return simulate_fmri_3d_slice(c.phantom_slice, act, c.TR, c.TE, c.FA, True)
+            return simulate_fmri_3d_slice(c.phantom_slice, act, c.TR, c.TE, c.FA, True, tissue_props=c.tprops)
         if disp == "Activation Map":
-            return compute_activation_map_3d(c.phantom_slice, act, c.TR, c.TE, c.FA)
+            return compute_activation_map_3d(c.phantom_slice, act, c.TR, c.TE, c.FA, tissue_props=c.tprops)
         if disp == "T-statistic Map":
-            img = compute_tstat_map_3d(c.phantom_slice, act, c.TR, c.TE, c.FA, c.params["fmri_volumes"])
+            img = compute_tstat_map_3d(c.phantom_slice, act, c.TR, c.TE, c.FA, c.params["fmri_volumes"],
+                                       tissue_props=c.tprops)
             return np.where(img > c.params["fmri_threshold"], img, 0)
         return None
 

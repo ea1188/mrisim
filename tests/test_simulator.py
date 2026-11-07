@@ -514,3 +514,13 @@ def test_susceptibility_dropout_worse_on_gre_than_se(sim, monkeypatch):
     gre_loss = 1 - gre_on.sum() / gre_off.sum()
     se_loss = 1 - se_on.sum() / se_off.sum()
     assert gre_loss > 2 * se_loss, f"GRE loss {gre_loss:.3f} vs SE loss {se_loss:.3f}"
+
+
+@pytest.mark.parametrize("seq", ["Diffusion (DWI)", "fMRI (BOLD)"])
+def test_field_strength_reaches_dwi_and_fmri_without_global_sync(sim, seq):
+    """DWI/fMRI must use the params' field strength, not the global tissue table
+    (the desktop never re-syncs it on a field change)."""
+    # Near-noiseless, so only the tissue properties can make the images differ.
+    img_15, _ = sim.simulate(base_params(sequence=seq, field_strength="1.5T", snr_level=1e4))
+    img_3, _ = sim.simulate(base_params(sequence=seq, field_strength="3T", snr_level=1e4))
+    assert np.abs(img_15 - img_3).max() > 1e-2

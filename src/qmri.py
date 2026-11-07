@@ -237,7 +237,7 @@ def ir_t1_map(signal_series: np.ndarray, TI_ms_list: Sequence[float],
                 maxfev=400,
             )
             T1_map.flat[idx] = popt[0]
-        except Exception:
+        except (RuntimeError, ValueError):
             pass
 
     return T1_map

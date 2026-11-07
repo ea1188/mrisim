@@ -240,10 +240,13 @@ def simulate_diffusion_3d_slice(
     direction: list[float] | np.ndarray,
     TR: float = 8000,
     TE: float = 80,
+    tissue_props: dict[int, dict] | None = None,
 ) -> np.ndarray:
     """Simulate diffusion-weighted image with anisotropy effects."""
     from signal_engine import spin_echo_signal
     from phantom3d import TISSUE_PROPERTIES_3D
+    if tissue_props is None:
+        tissue_props = TISSUE_PROPERTIES_3D
     
     diff_props = get_diffusion_properties_3d(None)
     image = np.zeros_like(phantom_slice, dtype=float)
@@ -257,7 +260,7 @@ def simulate_diffusion_3d_slice(
     dir_vec = np.array(direction[:2] if len(direction) >= 2 else [direction[0], 0], dtype=float)
     dir_vec = dir_vec / (np.linalg.norm(dir_vec) + 1e-10)
     
-    for label, props in TISSUE_PROPERTIES_3D.items():
+    for label, props in tissue_props.items():
         mask = phantom_slice == label
         if not np.any(mask):
             continue
@@ -397,15 +400,18 @@ def simulate_fmri_3d_slice(
     TE: float = 30,
     flip_angle: float = 90,
     is_active: bool = True,
+    tissue_props: dict[int, dict] | None = None,
 ) -> np.ndarray:
     """Simulate fMRI with tissue texture."""
     from signal_engine import gradient_echo_signal
     from phantom3d import TISSUE_PROPERTIES_3D
+    if tissue_props is None:
+        tissue_props = TISSUE_PROPERTIES_3D
     
     image = np.zeros_like(phantom_slice, dtype=float)
     T2star_base = {0: 1, 1: 1200, 2: 60, 3: 48, 4: 40, 5: 3, 6: 50}
     
-    for label, props in TISSUE_PROPERTIES_3D.items():
+    for label, props in tissue_props.items():
         mask = phantom_slice == label
         if not np.any(mask):
             continue
@@ -438,10 +444,13 @@ def compute_activation_map_3d(
     TR: float = 2000,
     TE: float = 30,
     flip_angle: float = 90,
+    tissue_props: dict[int, dict] | None = None,
 ) -> np.ndarray:
     """Compute BOLD percent signal change map."""
-    rest = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=False)
-    active = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=True)
+    rest = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=False,
+                                  tissue_props=tissue_props)
+    active = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=True,
+                                    tissue_props=tissue_props)
     
     with np.errstate(divide='ignore', invalid='ignore'):
         pct_change = np.where(rest > 0, (active - rest) / rest * 100, 0)
@@ -455,10 +464,13 @@ def compute_tstat_map_3d(
     TE: float = 30,
     flip_angle: float = 90,
     num_volumes: int = 100,
+    tissue_props: dict[int, dict] | None = None,
 ) -> np.ndarray:
     """Compute t-statistic map."""
-    rest = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=False)
-    active = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=True)
+    rest = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=False,
+                                  tissue_props=tissue_props)
+    active = simulate_fmri_3d_slice(phantom_slice, activation_slice, TR, TE, flip_angle, is_active=True,
+                                    tissue_props=tissue_props)
     
     sigma = np.max(rest) * 0.5 / 100
     n_per_condition = num_volumes // 2
