@@ -5,3 +5,6 @@ pytest-cov==7.1.0
 pytest-xdist==3.8.0
 ruff==0.15.15
 mypy==2.1.0
+# PyQt6 6.12.0 ships a stub mypy can't parse (QtGui.pyi: `*args, /`). Runtime is
+# unaffected, so the cap lives here, not in requirements.txt. Drop once fixed upstream.
+pyqt6<6.12
